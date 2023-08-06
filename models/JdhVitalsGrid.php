@@ -378,7 +378,7 @@ class JdhVitalsGrid extends JdhVitals
             $this->vitals_id->Visible = false;
         }
         if ($this->isAddOrEdit()) {
-            $this->subbmitted_by_user_id->Visible = false;
+            $this->submitted_by_user_id->Visible = false;
         }
     }
 
@@ -555,8 +555,14 @@ class JdhVitalsGrid extends JdhVitals
         $this->pressure->setVisibility();
         $this->height->setVisibility();
         $this->weight->setVisibility();
+        $this->body_mass_index->setVisibility();
+        $this->pulse_rate->setVisibility();
+        $this->respiratory_rate->setVisibility();
+        $this->temperature->setVisibility();
+        $this->random_blood_sugar->setVisibility();
+        $this->spo2->Visible = false;
         $this->submission_date->setVisibility();
-        $this->subbmitted_by_user_id->Visible = false;
+        $this->submitted_by_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -806,6 +812,9 @@ class JdhVitalsGrid extends JdhVitals
     // Exit inline mode
     protected function clearInlineMode()
     {
+        $this->height->FormValue = ""; // Clear form value
+        $this->body_mass_index->FormValue = ""; // Clear form value
+        $this->temperature->FormValue = ""; // Clear form value
         $this->LastAction = $this->CurrentAction; // Save last action
         $this->CurrentAction = ""; // Clear action
         $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
@@ -1060,6 +1069,21 @@ class JdhVitalsGrid extends JdhVitals
         if ($CurrentForm->hasValue("x_weight") && $CurrentForm->hasValue("o_weight") && $this->weight->CurrentValue != $this->weight->DefaultValue) {
             return false;
         }
+        if ($CurrentForm->hasValue("x_body_mass_index") && $CurrentForm->hasValue("o_body_mass_index") && $this->body_mass_index->CurrentValue != $this->body_mass_index->DefaultValue) {
+            return false;
+        }
+        if ($CurrentForm->hasValue("x_pulse_rate") && $CurrentForm->hasValue("o_pulse_rate") && $this->pulse_rate->CurrentValue != $this->pulse_rate->DefaultValue) {
+            return false;
+        }
+        if ($CurrentForm->hasValue("x_respiratory_rate") && $CurrentForm->hasValue("o_respiratory_rate") && $this->respiratory_rate->CurrentValue != $this->respiratory_rate->DefaultValue) {
+            return false;
+        }
+        if ($CurrentForm->hasValue("x_temperature") && $CurrentForm->hasValue("o_temperature") && $this->temperature->CurrentValue != $this->temperature->DefaultValue) {
+            return false;
+        }
+        if ($CurrentForm->hasValue("x_random_blood_sugar") && $CurrentForm->hasValue("o_random_blood_sugar") && $this->random_blood_sugar->CurrentValue != $this->random_blood_sugar->DefaultValue) {
+            return false;
+        }
         if ($CurrentForm->hasValue("x_submission_date") && $CurrentForm->hasValue("o_submission_date") && $this->submission_date->CurrentValue != $this->submission_date->DefaultValue) {
             return false;
         }
@@ -1153,6 +1177,11 @@ class JdhVitalsGrid extends JdhVitals
         $this->pressure->clearErrorMessage();
         $this->height->clearErrorMessage();
         $this->weight->clearErrorMessage();
+        $this->body_mass_index->clearErrorMessage();
+        $this->pulse_rate->clearErrorMessage();
+        $this->respiratory_rate->clearErrorMessage();
+        $this->temperature->clearErrorMessage();
+        $this->random_blood_sugar->clearErrorMessage();
         $this->submission_date->clearErrorMessage();
     }
 
@@ -1647,6 +1676,71 @@ class JdhVitalsGrid extends JdhVitals
             $this->weight->setOldValue($CurrentForm->getValue("o_weight"));
         }
 
+        // Check field name 'body_mass_index' first before field var 'x_body_mass_index'
+        $val = $CurrentForm->hasValue("body_mass_index") ? $CurrentForm->getValue("body_mass_index") : $CurrentForm->getValue("x_body_mass_index");
+        if (!$this->body_mass_index->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->body_mass_index->Visible = false; // Disable update for API request
+            } else {
+                $this->body_mass_index->setFormValue($val);
+            }
+        }
+        if ($CurrentForm->hasValue("o_body_mass_index")) {
+            $this->body_mass_index->setOldValue($CurrentForm->getValue("o_body_mass_index"));
+        }
+
+        // Check field name 'pulse_rate' first before field var 'x_pulse_rate'
+        $val = $CurrentForm->hasValue("pulse_rate") ? $CurrentForm->getValue("pulse_rate") : $CurrentForm->getValue("x_pulse_rate");
+        if (!$this->pulse_rate->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->pulse_rate->Visible = false; // Disable update for API request
+            } else {
+                $this->pulse_rate->setFormValue($val, true, $validate);
+            }
+        }
+        if ($CurrentForm->hasValue("o_pulse_rate")) {
+            $this->pulse_rate->setOldValue($CurrentForm->getValue("o_pulse_rate"));
+        }
+
+        // Check field name 'respiratory_rate' first before field var 'x_respiratory_rate'
+        $val = $CurrentForm->hasValue("respiratory_rate") ? $CurrentForm->getValue("respiratory_rate") : $CurrentForm->getValue("x_respiratory_rate");
+        if (!$this->respiratory_rate->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->respiratory_rate->Visible = false; // Disable update for API request
+            } else {
+                $this->respiratory_rate->setFormValue($val, true, $validate);
+            }
+        }
+        if ($CurrentForm->hasValue("o_respiratory_rate")) {
+            $this->respiratory_rate->setOldValue($CurrentForm->getValue("o_respiratory_rate"));
+        }
+
+        // Check field name 'temperature' first before field var 'x_temperature'
+        $val = $CurrentForm->hasValue("temperature") ? $CurrentForm->getValue("temperature") : $CurrentForm->getValue("x_temperature");
+        if (!$this->temperature->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->temperature->Visible = false; // Disable update for API request
+            } else {
+                $this->temperature->setFormValue($val, true, $validate);
+            }
+        }
+        if ($CurrentForm->hasValue("o_temperature")) {
+            $this->temperature->setOldValue($CurrentForm->getValue("o_temperature"));
+        }
+
+        // Check field name 'random_blood_sugar' first before field var 'x_random_blood_sugar'
+        $val = $CurrentForm->hasValue("random_blood_sugar") ? $CurrentForm->getValue("random_blood_sugar") : $CurrentForm->getValue("x_random_blood_sugar");
+        if (!$this->random_blood_sugar->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->random_blood_sugar->Visible = false; // Disable update for API request
+            } else {
+                $this->random_blood_sugar->setFormValue($val);
+            }
+        }
+        if ($CurrentForm->hasValue("o_random_blood_sugar")) {
+            $this->random_blood_sugar->setOldValue($CurrentForm->getValue("o_random_blood_sugar"));
+        }
+
         // Check field name 'submission_date' first before field var 'x_submission_date'
         $val = $CurrentForm->hasValue("submission_date") ? $CurrentForm->getValue("submission_date") : $CurrentForm->getValue("x_submission_date");
         if (!$this->submission_date->IsDetailKey) {
@@ -1673,6 +1767,11 @@ class JdhVitalsGrid extends JdhVitals
         $this->pressure->CurrentValue = $this->pressure->FormValue;
         $this->height->CurrentValue = $this->height->FormValue;
         $this->weight->CurrentValue = $this->weight->FormValue;
+        $this->body_mass_index->CurrentValue = $this->body_mass_index->FormValue;
+        $this->pulse_rate->CurrentValue = $this->pulse_rate->FormValue;
+        $this->respiratory_rate->CurrentValue = $this->respiratory_rate->FormValue;
+        $this->temperature->CurrentValue = $this->temperature->FormValue;
+        $this->random_blood_sugar->CurrentValue = $this->random_blood_sugar->FormValue;
         $this->submission_date->CurrentValue = $this->submission_date->FormValue;
         $this->submission_date->CurrentValue = UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern());
     }
@@ -1767,8 +1866,14 @@ class JdhVitalsGrid extends JdhVitals
         $this->pressure->setDbValue($row['pressure']);
         $this->height->setDbValue($row['height']);
         $this->weight->setDbValue($row['weight']);
+        $this->body_mass_index->setDbValue($row['body_mass_index']);
+        $this->pulse_rate->setDbValue($row['pulse_rate']);
+        $this->respiratory_rate->setDbValue($row['respiratory_rate']);
+        $this->temperature->setDbValue($row['temperature']);
+        $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
+        $this->spo2->setDbValue($row['spo2']);
         $this->submission_date->setDbValue($row['submission_date']);
-        $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
     // Return a row with default values
@@ -1780,8 +1885,14 @@ class JdhVitalsGrid extends JdhVitals
         $row['pressure'] = $this->pressure->DefaultValue;
         $row['height'] = $this->height->DefaultValue;
         $row['weight'] = $this->weight->DefaultValue;
+        $row['body_mass_index'] = $this->body_mass_index->DefaultValue;
+        $row['pulse_rate'] = $this->pulse_rate->DefaultValue;
+        $row['respiratory_rate'] = $this->respiratory_rate->DefaultValue;
+        $row['temperature'] = $this->temperature->DefaultValue;
+        $row['random_blood_sugar'] = $this->random_blood_sugar->DefaultValue;
+        $row['spo2'] = $this->spo2->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
-        $row['subbmitted_by_user_id'] = $this->subbmitted_by_user_id->DefaultValue;
+        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
     }
 
@@ -1830,9 +1941,21 @@ class JdhVitalsGrid extends JdhVitals
 
         // weight
 
+        // body_mass_index
+
+        // pulse_rate
+
+        // respiratory_rate
+
+        // temperature
+
+        // random_blood_sugar
+
+        // spo2
+
         // submission_date
 
-        // subbmitted_by_user_id
+        // submitted_by_user_id
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -1873,13 +1996,36 @@ class JdhVitalsGrid extends JdhVitals
             $this->weight->ViewValue = $this->weight->CurrentValue;
             $this->weight->ViewValue = FormatNumber($this->weight->ViewValue, $this->weight->formatPattern());
 
+            // body_mass_index
+            $this->body_mass_index->ViewValue = $this->body_mass_index->CurrentValue;
+            $this->body_mass_index->ViewValue = FormatNumber($this->body_mass_index->ViewValue, $this->body_mass_index->formatPattern());
+
+            // pulse_rate
+            $this->pulse_rate->ViewValue = $this->pulse_rate->CurrentValue;
+            $this->pulse_rate->ViewValue = FormatNumber($this->pulse_rate->ViewValue, $this->pulse_rate->formatPattern());
+
+            // respiratory_rate
+            $this->respiratory_rate->ViewValue = $this->respiratory_rate->CurrentValue;
+            $this->respiratory_rate->ViewValue = FormatNumber($this->respiratory_rate->ViewValue, $this->respiratory_rate->formatPattern());
+
+            // temperature
+            $this->temperature->ViewValue = $this->temperature->CurrentValue;
+            $this->temperature->ViewValue = FormatNumber($this->temperature->ViewValue, $this->temperature->formatPattern());
+
+            // random_blood_sugar
+            $this->random_blood_sugar->ViewValue = $this->random_blood_sugar->CurrentValue;
+
+            // spo2
+            $this->spo2->ViewValue = $this->spo2->CurrentValue;
+            $this->spo2->ViewValue = FormatNumber($this->spo2->ViewValue, $this->spo2->formatPattern());
+
             // submission_date
             $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
             $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
 
-            // subbmitted_by_user_id
-            $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
-            $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
+            // submitted_by_user_id
+            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
             // vitals_id
             $this->vitals_id->HrefValue = "";
@@ -1900,6 +2046,26 @@ class JdhVitalsGrid extends JdhVitals
             // weight
             $this->weight->HrefValue = "";
             $this->weight->TooltipValue = "";
+
+            // body_mass_index
+            $this->body_mass_index->HrefValue = "";
+            $this->body_mass_index->TooltipValue = "";
+
+            // pulse_rate
+            $this->pulse_rate->HrefValue = "";
+            $this->pulse_rate->TooltipValue = "";
+
+            // respiratory_rate
+            $this->respiratory_rate->HrefValue = "";
+            $this->respiratory_rate->TooltipValue = "";
+
+            // temperature
+            $this->temperature->HrefValue = "";
+            $this->temperature->TooltipValue = "";
+
+            // random_blood_sugar
+            $this->random_blood_sugar->HrefValue = "";
+            $this->random_blood_sugar->TooltipValue = "";
 
             // submission_date
             $this->submission_date->HrefValue = "";
@@ -1984,6 +2150,46 @@ class JdhVitalsGrid extends JdhVitals
                 $this->weight->EditValue = FormatNumber($this->weight->EditValue, null);
             }
 
+            // body_mass_index
+            $this->body_mass_index->setupEditAttributes();
+            $this->body_mass_index->EditValue = HtmlEncode($this->body_mass_index->CurrentValue);
+            $this->body_mass_index->PlaceHolder = RemoveHtml($this->body_mass_index->caption());
+            if (strval($this->body_mass_index->EditValue) != "" && is_numeric($this->body_mass_index->EditValue)) {
+                $this->body_mass_index->EditValue = FormatNumber($this->body_mass_index->EditValue, null);
+            }
+
+            // pulse_rate
+            $this->pulse_rate->setupEditAttributes();
+            $this->pulse_rate->EditValue = HtmlEncode($this->pulse_rate->CurrentValue);
+            $this->pulse_rate->PlaceHolder = RemoveHtml($this->pulse_rate->caption());
+            if (strval($this->pulse_rate->EditValue) != "" && is_numeric($this->pulse_rate->EditValue)) {
+                $this->pulse_rate->EditValue = FormatNumber($this->pulse_rate->EditValue, null);
+            }
+
+            // respiratory_rate
+            $this->respiratory_rate->setupEditAttributes();
+            $this->respiratory_rate->EditValue = HtmlEncode($this->respiratory_rate->CurrentValue);
+            $this->respiratory_rate->PlaceHolder = RemoveHtml($this->respiratory_rate->caption());
+            if (strval($this->respiratory_rate->EditValue) != "" && is_numeric($this->respiratory_rate->EditValue)) {
+                $this->respiratory_rate->EditValue = FormatNumber($this->respiratory_rate->EditValue, null);
+            }
+
+            // temperature
+            $this->temperature->setupEditAttributes();
+            $this->temperature->EditValue = HtmlEncode($this->temperature->CurrentValue);
+            $this->temperature->PlaceHolder = RemoveHtml($this->temperature->caption());
+            if (strval($this->temperature->EditValue) != "" && is_numeric($this->temperature->EditValue)) {
+                $this->temperature->EditValue = FormatNumber($this->temperature->EditValue, null);
+            }
+
+            // random_blood_sugar
+            $this->random_blood_sugar->setupEditAttributes();
+            if (!$this->random_blood_sugar->Raw) {
+                $this->random_blood_sugar->CurrentValue = HtmlDecode($this->random_blood_sugar->CurrentValue);
+            }
+            $this->random_blood_sugar->EditValue = HtmlEncode($this->random_blood_sugar->CurrentValue);
+            $this->random_blood_sugar->PlaceHolder = RemoveHtml($this->random_blood_sugar->caption());
+
             // submission_date
             $this->submission_date->setupEditAttributes();
             $this->submission_date->EditValue = HtmlEncode(FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()));
@@ -2005,6 +2211,21 @@ class JdhVitalsGrid extends JdhVitals
 
             // weight
             $this->weight->HrefValue = "";
+
+            // body_mass_index
+            $this->body_mass_index->HrefValue = "";
+
+            // pulse_rate
+            $this->pulse_rate->HrefValue = "";
+
+            // respiratory_rate
+            $this->respiratory_rate->HrefValue = "";
+
+            // temperature
+            $this->temperature->HrefValue = "";
+
+            // random_blood_sugar
+            $this->random_blood_sugar->HrefValue = "";
 
             // submission_date
             $this->submission_date->HrefValue = "";
@@ -2090,6 +2311,43 @@ class JdhVitalsGrid extends JdhVitals
                 $this->weight->EditValue = FormatNumber($this->weight->EditValue, null);
             }
 
+            // body_mass_index
+            $this->body_mass_index->setupEditAttributes();
+            $this->body_mass_index->EditValue = $this->body_mass_index->CurrentValue;
+            $this->body_mass_index->EditValue = FormatNumber($this->body_mass_index->EditValue, $this->body_mass_index->formatPattern());
+
+            // pulse_rate
+            $this->pulse_rate->setupEditAttributes();
+            $this->pulse_rate->EditValue = HtmlEncode($this->pulse_rate->CurrentValue);
+            $this->pulse_rate->PlaceHolder = RemoveHtml($this->pulse_rate->caption());
+            if (strval($this->pulse_rate->EditValue) != "" && is_numeric($this->pulse_rate->EditValue)) {
+                $this->pulse_rate->EditValue = FormatNumber($this->pulse_rate->EditValue, null);
+            }
+
+            // respiratory_rate
+            $this->respiratory_rate->setupEditAttributes();
+            $this->respiratory_rate->EditValue = HtmlEncode($this->respiratory_rate->CurrentValue);
+            $this->respiratory_rate->PlaceHolder = RemoveHtml($this->respiratory_rate->caption());
+            if (strval($this->respiratory_rate->EditValue) != "" && is_numeric($this->respiratory_rate->EditValue)) {
+                $this->respiratory_rate->EditValue = FormatNumber($this->respiratory_rate->EditValue, null);
+            }
+
+            // temperature
+            $this->temperature->setupEditAttributes();
+            $this->temperature->EditValue = HtmlEncode($this->temperature->CurrentValue);
+            $this->temperature->PlaceHolder = RemoveHtml($this->temperature->caption());
+            if (strval($this->temperature->EditValue) != "" && is_numeric($this->temperature->EditValue)) {
+                $this->temperature->EditValue = FormatNumber($this->temperature->EditValue, null);
+            }
+
+            // random_blood_sugar
+            $this->random_blood_sugar->setupEditAttributes();
+            if (!$this->random_blood_sugar->Raw) {
+                $this->random_blood_sugar->CurrentValue = HtmlDecode($this->random_blood_sugar->CurrentValue);
+            }
+            $this->random_blood_sugar->EditValue = HtmlEncode($this->random_blood_sugar->CurrentValue);
+            $this->random_blood_sugar->PlaceHolder = RemoveHtml($this->random_blood_sugar->caption());
+
             // submission_date
             $this->submission_date->setupEditAttributes();
             $this->submission_date->EditValue = HtmlEncode(FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()));
@@ -2111,6 +2369,22 @@ class JdhVitalsGrid extends JdhVitals
 
             // weight
             $this->weight->HrefValue = "";
+
+            // body_mass_index
+            $this->body_mass_index->HrefValue = "";
+            $this->body_mass_index->TooltipValue = "";
+
+            // pulse_rate
+            $this->pulse_rate->HrefValue = "";
+
+            // respiratory_rate
+            $this->respiratory_rate->HrefValue = "";
+
+            // temperature
+            $this->temperature->HrefValue = "";
+
+            // random_blood_sugar
+            $this->random_blood_sugar->HrefValue = "";
 
             // submission_date
             $this->submission_date->HrefValue = "";
@@ -2155,7 +2429,7 @@ class JdhVitalsGrid extends JdhVitals
                 $this->height->addErrorMessage(str_replace("%s", $this->height->caption(), $this->height->RequiredErrorMessage));
             }
         }
-        if (!CheckInteger($this->height->FormValue)) {
+        if (!CheckNumber($this->height->FormValue)) {
             $this->height->addErrorMessage($this->height->getErrorMessage(false));
         }
         if ($this->weight->Required) {
@@ -2165,6 +2439,40 @@ class JdhVitalsGrid extends JdhVitals
         }
         if (!CheckInteger($this->weight->FormValue)) {
             $this->weight->addErrorMessage($this->weight->getErrorMessage(false));
+        }
+        if ($this->body_mass_index->Required) {
+            if (!$this->body_mass_index->IsDetailKey && EmptyValue($this->body_mass_index->FormValue)) {
+                $this->body_mass_index->addErrorMessage(str_replace("%s", $this->body_mass_index->caption(), $this->body_mass_index->RequiredErrorMessage));
+            }
+        }
+        if ($this->pulse_rate->Required) {
+            if (!$this->pulse_rate->IsDetailKey && EmptyValue($this->pulse_rate->FormValue)) {
+                $this->pulse_rate->addErrorMessage(str_replace("%s", $this->pulse_rate->caption(), $this->pulse_rate->RequiredErrorMessage));
+            }
+        }
+        if (!CheckInteger($this->pulse_rate->FormValue)) {
+            $this->pulse_rate->addErrorMessage($this->pulse_rate->getErrorMessage(false));
+        }
+        if ($this->respiratory_rate->Required) {
+            if (!$this->respiratory_rate->IsDetailKey && EmptyValue($this->respiratory_rate->FormValue)) {
+                $this->respiratory_rate->addErrorMessage(str_replace("%s", $this->respiratory_rate->caption(), $this->respiratory_rate->RequiredErrorMessage));
+            }
+        }
+        if (!CheckInteger($this->respiratory_rate->FormValue)) {
+            $this->respiratory_rate->addErrorMessage($this->respiratory_rate->getErrorMessage(false));
+        }
+        if ($this->temperature->Required) {
+            if (!$this->temperature->IsDetailKey && EmptyValue($this->temperature->FormValue)) {
+                $this->temperature->addErrorMessage(str_replace("%s", $this->temperature->caption(), $this->temperature->RequiredErrorMessage));
+            }
+        }
+        if (!CheckNumber($this->temperature->FormValue)) {
+            $this->temperature->addErrorMessage($this->temperature->getErrorMessage(false));
+        }
+        if ($this->random_blood_sugar->Required) {
+            if (!$this->random_blood_sugar->IsDetailKey && EmptyValue($this->random_blood_sugar->FormValue)) {
+                $this->random_blood_sugar->addErrorMessage(str_replace("%s", $this->random_blood_sugar->caption(), $this->random_blood_sugar->RequiredErrorMessage));
+            }
         }
         if ($this->submission_date->Required) {
             if (!$this->submission_date->IsDetailKey && EmptyValue($this->submission_date->FormValue)) {
@@ -2293,6 +2601,18 @@ class JdhVitalsGrid extends JdhVitals
         // weight
         $this->weight->setDbValueDef($rsnew, $this->weight->CurrentValue, 0, $this->weight->ReadOnly);
 
+        // pulse_rate
+        $this->pulse_rate->setDbValueDef($rsnew, $this->pulse_rate->CurrentValue, 0, $this->pulse_rate->ReadOnly);
+
+        // respiratory_rate
+        $this->respiratory_rate->setDbValueDef($rsnew, $this->respiratory_rate->CurrentValue, 0, $this->respiratory_rate->ReadOnly);
+
+        // temperature
+        $this->temperature->setDbValueDef($rsnew, $this->temperature->CurrentValue, 0, $this->temperature->ReadOnly);
+
+        // random_blood_sugar
+        $this->random_blood_sugar->setDbValueDef($rsnew, $this->random_blood_sugar->CurrentValue, "", $this->random_blood_sugar->ReadOnly);
+
         // submission_date
         $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), $this->submission_date->ReadOnly);
 
@@ -2356,6 +2676,21 @@ class JdhVitalsGrid extends JdhVitals
 
         // weight
         $this->weight->setDbValueDef($rsnew, $this->weight->CurrentValue, 0, false);
+
+        // body_mass_index
+        $this->body_mass_index->setDbValueDef($rsnew, $this->body_mass_index->CurrentValue, null, false);
+
+        // pulse_rate
+        $this->pulse_rate->setDbValueDef($rsnew, $this->pulse_rate->CurrentValue, 0, false);
+
+        // respiratory_rate
+        $this->respiratory_rate->setDbValueDef($rsnew, $this->respiratory_rate->CurrentValue, 0, false);
+
+        // temperature
+        $this->temperature->setDbValueDef($rsnew, $this->temperature->CurrentValue, 0, false);
+
+        // random_blood_sugar
+        $this->random_blood_sugar->setDbValueDef($rsnew, $this->random_blood_sugar->CurrentValue, "", false);
 
         // submission_date
         $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), false);

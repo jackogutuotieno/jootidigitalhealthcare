@@ -1251,6 +1251,14 @@ class JdhPatientsEdit extends JdhPatients
         if (in_array("jdh_test_requests", $detailTblVar) && $detailPage->DetailEdit) {
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
+        $detailPage = Container("JdhPatientVisitsGrid");
+        if (in_array("jdh_patient_visits", $detailTblVar) && $detailPage->DetailEdit) {
+            $validateForm = $validateForm && $detailPage->validateGridForm();
+        }
+        $detailPage = Container("JdhChiefComplaintsGrid");
+        if (in_array("jdh_chief_complaints", $detailTblVar) && $detailPage->DetailEdit) {
+            $validateForm = $validateForm && $detailPage->validateGridForm();
+        }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -1377,6 +1385,22 @@ class JdhPatientsEdit extends JdhPatients
                     $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
                 }
             }
+            if ($editRow) {
+                $detailPage = Container("JdhPatientVisitsGrid");
+                if (in_array("jdh_patient_visits", $detailTblVar) && $detailPage->DetailEdit) {
+                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_patient_visits"); // Load user level of detail table
+                    $editRow = $detailPage->gridUpdate();
+                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
+                }
+            }
+            if ($editRow) {
+                $detailPage = Container("JdhChiefComplaintsGrid");
+                if (in_array("jdh_chief_complaints", $detailTblVar) && $detailPage->DetailEdit) {
+                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_chief_complaints"); // Load user level of detail table
+                    $editRow = $detailPage->gridUpdate();
+                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
+                }
+            }
 
             // Commit/Rollback transaction
             if ($this->getCurrentDetailTable() != "") {
@@ -1475,6 +1499,36 @@ class JdhPatientsEdit extends JdhPatients
             }
             if (in_array("jdh_test_requests", $detailTblVar)) {
                 $detailPageObj = Container("JdhTestRequestsGrid");
+                if ($detailPageObj->DetailEdit) {
+                    $detailPageObj->EventCancelled = $this->EventCancelled;
+                    $detailPageObj->CurrentMode = "edit";
+                    $detailPageObj->CurrentAction = "gridedit";
+
+                    // Save current master table to detail table
+                    $detailPageObj->setCurrentMasterTable($this->TableVar);
+                    $detailPageObj->setStartRecordNumber(1);
+                    $detailPageObj->patient_id->IsDetailKey = true;
+                    $detailPageObj->patient_id->CurrentValue = $this->patient_id->CurrentValue;
+                    $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
+                }
+            }
+            if (in_array("jdh_patient_visits", $detailTblVar)) {
+                $detailPageObj = Container("JdhPatientVisitsGrid");
+                if ($detailPageObj->DetailEdit) {
+                    $detailPageObj->EventCancelled = $this->EventCancelled;
+                    $detailPageObj->CurrentMode = "edit";
+                    $detailPageObj->CurrentAction = "gridedit";
+
+                    // Save current master table to detail table
+                    $detailPageObj->setCurrentMasterTable($this->TableVar);
+                    $detailPageObj->setStartRecordNumber(1);
+                    $detailPageObj->patient_id->IsDetailKey = true;
+                    $detailPageObj->patient_id->CurrentValue = $this->patient_id->CurrentValue;
+                    $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
+                }
+            }
+            if (in_array("jdh_chief_complaints", $detailTblVar)) {
+                $detailPageObj = Container("JdhChiefComplaintsGrid");
                 if ($detailPageObj->DetailEdit) {
                     $detailPageObj->EventCancelled = $this->EventCancelled;
                     $detailPageObj->CurrentMode = "edit";

@@ -43,9 +43,11 @@ class JdhPatientCases extends DbTable
     // Fields
     public $case_id;
     public $patient_id;
-    public $symtoms;
-    public $fasting_blood_sugar;
     public $history;
+    public $random_blood_sugar;
+    public $medical_history;
+    public $family;
+    public $socio_economic_history;
     public $notes;
     public $submission_date;
     public $submitted_by_user_id;
@@ -149,52 +151,6 @@ class JdhPatientCases extends DbTable
         $this->patient_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_id'] = &$this->patient_id;
 
-        // symtoms $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->symtoms = new DbField(
-            $this, // Table
-            'x_symtoms', // Variable name
-            'symtoms', // Name
-            '`symtoms`', // Expression
-            '`symtoms`', // Basic search expression
-            201, // Type
-            65535, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`symtoms`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXTAREA' // Edit Tag
-        );
-        $this->symtoms->InputTextType = "text";
-        $this->symtoms->Nullable = false; // NOT NULL field
-        $this->symtoms->Required = true; // Required field
-        $this->symtoms->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
-        $this->Fields['symtoms'] = &$this->symtoms;
-
-        // fasting_blood_sugar $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->fasting_blood_sugar = new DbField(
-            $this, // Table
-            'x_fasting_blood_sugar', // Variable name
-            'fasting_blood_sugar', // Name
-            '`fasting_blood_sugar`', // Expression
-            '`fasting_blood_sugar`', // Basic search expression
-            201, // Type
-            65535, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`fasting_blood_sugar`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXTAREA' // Edit Tag
-        );
-        $this->fasting_blood_sugar->InputTextType = "text";
-        $this->fasting_blood_sugar->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
-        $this->Fields['fasting_blood_sugar'] = &$this->fasting_blood_sugar;
-
         // history $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->history = new DbField(
             $this, // Table
@@ -216,6 +172,100 @@ class JdhPatientCases extends DbTable
         $this->history->InputTextType = "text";
         $this->history->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
         $this->Fields['history'] = &$this->history;
+
+        // random_blood_sugar $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->random_blood_sugar = new DbField(
+            $this, // Table
+            'x_random_blood_sugar', // Variable name
+            'random_blood_sugar', // Name
+            '`random_blood_sugar`', // Expression
+            '`random_blood_sugar`', // Basic search expression
+            201, // Type
+            65535, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`random_blood_sugar`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXTAREA' // Edit Tag
+        );
+        $this->random_blood_sugar->InputTextType = "text";
+        $this->random_blood_sugar->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
+        $this->Fields['random_blood_sugar'] = &$this->random_blood_sugar;
+
+        // medical_history $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->medical_history = new DbField(
+            $this, // Table
+            'x_medical_history', // Variable name
+            'medical_history', // Name
+            '`medical_history`', // Expression
+            '`medical_history`', // Basic search expression
+            201, // Type
+            65535, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`medical_history`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXTAREA' // Edit Tag
+        );
+        $this->medical_history->InputTextType = "text";
+        $this->medical_history->Nullable = false; // NOT NULL field
+        $this->medical_history->Required = true; // Required field
+        $this->medical_history->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['medical_history'] = &$this->medical_history;
+
+        // family $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->family = new DbField(
+            $this, // Table
+            'x_family', // Variable name
+            'family', // Name
+            '`family`', // Expression
+            '`family`', // Basic search expression
+            201, // Type
+            65535, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`family`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXTAREA' // Edit Tag
+        );
+        $this->family->InputTextType = "text";
+        $this->family->Nullable = false; // NOT NULL field
+        $this->family->Required = true; // Required field
+        $this->family->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['family'] = &$this->family;
+
+        // socio_economic_history $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->socio_economic_history = new DbField(
+            $this, // Table
+            'x_socio_economic_history', // Variable name
+            'socio_economic_history', // Name
+            '`socio_economic_history`', // Expression
+            '`socio_economic_history`', // Basic search expression
+            201, // Type
+            65535, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`socio_economic_history`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXTAREA' // Edit Tag
+        );
+        $this->socio_economic_history->InputTextType = "text";
+        $this->socio_economic_history->Nullable = false; // NOT NULL field
+        $this->socio_economic_history->Required = true; // Required field
+        $this->socio_economic_history->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['socio_economic_history'] = &$this->socio_economic_history;
 
         // notes $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->notes = new DbField(
@@ -843,9 +893,11 @@ class JdhPatientCases extends DbTable
         }
         $this->case_id->DbValue = $row['case_id'];
         $this->patient_id->DbValue = $row['patient_id'];
-        $this->symtoms->DbValue = $row['symtoms'];
-        $this->fasting_blood_sugar->DbValue = $row['fasting_blood_sugar'];
         $this->history->DbValue = $row['history'];
+        $this->random_blood_sugar->DbValue = $row['random_blood_sugar'];
+        $this->medical_history->DbValue = $row['medical_history'];
+        $this->family->DbValue = $row['family'];
+        $this->socio_economic_history->DbValue = $row['socio_economic_history'];
         $this->notes->DbValue = $row['notes'];
         $this->submission_date->DbValue = $row['submission_date'];
         $this->submitted_by_user_id->DbValue = $row['submitted_by_user_id'];
@@ -1208,9 +1260,11 @@ class JdhPatientCases extends DbTable
         }
         $this->case_id->setDbValue($row['case_id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->symtoms->setDbValue($row['symtoms']);
-        $this->fasting_blood_sugar->setDbValue($row['fasting_blood_sugar']);
         $this->history->setDbValue($row['history']);
+        $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
+        $this->medical_history->setDbValue($row['medical_history']);
+        $this->family->setDbValue($row['family']);
+        $this->socio_economic_history->setDbValue($row['socio_economic_history']);
         $this->notes->setDbValue($row['notes']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
@@ -1248,11 +1302,15 @@ class JdhPatientCases extends DbTable
 
         // patient_id
 
-        // symtoms
-
-        // fasting_blood_sugar
-
         // history
+
+        // random_blood_sugar
+
+        // medical_history
+
+        // family
+
+        // socio_economic_history
 
         // notes
 
@@ -1286,14 +1344,20 @@ class JdhPatientCases extends DbTable
             $this->patient_id->ViewValue = null;
         }
 
-        // symtoms
-        $this->symtoms->ViewValue = $this->symtoms->CurrentValue;
-
-        // fasting_blood_sugar
-        $this->fasting_blood_sugar->ViewValue = $this->fasting_blood_sugar->CurrentValue;
-
         // history
         $this->history->ViewValue = $this->history->CurrentValue;
+
+        // random_blood_sugar
+        $this->random_blood_sugar->ViewValue = $this->random_blood_sugar->CurrentValue;
+
+        // medical_history
+        $this->medical_history->ViewValue = $this->medical_history->CurrentValue;
+
+        // family
+        $this->family->ViewValue = $this->family->CurrentValue;
+
+        // socio_economic_history
+        $this->socio_economic_history->ViewValue = $this->socio_economic_history->CurrentValue;
 
         // notes
         $this->notes->ViewValue = $this->notes->CurrentValue;
@@ -1314,17 +1378,25 @@ class JdhPatientCases extends DbTable
         $this->patient_id->HrefValue = "";
         $this->patient_id->TooltipValue = "";
 
-        // symtoms
-        $this->symtoms->HrefValue = "";
-        $this->symtoms->TooltipValue = "";
-
-        // fasting_blood_sugar
-        $this->fasting_blood_sugar->HrefValue = "";
-        $this->fasting_blood_sugar->TooltipValue = "";
-
         // history
         $this->history->HrefValue = "";
         $this->history->TooltipValue = "";
+
+        // random_blood_sugar
+        $this->random_blood_sugar->HrefValue = "";
+        $this->random_blood_sugar->TooltipValue = "";
+
+        // medical_history
+        $this->medical_history->HrefValue = "";
+        $this->medical_history->TooltipValue = "";
+
+        // family
+        $this->family->HrefValue = "";
+        $this->family->TooltipValue = "";
+
+        // socio_economic_history
+        $this->socio_economic_history->HrefValue = "";
+        $this->socio_economic_history->TooltipValue = "";
 
         // notes
         $this->notes->HrefValue = "";
@@ -1386,20 +1458,30 @@ class JdhPatientCases extends DbTable
             $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
         }
 
-        // symtoms
-        $this->symtoms->setupEditAttributes();
-        $this->symtoms->EditValue = $this->symtoms->CurrentValue;
-        $this->symtoms->PlaceHolder = RemoveHtml($this->symtoms->caption());
-
-        // fasting_blood_sugar
-        $this->fasting_blood_sugar->setupEditAttributes();
-        $this->fasting_blood_sugar->EditValue = $this->fasting_blood_sugar->CurrentValue;
-        $this->fasting_blood_sugar->PlaceHolder = RemoveHtml($this->fasting_blood_sugar->caption());
-
         // history
         $this->history->setupEditAttributes();
         $this->history->EditValue = $this->history->CurrentValue;
         $this->history->PlaceHolder = RemoveHtml($this->history->caption());
+
+        // random_blood_sugar
+        $this->random_blood_sugar->setupEditAttributes();
+        $this->random_blood_sugar->EditValue = $this->random_blood_sugar->CurrentValue;
+        $this->random_blood_sugar->PlaceHolder = RemoveHtml($this->random_blood_sugar->caption());
+
+        // medical_history
+        $this->medical_history->setupEditAttributes();
+        $this->medical_history->EditValue = $this->medical_history->CurrentValue;
+        $this->medical_history->PlaceHolder = RemoveHtml($this->medical_history->caption());
+
+        // family
+        $this->family->setupEditAttributes();
+        $this->family->EditValue = $this->family->CurrentValue;
+        $this->family->PlaceHolder = RemoveHtml($this->family->caption());
+
+        // socio_economic_history
+        $this->socio_economic_history->setupEditAttributes();
+        $this->socio_economic_history->EditValue = $this->socio_economic_history->CurrentValue;
+        $this->socio_economic_history->PlaceHolder = RemoveHtml($this->socio_economic_history->caption());
 
         // notes
         $this->notes->setupEditAttributes();
@@ -1443,9 +1525,11 @@ class JdhPatientCases extends DbTable
                 if ($exportPageType == "view") {
                     $doc->exportCaption($this->case_id);
                     $doc->exportCaption($this->patient_id);
-                    $doc->exportCaption($this->symtoms);
-                    $doc->exportCaption($this->fasting_blood_sugar);
                     $doc->exportCaption($this->history);
+                    $doc->exportCaption($this->random_blood_sugar);
+                    $doc->exportCaption($this->medical_history);
+                    $doc->exportCaption($this->family);
+                    $doc->exportCaption($this->socio_economic_history);
                     $doc->exportCaption($this->notes);
                     $doc->exportCaption($this->submission_date);
                 } else {
@@ -1484,9 +1568,11 @@ class JdhPatientCases extends DbTable
                     if ($exportPageType == "view") {
                         $doc->exportField($this->case_id);
                         $doc->exportField($this->patient_id);
-                        $doc->exportField($this->symtoms);
-                        $doc->exportField($this->fasting_blood_sugar);
                         $doc->exportField($this->history);
+                        $doc->exportField($this->random_blood_sugar);
+                        $doc->exportField($this->medical_history);
+                        $doc->exportField($this->family);
+                        $doc->exportField($this->socio_economic_history);
                         $doc->exportField($this->notes);
                         $doc->exportField($this->submission_date);
                     } else {

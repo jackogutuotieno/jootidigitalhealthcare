@@ -367,8 +367,14 @@ class JdhVitalsDelete extends JdhVitals
         $this->pressure->setVisibility();
         $this->height->setVisibility();
         $this->weight->setVisibility();
+        $this->body_mass_index->setVisibility();
+        $this->pulse_rate->setVisibility();
+        $this->respiratory_rate->setVisibility();
+        $this->temperature->setVisibility();
+        $this->random_blood_sugar->setVisibility();
+        $this->spo2->Visible = false;
         $this->submission_date->setVisibility();
-        $this->subbmitted_by_user_id->Visible = false;
+        $this->submitted_by_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -581,8 +587,14 @@ class JdhVitalsDelete extends JdhVitals
         $this->pressure->setDbValue($row['pressure']);
         $this->height->setDbValue($row['height']);
         $this->weight->setDbValue($row['weight']);
+        $this->body_mass_index->setDbValue($row['body_mass_index']);
+        $this->pulse_rate->setDbValue($row['pulse_rate']);
+        $this->respiratory_rate->setDbValue($row['respiratory_rate']);
+        $this->temperature->setDbValue($row['temperature']);
+        $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
+        $this->spo2->setDbValue($row['spo2']);
         $this->submission_date->setDbValue($row['submission_date']);
-        $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
     // Return a row with default values
@@ -594,8 +606,14 @@ class JdhVitalsDelete extends JdhVitals
         $row['pressure'] = $this->pressure->DefaultValue;
         $row['height'] = $this->height->DefaultValue;
         $row['weight'] = $this->weight->DefaultValue;
+        $row['body_mass_index'] = $this->body_mass_index->DefaultValue;
+        $row['pulse_rate'] = $this->pulse_rate->DefaultValue;
+        $row['respiratory_rate'] = $this->respiratory_rate->DefaultValue;
+        $row['temperature'] = $this->temperature->DefaultValue;
+        $row['random_blood_sugar'] = $this->random_blood_sugar->DefaultValue;
+        $row['spo2'] = $this->spo2->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
-        $row['subbmitted_by_user_id'] = $this->subbmitted_by_user_id->DefaultValue;
+        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
     }
 
@@ -621,9 +639,21 @@ class JdhVitalsDelete extends JdhVitals
 
         // weight
 
+        // body_mass_index
+
+        // pulse_rate
+
+        // respiratory_rate
+
+        // temperature
+
+        // random_blood_sugar
+
+        // spo2
+
         // submission_date
 
-        // subbmitted_by_user_id
+        // submitted_by_user_id
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -664,13 +694,36 @@ class JdhVitalsDelete extends JdhVitals
             $this->weight->ViewValue = $this->weight->CurrentValue;
             $this->weight->ViewValue = FormatNumber($this->weight->ViewValue, $this->weight->formatPattern());
 
+            // body_mass_index
+            $this->body_mass_index->ViewValue = $this->body_mass_index->CurrentValue;
+            $this->body_mass_index->ViewValue = FormatNumber($this->body_mass_index->ViewValue, $this->body_mass_index->formatPattern());
+
+            // pulse_rate
+            $this->pulse_rate->ViewValue = $this->pulse_rate->CurrentValue;
+            $this->pulse_rate->ViewValue = FormatNumber($this->pulse_rate->ViewValue, $this->pulse_rate->formatPattern());
+
+            // respiratory_rate
+            $this->respiratory_rate->ViewValue = $this->respiratory_rate->CurrentValue;
+            $this->respiratory_rate->ViewValue = FormatNumber($this->respiratory_rate->ViewValue, $this->respiratory_rate->formatPattern());
+
+            // temperature
+            $this->temperature->ViewValue = $this->temperature->CurrentValue;
+            $this->temperature->ViewValue = FormatNumber($this->temperature->ViewValue, $this->temperature->formatPattern());
+
+            // random_blood_sugar
+            $this->random_blood_sugar->ViewValue = $this->random_blood_sugar->CurrentValue;
+
+            // spo2
+            $this->spo2->ViewValue = $this->spo2->CurrentValue;
+            $this->spo2->ViewValue = FormatNumber($this->spo2->ViewValue, $this->spo2->formatPattern());
+
             // submission_date
             $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
             $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
 
-            // subbmitted_by_user_id
-            $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
-            $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
+            // submitted_by_user_id
+            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
             // vitals_id
             $this->vitals_id->HrefValue = "";
@@ -691,6 +744,26 @@ class JdhVitalsDelete extends JdhVitals
             // weight
             $this->weight->HrefValue = "";
             $this->weight->TooltipValue = "";
+
+            // body_mass_index
+            $this->body_mass_index->HrefValue = "";
+            $this->body_mass_index->TooltipValue = "";
+
+            // pulse_rate
+            $this->pulse_rate->HrefValue = "";
+            $this->pulse_rate->TooltipValue = "";
+
+            // respiratory_rate
+            $this->respiratory_rate->HrefValue = "";
+            $this->respiratory_rate->TooltipValue = "";
+
+            // temperature
+            $this->temperature->HrefValue = "";
+            $this->temperature->TooltipValue = "";
+
+            // random_blood_sugar
+            $this->random_blood_sugar->HrefValue = "";
+            $this->random_blood_sugar->TooltipValue = "";
 
             // submission_date
             $this->submission_date->HrefValue = "";

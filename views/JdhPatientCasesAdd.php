@@ -23,9 +23,11 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
-            ["symtoms", [fields.symtoms.visible && fields.symtoms.required ? ew.Validators.required(fields.symtoms.caption) : null], fields.symtoms.isInvalid],
-            ["fasting_blood_sugar", [fields.fasting_blood_sugar.visible && fields.fasting_blood_sugar.required ? ew.Validators.required(fields.fasting_blood_sugar.caption) : null], fields.fasting_blood_sugar.isInvalid],
             ["history", [fields.history.visible && fields.history.required ? ew.Validators.required(fields.history.caption) : null], fields.history.isInvalid],
+            ["random_blood_sugar", [fields.random_blood_sugar.visible && fields.random_blood_sugar.required ? ew.Validators.required(fields.random_blood_sugar.caption) : null], fields.random_blood_sugar.isInvalid],
+            ["medical_history", [fields.medical_history.visible && fields.medical_history.required ? ew.Validators.required(fields.medical_history.caption) : null], fields.medical_history.isInvalid],
+            ["family", [fields.family.visible && fields.family.required ? ew.Validators.required(fields.family.caption) : null], fields.family.isInvalid],
+            ["socio_economic_history", [fields.socio_economic_history.visible && fields.socio_economic_history.required ? ew.Validators.required(fields.socio_economic_history.caption) : null], fields.socio_economic_history.isInvalid],
             ["notes", [fields.notes.visible && fields.notes.required ? ew.Validators.required(fields.notes.caption) : null], fields.notes.isInvalid]
         ])
 
@@ -122,30 +124,6 @@ loadjs.ready("fjdh_patient_casesadd", function() {
 </div></div>
     </div>
 <?php } ?>
-<?php if ($Page->symtoms->Visible) { // symtoms ?>
-    <div id="r_symtoms"<?= $Page->symtoms->rowAttributes() ?>>
-        <label id="elh_jdh_patient_cases_symtoms" for="x_symtoms" class="<?= $Page->LeftColumnClass ?>"><?= $Page->symtoms->caption() ?><?= $Page->symtoms->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->symtoms->cellAttributes() ?>>
-<span id="el_jdh_patient_cases_symtoms">
-<textarea data-table="jdh_patient_cases" data-field="x_symtoms" name="x_symtoms" id="x_symtoms" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->symtoms->getPlaceHolder()) ?>"<?= $Page->symtoms->editAttributes() ?> aria-describedby="x_symtoms_help"><?= $Page->symtoms->EditValue ?></textarea>
-<?= $Page->symtoms->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->symtoms->getErrorMessage() ?></div>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->fasting_blood_sugar->Visible) { // fasting_blood_sugar ?>
-    <div id="r_fasting_blood_sugar"<?= $Page->fasting_blood_sugar->rowAttributes() ?>>
-        <label id="elh_jdh_patient_cases_fasting_blood_sugar" for="x_fasting_blood_sugar" class="<?= $Page->LeftColumnClass ?>"><?= $Page->fasting_blood_sugar->caption() ?><?= $Page->fasting_blood_sugar->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->fasting_blood_sugar->cellAttributes() ?>>
-<span id="el_jdh_patient_cases_fasting_blood_sugar">
-<textarea data-table="jdh_patient_cases" data-field="x_fasting_blood_sugar" name="x_fasting_blood_sugar" id="x_fasting_blood_sugar" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->fasting_blood_sugar->getPlaceHolder()) ?>"<?= $Page->fasting_blood_sugar->editAttributes() ?> aria-describedby="x_fasting_blood_sugar_help"><?= $Page->fasting_blood_sugar->EditValue ?></textarea>
-<?= $Page->fasting_blood_sugar->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->fasting_blood_sugar->getErrorMessage() ?></div>
-</span>
-</div></div>
-    </div>
-<?php } ?>
 <?php if ($Page->history->Visible) { // history ?>
     <div id="r_history"<?= $Page->history->rowAttributes() ?>>
         <label id="elh_jdh_patient_cases_history" for="x_history" class="<?= $Page->LeftColumnClass ?>"><?= $Page->history->caption() ?><?= $Page->history->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
@@ -154,6 +132,54 @@ loadjs.ready("fjdh_patient_casesadd", function() {
 <textarea data-table="jdh_patient_cases" data-field="x_history" name="x_history" id="x_history" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->history->getPlaceHolder()) ?>"<?= $Page->history->editAttributes() ?> aria-describedby="x_history_help"><?= $Page->history->EditValue ?></textarea>
 <?= $Page->history->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->history->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->random_blood_sugar->Visible) { // random_blood_sugar ?>
+    <div id="r_random_blood_sugar"<?= $Page->random_blood_sugar->rowAttributes() ?>>
+        <label id="elh_jdh_patient_cases_random_blood_sugar" for="x_random_blood_sugar" class="<?= $Page->LeftColumnClass ?>"><?= $Page->random_blood_sugar->caption() ?><?= $Page->random_blood_sugar->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->random_blood_sugar->cellAttributes() ?>>
+<span id="el_jdh_patient_cases_random_blood_sugar">
+<textarea data-table="jdh_patient_cases" data-field="x_random_blood_sugar" name="x_random_blood_sugar" id="x_random_blood_sugar" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->random_blood_sugar->getPlaceHolder()) ?>"<?= $Page->random_blood_sugar->editAttributes() ?> aria-describedby="x_random_blood_sugar_help"><?= $Page->random_blood_sugar->EditValue ?></textarea>
+<?= $Page->random_blood_sugar->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->random_blood_sugar->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->medical_history->Visible) { // medical_history ?>
+    <div id="r_medical_history"<?= $Page->medical_history->rowAttributes() ?>>
+        <label id="elh_jdh_patient_cases_medical_history" for="x_medical_history" class="<?= $Page->LeftColumnClass ?>"><?= $Page->medical_history->caption() ?><?= $Page->medical_history->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->medical_history->cellAttributes() ?>>
+<span id="el_jdh_patient_cases_medical_history">
+<textarea data-table="jdh_patient_cases" data-field="x_medical_history" name="x_medical_history" id="x_medical_history" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->medical_history->getPlaceHolder()) ?>"<?= $Page->medical_history->editAttributes() ?> aria-describedby="x_medical_history_help"><?= $Page->medical_history->EditValue ?></textarea>
+<?= $Page->medical_history->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->medical_history->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->family->Visible) { // family ?>
+    <div id="r_family"<?= $Page->family->rowAttributes() ?>>
+        <label id="elh_jdh_patient_cases_family" for="x_family" class="<?= $Page->LeftColumnClass ?>"><?= $Page->family->caption() ?><?= $Page->family->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->family->cellAttributes() ?>>
+<span id="el_jdh_patient_cases_family">
+<textarea data-table="jdh_patient_cases" data-field="x_family" name="x_family" id="x_family" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->family->getPlaceHolder()) ?>"<?= $Page->family->editAttributes() ?> aria-describedby="x_family_help"><?= $Page->family->EditValue ?></textarea>
+<?= $Page->family->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->family->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->socio_economic_history->Visible) { // socio_economic_history ?>
+    <div id="r_socio_economic_history"<?= $Page->socio_economic_history->rowAttributes() ?>>
+        <label id="elh_jdh_patient_cases_socio_economic_history" for="x_socio_economic_history" class="<?= $Page->LeftColumnClass ?>"><?= $Page->socio_economic_history->caption() ?><?= $Page->socio_economic_history->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->socio_economic_history->cellAttributes() ?>>
+<span id="el_jdh_patient_cases_socio_economic_history">
+<textarea data-table="jdh_patient_cases" data-field="x_socio_economic_history" name="x_socio_economic_history" id="x_socio_economic_history" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->socio_economic_history->getPlaceHolder()) ?>"<?= $Page->socio_economic_history->editAttributes() ?> aria-describedby="x_socio_economic_history_help"><?= $Page->socio_economic_history->EditValue ?></textarea>
+<?= $Page->socio_economic_history->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->socio_economic_history->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

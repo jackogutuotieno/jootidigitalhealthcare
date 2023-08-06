@@ -507,9 +507,11 @@ class JdhPatientCasesView extends JdhPatientCases
         $this->CurrentAction = Param("action"); // Set up current action
         $this->case_id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->symtoms->setVisibility();
-        $this->fasting_blood_sugar->setVisibility();
         $this->history->setVisibility();
+        $this->random_blood_sugar->setVisibility();
+        $this->medical_history->setVisibility();
+        $this->family->setVisibility();
+        $this->socio_economic_history->setVisibility();
         $this->notes->setVisibility();
         $this->submission_date->setVisibility();
         $this->submitted_by_user_id->setVisibility();
@@ -793,9 +795,11 @@ class JdhPatientCasesView extends JdhPatientCases
         $this->rowSelected($row);
         $this->case_id->setDbValue($row['case_id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->symtoms->setDbValue($row['symtoms']);
-        $this->fasting_blood_sugar->setDbValue($row['fasting_blood_sugar']);
         $this->history->setDbValue($row['history']);
+        $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
+        $this->medical_history->setDbValue($row['medical_history']);
+        $this->family->setDbValue($row['family']);
+        $this->socio_economic_history->setDbValue($row['socio_economic_history']);
         $this->notes->setDbValue($row['notes']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
@@ -807,9 +811,11 @@ class JdhPatientCasesView extends JdhPatientCases
         $row = [];
         $row['case_id'] = $this->case_id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['symtoms'] = $this->symtoms->DefaultValue;
-        $row['fasting_blood_sugar'] = $this->fasting_blood_sugar->DefaultValue;
         $row['history'] = $this->history->DefaultValue;
+        $row['random_blood_sugar'] = $this->random_blood_sugar->DefaultValue;
+        $row['medical_history'] = $this->medical_history->DefaultValue;
+        $row['family'] = $this->family->DefaultValue;
+        $row['socio_economic_history'] = $this->socio_economic_history->DefaultValue;
         $row['notes'] = $this->notes->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
@@ -838,11 +844,15 @@ class JdhPatientCasesView extends JdhPatientCases
 
         // patient_id
 
-        // symtoms
-
-        // fasting_blood_sugar
-
         // history
+
+        // random_blood_sugar
+
+        // medical_history
+
+        // family
+
+        // socio_economic_history
 
         // notes
 
@@ -878,14 +888,20 @@ class JdhPatientCasesView extends JdhPatientCases
                 $this->patient_id->ViewValue = null;
             }
 
-            // symtoms
-            $this->symtoms->ViewValue = $this->symtoms->CurrentValue;
-
-            // fasting_blood_sugar
-            $this->fasting_blood_sugar->ViewValue = $this->fasting_blood_sugar->CurrentValue;
-
             // history
             $this->history->ViewValue = $this->history->CurrentValue;
+
+            // random_blood_sugar
+            $this->random_blood_sugar->ViewValue = $this->random_blood_sugar->CurrentValue;
+
+            // medical_history
+            $this->medical_history->ViewValue = $this->medical_history->CurrentValue;
+
+            // family
+            $this->family->ViewValue = $this->family->CurrentValue;
+
+            // socio_economic_history
+            $this->socio_economic_history->ViewValue = $this->socio_economic_history->CurrentValue;
 
             // notes
             $this->notes->ViewValue = $this->notes->CurrentValue;
@@ -906,17 +922,25 @@ class JdhPatientCasesView extends JdhPatientCases
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
 
-            // symtoms
-            $this->symtoms->HrefValue = "";
-            $this->symtoms->TooltipValue = "";
-
-            // fasting_blood_sugar
-            $this->fasting_blood_sugar->HrefValue = "";
-            $this->fasting_blood_sugar->TooltipValue = "";
-
             // history
             $this->history->HrefValue = "";
             $this->history->TooltipValue = "";
+
+            // random_blood_sugar
+            $this->random_blood_sugar->HrefValue = "";
+            $this->random_blood_sugar->TooltipValue = "";
+
+            // medical_history
+            $this->medical_history->HrefValue = "";
+            $this->medical_history->TooltipValue = "";
+
+            // family
+            $this->family->HrefValue = "";
+            $this->family->TooltipValue = "";
+
+            // socio_economic_history
+            $this->socio_economic_history->HrefValue = "";
+            $this->socio_economic_history->TooltipValue = "";
 
             // notes
             $this->notes->HrefValue = "";

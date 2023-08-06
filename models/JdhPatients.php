@@ -223,10 +223,10 @@ class JdhPatients extends DbTable
             'x_patient_dob', // Variable name
             'patient_dob', // Name
             '`patient_dob`', // Expression
-            CastDateFieldForLike("`patient_dob`", 0, "DB"), // Basic search expression
+            CastDateFieldForLike("`patient_dob`", 7, "DB"), // Basic search expression
             133, // Type
             10, // Size
-            0, // Date/Time format
+            7, // Date/Time format
             false, // Is upload field
             '`patient_dob`', // Virtual expression
             false, // Is virtual
@@ -238,7 +238,7 @@ class JdhPatients extends DbTable
         $this->patient_dob->InputTextType = "text";
         $this->patient_dob->Nullable = false; // NOT NULL field
         $this->patient_dob->Required = true; // Required field
-        $this->patient_dob->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->patient_dob->DefaultErrorMessage = str_replace("%s", DateFormat(7), $Language->phrase("IncorrectDate"));
         $this->patient_dob->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_dob'] = &$this->patient_dob;
 
@@ -344,10 +344,10 @@ class JdhPatients extends DbTable
             'x_patient_registration_date', // Variable name
             'patient_registration_date', // Name
             '`patient_registration_date`', // Expression
-            CastDateFieldForLike("`patient_registration_date`", 1, "DB"), // Basic search expression
+            CastDateFieldForLike("`patient_registration_date`", 11, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            1, // Date/Time format
+            11, // Date/Time format
             false, // Is upload field
             '`patient_registration_date`', // Virtual expression
             false, // Is virtual
@@ -359,7 +359,7 @@ class JdhPatients extends DbTable
         $this->patient_registration_date->InputTextType = "text";
         $this->patient_registration_date->Nullable = false; // NOT NULL field
         $this->patient_registration_date->Required = true; // Required field
-        $this->patient_registration_date->DefaultErrorMessage = str_replace("%s", DateFormat(1), $Language->phrase("IncorrectDate"));
+        $this->patient_registration_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->patient_registration_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_registration_date'] = &$this->patient_registration_date;
 
@@ -451,6 +451,14 @@ class JdhPatients extends DbTable
         }
         if ($this->getCurrentDetailTable() == "jdh_test_requests") {
             $detailUrl = Container("jdh_test_requests")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
+            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
+        }
+        if ($this->getCurrentDetailTable() == "jdh_patient_visits") {
+            $detailUrl = Container("jdh_patient_visits")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
+            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
+        }
+        if ($this->getCurrentDetailTable() == "jdh_chief_complaints") {
+            $detailUrl = Container("jdh_chief_complaints")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
             $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
         }
         if ($detailUrl == "") {

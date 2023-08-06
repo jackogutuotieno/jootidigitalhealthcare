@@ -463,9 +463,11 @@ class JdhPatientCasesEdit extends JdhPatientCases
         $this->CurrentAction = Param("action"); // Set up current action
         $this->case_id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->symtoms->setVisibility();
-        $this->fasting_blood_sugar->setVisibility();
         $this->history->setVisibility();
+        $this->random_blood_sugar->setVisibility();
+        $this->medical_history->setVisibility();
+        $this->family->setVisibility();
+        $this->socio_economic_history->setVisibility();
         $this->notes->setVisibility();
         $this->submission_date->Visible = false;
         $this->submitted_by_user_id->Visible = false;
@@ -696,26 +698,6 @@ class JdhPatientCasesEdit extends JdhPatientCases
             }
         }
 
-        // Check field name 'symtoms' first before field var 'x_symtoms'
-        $val = $CurrentForm->hasValue("symtoms") ? $CurrentForm->getValue("symtoms") : $CurrentForm->getValue("x_symtoms");
-        if (!$this->symtoms->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->symtoms->Visible = false; // Disable update for API request
-            } else {
-                $this->symtoms->setFormValue($val);
-            }
-        }
-
-        // Check field name 'fasting_blood_sugar' first before field var 'x_fasting_blood_sugar'
-        $val = $CurrentForm->hasValue("fasting_blood_sugar") ? $CurrentForm->getValue("fasting_blood_sugar") : $CurrentForm->getValue("x_fasting_blood_sugar");
-        if (!$this->fasting_blood_sugar->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->fasting_blood_sugar->Visible = false; // Disable update for API request
-            } else {
-                $this->fasting_blood_sugar->setFormValue($val);
-            }
-        }
-
         // Check field name 'history' first before field var 'x_history'
         $val = $CurrentForm->hasValue("history") ? $CurrentForm->getValue("history") : $CurrentForm->getValue("x_history");
         if (!$this->history->IsDetailKey) {
@@ -723,6 +705,46 @@ class JdhPatientCasesEdit extends JdhPatientCases
                 $this->history->Visible = false; // Disable update for API request
             } else {
                 $this->history->setFormValue($val);
+            }
+        }
+
+        // Check field name 'random_blood_sugar' first before field var 'x_random_blood_sugar'
+        $val = $CurrentForm->hasValue("random_blood_sugar") ? $CurrentForm->getValue("random_blood_sugar") : $CurrentForm->getValue("x_random_blood_sugar");
+        if (!$this->random_blood_sugar->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->random_blood_sugar->Visible = false; // Disable update for API request
+            } else {
+                $this->random_blood_sugar->setFormValue($val);
+            }
+        }
+
+        // Check field name 'medical_history' first before field var 'x_medical_history'
+        $val = $CurrentForm->hasValue("medical_history") ? $CurrentForm->getValue("medical_history") : $CurrentForm->getValue("x_medical_history");
+        if (!$this->medical_history->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->medical_history->Visible = false; // Disable update for API request
+            } else {
+                $this->medical_history->setFormValue($val);
+            }
+        }
+
+        // Check field name 'family' first before field var 'x_family'
+        $val = $CurrentForm->hasValue("family") ? $CurrentForm->getValue("family") : $CurrentForm->getValue("x_family");
+        if (!$this->family->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->family->Visible = false; // Disable update for API request
+            } else {
+                $this->family->setFormValue($val);
+            }
+        }
+
+        // Check field name 'socio_economic_history' first before field var 'x_socio_economic_history'
+        $val = $CurrentForm->hasValue("socio_economic_history") ? $CurrentForm->getValue("socio_economic_history") : $CurrentForm->getValue("x_socio_economic_history");
+        if (!$this->socio_economic_history->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->socio_economic_history->Visible = false; // Disable update for API request
+            } else {
+                $this->socio_economic_history->setFormValue($val);
             }
         }
 
@@ -743,9 +765,11 @@ class JdhPatientCasesEdit extends JdhPatientCases
         global $CurrentForm;
         $this->case_id->CurrentValue = $this->case_id->FormValue;
         $this->patient_id->CurrentValue = $this->patient_id->FormValue;
-        $this->symtoms->CurrentValue = $this->symtoms->FormValue;
-        $this->fasting_blood_sugar->CurrentValue = $this->fasting_blood_sugar->FormValue;
         $this->history->CurrentValue = $this->history->FormValue;
+        $this->random_blood_sugar->CurrentValue = $this->random_blood_sugar->FormValue;
+        $this->medical_history->CurrentValue = $this->medical_history->FormValue;
+        $this->family->CurrentValue = $this->family->FormValue;
+        $this->socio_economic_history->CurrentValue = $this->socio_economic_history->FormValue;
         $this->notes->CurrentValue = $this->notes->FormValue;
     }
 
@@ -798,9 +822,11 @@ class JdhPatientCasesEdit extends JdhPatientCases
         $this->rowSelected($row);
         $this->case_id->setDbValue($row['case_id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->symtoms->setDbValue($row['symtoms']);
-        $this->fasting_blood_sugar->setDbValue($row['fasting_blood_sugar']);
         $this->history->setDbValue($row['history']);
+        $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
+        $this->medical_history->setDbValue($row['medical_history']);
+        $this->family->setDbValue($row['family']);
+        $this->socio_economic_history->setDbValue($row['socio_economic_history']);
         $this->notes->setDbValue($row['notes']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
@@ -812,9 +838,11 @@ class JdhPatientCasesEdit extends JdhPatientCases
         $row = [];
         $row['case_id'] = $this->case_id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['symtoms'] = $this->symtoms->DefaultValue;
-        $row['fasting_blood_sugar'] = $this->fasting_blood_sugar->DefaultValue;
         $row['history'] = $this->history->DefaultValue;
+        $row['random_blood_sugar'] = $this->random_blood_sugar->DefaultValue;
+        $row['medical_history'] = $this->medical_history->DefaultValue;
+        $row['family'] = $this->family->DefaultValue;
+        $row['socio_economic_history'] = $this->socio_economic_history->DefaultValue;
         $row['notes'] = $this->notes->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
@@ -858,14 +886,20 @@ class JdhPatientCasesEdit extends JdhPatientCases
         // patient_id
         $this->patient_id->RowCssClass = "row";
 
-        // symtoms
-        $this->symtoms->RowCssClass = "row";
-
-        // fasting_blood_sugar
-        $this->fasting_blood_sugar->RowCssClass = "row";
-
         // history
         $this->history->RowCssClass = "row";
+
+        // random_blood_sugar
+        $this->random_blood_sugar->RowCssClass = "row";
+
+        // medical_history
+        $this->medical_history->RowCssClass = "row";
+
+        // family
+        $this->family->RowCssClass = "row";
+
+        // socio_economic_history
+        $this->socio_economic_history->RowCssClass = "row";
 
         // notes
         $this->notes->RowCssClass = "row";
@@ -904,14 +938,20 @@ class JdhPatientCasesEdit extends JdhPatientCases
                 $this->patient_id->ViewValue = null;
             }
 
-            // symtoms
-            $this->symtoms->ViewValue = $this->symtoms->CurrentValue;
-
-            // fasting_blood_sugar
-            $this->fasting_blood_sugar->ViewValue = $this->fasting_blood_sugar->CurrentValue;
-
             // history
             $this->history->ViewValue = $this->history->CurrentValue;
+
+            // random_blood_sugar
+            $this->random_blood_sugar->ViewValue = $this->random_blood_sugar->CurrentValue;
+
+            // medical_history
+            $this->medical_history->ViewValue = $this->medical_history->CurrentValue;
+
+            // family
+            $this->family->ViewValue = $this->family->CurrentValue;
+
+            // socio_economic_history
+            $this->socio_economic_history->ViewValue = $this->socio_economic_history->CurrentValue;
 
             // notes
             $this->notes->ViewValue = $this->notes->CurrentValue;
@@ -930,14 +970,20 @@ class JdhPatientCasesEdit extends JdhPatientCases
             // patient_id
             $this->patient_id->HrefValue = "";
 
-            // symtoms
-            $this->symtoms->HrefValue = "";
-
-            // fasting_blood_sugar
-            $this->fasting_blood_sugar->HrefValue = "";
-
             // history
             $this->history->HrefValue = "";
+
+            // random_blood_sugar
+            $this->random_blood_sugar->HrefValue = "";
+
+            // medical_history
+            $this->medical_history->HrefValue = "";
+
+            // family
+            $this->family->HrefValue = "";
+
+            // socio_economic_history
+            $this->socio_economic_history->HrefValue = "";
 
             // notes
             $this->notes->HrefValue = "";
@@ -998,20 +1044,30 @@ class JdhPatientCasesEdit extends JdhPatientCases
                 $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
             }
 
-            // symtoms
-            $this->symtoms->setupEditAttributes();
-            $this->symtoms->EditValue = HtmlEncode($this->symtoms->CurrentValue);
-            $this->symtoms->PlaceHolder = RemoveHtml($this->symtoms->caption());
-
-            // fasting_blood_sugar
-            $this->fasting_blood_sugar->setupEditAttributes();
-            $this->fasting_blood_sugar->EditValue = HtmlEncode($this->fasting_blood_sugar->CurrentValue);
-            $this->fasting_blood_sugar->PlaceHolder = RemoveHtml($this->fasting_blood_sugar->caption());
-
             // history
             $this->history->setupEditAttributes();
             $this->history->EditValue = HtmlEncode($this->history->CurrentValue);
             $this->history->PlaceHolder = RemoveHtml($this->history->caption());
+
+            // random_blood_sugar
+            $this->random_blood_sugar->setupEditAttributes();
+            $this->random_blood_sugar->EditValue = HtmlEncode($this->random_blood_sugar->CurrentValue);
+            $this->random_blood_sugar->PlaceHolder = RemoveHtml($this->random_blood_sugar->caption());
+
+            // medical_history
+            $this->medical_history->setupEditAttributes();
+            $this->medical_history->EditValue = HtmlEncode($this->medical_history->CurrentValue);
+            $this->medical_history->PlaceHolder = RemoveHtml($this->medical_history->caption());
+
+            // family
+            $this->family->setupEditAttributes();
+            $this->family->EditValue = HtmlEncode($this->family->CurrentValue);
+            $this->family->PlaceHolder = RemoveHtml($this->family->caption());
+
+            // socio_economic_history
+            $this->socio_economic_history->setupEditAttributes();
+            $this->socio_economic_history->EditValue = HtmlEncode($this->socio_economic_history->CurrentValue);
+            $this->socio_economic_history->PlaceHolder = RemoveHtml($this->socio_economic_history->caption());
 
             // notes
             $this->notes->setupEditAttributes();
@@ -1026,14 +1082,20 @@ class JdhPatientCasesEdit extends JdhPatientCases
             // patient_id
             $this->patient_id->HrefValue = "";
 
-            // symtoms
-            $this->symtoms->HrefValue = "";
-
-            // fasting_blood_sugar
-            $this->fasting_blood_sugar->HrefValue = "";
-
             // history
             $this->history->HrefValue = "";
+
+            // random_blood_sugar
+            $this->random_blood_sugar->HrefValue = "";
+
+            // medical_history
+            $this->medical_history->HrefValue = "";
+
+            // family
+            $this->family->HrefValue = "";
+
+            // socio_economic_history
+            $this->socio_economic_history->HrefValue = "";
 
             // notes
             $this->notes->HrefValue = "";
@@ -1068,19 +1130,29 @@ class JdhPatientCasesEdit extends JdhPatientCases
                 $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
             }
         }
-        if ($this->symtoms->Required) {
-            if (!$this->symtoms->IsDetailKey && EmptyValue($this->symtoms->FormValue)) {
-                $this->symtoms->addErrorMessage(str_replace("%s", $this->symtoms->caption(), $this->symtoms->RequiredErrorMessage));
-            }
-        }
-        if ($this->fasting_blood_sugar->Required) {
-            if (!$this->fasting_blood_sugar->IsDetailKey && EmptyValue($this->fasting_blood_sugar->FormValue)) {
-                $this->fasting_blood_sugar->addErrorMessage(str_replace("%s", $this->fasting_blood_sugar->caption(), $this->fasting_blood_sugar->RequiredErrorMessage));
-            }
-        }
         if ($this->history->Required) {
             if (!$this->history->IsDetailKey && EmptyValue($this->history->FormValue)) {
                 $this->history->addErrorMessage(str_replace("%s", $this->history->caption(), $this->history->RequiredErrorMessage));
+            }
+        }
+        if ($this->random_blood_sugar->Required) {
+            if (!$this->random_blood_sugar->IsDetailKey && EmptyValue($this->random_blood_sugar->FormValue)) {
+                $this->random_blood_sugar->addErrorMessage(str_replace("%s", $this->random_blood_sugar->caption(), $this->random_blood_sugar->RequiredErrorMessage));
+            }
+        }
+        if ($this->medical_history->Required) {
+            if (!$this->medical_history->IsDetailKey && EmptyValue($this->medical_history->FormValue)) {
+                $this->medical_history->addErrorMessage(str_replace("%s", $this->medical_history->caption(), $this->medical_history->RequiredErrorMessage));
+            }
+        }
+        if ($this->family->Required) {
+            if (!$this->family->IsDetailKey && EmptyValue($this->family->FormValue)) {
+                $this->family->addErrorMessage(str_replace("%s", $this->family->caption(), $this->family->RequiredErrorMessage));
+            }
+        }
+        if ($this->socio_economic_history->Required) {
+            if (!$this->socio_economic_history->IsDetailKey && EmptyValue($this->socio_economic_history->FormValue)) {
+                $this->socio_economic_history->addErrorMessage(str_replace("%s", $this->socio_economic_history->caption(), $this->socio_economic_history->RequiredErrorMessage));
             }
         }
         if ($this->notes->Required) {
@@ -1130,14 +1202,20 @@ class JdhPatientCasesEdit extends JdhPatientCases
         }
         $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, $this->patient_id->ReadOnly);
 
-        // symtoms
-        $this->symtoms->setDbValueDef($rsnew, $this->symtoms->CurrentValue, "", $this->symtoms->ReadOnly);
-
-        // fasting_blood_sugar
-        $this->fasting_blood_sugar->setDbValueDef($rsnew, $this->fasting_blood_sugar->CurrentValue, null, $this->fasting_blood_sugar->ReadOnly);
-
         // history
         $this->history->setDbValueDef($rsnew, $this->history->CurrentValue, null, $this->history->ReadOnly);
+
+        // random_blood_sugar
+        $this->random_blood_sugar->setDbValueDef($rsnew, $this->random_blood_sugar->CurrentValue, null, $this->random_blood_sugar->ReadOnly);
+
+        // medical_history
+        $this->medical_history->setDbValueDef($rsnew, $this->medical_history->CurrentValue, "", $this->medical_history->ReadOnly);
+
+        // family
+        $this->family->setDbValueDef($rsnew, $this->family->CurrentValue, "", $this->family->ReadOnly);
+
+        // socio_economic_history
+        $this->socio_economic_history->setDbValueDef($rsnew, $this->socio_economic_history->CurrentValue, "", $this->socio_economic_history->ReadOnly);
 
         // notes
         $this->notes->setDbValueDef($rsnew, $this->notes->CurrentValue, null, $this->notes->ReadOnly);

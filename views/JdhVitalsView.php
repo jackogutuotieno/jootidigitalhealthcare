@@ -108,6 +108,61 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->body_mass_index->Visible) { // body_mass_index ?>
+    <tr id="r_body_mass_index"<?= $Page->body_mass_index->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_vitals_body_mass_index"><?= $Page->body_mass_index->caption() ?></span></td>
+        <td data-name="body_mass_index"<?= $Page->body_mass_index->cellAttributes() ?>>
+<span id="el_jdh_vitals_body_mass_index">
+<span<?= $Page->body_mass_index->viewAttributes() ?>>
+<?= $Page->body_mass_index->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
+<?php if ($Page->pulse_rate->Visible) { // pulse_rate ?>
+    <tr id="r_pulse_rate"<?= $Page->pulse_rate->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_vitals_pulse_rate"><?= $Page->pulse_rate->caption() ?></span></td>
+        <td data-name="pulse_rate"<?= $Page->pulse_rate->cellAttributes() ?>>
+<span id="el_jdh_vitals_pulse_rate">
+<span<?= $Page->pulse_rate->viewAttributes() ?>>
+<?= $Page->pulse_rate->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
+<?php if ($Page->respiratory_rate->Visible) { // respiratory_rate ?>
+    <tr id="r_respiratory_rate"<?= $Page->respiratory_rate->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_vitals_respiratory_rate"><?= $Page->respiratory_rate->caption() ?></span></td>
+        <td data-name="respiratory_rate"<?= $Page->respiratory_rate->cellAttributes() ?>>
+<span id="el_jdh_vitals_respiratory_rate">
+<span<?= $Page->respiratory_rate->viewAttributes() ?>>
+<?= $Page->respiratory_rate->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
+<?php if ($Page->temperature->Visible) { // temperature ?>
+    <tr id="r_temperature"<?= $Page->temperature->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_vitals_temperature"><?= $Page->temperature->caption() ?></span></td>
+        <td data-name="temperature"<?= $Page->temperature->cellAttributes() ?>>
+<span id="el_jdh_vitals_temperature">
+<span<?= $Page->temperature->viewAttributes() ?>>
+<?= $Page->temperature->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
+<?php if ($Page->random_blood_sugar->Visible) { // random_blood_sugar ?>
+    <tr id="r_random_blood_sugar"<?= $Page->random_blood_sugar->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_vitals_random_blood_sugar"><?= $Page->random_blood_sugar->caption() ?></span></td>
+        <td data-name="random_blood_sugar"<?= $Page->random_blood_sugar->cellAttributes() ?>>
+<span id="el_jdh_vitals_random_blood_sugar">
+<span<?= $Page->random_blood_sugar->viewAttributes() ?>>
+<?= $Page->random_blood_sugar->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 <?php if ($Page->submission_date->Visible) { // submission_date ?>
     <tr id="r_submission_date"<?= $Page->submission_date->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_vitals_submission_date"><?= $Page->submission_date->caption() ?></span></td>
@@ -115,6 +170,17 @@ loadjs.ready(["wrapper", "head"], function () {
 <span id="el_jdh_vitals_submission_date">
 <span<?= $Page->submission_date->viewAttributes() ?>>
 <?= $Page->submission_date->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
+<?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
+    <tr id="r_submitted_by_user_id"<?= $Page->submitted_by_user_id->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_vitals_submitted_by_user_id"><?= $Page->submitted_by_user_id->caption() ?></span></td>
+        <td data-name="submitted_by_user_id"<?= $Page->submitted_by_user_id->cellAttributes() ?>>
+<span id="el_jdh_vitals_submitted_by_user_id">
+<span<?= $Page->submitted_by_user_id->viewAttributes() ?>>
+<?= $Page->submitted_by_user_id->getViewValue() ?></span>
 </span>
 </td>
     </tr>

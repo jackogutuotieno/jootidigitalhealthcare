@@ -649,9 +649,11 @@ class JdhPatientCasesList extends JdhPatientCases
         $this->setupImportOptions();
         $this->case_id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->symtoms->Visible = false;
-        $this->fasting_blood_sugar->Visible = false;
         $this->history->Visible = false;
+        $this->random_blood_sugar->Visible = false;
+        $this->medical_history->Visible = false;
+        $this->family->Visible = false;
+        $this->socio_economic_history->Visible = false;
         $this->notes->Visible = false;
         $this->submission_date->setVisibility();
         $this->submitted_by_user_id->Visible = false;
@@ -1034,9 +1036,11 @@ class JdhPatientCasesList extends JdhPatientCases
                 $this->setSessionOrderBy($orderBy);
                 $this->case_id->setSort("");
                 $this->patient_id->setSort("");
-                $this->symtoms->setSort("");
-                $this->fasting_blood_sugar->setSort("");
                 $this->history->setSort("");
+                $this->random_blood_sugar->setSort("");
+                $this->medical_history->setSort("");
+                $this->family->setSort("");
+                $this->socio_economic_history->setSort("");
                 $this->notes->setSort("");
                 $this->submission_date->setSort("");
                 $this->submitted_by_user_id->setSort("");
@@ -1637,9 +1641,11 @@ class JdhPatientCasesList extends JdhPatientCases
         $this->rowSelected($row);
         $this->case_id->setDbValue($row['case_id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->symtoms->setDbValue($row['symtoms']);
-        $this->fasting_blood_sugar->setDbValue($row['fasting_blood_sugar']);
         $this->history->setDbValue($row['history']);
+        $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
+        $this->medical_history->setDbValue($row['medical_history']);
+        $this->family->setDbValue($row['family']);
+        $this->socio_economic_history->setDbValue($row['socio_economic_history']);
         $this->notes->setDbValue($row['notes']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
@@ -1651,9 +1657,11 @@ class JdhPatientCasesList extends JdhPatientCases
         $row = [];
         $row['case_id'] = $this->case_id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['symtoms'] = $this->symtoms->DefaultValue;
-        $row['fasting_blood_sugar'] = $this->fasting_blood_sugar->DefaultValue;
         $row['history'] = $this->history->DefaultValue;
+        $row['random_blood_sugar'] = $this->random_blood_sugar->DefaultValue;
+        $row['medical_history'] = $this->medical_history->DefaultValue;
+        $row['family'] = $this->family->DefaultValue;
+        $row['socio_economic_history'] = $this->socio_economic_history->DefaultValue;
         $row['notes'] = $this->notes->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
@@ -1701,11 +1709,15 @@ class JdhPatientCasesList extends JdhPatientCases
 
         // patient_id
 
-        // symtoms
-
-        // fasting_blood_sugar
-
         // history
+
+        // random_blood_sugar
+
+        // medical_history
+
+        // family
+
+        // socio_economic_history
 
         // notes
 

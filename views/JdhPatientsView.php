@@ -208,6 +208,22 @@ loadjs.ready(["wrapper", "head"], function () {
 <?php } ?>
 <?php include_once "JdhTestRequestsGrid.php" ?>
 <?php } ?>
+<?php
+    if (in_array("jdh_patient_visits", explode(",", $Page->getCurrentDetailTable())) && $jdh_patient_visits->DetailView) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_patient_visits", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhPatientVisitsGrid.php" ?>
+<?php } ?>
+<?php
+    if (in_array("jdh_chief_complaints", explode(",", $Page->getCurrentDetailTable())) && $jdh_chief_complaints->DetailView) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_chief_complaints", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhChiefComplaintsGrid.php" ?>
+<?php } ?>
 </form>
 </main>
 <?php

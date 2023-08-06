@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhVitalsView extends JdhVitals
+class JdhChiefComplaintsView extends JdhChiefComplaints
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhVitalsView extends JdhVitals
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhVitalsView";
+    public $PageObjName = "JdhChiefComplaintsView";
 
     // View file path
     public $View = null;
@@ -33,7 +33,7 @@ class JdhVitalsView extends JdhVitals
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "jdhvitalsview";
+    public $CurrentPageName = "jdhchiefcomplaintsview";
 
     // Page URLs
     public $AddUrl;
@@ -52,6 +52,14 @@ class JdhVitalsView extends JdhVitals
     public $MultiEditUrl;
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
+
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
 
     // Page headings
     public $Heading = "";
@@ -136,8 +144,8 @@ class JdhVitalsView extends JdhVitals
     {
         parent::__construct();
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
-        $this->TableVar = 'jdh_vitals';
-        $this->TableName = 'jdh_vitals';
+        $this->TableVar = 'jdh_chief_complaints';
+        $this->TableName = 'jdh_chief_complaints';
 
         // Table CSS class
         $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-view-table";
@@ -148,19 +156,19 @@ class JdhVitalsView extends JdhVitals
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_vitals)
-        if (!isset($GLOBALS["jdh_vitals"]) || get_class($GLOBALS["jdh_vitals"]) == PROJECT_NAMESPACE . "jdh_vitals") {
-            $GLOBALS["jdh_vitals"] = &$this;
+        // Table object (jdh_chief_complaints)
+        if (!isset($GLOBALS["jdh_chief_complaints"]) || get_class($GLOBALS["jdh_chief_complaints"]) == PROJECT_NAMESPACE . "jdh_chief_complaints") {
+            $GLOBALS["jdh_chief_complaints"] = &$this;
         }
 
         // Set up record key
-        if (($keyValue = Get("vitals_id") ?? Route("vitals_id")) !== null) {
-            $this->RecKey["vitals_id"] = $keyValue;
+        if (($keyValue = Get("id") ?? Route("id")) !== null) {
+            $this->RecKey["id"] = $keyValue;
         }
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_vitals');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_chief_complaints');
         }
 
         // Start timer
@@ -284,7 +292,7 @@ class JdhVitalsView extends JdhVitals
                 $pageName = GetPageName($url);
                 if ($pageName != $this->getListUrl()) { // Not List page => View page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhvitalsview"; // If View page, no primary button
+                    $result["view"] = $pageName == "jdhchiefcomplaintsview"; // If View page, no primary button
                 } else { // List page
                     // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
@@ -374,7 +382,7 @@ class JdhVitalsView extends JdhVitals
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['vitals_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -387,7 +395,7 @@ class JdhVitalsView extends JdhVitals
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->vitals_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
 
@@ -505,19 +513,13 @@ class JdhVitalsView extends JdhVitals
             $SkipHeaderFooter = true;
         }
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->vitals_id->setVisibility();
+        $this->id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->pressure->setVisibility();
-        $this->height->setVisibility();
-        $this->weight->setVisibility();
-        $this->body_mass_index->setVisibility();
-        $this->pulse_rate->setVisibility();
-        $this->respiratory_rate->setVisibility();
-        $this->temperature->setVisibility();
-        $this->random_blood_sugar->setVisibility();
-        $this->spo2->setVisibility();
-        $this->submission_date->setVisibility();
-        $this->submitted_by_user_id->setVisibility();
+        $this->chief_compaints->setVisibility();
+        $this->addedby_user_id->setVisibility();
+        $this->modifiedby_user_id->setVisibility();
+        $this->date_created->setVisibility();
+        $this->date_updated->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -556,17 +558,17 @@ class JdhVitalsView extends JdhVitals
 
         // Set up master/detail parameters
         $this->setupMasterParms();
-        if (($keyValue = Get("vitals_id") ?? Route("vitals_id")) !== null) {
-            $this->vitals_id->setQueryStringValue($keyValue);
-            $this->RecKey["vitals_id"] = $this->vitals_id->QueryStringValue;
-        } elseif (Post("vitals_id") !== null) {
-            $this->vitals_id->setFormValue(Post("vitals_id"));
-            $this->RecKey["vitals_id"] = $this->vitals_id->FormValue;
+        if (($keyValue = Get("id") ?? Route("id")) !== null) {
+            $this->id->setQueryStringValue($keyValue);
+            $this->RecKey["id"] = $this->id->QueryStringValue;
+        } elseif (Post("id") !== null) {
+            $this->id->setFormValue(Post("id"));
+            $this->RecKey["id"] = $this->id->FormValue;
         } elseif (IsApi() && ($keyValue = Key(0) ?? Route(2)) !== null) {
-            $this->vitals_id->setQueryStringValue($keyValue);
-            $this->RecKey["vitals_id"] = $this->vitals_id->QueryStringValue;
+            $this->id->setQueryStringValue($keyValue);
+            $this->RecKey["id"] = $this->id->QueryStringValue;
         } elseif (!$loadCurrentRecord) {
-            $returnUrl = "jdhvitalslist"; // Return to list
+            $returnUrl = "jdhchiefcomplaintslist"; // Return to list
         }
 
         // Get action
@@ -589,7 +591,7 @@ class JdhVitalsView extends JdhVitals
                         if ($this->getSuccessMessage() == "" && $this->getFailureMessage() == "") {
                             $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
                         }
-                        $returnUrl = "jdhvitalslist"; // No matching record, return to list
+                        $returnUrl = "jdhchiefcomplaintslist"; // No matching record, return to list
                     }
                 break;
         }
@@ -796,38 +798,29 @@ class JdhVitalsView extends JdhVitals
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->vitals_id->setDbValue($row['vitals_id']);
+        if ($this->AuditTrailOnView) {
+            $this->writeAuditTrailOnView($row);
+        }
+        $this->id->setDbValue($row['id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->pressure->setDbValue($row['pressure']);
-        $this->height->setDbValue($row['height']);
-        $this->weight->setDbValue($row['weight']);
-        $this->body_mass_index->setDbValue($row['body_mass_index']);
-        $this->pulse_rate->setDbValue($row['pulse_rate']);
-        $this->respiratory_rate->setDbValue($row['respiratory_rate']);
-        $this->temperature->setDbValue($row['temperature']);
-        $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
-        $this->spo2->setDbValue($row['spo2']);
-        $this->submission_date->setDbValue($row['submission_date']);
-        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->chief_compaints->setDbValue($row['chief_compaints']);
+        $this->addedby_user_id->setDbValue($row['addedby_user_id']);
+        $this->modifiedby_user_id->setDbValue($row['modifiedby_user_id']);
+        $this->date_created->setDbValue($row['date_created']);
+        $this->date_updated->setDbValue($row['date_updated']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['vitals_id'] = $this->vitals_id->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['pressure'] = $this->pressure->DefaultValue;
-        $row['height'] = $this->height->DefaultValue;
-        $row['weight'] = $this->weight->DefaultValue;
-        $row['body_mass_index'] = $this->body_mass_index->DefaultValue;
-        $row['pulse_rate'] = $this->pulse_rate->DefaultValue;
-        $row['respiratory_rate'] = $this->respiratory_rate->DefaultValue;
-        $row['temperature'] = $this->temperature->DefaultValue;
-        $row['random_blood_sugar'] = $this->random_blood_sugar->DefaultValue;
-        $row['spo2'] = $this->spo2->DefaultValue;
-        $row['submission_date'] = $this->submission_date->DefaultValue;
-        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['chief_compaints'] = $this->chief_compaints->DefaultValue;
+        $row['addedby_user_id'] = $this->addedby_user_id->DefaultValue;
+        $row['modifiedby_user_id'] = $this->modifiedby_user_id->DefaultValue;
+        $row['date_created'] = $this->date_created->DefaultValue;
+        $row['date_updated'] = $this->date_updated->DefaultValue;
         return $row;
     }
 
@@ -849,36 +842,24 @@ class JdhVitalsView extends JdhVitals
 
         // Common render codes for all row types
 
-        // vitals_id
+        // id
 
         // patient_id
 
-        // pressure
+        // chief_compaints
 
-        // height
+        // addedby_user_id
 
-        // weight
+        // modifiedby_user_id
 
-        // body_mass_index
+        // date_created
 
-        // pulse_rate
-
-        // respiratory_rate
-
-        // temperature
-
-        // random_blood_sugar
-
-        // spo2
-
-        // submission_date
-
-        // submitted_by_user_id
+        // date_updated
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // vitals_id
-            $this->vitals_id->ViewValue = $this->vitals_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
 
             // patient_id
             $curVal = strval($this->patient_id->CurrentValue);
@@ -903,95 +884,44 @@ class JdhVitalsView extends JdhVitals
                 $this->patient_id->ViewValue = null;
             }
 
-            // pressure
-            $this->pressure->ViewValue = $this->pressure->CurrentValue;
+            // chief_compaints
+            $this->chief_compaints->ViewValue = $this->chief_compaints->CurrentValue;
 
-            // height
-            $this->height->ViewValue = $this->height->CurrentValue;
-            $this->height->ViewValue = FormatNumber($this->height->ViewValue, $this->height->formatPattern());
+            // addedby_user_id
+            $this->addedby_user_id->ViewValue = $this->addedby_user_id->CurrentValue;
+            $this->addedby_user_id->ViewValue = FormatNumber($this->addedby_user_id->ViewValue, $this->addedby_user_id->formatPattern());
 
-            // weight
-            $this->weight->ViewValue = $this->weight->CurrentValue;
-            $this->weight->ViewValue = FormatNumber($this->weight->ViewValue, $this->weight->formatPattern());
+            // modifiedby_user_id
+            $this->modifiedby_user_id->ViewValue = $this->modifiedby_user_id->CurrentValue;
+            $this->modifiedby_user_id->ViewValue = FormatNumber($this->modifiedby_user_id->ViewValue, $this->modifiedby_user_id->formatPattern());
 
-            // body_mass_index
-            $this->body_mass_index->ViewValue = $this->body_mass_index->CurrentValue;
-            $this->body_mass_index->ViewValue = FormatNumber($this->body_mass_index->ViewValue, $this->body_mass_index->formatPattern());
+            // date_created
+            $this->date_created->ViewValue = $this->date_created->CurrentValue;
+            $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
 
-            // pulse_rate
-            $this->pulse_rate->ViewValue = $this->pulse_rate->CurrentValue;
-            $this->pulse_rate->ViewValue = FormatNumber($this->pulse_rate->ViewValue, $this->pulse_rate->formatPattern());
+            // date_updated
+            $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
+            $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
 
-            // respiratory_rate
-            $this->respiratory_rate->ViewValue = $this->respiratory_rate->CurrentValue;
-            $this->respiratory_rate->ViewValue = FormatNumber($this->respiratory_rate->ViewValue, $this->respiratory_rate->formatPattern());
-
-            // temperature
-            $this->temperature->ViewValue = $this->temperature->CurrentValue;
-            $this->temperature->ViewValue = FormatNumber($this->temperature->ViewValue, $this->temperature->formatPattern());
-
-            // random_blood_sugar
-            $this->random_blood_sugar->ViewValue = $this->random_blood_sugar->CurrentValue;
-
-            // spo2
-            $this->spo2->ViewValue = $this->spo2->CurrentValue;
-            $this->spo2->ViewValue = FormatNumber($this->spo2->ViewValue, $this->spo2->formatPattern());
-
-            // submission_date
-            $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
-            $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
-            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
-
-            // vitals_id
-            $this->vitals_id->HrefValue = "";
-            $this->vitals_id->TooltipValue = "";
+            // id
+            $this->id->HrefValue = "";
+            $this->id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
 
-            // pressure
-            $this->pressure->HrefValue = "";
-            $this->pressure->TooltipValue = "";
+            // chief_compaints
+            $this->chief_compaints->HrefValue = "";
+            $this->chief_compaints->TooltipValue = "";
 
-            // height
-            $this->height->HrefValue = "";
-            $this->height->TooltipValue = "";
+            // date_created
+            $this->date_created->HrefValue = "";
+            $this->date_created->TooltipValue = "";
 
-            // weight
-            $this->weight->HrefValue = "";
-            $this->weight->TooltipValue = "";
-
-            // body_mass_index
-            $this->body_mass_index->HrefValue = "";
-            $this->body_mass_index->TooltipValue = "";
-
-            // pulse_rate
-            $this->pulse_rate->HrefValue = "";
-            $this->pulse_rate->TooltipValue = "";
-
-            // respiratory_rate
-            $this->respiratory_rate->HrefValue = "";
-            $this->respiratory_rate->TooltipValue = "";
-
-            // temperature
-            $this->temperature->HrefValue = "";
-            $this->temperature->TooltipValue = "";
-
-            // random_blood_sugar
-            $this->random_blood_sugar->HrefValue = "";
-            $this->random_blood_sugar->TooltipValue = "";
-
-            // submission_date
-            $this->submission_date->HrefValue = "";
-            $this->submission_date->TooltipValue = "";
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
-            $this->submitted_by_user_id->TooltipValue = "";
+            // date_updated
+            $this->date_updated->HrefValue = "";
+            $this->date_updated->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -1013,19 +943,19 @@ class JdhVitalsView extends JdhVitals
         }
         if (SameText($type, "excel")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_vitalsview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_chief_complaintsview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\">" . $Language->phrase("ExportToExcel") . "</a>";
             }
         } elseif (SameText($type, "word")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_vitalsview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_chief_complaintsview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\">" . $Language->phrase("ExportToWord") . "</a>";
             }
         } elseif (SameText($type, "pdf")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_vitalsview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_chief_complaintsview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\">" . $Language->phrase("ExportToPdf") . "</a>";
             }
@@ -1037,7 +967,7 @@ class JdhVitalsView extends JdhVitals
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-csv\" title=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\">" . $Language->phrase("ExportToCsv") . "</a>";
         } elseif (SameText($type, "email")) {
             $url = $custom ? ' data-url="' . $exportUrl . '"' : '';
-            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_vitalsview" data-ew-action="email" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-key="' . HtmlEncode(ArrayToJsonAttribute($this->RecKey)) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
+            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_chief_complaintsview" data-ew-action="email" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-key="' . HtmlEncode(ArrayToJsonAttribute($this->RecKey)) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
         } elseif (SameText($type, "print")) {
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-print\" title=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\">" . $Language->phrase("PrinterFriendly") . "</a>";
         }
@@ -1252,7 +1182,7 @@ class JdhVitalsView extends JdhVitals
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhvitalslist"), "", $this->TableVar, true);
+        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhchiefcomplaintslist"), "", $this->TableVar, true);
         $pageId = "view";
         $Breadcrumb->add("view", $pageId, $url);
     }

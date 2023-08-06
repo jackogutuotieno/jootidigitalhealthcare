@@ -10,18 +10,18 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhVitalsView extends JdhVitals
+class JdhChiefComplaintsEdit extends JdhChiefComplaints
 {
     use MessagesTrait;
 
     // Page ID
-    public $PageID = "view";
+    public $PageID = "edit";
 
     // Project ID
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhVitalsView";
+    public $PageObjName = "JdhChiefComplaintsEdit";
 
     // View file path
     public $View = null;
@@ -33,25 +33,15 @@ class JdhVitalsView extends JdhVitals
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "jdhvitalsview";
+    public $CurrentPageName = "jdhchiefcomplaintsedit";
 
-    // Page URLs
-    public $AddUrl;
-    public $EditUrl;
-    public $DeleteUrl;
-    public $ViewUrl;
-    public $CopyUrl;
-    public $ListUrl;
-
-    // Update URLs
-    public $InlineAddUrl;
-    public $InlineCopyUrl;
-    public $InlineEditUrl;
-    public $GridAddUrl;
-    public $GridEditUrl;
-    public $MultiEditUrl;
-    public $MultiDeleteUrl;
-    public $MultiUpdateUrl;
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
 
     // Page headings
     public $Heading = "";
@@ -136,11 +126,11 @@ class JdhVitalsView extends JdhVitals
     {
         parent::__construct();
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
-        $this->TableVar = 'jdh_vitals';
-        $this->TableName = 'jdh_vitals';
+        $this->TableVar = 'jdh_chief_complaints';
+        $this->TableName = 'jdh_chief_complaints';
 
         // Table CSS class
-        $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-view-table";
+        $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-desktop-table ew-edit-table";
 
         // Initialize
         $GLOBALS["Page"] = &$this;
@@ -148,19 +138,14 @@ class JdhVitalsView extends JdhVitals
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_vitals)
-        if (!isset($GLOBALS["jdh_vitals"]) || get_class($GLOBALS["jdh_vitals"]) == PROJECT_NAMESPACE . "jdh_vitals") {
-            $GLOBALS["jdh_vitals"] = &$this;
-        }
-
-        // Set up record key
-        if (($keyValue = Get("vitals_id") ?? Route("vitals_id")) !== null) {
-            $this->RecKey["vitals_id"] = $keyValue;
+        // Table object (jdh_chief_complaints)
+        if (!isset($GLOBALS["jdh_chief_complaints"]) || get_class($GLOBALS["jdh_chief_complaints"]) == PROJECT_NAMESPACE . "jdh_chief_complaints") {
+            $GLOBALS["jdh_chief_complaints"] = &$this;
         }
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_vitals');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_chief_complaints');
         }
 
         // Start timer
@@ -174,19 +159,6 @@ class JdhVitalsView extends JdhVitals
 
         // User table object
         $UserTable = Container("usertable");
-
-        // Export options
-        $this->ExportOptions = new ListOptions(["TagClassName" => "ew-export-option"]);
-
-        // Other options
-        if (!$this->OtherOptions) {
-            $this->OtherOptions = new ListOptionsArray();
-        }
-
-        // Detail tables
-        $this->OtherOptions["detail"] = new ListOptions(["TagClassName" => "ew-detail-option"]);
-        // Actions
-        $this->OtherOptions["action"] = new ListOptions(["TagClassName" => "ew-action-option"]);
     }
 
     // Get content from stream
@@ -284,7 +256,7 @@ class JdhVitalsView extends JdhVitals
                 $pageName = GetPageName($url);
                 if ($pageName != $this->getListUrl()) { // Not List page => View page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhvitalsview"; // If View page, no primary button
+                    $result["view"] = $pageName == "jdhchiefcomplaintsview"; // If View page, no primary button
                 } else { // List page
                     // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
@@ -374,7 +346,7 @@ class JdhVitalsView extends JdhVitals
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['vitals_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -387,7 +359,7 @@ class JdhVitalsView extends JdhVitals
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->vitals_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
 
@@ -460,17 +432,20 @@ class JdhVitalsView extends JdhVitals
         }
         return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
     }
-    public $ExportOptions; // Export options
-    public $OtherOptions; // Other options
-    public $DisplayRecords = 1;
+
+    // Properties
+    public $FormClassName = "ew-form ew-edit-form overlay-wrapper";
+    public $IsModal = false;
+    public $IsMobileOrModal = false;
     public $DbMasterFilter;
     public $DbDetailFilter;
+    public $HashValue; // Hash Value
+    public $DisplayRecords = 1;
     public $StartRecord;
     public $StopRecord;
     public $TotalRecords = 0;
     public $RecordRange = 10;
-    public $RecKey = [];
-    public $IsModal = false;
+    public $RecordCount;
 
     /**
      * Page run
@@ -491,33 +466,16 @@ class JdhVitalsView extends JdhVitals
         // View
         $this->View = Get(Config("VIEW"));
 
-        // Get export parameters
-        $custom = "";
-        if (Param("export") !== null) {
-            $this->Export = Param("export");
-            $custom = Param("custom", "");
-        } else {
-            $this->setExportReturnUrl(CurrentUrl());
-        }
-        $ExportType = $this->Export; // Get export parameter, used in header
-        if ($ExportType != "") {
-            global $SkipHeaderFooter;
-            $SkipHeaderFooter = true;
-        }
+        // Create form object
+        $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->vitals_id->setVisibility();
+        $this->id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->pressure->setVisibility();
-        $this->height->setVisibility();
-        $this->weight->setVisibility();
-        $this->body_mass_index->setVisibility();
-        $this->pulse_rate->setVisibility();
-        $this->respiratory_rate->setVisibility();
-        $this->temperature->setVisibility();
-        $this->random_blood_sugar->setVisibility();
-        $this->spo2->setVisibility();
-        $this->submission_date->setVisibility();
-        $this->submitted_by_user_id->setVisibility();
+        $this->chief_compaints->setVisibility();
+        $this->addedby_user_id->Visible = false;
+        $this->modifiedby_user_id->Visible = false;
+        $this->date_created->Visible = false;
+        $this->date_updated->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -548,79 +506,150 @@ class JdhVitalsView extends JdhVitals
         if ($this->IsModal) {
             $SkipHeaderFooter = true;
         }
+        $this->IsMobileOrModal = IsMobile() || $this->IsModal;
+        $loaded = false;
+        $postBack = false;
 
-        // Load current record
-        $loadCurrentRecord = false;
-        $returnUrl = "";
-        $matchRecord = false;
+        // Set up current action and primary key
+        if (IsApi()) {
+            // Load key values
+            $loaded = true;
+            if (($keyValue = Get("id") ?? Key(0) ?? Route(2)) !== null) {
+                $this->id->setQueryStringValue($keyValue);
+                $this->id->setOldValue($this->id->QueryStringValue);
+            } elseif (Post("id") !== null) {
+                $this->id->setFormValue(Post("id"));
+                $this->id->setOldValue($this->id->FormValue);
+            } else {
+                $loaded = false; // Unable to load key
+            }
 
-        // Set up master/detail parameters
-        $this->setupMasterParms();
-        if (($keyValue = Get("vitals_id") ?? Route("vitals_id")) !== null) {
-            $this->vitals_id->setQueryStringValue($keyValue);
-            $this->RecKey["vitals_id"] = $this->vitals_id->QueryStringValue;
-        } elseif (Post("vitals_id") !== null) {
-            $this->vitals_id->setFormValue(Post("vitals_id"));
-            $this->RecKey["vitals_id"] = $this->vitals_id->FormValue;
-        } elseif (IsApi() && ($keyValue = Key(0) ?? Route(2)) !== null) {
-            $this->vitals_id->setQueryStringValue($keyValue);
-            $this->RecKey["vitals_id"] = $this->vitals_id->QueryStringValue;
-        } elseif (!$loadCurrentRecord) {
-            $returnUrl = "jdhvitalslist"; // Return to list
+            // Load record
+            if ($loaded) {
+                $loaded = $this->loadRow();
+            }
+            if (!$loaded) {
+                $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
+                $this->terminate();
+                return;
+            }
+            $this->CurrentAction = "update"; // Update record directly
+            $this->OldKey = $this->getKey(true); // Get from CurrentValue
+            $postBack = true;
+        } else {
+            if (Post("action") !== null) {
+                $this->CurrentAction = Post("action"); // Get action code
+                if (!$this->isShow()) { // Not reload record, handle as postback
+                    $postBack = true;
+                }
+
+                // Get key from Form
+                $this->setKey(Post($this->OldKeyName), $this->isShow());
+            } else {
+                $this->CurrentAction = "show"; // Default action is display
+
+                // Load key from QueryString
+                $loadByQuery = false;
+                if (($keyValue = Get("id") ?? Route("id")) !== null) {
+                    $this->id->setQueryStringValue($keyValue);
+                    $loadByQuery = true;
+                } else {
+                    $this->id->CurrentValue = null;
+                }
+            }
+
+            // Set up master detail parameters
+            $this->setupMasterParms();
+
+            // Load recordset
+            if ($this->isShow()) {
+                    // Load current record
+                    $loaded = $this->loadRow();
+                $this->OldKey = $loaded ? $this->getKey(true) : ""; // Get from CurrentValue
+            }
         }
 
-        // Get action
-        $this->CurrentAction = "show"; // Display
+        // Process form if post back
+        if ($postBack) {
+            $this->loadFormValues(); // Get form values
+        }
+
+        // Validate form if post back
+        if ($postBack) {
+            if (!$this->validateForm()) {
+                $this->EventCancelled = true; // Event cancelled
+                $this->restoreFormValues();
+                if (IsApi()) {
+                    $this->terminate();
+                    return;
+                } else {
+                    $this->CurrentAction = ""; // Form error, reset action
+                }
+            }
+        }
+
+        // Perform current action
         switch ($this->CurrentAction) {
             case "show": // Get a record to display
-
-                    // Load record based on key
-                    if (IsApi()) {
-                        $filter = $this->getRecordFilter();
-                        $this->CurrentFilter = $filter;
-                        $sql = $this->getCurrentSql();
-                        $conn = $this->getConnection();
-                        $this->Recordset = LoadRecordset($sql, $conn);
-                        $res = $this->Recordset && !$this->Recordset->EOF;
-                    } else {
-                        $res = $this->loadRow();
-                    }
-                    if (!$res) { // Load record based on key
-                        if ($this->getSuccessMessage() == "" && $this->getFailureMessage() == "") {
-                            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
+                    if (!$loaded) { // Load record based on key
+                        if ($this->getFailureMessage() == "") {
+                            $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
                         }
-                        $returnUrl = "jdhvitalslist"; // No matching record, return to list
+                        $this->terminate("jdhchiefcomplaintslist"); // No matching record, return to list
+                        return;
                     }
                 break;
-        }
+            case "update": // Update
+                $returnUrl = $this->getReturnUrl();
+                if (GetPageName($returnUrl) == "jdhchiefcomplaintslist") {
+                    $returnUrl = $this->addMasterUrl($returnUrl); // List page, return to List page with correct master key if necessary
+                }
+                $this->SendEmail = true; // Send email on update success
+                if ($this->editRow()) {
+                    // Do not return Json for UseAjaxActions
+                    if ($this->IsModal && $this->UseAjaxActions) {
+                        $this->IsModal = false;
+                    }
 
-        // Setup export options
-        $this->setupExportOptions();
-        if ($returnUrl != "") {
-            $this->terminate($returnUrl);
-            return;
+                    // Handle UseAjaxActions with return page
+                    if ($this->UseAjaxActions && GetPageName($returnUrl) != "jdhchiefcomplaintslist") {
+                        Container("flash")->addMessage("Return-Url", $returnUrl); // Save return URL
+                        $returnUrl = "jdhchiefcomplaintslist"; // Return list page content
+                    }
+                    if ($this->getSuccessMessage() == "") {
+                        $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Update success
+                    }
+                    if (IsJsonResponse()) {
+                        $this->terminate(true);
+                        return;
+                    } else {
+                        $this->terminate($returnUrl); // Return to caller
+                        return;
+                    }
+                } elseif (IsApi()) { // API request, return
+                    $this->terminate();
+                    return;
+                } elseif ($this->UseAjaxActions) { // Return JSON error message
+                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                    $this->clearFailureMessage();
+                    $this->terminate();
+                    return;
+                } elseif ($this->getFailureMessage() == $Language->phrase("NoRecord")) {
+                    $this->terminate($returnUrl); // Return to caller
+                    return;
+                } else {
+                    $this->EventCancelled = true; // Event cancelled
+                    $this->restoreFormValues(); // Restore form values if update failed
+                }
         }
 
         // Set up Breadcrumb
-        if (!$this->isExport()) {
-            $this->setupBreadcrumb();
-        }
+        $this->setupBreadcrumb();
 
-        // Render row
-        $this->RowType = ROWTYPE_VIEW;
+        // Render the record
+        $this->RowType = ROWTYPE_EDIT; // Render as Edit
         $this->resetAttributes();
         $this->renderRow();
-
-        // Normal return
-        if (IsApi()) {
-            if (!$this->isExport()) {
-                $row = $this->getRecordsFromRecordset($this->Recordset, true); // Get current record only
-                $this->Recordset->close();
-                WriteJson(["success" => true, "action" => Config("API_VIEW_ACTION"), $this->TableVar => $row]);
-                $this->terminate(true);
-            }
-            return;
-        }
 
         // Set LoginStatus / Page_Rendering / Page_Render
         if (!IsApi() && !$this->isTerminated()) {
@@ -645,108 +674,53 @@ class JdhVitalsView extends JdhVitals
         }
     }
 
-    // Set up other options
-    protected function setupOtherOptions()
+    // Get upload files
+    protected function getUploadFiles()
     {
-        global $Language, $Security;
-
-        // Disable Add/Edit/Copy/Delete for Modal and UseAjaxActions
-        /*
-        if ($this->IsModal && $this->UseAjaxActions) {
-            $this->AddUrl = "";
-            $this->EditUrl = "";
-            $this->CopyUrl = "";
-            $this->DeleteUrl = "";
-        }
-        */
-        $options = &$this->OtherOptions;
-        $option = $options["action"];
-
-        // Add
-        $item = &$option->add("add");
-        $addcaption = HtmlTitle($Language->phrase("ViewPageAddLink"));
-        if ($this->IsModal) {
-            $item->Body = "<a class=\"ew-action ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("ViewPageAddLink") . "</a>";
-        } else {
-            $item->Body = "<a class=\"ew-action ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("ViewPageAddLink") . "</a>";
-        }
-        $item->Visible = $this->AddUrl != "" && $Security->canAdd();
-
-        // Edit
-        $item = &$option->add("edit");
-        $editcaption = HtmlTitle($Language->phrase("ViewPageEditLink"));
-        if ($this->IsModal) {
-            $item->Body = "<a class=\"ew-action ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("ViewPageEditLink") . "</a>";
-        } else {
-            $item->Body = "<a class=\"ew-action ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("ViewPageEditLink") . "</a>";
-        }
-        $item->Visible = $this->EditUrl != "" && $Security->canEdit();
-
-        // Copy
-        $item = &$option->add("copy");
-        $copycaption = HtmlTitle($Language->phrase("ViewPageCopyLink"));
-        if ($this->IsModal) {
-            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
-        } else {
-            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
-        }
-        $item->Visible = $this->CopyUrl != "" && $Security->canAdd();
-
-        // Delete
-        $item = &$option->add("delete");
-        $url = GetUrl($this->DeleteUrl);
-        $item->Body = "<a class=\"ew-action ew-delete\"" .
-            ($this->InlineDelete || $this->IsModal ? " data-ew-action=\"inline-delete\"" : "") .
-            " title=\"" . HtmlTitle($Language->phrase("ViewPageDeleteLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("ViewPageDeleteLink")) .
-            "\" href=\"" . HtmlEncode($url) . "\">" . $Language->phrase("ViewPageDeleteLink") . "</a>";
-        $item->Visible = $this->DeleteUrl != "" && $Security->canDelete();
-
-        // Set up action default
-        $option = $options["action"];
-        $option->DropDownButtonPhrase = $Language->phrase("ButtonActions");
-        $option->UseDropDownButton = !IsJsonResponse() && true;
-        $option->UseButtonGroup = true;
-        $item = &$option->addGroupOption();
-        $item->Body = "";
-        $item->Visible = false;
+        global $CurrentForm, $Language;
     }
 
-    // Load recordset
-    public function loadRecordset($offset = -1, $rowcnt = -1)
+    // Load form values
+    protected function loadFormValues()
     {
-        // Load List page SQL (QueryBuilder)
-        $sql = $this->getListSql();
+        // Load from form
+        global $CurrentForm;
+        $validate = !Config("SERVER_VALIDATE");
 
-        // Load recordset
-        if ($offset > -1) {
-            $sql->setFirstResult($offset);
+        // Check field name 'id' first before field var 'x_id'
+        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
+        if (!$this->id->IsDetailKey) {
+            $this->id->setFormValue($val);
         }
-        if ($rowcnt > 0) {
-            $sql->setMaxResults($rowcnt);
-        }
-        $result = $sql->execute();
-        $rs = new Recordset($result, $sql);
 
-        // Call Recordset Selected event
-        $this->recordsetSelected($rs);
-        return $rs;
+        // Check field name 'patient_id' first before field var 'x_patient_id'
+        $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
+        if (!$this->patient_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->patient_id->Visible = false; // Disable update for API request
+            } else {
+                $this->patient_id->setFormValue($val);
+            }
+        }
+
+        // Check field name 'chief_compaints' first before field var 'x_chief_compaints'
+        $val = $CurrentForm->hasValue("chief_compaints") ? $CurrentForm->getValue("chief_compaints") : $CurrentForm->getValue("x_chief_compaints");
+        if (!$this->chief_compaints->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->chief_compaints->Visible = false; // Disable update for API request
+            } else {
+                $this->chief_compaints->setFormValue($val);
+            }
+        }
     }
 
-    // Load records as associative array
-    public function loadRows($offset = -1, $rowcnt = -1)
+    // Restore form values
+    public function restoreFormValues()
     {
-        // Load List page SQL (QueryBuilder)
-        $sql = $this->getListSql();
-
-        // Load recordset
-        if ($offset > -1) {
-            $sql->setFirstResult($offset);
-        }
-        if ($rowcnt > 0) {
-            $sql->setMaxResults($rowcnt);
-        }
-        $result = $sql->execute();
-        return $result->fetchAllAssociative();
+        global $CurrentForm;
+        $this->id->CurrentValue = $this->id->FormValue;
+        $this->patient_id->CurrentValue = $this->patient_id->FormValue;
+        $this->chief_compaints->CurrentValue = $this->chief_compaints->FormValue;
     }
 
     /**
@@ -796,39 +770,46 @@ class JdhVitalsView extends JdhVitals
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->vitals_id->setDbValue($row['vitals_id']);
+        $this->id->setDbValue($row['id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->pressure->setDbValue($row['pressure']);
-        $this->height->setDbValue($row['height']);
-        $this->weight->setDbValue($row['weight']);
-        $this->body_mass_index->setDbValue($row['body_mass_index']);
-        $this->pulse_rate->setDbValue($row['pulse_rate']);
-        $this->respiratory_rate->setDbValue($row['respiratory_rate']);
-        $this->temperature->setDbValue($row['temperature']);
-        $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
-        $this->spo2->setDbValue($row['spo2']);
-        $this->submission_date->setDbValue($row['submission_date']);
-        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->chief_compaints->setDbValue($row['chief_compaints']);
+        $this->addedby_user_id->setDbValue($row['addedby_user_id']);
+        $this->modifiedby_user_id->setDbValue($row['modifiedby_user_id']);
+        $this->date_created->setDbValue($row['date_created']);
+        $this->date_updated->setDbValue($row['date_updated']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['vitals_id'] = $this->vitals_id->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['pressure'] = $this->pressure->DefaultValue;
-        $row['height'] = $this->height->DefaultValue;
-        $row['weight'] = $this->weight->DefaultValue;
-        $row['body_mass_index'] = $this->body_mass_index->DefaultValue;
-        $row['pulse_rate'] = $this->pulse_rate->DefaultValue;
-        $row['respiratory_rate'] = $this->respiratory_rate->DefaultValue;
-        $row['temperature'] = $this->temperature->DefaultValue;
-        $row['random_blood_sugar'] = $this->random_blood_sugar->DefaultValue;
-        $row['spo2'] = $this->spo2->DefaultValue;
-        $row['submission_date'] = $this->submission_date->DefaultValue;
-        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['chief_compaints'] = $this->chief_compaints->DefaultValue;
+        $row['addedby_user_id'] = $this->addedby_user_id->DefaultValue;
+        $row['modifiedby_user_id'] = $this->modifiedby_user_id->DefaultValue;
+        $row['date_created'] = $this->date_created->DefaultValue;
+        $row['date_updated'] = $this->date_updated->DefaultValue;
         return $row;
+    }
+
+    // Load old record
+    protected function loadOldRecord()
+    {
+        // Load old record
+        if ($this->OldKey != "") {
+            $this->setKey($this->OldKey);
+            $this->CurrentFilter = $this->getRecordFilter();
+            $sql = $this->getCurrentSql();
+            $conn = $this->getConnection();
+            $rs = LoadRecordset($sql, $conn);
+            if ($rs && ($row = $rs->fields)) {
+                $this->loadRowValues($row); // Load row values
+                return $row;
+            }
+        }
+        $this->loadRowValues(); // Load default row values
+        return null;
     }
 
     // Render row values based on field settings
@@ -837,48 +818,37 @@ class JdhVitalsView extends JdhVitals
         global $Security, $Language, $CurrentLanguage;
 
         // Initialize URLs
-        $this->AddUrl = $this->getAddUrl();
-        $this->EditUrl = $this->getEditUrl();
-        $this->CopyUrl = $this->getCopyUrl();
-        $this->DeleteUrl = $this->getDeleteUrl();
-        $this->ListUrl = $this->getListUrl();
-        $this->setupOtherOptions();
 
         // Call Row_Rendering event
         $this->rowRendering();
 
         // Common render codes for all row types
 
-        // vitals_id
+        // id
+        $this->id->RowCssClass = "row";
 
         // patient_id
+        $this->patient_id->RowCssClass = "row";
 
-        // pressure
+        // chief_compaints
+        $this->chief_compaints->RowCssClass = "row";
 
-        // height
+        // addedby_user_id
+        $this->addedby_user_id->RowCssClass = "row";
 
-        // weight
+        // modifiedby_user_id
+        $this->modifiedby_user_id->RowCssClass = "row";
 
-        // body_mass_index
+        // date_created
+        $this->date_created->RowCssClass = "row";
 
-        // pulse_rate
-
-        // respiratory_rate
-
-        // temperature
-
-        // random_blood_sugar
-
-        // spo2
-
-        // submission_date
-
-        // submitted_by_user_id
+        // date_updated
+        $this->date_updated->RowCssClass = "row";
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // vitals_id
-            $this->vitals_id->ViewValue = $this->vitals_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
 
             // patient_id
             $curVal = strval($this->patient_id->CurrentValue);
@@ -903,95 +873,108 @@ class JdhVitalsView extends JdhVitals
                 $this->patient_id->ViewValue = null;
             }
 
-            // pressure
-            $this->pressure->ViewValue = $this->pressure->CurrentValue;
+            // chief_compaints
+            $this->chief_compaints->ViewValue = $this->chief_compaints->CurrentValue;
 
-            // height
-            $this->height->ViewValue = $this->height->CurrentValue;
-            $this->height->ViewValue = FormatNumber($this->height->ViewValue, $this->height->formatPattern());
+            // addedby_user_id
+            $this->addedby_user_id->ViewValue = $this->addedby_user_id->CurrentValue;
+            $this->addedby_user_id->ViewValue = FormatNumber($this->addedby_user_id->ViewValue, $this->addedby_user_id->formatPattern());
 
-            // weight
-            $this->weight->ViewValue = $this->weight->CurrentValue;
-            $this->weight->ViewValue = FormatNumber($this->weight->ViewValue, $this->weight->formatPattern());
+            // modifiedby_user_id
+            $this->modifiedby_user_id->ViewValue = $this->modifiedby_user_id->CurrentValue;
+            $this->modifiedby_user_id->ViewValue = FormatNumber($this->modifiedby_user_id->ViewValue, $this->modifiedby_user_id->formatPattern());
 
-            // body_mass_index
-            $this->body_mass_index->ViewValue = $this->body_mass_index->CurrentValue;
-            $this->body_mass_index->ViewValue = FormatNumber($this->body_mass_index->ViewValue, $this->body_mass_index->formatPattern());
+            // date_created
+            $this->date_created->ViewValue = $this->date_created->CurrentValue;
+            $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
 
-            // pulse_rate
-            $this->pulse_rate->ViewValue = $this->pulse_rate->CurrentValue;
-            $this->pulse_rate->ViewValue = FormatNumber($this->pulse_rate->ViewValue, $this->pulse_rate->formatPattern());
+            // date_updated
+            $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
+            $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
 
-            // respiratory_rate
-            $this->respiratory_rate->ViewValue = $this->respiratory_rate->CurrentValue;
-            $this->respiratory_rate->ViewValue = FormatNumber($this->respiratory_rate->ViewValue, $this->respiratory_rate->formatPattern());
-
-            // temperature
-            $this->temperature->ViewValue = $this->temperature->CurrentValue;
-            $this->temperature->ViewValue = FormatNumber($this->temperature->ViewValue, $this->temperature->formatPattern());
-
-            // random_blood_sugar
-            $this->random_blood_sugar->ViewValue = $this->random_blood_sugar->CurrentValue;
-
-            // spo2
-            $this->spo2->ViewValue = $this->spo2->CurrentValue;
-            $this->spo2->ViewValue = FormatNumber($this->spo2->ViewValue, $this->spo2->formatPattern());
-
-            // submission_date
-            $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
-            $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
-            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
-
-            // vitals_id
-            $this->vitals_id->HrefValue = "";
-            $this->vitals_id->TooltipValue = "";
+            // id
+            $this->id->HrefValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
-            $this->patient_id->TooltipValue = "";
 
-            // pressure
-            $this->pressure->HrefValue = "";
-            $this->pressure->TooltipValue = "";
+            // chief_compaints
+            $this->chief_compaints->HrefValue = "";
+        } elseif ($this->RowType == ROWTYPE_EDIT) {
+            // id
+            $this->id->setupEditAttributes();
+            $this->id->EditValue = $this->id->CurrentValue;
 
-            // height
-            $this->height->HrefValue = "";
-            $this->height->TooltipValue = "";
+            // patient_id
+            $this->patient_id->setupEditAttributes();
+            if ($this->patient_id->getSessionValue() != "") {
+                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
+                $curVal = strval($this->patient_id->CurrentValue);
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                    if ($this->patient_id->ViewValue === null) { // Lookup from database
+                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $conn = Conn();
+                        $config = $conn->getConfiguration();
+                        $config->setResultCacheImpl($this->Cache);
+                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                        $ari = count($rswrk);
+                        if ($ari > 0) { // Lookup values found
+                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
+                        } else {
+                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                        }
+                    }
+                } else {
+                    $this->patient_id->ViewValue = null;
+                }
+            } else {
+                $curVal = trim(strval($this->patient_id->CurrentValue));
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                } else {
+                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
+                }
+                if ($this->patient_id->ViewValue !== null) { // Load from cache
+                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
+                } else { // Lookup from database
+                    if ($curVal == "") {
+                        $filterWrk = "0=1";
+                    } else {
+                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
+                    }
+                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    $arwrk = $rswrk;
+                    $this->patient_id->EditValue = $arwrk;
+                }
+                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+            }
 
-            // weight
-            $this->weight->HrefValue = "";
-            $this->weight->TooltipValue = "";
+            // chief_compaints
+            $this->chief_compaints->setupEditAttributes();
+            $this->chief_compaints->EditValue = HtmlEncode($this->chief_compaints->CurrentValue);
+            $this->chief_compaints->PlaceHolder = RemoveHtml($this->chief_compaints->caption());
 
-            // body_mass_index
-            $this->body_mass_index->HrefValue = "";
-            $this->body_mass_index->TooltipValue = "";
+            // Edit refer script
 
-            // pulse_rate
-            $this->pulse_rate->HrefValue = "";
-            $this->pulse_rate->TooltipValue = "";
+            // id
+            $this->id->HrefValue = "";
 
-            // respiratory_rate
-            $this->respiratory_rate->HrefValue = "";
-            $this->respiratory_rate->TooltipValue = "";
+            // patient_id
+            $this->patient_id->HrefValue = "";
 
-            // temperature
-            $this->temperature->HrefValue = "";
-            $this->temperature->TooltipValue = "";
-
-            // random_blood_sugar
-            $this->random_blood_sugar->HrefValue = "";
-            $this->random_blood_sugar->TooltipValue = "";
-
-            // submission_date
-            $this->submission_date->HrefValue = "";
-            $this->submission_date->TooltipValue = "";
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
-            $this->submitted_by_user_id->TooltipValue = "";
+            // chief_compaints
+            $this->chief_compaints->HrefValue = "";
+        }
+        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+            $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
@@ -1000,180 +983,122 @@ class JdhVitalsView extends JdhVitals
         }
     }
 
-    // Get export HTML tag
-    protected function getExportTag($type, $custom = false)
-    {
-        global $Language;
-        if ($type == "print" || $custom) { // Printer friendly / custom export
-            $pageUrl = $this->pageUrl(true);
-            $exportUrl = GetUrl($pageUrl . "export=" . $type . ($custom ? "&amp;custom=1" : ""));
-        } else { // Export API URL
-            $exportUrl = GetApiUrl(Config("API_EXPORT_ACTION") . "/" . $type . "/" . $this->TableVar);
-            $exportUrl .= "?key=" . $this->getKey(true);
-        }
-        if (SameText($type, "excel")) {
-            if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_vitalsview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
-            } else {
-                return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\">" . $Language->phrase("ExportToExcel") . "</a>";
-            }
-        } elseif (SameText($type, "word")) {
-            if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_vitalsview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
-            } else {
-                return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\">" . $Language->phrase("ExportToWord") . "</a>";
-            }
-        } elseif (SameText($type, "pdf")) {
-            if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_vitalsview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
-            } else {
-                return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\">" . $Language->phrase("ExportToPdf") . "</a>";
-            }
-        } elseif (SameText($type, "html")) {
-            return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-html\" title=\"" . HtmlEncode($Language->phrase("ExportToHtml", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToHtml", true)) . "\">" . $Language->phrase("ExportToHtml") . "</a>";
-        } elseif (SameText($type, "xml")) {
-            return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-xml\" title=\"" . HtmlEncode($Language->phrase("ExportToXml", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToXml", true)) . "\">" . $Language->phrase("ExportToXml") . "</a>";
-        } elseif (SameText($type, "csv")) {
-            return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-csv\" title=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\">" . $Language->phrase("ExportToCsv") . "</a>";
-        } elseif (SameText($type, "email")) {
-            $url = $custom ? ' data-url="' . $exportUrl . '"' : '';
-            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_vitalsview" data-ew-action="email" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-key="' . HtmlEncode(ArrayToJsonAttribute($this->RecKey)) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
-        } elseif (SameText($type, "print")) {
-            return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-print\" title=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\">" . $Language->phrase("PrinterFriendly") . "</a>";
-        }
-    }
-
-    // Set up export options
-    protected function setupExportOptions()
+    // Validate form
+    protected function validateForm()
     {
         global $Language, $Security;
 
-        // Printer friendly
-        $item = &$this->ExportOptions->add("print");
-        $item->Body = $this->getExportTag("print");
-        $item->Visible = true;
-
-        // Export to Excel
-        $item = &$this->ExportOptions->add("excel");
-        $item->Body = $this->getExportTag("excel");
-        $item->Visible = true;
-
-        // Export to Word
-        $item = &$this->ExportOptions->add("word");
-        $item->Body = $this->getExportTag("word");
-        $item->Visible = false;
-
-        // Export to HTML
-        $item = &$this->ExportOptions->add("html");
-        $item->Body = $this->getExportTag("html");
-        $item->Visible = true;
-
-        // Export to XML
-        $item = &$this->ExportOptions->add("xml");
-        $item->Body = $this->getExportTag("xml");
-        $item->Visible = false;
-
-        // Export to CSV
-        $item = &$this->ExportOptions->add("csv");
-        $item->Body = $this->getExportTag("csv");
-        $item->Visible = false;
-
-        // Export to PDF
-        $item = &$this->ExportOptions->add("pdf");
-        $item->Body = $this->getExportTag("pdf");
-        $item->Visible = true;
-
-        // Export to Email
-        $item = &$this->ExportOptions->add("email");
-        $item->Body = $this->getExportTag("email");
-        $item->Visible = true;
-
-        // Drop down button for export
-        $this->ExportOptions->UseButtonGroup = true;
-        $this->ExportOptions->UseDropDownButton = true;
-        if ($this->ExportOptions->UseButtonGroup && IsMobile()) {
-            $this->ExportOptions->UseDropDownButton = true;
+        // Check if validation required
+        if (!Config("SERVER_VALIDATE")) {
+            return true;
         }
-        $this->ExportOptions->DropDownButtonPhrase = $Language->phrase("ButtonExport");
-
-        // Add group option item
-        $item = &$this->ExportOptions->addGroupOption();
-        $item->Body = "";
-        $item->Visible = false;
-
-        // Hide options for export
-        if ($this->isExport()) {
-            $this->ExportOptions->hideAllOptions();
+        $validateForm = true;
+        if ($this->id->Required) {
+            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
+                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
+            }
+        }
+        if ($this->patient_id->Required) {
+            if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
+                $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->chief_compaints->Required) {
+            if (!$this->chief_compaints->IsDetailKey && EmptyValue($this->chief_compaints->FormValue)) {
+                $this->chief_compaints->addErrorMessage(str_replace("%s", $this->chief_compaints->caption(), $this->chief_compaints->RequiredErrorMessage));
+            }
         }
 
-        // Hide options if json response
-        if (IsJsonResponse()) {
-            $this->ExportOptions->hideAllOptions();
+        // Return validate result
+        $validateForm = $validateForm && !$this->hasInvalidFields();
+
+        // Call Form_CustomValidate event
+        $formCustomError = "";
+        $validateForm = $validateForm && $this->formCustomValidate($formCustomError);
+        if ($formCustomError != "") {
+            $this->setFailureMessage($formCustomError);
         }
-        if (!$Security->canExport()) { // Export not allowed
-            $this->ExportOptions->hideAllOptions();
-        }
+        return $validateForm;
     }
 
-    /**
-    * Export data in HTML/CSV/Word/Excel/XML/Email/PDF format
-    *
-    * @param bool $return Return the data rather than output it
-    * @return mixed
-    */
-    public function exportData($doc)
+    // Update record based on key values
+    protected function editRow()
     {
-        global $Language;
-        $utf8 = SameText(Config("PROJECT_CHARSET"), "utf-8");
+        global $Security, $Language;
+        $oldKeyFilter = $this->getRecordFilter();
+        $filter = $this->applyUserIDFilters($oldKeyFilter);
+        $conn = $this->getConnection();
 
-        // Load recordset
-        if (!$this->Recordset) {
-            $this->Recordset = $this->loadRecordset();
-        }
-        $rs = &$this->Recordset;
-        if ($rs) {
-            $this->TotalRecords = $rs->recordCount();
-        }
-        $this->StartRecord = 1;
-        $this->setupStartRecord(); // Set up start record position
-
-        // Set the last record to display
-        if ($this->DisplayRecords <= 0) {
-            $this->StopRecord = $this->TotalRecords;
+        // Load old row
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $rsold = $conn->fetchAssociative($sql);
+        if (!$rsold) {
+            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
+            return false; // Update Failed
         } else {
-            $this->StopRecord = $this->StartRecord + $this->DisplayRecords - 1;
+            // Save old values
+            $this->loadDbValues($rsold);
         }
-        if (!$rs || !$doc) {
-            RemoveHeader("Content-Type"); // Remove header
-            RemoveHeader("Content-Disposition");
-            $this->showMessage();
-            return;
+
+        // Set new row
+        $rsnew = [];
+
+        // patient_id
+        if ($this->patient_id->getSessionValue() != "") {
+            $this->patient_id->ReadOnly = true;
         }
-        $this->StartRecord = 1;
-        $this->StopRecord = $this->DisplayRecords <= 0 ? $this->TotalRecords : $this->DisplayRecords;
+        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, $this->patient_id->ReadOnly);
 
-        // Call Page Exporting server event
-        $doc->ExportCustom = !$this->pageExporting($doc);
+        // chief_compaints
+        $this->chief_compaints->setDbValueDef($rsnew, $this->chief_compaints->CurrentValue, "", $this->chief_compaints->ReadOnly);
 
-        // Page header
-        $header = $this->PageHeader;
-        $this->pageDataRendering($header);
-        $doc->Text .= $header;
-        $this->exportDocument($doc, $rs, $this->StartRecord, $this->StopRecord, "view");
+        // Update current values
+        $this->setCurrentValues($rsnew);
 
-        // Close recordset
-        $rs->close();
+        // Call Row Updating event
+        $updateRow = $this->rowUpdating($rsold, $rsnew);
+        if ($updateRow) {
+            if (count($rsnew) > 0) {
+                $this->CurrentFilter = $filter; // Set up current filter
+                $editRow = $this->update($rsnew, "", $rsold);
+                if (!$editRow && !EmptyValue($this->DbErrorMessage)) { // Show database error
+                    $this->setFailureMessage($this->DbErrorMessage);
+                }
+            } else {
+                $editRow = true; // No field to update
+            }
+            if ($editRow) {
+            }
+        } else {
+            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
+                // Use the message, do nothing
+            } elseif ($this->CancelMessage != "") {
+                $this->setFailureMessage($this->CancelMessage);
+                $this->CancelMessage = "";
+            } else {
+                $this->setFailureMessage($Language->phrase("UpdateCancelled"));
+            }
+            $editRow = false;
+        }
 
-        // Page footer
-        $footer = $this->PageFooter;
-        $this->pageDataRendered($footer);
-        $doc->Text .= $footer;
+        // Call Row_Updated event
+        if ($editRow) {
+            $this->rowUpdated($rsold, $rsnew);
+        }
+        if ($editRow) {
+            if ($this->SendEmail) {
+                $this->sendEmailOnEdit($rsold, $rsnew);
+            }
+        }
 
-        // Export header and footer
-        $doc->exportHeaderAndFooter();
-
-        // Call Page Exported server event
-        $this->pageExported($doc);
+        // Write JSON response
+        if (IsJsonResponse() && $editRow) {
+            $row = $this->getRecordsFromRecordset([$rsnew], true);
+            $table = $this->TableVar;
+            WriteJson(["success" => true, "action" => Config("API_EDIT_ACTION"), $table => $row]);
+        }
+        return $editRow;
     }
 
     // Set up master/detail based on QueryString
@@ -1252,9 +1177,9 @@ class JdhVitalsView extends JdhVitals
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhvitalslist"), "", $this->TableVar, true);
-        $pageId = "view";
-        $Breadcrumb->add("view", $pageId, $url);
+        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhchiefcomplaintslist"), "", $this->TableVar, true);
+        $pageId = "edit";
+        $Breadcrumb->add("edit", $pageId, $url);
     }
 
     // Setup lookup options
@@ -1397,27 +1322,10 @@ class JdhVitalsView extends JdhVitals
         //$content = "<div style=\"break-after:page;\"></div>"; // Modify page break content
     }
 
-    // Page Exporting event
-    // $doc = export object
-    public function pageExporting(&$doc)
+    // Form Custom Validate event
+    public function formCustomValidate(&$customError)
     {
-        //$doc->Text = "my header"; // Export header
-        //return false; // Return false to skip default export and use Row_Export event
-        return true; // Return true to use default export and skip Row_Export event
-    }
-
-    // Row Export event
-    // $doc = export document object
-    public function rowExport($doc, $rs)
-    {
-        //$doc->Text .= "my content"; // Build HTML with field value: $rs["MyField"] or $this->MyField->ViewValue
-    }
-
-    // Page Exported event
-    // $doc = export document object
-    public function pageExported($doc)
-    {
-        //$doc->Text .= "my footer"; // Export footer
-        //Log($doc->Text);
+        // Return error message in $customError
+        return true;
     }
 }

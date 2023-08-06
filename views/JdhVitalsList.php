@@ -28,8 +28,13 @@ loadjs.ready(["wrapper", "head"], function () {
             ["vitals_id", [fields.vitals_id.visible && fields.vitals_id.required ? ew.Validators.required(fields.vitals_id.caption) : null], fields.vitals_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["pressure", [fields.pressure.visible && fields.pressure.required ? ew.Validators.required(fields.pressure.caption) : null], fields.pressure.isInvalid],
-            ["height", [fields.height.visible && fields.height.required ? ew.Validators.required(fields.height.caption) : null, ew.Validators.integer], fields.height.isInvalid],
+            ["height", [fields.height.visible && fields.height.required ? ew.Validators.required(fields.height.caption) : null, ew.Validators.float], fields.height.isInvalid],
             ["weight", [fields.weight.visible && fields.weight.required ? ew.Validators.required(fields.weight.caption) : null, ew.Validators.integer], fields.weight.isInvalid],
+            ["body_mass_index", [fields.body_mass_index.visible && fields.body_mass_index.required ? ew.Validators.required(fields.body_mass_index.caption) : null], fields.body_mass_index.isInvalid],
+            ["pulse_rate", [fields.pulse_rate.visible && fields.pulse_rate.required ? ew.Validators.required(fields.pulse_rate.caption) : null, ew.Validators.integer], fields.pulse_rate.isInvalid],
+            ["respiratory_rate", [fields.respiratory_rate.visible && fields.respiratory_rate.required ? ew.Validators.required(fields.respiratory_rate.caption) : null, ew.Validators.integer], fields.respiratory_rate.isInvalid],
+            ["temperature", [fields.temperature.visible && fields.temperature.required ? ew.Validators.required(fields.temperature.caption) : null, ew.Validators.float], fields.temperature.isInvalid],
+            ["random_blood_sugar", [fields.random_blood_sugar.visible && fields.random_blood_sugar.required ? ew.Validators.required(fields.random_blood_sugar.caption) : null], fields.random_blood_sugar.isInvalid],
             ["submission_date", [fields.submission_date.visible && fields.submission_date.required ? ew.Validators.required(fields.submission_date.caption) : null, ew.Validators.datetime(fields.submission_date.clientFormatPattern)], fields.submission_date.isInvalid]
         ])
 
@@ -203,6 +208,21 @@ $Page->ListOptions->render("header", "left");
 <?php if ($Page->weight->Visible) { // weight ?>
         <th data-name="weight" class="<?= $Page->weight->headerCellClass() ?>"><div id="elh_jdh_vitals_weight" class="jdh_vitals_weight"><?= $Page->renderFieldHeader($Page->weight) ?></div></th>
 <?php } ?>
+<?php if ($Page->body_mass_index->Visible) { // body_mass_index ?>
+        <th data-name="body_mass_index" class="<?= $Page->body_mass_index->headerCellClass() ?>"><div id="elh_jdh_vitals_body_mass_index" class="jdh_vitals_body_mass_index"><?= $Page->renderFieldHeader($Page->body_mass_index) ?></div></th>
+<?php } ?>
+<?php if ($Page->pulse_rate->Visible) { // pulse_rate ?>
+        <th data-name="pulse_rate" class="<?= $Page->pulse_rate->headerCellClass() ?>"><div id="elh_jdh_vitals_pulse_rate" class="jdh_vitals_pulse_rate"><?= $Page->renderFieldHeader($Page->pulse_rate) ?></div></th>
+<?php } ?>
+<?php if ($Page->respiratory_rate->Visible) { // respiratory_rate ?>
+        <th data-name="respiratory_rate" class="<?= $Page->respiratory_rate->headerCellClass() ?>"><div id="elh_jdh_vitals_respiratory_rate" class="jdh_vitals_respiratory_rate"><?= $Page->renderFieldHeader($Page->respiratory_rate) ?></div></th>
+<?php } ?>
+<?php if ($Page->temperature->Visible) { // temperature ?>
+        <th data-name="temperature" class="<?= $Page->temperature->headerCellClass() ?>"><div id="elh_jdh_vitals_temperature" class="jdh_vitals_temperature"><?= $Page->renderFieldHeader($Page->temperature) ?></div></th>
+<?php } ?>
+<?php if ($Page->random_blood_sugar->Visible) { // random_blood_sugar ?>
+        <th data-name="random_blood_sugar" class="<?= $Page->random_blood_sugar->headerCellClass() ?>"><div id="elh_jdh_vitals_random_blood_sugar" class="jdh_vitals_random_blood_sugar"><?= $Page->renderFieldHeader($Page->random_blood_sugar) ?></div></th>
+<?php } ?>
 <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <th data-name="submission_date" class="<?= $Page->submission_date->headerCellClass() ?>"><div id="elh_jdh_vitals_submission_date" class="jdh_vitals_submission_date"><?= $Page->renderFieldHeader($Page->submission_date) ?></div></th>
 <?php } ?>
@@ -337,6 +357,91 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_weight" class="el_jdh_vitals_weight">
 <span<?= $Page->weight->viewAttributes() ?>>
 <?= $Page->weight->getViewValue() ?></span>
+</span>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Page->body_mass_index->Visible) { // body_mass_index ?>
+        <td data-name="body_mass_index"<?= $Page->body_mass_index->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_body_mass_index" class="el_jdh_vitals_body_mass_index">
+<input type="<?= $Page->body_mass_index->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_body_mass_index" id="x<?= $Page->RowIndex ?>_body_mass_index" data-table="jdh_vitals" data-field="x_body_mass_index" value="<?= $Page->body_mass_index->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->body_mass_index->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->body_mass_index->formatPattern()) ?>"<?= $Page->body_mass_index->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->body_mass_index->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_body_mass_index" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_body_mass_index" id="o<?= $Page->RowIndex ?>_body_mass_index" value="<?= HtmlEncode($Page->body_mass_index->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_body_mass_index" class="el_jdh_vitals_body_mass_index">
+<span<?= $Page->body_mass_index->viewAttributes() ?>>
+<?= $Page->body_mass_index->getViewValue() ?></span>
+</span>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Page->pulse_rate->Visible) { // pulse_rate ?>
+        <td data-name="pulse_rate"<?= $Page->pulse_rate->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_pulse_rate" class="el_jdh_vitals_pulse_rate">
+<input type="<?= $Page->pulse_rate->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_pulse_rate" id="x<?= $Page->RowIndex ?>_pulse_rate" data-table="jdh_vitals" data-field="x_pulse_rate" value="<?= $Page->pulse_rate->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->pulse_rate->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->pulse_rate->formatPattern()) ?>"<?= $Page->pulse_rate->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->pulse_rate->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_pulse_rate" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_pulse_rate" id="o<?= $Page->RowIndex ?>_pulse_rate" value="<?= HtmlEncode($Page->pulse_rate->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_pulse_rate" class="el_jdh_vitals_pulse_rate">
+<span<?= $Page->pulse_rate->viewAttributes() ?>>
+<?= $Page->pulse_rate->getViewValue() ?></span>
+</span>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Page->respiratory_rate->Visible) { // respiratory_rate ?>
+        <td data-name="respiratory_rate"<?= $Page->respiratory_rate->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_respiratory_rate" class="el_jdh_vitals_respiratory_rate">
+<input type="<?= $Page->respiratory_rate->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_respiratory_rate" id="x<?= $Page->RowIndex ?>_respiratory_rate" data-table="jdh_vitals" data-field="x_respiratory_rate" value="<?= $Page->respiratory_rate->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->respiratory_rate->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->respiratory_rate->formatPattern()) ?>"<?= $Page->respiratory_rate->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->respiratory_rate->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_respiratory_rate" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_respiratory_rate" id="o<?= $Page->RowIndex ?>_respiratory_rate" value="<?= HtmlEncode($Page->respiratory_rate->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_respiratory_rate" class="el_jdh_vitals_respiratory_rate">
+<span<?= $Page->respiratory_rate->viewAttributes() ?>>
+<?= $Page->respiratory_rate->getViewValue() ?></span>
+</span>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Page->temperature->Visible) { // temperature ?>
+        <td data-name="temperature"<?= $Page->temperature->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_temperature" class="el_jdh_vitals_temperature">
+<input type="<?= $Page->temperature->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_temperature" id="x<?= $Page->RowIndex ?>_temperature" data-table="jdh_vitals" data-field="x_temperature" value="<?= $Page->temperature->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->temperature->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->temperature->formatPattern()) ?>"<?= $Page->temperature->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->temperature->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_temperature" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_temperature" id="o<?= $Page->RowIndex ?>_temperature" value="<?= HtmlEncode($Page->temperature->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_temperature" class="el_jdh_vitals_temperature">
+<span<?= $Page->temperature->viewAttributes() ?>>
+<?= $Page->temperature->getViewValue() ?></span>
+</span>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Page->random_blood_sugar->Visible) { // random_blood_sugar ?>
+        <td data-name="random_blood_sugar"<?= $Page->random_blood_sugar->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_random_blood_sugar" class="el_jdh_vitals_random_blood_sugar">
+<input type="<?= $Page->random_blood_sugar->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_random_blood_sugar" id="x<?= $Page->RowIndex ?>_random_blood_sugar" data-table="jdh_vitals" data-field="x_random_blood_sugar" value="<?= $Page->random_blood_sugar->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Page->random_blood_sugar->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->random_blood_sugar->formatPattern()) ?>"<?= $Page->random_blood_sugar->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->random_blood_sugar->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_random_blood_sugar" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_random_blood_sugar" id="o<?= $Page->RowIndex ?>_random_blood_sugar" value="<?= HtmlEncode($Page->random_blood_sugar->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_random_blood_sugar" class="el_jdh_vitals_random_blood_sugar">
+<span<?= $Page->random_blood_sugar->viewAttributes() ?>>
+<?= $Page->random_blood_sugar->getViewValue() ?></span>
 </span>
 <?php } ?>
 </td>

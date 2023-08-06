@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhPatientCasesDelete extends JdhPatientCases
+class JdhChiefComplaintsDelete extends JdhChiefComplaints
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhPatientCasesDelete extends JdhPatientCases
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhPatientCasesDelete";
+    public $PageObjName = "JdhChiefComplaintsDelete";
 
     // View file path
     public $View = null;
@@ -33,7 +33,15 @@ class JdhPatientCasesDelete extends JdhPatientCases
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "jdhpatientcasesdelete";
+    public $CurrentPageName = "jdhchiefcomplaintsdelete";
+
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
 
     // Page headings
     public $Heading = "";
@@ -118,8 +126,8 @@ class JdhPatientCasesDelete extends JdhPatientCases
     {
         parent::__construct();
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
-        $this->TableVar = 'jdh_patient_cases';
-        $this->TableName = 'jdh_patient_cases';
+        $this->TableVar = 'jdh_chief_complaints';
+        $this->TableName = 'jdh_chief_complaints';
 
         // Table CSS class
         $this->TableClass = "table table-bordered table-hover table-sm ew-table";
@@ -130,14 +138,14 @@ class JdhPatientCasesDelete extends JdhPatientCases
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_patient_cases)
-        if (!isset($GLOBALS["jdh_patient_cases"]) || get_class($GLOBALS["jdh_patient_cases"]) == PROJECT_NAMESPACE . "jdh_patient_cases") {
-            $GLOBALS["jdh_patient_cases"] = &$this;
+        // Table object (jdh_chief_complaints)
+        if (!isset($GLOBALS["jdh_chief_complaints"]) || get_class($GLOBALS["jdh_chief_complaints"]) == PROJECT_NAMESPACE . "jdh_chief_complaints") {
+            $GLOBALS["jdh_chief_complaints"] = &$this;
         }
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_patient_cases');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_chief_complaints');
         }
 
         // Start timer
@@ -322,7 +330,7 @@ class JdhPatientCasesDelete extends JdhPatientCases
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['case_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -335,7 +343,7 @@ class JdhPatientCasesDelete extends JdhPatientCases
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->case_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
     public $DbMasterFilter = "";
@@ -362,16 +370,13 @@ class JdhPatientCasesDelete extends JdhPatientCases
         // View
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->case_id->setVisibility();
+        $this->id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->history->Visible = false;
-        $this->random_blood_sugar->Visible = false;
-        $this->medical_history->Visible = false;
-        $this->family->Visible = false;
-        $this->socio_economic_history->Visible = false;
-        $this->notes->Visible = false;
-        $this->submission_date->setVisibility();
-        $this->submitted_by_user_id->Visible = false;
+        $this->chief_compaints->Visible = false;
+        $this->addedby_user_id->Visible = false;
+        $this->modifiedby_user_id->Visible = false;
+        $this->date_created->setVisibility();
+        $this->date_updated->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -408,7 +413,7 @@ class JdhPatientCasesDelete extends JdhPatientCases
         $this->RecKeys = $this->getRecordKeys(); // Load record keys
         $filter = $this->getFilterFromRecordKeys();
         if ($filter == "") {
-            $this->terminate("jdhpatientcaseslist"); // Prevent SQL injection, return to list
+            $this->terminate("jdhchiefcomplaintslist"); // Prevent SQL injection, return to list
             return;
         }
 
@@ -466,7 +471,7 @@ class JdhPatientCasesDelete extends JdhPatientCases
                 if ($this->Recordset) {
                     $this->Recordset->close();
                 }
-                $this->terminate("jdhpatientcaseslist"); // Return to list
+                $this->terminate("jdhchiefcomplaintslist"); // Return to list
                 return;
             }
         }
@@ -579,32 +584,26 @@ class JdhPatientCasesDelete extends JdhPatientCases
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->case_id->setDbValue($row['case_id']);
+        $this->id->setDbValue($row['id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->history->setDbValue($row['history']);
-        $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
-        $this->medical_history->setDbValue($row['medical_history']);
-        $this->family->setDbValue($row['family']);
-        $this->socio_economic_history->setDbValue($row['socio_economic_history']);
-        $this->notes->setDbValue($row['notes']);
-        $this->submission_date->setDbValue($row['submission_date']);
-        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->chief_compaints->setDbValue($row['chief_compaints']);
+        $this->addedby_user_id->setDbValue($row['addedby_user_id']);
+        $this->modifiedby_user_id->setDbValue($row['modifiedby_user_id']);
+        $this->date_created->setDbValue($row['date_created']);
+        $this->date_updated->setDbValue($row['date_updated']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['case_id'] = $this->case_id->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['history'] = $this->history->DefaultValue;
-        $row['random_blood_sugar'] = $this->random_blood_sugar->DefaultValue;
-        $row['medical_history'] = $this->medical_history->DefaultValue;
-        $row['family'] = $this->family->DefaultValue;
-        $row['socio_economic_history'] = $this->socio_economic_history->DefaultValue;
-        $row['notes'] = $this->notes->DefaultValue;
-        $row['submission_date'] = $this->submission_date->DefaultValue;
-        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['chief_compaints'] = $this->chief_compaints->DefaultValue;
+        $row['addedby_user_id'] = $this->addedby_user_id->DefaultValue;
+        $row['modifiedby_user_id'] = $this->modifiedby_user_id->DefaultValue;
+        $row['date_created'] = $this->date_created->DefaultValue;
+        $row['date_updated'] = $this->date_updated->DefaultValue;
         return $row;
     }
 
@@ -620,30 +619,24 @@ class JdhPatientCasesDelete extends JdhPatientCases
 
         // Common render codes for all row types
 
-        // case_id
+        // id
 
         // patient_id
 
-        // history
+        // chief_compaints
 
-        // random_blood_sugar
+        // addedby_user_id
 
-        // medical_history
+        // modifiedby_user_id
 
-        // family
+        // date_created
 
-        // socio_economic_history
-
-        // notes
-
-        // submission_date
-
-        // submitted_by_user_id
+        // date_updated
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // case_id
-            $this->case_id->ViewValue = $this->case_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
 
             // patient_id
             $curVal = strval($this->patient_id->CurrentValue);
@@ -668,25 +661,37 @@ class JdhPatientCasesDelete extends JdhPatientCases
                 $this->patient_id->ViewValue = null;
             }
 
-            // submission_date
-            $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
-            $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
+            // addedby_user_id
+            $this->addedby_user_id->ViewValue = $this->addedby_user_id->CurrentValue;
+            $this->addedby_user_id->ViewValue = FormatNumber($this->addedby_user_id->ViewValue, $this->addedby_user_id->formatPattern());
 
-            // submitted_by_user_id
-            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
-            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
+            // modifiedby_user_id
+            $this->modifiedby_user_id->ViewValue = $this->modifiedby_user_id->CurrentValue;
+            $this->modifiedby_user_id->ViewValue = FormatNumber($this->modifiedby_user_id->ViewValue, $this->modifiedby_user_id->formatPattern());
 
-            // case_id
-            $this->case_id->HrefValue = "";
-            $this->case_id->TooltipValue = "";
+            // date_created
+            $this->date_created->ViewValue = $this->date_created->CurrentValue;
+            $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
+
+            // date_updated
+            $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
+            $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
+
+            // id
+            $this->id->HrefValue = "";
+            $this->id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
 
-            // submission_date
-            $this->submission_date->HrefValue = "";
-            $this->submission_date->TooltipValue = "";
+            // date_created
+            $this->date_created->HrefValue = "";
+            $this->date_created->TooltipValue = "";
+
+            // date_updated
+            $this->date_updated->HrefValue = "";
+            $this->date_updated->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -713,6 +718,9 @@ class JdhPatientCasesDelete extends JdhPatientCases
         if ($this->UseTransaction) {
             $conn->beginTransaction();
         }
+        if ($this->AuditTrailOnDelete) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
+        }
 
         // Clone old rows
         $rsold = $rows;
@@ -723,7 +731,7 @@ class JdhPatientCasesDelete extends JdhPatientCases
             if ($thisKey != "") {
                 $thisKey .= Config("COMPOSITE_KEY_SEPARATOR");
             }
-            $thisKey .= $row['case_id'];
+            $thisKey .= $row['id'];
 
             // Call row deleting event
             $deleteRow = $this->rowDeleting($row);
@@ -772,9 +780,35 @@ class JdhPatientCasesDelete extends JdhPatientCases
             if (count($failKeys) > 0) {
                 $this->setWarningMessage(str_replace("%k", explode(", ", $failKeys), $Language->phrase("DeleteRecordsFailed")));
             }
+            if ($this->AuditTrailOnDelete) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteSuccess")); // Batch delete success
+            }
+            $table = 'jdh_chief_complaints';
+            $subject = $table . " " . $Language->phrase("RecordDeleted");
+            $action = $Language->phrase("ActionDeleted");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", implode(", ", $successKeys));
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rs"] = &$rsold;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
         } else {
             if ($this->UseTransaction) { // Rollback transaction
                 $conn->rollback();
+            }
+            if ($this->AuditTrailOnDelete) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteRollback")); // Batch delete rollback
             }
         }
 
@@ -865,7 +899,7 @@ class JdhPatientCasesDelete extends JdhPatientCases
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhpatientcaseslist"), "", $this->TableVar, true);
+        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhchiefcomplaintslist"), "", $this->TableVar, true);
         $pageId = "delete";
         $Breadcrumb->add("delete", $pageId, $url);
     }

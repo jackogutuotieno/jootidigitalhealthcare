@@ -10,18 +10,18 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhVitalsEdit extends JdhVitals
+class JdhChiefComplaintsAdd extends JdhChiefComplaints
 {
     use MessagesTrait;
 
     // Page ID
-    public $PageID = "edit";
+    public $PageID = "add";
 
     // Project ID
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhVitalsEdit";
+    public $PageObjName = "JdhChiefComplaintsAdd";
 
     // View file path
     public $View = null;
@@ -33,7 +33,15 @@ class JdhVitalsEdit extends JdhVitals
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "jdhvitalsedit";
+    public $CurrentPageName = "jdhchiefcomplaintsadd";
+
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
 
     // Page headings
     public $Heading = "";
@@ -118,11 +126,11 @@ class JdhVitalsEdit extends JdhVitals
     {
         parent::__construct();
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
-        $this->TableVar = 'jdh_vitals';
-        $this->TableName = 'jdh_vitals';
+        $this->TableVar = 'jdh_chief_complaints';
+        $this->TableName = 'jdh_chief_complaints';
 
         // Table CSS class
-        $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-desktop-table ew-edit-table";
+        $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-desktop-table ew-add-table";
 
         // Initialize
         $GLOBALS["Page"] = &$this;
@@ -130,14 +138,14 @@ class JdhVitalsEdit extends JdhVitals
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_vitals)
-        if (!isset($GLOBALS["jdh_vitals"]) || get_class($GLOBALS["jdh_vitals"]) == PROJECT_NAMESPACE . "jdh_vitals") {
-            $GLOBALS["jdh_vitals"] = &$this;
+        // Table object (jdh_chief_complaints)
+        if (!isset($GLOBALS["jdh_chief_complaints"]) || get_class($GLOBALS["jdh_chief_complaints"]) == PROJECT_NAMESPACE . "jdh_chief_complaints") {
+            $GLOBALS["jdh_chief_complaints"] = &$this;
         }
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_vitals');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_chief_complaints');
         }
 
         // Start timer
@@ -248,7 +256,7 @@ class JdhVitalsEdit extends JdhVitals
                 $pageName = GetPageName($url);
                 if ($pageName != $this->getListUrl()) { // Not List page => View page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhvitalsview"; // If View page, no primary button
+                    $result["view"] = $pageName == "jdhchiefcomplaintsview"; // If View page, no primary button
                 } else { // List page
                     // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
@@ -338,7 +346,7 @@ class JdhVitalsEdit extends JdhVitals
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['vitals_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -351,7 +359,7 @@ class JdhVitalsEdit extends JdhVitals
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->vitals_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
 
@@ -424,20 +432,14 @@ class JdhVitalsEdit extends JdhVitals
         }
         return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
     }
-
-    // Properties
-    public $FormClassName = "ew-form ew-edit-form overlay-wrapper";
+    public $FormClassName = "ew-form ew-add-form";
     public $IsModal = false;
     public $IsMobileOrModal = false;
-    public $DbMasterFilter;
-    public $DbDetailFilter;
-    public $HashValue; // Hash Value
-    public $DisplayRecords = 1;
+    public $DbMasterFilter = "";
+    public $DbDetailFilter = "";
     public $StartRecord;
-    public $StopRecord;
-    public $TotalRecords = 0;
-    public $RecordRange = 10;
-    public $RecordCount;
+    public $Priv = 0;
+    public $CopyRecord;
 
     /**
      * Page run
@@ -461,19 +463,13 @@ class JdhVitalsEdit extends JdhVitals
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->vitals_id->setVisibility();
+        $this->id->Visible = false;
         $this->patient_id->setVisibility();
-        $this->pressure->setVisibility();
-        $this->height->setVisibility();
-        $this->weight->setVisibility();
-        $this->body_mass_index->Visible = false;
-        $this->pulse_rate->setVisibility();
-        $this->respiratory_rate->setVisibility();
-        $this->temperature->setVisibility();
-        $this->random_blood_sugar->setVisibility();
-        $this->spo2->Visible = false;
-        $this->submission_date->Visible = false;
-        $this->submitted_by_user_id->setVisibility();
+        $this->chief_compaints->setVisibility();
+        $this->addedby_user_id->Visible = false;
+        $this->modifiedby_user_id->Visible = false;
+        $this->date_created->Visible = false;
+        $this->date_updated->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -500,128 +496,102 @@ class JdhVitalsEdit extends JdhVitals
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
 
+        // Load default values for add
+        $this->loadDefaultValues();
+
         // Check modal
         if ($this->IsModal) {
             $SkipHeaderFooter = true;
         }
         $this->IsMobileOrModal = IsMobile() || $this->IsModal;
-        $loaded = false;
         $postBack = false;
 
-        // Set up current action and primary key
+        // Set up current action
         if (IsApi()) {
-            // Load key values
-            $loaded = true;
-            if (($keyValue = Get("vitals_id") ?? Key(0) ?? Route(2)) !== null) {
-                $this->vitals_id->setQueryStringValue($keyValue);
-                $this->vitals_id->setOldValue($this->vitals_id->QueryStringValue);
-            } elseif (Post("vitals_id") !== null) {
-                $this->vitals_id->setFormValue(Post("vitals_id"));
-                $this->vitals_id->setOldValue($this->vitals_id->FormValue);
-            } else {
-                $loaded = false; // Unable to load key
-            }
-
-            // Load record
-            if ($loaded) {
-                $loaded = $this->loadRow();
-            }
-            if (!$loaded) {
-                $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
-                $this->terminate();
-                return;
-            }
-            $this->CurrentAction = "update"; // Update record directly
-            $this->OldKey = $this->getKey(true); // Get from CurrentValue
+            $this->CurrentAction = "insert"; // Add record directly
+            $postBack = true;
+        } elseif (Post("action") !== null) {
+            $this->CurrentAction = Post("action"); // Get form action
+            $this->setKey(Post($this->OldKeyName));
             $postBack = true;
         } else {
-            if (Post("action") !== null) {
-                $this->CurrentAction = Post("action"); // Get action code
-                if (!$this->isShow()) { // Not reload record, handle as postback
-                    $postBack = true;
-                }
-
-                // Get key from Form
-                $this->setKey(Post($this->OldKeyName), $this->isShow());
-            } else {
-                $this->CurrentAction = "show"; // Default action is display
-
-                // Load key from QueryString
-                $loadByQuery = false;
-                if (($keyValue = Get("vitals_id") ?? Route("vitals_id")) !== null) {
-                    $this->vitals_id->setQueryStringValue($keyValue);
-                    $loadByQuery = true;
-                } else {
-                    $this->vitals_id->CurrentValue = null;
-                }
+            // Load key values from QueryString
+            if (($keyValue = Get("id") ?? Route("id")) !== null) {
+                $this->id->setQueryStringValue($keyValue);
             }
-
-            // Set up master detail parameters
-            $this->setupMasterParms();
-
-            // Load recordset
-            if ($this->isShow()) {
-                    // Load current record
-                    $loaded = $this->loadRow();
-                $this->OldKey = $loaded ? $this->getKey(true) : ""; // Get from CurrentValue
+            $this->OldKey = $this->getKey(true); // Get from CurrentValue
+            $this->CopyRecord = !EmptyValue($this->OldKey);
+            if ($this->CopyRecord) {
+                $this->CurrentAction = "copy"; // Copy record
+            } else {
+                $this->CurrentAction = "show"; // Display blank record
             }
         }
 
-        // Process form if post back
+        // Load old record or default values
+        $rsold = $this->loadOldRecord();
+
+        // Set up master/detail parameters
+        // NOTE: Must be after loadOldRecord to prevent master key values being overwritten
+        $this->setupMasterParms();
+
+        // Load form values
         if ($postBack) {
-            $this->loadFormValues(); // Get form values
+            $this->loadFormValues(); // Load form values
         }
 
         // Validate form if post back
         if ($postBack) {
             if (!$this->validateForm()) {
                 $this->EventCancelled = true; // Event cancelled
-                $this->restoreFormValues();
+                $this->restoreFormValues(); // Restore form values
                 if (IsApi()) {
                     $this->terminate();
                     return;
                 } else {
-                    $this->CurrentAction = ""; // Form error, reset action
+                    $this->CurrentAction = "show"; // Form error, reset action
                 }
             }
         }
 
         // Perform current action
         switch ($this->CurrentAction) {
-            case "show": // Get a record to display
-                    if (!$loaded) { // Load record based on key
-                        if ($this->getFailureMessage() == "") {
-                            $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
-                        }
-                        $this->terminate("jdhvitalslist"); // No matching record, return to list
-                        return;
+            case "copy": // Copy an existing record
+                if (!$rsold) { // Record not loaded
+                    if ($this->getFailureMessage() == "") {
+                        $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
                     }
-                break;
-            case "update": // Update
-                $returnUrl = $this->getReturnUrl();
-                if (GetPageName($returnUrl) == "jdhvitalslist") {
-                    $returnUrl = $this->addMasterUrl($returnUrl); // List page, return to List page with correct master key if necessary
+                    $this->terminate("jdhchiefcomplaintslist"); // No matching record, return to list
+                    return;
                 }
-                $this->SendEmail = true; // Send email on update success
-                if ($this->editRow()) {
+                break;
+            case "insert": // Add new record
+                $this->SendEmail = true; // Send email on add success
+                if ($this->addRow($rsold)) {
                     // Do not return Json for UseAjaxActions
                     if ($this->IsModal && $this->UseAjaxActions) {
                         $this->IsModal = false;
                     }
+                    if ($this->getSuccessMessage() == "" && Post("addopt") != "1") { // Skip success message for addopt (done in JavaScript)
+                        $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up success message
+                    }
+                    $returnUrl = $this->getReturnUrl();
+                    if (GetPageName($returnUrl) == "jdhchiefcomplaintslist") {
+                        $returnUrl = $this->addMasterUrl($returnUrl); // List page, return to List page with correct master key if necessary
+                    } elseif (GetPageName($returnUrl) == "jdhchiefcomplaintsview") {
+                        $returnUrl = $this->getViewUrl(); // View page, return to View page with keyurl directly
+                    }
 
                     // Handle UseAjaxActions with return page
-                    if ($this->UseAjaxActions && GetPageName($returnUrl) != "jdhvitalslist") {
+                    if ($this->UseAjaxActions && GetPageName($returnUrl) != "jdhchiefcomplaintslist") {
                         Container("flash")->addMessage("Return-Url", $returnUrl); // Save return URL
-                        $returnUrl = "jdhvitalslist"; // Return list page content
+                        $returnUrl = "jdhchiefcomplaintslist"; // Return list page content
                     }
-                    if ($this->getSuccessMessage() == "") {
-                        $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Update success
-                    }
-                    if (IsJsonResponse()) {
+                    if (IsJsonResponse()) { // Return to caller
                         $this->terminate(true);
                         return;
                     } else {
-                        $this->terminate($returnUrl); // Return to caller
+                        $this->terminate($returnUrl);
                         return;
                     }
                 } elseif (IsApi()) { // API request, return
@@ -632,20 +602,19 @@ class JdhVitalsEdit extends JdhVitals
                     $this->clearFailureMessage();
                     $this->terminate();
                     return;
-                } elseif ($this->getFailureMessage() == $Language->phrase("NoRecord")) {
-                    $this->terminate($returnUrl); // Return to caller
-                    return;
                 } else {
                     $this->EventCancelled = true; // Event cancelled
-                    $this->restoreFormValues(); // Restore form values if update failed
+                    $this->restoreFormValues(); // Add failed, restore form values
                 }
         }
 
         // Set up Breadcrumb
         $this->setupBreadcrumb();
 
-        // Render the record
-        $this->RowType = ROWTYPE_EDIT; // Render as Edit
+        // Render row based on row type
+        $this->RowType = ROWTYPE_ADD; // Render add type
+
+        // Render row
         $this->resetAttributes();
         $this->renderRow();
 
@@ -678,18 +647,17 @@ class JdhVitalsEdit extends JdhVitals
         global $CurrentForm, $Language;
     }
 
+    // Load default values
+    protected function loadDefaultValues()
+    {
+    }
+
     // Load form values
     protected function loadFormValues()
     {
         // Load from form
         global $CurrentForm;
         $validate = !Config("SERVER_VALIDATE");
-
-        // Check field name 'vitals_id' first before field var 'x_vitals_id'
-        $val = $CurrentForm->hasValue("vitals_id") ? $CurrentForm->getValue("vitals_id") : $CurrentForm->getValue("x_vitals_id");
-        if (!$this->vitals_id->IsDetailKey) {
-            $this->vitals_id->setFormValue($val);
-        }
 
         // Check field name 'patient_id' first before field var 'x_patient_id'
         $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
@@ -701,101 +669,26 @@ class JdhVitalsEdit extends JdhVitals
             }
         }
 
-        // Check field name 'pressure' first before field var 'x_pressure'
-        $val = $CurrentForm->hasValue("pressure") ? $CurrentForm->getValue("pressure") : $CurrentForm->getValue("x_pressure");
-        if (!$this->pressure->IsDetailKey) {
+        // Check field name 'chief_compaints' first before field var 'x_chief_compaints'
+        $val = $CurrentForm->hasValue("chief_compaints") ? $CurrentForm->getValue("chief_compaints") : $CurrentForm->getValue("x_chief_compaints");
+        if (!$this->chief_compaints->IsDetailKey) {
             if (IsApi() && $val === null) {
-                $this->pressure->Visible = false; // Disable update for API request
+                $this->chief_compaints->Visible = false; // Disable update for API request
             } else {
-                $this->pressure->setFormValue($val);
+                $this->chief_compaints->setFormValue($val);
             }
         }
 
-        // Check field name 'height' first before field var 'x_height'
-        $val = $CurrentForm->hasValue("height") ? $CurrentForm->getValue("height") : $CurrentForm->getValue("x_height");
-        if (!$this->height->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->height->Visible = false; // Disable update for API request
-            } else {
-                $this->height->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'weight' first before field var 'x_weight'
-        $val = $CurrentForm->hasValue("weight") ? $CurrentForm->getValue("weight") : $CurrentForm->getValue("x_weight");
-        if (!$this->weight->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->weight->Visible = false; // Disable update for API request
-            } else {
-                $this->weight->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'pulse_rate' first before field var 'x_pulse_rate'
-        $val = $CurrentForm->hasValue("pulse_rate") ? $CurrentForm->getValue("pulse_rate") : $CurrentForm->getValue("x_pulse_rate");
-        if (!$this->pulse_rate->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->pulse_rate->Visible = false; // Disable update for API request
-            } else {
-                $this->pulse_rate->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'respiratory_rate' first before field var 'x_respiratory_rate'
-        $val = $CurrentForm->hasValue("respiratory_rate") ? $CurrentForm->getValue("respiratory_rate") : $CurrentForm->getValue("x_respiratory_rate");
-        if (!$this->respiratory_rate->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->respiratory_rate->Visible = false; // Disable update for API request
-            } else {
-                $this->respiratory_rate->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'temperature' first before field var 'x_temperature'
-        $val = $CurrentForm->hasValue("temperature") ? $CurrentForm->getValue("temperature") : $CurrentForm->getValue("x_temperature");
-        if (!$this->temperature->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->temperature->Visible = false; // Disable update for API request
-            } else {
-                $this->temperature->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'random_blood_sugar' first before field var 'x_random_blood_sugar'
-        $val = $CurrentForm->hasValue("random_blood_sugar") ? $CurrentForm->getValue("random_blood_sugar") : $CurrentForm->getValue("x_random_blood_sugar");
-        if (!$this->random_blood_sugar->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->random_blood_sugar->Visible = false; // Disable update for API request
-            } else {
-                $this->random_blood_sugar->setFormValue($val);
-            }
-        }
-
-        // Check field name 'submitted_by_user_id' first before field var 'x_submitted_by_user_id'
-        $val = $CurrentForm->hasValue("submitted_by_user_id") ? $CurrentForm->getValue("submitted_by_user_id") : $CurrentForm->getValue("x_submitted_by_user_id");
-        if (!$this->submitted_by_user_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->submitted_by_user_id->Visible = false; // Disable update for API request
-            } else {
-                $this->submitted_by_user_id->setFormValue($val);
-            }
-        }
+        // Check field name 'id' first before field var 'x_id'
+        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
     }
 
     // Restore form values
     public function restoreFormValues()
     {
         global $CurrentForm;
-        $this->vitals_id->CurrentValue = $this->vitals_id->FormValue;
         $this->patient_id->CurrentValue = $this->patient_id->FormValue;
-        $this->pressure->CurrentValue = $this->pressure->FormValue;
-        $this->height->CurrentValue = $this->height->FormValue;
-        $this->weight->CurrentValue = $this->weight->FormValue;
-        $this->pulse_rate->CurrentValue = $this->pulse_rate->FormValue;
-        $this->respiratory_rate->CurrentValue = $this->respiratory_rate->FormValue;
-        $this->temperature->CurrentValue = $this->temperature->FormValue;
-        $this->random_blood_sugar->CurrentValue = $this->random_blood_sugar->FormValue;
-        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->FormValue;
+        $this->chief_compaints->CurrentValue = $this->chief_compaints->FormValue;
     }
 
     /**
@@ -845,38 +738,26 @@ class JdhVitalsEdit extends JdhVitals
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->vitals_id->setDbValue($row['vitals_id']);
+        $this->id->setDbValue($row['id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->pressure->setDbValue($row['pressure']);
-        $this->height->setDbValue($row['height']);
-        $this->weight->setDbValue($row['weight']);
-        $this->body_mass_index->setDbValue($row['body_mass_index']);
-        $this->pulse_rate->setDbValue($row['pulse_rate']);
-        $this->respiratory_rate->setDbValue($row['respiratory_rate']);
-        $this->temperature->setDbValue($row['temperature']);
-        $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
-        $this->spo2->setDbValue($row['spo2']);
-        $this->submission_date->setDbValue($row['submission_date']);
-        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->chief_compaints->setDbValue($row['chief_compaints']);
+        $this->addedby_user_id->setDbValue($row['addedby_user_id']);
+        $this->modifiedby_user_id->setDbValue($row['modifiedby_user_id']);
+        $this->date_created->setDbValue($row['date_created']);
+        $this->date_updated->setDbValue($row['date_updated']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['vitals_id'] = $this->vitals_id->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['pressure'] = $this->pressure->DefaultValue;
-        $row['height'] = $this->height->DefaultValue;
-        $row['weight'] = $this->weight->DefaultValue;
-        $row['body_mass_index'] = $this->body_mass_index->DefaultValue;
-        $row['pulse_rate'] = $this->pulse_rate->DefaultValue;
-        $row['respiratory_rate'] = $this->respiratory_rate->DefaultValue;
-        $row['temperature'] = $this->temperature->DefaultValue;
-        $row['random_blood_sugar'] = $this->random_blood_sugar->DefaultValue;
-        $row['spo2'] = $this->spo2->DefaultValue;
-        $row['submission_date'] = $this->submission_date->DefaultValue;
-        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['chief_compaints'] = $this->chief_compaints->DefaultValue;
+        $row['addedby_user_id'] = $this->addedby_user_id->DefaultValue;
+        $row['modifiedby_user_id'] = $this->modifiedby_user_id->DefaultValue;
+        $row['date_created'] = $this->date_created->DefaultValue;
+        $row['date_updated'] = $this->date_updated->DefaultValue;
         return $row;
     }
 
@@ -911,49 +792,31 @@ class JdhVitalsEdit extends JdhVitals
 
         // Common render codes for all row types
 
-        // vitals_id
-        $this->vitals_id->RowCssClass = "row";
+        // id
+        $this->id->RowCssClass = "row";
 
         // patient_id
         $this->patient_id->RowCssClass = "row";
 
-        // pressure
-        $this->pressure->RowCssClass = "row";
+        // chief_compaints
+        $this->chief_compaints->RowCssClass = "row";
 
-        // height
-        $this->height->RowCssClass = "row";
+        // addedby_user_id
+        $this->addedby_user_id->RowCssClass = "row";
 
-        // weight
-        $this->weight->RowCssClass = "row";
+        // modifiedby_user_id
+        $this->modifiedby_user_id->RowCssClass = "row";
 
-        // body_mass_index
-        $this->body_mass_index->RowCssClass = "row";
+        // date_created
+        $this->date_created->RowCssClass = "row";
 
-        // pulse_rate
-        $this->pulse_rate->RowCssClass = "row";
-
-        // respiratory_rate
-        $this->respiratory_rate->RowCssClass = "row";
-
-        // temperature
-        $this->temperature->RowCssClass = "row";
-
-        // random_blood_sugar
-        $this->random_blood_sugar->RowCssClass = "row";
-
-        // spo2
-        $this->spo2->RowCssClass = "row";
-
-        // submission_date
-        $this->submission_date->RowCssClass = "row";
-
-        // submitted_by_user_id
-        $this->submitted_by_user_id->RowCssClass = "row";
+        // date_updated
+        $this->date_updated->RowCssClass = "row";
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // vitals_id
-            $this->vitals_id->ViewValue = $this->vitals_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
 
             // patient_id
             $curVal = strval($this->patient_id->CurrentValue);
@@ -978,82 +841,31 @@ class JdhVitalsEdit extends JdhVitals
                 $this->patient_id->ViewValue = null;
             }
 
-            // pressure
-            $this->pressure->ViewValue = $this->pressure->CurrentValue;
+            // chief_compaints
+            $this->chief_compaints->ViewValue = $this->chief_compaints->CurrentValue;
 
-            // height
-            $this->height->ViewValue = $this->height->CurrentValue;
-            $this->height->ViewValue = FormatNumber($this->height->ViewValue, $this->height->formatPattern());
+            // addedby_user_id
+            $this->addedby_user_id->ViewValue = $this->addedby_user_id->CurrentValue;
+            $this->addedby_user_id->ViewValue = FormatNumber($this->addedby_user_id->ViewValue, $this->addedby_user_id->formatPattern());
 
-            // weight
-            $this->weight->ViewValue = $this->weight->CurrentValue;
-            $this->weight->ViewValue = FormatNumber($this->weight->ViewValue, $this->weight->formatPattern());
+            // modifiedby_user_id
+            $this->modifiedby_user_id->ViewValue = $this->modifiedby_user_id->CurrentValue;
+            $this->modifiedby_user_id->ViewValue = FormatNumber($this->modifiedby_user_id->ViewValue, $this->modifiedby_user_id->formatPattern());
 
-            // body_mass_index
-            $this->body_mass_index->ViewValue = $this->body_mass_index->CurrentValue;
-            $this->body_mass_index->ViewValue = FormatNumber($this->body_mass_index->ViewValue, $this->body_mass_index->formatPattern());
+            // date_created
+            $this->date_created->ViewValue = $this->date_created->CurrentValue;
+            $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
 
-            // pulse_rate
-            $this->pulse_rate->ViewValue = $this->pulse_rate->CurrentValue;
-            $this->pulse_rate->ViewValue = FormatNumber($this->pulse_rate->ViewValue, $this->pulse_rate->formatPattern());
-
-            // respiratory_rate
-            $this->respiratory_rate->ViewValue = $this->respiratory_rate->CurrentValue;
-            $this->respiratory_rate->ViewValue = FormatNumber($this->respiratory_rate->ViewValue, $this->respiratory_rate->formatPattern());
-
-            // temperature
-            $this->temperature->ViewValue = $this->temperature->CurrentValue;
-            $this->temperature->ViewValue = FormatNumber($this->temperature->ViewValue, $this->temperature->formatPattern());
-
-            // random_blood_sugar
-            $this->random_blood_sugar->ViewValue = $this->random_blood_sugar->CurrentValue;
-
-            // spo2
-            $this->spo2->ViewValue = $this->spo2->CurrentValue;
-            $this->spo2->ViewValue = FormatNumber($this->spo2->ViewValue, $this->spo2->formatPattern());
-
-            // submission_date
-            $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
-            $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
-            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
-
-            // vitals_id
-            $this->vitals_id->HrefValue = "";
+            // date_updated
+            $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
+            $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
 
             // patient_id
             $this->patient_id->HrefValue = "";
 
-            // pressure
-            $this->pressure->HrefValue = "";
-
-            // height
-            $this->height->HrefValue = "";
-
-            // weight
-            $this->weight->HrefValue = "";
-
-            // pulse_rate
-            $this->pulse_rate->HrefValue = "";
-
-            // respiratory_rate
-            $this->respiratory_rate->HrefValue = "";
-
-            // temperature
-            $this->temperature->HrefValue = "";
-
-            // random_blood_sugar
-            $this->random_blood_sugar->HrefValue = "";
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // vitals_id
-            $this->vitals_id->setupEditAttributes();
-            $this->vitals_id->EditValue = $this->vitals_id->CurrentValue;
-
+            // chief_compaints
+            $this->chief_compaints->HrefValue = "";
+        } elseif ($this->RowType == ROWTYPE_ADD) {
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -1106,95 +918,18 @@ class JdhVitalsEdit extends JdhVitals
                 $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
             }
 
-            // pressure
-            $this->pressure->setupEditAttributes();
-            if (!$this->pressure->Raw) {
-                $this->pressure->CurrentValue = HtmlDecode($this->pressure->CurrentValue);
-            }
-            $this->pressure->EditValue = HtmlEncode($this->pressure->CurrentValue);
-            $this->pressure->PlaceHolder = RemoveHtml($this->pressure->caption());
+            // chief_compaints
+            $this->chief_compaints->setupEditAttributes();
+            $this->chief_compaints->EditValue = HtmlEncode($this->chief_compaints->CurrentValue);
+            $this->chief_compaints->PlaceHolder = RemoveHtml($this->chief_compaints->caption());
 
-            // height
-            $this->height->setupEditAttributes();
-            $this->height->EditValue = HtmlEncode($this->height->CurrentValue);
-            $this->height->PlaceHolder = RemoveHtml($this->height->caption());
-            if (strval($this->height->EditValue) != "" && is_numeric($this->height->EditValue)) {
-                $this->height->EditValue = FormatNumber($this->height->EditValue, null);
-            }
-
-            // weight
-            $this->weight->setupEditAttributes();
-            $this->weight->EditValue = HtmlEncode($this->weight->CurrentValue);
-            $this->weight->PlaceHolder = RemoveHtml($this->weight->caption());
-            if (strval($this->weight->EditValue) != "" && is_numeric($this->weight->EditValue)) {
-                $this->weight->EditValue = FormatNumber($this->weight->EditValue, null);
-            }
-
-            // pulse_rate
-            $this->pulse_rate->setupEditAttributes();
-            $this->pulse_rate->EditValue = HtmlEncode($this->pulse_rate->CurrentValue);
-            $this->pulse_rate->PlaceHolder = RemoveHtml($this->pulse_rate->caption());
-            if (strval($this->pulse_rate->EditValue) != "" && is_numeric($this->pulse_rate->EditValue)) {
-                $this->pulse_rate->EditValue = FormatNumber($this->pulse_rate->EditValue, null);
-            }
-
-            // respiratory_rate
-            $this->respiratory_rate->setupEditAttributes();
-            $this->respiratory_rate->EditValue = HtmlEncode($this->respiratory_rate->CurrentValue);
-            $this->respiratory_rate->PlaceHolder = RemoveHtml($this->respiratory_rate->caption());
-            if (strval($this->respiratory_rate->EditValue) != "" && is_numeric($this->respiratory_rate->EditValue)) {
-                $this->respiratory_rate->EditValue = FormatNumber($this->respiratory_rate->EditValue, null);
-            }
-
-            // temperature
-            $this->temperature->setupEditAttributes();
-            $this->temperature->EditValue = HtmlEncode($this->temperature->CurrentValue);
-            $this->temperature->PlaceHolder = RemoveHtml($this->temperature->caption());
-            if (strval($this->temperature->EditValue) != "" && is_numeric($this->temperature->EditValue)) {
-                $this->temperature->EditValue = FormatNumber($this->temperature->EditValue, null);
-            }
-
-            // random_blood_sugar
-            $this->random_blood_sugar->setupEditAttributes();
-            if (!$this->random_blood_sugar->Raw) {
-                $this->random_blood_sugar->CurrentValue = HtmlDecode($this->random_blood_sugar->CurrentValue);
-            }
-            $this->random_blood_sugar->EditValue = HtmlEncode($this->random_blood_sugar->CurrentValue);
-            $this->random_blood_sugar->PlaceHolder = RemoveHtml($this->random_blood_sugar->caption());
-
-            // submitted_by_user_id
-
-            // Edit refer script
-
-            // vitals_id
-            $this->vitals_id->HrefValue = "";
+            // Add refer script
 
             // patient_id
             $this->patient_id->HrefValue = "";
 
-            // pressure
-            $this->pressure->HrefValue = "";
-
-            // height
-            $this->height->HrefValue = "";
-
-            // weight
-            $this->weight->HrefValue = "";
-
-            // pulse_rate
-            $this->pulse_rate->HrefValue = "";
-
-            // respiratory_rate
-            $this->respiratory_rate->HrefValue = "";
-
-            // temperature
-            $this->temperature->HrefValue = "";
-
-            // random_blood_sugar
-            $this->random_blood_sugar->HrefValue = "";
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
+            // chief_compaints
+            $this->chief_compaints->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -1216,69 +951,14 @@ class JdhVitalsEdit extends JdhVitals
             return true;
         }
         $validateForm = true;
-        if ($this->vitals_id->Required) {
-            if (!$this->vitals_id->IsDetailKey && EmptyValue($this->vitals_id->FormValue)) {
-                $this->vitals_id->addErrorMessage(str_replace("%s", $this->vitals_id->caption(), $this->vitals_id->RequiredErrorMessage));
-            }
-        }
         if ($this->patient_id->Required) {
             if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
                 $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
             }
         }
-        if ($this->pressure->Required) {
-            if (!$this->pressure->IsDetailKey && EmptyValue($this->pressure->FormValue)) {
-                $this->pressure->addErrorMessage(str_replace("%s", $this->pressure->caption(), $this->pressure->RequiredErrorMessage));
-            }
-        }
-        if ($this->height->Required) {
-            if (!$this->height->IsDetailKey && EmptyValue($this->height->FormValue)) {
-                $this->height->addErrorMessage(str_replace("%s", $this->height->caption(), $this->height->RequiredErrorMessage));
-            }
-        }
-        if (!CheckNumber($this->height->FormValue)) {
-            $this->height->addErrorMessage($this->height->getErrorMessage(false));
-        }
-        if ($this->weight->Required) {
-            if (!$this->weight->IsDetailKey && EmptyValue($this->weight->FormValue)) {
-                $this->weight->addErrorMessage(str_replace("%s", $this->weight->caption(), $this->weight->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->weight->FormValue)) {
-            $this->weight->addErrorMessage($this->weight->getErrorMessage(false));
-        }
-        if ($this->pulse_rate->Required) {
-            if (!$this->pulse_rate->IsDetailKey && EmptyValue($this->pulse_rate->FormValue)) {
-                $this->pulse_rate->addErrorMessage(str_replace("%s", $this->pulse_rate->caption(), $this->pulse_rate->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->pulse_rate->FormValue)) {
-            $this->pulse_rate->addErrorMessage($this->pulse_rate->getErrorMessage(false));
-        }
-        if ($this->respiratory_rate->Required) {
-            if (!$this->respiratory_rate->IsDetailKey && EmptyValue($this->respiratory_rate->FormValue)) {
-                $this->respiratory_rate->addErrorMessage(str_replace("%s", $this->respiratory_rate->caption(), $this->respiratory_rate->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->respiratory_rate->FormValue)) {
-            $this->respiratory_rate->addErrorMessage($this->respiratory_rate->getErrorMessage(false));
-        }
-        if ($this->temperature->Required) {
-            if (!$this->temperature->IsDetailKey && EmptyValue($this->temperature->FormValue)) {
-                $this->temperature->addErrorMessage(str_replace("%s", $this->temperature->caption(), $this->temperature->RequiredErrorMessage));
-            }
-        }
-        if (!CheckNumber($this->temperature->FormValue)) {
-            $this->temperature->addErrorMessage($this->temperature->getErrorMessage(false));
-        }
-        if ($this->random_blood_sugar->Required) {
-            if (!$this->random_blood_sugar->IsDetailKey && EmptyValue($this->random_blood_sugar->FormValue)) {
-                $this->random_blood_sugar->addErrorMessage(str_replace("%s", $this->random_blood_sugar->caption(), $this->random_blood_sugar->RequiredErrorMessage));
-            }
-        }
-        if ($this->submitted_by_user_id->Required) {
-            if (!$this->submitted_by_user_id->IsDetailKey && EmptyValue($this->submitted_by_user_id->FormValue)) {
-                $this->submitted_by_user_id->addErrorMessage(str_replace("%s", $this->submitted_by_user_id->caption(), $this->submitted_by_user_id->RequiredErrorMessage));
+        if ($this->chief_compaints->Required) {
+            if (!$this->chief_compaints->IsDetailKey && EmptyValue($this->chief_compaints->FormValue)) {
+                $this->chief_compaints->addErrorMessage(str_replace("%s", $this->chief_compaints->caption(), $this->chief_compaints->RequiredErrorMessage));
             }
         }
 
@@ -1294,76 +974,34 @@ class JdhVitalsEdit extends JdhVitals
         return $validateForm;
     }
 
-    // Update record based on key values
-    protected function editRow()
+    // Add record
+    protected function addRow($rsold = null)
     {
-        global $Security, $Language;
-        $oldKeyFilter = $this->getRecordFilter();
-        $filter = $this->applyUserIDFilters($oldKeyFilter);
-        $conn = $this->getConnection();
-
-        // Load old row
-        $this->CurrentFilter = $filter;
-        $sql = $this->getCurrentSql();
-        $rsold = $conn->fetchAssociative($sql);
-        if (!$rsold) {
-            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
-            return false; // Update Failed
-        } else {
-            // Save old values
-            $this->loadDbValues($rsold);
-        }
+        global $Language, $Security;
 
         // Set new row
         $rsnew = [];
 
         // patient_id
-        if ($this->patient_id->getSessionValue() != "") {
-            $this->patient_id->ReadOnly = true;
-        }
-        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, null, $this->patient_id->ReadOnly);
+        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, false);
 
-        // pressure
-        $this->pressure->setDbValueDef($rsnew, $this->pressure->CurrentValue, "", $this->pressure->ReadOnly);
-
-        // height
-        $this->height->setDbValueDef($rsnew, $this->height->CurrentValue, 0, $this->height->ReadOnly);
-
-        // weight
-        $this->weight->setDbValueDef($rsnew, $this->weight->CurrentValue, 0, $this->weight->ReadOnly);
-
-        // pulse_rate
-        $this->pulse_rate->setDbValueDef($rsnew, $this->pulse_rate->CurrentValue, 0, $this->pulse_rate->ReadOnly);
-
-        // respiratory_rate
-        $this->respiratory_rate->setDbValueDef($rsnew, $this->respiratory_rate->CurrentValue, 0, $this->respiratory_rate->ReadOnly);
-
-        // temperature
-        $this->temperature->setDbValueDef($rsnew, $this->temperature->CurrentValue, 0, $this->temperature->ReadOnly);
-
-        // random_blood_sugar
-        $this->random_blood_sugar->setDbValueDef($rsnew, $this->random_blood_sugar->CurrentValue, "", $this->random_blood_sugar->ReadOnly);
-
-        // submitted_by_user_id
-        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->getAutoUpdateValue(); // PHP
-        $this->submitted_by_user_id->setDbValueDef($rsnew, $this->submitted_by_user_id->CurrentValue, 0);
+        // chief_compaints
+        $this->chief_compaints->setDbValueDef($rsnew, $this->chief_compaints->CurrentValue, "", false);
 
         // Update current values
         $this->setCurrentValues($rsnew);
+        $conn = $this->getConnection();
 
-        // Call Row Updating event
-        $updateRow = $this->rowUpdating($rsold, $rsnew);
-        if ($updateRow) {
-            if (count($rsnew) > 0) {
-                $this->CurrentFilter = $filter; // Set up current filter
-                $editRow = $this->update($rsnew, "", $rsold);
-                if (!$editRow && !EmptyValue($this->DbErrorMessage)) { // Show database error
-                    $this->setFailureMessage($this->DbErrorMessage);
-                }
-            } else {
-                $editRow = true; // No field to update
-            }
-            if ($editRow) {
+        // Load db values from old row
+        $this->loadDbValues($rsold);
+
+        // Call Row Inserting event
+        $insertRow = $this->rowInserting($rsold, $rsnew);
+        if ($insertRow) {
+            $addRow = $this->insert($rsnew);
+            if ($addRow) {
+            } elseif (!EmptyValue($this->DbErrorMessage)) { // Show database error
+                $this->setFailureMessage($this->DbErrorMessage);
             }
         } else {
             if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
@@ -1372,23 +1010,25 @@ class JdhVitalsEdit extends JdhVitals
                 $this->setFailureMessage($this->CancelMessage);
                 $this->CancelMessage = "";
             } else {
-                $this->setFailureMessage($Language->phrase("UpdateCancelled"));
+                $this->setFailureMessage($Language->phrase("InsertCancelled"));
             }
-            $editRow = false;
+            $addRow = false;
         }
-
-        // Call Row_Updated event
-        if ($editRow) {
-            $this->rowUpdated($rsold, $rsnew);
+        if ($addRow) {
+            // Call Row Inserted event
+            $this->rowInserted($rsold, $rsnew);
+            if ($this->SendEmail) {
+                $this->sendEmailOnAdd($rsnew);
+            }
         }
 
         // Write JSON response
-        if (IsJsonResponse() && $editRow) {
+        if (IsJsonResponse() && $addRow) {
             $row = $this->getRecordsFromRecordset([$rsnew], true);
             $table = $this->TableVar;
-            WriteJson(["success" => true, "action" => Config("API_EDIT_ACTION"), $table => $row]);
+            WriteJson(["success" => true, "action" => Config("API_ADD_ACTION"), $table => $row]);
         }
-        return $editRow;
+        return $addRow;
     }
 
     // Set up master/detail based on QueryString
@@ -1442,7 +1082,6 @@ class JdhVitalsEdit extends JdhVitals
         if ($validMaster) {
             // Save current master table
             $this->setCurrentMasterTable($masterTblVar);
-            $this->setSessionWhere($this->getDetailFilterFromSession());
 
             // Reset start record counter (new master key)
             if (!$this->isAddOrEdit()) {
@@ -1467,9 +1106,9 @@ class JdhVitalsEdit extends JdhVitals
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhvitalslist"), "", $this->TableVar, true);
-        $pageId = "edit";
-        $Breadcrumb->add("edit", $pageId, $url);
+        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhchiefcomplaintslist"), "", $this->TableVar, true);
+        $pageId = ($this->isCopy()) ? "Copy" : "Add";
+        $Breadcrumb->add("add", $pageId, $url);
     }
 
     // Setup lookup options
@@ -1514,40 +1153,6 @@ class JdhVitalsEdit extends JdhVitals
                 $fld->Lookup->Options = $ar;
             }
         }
-    }
-
-    // Set up starting record parameters
-    public function setupStartRecord()
-    {
-        if ($this->DisplayRecords == 0) {
-            return;
-        }
-        $pageNo = Get(Config("TABLE_PAGE_NUMBER"));
-        $startRec = Get(Config("TABLE_START_REC"));
-        $infiniteScroll = false;
-        $recordNo = $pageNo ?? $startRec; // Record number = page number or start record
-        if ($recordNo !== null && is_numeric($recordNo)) {
-            $this->StartRecord = $recordNo;
-        } else {
-            $this->StartRecord = $this->getStartRecordNumber();
-        }
-
-        // Check if correct start record counter
-        if (!is_numeric($this->StartRecord) || intval($this->StartRecord) <= 0) { // Avoid invalid start record counter
-            $this->StartRecord = 1; // Reset start record counter
-        } elseif ($this->StartRecord > $this->TotalRecords) { // Avoid starting record > total records
-            $this->StartRecord = (int)(($this->TotalRecords - 1) / $this->DisplayRecords) * $this->DisplayRecords + 1; // Point to last page first record
-        } elseif (($this->StartRecord - 1) % $this->DisplayRecords != 0) {
-            $this->StartRecord = (int)(($this->StartRecord - 1) / $this->DisplayRecords) * $this->DisplayRecords + 1; // Point to page boundary
-        }
-        if (!$infiniteScroll) {
-            $this->setStartRecordNumber($this->StartRecord);
-        }
-    }
-
-    // Get page count
-    public function pageCount() {
-        return ceil($this->TotalRecords / $this->DisplayRecords);
     }
 
     // Page Load event

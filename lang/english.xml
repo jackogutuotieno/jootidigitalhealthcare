@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/8/5">
+<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/8/6">
   <!--
     IMPORTANT NOTES:
     1. Language ID must be RFC 4646 language tags (which use hyphen, not underscore), e.g. en-US, fr-CA, fr-FR,
@@ -1159,6 +1159,9 @@
   <project>
     <phrase id="bodytitle" value="Jooti Digital | Healthcare - Supporting effective health information management" />
     <phrase id="footertext" value="&amp;copy;2023 Jooti Digital | Healthcare. All rights reserved." />
+    <menu id="105">
+      <phrase id="menutext" value="Dashboard" />
+    </menu>
     <menu id="27">
       <phrase id="menutext" value="Notifications" />
     </menu>
@@ -1197,6 +1200,9 @@
     </menu>
     <menu id="8">
       <phrase id="menutext" value="Cases" />
+    </menu>
+    <menu id="104">
+      <phrase id="menutext" value="Chief Complaints" />
     </menu>
     <menu id="19">
       <phrase id="menutext" value="Visit Types" />
@@ -1383,14 +1389,20 @@
       <field id="patient_id">
         <phrase id="fldcaption" value="Patient" />
       </field>
-      <field id="symtoms">
-        <phrase id="fldcaption" value="Symptoms" />
-      </field>
-      <field id="fasting_blood_sugar">
-        <phrase id="fldcaption" value="Fasting Blood Sugar" />
-      </field>
       <field id="history">
-        <phrase id="fldcaption" value="History" />
+        <phrase id="fldcaption" value="History of Presenting Illness" />
+      </field>
+      <field id="random_blood_sugar">
+        <phrase id="fldcaption" value="Random Blood Sugar(Fasting)" />
+      </field>
+      <field id="medical_history">
+        <phrase id="fldcaption" value="Past Medical &amp; Surgical History" />
+      </field>
+      <field id="family">
+        <phrase id="fldcaption" value="Family" />
+      </field>
+      <field id="socio_economic_history">
+        <phrase id="fldcaption" value="Socio-Economic History" />
       </field>
       <field id="notes">
         <phrase id="fldcaption" value="Notes" />
@@ -1403,7 +1415,7 @@
       </field>
     </table>
     <table id="jdh_patient_visits">
-      <phrase id="tblcaption" value="Patient Visits" />
+      <phrase id="tblcaption" value="Visits" />
       <field id="visit_id">
         <phrase id="fldcaption" value="Visit ID" />
       </field>
@@ -1692,15 +1704,33 @@
         <phrase id="fldcaption" value="Pressure (mmHg)" />
       </field>
       <field id="height">
-        <phrase id="fldcaption" value="Height(cm)" />
+        <phrase id="fldcaption" value="Height(m)" />
       </field>
       <field id="weight">
         <phrase id="fldcaption" value="Wheight(Kg)" />
       </field>
+      <field id="body_mass_index">
+        <phrase id="fldcaption" value="BMI" />
+      </field>
+      <field id="pulse_rate">
+        <phrase id="fldcaption" value="Pulse" />
+      </field>
+      <field id="respiratory_rate">
+        <phrase id="fldcaption" value="Resp. Rate" />
+      </field>
+      <field id="temperature">
+        <phrase id="fldcaption" value="Temp (C)" />
+      </field>
+      <field id="random_blood_sugar">
+        <phrase id="fldcaption" value="RBS(Fasting)" />
+      </field>
+      <field id="spo2">
+        <phrase id="fldcaption" value="SPO2(%)" />
+      </field>
       <field id="submission_date">
         <phrase id="fldcaption" value="Submission Date" />
       </field>
-      <field id="subbmitted_by_user_id">
+      <field id="submitted_by_user_id">
         <phrase id="fldcaption" value="User ID" />
       </field>
     </table>
@@ -1932,8 +1962,35 @@
         <phrase id="fldcaption" value="Last Updated" />
       </field>
       <field id="submitted_by_user_id">
-        <phrase id="fldcaption" value="User ID" />
+        <phrase id="fldcaption" value="Height(metres)" />
       </field>
+    </table>
+    <table id="jdh_chief_complaints">
+      <phrase id="tblcaption" value="Chief Complaints" />
+      <field id="id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient No" />
+      </field>
+      <field id="chief_compaints">
+        <phrase id="fldcaption" value="Chief Complaint" />
+      </field>
+      <field id="addedby_user_id">
+        <phrase id="fldcaption" value="Added By ID" />
+      </field>
+      <field id="modifiedby_user_id">
+        <phrase id="fldcaption" value="Modified By ID" />
+      </field>
+      <field id="date_created">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="date_updated">
+        <phrase id="fldcaption" value="Modified Date" />
+      </field>
+    </table>
+    <table id="dashboard2">
+      <phrase id="tblcaption" value="Dashboard" />
     </table>
   </project>
 </ew-language>

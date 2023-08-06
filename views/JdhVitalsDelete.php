@@ -65,6 +65,21 @@ $Page->showMessage();
 <?php if ($Page->weight->Visible) { // weight ?>
         <th class="<?= $Page->weight->headerCellClass() ?>"><span id="elh_jdh_vitals_weight" class="jdh_vitals_weight"><?= $Page->weight->caption() ?></span></th>
 <?php } ?>
+<?php if ($Page->body_mass_index->Visible) { // body_mass_index ?>
+        <th class="<?= $Page->body_mass_index->headerCellClass() ?>"><span id="elh_jdh_vitals_body_mass_index" class="jdh_vitals_body_mass_index"><?= $Page->body_mass_index->caption() ?></span></th>
+<?php } ?>
+<?php if ($Page->pulse_rate->Visible) { // pulse_rate ?>
+        <th class="<?= $Page->pulse_rate->headerCellClass() ?>"><span id="elh_jdh_vitals_pulse_rate" class="jdh_vitals_pulse_rate"><?= $Page->pulse_rate->caption() ?></span></th>
+<?php } ?>
+<?php if ($Page->respiratory_rate->Visible) { // respiratory_rate ?>
+        <th class="<?= $Page->respiratory_rate->headerCellClass() ?>"><span id="elh_jdh_vitals_respiratory_rate" class="jdh_vitals_respiratory_rate"><?= $Page->respiratory_rate->caption() ?></span></th>
+<?php } ?>
+<?php if ($Page->temperature->Visible) { // temperature ?>
+        <th class="<?= $Page->temperature->headerCellClass() ?>"><span id="elh_jdh_vitals_temperature" class="jdh_vitals_temperature"><?= $Page->temperature->caption() ?></span></th>
+<?php } ?>
+<?php if ($Page->random_blood_sugar->Visible) { // random_blood_sugar ?>
+        <th class="<?= $Page->random_blood_sugar->headerCellClass() ?>"><span id="elh_jdh_vitals_random_blood_sugar" class="jdh_vitals_random_blood_sugar"><?= $Page->random_blood_sugar->caption() ?></span></th>
+<?php } ?>
 <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <th class="<?= $Page->submission_date->headerCellClass() ?>"><span id="elh_jdh_vitals_submission_date" class="jdh_vitals_submission_date"><?= $Page->submission_date->caption() ?></span></th>
 <?php } ?>
@@ -126,6 +141,46 @@ while (!$Page->Recordset->EOF) {
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_weight" class="el_jdh_vitals_weight">
 <span<?= $Page->weight->viewAttributes() ?>>
 <?= $Page->weight->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->body_mass_index->Visible) { // body_mass_index ?>
+        <td<?= $Page->body_mass_index->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_body_mass_index" class="el_jdh_vitals_body_mass_index">
+<span<?= $Page->body_mass_index->viewAttributes() ?>>
+<?= $Page->body_mass_index->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->pulse_rate->Visible) { // pulse_rate ?>
+        <td<?= $Page->pulse_rate->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_pulse_rate" class="el_jdh_vitals_pulse_rate">
+<span<?= $Page->pulse_rate->viewAttributes() ?>>
+<?= $Page->pulse_rate->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->respiratory_rate->Visible) { // respiratory_rate ?>
+        <td<?= $Page->respiratory_rate->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_respiratory_rate" class="el_jdh_vitals_respiratory_rate">
+<span<?= $Page->respiratory_rate->viewAttributes() ?>>
+<?= $Page->respiratory_rate->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->temperature->Visible) { // temperature ?>
+        <td<?= $Page->temperature->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_temperature" class="el_jdh_vitals_temperature">
+<span<?= $Page->temperature->viewAttributes() ?>>
+<?= $Page->temperature->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->random_blood_sugar->Visible) { // random_blood_sugar ?>
+        <td<?= $Page->random_blood_sugar->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_random_blood_sugar" class="el_jdh_vitals_random_blood_sugar">
+<span<?= $Page->random_blood_sugar->viewAttributes() ?>>
+<?= $Page->random_blood_sugar->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

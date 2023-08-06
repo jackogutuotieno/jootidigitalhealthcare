@@ -75,28 +75,6 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->symtoms->Visible) { // symtoms ?>
-    <tr id="r_symtoms"<?= $Page->symtoms->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patient_cases_symtoms"><?= $Page->symtoms->caption() ?></span></td>
-        <td data-name="symtoms"<?= $Page->symtoms->cellAttributes() ?>>
-<span id="el_jdh_patient_cases_symtoms">
-<span<?= $Page->symtoms->viewAttributes() ?>>
-<?= $Page->symtoms->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
-<?php if ($Page->fasting_blood_sugar->Visible) { // fasting_blood_sugar ?>
-    <tr id="r_fasting_blood_sugar"<?= $Page->fasting_blood_sugar->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patient_cases_fasting_blood_sugar"><?= $Page->fasting_blood_sugar->caption() ?></span></td>
-        <td data-name="fasting_blood_sugar"<?= $Page->fasting_blood_sugar->cellAttributes() ?>>
-<span id="el_jdh_patient_cases_fasting_blood_sugar">
-<span<?= $Page->fasting_blood_sugar->viewAttributes() ?>>
-<?= $Page->fasting_blood_sugar->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
 <?php if ($Page->history->Visible) { // history ?>
     <tr id="r_history"<?= $Page->history->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patient_cases_history"><?= $Page->history->caption() ?></span></td>
@@ -104,6 +82,50 @@ loadjs.ready(["wrapper", "head"], function () {
 <span id="el_jdh_patient_cases_history">
 <span<?= $Page->history->viewAttributes() ?>>
 <?= $Page->history->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
+<?php if ($Page->random_blood_sugar->Visible) { // random_blood_sugar ?>
+    <tr id="r_random_blood_sugar"<?= $Page->random_blood_sugar->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patient_cases_random_blood_sugar"><?= $Page->random_blood_sugar->caption() ?></span></td>
+        <td data-name="random_blood_sugar"<?= $Page->random_blood_sugar->cellAttributes() ?>>
+<span id="el_jdh_patient_cases_random_blood_sugar">
+<span<?= $Page->random_blood_sugar->viewAttributes() ?>>
+<?= $Page->random_blood_sugar->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
+<?php if ($Page->medical_history->Visible) { // medical_history ?>
+    <tr id="r_medical_history"<?= $Page->medical_history->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patient_cases_medical_history"><?= $Page->medical_history->caption() ?></span></td>
+        <td data-name="medical_history"<?= $Page->medical_history->cellAttributes() ?>>
+<span id="el_jdh_patient_cases_medical_history">
+<span<?= $Page->medical_history->viewAttributes() ?>>
+<?= $Page->medical_history->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
+<?php if ($Page->family->Visible) { // family ?>
+    <tr id="r_family"<?= $Page->family->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patient_cases_family"><?= $Page->family->caption() ?></span></td>
+        <td data-name="family"<?= $Page->family->cellAttributes() ?>>
+<span id="el_jdh_patient_cases_family">
+<span<?= $Page->family->viewAttributes() ?>>
+<?= $Page->family->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
+<?php if ($Page->socio_economic_history->Visible) { // socio_economic_history ?>
+    <tr id="r_socio_economic_history"<?= $Page->socio_economic_history->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patient_cases_socio_economic_history"><?= $Page->socio_economic_history->caption() ?></span></td>
+        <td data-name="socio_economic_history"<?= $Page->socio_economic_history->cellAttributes() ?>>
+<span id="el_jdh_patient_cases_socio_economic_history">
+<span<?= $Page->socio_economic_history->viewAttributes() ?>>
+<?= $Page->socio_economic_history->getViewValue() ?></span>
 </span>
 </td>
     </tr>

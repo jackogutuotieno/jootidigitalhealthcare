@@ -172,7 +172,7 @@ loadjs.ready(["wrapper", "head"], function () {
 <?php if (!$Page->patient_dob->ReadOnly && !$Page->patient_dob->Disabled && !isset($Page->patient_dob->EditAttrs["readonly"]) && !isset($Page->patient_dob->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_patientsedit", "datetimepicker"], function () {
-    let format = "<?= DateFormat(0) ?>",
+    let format = "<?= DateFormat(7) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
@@ -310,6 +310,22 @@ loadjs.ready("fjdh_patientsedit", function() {
 <h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_test_requests", "TblCaption") ?></h4>
 <?php } ?>
 <?php include_once "JdhTestRequestsGrid.php" ?>
+<?php } ?>
+<?php
+    if (in_array("jdh_patient_visits", explode(",", $Page->getCurrentDetailTable())) && $jdh_patient_visits->DetailEdit) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_patient_visits", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhPatientVisitsGrid.php" ?>
+<?php } ?>
+<?php
+    if (in_array("jdh_chief_complaints", explode(",", $Page->getCurrentDetailTable())) && $jdh_chief_complaints->DetailEdit) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_chief_complaints", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhChiefComplaintsGrid.php" ?>
 <?php } ?>
 <?= $Page->IsModal ? '<template class="ew-modal-buttons">' : '<div class="row ew-buttons">' ?><!-- buttons .row -->
     <div class="<?= $Page->OffsetColumnClass ?>"><!-- buttons offset -->

@@ -8,9 +8,9 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 
 /**
- * Table class for jdh_patient_visits
+ * Table class for jdh_chief_complaints
  */
-class JdhPatientVisits extends DbTable
+class JdhChiefComplaints extends DbTable
 {
     protected $SqlFrom = "";
     protected $SqlSelect = null;
@@ -28,6 +28,14 @@ class JdhPatientVisits extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
+    // Audit trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Export
     public $UseAjaxActions = false;
     public $ModalSearch = false;
@@ -41,13 +49,13 @@ class JdhPatientVisits extends DbTable
     public $ModalMultiEdit = false;
 
     // Fields
-    public $visit_id;
+    public $id;
     public $patient_id;
-    public $visit_type_id;
-    public $doctor_id;
-    public $visit_description;
-    public $visit_date;
-    public $subbmitted_by_user_id;
+    public $chief_compaints;
+    public $addedby_user_id;
+    public $modifiedby_user_id;
+    public $date_created;
+    public $date_updated;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -60,14 +68,14 @@ class JdhPatientVisits extends DbTable
 
         // Language object
         $Language = Container("language");
-        $this->TableVar = "jdh_patient_visits";
-        $this->TableName = 'jdh_patient_visits';
+        $this->TableVar = "jdh_chief_complaints";
+        $this->TableName = 'jdh_chief_complaints';
         $this->TableType = "TABLE";
         $this->ImportUseTransaction = $this->supportsTransaction() && Config("IMPORT_USE_TRANSACTION");
         $this->UseTransaction = $this->supportsTransaction() && Config("USE_TRANSACTION");
 
         // Update Table
-        $this->UpdateTable = "`jdh_patient_visits`";
+        $this->UpdateTable = "`jdh_chief_complaints`";
         $this->Dbid = 'DB';
         $this->ExportAll = true;
         $this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
@@ -94,30 +102,30 @@ class JdhPatientVisits extends DbTable
         $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
         $this->BasicSearch = new BasicSearch($this);
 
-        // visit_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->visit_id = new DbField(
+        // id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->id = new DbField(
             $this, // Table
-            'x_visit_id', // Variable name
-            'visit_id', // Name
-            '`visit_id`', // Expression
-            '`visit_id`', // Basic search expression
+            'x_id', // Variable name
+            'id', // Name
+            '`id`', // Expression
+            '`id`', // Basic search expression
             3, // Type
             11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`visit_id`', // Virtual expression
+            '`id`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'NO' // Edit Tag
         );
-        $this->visit_id->InputTextType = "text";
-        $this->visit_id->IsAutoIncrement = true; // Autoincrement field
-        $this->visit_id->IsPrimaryKey = true; // Primary key field
-        $this->visit_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->visit_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
-        $this->Fields['visit_id'] = &$this->visit_id;
+        $this->id->InputTextType = "text";
+        $this->id->IsAutoIncrement = true; // Autoincrement field
+        $this->id->IsPrimaryKey = true; // Primary key field
+        $this->id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->Fields['id'] = &$this->id;
 
         // patient_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->patient_id = new DbField(
@@ -148,132 +156,129 @@ class JdhPatientVisits extends DbTable
         $this->patient_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_id'] = &$this->patient_id;
 
-        // visit_type_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->visit_type_id = new DbField(
+        // chief_compaints $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->chief_compaints = new DbField(
             $this, // Table
-            'x_visit_type_id', // Variable name
-            'visit_type_id', // Name
-            '`visit_type_id`', // Expression
-            '`visit_type_id`', // Basic search expression
-            3, // Type
-            11, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`visit_type_id`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'SELECT' // Edit Tag
-        );
-        $this->visit_type_id->InputTextType = "text";
-        $this->visit_type_id->Nullable = false; // NOT NULL field
-        $this->visit_type_id->Required = true; // Required field
-        $this->visit_type_id->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->visit_type_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->visit_type_id->Lookup = new Lookup('visit_type_id', 'jdh_visit_types', false, 'visit_type_id', ["visit_type","","",""], '', '', [], [], [], [], [], [], '', '', "`visit_type`");
-        $this->visit_type_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->visit_type_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['visit_type_id'] = &$this->visit_type_id;
-
-        // doctor_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->doctor_id = new DbField(
-            $this, // Table
-            'x_doctor_id', // Variable name
-            'doctor_id', // Name
-            '`doctor_id`', // Expression
-            '`doctor_id`', // Basic search expression
-            3, // Type
-            11, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`doctor_id`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'SELECT' // Edit Tag
-        );
-        $this->doctor_id->addMethod("getSelectFilter", fn() => "`role_id` = 2");
-        $this->doctor_id->InputTextType = "text";
-        $this->doctor_id->Nullable = false; // NOT NULL field
-        $this->doctor_id->Required = true; // Required field
-        $this->doctor_id->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->doctor_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->doctor_id->Lookup = new Lookup('doctor_id', 'jdh_users', true, 'user_id', ["first_name","last_name","",""], '', '', [], [], [], [], [], [], '', '', "CONCAT(COALESCE(`first_name`, ''),'" . ValueSeparator(1, $this->doctor_id) . "',COALESCE(`last_name`,''))");
-        $this->doctor_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->doctor_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['doctor_id'] = &$this->doctor_id;
-
-        // visit_description $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->visit_description = new DbField(
-            $this, // Table
-            'x_visit_description', // Variable name
-            'visit_description', // Name
-            '`visit_description`', // Expression
-            '`visit_description`', // Basic search expression
+            'x_chief_compaints', // Variable name
+            'chief_compaints', // Name
+            '`chief_compaints`', // Expression
+            '`chief_compaints`', // Basic search expression
             201, // Type
             65535, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`visit_description`', // Virtual expression
+            '`chief_compaints`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXTAREA' // Edit Tag
         );
-        $this->visit_description->InputTextType = "text";
-        $this->visit_description->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
-        $this->Fields['visit_description'] = &$this->visit_description;
+        $this->chief_compaints->InputTextType = "text";
+        $this->chief_compaints->Nullable = false; // NOT NULL field
+        $this->chief_compaints->Required = true; // Required field
+        $this->chief_compaints->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['chief_compaints'] = &$this->chief_compaints;
 
-        // visit_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->visit_date = new DbField(
+        // addedby_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->addedby_user_id = new DbField(
             $this, // Table
-            'x_visit_date', // Variable name
-            'visit_date', // Name
-            '`visit_date`', // Expression
-            CastDateFieldForLike("`visit_date`", 11, "DB"), // Basic search expression
-            135, // Type
-            19, // Size
-            11, // Date/Time format
-            false, // Is upload field
-            '`visit_date`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
-        );
-        $this->visit_date->InputTextType = "text";
-        $this->visit_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
-        $this->visit_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
-        $this->Fields['visit_date'] = &$this->visit_date;
-
-        // subbmitted_by_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->subbmitted_by_user_id = new DbField(
-            $this, // Table
-            'x_subbmitted_by_user_id', // Variable name
-            'subbmitted_by_user_id', // Name
-            '`subbmitted_by_user_id`', // Expression
-            '`subbmitted_by_user_id`', // Basic search expression
+            'x_addedby_user_id', // Variable name
+            'addedby_user_id', // Name
+            '`addedby_user_id`', // Expression
+            '`addedby_user_id`', // Basic search expression
             3, // Type
             11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`subbmitted_by_user_id`', // Virtual expression
+            '`addedby_user_id`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->subbmitted_by_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
-        $this->subbmitted_by_user_id->InputTextType = "text";
-        $this->subbmitted_by_user_id->Nullable = false; // NOT NULL field
-        $this->subbmitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->subbmitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['subbmitted_by_user_id'] = &$this->subbmitted_by_user_id;
+        $this->addedby_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
+        $this->addedby_user_id->InputTextType = "text";
+        $this->addedby_user_id->Nullable = false; // NOT NULL field
+        $this->addedby_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->addedby_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['addedby_user_id'] = &$this->addedby_user_id;
+
+        // modifiedby_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->modifiedby_user_id = new DbField(
+            $this, // Table
+            'x_modifiedby_user_id', // Variable name
+            'modifiedby_user_id', // Name
+            '`modifiedby_user_id`', // Expression
+            '`modifiedby_user_id`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`modifiedby_user_id`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->modifiedby_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
+        $this->modifiedby_user_id->InputTextType = "text";
+        $this->modifiedby_user_id->Nullable = false; // NOT NULL field
+        $this->modifiedby_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->modifiedby_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['modifiedby_user_id'] = &$this->modifiedby_user_id;
+
+        // date_created $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->date_created = new DbField(
+            $this, // Table
+            'x_date_created', // Variable name
+            'date_created', // Name
+            '`date_created`', // Expression
+            CastDateFieldForLike("`date_created`", 11, "DB"), // Basic search expression
+            135, // Type
+            19, // Size
+            11, // Date/Time format
+            false, // Is upload field
+            '`date_created`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->date_created->InputTextType = "text";
+        $this->date_created->Nullable = false; // NOT NULL field
+        $this->date_created->Required = true; // Required field
+        $this->date_created->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
+        $this->date_created->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['date_created'] = &$this->date_created;
+
+        // date_updated $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->date_updated = new DbField(
+            $this, // Table
+            'x_date_updated', // Variable name
+            'date_updated', // Name
+            '`date_updated`', // Expression
+            CastDateFieldForLike("`date_updated`", 11, "DB"), // Basic search expression
+            135, // Type
+            19, // Size
+            11, // Date/Time format
+            false, // Is upload field
+            '`date_updated`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->date_updated->InputTextType = "text";
+        $this->date_updated->Nullable = false; // NOT NULL field
+        $this->date_updated->Required = true; // Required field
+        $this->date_updated->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
+        $this->date_updated->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['date_updated'] = &$this->date_updated;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -424,7 +429,7 @@ class JdhPatientVisits extends DbTable
     // Table level SQL
     public function getSqlFrom() // From
     {
-        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_patient_visits`";
+        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_chief_complaints`";
     }
 
     public function sqlFrom() // For backward compatibility
@@ -722,8 +727,11 @@ class JdhPatientVisits extends DbTable
         }
         if ($success) {
             // Get insert id if necessary
-            $this->visit_id->setDbValue($conn->lastInsertId());
-            $rs['visit_id'] = $this->visit_id->DbValue;
+            $this->id->setDbValue($conn->lastInsertId());
+            $rs['id'] = $this->id->DbValue;
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailOnAdd($rs);
+            }
         }
         return $success;
     }
@@ -773,9 +781,17 @@ class JdhPatientVisits extends DbTable
 
         // Return auto increment field
         if ($success) {
-            if (!isset($rs['visit_id']) && !EmptyValue($this->visit_id->CurrentValue)) {
-                $rs['visit_id'] = $this->visit_id->CurrentValue;
+            if (!isset($rs['id']) && !EmptyValue($this->id->CurrentValue)) {
+                $rs['id'] = $this->id->CurrentValue;
             }
+        }
+        if ($success && $this->AuditTrailOnEdit && $rsold) {
+            $rsaudit = $rs;
+            $fldname = 'id';
+            if (!array_key_exists($fldname, $rsaudit)) {
+                $rsaudit[$fldname] = $rsold[$fldname];
+            }
+            $this->writeAuditTrailOnEdit($rsold, $rsaudit);
         }
         return $success;
     }
@@ -796,8 +812,8 @@ class JdhPatientVisits extends DbTable
             $where = $this->arrayToFilter($where);
         }
         if ($rs) {
-            if (array_key_exists('visit_id', $rs)) {
-                AddFilter($where, QuotedName('visit_id', $this->Dbid) . '=' . QuotedValue($rs['visit_id'], $this->visit_id->DataType, $this->Dbid));
+            if (array_key_exists('id', $rs)) {
+                AddFilter($where, QuotedName('id', $this->Dbid) . '=' . QuotedValue($rs['id'], $this->id->DataType, $this->Dbid));
             }
         }
         $filter = ($curfilter) ? $this->CurrentFilter : "";
@@ -818,6 +834,9 @@ class JdhPatientVisits extends DbTable
                 $this->DbErrorMessage = $e->getMessage();
             }
         }
+        if ($success && $this->AuditTrailOnDelete) {
+            $this->writeAuditTrailOnDelete($rs);
+        }
         return $success;
     }
 
@@ -827,13 +846,13 @@ class JdhPatientVisits extends DbTable
         if (!is_array($row)) {
             return;
         }
-        $this->visit_id->DbValue = $row['visit_id'];
+        $this->id->DbValue = $row['id'];
         $this->patient_id->DbValue = $row['patient_id'];
-        $this->visit_type_id->DbValue = $row['visit_type_id'];
-        $this->doctor_id->DbValue = $row['doctor_id'];
-        $this->visit_description->DbValue = $row['visit_description'];
-        $this->visit_date->DbValue = $row['visit_date'];
-        $this->subbmitted_by_user_id->DbValue = $row['subbmitted_by_user_id'];
+        $this->chief_compaints->DbValue = $row['chief_compaints'];
+        $this->addedby_user_id->DbValue = $row['addedby_user_id'];
+        $this->modifiedby_user_id->DbValue = $row['modifiedby_user_id'];
+        $this->date_created->DbValue = $row['date_created'];
+        $this->date_updated->DbValue = $row['date_updated'];
     }
 
     // Delete uploaded files
@@ -845,14 +864,14 @@ class JdhPatientVisits extends DbTable
     // Record filter WHERE clause
     protected function sqlKeyFilter()
     {
-        return "`visit_id` = @visit_id@";
+        return "`id` = @id@";
     }
 
     // Get Key
     public function getKey($current = false)
     {
         $keys = [];
-        $val = $current ? $this->visit_id->CurrentValue : $this->visit_id->OldValue;
+        $val = $current ? $this->id->CurrentValue : $this->id->OldValue;
         if (EmptyValue($val)) {
             return "";
         } else {
@@ -868,9 +887,9 @@ class JdhPatientVisits extends DbTable
         $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
         if (count($keys) == 1) {
             if ($current) {
-                $this->visit_id->CurrentValue = $keys[0];
+                $this->id->CurrentValue = $keys[0];
             } else {
-                $this->visit_id->OldValue = $keys[0];
+                $this->id->OldValue = $keys[0];
             }
         }
     }
@@ -880,9 +899,9 @@ class JdhPatientVisits extends DbTable
     {
         $keyFilter = $this->sqlKeyFilter();
         if (is_array($row)) {
-            $val = array_key_exists('visit_id', $row) ? $row['visit_id'] : null;
+            $val = array_key_exists('id', $row) ? $row['id'] : null;
         } else {
-            $val = !EmptyValue($this->visit_id->OldValue) && !$current ? $this->visit_id->OldValue : $this->visit_id->CurrentValue;
+            $val = !EmptyValue($this->id->OldValue) && !$current ? $this->id->OldValue : $this->id->CurrentValue;
         }
         if (!is_numeric($val)) {
             return "0=1"; // Invalid key
@@ -890,7 +909,7 @@ class JdhPatientVisits extends DbTable
         if ($val === null) {
             return "0=1"; // Invalid key
         } else {
-            $keyFilter = str_replace("@visit_id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
+            $keyFilter = str_replace("@id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
         }
         return $keyFilter;
     }
@@ -905,7 +924,7 @@ class JdhPatientVisits extends DbTable
         if ($referUrl != "" && $referPageName != CurrentPageName() && $referPageName != "login") { // Referer not same page or login page
             $_SESSION[$name] = $referUrl; // Save to Session
         }
-        return $_SESSION[$name] ?? GetUrl("jdhpatientvisitslist");
+        return $_SESSION[$name] ?? GetUrl("jdhchiefcomplaintslist");
     }
 
     // Set return page URL
@@ -918,11 +937,11 @@ class JdhPatientVisits extends DbTable
     public function getModalCaption($pageName)
     {
         global $Language;
-        if ($pageName == "jdhpatientvisitsview") {
+        if ($pageName == "jdhchiefcomplaintsview") {
             return $Language->phrase("View");
-        } elseif ($pageName == "jdhpatientvisitsedit") {
+        } elseif ($pageName == "jdhchiefcomplaintsedit") {
             return $Language->phrase("Edit");
-        } elseif ($pageName == "jdhpatientvisitsadd") {
+        } elseif ($pageName == "jdhchiefcomplaintsadd") {
             return $Language->phrase("Add");
         }
         return "";
@@ -933,15 +952,15 @@ class JdhPatientVisits extends DbTable
     {
         switch (strtolower($action)) {
             case Config("API_VIEW_ACTION"):
-                return "JdhPatientVisitsView";
+                return "JdhChiefComplaintsView";
             case Config("API_ADD_ACTION"):
-                return "JdhPatientVisitsAdd";
+                return "JdhChiefComplaintsAdd";
             case Config("API_EDIT_ACTION"):
-                return "JdhPatientVisitsEdit";
+                return "JdhChiefComplaintsEdit";
             case Config("API_DELETE_ACTION"):
-                return "JdhPatientVisitsDelete";
+                return "JdhChiefComplaintsDelete";
             case Config("API_LIST_ACTION"):
-                return "JdhPatientVisitsList";
+                return "JdhChiefComplaintsList";
             default:
                 return "";
         }
@@ -962,16 +981,16 @@ class JdhPatientVisits extends DbTable
     // List URL
     public function getListUrl()
     {
-        return "jdhpatientvisitslist";
+        return "jdhchiefcomplaintslist";
     }
 
     // View URL
     public function getViewUrl($parm = "")
     {
         if ($parm != "") {
-            $url = $this->keyUrl("jdhpatientvisitsview", $parm);
+            $url = $this->keyUrl("jdhchiefcomplaintsview", $parm);
         } else {
-            $url = $this->keyUrl("jdhpatientvisitsview", Config("TABLE_SHOW_DETAIL") . "=");
+            $url = $this->keyUrl("jdhchiefcomplaintsview", Config("TABLE_SHOW_DETAIL") . "=");
         }
         return $this->addMasterUrl($url);
     }
@@ -980,9 +999,9 @@ class JdhPatientVisits extends DbTable
     public function getAddUrl($parm = "")
     {
         if ($parm != "") {
-            $url = "jdhpatientvisitsadd?" . $parm;
+            $url = "jdhchiefcomplaintsadd?" . $parm;
         } else {
-            $url = "jdhpatientvisitsadd";
+            $url = "jdhchiefcomplaintsadd";
         }
         return $this->addMasterUrl($url);
     }
@@ -990,28 +1009,28 @@ class JdhPatientVisits extends DbTable
     // Edit URL
     public function getEditUrl($parm = "")
     {
-        $url = $this->keyUrl("jdhpatientvisitsedit", $parm);
+        $url = $this->keyUrl("jdhchiefcomplaintsedit", $parm);
         return $this->addMasterUrl($url);
     }
 
     // Inline edit URL
     public function getInlineEditUrl()
     {
-        $url = $this->keyUrl("jdhpatientvisitslist", "action=edit");
+        $url = $this->keyUrl("jdhchiefcomplaintslist", "action=edit");
         return $this->addMasterUrl($url);
     }
 
     // Copy URL
     public function getCopyUrl($parm = "")
     {
-        $url = $this->keyUrl("jdhpatientvisitsadd", $parm);
+        $url = $this->keyUrl("jdhchiefcomplaintsadd", $parm);
         return $this->addMasterUrl($url);
     }
 
     // Inline copy URL
     public function getInlineCopyUrl()
     {
-        $url = $this->keyUrl("jdhpatientvisitslist", "action=copy");
+        $url = $this->keyUrl("jdhchiefcomplaintslist", "action=copy");
         return $this->addMasterUrl($url);
     }
 
@@ -1021,7 +1040,7 @@ class JdhPatientVisits extends DbTable
         if ($this->UseAjaxActions && ConvertToBool(Param("infinitescroll")) && CurrentPageID() == "list") {
             return $this->keyUrl(GetApiUrl(Config("API_DELETE_ACTION") . "/" . $this->TableVar));
         } else {
-            return $this->keyUrl("jdhpatientvisitsdelete");
+            return $this->keyUrl("jdhchiefcomplaintsdelete");
         }
     }
 
@@ -1038,7 +1057,7 @@ class JdhPatientVisits extends DbTable
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
-        $json .= "\"visit_id\":" . JsonEncode($this->visit_id->CurrentValue, "number");
+        $json .= "\"id\":" . JsonEncode($this->id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -1049,8 +1068,8 @@ class JdhPatientVisits extends DbTable
     // Add key value to URL
     public function keyUrl($url, $parm = "")
     {
-        if ($this->visit_id->CurrentValue !== null) {
-            $url .= "/" . $this->encodeKeyValue($this->visit_id->CurrentValue);
+        if ($this->id->CurrentValue !== null) {
+            $url .= "/" . $this->encodeKeyValue($this->id->CurrentValue);
         } else {
             return "javascript:ew.alert(ew.language.phrase('InvalidRecord'));";
         }
@@ -1118,7 +1137,7 @@ class JdhPatientVisits extends DbTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
-            if (($keyValue = Param("visit_id") ?? Route("visit_id")) !== null) {
+            if (($keyValue = Param("id") ?? Route("id")) !== null) {
                 $arKeys[] = $keyValue;
             } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
                 $arKeys[] = $keyValue;
@@ -1164,9 +1183,9 @@ class JdhPatientVisits extends DbTable
                 $keyFilter .= " OR ";
             }
             if ($setCurrent) {
-                $this->visit_id->CurrentValue = $key;
+                $this->id->CurrentValue = $key;
             } else {
-                $this->visit_id->OldValue = $key;
+                $this->id->OldValue = $key;
             }
             $keyFilter .= "(" . $this->getRecordFilter() . ")";
         }
@@ -1191,20 +1210,20 @@ class JdhPatientVisits extends DbTable
         } else {
             return;
         }
-        $this->visit_id->setDbValue($row['visit_id']);
+        $this->id->setDbValue($row['id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->visit_type_id->setDbValue($row['visit_type_id']);
-        $this->doctor_id->setDbValue($row['doctor_id']);
-        $this->visit_description->setDbValue($row['visit_description']);
-        $this->visit_date->setDbValue($row['visit_date']);
-        $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
+        $this->chief_compaints->setDbValue($row['chief_compaints']);
+        $this->addedby_user_id->setDbValue($row['addedby_user_id']);
+        $this->modifiedby_user_id->setDbValue($row['modifiedby_user_id']);
+        $this->date_created->setDbValue($row['date_created']);
+        $this->date_updated->setDbValue($row['date_updated']);
     }
 
     // Render list content
     public function renderListContent($filter)
     {
         global $Response;
-        $listPage = "JdhPatientVisitsList";
+        $listPage = "JdhChiefComplaintsList";
         $listClass = PROJECT_NAMESPACE . $listPage;
         $page = new $listClass();
         $page->loadRecordsetFromFilter($filter);
@@ -1228,23 +1247,22 @@ class JdhPatientVisits extends DbTable
 
         // Common render codes
 
-        // visit_id
+        // id
 
         // patient_id
 
-        // visit_type_id
+        // chief_compaints
 
-        // doctor_id
+        // addedby_user_id
 
-        // visit_description
+        // modifiedby_user_id
 
-        // visit_date
+        // date_created
 
-        // subbmitted_by_user_id
+        // date_updated
 
-        // visit_id
-        $this->visit_id->ViewValue = $this->visit_id->CurrentValue;
-        $this->visit_id->ViewValue = FormatNumber($this->visit_id->ViewValue, $this->visit_id->formatPattern());
+        // id
+        $this->id->ViewValue = $this->id->CurrentValue;
 
         // patient_id
         $curVal = strval($this->patient_id->CurrentValue);
@@ -1269,91 +1287,52 @@ class JdhPatientVisits extends DbTable
             $this->patient_id->ViewValue = null;
         }
 
-        // visit_type_id
-        $curVal = strval($this->visit_type_id->CurrentValue);
-        if ($curVal != "") {
-            $this->visit_type_id->ViewValue = $this->visit_type_id->lookupCacheOption($curVal);
-            if ($this->visit_type_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`visit_type_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $sqlWrk = $this->visit_type_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->visit_type_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->visit_type_id->ViewValue = $this->visit_type_id->displayValue($arwrk);
-                } else {
-                    $this->visit_type_id->ViewValue = FormatNumber($this->visit_type_id->CurrentValue, $this->visit_type_id->formatPattern());
-                }
-            }
-        } else {
-            $this->visit_type_id->ViewValue = null;
-        }
+        // chief_compaints
+        $this->chief_compaints->ViewValue = $this->chief_compaints->CurrentValue;
 
-        // doctor_id
-        $curVal = strval($this->doctor_id->CurrentValue);
-        if ($curVal != "") {
-            $this->doctor_id->ViewValue = $this->doctor_id->lookupCacheOption($curVal);
-            if ($this->doctor_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`user_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $lookupFilter = $this->doctor_id->getSelectFilter($this); // PHP
-                $sqlWrk = $this->doctor_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->doctor_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->doctor_id->ViewValue = $this->doctor_id->displayValue($arwrk);
-                } else {
-                    $this->doctor_id->ViewValue = FormatNumber($this->doctor_id->CurrentValue, $this->doctor_id->formatPattern());
-                }
-            }
-        } else {
-            $this->doctor_id->ViewValue = null;
-        }
+        // addedby_user_id
+        $this->addedby_user_id->ViewValue = $this->addedby_user_id->CurrentValue;
+        $this->addedby_user_id->ViewValue = FormatNumber($this->addedby_user_id->ViewValue, $this->addedby_user_id->formatPattern());
 
-        // visit_description
-        $this->visit_description->ViewValue = $this->visit_description->CurrentValue;
+        // modifiedby_user_id
+        $this->modifiedby_user_id->ViewValue = $this->modifiedby_user_id->CurrentValue;
+        $this->modifiedby_user_id->ViewValue = FormatNumber($this->modifiedby_user_id->ViewValue, $this->modifiedby_user_id->formatPattern());
 
-        // visit_date
-        $this->visit_date->ViewValue = $this->visit_date->CurrentValue;
-        $this->visit_date->ViewValue = FormatDateTime($this->visit_date->ViewValue, $this->visit_date->formatPattern());
+        // date_created
+        $this->date_created->ViewValue = $this->date_created->CurrentValue;
+        $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
 
-        // subbmitted_by_user_id
-        $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
-        $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
+        // date_updated
+        $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
+        $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
 
-        // visit_id
-        $this->visit_id->HrefValue = "";
-        $this->visit_id->TooltipValue = "";
+        // id
+        $this->id->HrefValue = "";
+        $this->id->TooltipValue = "";
 
         // patient_id
         $this->patient_id->HrefValue = "";
         $this->patient_id->TooltipValue = "";
 
-        // visit_type_id
-        $this->visit_type_id->HrefValue = "";
-        $this->visit_type_id->TooltipValue = "";
+        // chief_compaints
+        $this->chief_compaints->HrefValue = "";
+        $this->chief_compaints->TooltipValue = "";
 
-        // doctor_id
-        $this->doctor_id->HrefValue = "";
-        $this->doctor_id->TooltipValue = "";
+        // addedby_user_id
+        $this->addedby_user_id->HrefValue = "";
+        $this->addedby_user_id->TooltipValue = "";
 
-        // visit_description
-        $this->visit_description->HrefValue = "";
-        $this->visit_description->TooltipValue = "";
+        // modifiedby_user_id
+        $this->modifiedby_user_id->HrefValue = "";
+        $this->modifiedby_user_id->TooltipValue = "";
 
-        // visit_date
-        $this->visit_date->HrefValue = "";
-        $this->visit_date->TooltipValue = "";
+        // date_created
+        $this->date_created->HrefValue = "";
+        $this->date_created->TooltipValue = "";
 
-        // subbmitted_by_user_id
-        $this->subbmitted_by_user_id->HrefValue = "";
-        $this->subbmitted_by_user_id->TooltipValue = "";
+        // date_updated
+        $this->date_updated->HrefValue = "";
+        $this->date_updated->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1370,10 +1349,9 @@ class JdhPatientVisits extends DbTable
         // Call Row Rendering event
         $this->rowRendering();
 
-        // visit_id
-        $this->visit_id->setupEditAttributes();
-        $this->visit_id->EditValue = $this->visit_id->CurrentValue;
-        $this->visit_id->EditValue = FormatNumber($this->visit_id->EditValue, $this->visit_id->formatPattern());
+        // id
+        $this->id->setupEditAttributes();
+        $this->id->EditValue = $this->id->CurrentValue;
 
         // patient_id
         $this->patient_id->setupEditAttributes();
@@ -1404,25 +1382,24 @@ class JdhPatientVisits extends DbTable
             $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
         }
 
-        // visit_type_id
-        $this->visit_type_id->setupEditAttributes();
-        $this->visit_type_id->PlaceHolder = RemoveHtml($this->visit_type_id->caption());
+        // chief_compaints
+        $this->chief_compaints->setupEditAttributes();
+        $this->chief_compaints->EditValue = $this->chief_compaints->CurrentValue;
+        $this->chief_compaints->PlaceHolder = RemoveHtml($this->chief_compaints->caption());
 
-        // doctor_id
-        $this->doctor_id->setupEditAttributes();
-        $this->doctor_id->PlaceHolder = RemoveHtml($this->doctor_id->caption());
+        // addedby_user_id
 
-        // visit_description
-        $this->visit_description->setupEditAttributes();
-        $this->visit_description->EditValue = $this->visit_description->CurrentValue;
-        $this->visit_description->PlaceHolder = RemoveHtml($this->visit_description->caption());
+        // modifiedby_user_id
 
-        // visit_date
-        $this->visit_date->setupEditAttributes();
-        $this->visit_date->EditValue = FormatDateTime($this->visit_date->CurrentValue, $this->visit_date->formatPattern());
-        $this->visit_date->PlaceHolder = RemoveHtml($this->visit_date->caption());
+        // date_created
+        $this->date_created->setupEditAttributes();
+        $this->date_created->EditValue = FormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern());
+        $this->date_created->PlaceHolder = RemoveHtml($this->date_created->caption());
 
-        // subbmitted_by_user_id
+        // date_updated
+        $this->date_updated->setupEditAttributes();
+        $this->date_updated->EditValue = FormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern());
+        $this->date_updated->PlaceHolder = RemoveHtml($this->date_updated->caption());
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1452,19 +1429,18 @@ class JdhPatientVisits extends DbTable
             if ($doc->Horizontal) { // Horizontal format, write header
                 $doc->beginExportRow();
                 if ($exportPageType == "view") {
-                    $doc->exportCaption($this->visit_id);
+                    $doc->exportCaption($this->id);
                     $doc->exportCaption($this->patient_id);
-                    $doc->exportCaption($this->visit_type_id);
-                    $doc->exportCaption($this->doctor_id);
-                    $doc->exportCaption($this->visit_description);
-                    $doc->exportCaption($this->visit_date);
+                    $doc->exportCaption($this->chief_compaints);
+                    $doc->exportCaption($this->date_created);
+                    $doc->exportCaption($this->date_updated);
                 } else {
-                    $doc->exportCaption($this->visit_id);
+                    $doc->exportCaption($this->id);
                     $doc->exportCaption($this->patient_id);
-                    $doc->exportCaption($this->visit_type_id);
-                    $doc->exportCaption($this->doctor_id);
-                    $doc->exportCaption($this->visit_date);
-                    $doc->exportCaption($this->subbmitted_by_user_id);
+                    $doc->exportCaption($this->addedby_user_id);
+                    $doc->exportCaption($this->modifiedby_user_id);
+                    $doc->exportCaption($this->date_created);
+                    $doc->exportCaption($this->date_updated);
                 }
                 $doc->endExportRow();
             }
@@ -1494,19 +1470,18 @@ class JdhPatientVisits extends DbTable
                 if (!$doc->ExportCustom) {
                     $doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
                     if ($exportPageType == "view") {
-                        $doc->exportField($this->visit_id);
+                        $doc->exportField($this->id);
                         $doc->exportField($this->patient_id);
-                        $doc->exportField($this->visit_type_id);
-                        $doc->exportField($this->doctor_id);
-                        $doc->exportField($this->visit_description);
-                        $doc->exportField($this->visit_date);
+                        $doc->exportField($this->chief_compaints);
+                        $doc->exportField($this->date_created);
+                        $doc->exportField($this->date_updated);
                     } else {
-                        $doc->exportField($this->visit_id);
+                        $doc->exportField($this->id);
                         $doc->exportField($this->patient_id);
-                        $doc->exportField($this->visit_type_id);
-                        $doc->exportField($this->doctor_id);
-                        $doc->exportField($this->visit_date);
-                        $doc->exportField($this->subbmitted_by_user_id);
+                        $doc->exportField($this->addedby_user_id);
+                        $doc->exportField($this->modifiedby_user_id);
+                        $doc->exportField($this->date_created);
+                        $doc->exportField($this->date_updated);
                     }
                     $doc->endExportRow($rowCnt);
                 }
@@ -1530,6 +1505,192 @@ class JdhPatientVisits extends DbTable
 
         // No binary fields
         return false;
+    }
+
+    // Write audit trail start/end for grid update
+    public function writeAuditTrailDummy($typ)
+    {
+        WriteAuditLog(CurrentUser(), $typ, 'jdh_chief_complaints', "", "", "", "");
+    }
+
+    // Write audit trail (add page)
+    public function writeAuditTrailOnAdd(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnAdd) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $newvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo Field
+                    $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML Field
+                    $newvalue = "[XML]";
+                } else {
+                    $newvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "A", 'jdh_chief_complaints', $fldname, $key, "", $newvalue);
+            }
+        }
+    }
+
+    // Write audit trail (edit page)
+    public function writeAuditTrailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnEdit) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rsnew) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && array_key_exists($fldname, $rsold) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->DataType == DATATYPE_DATE) { // DateTime field
+                    $modified = (FormatDateTime($rsold[$fldname], 0) != FormatDateTime($rsnew[$fldname], 0));
+                } else {
+                    $modified = !CompareValue($rsold[$fldname], $rsnew[$fldname]);
+                }
+                if ($modified) {
+                    if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                        $oldvalue = $Language->phrase("PasswordMask");
+                        $newvalue = $Language->phrase("PasswordMask");
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                        $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsold[$fldname] : "[MEMO]";
+                        $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsnew[$fldname] : "[MEMO]";
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                        $oldvalue = "[XML]";
+                        $newvalue = "[XML]";
+                    } else {
+                        $oldvalue = $rsold[$fldname];
+                        $newvalue = $rsnew[$fldname];
+                    }
+                    WriteAuditLog($usr, "U", 'jdh_chief_complaints', $fldname, $key, $oldvalue, $newvalue);
+                }
+            }
+        }
+    }
+
+    // Write audit trail (delete page)
+    public function writeAuditTrailOnDelete(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnDelete) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $oldvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                    $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                    $oldvalue = "[XML]";
+                } else {
+                    $oldvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "D", 'jdh_chief_complaints', $fldname, $key, $oldvalue, "");
+            }
+        }
+    }
+
+    // Send email after add success
+    public function sendEmailOnAdd(&$rs)
+    {
+        global $Language;
+        $table = 'jdh_chief_complaints';
+        $subject = $table . " " . $Language->phrase("RecordInserted");
+        $action = $Language->phrase("ActionInserted");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = ["rsnew" => $rs];
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
+    }
+
+    // Send email after update success
+    public function sendEmailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        $table = 'jdh_chief_complaints';
+        $subject = $table . " ". $Language->phrase("RecordUpdated");
+        $action = $Language->phrase("ActionUpdated");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = [];
+        $args["rsold"] = &$rsold;
+        $args["rsnew"] = &$rsnew;
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
     }
 
     // Table level events

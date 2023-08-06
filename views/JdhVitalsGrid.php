@@ -26,8 +26,13 @@ loadjs.ready(["wrapper", "head"], function () {
             ["vitals_id", [fields.vitals_id.visible && fields.vitals_id.required ? ew.Validators.required(fields.vitals_id.caption) : null], fields.vitals_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["pressure", [fields.pressure.visible && fields.pressure.required ? ew.Validators.required(fields.pressure.caption) : null], fields.pressure.isInvalid],
-            ["height", [fields.height.visible && fields.height.required ? ew.Validators.required(fields.height.caption) : null, ew.Validators.integer], fields.height.isInvalid],
+            ["height", [fields.height.visible && fields.height.required ? ew.Validators.required(fields.height.caption) : null, ew.Validators.float], fields.height.isInvalid],
             ["weight", [fields.weight.visible && fields.weight.required ? ew.Validators.required(fields.weight.caption) : null, ew.Validators.integer], fields.weight.isInvalid],
+            ["body_mass_index", [fields.body_mass_index.visible && fields.body_mass_index.required ? ew.Validators.required(fields.body_mass_index.caption) : null], fields.body_mass_index.isInvalid],
+            ["pulse_rate", [fields.pulse_rate.visible && fields.pulse_rate.required ? ew.Validators.required(fields.pulse_rate.caption) : null, ew.Validators.integer], fields.pulse_rate.isInvalid],
+            ["respiratory_rate", [fields.respiratory_rate.visible && fields.respiratory_rate.required ? ew.Validators.required(fields.respiratory_rate.caption) : null, ew.Validators.integer], fields.respiratory_rate.isInvalid],
+            ["temperature", [fields.temperature.visible && fields.temperature.required ? ew.Validators.required(fields.temperature.caption) : null, ew.Validators.float], fields.temperature.isInvalid],
+            ["random_blood_sugar", [fields.random_blood_sugar.visible && fields.random_blood_sugar.required ? ew.Validators.required(fields.random_blood_sugar.caption) : null], fields.random_blood_sugar.isInvalid],
             ["submission_date", [fields.submission_date.visible && fields.submission_date.required ? ew.Validators.required(fields.submission_date.caption) : null, ew.Validators.datetime(fields.submission_date.clientFormatPattern)], fields.submission_date.isInvalid]
         ])
 
@@ -35,7 +40,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setEmptyRow(
             function (rowIndex) {
                 let fobj = this.getForm(),
-                    fields = [["patient_id",false],["pressure",false],["height",false],["weight",false],["submission_date",false]];
+                    fields = [["patient_id",false],["pressure",false],["height",false],["weight",false],["body_mass_index",false],["pulse_rate",false],["respiratory_rate",false],["temperature",false],["random_blood_sugar",false],["submission_date",false]];
                 if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
                     return false;
                 return true;
@@ -96,6 +101,21 @@ $Grid->ListOptions->render("header", "left");
 <?php } ?>
 <?php if ($Grid->weight->Visible) { // weight ?>
         <th data-name="weight" class="<?= $Grid->weight->headerCellClass() ?>"><div id="elh_jdh_vitals_weight" class="jdh_vitals_weight"><?= $Grid->renderFieldHeader($Grid->weight) ?></div></th>
+<?php } ?>
+<?php if ($Grid->body_mass_index->Visible) { // body_mass_index ?>
+        <th data-name="body_mass_index" class="<?= $Grid->body_mass_index->headerCellClass() ?>"><div id="elh_jdh_vitals_body_mass_index" class="jdh_vitals_body_mass_index"><?= $Grid->renderFieldHeader($Grid->body_mass_index) ?></div></th>
+<?php } ?>
+<?php if ($Grid->pulse_rate->Visible) { // pulse_rate ?>
+        <th data-name="pulse_rate" class="<?= $Grid->pulse_rate->headerCellClass() ?>"><div id="elh_jdh_vitals_pulse_rate" class="jdh_vitals_pulse_rate"><?= $Grid->renderFieldHeader($Grid->pulse_rate) ?></div></th>
+<?php } ?>
+<?php if ($Grid->respiratory_rate->Visible) { // respiratory_rate ?>
+        <th data-name="respiratory_rate" class="<?= $Grid->respiratory_rate->headerCellClass() ?>"><div id="elh_jdh_vitals_respiratory_rate" class="jdh_vitals_respiratory_rate"><?= $Grid->renderFieldHeader($Grid->respiratory_rate) ?></div></th>
+<?php } ?>
+<?php if ($Grid->temperature->Visible) { // temperature ?>
+        <th data-name="temperature" class="<?= $Grid->temperature->headerCellClass() ?>"><div id="elh_jdh_vitals_temperature" class="jdh_vitals_temperature"><?= $Grid->renderFieldHeader($Grid->temperature) ?></div></th>
+<?php } ?>
+<?php if ($Grid->random_blood_sugar->Visible) { // random_blood_sugar ?>
+        <th data-name="random_blood_sugar" class="<?= $Grid->random_blood_sugar->headerCellClass() ?>"><div id="elh_jdh_vitals_random_blood_sugar" class="jdh_vitals_random_blood_sugar"><?= $Grid->renderFieldHeader($Grid->random_blood_sugar) ?></div></th>
 <?php } ?>
 <?php if ($Grid->submission_date->Visible) { // submission_date ?>
         <th data-name="submission_date" class="<?= $Grid->submission_date->headerCellClass() ?>"><div id="elh_jdh_vitals_submission_date" class="jdh_vitals_submission_date"><?= $Grid->renderFieldHeader($Grid->submission_date) ?></div></th>
@@ -326,6 +346,142 @@ loadjs.ready("fjdh_vitalsgrid", function() {
 <?php if ($Grid->isConfirm()) { ?>
 <input type="hidden" data-table="jdh_vitals" data-field="x_weight" data-hidden="1" name="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_weight" id="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_weight" value="<?= HtmlEncode($Grid->weight->FormValue) ?>">
 <input type="hidden" data-table="jdh_vitals" data-field="x_weight" data-hidden="1" data-old name="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_weight" id="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_weight" value="<?= HtmlEncode($Grid->weight->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->body_mass_index->Visible) { // body_mass_index ?>
+        <td data-name="body_mass_index"<?= $Grid->body_mass_index->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_body_mass_index" class="el_jdh_vitals_body_mass_index">
+<input type="<?= $Grid->body_mass_index->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_body_mass_index" id="x<?= $Grid->RowIndex ?>_body_mass_index" data-table="jdh_vitals" data-field="x_body_mass_index" value="<?= $Grid->body_mass_index->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->body_mass_index->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->body_mass_index->formatPattern()) ?>"<?= $Grid->body_mass_index->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->body_mass_index->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_body_mass_index" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_body_mass_index" id="o<?= $Grid->RowIndex ?>_body_mass_index" value="<?= HtmlEncode($Grid->body_mass_index->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_body_mass_index" class="el_jdh_vitals_body_mass_index">
+<span<?= $Grid->body_mass_index->viewAttributes() ?>>
+<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Grid->body_mass_index->getDisplayValue($Grid->body_mass_index->EditValue))) ?>"></span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_body_mass_index" data-hidden="1" name="x<?= $Grid->RowIndex ?>_body_mass_index" id="x<?= $Grid->RowIndex ?>_body_mass_index" value="<?= HtmlEncode($Grid->body_mass_index->CurrentValue) ?>">
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_body_mass_index" class="el_jdh_vitals_body_mass_index">
+<span<?= $Grid->body_mass_index->viewAttributes() ?>>
+<?= $Grid->body_mass_index->getViewValue() ?></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_vitals" data-field="x_body_mass_index" data-hidden="1" name="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_body_mass_index" id="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_body_mass_index" value="<?= HtmlEncode($Grid->body_mass_index->FormValue) ?>">
+<input type="hidden" data-table="jdh_vitals" data-field="x_body_mass_index" data-hidden="1" data-old name="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_body_mass_index" id="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_body_mass_index" value="<?= HtmlEncode($Grid->body_mass_index->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->pulse_rate->Visible) { // pulse_rate ?>
+        <td data-name="pulse_rate"<?= $Grid->pulse_rate->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_pulse_rate" class="el_jdh_vitals_pulse_rate">
+<input type="<?= $Grid->pulse_rate->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_pulse_rate" id="x<?= $Grid->RowIndex ?>_pulse_rate" data-table="jdh_vitals" data-field="x_pulse_rate" value="<?= $Grid->pulse_rate->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->pulse_rate->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->pulse_rate->formatPattern()) ?>"<?= $Grid->pulse_rate->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->pulse_rate->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_pulse_rate" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_pulse_rate" id="o<?= $Grid->RowIndex ?>_pulse_rate" value="<?= HtmlEncode($Grid->pulse_rate->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_pulse_rate" class="el_jdh_vitals_pulse_rate">
+<input type="<?= $Grid->pulse_rate->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_pulse_rate" id="x<?= $Grid->RowIndex ?>_pulse_rate" data-table="jdh_vitals" data-field="x_pulse_rate" value="<?= $Grid->pulse_rate->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->pulse_rate->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->pulse_rate->formatPattern()) ?>"<?= $Grid->pulse_rate->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->pulse_rate->getErrorMessage() ?></div>
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_pulse_rate" class="el_jdh_vitals_pulse_rate">
+<span<?= $Grid->pulse_rate->viewAttributes() ?>>
+<?= $Grid->pulse_rate->getViewValue() ?></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_vitals" data-field="x_pulse_rate" data-hidden="1" name="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_pulse_rate" id="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_pulse_rate" value="<?= HtmlEncode($Grid->pulse_rate->FormValue) ?>">
+<input type="hidden" data-table="jdh_vitals" data-field="x_pulse_rate" data-hidden="1" data-old name="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_pulse_rate" id="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_pulse_rate" value="<?= HtmlEncode($Grid->pulse_rate->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->respiratory_rate->Visible) { // respiratory_rate ?>
+        <td data-name="respiratory_rate"<?= $Grid->respiratory_rate->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_respiratory_rate" class="el_jdh_vitals_respiratory_rate">
+<input type="<?= $Grid->respiratory_rate->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_respiratory_rate" id="x<?= $Grid->RowIndex ?>_respiratory_rate" data-table="jdh_vitals" data-field="x_respiratory_rate" value="<?= $Grid->respiratory_rate->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->respiratory_rate->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->respiratory_rate->formatPattern()) ?>"<?= $Grid->respiratory_rate->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->respiratory_rate->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_respiratory_rate" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_respiratory_rate" id="o<?= $Grid->RowIndex ?>_respiratory_rate" value="<?= HtmlEncode($Grid->respiratory_rate->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_respiratory_rate" class="el_jdh_vitals_respiratory_rate">
+<input type="<?= $Grid->respiratory_rate->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_respiratory_rate" id="x<?= $Grid->RowIndex ?>_respiratory_rate" data-table="jdh_vitals" data-field="x_respiratory_rate" value="<?= $Grid->respiratory_rate->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->respiratory_rate->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->respiratory_rate->formatPattern()) ?>"<?= $Grid->respiratory_rate->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->respiratory_rate->getErrorMessage() ?></div>
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_respiratory_rate" class="el_jdh_vitals_respiratory_rate">
+<span<?= $Grid->respiratory_rate->viewAttributes() ?>>
+<?= $Grid->respiratory_rate->getViewValue() ?></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_vitals" data-field="x_respiratory_rate" data-hidden="1" name="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_respiratory_rate" id="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_respiratory_rate" value="<?= HtmlEncode($Grid->respiratory_rate->FormValue) ?>">
+<input type="hidden" data-table="jdh_vitals" data-field="x_respiratory_rate" data-hidden="1" data-old name="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_respiratory_rate" id="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_respiratory_rate" value="<?= HtmlEncode($Grid->respiratory_rate->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->temperature->Visible) { // temperature ?>
+        <td data-name="temperature"<?= $Grid->temperature->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_temperature" class="el_jdh_vitals_temperature">
+<input type="<?= $Grid->temperature->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_temperature" id="x<?= $Grid->RowIndex ?>_temperature" data-table="jdh_vitals" data-field="x_temperature" value="<?= $Grid->temperature->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->temperature->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->temperature->formatPattern()) ?>"<?= $Grid->temperature->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->temperature->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_temperature" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_temperature" id="o<?= $Grid->RowIndex ?>_temperature" value="<?= HtmlEncode($Grid->temperature->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_temperature" class="el_jdh_vitals_temperature">
+<input type="<?= $Grid->temperature->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_temperature" id="x<?= $Grid->RowIndex ?>_temperature" data-table="jdh_vitals" data-field="x_temperature" value="<?= $Grid->temperature->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->temperature->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->temperature->formatPattern()) ?>"<?= $Grid->temperature->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->temperature->getErrorMessage() ?></div>
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_temperature" class="el_jdh_vitals_temperature">
+<span<?= $Grid->temperature->viewAttributes() ?>>
+<?= $Grid->temperature->getViewValue() ?></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_vitals" data-field="x_temperature" data-hidden="1" name="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_temperature" id="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_temperature" value="<?= HtmlEncode($Grid->temperature->FormValue) ?>">
+<input type="hidden" data-table="jdh_vitals" data-field="x_temperature" data-hidden="1" data-old name="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_temperature" id="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_temperature" value="<?= HtmlEncode($Grid->temperature->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->random_blood_sugar->Visible) { // random_blood_sugar ?>
+        <td data-name="random_blood_sugar"<?= $Grid->random_blood_sugar->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_random_blood_sugar" class="el_jdh_vitals_random_blood_sugar">
+<input type="<?= $Grid->random_blood_sugar->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_random_blood_sugar" id="x<?= $Grid->RowIndex ?>_random_blood_sugar" data-table="jdh_vitals" data-field="x_random_blood_sugar" value="<?= $Grid->random_blood_sugar->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Grid->random_blood_sugar->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->random_blood_sugar->formatPattern()) ?>"<?= $Grid->random_blood_sugar->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->random_blood_sugar->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_random_blood_sugar" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_random_blood_sugar" id="o<?= $Grid->RowIndex ?>_random_blood_sugar" value="<?= HtmlEncode($Grid->random_blood_sugar->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_random_blood_sugar" class="el_jdh_vitals_random_blood_sugar">
+<input type="<?= $Grid->random_blood_sugar->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_random_blood_sugar" id="x<?= $Grid->RowIndex ?>_random_blood_sugar" data-table="jdh_vitals" data-field="x_random_blood_sugar" value="<?= $Grid->random_blood_sugar->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Grid->random_blood_sugar->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->random_blood_sugar->formatPattern()) ?>"<?= $Grid->random_blood_sugar->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->random_blood_sugar->getErrorMessage() ?></div>
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_random_blood_sugar" class="el_jdh_vitals_random_blood_sugar">
+<span<?= $Grid->random_blood_sugar->viewAttributes() ?>>
+<?= $Grid->random_blood_sugar->getViewValue() ?></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_vitals" data-field="x_random_blood_sugar" data-hidden="1" name="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_random_blood_sugar" id="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_random_blood_sugar" value="<?= HtmlEncode($Grid->random_blood_sugar->FormValue) ?>">
+<input type="hidden" data-table="jdh_vitals" data-field="x_random_blood_sugar" data-hidden="1" data-old name="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_random_blood_sugar" id="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_random_blood_sugar" value="<?= HtmlEncode($Grid->random_blood_sugar->OldValue) ?>">
 <?php } ?>
 <?php } ?>
 </td>

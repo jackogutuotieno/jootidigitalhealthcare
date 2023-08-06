@@ -36,8 +36,13 @@ loadjs.ready(["wrapper", "head"], function () {
             ["vitals_id", [fields.vitals_id.visible && fields.vitals_id.required ? ew.Validators.required(fields.vitals_id.caption) : null], fields.vitals_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["pressure", [fields.pressure.visible && fields.pressure.required ? ew.Validators.required(fields.pressure.caption) : null], fields.pressure.isInvalid],
-            ["height", [fields.height.visible && fields.height.required ? ew.Validators.required(fields.height.caption) : null, ew.Validators.integer], fields.height.isInvalid],
-            ["weight", [fields.weight.visible && fields.weight.required ? ew.Validators.required(fields.weight.caption) : null, ew.Validators.integer], fields.weight.isInvalid]
+            ["height", [fields.height.visible && fields.height.required ? ew.Validators.required(fields.height.caption) : null, ew.Validators.float], fields.height.isInvalid],
+            ["weight", [fields.weight.visible && fields.weight.required ? ew.Validators.required(fields.weight.caption) : null, ew.Validators.integer], fields.weight.isInvalid],
+            ["pulse_rate", [fields.pulse_rate.visible && fields.pulse_rate.required ? ew.Validators.required(fields.pulse_rate.caption) : null, ew.Validators.integer], fields.pulse_rate.isInvalid],
+            ["respiratory_rate", [fields.respiratory_rate.visible && fields.respiratory_rate.required ? ew.Validators.required(fields.respiratory_rate.caption) : null, ew.Validators.integer], fields.respiratory_rate.isInvalid],
+            ["temperature", [fields.temperature.visible && fields.temperature.required ? ew.Validators.required(fields.temperature.caption) : null, ew.Validators.float], fields.temperature.isInvalid],
+            ["random_blood_sugar", [fields.random_blood_sugar.visible && fields.random_blood_sugar.required ? ew.Validators.required(fields.random_blood_sugar.caption) : null], fields.random_blood_sugar.isInvalid],
+            ["submitted_by_user_id", [fields.submitted_by_user_id.visible && fields.submitted_by_user_id.required ? ew.Validators.required(fields.submitted_by_user_id.caption) : null], fields.submitted_by_user_id.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -167,6 +172,54 @@ loadjs.ready("fjdh_vitalsedit", function() {
 <input type="<?= $Page->weight->getInputTextType() ?>" name="x_weight" id="x_weight" data-table="jdh_vitals" data-field="x_weight" value="<?= $Page->weight->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->weight->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->weight->formatPattern()) ?>"<?= $Page->weight->editAttributes() ?> aria-describedby="x_weight_help">
 <?= $Page->weight->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->weight->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->pulse_rate->Visible) { // pulse_rate ?>
+    <div id="r_pulse_rate"<?= $Page->pulse_rate->rowAttributes() ?>>
+        <label id="elh_jdh_vitals_pulse_rate" for="x_pulse_rate" class="<?= $Page->LeftColumnClass ?>"><?= $Page->pulse_rate->caption() ?><?= $Page->pulse_rate->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->pulse_rate->cellAttributes() ?>>
+<span id="el_jdh_vitals_pulse_rate">
+<input type="<?= $Page->pulse_rate->getInputTextType() ?>" name="x_pulse_rate" id="x_pulse_rate" data-table="jdh_vitals" data-field="x_pulse_rate" value="<?= $Page->pulse_rate->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->pulse_rate->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->pulse_rate->formatPattern()) ?>"<?= $Page->pulse_rate->editAttributes() ?> aria-describedby="x_pulse_rate_help">
+<?= $Page->pulse_rate->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->pulse_rate->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->respiratory_rate->Visible) { // respiratory_rate ?>
+    <div id="r_respiratory_rate"<?= $Page->respiratory_rate->rowAttributes() ?>>
+        <label id="elh_jdh_vitals_respiratory_rate" for="x_respiratory_rate" class="<?= $Page->LeftColumnClass ?>"><?= $Page->respiratory_rate->caption() ?><?= $Page->respiratory_rate->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->respiratory_rate->cellAttributes() ?>>
+<span id="el_jdh_vitals_respiratory_rate">
+<input type="<?= $Page->respiratory_rate->getInputTextType() ?>" name="x_respiratory_rate" id="x_respiratory_rate" data-table="jdh_vitals" data-field="x_respiratory_rate" value="<?= $Page->respiratory_rate->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->respiratory_rate->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->respiratory_rate->formatPattern()) ?>"<?= $Page->respiratory_rate->editAttributes() ?> aria-describedby="x_respiratory_rate_help">
+<?= $Page->respiratory_rate->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->respiratory_rate->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->temperature->Visible) { // temperature ?>
+    <div id="r_temperature"<?= $Page->temperature->rowAttributes() ?>>
+        <label id="elh_jdh_vitals_temperature" for="x_temperature" class="<?= $Page->LeftColumnClass ?>"><?= $Page->temperature->caption() ?><?= $Page->temperature->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->temperature->cellAttributes() ?>>
+<span id="el_jdh_vitals_temperature">
+<input type="<?= $Page->temperature->getInputTextType() ?>" name="x_temperature" id="x_temperature" data-table="jdh_vitals" data-field="x_temperature" value="<?= $Page->temperature->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->temperature->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->temperature->formatPattern()) ?>"<?= $Page->temperature->editAttributes() ?> aria-describedby="x_temperature_help">
+<?= $Page->temperature->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->temperature->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->random_blood_sugar->Visible) { // random_blood_sugar ?>
+    <div id="r_random_blood_sugar"<?= $Page->random_blood_sugar->rowAttributes() ?>>
+        <label id="elh_jdh_vitals_random_blood_sugar" for="x_random_blood_sugar" class="<?= $Page->LeftColumnClass ?>"><?= $Page->random_blood_sugar->caption() ?><?= $Page->random_blood_sugar->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->random_blood_sugar->cellAttributes() ?>>
+<span id="el_jdh_vitals_random_blood_sugar">
+<input type="<?= $Page->random_blood_sugar->getInputTextType() ?>" name="x_random_blood_sugar" id="x_random_blood_sugar" data-table="jdh_vitals" data-field="x_random_blood_sugar" value="<?= $Page->random_blood_sugar->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Page->random_blood_sugar->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->random_blood_sugar->formatPattern()) ?>"<?= $Page->random_blood_sugar->editAttributes() ?> aria-describedby="x_random_blood_sugar_help">
+<?= $Page->random_blood_sugar->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->random_blood_sugar->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

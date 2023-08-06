@@ -46,8 +46,14 @@ class JdhVitals extends DbTable
     public $pressure;
     public $height;
     public $weight;
+    public $body_mass_index;
+    public $pulse_rate;
+    public $respiratory_rate;
+    public $temperature;
+    public $random_blood_sugar;
+    public $spo2;
     public $submission_date;
-    public $subbmitted_by_user_id;
+    public $submitted_by_user_id;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -177,8 +183,8 @@ class JdhVitals extends DbTable
             'height', // Name
             '`height`', // Expression
             '`height`', // Basic search expression
-            3, // Type
-            11, // Size
+            4, // Type
+            12, // Size
             -1, // Date/Time format
             false, // Is upload field
             '`height`', // Virtual expression
@@ -191,7 +197,7 @@ class JdhVitals extends DbTable
         $this->height->InputTextType = "text";
         $this->height->Nullable = false; // NOT NULL field
         $this->height->Required = true; // Required field
-        $this->height->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->height->DefaultErrorMessage = $Language->phrase("IncorrectFloat");
         $this->height->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['height'] = &$this->height;
 
@@ -220,6 +226,154 @@ class JdhVitals extends DbTable
         $this->weight->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['weight'] = &$this->weight;
 
+        // body_mass_index $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->body_mass_index = new DbField(
+            $this, // Table
+            'x_body_mass_index', // Variable name
+            'body_mass_index', // Name
+            'weight/(height*height)', // Expression
+            'weight/(height*height)', // Basic search expression
+            131, // Type
+            14, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            'weight/(height*height)', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->body_mass_index->InputTextType = "text";
+        $this->body_mass_index->IsCustom = true; // Custom field
+        $this->body_mass_index->DefaultErrorMessage = $Language->phrase("IncorrectFloat");
+        $this->body_mass_index->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->Fields['body_mass_index'] = &$this->body_mass_index;
+
+        // pulse_rate $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->pulse_rate = new DbField(
+            $this, // Table
+            'x_pulse_rate', // Variable name
+            'pulse_rate', // Name
+            '`pulse_rate`', // Expression
+            '`pulse_rate`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`pulse_rate`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->pulse_rate->InputTextType = "text";
+        $this->pulse_rate->Nullable = false; // NOT NULL field
+        $this->pulse_rate->Required = true; // Required field
+        $this->pulse_rate->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->pulse_rate->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['pulse_rate'] = &$this->pulse_rate;
+
+        // respiratory_rate $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->respiratory_rate = new DbField(
+            $this, // Table
+            'x_respiratory_rate', // Variable name
+            'respiratory_rate', // Name
+            '`respiratory_rate`', // Expression
+            '`respiratory_rate`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`respiratory_rate`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->respiratory_rate->InputTextType = "text";
+        $this->respiratory_rate->Nullable = false; // NOT NULL field
+        $this->respiratory_rate->Required = true; // Required field
+        $this->respiratory_rate->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->respiratory_rate->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['respiratory_rate'] = &$this->respiratory_rate;
+
+        // temperature $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->temperature = new DbField(
+            $this, // Table
+            'x_temperature', // Variable name
+            'temperature', // Name
+            '`temperature`', // Expression
+            '`temperature`', // Basic search expression
+            4, // Type
+            12, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`temperature`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->temperature->InputTextType = "text";
+        $this->temperature->Nullable = false; // NOT NULL field
+        $this->temperature->Required = true; // Required field
+        $this->temperature->DefaultErrorMessage = $Language->phrase("IncorrectFloat");
+        $this->temperature->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['temperature'] = &$this->temperature;
+
+        // random_blood_sugar $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->random_blood_sugar = new DbField(
+            $this, // Table
+            'x_random_blood_sugar', // Variable name
+            'random_blood_sugar', // Name
+            '`random_blood_sugar`', // Expression
+            '`random_blood_sugar`', // Basic search expression
+            200, // Type
+            100, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`random_blood_sugar`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->random_blood_sugar->InputTextType = "text";
+        $this->random_blood_sugar->Nullable = false; // NOT NULL field
+        $this->random_blood_sugar->Required = true; // Required field
+        $this->random_blood_sugar->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['random_blood_sugar'] = &$this->random_blood_sugar;
+
+        // spo2 $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->spo2 = new DbField(
+            $this, // Table
+            'x_spo2', // Variable name
+            'spo2', // Name
+            '`spo2`', // Expression
+            '`spo2`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`spo2`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->spo2->InputTextType = "text";
+        $this->spo2->Nullable = false; // NOT NULL field
+        $this->spo2->Required = true; // Required field
+        $this->spo2->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->spo2->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['spo2'] = &$this->spo2;
+
         // submission_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->submission_date = new DbField(
             $this, // Table
@@ -245,30 +399,30 @@ class JdhVitals extends DbTable
         $this->submission_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['submission_date'] = &$this->submission_date;
 
-        // subbmitted_by_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->subbmitted_by_user_id = new DbField(
+        // submitted_by_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->submitted_by_user_id = new DbField(
             $this, // Table
-            'x_subbmitted_by_user_id', // Variable name
-            'subbmitted_by_user_id', // Name
-            '`subbmitted_by_user_id`', // Expression
-            '`subbmitted_by_user_id`', // Basic search expression
+            'x_submitted_by_user_id', // Variable name
+            'submitted_by_user_id', // Name
+            '`submitted_by_user_id`', // Expression
+            '`submitted_by_user_id`', // Basic search expression
             3, // Type
             11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`subbmitted_by_user_id`', // Virtual expression
+            '`submitted_by_user_id`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->subbmitted_by_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
-        $this->subbmitted_by_user_id->InputTextType = "text";
-        $this->subbmitted_by_user_id->Nullable = false; // NOT NULL field
-        $this->subbmitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->subbmitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['subbmitted_by_user_id'] = &$this->subbmitted_by_user_id;
+        $this->submitted_by_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
+        $this->submitted_by_user_id->InputTextType = "text";
+        $this->submitted_by_user_id->Nullable = false; // NOT NULL field
+        $this->submitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->submitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['submitted_by_user_id'] = &$this->submitted_by_user_id;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -434,7 +588,7 @@ class JdhVitals extends DbTable
 
     public function getSqlSelect() // Select
     {
-        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*");
+        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*, weight/(height*height) AS `body_mass_index`");
     }
 
     public function sqlSelect() // For backward compatibility
@@ -827,8 +981,14 @@ class JdhVitals extends DbTable
         $this->pressure->DbValue = $row['pressure'];
         $this->height->DbValue = $row['height'];
         $this->weight->DbValue = $row['weight'];
+        $this->body_mass_index->DbValue = $row['body_mass_index'];
+        $this->pulse_rate->DbValue = $row['pulse_rate'];
+        $this->respiratory_rate->DbValue = $row['respiratory_rate'];
+        $this->temperature->DbValue = $row['temperature'];
+        $this->random_blood_sugar->DbValue = $row['random_blood_sugar'];
+        $this->spo2->DbValue = $row['spo2'];
         $this->submission_date->DbValue = $row['submission_date'];
-        $this->subbmitted_by_user_id->DbValue = $row['subbmitted_by_user_id'];
+        $this->submitted_by_user_id->DbValue = $row['submitted_by_user_id'];
     }
 
     // Delete uploaded files
@@ -1191,8 +1351,14 @@ class JdhVitals extends DbTable
         $this->pressure->setDbValue($row['pressure']);
         $this->height->setDbValue($row['height']);
         $this->weight->setDbValue($row['weight']);
+        $this->body_mass_index->setDbValue($row['body_mass_index']);
+        $this->pulse_rate->setDbValue($row['pulse_rate']);
+        $this->respiratory_rate->setDbValue($row['respiratory_rate']);
+        $this->temperature->setDbValue($row['temperature']);
+        $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
+        $this->spo2->setDbValue($row['spo2']);
         $this->submission_date->setDbValue($row['submission_date']);
-        $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
     // Render list content
@@ -1233,9 +1399,21 @@ class JdhVitals extends DbTable
 
         // weight
 
+        // body_mass_index
+
+        // pulse_rate
+
+        // respiratory_rate
+
+        // temperature
+
+        // random_blood_sugar
+
+        // spo2
+
         // submission_date
 
-        // subbmitted_by_user_id
+        // submitted_by_user_id
 
         // vitals_id
         $this->vitals_id->ViewValue = $this->vitals_id->CurrentValue;
@@ -1274,13 +1452,36 @@ class JdhVitals extends DbTable
         $this->weight->ViewValue = $this->weight->CurrentValue;
         $this->weight->ViewValue = FormatNumber($this->weight->ViewValue, $this->weight->formatPattern());
 
+        // body_mass_index
+        $this->body_mass_index->ViewValue = $this->body_mass_index->CurrentValue;
+        $this->body_mass_index->ViewValue = FormatNumber($this->body_mass_index->ViewValue, $this->body_mass_index->formatPattern());
+
+        // pulse_rate
+        $this->pulse_rate->ViewValue = $this->pulse_rate->CurrentValue;
+        $this->pulse_rate->ViewValue = FormatNumber($this->pulse_rate->ViewValue, $this->pulse_rate->formatPattern());
+
+        // respiratory_rate
+        $this->respiratory_rate->ViewValue = $this->respiratory_rate->CurrentValue;
+        $this->respiratory_rate->ViewValue = FormatNumber($this->respiratory_rate->ViewValue, $this->respiratory_rate->formatPattern());
+
+        // temperature
+        $this->temperature->ViewValue = $this->temperature->CurrentValue;
+        $this->temperature->ViewValue = FormatNumber($this->temperature->ViewValue, $this->temperature->formatPattern());
+
+        // random_blood_sugar
+        $this->random_blood_sugar->ViewValue = $this->random_blood_sugar->CurrentValue;
+
+        // spo2
+        $this->spo2->ViewValue = $this->spo2->CurrentValue;
+        $this->spo2->ViewValue = FormatNumber($this->spo2->ViewValue, $this->spo2->formatPattern());
+
         // submission_date
         $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
         $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
 
-        // subbmitted_by_user_id
-        $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
-        $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
+        // submitted_by_user_id
+        $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+        $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
         // vitals_id
         $this->vitals_id->HrefValue = "";
@@ -1302,13 +1503,37 @@ class JdhVitals extends DbTable
         $this->weight->HrefValue = "";
         $this->weight->TooltipValue = "";
 
+        // body_mass_index
+        $this->body_mass_index->HrefValue = "";
+        $this->body_mass_index->TooltipValue = "";
+
+        // pulse_rate
+        $this->pulse_rate->HrefValue = "";
+        $this->pulse_rate->TooltipValue = "";
+
+        // respiratory_rate
+        $this->respiratory_rate->HrefValue = "";
+        $this->respiratory_rate->TooltipValue = "";
+
+        // temperature
+        $this->temperature->HrefValue = "";
+        $this->temperature->TooltipValue = "";
+
+        // random_blood_sugar
+        $this->random_blood_sugar->HrefValue = "";
+        $this->random_blood_sugar->TooltipValue = "";
+
+        // spo2
+        $this->spo2->HrefValue = "";
+        $this->spo2->TooltipValue = "";
+
         // submission_date
         $this->submission_date->HrefValue = "";
         $this->submission_date->TooltipValue = "";
 
-        // subbmitted_by_user_id
-        $this->subbmitted_by_user_id->HrefValue = "";
-        $this->subbmitted_by_user_id->TooltipValue = "";
+        // submitted_by_user_id
+        $this->submitted_by_user_id->HrefValue = "";
+        $this->submitted_by_user_id->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1382,12 +1607,57 @@ class JdhVitals extends DbTable
             $this->weight->EditValue = FormatNumber($this->weight->EditValue, null);
         }
 
+        // body_mass_index
+        $this->body_mass_index->setupEditAttributes();
+        $this->body_mass_index->EditValue = $this->body_mass_index->CurrentValue;
+        $this->body_mass_index->EditValue = FormatNumber($this->body_mass_index->EditValue, $this->body_mass_index->formatPattern());
+
+        // pulse_rate
+        $this->pulse_rate->setupEditAttributes();
+        $this->pulse_rate->EditValue = $this->pulse_rate->CurrentValue;
+        $this->pulse_rate->PlaceHolder = RemoveHtml($this->pulse_rate->caption());
+        if (strval($this->pulse_rate->EditValue) != "" && is_numeric($this->pulse_rate->EditValue)) {
+            $this->pulse_rate->EditValue = FormatNumber($this->pulse_rate->EditValue, null);
+        }
+
+        // respiratory_rate
+        $this->respiratory_rate->setupEditAttributes();
+        $this->respiratory_rate->EditValue = $this->respiratory_rate->CurrentValue;
+        $this->respiratory_rate->PlaceHolder = RemoveHtml($this->respiratory_rate->caption());
+        if (strval($this->respiratory_rate->EditValue) != "" && is_numeric($this->respiratory_rate->EditValue)) {
+            $this->respiratory_rate->EditValue = FormatNumber($this->respiratory_rate->EditValue, null);
+        }
+
+        // temperature
+        $this->temperature->setupEditAttributes();
+        $this->temperature->EditValue = $this->temperature->CurrentValue;
+        $this->temperature->PlaceHolder = RemoveHtml($this->temperature->caption());
+        if (strval($this->temperature->EditValue) != "" && is_numeric($this->temperature->EditValue)) {
+            $this->temperature->EditValue = FormatNumber($this->temperature->EditValue, null);
+        }
+
+        // random_blood_sugar
+        $this->random_blood_sugar->setupEditAttributes();
+        if (!$this->random_blood_sugar->Raw) {
+            $this->random_blood_sugar->CurrentValue = HtmlDecode($this->random_blood_sugar->CurrentValue);
+        }
+        $this->random_blood_sugar->EditValue = $this->random_blood_sugar->CurrentValue;
+        $this->random_blood_sugar->PlaceHolder = RemoveHtml($this->random_blood_sugar->caption());
+
+        // spo2
+        $this->spo2->setupEditAttributes();
+        $this->spo2->EditValue = $this->spo2->CurrentValue;
+        $this->spo2->PlaceHolder = RemoveHtml($this->spo2->caption());
+        if (strval($this->spo2->EditValue) != "" && is_numeric($this->spo2->EditValue)) {
+            $this->spo2->EditValue = FormatNumber($this->spo2->EditValue, null);
+        }
+
         // submission_date
         $this->submission_date->setupEditAttributes();
         $this->submission_date->EditValue = FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern());
         $this->submission_date->PlaceHolder = RemoveHtml($this->submission_date->caption());
 
-        // subbmitted_by_user_id
+        // submitted_by_user_id
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1422,15 +1692,27 @@ class JdhVitals extends DbTable
                     $doc->exportCaption($this->pressure);
                     $doc->exportCaption($this->height);
                     $doc->exportCaption($this->weight);
+                    $doc->exportCaption($this->body_mass_index);
+                    $doc->exportCaption($this->pulse_rate);
+                    $doc->exportCaption($this->respiratory_rate);
+                    $doc->exportCaption($this->temperature);
+                    $doc->exportCaption($this->random_blood_sugar);
                     $doc->exportCaption($this->submission_date);
+                    $doc->exportCaption($this->submitted_by_user_id);
                 } else {
                     $doc->exportCaption($this->vitals_id);
                     $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->pressure);
                     $doc->exportCaption($this->height);
                     $doc->exportCaption($this->weight);
+                    $doc->exportCaption($this->body_mass_index);
+                    $doc->exportCaption($this->pulse_rate);
+                    $doc->exportCaption($this->respiratory_rate);
+                    $doc->exportCaption($this->temperature);
+                    $doc->exportCaption($this->random_blood_sugar);
+                    $doc->exportCaption($this->spo2);
                     $doc->exportCaption($this->submission_date);
-                    $doc->exportCaption($this->subbmitted_by_user_id);
+                    $doc->exportCaption($this->submitted_by_user_id);
                 }
                 $doc->endExportRow();
             }
@@ -1465,15 +1747,27 @@ class JdhVitals extends DbTable
                         $doc->exportField($this->pressure);
                         $doc->exportField($this->height);
                         $doc->exportField($this->weight);
+                        $doc->exportField($this->body_mass_index);
+                        $doc->exportField($this->pulse_rate);
+                        $doc->exportField($this->respiratory_rate);
+                        $doc->exportField($this->temperature);
+                        $doc->exportField($this->random_blood_sugar);
                         $doc->exportField($this->submission_date);
+                        $doc->exportField($this->submitted_by_user_id);
                     } else {
                         $doc->exportField($this->vitals_id);
                         $doc->exportField($this->patient_id);
                         $doc->exportField($this->pressure);
                         $doc->exportField($this->height);
                         $doc->exportField($this->weight);
+                        $doc->exportField($this->body_mass_index);
+                        $doc->exportField($this->pulse_rate);
+                        $doc->exportField($this->respiratory_rate);
+                        $doc->exportField($this->temperature);
+                        $doc->exportField($this->random_blood_sugar);
+                        $doc->exportField($this->spo2);
                         $doc->exportField($this->submission_date);
-                        $doc->exportField($this->subbmitted_by_user_id);
+                        $doc->exportField($this->submitted_by_user_id);
                     }
                     $doc->endExportRow($rowCnt);
                 }

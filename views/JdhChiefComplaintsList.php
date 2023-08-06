@@ -3,12 +3,12 @@
 namespace PHPMaker2023\jootidigitalhealthcare;
 
 // Page object
-$JdhPatientVisitsList = &$Page;
+$JdhChiefComplaintsList = &$Page;
 ?>
 <?php if (!$Page->isExport()) { ?>
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
-ew.deepAssign(ew.vars, { tables: { jdh_patient_visits: currentTable } });
+ew.deepAssign(ew.vars, { tables: { jdh_chief_complaints: currentTable } });
 var currentPageID = ew.PAGE_ID = "list";
 var currentForm;
 var <?= $Page->FormName ?>;
@@ -72,7 +72,7 @@ $Page->showMessage();
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
 <?php } ?>
-<input type="hidden" name="t" value="jdh_patient_visits">
+<input type="hidden" name="t" value="jdh_chief_complaints">
 <?php if ($Page->IsModal) { ?>
 <input type="hidden" name="modal" value="1">
 <?php } ?>
@@ -80,9 +80,9 @@ $Page->showMessage();
 <input type="hidden" name="<?= Config("TABLE_SHOW_MASTER") ?>" value="jdh_patients">
 <input type="hidden" name="fk_patient_id" value="<?= HtmlEncode($Page->patient_id->getSessionValue()) ?>">
 <?php } ?>
-<div id="gmp_jdh_patient_visits" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
+<div id="gmp_jdh_chief_complaints" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
 <?php if ($Page->TotalRecords > 0 || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
-<table id="tbl_jdh_patient_visitslist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
+<table id="tbl_jdh_chief_complaintslist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
 <thead>
     <tr class="ew-table-header">
 <?php
@@ -95,20 +95,17 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
-<?php if ($Page->visit_id->Visible) { // visit_id ?>
-        <th data-name="visit_id" class="<?= $Page->visit_id->headerCellClass() ?>"><div id="elh_jdh_patient_visits_visit_id" class="jdh_patient_visits_visit_id"><?= $Page->renderFieldHeader($Page->visit_id) ?></div></th>
+<?php if ($Page->id->Visible) { // id ?>
+        <th data-name="id" class="<?= $Page->id->headerCellClass() ?>"><div id="elh_jdh_chief_complaints_id" class="jdh_chief_complaints_id"><?= $Page->renderFieldHeader($Page->id) ?></div></th>
 <?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
-        <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_patient_visits_patient_id" class="jdh_patient_visits_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
+        <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_chief_complaints_patient_id" class="jdh_chief_complaints_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
 <?php } ?>
-<?php if ($Page->visit_type_id->Visible) { // visit_type_id ?>
-        <th data-name="visit_type_id" class="<?= $Page->visit_type_id->headerCellClass() ?>"><div id="elh_jdh_patient_visits_visit_type_id" class="jdh_patient_visits_visit_type_id"><?= $Page->renderFieldHeader($Page->visit_type_id) ?></div></th>
+<?php if ($Page->date_created->Visible) { // date_created ?>
+        <th data-name="date_created" class="<?= $Page->date_created->headerCellClass() ?>"><div id="elh_jdh_chief_complaints_date_created" class="jdh_chief_complaints_date_created"><?= $Page->renderFieldHeader($Page->date_created) ?></div></th>
 <?php } ?>
-<?php if ($Page->doctor_id->Visible) { // doctor_id ?>
-        <th data-name="doctor_id" class="<?= $Page->doctor_id->headerCellClass() ?>"><div id="elh_jdh_patient_visits_doctor_id" class="jdh_patient_visits_doctor_id"><?= $Page->renderFieldHeader($Page->doctor_id) ?></div></th>
-<?php } ?>
-<?php if ($Page->visit_date->Visible) { // visit_date ?>
-        <th data-name="visit_date" class="<?= $Page->visit_date->headerCellClass() ?>"><div id="elh_jdh_patient_visits_visit_date" class="jdh_patient_visits_visit_date"><?= $Page->renderFieldHeader($Page->visit_date) ?></div></th>
+<?php if ($Page->date_updated->Visible) { // date_updated ?>
+        <th data-name="date_updated" class="<?= $Page->date_updated->headerCellClass() ?>"><div id="elh_jdh_chief_complaints_date_updated" class="jdh_chief_complaints_date_updated"><?= $Page->renderFieldHeader($Page->date_updated) ?></div></th>
 <?php } ?>
 <?php
 // Render list options (header, right)
@@ -129,43 +126,35 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
-    <?php if ($Page->visit_id->Visible) { // visit_id ?>
-        <td data-name="visit_id"<?= $Page->visit_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patient_visits_visit_id" class="el_jdh_patient_visits_visit_id">
-<span<?= $Page->visit_id->viewAttributes() ?>>
-<?= $Page->visit_id->getViewValue() ?></span>
+    <?php if ($Page->id->Visible) { // id ?>
+        <td data-name="id"<?= $Page->id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_chief_complaints_id" class="el_jdh_chief_complaints_id">
+<span<?= $Page->id->viewAttributes() ?>>
+<?= $Page->id->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
     <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patient_visits_patient_id" class="el_jdh_patient_visits_patient_id">
+<span id="el<?= $Page->RowCount ?>_jdh_chief_complaints_patient_id" class="el_jdh_chief_complaints_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->visit_type_id->Visible) { // visit_type_id ?>
-        <td data-name="visit_type_id"<?= $Page->visit_type_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patient_visits_visit_type_id" class="el_jdh_patient_visits_visit_type_id">
-<span<?= $Page->visit_type_id->viewAttributes() ?>>
-<?= $Page->visit_type_id->getViewValue() ?></span>
+    <?php if ($Page->date_created->Visible) { // date_created ?>
+        <td data-name="date_created"<?= $Page->date_created->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_chief_complaints_date_created" class="el_jdh_chief_complaints_date_created">
+<span<?= $Page->date_created->viewAttributes() ?>>
+<?= $Page->date_created->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->doctor_id->Visible) { // doctor_id ?>
-        <td data-name="doctor_id"<?= $Page->doctor_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patient_visits_doctor_id" class="el_jdh_patient_visits_doctor_id">
-<span<?= $Page->doctor_id->viewAttributes() ?>>
-<?= $Page->doctor_id->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->visit_date->Visible) { // visit_date ?>
-        <td data-name="visit_date"<?= $Page->visit_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patient_visits_visit_date" class="el_jdh_patient_visits_visit_date">
-<span<?= $Page->visit_date->viewAttributes() ?>>
-<?= $Page->visit_date->getViewValue() ?></span>
+    <?php if ($Page->date_updated->Visible) { // date_updated ?>
+        <td data-name="date_updated"<?= $Page->date_updated->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_chief_complaints_date_updated" class="el_jdh_chief_complaints_date_updated">
+<span<?= $Page->date_updated->viewAttributes() ?>>
+<?= $Page->date_updated->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
@@ -221,7 +210,7 @@ echo GetDebugMessage();
 <script>
 // Field event handlers
 loadjs.ready("head", function() {
-    ew.addEventHandlers("jdh_patient_visits");
+    ew.addEventHandlers("jdh_chief_complaints");
 });
 </script>
 <script>
