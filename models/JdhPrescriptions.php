@@ -296,10 +296,10 @@ class JdhPrescriptions extends DbTable
             'x_prescription_date', // Variable name
             'prescription_date', // Name
             '`prescription_date`', // Expression
-            CastDateFieldForLike("`prescription_date`", 0, "DB"), // Basic search expression
+            CastDateFieldForLike("`prescription_date`", 11, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            0, // Date/Time format
+            11, // Date/Time format
             false, // Is upload field
             '`prescription_date`', // Virtual expression
             false, // Is virtual
@@ -311,7 +311,7 @@ class JdhPrescriptions extends DbTable
         $this->prescription_date->InputTextType = "text";
         $this->prescription_date->Nullable = false; // NOT NULL field
         $this->prescription_date->Required = true; // Required field
-        $this->prescription_date->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->prescription_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->prescription_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['prescription_date'] = &$this->prescription_date;
 

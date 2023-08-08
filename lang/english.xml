@@ -1693,6 +1693,8 @@
         <phrase id="fldtagcaption6" value="Nurse" />
         <phrase id="fldtagvalue7" value="4" />
         <phrase id="fldtagcaption7" value="Lab Technician" />
+        <phrase id="fldtagvalue8" value="5" />
+        <phrase id="fldtagcaption8" value="Pharmacist" />
       </field>
     </table>
     <table id="jdh_visit_types">

@@ -568,7 +568,7 @@ loadjs.ready("fjdh_prescriptionsgrid", function() {
 <?php if (!$Grid->prescription_date->ReadOnly && !$Grid->prescription_date->Disabled && !isset($Grid->prescription_date->EditAttrs["readonly"]) && !isset($Grid->prescription_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_prescriptionsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(0) ?>",
+    let format = "<?= DateFormat(11) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
@@ -605,7 +605,7 @@ loadjs.ready(["fjdh_prescriptionsgrid", "datetimepicker"], function () {
 <?php if (!$Grid->prescription_date->ReadOnly && !$Grid->prescription_date->Disabled && !isset($Grid->prescription_date->EditAttrs["readonly"]) && !isset($Grid->prescription_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_prescriptionsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(0) ?>",
+    let format = "<?= DateFormat(11) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
