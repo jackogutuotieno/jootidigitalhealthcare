@@ -1889,7 +1889,7 @@
     <table id="jdh_insurance">
       <phrase id="tblcaption" value="Insurance" />
       <field id="insurance_id">
-        <phrase id="fldcaption" value="Insurance ID" />
+        <phrase id="fldcaption" value="No." />
       </field>
       <field id="insurance_name">
         <phrase id="fldcaption" value="Name" />

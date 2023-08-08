@@ -186,6 +186,7 @@ class JdhInsurance extends DbTable
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
+        $this->insurance_contact_person_phone->addMethod("getLinkPrefix", fn() => "tel:");
         $this->insurance_contact_person_phone->InputTextType = "text";
         $this->insurance_contact_person_phone->Nullable = false; // NOT NULL field
         $this->insurance_contact_person_phone->Required = true; // Required field
@@ -210,6 +211,7 @@ class JdhInsurance extends DbTable
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
+        $this->insurance_contact_person_email->addMethod("getLinkPrefix", fn() => "mailto:");
         $this->insurance_contact_person_email->InputTextType = "text";
         $this->insurance_contact_person_email->Nullable = false; // NOT NULL field
         $this->insurance_contact_person_email->Required = true; // Required field
@@ -246,10 +248,10 @@ class JdhInsurance extends DbTable
             'x_submission_date', // Variable name
             'submission_date', // Name
             '`submission_date`', // Expression
-            CastDateFieldForLike("`submission_date`", 0, "DB"), // Basic search expression
+            CastDateFieldForLike("`submission_date`", 11, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            0, // Date/Time format
+            11, // Date/Time format
             false, // Is upload field
             '`submission_date`', // Virtual expression
             false, // Is virtual
@@ -261,7 +263,7 @@ class JdhInsurance extends DbTable
         $this->submission_date->InputTextType = "text";
         $this->submission_date->Nullable = false; // NOT NULL field
         $this->submission_date->Required = true; // Required field
-        $this->submission_date->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->submission_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->submission_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['submission_date'] = &$this->submission_date;
 
@@ -271,10 +273,10 @@ class JdhInsurance extends DbTable
             'x_date_updated', // Variable name
             'date_updated', // Name
             '`date_updated`', // Expression
-            CastDateFieldForLike("`date_updated`", 0, "DB"), // Basic search expression
+            CastDateFieldForLike("`date_updated`", 11, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            0, // Date/Time format
+            11, // Date/Time format
             false, // Is upload field
             '`date_updated`', // Virtual expression
             false, // Is virtual
@@ -286,7 +288,7 @@ class JdhInsurance extends DbTable
         $this->date_updated->InputTextType = "text";
         $this->date_updated->Nullable = false; // NOT NULL field
         $this->date_updated->Required = true; // Required field
-        $this->date_updated->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->date_updated->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->date_updated->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['date_updated'] = &$this->date_updated;
 
@@ -1214,11 +1216,27 @@ class JdhInsurance extends DbTable
         $this->insurance_contact_person->TooltipValue = "";
 
         // insurance_contact_person_phone
-        $this->insurance_contact_person_phone->HrefValue = "";
+        if (!EmptyValue($this->insurance_contact_person_phone->CurrentValue)) {
+            $this->insurance_contact_person_phone->HrefValue = $this->insurance_contact_person_phone->getLinkPrefix() . $this->insurance_contact_person_phone->CurrentValue; // Add prefix/suffix
+            $this->insurance_contact_person_phone->LinkAttrs["target"] = ""; // Add target
+            if ($this->isExport()) {
+                $this->insurance_contact_person_phone->HrefValue = FullUrl($this->insurance_contact_person_phone->HrefValue, "href");
+            }
+        } else {
+            $this->insurance_contact_person_phone->HrefValue = "";
+        }
         $this->insurance_contact_person_phone->TooltipValue = "";
 
         // insurance_contact_person_email
-        $this->insurance_contact_person_email->HrefValue = "";
+        if (!EmptyValue($this->insurance_contact_person_email->CurrentValue)) {
+            $this->insurance_contact_person_email->HrefValue = $this->insurance_contact_person_email->getLinkPrefix() . $this->insurance_contact_person_email->CurrentValue; // Add prefix/suffix
+            $this->insurance_contact_person_email->LinkAttrs["target"] = ""; // Add target
+            if ($this->isExport()) {
+                $this->insurance_contact_person_email->HrefValue = FullUrl($this->insurance_contact_person_email->HrefValue, "href");
+            }
+        } else {
+            $this->insurance_contact_person_email->HrefValue = "";
+        }
         $this->insurance_contact_person_email->TooltipValue = "";
 
         // insurance_physical_address

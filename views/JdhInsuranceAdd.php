@@ -121,18 +121,12 @@ $Page->showMessage();
 <?php } ?>
 <?php if ($Page->insurance_physical_address->Visible) { // insurance_physical_address ?>
     <div id="r_insurance_physical_address"<?= $Page->insurance_physical_address->rowAttributes() ?>>
-        <label id="elh_jdh_insurance_insurance_physical_address" class="<?= $Page->LeftColumnClass ?>"><?= $Page->insurance_physical_address->caption() ?><?= $Page->insurance_physical_address->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <label id="elh_jdh_insurance_insurance_physical_address" for="x_insurance_physical_address" class="<?= $Page->LeftColumnClass ?>"><?= $Page->insurance_physical_address->caption() ?><?= $Page->insurance_physical_address->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->insurance_physical_address->cellAttributes() ?>>
 <span id="el_jdh_insurance_insurance_physical_address">
-<?php $Page->insurance_physical_address->EditAttrs->appendClass("editor"); ?>
 <textarea data-table="jdh_insurance" data-field="x_insurance_physical_address" name="x_insurance_physical_address" id="x_insurance_physical_address" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->insurance_physical_address->getPlaceHolder()) ?>"<?= $Page->insurance_physical_address->editAttributes() ?> aria-describedby="x_insurance_physical_address_help"><?= $Page->insurance_physical_address->EditValue ?></textarea>
 <?= $Page->insurance_physical_address->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->insurance_physical_address->getErrorMessage() ?></div>
-<script>
-loadjs.ready(["fjdh_insuranceadd", "editor"], function() {
-    ew.createEditor("fjdh_insuranceadd", "x_insurance_physical_address", 35, 4, <?= $Page->insurance_physical_address->ReadOnly || false ? "true" : "false" ?>);
-});
-</script>
 </span>
 </div></div>
     </div>

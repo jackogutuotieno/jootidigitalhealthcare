@@ -92,7 +92,12 @@ loadjs.ready(["wrapper", "head"], function () {
         <td data-name="insurance_contact_person_phone"<?= $Page->insurance_contact_person_phone->cellAttributes() ?>>
 <span id="el_jdh_insurance_insurance_contact_person_phone">
 <span<?= $Page->insurance_contact_person_phone->viewAttributes() ?>>
-<?= $Page->insurance_contact_person_phone->getViewValue() ?></span>
+<?php if (!EmptyString($Page->insurance_contact_person_phone->getViewValue()) && $Page->insurance_contact_person_phone->linkAttributes() != "") { ?>
+<a<?= $Page->insurance_contact_person_phone->linkAttributes() ?>><?= $Page->insurance_contact_person_phone->getViewValue() ?></a>
+<?php } else { ?>
+<?= $Page->insurance_contact_person_phone->getViewValue() ?>
+<?php } ?>
+</span>
 </span>
 </td>
     </tr>
@@ -103,7 +108,12 @@ loadjs.ready(["wrapper", "head"], function () {
         <td data-name="insurance_contact_person_email"<?= $Page->insurance_contact_person_email->cellAttributes() ?>>
 <span id="el_jdh_insurance_insurance_contact_person_email">
 <span<?= $Page->insurance_contact_person_email->viewAttributes() ?>>
-<?= $Page->insurance_contact_person_email->getViewValue() ?></span>
+<?php if (!EmptyString($Page->insurance_contact_person_email->getViewValue()) && $Page->insurance_contact_person_email->linkAttributes() != "") { ?>
+<a<?= $Page->insurance_contact_person_email->linkAttributes() ?>><?= $Page->insurance_contact_person_email->getViewValue() ?></a>
+<?php } else { ?>
+<?= $Page->insurance_contact_person_email->getViewValue() ?>
+<?php } ?>
+</span>
 </span>
 </td>
     </tr>

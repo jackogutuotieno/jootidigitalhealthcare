@@ -872,10 +872,26 @@ class JdhInsuranceAdd extends JdhInsurance
             $this->insurance_contact_person->HrefValue = "";
 
             // insurance_contact_person_phone
-            $this->insurance_contact_person_phone->HrefValue = "";
+            if (!EmptyValue($this->insurance_contact_person_phone->CurrentValue)) {
+                $this->insurance_contact_person_phone->HrefValue = $this->insurance_contact_person_phone->getLinkPrefix() . $this->insurance_contact_person_phone->CurrentValue; // Add prefix/suffix
+                $this->insurance_contact_person_phone->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->insurance_contact_person_phone->HrefValue = FullUrl($this->insurance_contact_person_phone->HrefValue, "href");
+                }
+            } else {
+                $this->insurance_contact_person_phone->HrefValue = "";
+            }
 
             // insurance_contact_person_email
-            $this->insurance_contact_person_email->HrefValue = "";
+            if (!EmptyValue($this->insurance_contact_person_email->CurrentValue)) {
+                $this->insurance_contact_person_email->HrefValue = $this->insurance_contact_person_email->getLinkPrefix() . $this->insurance_contact_person_email->CurrentValue; // Add prefix/suffix
+                $this->insurance_contact_person_email->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->insurance_contact_person_email->HrefValue = FullUrl($this->insurance_contact_person_email->HrefValue, "href");
+                }
+            } else {
+                $this->insurance_contact_person_email->HrefValue = "";
+            }
 
             // insurance_physical_address
             $this->insurance_physical_address->HrefValue = "";
@@ -926,10 +942,26 @@ class JdhInsuranceAdd extends JdhInsurance
             $this->insurance_contact_person->HrefValue = "";
 
             // insurance_contact_person_phone
-            $this->insurance_contact_person_phone->HrefValue = "";
+            if (!EmptyValue($this->insurance_contact_person_phone->CurrentValue)) {
+                $this->insurance_contact_person_phone->HrefValue = $this->insurance_contact_person_phone->getLinkPrefix() . $this->insurance_contact_person_phone->CurrentValue; // Add prefix/suffix
+                $this->insurance_contact_person_phone->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->insurance_contact_person_phone->HrefValue = FullUrl($this->insurance_contact_person_phone->HrefValue, "href");
+                }
+            } else {
+                $this->insurance_contact_person_phone->HrefValue = "";
+            }
 
             // insurance_contact_person_email
-            $this->insurance_contact_person_email->HrefValue = "";
+            if (!EmptyValue($this->insurance_contact_person_email->CurrentValue)) {
+                $this->insurance_contact_person_email->HrefValue = $this->insurance_contact_person_email->getLinkPrefix() . $this->insurance_contact_person_email->CurrentValue; // Add prefix/suffix
+                $this->insurance_contact_person_email->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->insurance_contact_person_email->HrefValue = FullUrl($this->insurance_contact_person_email->HrefValue, "href");
+                }
+            } else {
+                $this->insurance_contact_person_email->HrefValue = "";
+            }
 
             // insurance_physical_address
             $this->insurance_physical_address->HrefValue = "";
