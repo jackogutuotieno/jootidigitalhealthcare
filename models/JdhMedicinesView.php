@@ -10,18 +10,18 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhServicesEdit extends JdhServices
+class JdhMedicinesView extends JdhMedicines
 {
     use MessagesTrait;
 
     // Page ID
-    public $PageID = "edit";
+    public $PageID = "view";
 
     // Project ID
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhServicesEdit";
+    public $PageObjName = "JdhMedicinesView";
 
     // View file path
     public $View = null;
@@ -33,7 +33,33 @@ class JdhServicesEdit extends JdhServices
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "jdhservicesedit";
+    public $CurrentPageName = "jdhmedicinesview";
+
+    // Page URLs
+    public $AddUrl;
+    public $EditUrl;
+    public $DeleteUrl;
+    public $ViewUrl;
+    public $CopyUrl;
+    public $ListUrl;
+
+    // Update URLs
+    public $InlineAddUrl;
+    public $InlineCopyUrl;
+    public $InlineEditUrl;
+    public $GridAddUrl;
+    public $GridEditUrl;
+    public $MultiEditUrl;
+    public $MultiDeleteUrl;
+    public $MultiUpdateUrl;
+
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
 
     // Page headings
     public $Heading = "";
@@ -118,11 +144,11 @@ class JdhServicesEdit extends JdhServices
     {
         parent::__construct();
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
-        $this->TableVar = 'jdh_services';
-        $this->TableName = 'jdh_services';
+        $this->TableVar = 'jdh_medicines';
+        $this->TableName = 'jdh_medicines';
 
         // Table CSS class
-        $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-desktop-table ew-edit-table";
+        $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-view-table";
 
         // Initialize
         $GLOBALS["Page"] = &$this;
@@ -130,14 +156,19 @@ class JdhServicesEdit extends JdhServices
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_services)
-        if (!isset($GLOBALS["jdh_services"]) || get_class($GLOBALS["jdh_services"]) == PROJECT_NAMESPACE . "jdh_services") {
-            $GLOBALS["jdh_services"] = &$this;
+        // Table object (jdh_medicines)
+        if (!isset($GLOBALS["jdh_medicines"]) || get_class($GLOBALS["jdh_medicines"]) == PROJECT_NAMESPACE . "jdh_medicines") {
+            $GLOBALS["jdh_medicines"] = &$this;
+        }
+
+        // Set up record key
+        if (($keyValue = Get("id") ?? Route("id")) !== null) {
+            $this->RecKey["id"] = $keyValue;
         }
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_services');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_medicines');
         }
 
         // Start timer
@@ -151,6 +182,19 @@ class JdhServicesEdit extends JdhServices
 
         // User table object
         $UserTable = Container("usertable");
+
+        // Export options
+        $this->ExportOptions = new ListOptions(["TagClassName" => "ew-export-option"]);
+
+        // Other options
+        if (!$this->OtherOptions) {
+            $this->OtherOptions = new ListOptionsArray();
+        }
+
+        // Detail tables
+        $this->OtherOptions["detail"] = new ListOptions(["TagClassName" => "ew-detail-option"]);
+        // Actions
+        $this->OtherOptions["action"] = new ListOptions(["TagClassName" => "ew-action-option"]);
     }
 
     // Get content from stream
@@ -248,7 +292,7 @@ class JdhServicesEdit extends JdhServices
                 $pageName = GetPageName($url);
                 if ($pageName != $this->getListUrl()) { // Not List page => View page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhservicesview"; // If View page, no primary button
+                    $result["view"] = $pageName == "jdhmedicinesview"; // If View page, no primary button
                 } else { // List page
                     // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
@@ -338,7 +382,7 @@ class JdhServicesEdit extends JdhServices
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['service_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -351,7 +395,7 @@ class JdhServicesEdit extends JdhServices
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->service_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
 
@@ -424,20 +468,17 @@ class JdhServicesEdit extends JdhServices
         }
         return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
     }
-
-    // Properties
-    public $FormClassName = "ew-form ew-edit-form overlay-wrapper";
-    public $IsModal = false;
-    public $IsMobileOrModal = false;
+    public $ExportOptions; // Export options
+    public $OtherOptions; // Other options
+    public $DisplayRecords = 1;
     public $DbMasterFilter;
     public $DbDetailFilter;
-    public $HashValue; // Hash Value
-    public $DisplayRecords = 1;
     public $StartRecord;
     public $StopRecord;
     public $TotalRecords = 0;
     public $RecordRange = 10;
-    public $RecordCount;
+    public $RecKey = [];
+    public $IsModal = false;
 
     /**
      * Page run
@@ -458,18 +499,30 @@ class JdhServicesEdit extends JdhServices
         // View
         $this->View = Get(Config("VIEW"));
 
-        // Create form object
-        $CurrentForm = new HttpForm();
+        // Get export parameters
+        $custom = "";
+        if (Param("export") !== null) {
+            $this->Export = Param("export");
+            $custom = Param("custom", "");
+        } else {
+            $this->setExportReturnUrl(CurrentUrl());
+        }
+        $ExportType = $this->Export; // Get export parameter, used in header
+        if ($ExportType != "") {
+            global $SkipHeaderFooter;
+            $SkipHeaderFooter = true;
+        }
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->service_id->setVisibility();
+        $this->id->setVisibility();
         $this->category_id->setVisibility();
-        $this->subcategory_id->setVisibility();
-        $this->service_name->setVisibility();
-        $this->service_cost->setVisibility();
-        $this->service_description->setVisibility();
-        $this->date_created->Visible = false;
-        $this->date_updated->Visible = false;
-        $this->submitted_by_user_id->Visible = false;
+        $this->name->setVisibility();
+        $this->selling_price->setVisibility();
+        $this->buying_price->setVisibility();
+        $this->description->setVisibility();
+        $this->expiry->setVisibility();
+        $this->date_created->setVisibility();
+        $this->date_updated->setVisibility();
+        $this->submitted_by_user_id->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -500,147 +553,76 @@ class JdhServicesEdit extends JdhServices
         if ($this->IsModal) {
             $SkipHeaderFooter = true;
         }
-        $this->IsMobileOrModal = IsMobile() || $this->IsModal;
-        $loaded = false;
-        $postBack = false;
 
-        // Set up current action and primary key
-        if (IsApi()) {
-            // Load key values
-            $loaded = true;
-            if (($keyValue = Get("service_id") ?? Key(0) ?? Route(2)) !== null) {
-                $this->service_id->setQueryStringValue($keyValue);
-                $this->service_id->setOldValue($this->service_id->QueryStringValue);
-            } elseif (Post("service_id") !== null) {
-                $this->service_id->setFormValue(Post("service_id"));
-                $this->service_id->setOldValue($this->service_id->FormValue);
-            } else {
-                $loaded = false; // Unable to load key
-            }
-
-            // Load record
-            if ($loaded) {
-                $loaded = $this->loadRow();
-            }
-            if (!$loaded) {
-                $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
-                $this->terminate();
-                return;
-            }
-            $this->CurrentAction = "update"; // Update record directly
-            $this->OldKey = $this->getKey(true); // Get from CurrentValue
-            $postBack = true;
-        } else {
-            if (Post("action") !== null) {
-                $this->CurrentAction = Post("action"); // Get action code
-                if (!$this->isShow()) { // Not reload record, handle as postback
-                    $postBack = true;
-                }
-
-                // Get key from Form
-                $this->setKey(Post($this->OldKeyName), $this->isShow());
-            } else {
-                $this->CurrentAction = "show"; // Default action is display
-
-                // Load key from QueryString
-                $loadByQuery = false;
-                if (($keyValue = Get("service_id") ?? Route("service_id")) !== null) {
-                    $this->service_id->setQueryStringValue($keyValue);
-                    $loadByQuery = true;
-                } else {
-                    $this->service_id->CurrentValue = null;
-                }
-            }
-
-            // Load recordset
-            if ($this->isShow()) {
-                    // Load current record
-                    $loaded = $this->loadRow();
-                $this->OldKey = $loaded ? $this->getKey(true) : ""; // Get from CurrentValue
-            }
+        // Load current record
+        $loadCurrentRecord = false;
+        $returnUrl = "";
+        $matchRecord = false;
+        if (($keyValue = Get("id") ?? Route("id")) !== null) {
+            $this->id->setQueryStringValue($keyValue);
+            $this->RecKey["id"] = $this->id->QueryStringValue;
+        } elseif (Post("id") !== null) {
+            $this->id->setFormValue(Post("id"));
+            $this->RecKey["id"] = $this->id->FormValue;
+        } elseif (IsApi() && ($keyValue = Key(0) ?? Route(2)) !== null) {
+            $this->id->setQueryStringValue($keyValue);
+            $this->RecKey["id"] = $this->id->QueryStringValue;
+        } elseif (!$loadCurrentRecord) {
+            $returnUrl = "jdhmedicineslist"; // Return to list
         }
 
-        // Process form if post back
-        if ($postBack) {
-            $this->loadFormValues(); // Get form values
-        }
-
-        // Validate form if post back
-        if ($postBack) {
-            if (!$this->validateForm()) {
-                $this->EventCancelled = true; // Event cancelled
-                $this->restoreFormValues();
-                if (IsApi()) {
-                    $this->terminate();
-                    return;
-                } else {
-                    $this->CurrentAction = ""; // Form error, reset action
-                }
-            }
-        }
-
-        // Perform current action
+        // Get action
+        $this->CurrentAction = "show"; // Display
         switch ($this->CurrentAction) {
             case "show": // Get a record to display
-                    if (!$loaded) { // Load record based on key
-                        if ($this->getFailureMessage() == "") {
-                            $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
+
+                    // Load record based on key
+                    if (IsApi()) {
+                        $filter = $this->getRecordFilter();
+                        $this->CurrentFilter = $filter;
+                        $sql = $this->getCurrentSql();
+                        $conn = $this->getConnection();
+                        $this->Recordset = LoadRecordset($sql, $conn);
+                        $res = $this->Recordset && !$this->Recordset->EOF;
+                    } else {
+                        $res = $this->loadRow();
+                    }
+                    if (!$res) { // Load record based on key
+                        if ($this->getSuccessMessage() == "" && $this->getFailureMessage() == "") {
+                            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
                         }
-                        $this->terminate("jdhserviceslist"); // No matching record, return to list
-                        return;
+                        $returnUrl = "jdhmedicineslist"; // No matching record, return to list
                     }
                 break;
-            case "update": // Update
-                $returnUrl = $this->getReturnUrl();
-                if (GetPageName($returnUrl) == "jdhserviceslist") {
-                    $returnUrl = $this->addMasterUrl($returnUrl); // List page, return to List page with correct master key if necessary
-                }
-                $this->SendEmail = true; // Send email on update success
-                if ($this->editRow()) {
-                    // Do not return Json for UseAjaxActions
-                    if ($this->IsModal && $this->UseAjaxActions) {
-                        $this->IsModal = false;
-                    }
+        }
 
-                    // Handle UseAjaxActions with return page
-                    if ($this->UseAjaxActions && GetPageName($returnUrl) != "jdhserviceslist") {
-                        Container("flash")->addMessage("Return-Url", $returnUrl); // Save return URL
-                        $returnUrl = "jdhserviceslist"; // Return list page content
-                    }
-                    if ($this->getSuccessMessage() == "") {
-                        $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Update success
-                    }
-                    if (IsJsonResponse()) {
-                        $this->terminate(true);
-                        return;
-                    } else {
-                        $this->terminate($returnUrl); // Return to caller
-                        return;
-                    }
-                } elseif (IsApi()) { // API request, return
-                    $this->terminate();
-                    return;
-                } elseif ($this->UseAjaxActions) { // Return JSON error message
-                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
-                    $this->clearFailureMessage();
-                    $this->terminate();
-                    return;
-                } elseif ($this->getFailureMessage() == $Language->phrase("NoRecord")) {
-                    $this->terminate($returnUrl); // Return to caller
-                    return;
-                } else {
-                    $this->EventCancelled = true; // Event cancelled
-                    $this->restoreFormValues(); // Restore form values if update failed
-                }
+        // Setup export options
+        $this->setupExportOptions();
+        if ($returnUrl != "") {
+            $this->terminate($returnUrl);
+            return;
         }
 
         // Set up Breadcrumb
-        $this->setupBreadcrumb();
+        if (!$this->isExport()) {
+            $this->setupBreadcrumb();
+        }
 
-        // Render the record
-        $this->RowType = ROWTYPE_EDIT; // Render as Edit
+        // Render row
+        $this->RowType = ROWTYPE_VIEW;
         $this->resetAttributes();
         $this->renderRow();
+
+        // Normal return
+        if (IsApi()) {
+            if (!$this->isExport()) {
+                $row = $this->getRecordsFromRecordset($this->Recordset, true); // Get current record only
+                $this->Recordset->close();
+                WriteJson(["success" => true, "action" => Config("API_VIEW_ACTION"), $this->TableVar => $row]);
+                $this->terminate(true);
+            }
+            return;
+        }
 
         // Set LoginStatus / Page_Rendering / Page_Render
         if (!IsApi() && !$this->isTerminated()) {
@@ -665,86 +647,98 @@ class JdhServicesEdit extends JdhServices
         }
     }
 
-    // Get upload files
-    protected function getUploadFiles()
+    // Set up other options
+    protected function setupOtherOptions()
     {
-        global $CurrentForm, $Language;
+        global $Language, $Security;
+
+        // Disable Add/Edit/Copy/Delete for Modal and UseAjaxActions
+        /*
+        if ($this->IsModal && $this->UseAjaxActions) {
+            $this->AddUrl = "";
+            $this->EditUrl = "";
+            $this->CopyUrl = "";
+            $this->DeleteUrl = "";
+        }
+        */
+        $options = &$this->OtherOptions;
+        $option = $options["action"];
+
+        // Add
+        $item = &$option->add("add");
+        $addcaption = HtmlTitle($Language->phrase("ViewPageAddLink"));
+        if ($this->IsModal) {
+            $item->Body = "<a class=\"ew-action ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("ViewPageAddLink") . "</a>";
+        } else {
+            $item->Body = "<a class=\"ew-action ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("ViewPageAddLink") . "</a>";
+        }
+        $item->Visible = $this->AddUrl != "" && $Security->canAdd();
+
+        // Edit
+        $item = &$option->add("edit");
+        $editcaption = HtmlTitle($Language->phrase("ViewPageEditLink"));
+        if ($this->IsModal) {
+            $item->Body = "<a class=\"ew-action ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("ViewPageEditLink") . "</a>";
+        } else {
+            $item->Body = "<a class=\"ew-action ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("ViewPageEditLink") . "</a>";
+        }
+        $item->Visible = $this->EditUrl != "" && $Security->canEdit();
+
+        // Delete
+        $item = &$option->add("delete");
+        $url = GetUrl($this->DeleteUrl);
+        $item->Body = "<a class=\"ew-action ew-delete\"" .
+            ($this->InlineDelete || $this->IsModal ? " data-ew-action=\"inline-delete\"" : "") .
+            " title=\"" . HtmlTitle($Language->phrase("ViewPageDeleteLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("ViewPageDeleteLink")) .
+            "\" href=\"" . HtmlEncode($url) . "\">" . $Language->phrase("ViewPageDeleteLink") . "</a>";
+        $item->Visible = $this->DeleteUrl != "" && $Security->canDelete();
+
+        // Set up action default
+        $option = $options["action"];
+        $option->DropDownButtonPhrase = $Language->phrase("ButtonActions");
+        $option->UseDropDownButton = !IsJsonResponse() && true;
+        $option->UseButtonGroup = true;
+        $item = &$option->addGroupOption();
+        $item->Body = "";
+        $item->Visible = false;
     }
 
-    // Load form values
-    protected function loadFormValues()
+    // Load recordset
+    public function loadRecordset($offset = -1, $rowcnt = -1)
     {
-        // Load from form
-        global $CurrentForm;
-        $validate = !Config("SERVER_VALIDATE");
+        // Load List page SQL (QueryBuilder)
+        $sql = $this->getListSql();
 
-        // Check field name 'service_id' first before field var 'x_service_id'
-        $val = $CurrentForm->hasValue("service_id") ? $CurrentForm->getValue("service_id") : $CurrentForm->getValue("x_service_id");
-        if (!$this->service_id->IsDetailKey) {
-            $this->service_id->setFormValue($val);
+        // Load recordset
+        if ($offset > -1) {
+            $sql->setFirstResult($offset);
         }
+        if ($rowcnt > 0) {
+            $sql->setMaxResults($rowcnt);
+        }
+        $result = $sql->execute();
+        $rs = new Recordset($result, $sql);
 
-        // Check field name 'category_id' first before field var 'x_category_id'
-        $val = $CurrentForm->hasValue("category_id") ? $CurrentForm->getValue("category_id") : $CurrentForm->getValue("x_category_id");
-        if (!$this->category_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->category_id->Visible = false; // Disable update for API request
-            } else {
-                $this->category_id->setFormValue($val);
-            }
-        }
-
-        // Check field name 'subcategory_id' first before field var 'x_subcategory_id'
-        $val = $CurrentForm->hasValue("subcategory_id") ? $CurrentForm->getValue("subcategory_id") : $CurrentForm->getValue("x_subcategory_id");
-        if (!$this->subcategory_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->subcategory_id->Visible = false; // Disable update for API request
-            } else {
-                $this->subcategory_id->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'service_name' first before field var 'x_service_name'
-        $val = $CurrentForm->hasValue("service_name") ? $CurrentForm->getValue("service_name") : $CurrentForm->getValue("x_service_name");
-        if (!$this->service_name->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->service_name->Visible = false; // Disable update for API request
-            } else {
-                $this->service_name->setFormValue($val);
-            }
-        }
-
-        // Check field name 'service_cost' first before field var 'x_service_cost'
-        $val = $CurrentForm->hasValue("service_cost") ? $CurrentForm->getValue("service_cost") : $CurrentForm->getValue("x_service_cost");
-        if (!$this->service_cost->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->service_cost->Visible = false; // Disable update for API request
-            } else {
-                $this->service_cost->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'service_description' first before field var 'x_service_description'
-        $val = $CurrentForm->hasValue("service_description") ? $CurrentForm->getValue("service_description") : $CurrentForm->getValue("x_service_description");
-        if (!$this->service_description->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->service_description->Visible = false; // Disable update for API request
-            } else {
-                $this->service_description->setFormValue($val);
-            }
-        }
+        // Call Recordset Selected event
+        $this->recordsetSelected($rs);
+        return $rs;
     }
 
-    // Restore form values
-    public function restoreFormValues()
+    // Load records as associative array
+    public function loadRows($offset = -1, $rowcnt = -1)
     {
-        global $CurrentForm;
-        $this->service_id->CurrentValue = $this->service_id->FormValue;
-        $this->category_id->CurrentValue = $this->category_id->FormValue;
-        $this->subcategory_id->CurrentValue = $this->subcategory_id->FormValue;
-        $this->service_name->CurrentValue = $this->service_name->FormValue;
-        $this->service_cost->CurrentValue = $this->service_cost->FormValue;
-        $this->service_description->CurrentValue = $this->service_description->FormValue;
+        // Load List page SQL (QueryBuilder)
+        $sql = $this->getListSql();
+
+        // Load recordset
+        if ($offset > -1) {
+            $sql->setFirstResult($offset);
+        }
+        if ($rowcnt > 0) {
+            $sql->setMaxResults($rowcnt);
+        }
+        $result = $sql->execute();
+        return $result->fetchAllAssociative();
     }
 
     /**
@@ -794,12 +788,16 @@ class JdhServicesEdit extends JdhServices
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->service_id->setDbValue($row['service_id']);
+        if ($this->AuditTrailOnView) {
+            $this->writeAuditTrailOnView($row);
+        }
+        $this->id->setDbValue($row['id']);
         $this->category_id->setDbValue($row['category_id']);
-        $this->subcategory_id->setDbValue($row['subcategory_id']);
-        $this->service_name->setDbValue($row['service_name']);
-        $this->service_cost->setDbValue($row['service_cost']);
-        $this->service_description->setDbValue($row['service_description']);
+        $this->name->setDbValue($row['name']);
+        $this->selling_price->setDbValue($row['selling_price']);
+        $this->buying_price->setDbValue($row['buying_price']);
+        $this->description->setDbValue($row['description']);
+        $this->expiry->setDbValue($row['expiry']);
         $this->date_created->setDbValue($row['date_created']);
         $this->date_updated->setDbValue($row['date_updated']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
@@ -809,35 +807,17 @@ class JdhServicesEdit extends JdhServices
     protected function newRow()
     {
         $row = [];
-        $row['service_id'] = $this->service_id->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
         $row['category_id'] = $this->category_id->DefaultValue;
-        $row['subcategory_id'] = $this->subcategory_id->DefaultValue;
-        $row['service_name'] = $this->service_name->DefaultValue;
-        $row['service_cost'] = $this->service_cost->DefaultValue;
-        $row['service_description'] = $this->service_description->DefaultValue;
+        $row['name'] = $this->name->DefaultValue;
+        $row['selling_price'] = $this->selling_price->DefaultValue;
+        $row['buying_price'] = $this->buying_price->DefaultValue;
+        $row['description'] = $this->description->DefaultValue;
+        $row['expiry'] = $this->expiry->DefaultValue;
         $row['date_created'] = $this->date_created->DefaultValue;
         $row['date_updated'] = $this->date_updated->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
-    }
-
-    // Load old record
-    protected function loadOldRecord()
-    {
-        // Load old record
-        if ($this->OldKey != "") {
-            $this->setKey($this->OldKey);
-            $this->CurrentFilter = $this->getRecordFilter();
-            $sql = $this->getCurrentSql();
-            $conn = $this->getConnection();
-            $rs = LoadRecordset($sql, $conn);
-            if ($rs && ($row = $rs->fields)) {
-                $this->loadRowValues($row); // Load row values
-                return $row;
-            }
-        }
-        $this->loadRowValues(); // Load default row values
-        return null;
     }
 
     // Render row values based on field settings
@@ -846,43 +826,43 @@ class JdhServicesEdit extends JdhServices
         global $Security, $Language, $CurrentLanguage;
 
         // Initialize URLs
+        $this->AddUrl = $this->getAddUrl();
+        $this->EditUrl = $this->getEditUrl();
+        $this->CopyUrl = $this->getCopyUrl();
+        $this->DeleteUrl = $this->getDeleteUrl();
+        $this->ListUrl = $this->getListUrl();
+        $this->setupOtherOptions();
 
         // Call Row_Rendering event
         $this->rowRendering();
 
         // Common render codes for all row types
 
-        // service_id
-        $this->service_id->RowCssClass = "row";
+        // id
 
         // category_id
-        $this->category_id->RowCssClass = "row";
 
-        // subcategory_id
-        $this->subcategory_id->RowCssClass = "row";
+        // name
 
-        // service_name
-        $this->service_name->RowCssClass = "row";
+        // selling_price
 
-        // service_cost
-        $this->service_cost->RowCssClass = "row";
+        // buying_price
 
-        // service_description
-        $this->service_description->RowCssClass = "row";
+        // description
+
+        // expiry
 
         // date_created
-        $this->date_created->RowCssClass = "row";
 
         // date_updated
-        $this->date_updated->RowCssClass = "row";
 
         // submitted_by_user_id
-        $this->submitted_by_user_id->RowCssClass = "row";
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // service_id
-            $this->service_id->ViewValue = $this->service_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
+            $this->id->ViewValue = FormatNumber($this->id->ViewValue, $this->id->formatPattern());
 
             // category_id
             $curVal = strval($this->category_id->CurrentValue);
@@ -907,19 +887,23 @@ class JdhServicesEdit extends JdhServices
                 $this->category_id->ViewValue = null;
             }
 
-            // subcategory_id
-            $this->subcategory_id->ViewValue = $this->subcategory_id->CurrentValue;
-            $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->ViewValue, $this->subcategory_id->formatPattern());
+            // name
+            $this->name->ViewValue = $this->name->CurrentValue;
 
-            // service_name
-            $this->service_name->ViewValue = $this->service_name->CurrentValue;
+            // selling_price
+            $this->selling_price->ViewValue = $this->selling_price->CurrentValue;
+            $this->selling_price->ViewValue = FormatNumber($this->selling_price->ViewValue, $this->selling_price->formatPattern());
 
-            // service_cost
-            $this->service_cost->ViewValue = $this->service_cost->CurrentValue;
-            $this->service_cost->ViewValue = FormatNumber($this->service_cost->ViewValue, $this->service_cost->formatPattern());
+            // buying_price
+            $this->buying_price->ViewValue = $this->buying_price->CurrentValue;
+            $this->buying_price->ViewValue = FormatNumber($this->buying_price->ViewValue, $this->buying_price->formatPattern());
 
-            // service_description
-            $this->service_description->ViewValue = $this->service_description->CurrentValue;
+            // description
+            $this->description->ViewValue = $this->description->CurrentValue;
+
+            // expiry
+            $this->expiry->ViewValue = $this->expiry->CurrentValue;
+            $this->expiry->ViewValue = FormatDateTime($this->expiry->ViewValue, $this->expiry->formatPattern());
 
             // date_created
             $this->date_created->ViewValue = $this->date_created->CurrentValue;
@@ -933,106 +917,41 @@ class JdhServicesEdit extends JdhServices
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
-            // service_id
-            $this->service_id->HrefValue = "";
+            // id
+            $this->id->HrefValue = "";
+            $this->id->TooltipValue = "";
 
             // category_id
             $this->category_id->HrefValue = "";
+            $this->category_id->TooltipValue = "";
 
-            // subcategory_id
-            $this->subcategory_id->HrefValue = "";
+            // name
+            $this->name->HrefValue = "";
+            $this->name->TooltipValue = "";
 
-            // service_name
-            $this->service_name->HrefValue = "";
+            // selling_price
+            $this->selling_price->HrefValue = "";
+            $this->selling_price->TooltipValue = "";
 
-            // service_cost
-            $this->service_cost->HrefValue = "";
+            // buying_price
+            $this->buying_price->HrefValue = "";
+            $this->buying_price->TooltipValue = "";
 
-            // service_description
-            $this->service_description->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // service_id
-            $this->service_id->setupEditAttributes();
-            $this->service_id->EditValue = $this->service_id->CurrentValue;
+            // description
+            $this->description->HrefValue = "";
+            $this->description->TooltipValue = "";
 
-            // category_id
-            $this->category_id->setupEditAttributes();
-            $curVal = trim(strval($this->category_id->CurrentValue));
-            if ($curVal != "") {
-                $this->category_id->ViewValue = $this->category_id->lookupCacheOption($curVal);
-            } else {
-                $this->category_id->ViewValue = $this->category_id->Lookup !== null && is_array($this->category_id->lookupOptions()) ? $curVal : null;
-            }
-            if ($this->category_id->ViewValue !== null) { // Load from cache
-                $this->category_id->EditValue = array_values($this->category_id->lookupOptions());
-            } else { // Lookup from database
-                if ($curVal == "") {
-                    $filterWrk = "0=1";
-                } else {
-                    $filterWrk = SearchFilter("`category_id`", "=", $this->category_id->CurrentValue, DATATYPE_NUMBER, "");
-                }
-                $sqlWrk = $this->category_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                $arwrk = $rswrk;
-                $this->category_id->EditValue = $arwrk;
-            }
-            $this->category_id->PlaceHolder = RemoveHtml($this->category_id->caption());
+            // expiry
+            $this->expiry->HrefValue = "";
+            $this->expiry->TooltipValue = "";
 
-            // subcategory_id
-            $this->subcategory_id->setupEditAttributes();
-            $this->subcategory_id->EditValue = HtmlEncode($this->subcategory_id->CurrentValue);
-            $this->subcategory_id->PlaceHolder = RemoveHtml($this->subcategory_id->caption());
-            if (strval($this->subcategory_id->EditValue) != "" && is_numeric($this->subcategory_id->EditValue)) {
-                $this->subcategory_id->EditValue = FormatNumber($this->subcategory_id->EditValue, null);
-            }
+            // date_created
+            $this->date_created->HrefValue = "";
+            $this->date_created->TooltipValue = "";
 
-            // service_name
-            $this->service_name->setupEditAttributes();
-            if (!$this->service_name->Raw) {
-                $this->service_name->CurrentValue = HtmlDecode($this->service_name->CurrentValue);
-            }
-            $this->service_name->EditValue = HtmlEncode($this->service_name->CurrentValue);
-            $this->service_name->PlaceHolder = RemoveHtml($this->service_name->caption());
-
-            // service_cost
-            $this->service_cost->setupEditAttributes();
-            $this->service_cost->EditValue = HtmlEncode($this->service_cost->CurrentValue);
-            $this->service_cost->PlaceHolder = RemoveHtml($this->service_cost->caption());
-            if (strval($this->service_cost->EditValue) != "" && is_numeric($this->service_cost->EditValue)) {
-                $this->service_cost->EditValue = FormatNumber($this->service_cost->EditValue, null);
-            }
-
-            // service_description
-            $this->service_description->setupEditAttributes();
-            $this->service_description->EditValue = HtmlEncode($this->service_description->CurrentValue);
-            $this->service_description->PlaceHolder = RemoveHtml($this->service_description->caption());
-
-            // Edit refer script
-
-            // service_id
-            $this->service_id->HrefValue = "";
-
-            // category_id
-            $this->category_id->HrefValue = "";
-
-            // subcategory_id
-            $this->subcategory_id->HrefValue = "";
-
-            // service_name
-            $this->service_name->HrefValue = "";
-
-            // service_cost
-            $this->service_cost->HrefValue = "";
-
-            // service_description
-            $this->service_description->HrefValue = "";
-        }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
-            $this->setupFieldTitles();
+            // date_updated
+            $this->date_updated->HrefValue = "";
+            $this->date_updated->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -1041,144 +960,180 @@ class JdhServicesEdit extends JdhServices
         }
     }
 
-    // Validate form
-    protected function validateForm()
+    // Get export HTML tag
+    protected function getExportTag($type, $custom = false)
+    {
+        global $Language;
+        if ($type == "print" || $custom) { // Printer friendly / custom export
+            $pageUrl = $this->pageUrl(true);
+            $exportUrl = GetUrl($pageUrl . "export=" . $type . ($custom ? "&amp;custom=1" : ""));
+        } else { // Export API URL
+            $exportUrl = GetApiUrl(Config("API_EXPORT_ACTION") . "/" . $type . "/" . $this->TableVar);
+            $exportUrl .= "?key=" . $this->getKey(true);
+        }
+        if (SameText($type, "excel")) {
+            if ($custom) {
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_medicinesview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
+            } else {
+                return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\">" . $Language->phrase("ExportToExcel") . "</a>";
+            }
+        } elseif (SameText($type, "word")) {
+            if ($custom) {
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_medicinesview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
+            } else {
+                return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\">" . $Language->phrase("ExportToWord") . "</a>";
+            }
+        } elseif (SameText($type, "pdf")) {
+            if ($custom) {
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_medicinesview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
+            } else {
+                return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\">" . $Language->phrase("ExportToPdf") . "</a>";
+            }
+        } elseif (SameText($type, "html")) {
+            return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-html\" title=\"" . HtmlEncode($Language->phrase("ExportToHtml", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToHtml", true)) . "\">" . $Language->phrase("ExportToHtml") . "</a>";
+        } elseif (SameText($type, "xml")) {
+            return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-xml\" title=\"" . HtmlEncode($Language->phrase("ExportToXml", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToXml", true)) . "\">" . $Language->phrase("ExportToXml") . "</a>";
+        } elseif (SameText($type, "csv")) {
+            return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-csv\" title=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\">" . $Language->phrase("ExportToCsv") . "</a>";
+        } elseif (SameText($type, "email")) {
+            $url = $custom ? ' data-url="' . $exportUrl . '"' : '';
+            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_medicinesview" data-ew-action="email" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-key="' . HtmlEncode(ArrayToJsonAttribute($this->RecKey)) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
+        } elseif (SameText($type, "print")) {
+            return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-print\" title=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\">" . $Language->phrase("PrinterFriendly") . "</a>";
+        }
+    }
+
+    // Set up export options
+    protected function setupExportOptions()
     {
         global $Language, $Security;
 
-        // Check if validation required
-        if (!Config("SERVER_VALIDATE")) {
-            return true;
+        // Printer friendly
+        $item = &$this->ExportOptions->add("print");
+        $item->Body = $this->getExportTag("print");
+        $item->Visible = true;
+
+        // Export to Excel
+        $item = &$this->ExportOptions->add("excel");
+        $item->Body = $this->getExportTag("excel");
+        $item->Visible = true;
+
+        // Export to Word
+        $item = &$this->ExportOptions->add("word");
+        $item->Body = $this->getExportTag("word");
+        $item->Visible = false;
+
+        // Export to HTML
+        $item = &$this->ExportOptions->add("html");
+        $item->Body = $this->getExportTag("html");
+        $item->Visible = true;
+
+        // Export to XML
+        $item = &$this->ExportOptions->add("xml");
+        $item->Body = $this->getExportTag("xml");
+        $item->Visible = false;
+
+        // Export to CSV
+        $item = &$this->ExportOptions->add("csv");
+        $item->Body = $this->getExportTag("csv");
+        $item->Visible = false;
+
+        // Export to PDF
+        $item = &$this->ExportOptions->add("pdf");
+        $item->Body = $this->getExportTag("pdf");
+        $item->Visible = true;
+
+        // Export to Email
+        $item = &$this->ExportOptions->add("email");
+        $item->Body = $this->getExportTag("email");
+        $item->Visible = true;
+
+        // Drop down button for export
+        $this->ExportOptions->UseButtonGroup = true;
+        $this->ExportOptions->UseDropDownButton = true;
+        if ($this->ExportOptions->UseButtonGroup && IsMobile()) {
+            $this->ExportOptions->UseDropDownButton = true;
         }
-        $validateForm = true;
-        if ($this->service_id->Required) {
-            if (!$this->service_id->IsDetailKey && EmptyValue($this->service_id->FormValue)) {
-                $this->service_id->addErrorMessage(str_replace("%s", $this->service_id->caption(), $this->service_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->category_id->Required) {
-            if (!$this->category_id->IsDetailKey && EmptyValue($this->category_id->FormValue)) {
-                $this->category_id->addErrorMessage(str_replace("%s", $this->category_id->caption(), $this->category_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->subcategory_id->Required) {
-            if (!$this->subcategory_id->IsDetailKey && EmptyValue($this->subcategory_id->FormValue)) {
-                $this->subcategory_id->addErrorMessage(str_replace("%s", $this->subcategory_id->caption(), $this->subcategory_id->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->subcategory_id->FormValue)) {
-            $this->subcategory_id->addErrorMessage($this->subcategory_id->getErrorMessage(false));
-        }
-        if ($this->service_name->Required) {
-            if (!$this->service_name->IsDetailKey && EmptyValue($this->service_name->FormValue)) {
-                $this->service_name->addErrorMessage(str_replace("%s", $this->service_name->caption(), $this->service_name->RequiredErrorMessage));
-            }
-        }
-        if ($this->service_cost->Required) {
-            if (!$this->service_cost->IsDetailKey && EmptyValue($this->service_cost->FormValue)) {
-                $this->service_cost->addErrorMessage(str_replace("%s", $this->service_cost->caption(), $this->service_cost->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->service_cost->FormValue)) {
-            $this->service_cost->addErrorMessage($this->service_cost->getErrorMessage(false));
-        }
-        if ($this->service_description->Required) {
-            if (!$this->service_description->IsDetailKey && EmptyValue($this->service_description->FormValue)) {
-                $this->service_description->addErrorMessage(str_replace("%s", $this->service_description->caption(), $this->service_description->RequiredErrorMessage));
-            }
+        $this->ExportOptions->DropDownButtonPhrase = $Language->phrase("ButtonExport");
+
+        // Add group option item
+        $item = &$this->ExportOptions->addGroupOption();
+        $item->Body = "";
+        $item->Visible = false;
+
+        // Hide options for export
+        if ($this->isExport()) {
+            $this->ExportOptions->hideAllOptions();
         }
 
-        // Return validate result
-        $validateForm = $validateForm && !$this->hasInvalidFields();
-
-        // Call Form_CustomValidate event
-        $formCustomError = "";
-        $validateForm = $validateForm && $this->formCustomValidate($formCustomError);
-        if ($formCustomError != "") {
-            $this->setFailureMessage($formCustomError);
+        // Hide options if json response
+        if (IsJsonResponse()) {
+            $this->ExportOptions->hideAllOptions();
         }
-        return $validateForm;
+        if (!$Security->canExport()) { // Export not allowed
+            $this->ExportOptions->hideAllOptions();
+        }
     }
 
-    // Update record based on key values
-    protected function editRow()
+    /**
+    * Export data in HTML/CSV/Word/Excel/XML/Email/PDF format
+    *
+    * @param bool $return Return the data rather than output it
+    * @return mixed
+    */
+    public function exportData($doc)
     {
-        global $Security, $Language;
-        $oldKeyFilter = $this->getRecordFilter();
-        $filter = $this->applyUserIDFilters($oldKeyFilter);
-        $conn = $this->getConnection();
+        global $Language;
+        $utf8 = SameText(Config("PROJECT_CHARSET"), "utf-8");
 
-        // Load old row
-        $this->CurrentFilter = $filter;
-        $sql = $this->getCurrentSql();
-        $rsold = $conn->fetchAssociative($sql);
-        if (!$rsold) {
-            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
-            return false; // Update Failed
+        // Load recordset
+        if (!$this->Recordset) {
+            $this->Recordset = $this->loadRecordset();
+        }
+        $rs = &$this->Recordset;
+        if ($rs) {
+            $this->TotalRecords = $rs->recordCount();
+        }
+        $this->StartRecord = 1;
+        $this->setupStartRecord(); // Set up start record position
+
+        // Set the last record to display
+        if ($this->DisplayRecords <= 0) {
+            $this->StopRecord = $this->TotalRecords;
         } else {
-            // Save old values
-            $this->loadDbValues($rsold);
+            $this->StopRecord = $this->StartRecord + $this->DisplayRecords - 1;
         }
-
-        // Set new row
-        $rsnew = [];
-
-        // category_id
-        $this->category_id->setDbValueDef($rsnew, $this->category_id->CurrentValue, 0, $this->category_id->ReadOnly);
-
-        // subcategory_id
-        $this->subcategory_id->setDbValueDef($rsnew, $this->subcategory_id->CurrentValue, 0, $this->subcategory_id->ReadOnly);
-
-        // service_name
-        $this->service_name->setDbValueDef($rsnew, $this->service_name->CurrentValue, "", $this->service_name->ReadOnly);
-
-        // service_cost
-        $this->service_cost->setDbValueDef($rsnew, $this->service_cost->CurrentValue, 0, $this->service_cost->ReadOnly);
-
-        // service_description
-        $this->service_description->setDbValueDef($rsnew, $this->service_description->CurrentValue, null, $this->service_description->ReadOnly);
-
-        // Update current values
-        $this->setCurrentValues($rsnew);
-
-        // Call Row Updating event
-        $updateRow = $this->rowUpdating($rsold, $rsnew);
-        if ($updateRow) {
-            if (count($rsnew) > 0) {
-                $this->CurrentFilter = $filter; // Set up current filter
-                $editRow = $this->update($rsnew, "", $rsold);
-                if (!$editRow && !EmptyValue($this->DbErrorMessage)) { // Show database error
-                    $this->setFailureMessage($this->DbErrorMessage);
-                }
-            } else {
-                $editRow = true; // No field to update
-            }
-            if ($editRow) {
-            }
-        } else {
-            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
-                // Use the message, do nothing
-            } elseif ($this->CancelMessage != "") {
-                $this->setFailureMessage($this->CancelMessage);
-                $this->CancelMessage = "";
-            } else {
-                $this->setFailureMessage($Language->phrase("UpdateCancelled"));
-            }
-            $editRow = false;
+        if (!$rs || !$doc) {
+            RemoveHeader("Content-Type"); // Remove header
+            RemoveHeader("Content-Disposition");
+            $this->showMessage();
+            return;
         }
+        $this->StartRecord = 1;
+        $this->StopRecord = $this->DisplayRecords <= 0 ? $this->TotalRecords : $this->DisplayRecords;
 
-        // Call Row_Updated event
-        if ($editRow) {
-            $this->rowUpdated($rsold, $rsnew);
-        }
+        // Call Page Exporting server event
+        $doc->ExportCustom = !$this->pageExporting($doc);
 
-        // Write JSON response
-        if (IsJsonResponse() && $editRow) {
-            $row = $this->getRecordsFromRecordset([$rsnew], true);
-            $table = $this->TableVar;
-            WriteJson(["success" => true, "action" => Config("API_EDIT_ACTION"), $table => $row]);
-        }
-        return $editRow;
+        // Page header
+        $header = $this->PageHeader;
+        $this->pageDataRendering($header);
+        $doc->Text .= $header;
+        $this->exportDocument($doc, $rs, $this->StartRecord, $this->StopRecord, "view");
+
+        // Close recordset
+        $rs->close();
+
+        // Page footer
+        $footer = $this->PageFooter;
+        $this->pageDataRendered($footer);
+        $doc->Text .= $footer;
+
+        // Export header and footer
+        $doc->exportHeaderAndFooter();
+
+        // Call Page Exported server event
+        $this->pageExported($doc);
     }
 
     // Set up Breadcrumb
@@ -1187,9 +1142,9 @@ class JdhServicesEdit extends JdhServices
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhserviceslist"), "", $this->TableVar, true);
-        $pageId = "edit";
-        $Breadcrumb->add("edit", $pageId, $url);
+        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhmedicineslist"), "", $this->TableVar, true);
+        $pageId = "view";
+        $Breadcrumb->add("view", $pageId, $url);
     }
 
     // Setup lookup options
@@ -1332,10 +1287,27 @@ class JdhServicesEdit extends JdhServices
         //$content = "<div style=\"break-after:page;\"></div>"; // Modify page break content
     }
 
-    // Form Custom Validate event
-    public function formCustomValidate(&$customError)
+    // Page Exporting event
+    // $doc = export object
+    public function pageExporting(&$doc)
     {
-        // Return error message in $customError
-        return true;
+        //$doc->Text = "my header"; // Export header
+        //return false; // Return false to skip default export and use Row_Export event
+        return true; // Return true to use default export and skip Row_Export event
+    }
+
+    // Row Export event
+    // $doc = export document object
+    public function rowExport($doc, $rs)
+    {
+        //$doc->Text .= "my content"; // Build HTML with field value: $rs["MyField"] or $this->MyField->ViewValue
+    }
+
+    // Page Exported event
+    // $doc = export document object
+    public function pageExported($doc)
+    {
+        //$doc->Text .= "my footer"; // Export footer
+        //Log($doc->Text);
     }
 }

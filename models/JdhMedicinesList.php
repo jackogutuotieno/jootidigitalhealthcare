@@ -59,6 +59,14 @@ class JdhMedicinesList extends JdhMedicines
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -433,6 +441,7 @@ class JdhMedicinesList extends JdhMedicines
     {
         $key = "";
         if (is_array($ar)) {
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -444,6 +453,9 @@ class JdhMedicinesList extends JdhMedicines
      */
     protected function hideFieldsForAddEdit()
     {
+        if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
+            $this->id->Visible = false;
+        }
     }
 
     // Lookup data
@@ -611,6 +623,9 @@ class JdhMedicinesList extends JdhMedicines
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Create form object
+        $CurrentForm = new HttpForm();
+
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -637,9 +652,11 @@ class JdhMedicinesList extends JdhMedicines
 
         // Setup export options
         $this->setupExportOptions();
+
+        // Setup import options
+        $this->setupImportOptions();
         $this->id->setVisibility();
         $this->category_id->setVisibility();
-        $this->subcategory_id->setVisibility();
         $this->name->setVisibility();
         $this->selling_price->setVisibility();
         $this->buying_price->setVisibility();
@@ -647,7 +664,7 @@ class JdhMedicinesList extends JdhMedicines
         $this->expiry->setVisibility();
         $this->date_created->setVisibility();
         $this->date_updated->setVisibility();
-        $this->submitted_by_user_id->setVisibility();
+        $this->submitted_by_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -681,7 +698,9 @@ class JdhMedicinesList extends JdhMedicines
 
         // Set up lookup cache
         $this->setupLookupOptions($this->category_id);
-        $this->setupLookupOptions($this->subcategory_id);
+
+        // Load default values for add
+        $this->loadDefaultValues();
 
         // Update form name to avoid conflict
         if ($this->IsModal) {
@@ -718,6 +737,42 @@ class JdhMedicinesList extends JdhMedicines
         // Set up Breadcrumb
         if (!$this->isExport()) {
             $this->setupBreadcrumb();
+        }
+
+        // Process import
+        if ($this->isImport()) {
+            $this->import(Param(Config("API_FILE_TOKEN_NAME")), ConvertToBool(Param("rollback")));
+            $this->terminate();
+            return;
+        }
+
+        // Check QueryString parameters
+        if (Get("action") !== null) {
+            $this->CurrentAction = Get("action");
+        } else {
+            if (Post("action") !== null) {
+                $this->CurrentAction = Post("action"); // Get action
+            }
+        }
+
+        // Clear inline mode
+        if ($this->isCancel()) {
+            $this->clearInlineMode();
+        }
+
+        // Switch to inline edit mode
+        if ($this->isEdit()) {
+            $this->inlineEditMode();
+        // Inline Update
+        } elseif (IsPost() && ($this->isUpdate() || $this->isOverwrite()) && Session(SESSION_INLINE_MODE) == "edit") {
+            $this->setKey(Post($this->OldKeyName));
+            // Return JSON error message if UseAjaxActions
+            if (!$this->inlineUpdate() && $this->UseAjaxActions) {
+                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                $this->clearFailureMessage();
+                $this->terminate();
+                return;
+            }
         }
 
         // Hide list options
@@ -870,6 +925,13 @@ class JdhMedicinesList extends JdhMedicines
                     $this->setWarningMessage($Language->phrase("NoRecord"));
                 }
             }
+
+            // Audit trail on search
+            if ($this->AuditTrailOnSearch && $this->Command == "search" && !$this->RestoreSearch) {
+                $searchParm = ServerVar("QUERY_STRING");
+                $searchSql = $this->getSessionWhere();
+                $this->writeAuditTrailOnSearch($searchParm, $searchSql);
+            }
         }
 
         // Set up list action columns
@@ -974,6 +1036,81 @@ class JdhMedicinesList extends JdhMedicines
         }
     }
 
+    // Exit inline mode
+    protected function clearInlineMode()
+    {
+        $this->selling_price->FormValue = ""; // Clear form value
+        $this->buying_price->FormValue = ""; // Clear form value
+        $this->LastAction = $this->CurrentAction; // Save last action
+        $this->CurrentAction = ""; // Clear action
+        $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
+    }
+
+    // Switch to Inline Edit mode
+    protected function inlineEditMode()
+    {
+        global $Security, $Language;
+        if (!$Security->canEdit()) {
+            return false; // Edit not allowed
+        }
+        $inlineEdit = true;
+        if (($keyValue = Get("id") ?? Route("id")) !== null) {
+            $this->id->setQueryStringValue($keyValue);
+        } elseif (IsApi() && ($keyValue = Route(2)) !== null) {
+            $this->id->setQueryStringValue($keyValue);
+        } else {
+            $inlineEdit = false;
+        }
+        if ($inlineEdit) {
+            if ($this->loadRow()) {
+                $this->OldKey = $this->getKey(true); // Get from CurrentValue
+                $this->setKey($this->OldKey); // Set to OldValue
+                $_SESSION[SESSION_INLINE_MODE] = "edit"; // Enable inline edit
+            }
+        }
+        return true;
+    }
+
+    // Perform update to Inline Edit record
+    protected function inlineUpdate()
+    {
+        global $Language, $CurrentForm;
+        $CurrentForm->Index = 1;
+        $this->loadFormValues(); // Get form values
+
+        // Validate form
+        $inlineUpdate = true;
+        if (!$this->validateForm()) {
+            $inlineUpdate = false; // Form error, reset action
+        } else {
+            $inlineUpdate = false;
+            $this->SendEmail = true; // Send email on update success
+            $inlineUpdate = $this->editRow(); // Update record
+        }
+        if ($inlineUpdate) { // Update success
+            if ($this->getSuccessMessage() == "") {
+                $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Set up success message
+            }
+            $this->clearInlineMode(); // Clear inline edit mode
+        } else {
+            if ($this->getFailureMessage() == "") {
+                $this->setFailureMessage($Language->phrase("UpdateFailed")); // Set update failed message
+            }
+            $this->EventCancelled = true; // Cancel event
+            $this->CurrentAction = "edit"; // Stay in edit mode
+        }
+        return $inlineUpdate;
+    }
+
+    // Check Inline Edit key
+    public function checkInlineEditKey()
+    {
+        if (!SameString($this->id->OldValue, $this->id->CurrentValue)) {
+            return false;
+        }
+        return true;
+    }
+
     // Build filter for all keys
     protected function buildKeyFilter()
     {
@@ -1020,7 +1157,6 @@ class JdhMedicinesList extends JdhMedicines
         }
         $filterList = Concat($filterList, $this->id->AdvancedSearch->toJson(), ","); // Field id
         $filterList = Concat($filterList, $this->category_id->AdvancedSearch->toJson(), ","); // Field category_id
-        $filterList = Concat($filterList, $this->subcategory_id->AdvancedSearch->toJson(), ","); // Field subcategory_id
         $filterList = Concat($filterList, $this->name->AdvancedSearch->toJson(), ","); // Field name
         $filterList = Concat($filterList, $this->selling_price->AdvancedSearch->toJson(), ","); // Field selling_price
         $filterList = Concat($filterList, $this->buying_price->AdvancedSearch->toJson(), ","); // Field buying_price
@@ -1084,14 +1220,6 @@ class JdhMedicinesList extends JdhMedicines
         $this->category_id->AdvancedSearch->SearchValue2 = @$filter["y_category_id"];
         $this->category_id->AdvancedSearch->SearchOperator2 = @$filter["w_category_id"];
         $this->category_id->AdvancedSearch->save();
-
-        // Field subcategory_id
-        $this->subcategory_id->AdvancedSearch->SearchValue = @$filter["x_subcategory_id"];
-        $this->subcategory_id->AdvancedSearch->SearchOperator = @$filter["z_subcategory_id"];
-        $this->subcategory_id->AdvancedSearch->SearchCondition = @$filter["v_subcategory_id"];
-        $this->subcategory_id->AdvancedSearch->SearchValue2 = @$filter["y_subcategory_id"];
-        $this->subcategory_id->AdvancedSearch->SearchOperator2 = @$filter["w_subcategory_id"];
-        $this->subcategory_id->AdvancedSearch->save();
 
         // Field name
         $this->name->AdvancedSearch->SearchValue = @$filter["x_name"];
@@ -1277,14 +1405,12 @@ class JdhMedicinesList extends JdhMedicines
             $this->CurrentOrderType = Get("ordertype", "");
             $this->updateSort($this->id); // id
             $this->updateSort($this->category_id); // category_id
-            $this->updateSort($this->subcategory_id); // subcategory_id
             $this->updateSort($this->name); // name
             $this->updateSort($this->selling_price); // selling_price
             $this->updateSort($this->buying_price); // buying_price
             $this->updateSort($this->expiry); // expiry
             $this->updateSort($this->date_created); // date_created
             $this->updateSort($this->date_updated); // date_updated
-            $this->updateSort($this->submitted_by_user_id); // submitted_by_user_id
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1311,7 +1437,6 @@ class JdhMedicinesList extends JdhMedicines
                 $this->setSessionOrderBy($orderBy);
                 $this->id->setSort("");
                 $this->category_id->setSort("");
-                $this->subcategory_id->setSort("");
                 $this->name->setSort("");
                 $this->selling_price->setSort("");
                 $this->buying_price->setSort("");
@@ -1339,6 +1464,18 @@ class JdhMedicinesList extends JdhMedicines
         $item->OnLeft = false;
         $item->Visible = false;
 
+        // "view"
+        $item = &$this->ListOptions->add("view");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->canView();
+        $item->OnLeft = false;
+
+        // "edit"
+        $item = &$this->ListOptions->add("edit");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->canEdit();
+        $item->OnLeft = false;
+
         // List actions
         $item = &$this->ListOptions->add("listactions");
         $item->CssClass = "text-nowrap";
@@ -1349,7 +1486,7 @@ class JdhMedicinesList extends JdhMedicines
 
         // "checkbox"
         $item = &$this->ListOptions->add("checkbox");
-        $item->Visible = false;
+        $item->Visible = $Security->canDelete();
         $item->OnLeft = false;
         $item->Header = "<div class=\"form-check\"><input type=\"checkbox\" name=\"key\" id=\"key\" class=\"form-check-input\" data-ew-action=\"select-all-keys\"></div>";
         if ($item->OnLeft) {
@@ -1395,8 +1532,91 @@ class JdhMedicinesList extends JdhMedicines
 
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
+
+        // Set up row action and key
+        if ($CurrentForm && is_numeric($this->RowIndex) && $this->RowType != "view") {
+            $CurrentForm->Index = $this->RowIndex;
+            $actionName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormActionName);
+            $oldKeyName = str_replace("k_", "k" . $this->RowIndex . "_", $this->OldKeyName);
+            $blankRowName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormBlankRowName);
+            if ($this->RowAction != "") {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $actionName . "\" id=\"" . $actionName . "\" value=\"" . $this->RowAction . "\">";
+            }
+            $oldKey = $this->getKey(false); // Get from OldValue
+            if ($oldKeyName != "" && $oldKey != "") {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $oldKeyName . "\" id=\"" . $oldKeyName . "\" value=\"" . HtmlEncode($oldKey) . "\">";
+            }
+            if ($this->RowAction == "insert" && $this->isConfirm() && $this->emptyRow()) {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $blankRowName . "\" id=\"" . $blankRowName . "\" value=\"1\">";
+            }
+        }
         $pageUrl = $this->pageUrl(false);
-        if ($this->CurrentMode == "view") { // Check view mode
+
+        // "edit"
+        $opt = $this->ListOptions["edit"];
+        if ($this->isInlineEditRow()) { // Inline-Edit
+            $this->ListOptions->CustomItem = "edit"; // Show edit column only
+            $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
+                $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
+                $updateCaption = $Language->phrase("UpdateLink");
+                $updateTitle = HtmlTitle($updateCaption);
+                $cancelCaption = $Language->phrase("CancelLink");
+                $cancelTitle = HtmlTitle($cancelCaption);
+                $oldKey = HtmlEncode($this->getKey(true));
+                $inlineUpdateUrl = HtmlEncode(GetUrl($this->urlAddHash($this->pageName(), "r" . $this->RowCount . "_" . $this->TableVar)));
+                if ($this->UseAjaxActions) {
+                    $inlineCancelUrl = $this->InlineEditUrl . "?action=cancel";
+                    $opt->Body = <<<INLINEEDITAJAX
+                    <div{$divClass}>
+                        <button type="button" class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" data-ew-action="inline" data-action="update" data-key="{$oldKey}" data-url="{$inlineUpdateUrl}">{$updateCaption}</button>
+                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel" data-key="{$oldKey}" data-url="{$inlineCancelUrl}">{$cancelCaption}</button>
+                    </div>
+                    INLINEEDITAJAX;
+                } else {
+                    $opt->Body = <<<INLINEEDIT
+                    <div{$divClass}>
+                        <button class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" form="fjdh_medicineslist" formaction="{$inlineUpdateUrl}">{$updateCaption}</button>
+                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$updateTitle}" href="{$cancelurl}">{$cancelCaption}</a>
+                        <input type="hidden" name="action" id="action" value="update">
+                    </div>
+                    INLINEEDIT;
+                }
+            $opt->Body .= "<input type=\"hidden\" name=\"" . $this->OldKeyName . "\" id=\"" . $this->OldKeyName . "\" value=\"" . HtmlEncode($this->id->CurrentValue) . "\">";
+            return;
+        }
+        if ($this->CurrentMode == "view") {
+            // "view"
+            $opt = $this->ListOptions["view"];
+            $viewcaption = HtmlTitle($Language->phrase("ViewLink"));
+            if ($Security->canView()) {
+                if ($this->ModalView && !IsMobile()) {
+                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_medicines\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
+                } else {
+                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-caption=\"" . $viewcaption . "\" href=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\">" . $Language->phrase("ViewLink") . "</a>";
+                }
+            } else {
+                $opt->Body = "";
+            }
+
+            // "edit"
+            $opt = $this->ListOptions["edit"];
+            $editcaption = HtmlTitle($Language->phrase("EditLink"));
+            if ($Security->canEdit()) {
+                if ($this->ModalEdit && !IsMobile()) {
+                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_medicines\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
+                } else {
+                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
+                }
+                $inlineEditCaption = $Language->phrase("InlineEditLink");
+                $inlineEditTitle = HtmlTitle($inlineEditCaption);
+                if ($this->UseAjaxActions) {
+                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" data-ew-action=\"inline\" data-action=\"edit\" data-key=\"" . HtmlEncode($this->getKey(true)) . "\" data-url=\"" . HtmlEncode($this->InlineEditUrl) . "\">" . $inlineEditCaption . "</a>";
+                } else {
+                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" href=\"" . HtmlEncode($this->urlAddHash(GetUrl($this->InlineEditUrl), "r" . $this->RowCount . "_" . $this->TableVar)) . "\">" . $inlineEditCaption . "</a>";
+                }
+            } else {
+                $opt->Body = "";
+            }
         } // End View mode
 
         // Set up list action buttons
@@ -1435,6 +1655,7 @@ class JdhMedicinesList extends JdhMedicines
 
         // "checkbox"
         $opt = $this->ListOptions["checkbox"];
+        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
         $this->renderListOptionsExt();
 
         // Call ListOptions_Rendered event
@@ -1453,7 +1674,30 @@ class JdhMedicinesList extends JdhMedicines
     {
         global $Language, $Security;
         $options = &$this->OtherOptions;
+        $option = $options["addedit"];
+
+        // Add
+        $item = &$option->add("add");
+        $addcaption = HtmlTitle($Language->phrase("AddLink"));
+        if ($this->ModalAdd && !IsMobile()) {
+            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-table=\"jdh_medicines\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("AddLink") . "</a>";
+        } else {
+            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
+        }
+        $item->Visible = $this->AddUrl != "" && $Security->canAdd();
         $option = $options["action"];
+
+        // Add multi delete
+        $item = &$option->add("multidelete");
+        $item->Body = "<button type=\"button\" class=\"ew-action ew-multi-delete\" title=\"" .
+            HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" data-caption=\"" .
+            HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" form=\"fjdh_medicineslist\"" .
+            " data-ew-action=\"" . ($this->UseAjaxActions ? "inline" : "submit") . "\"" .
+            ($this->UseAjaxActions ? " data-action=\"delete\"" : "") .
+            " data-url=\"" . GetUrl($this->MultiDeleteUrl) . "\"" .
+            ($this->InlineDelete ? " data-msg=\"" . HtmlEncode($Language->phrase("DeleteConfirm")) . "\" data-data='{\"action\":\"delete\"}'" : " data-data='{\"action\":\"show\"}'") .
+            ">" . $Language->phrase("DeleteSelectedLink") . "</button>";
+        $item->Visible = $Security->canDelete();
 
         // Show column list for column visibility
         if ($this->UseColumnVisibility) {
@@ -1463,14 +1707,12 @@ class JdhMedicinesList extends JdhMedicines
             $item->Visible = $this->UseColumnVisibility;
             $option->add("id", $this->createColumnOption("id"));
             $option->add("category_id", $this->createColumnOption("category_id"));
-            $option->add("subcategory_id", $this->createColumnOption("subcategory_id"));
             $option->add("name", $this->createColumnOption("name"));
             $option->add("selling_price", $this->createColumnOption("selling_price"));
             $option->add("buying_price", $this->createColumnOption("buying_price"));
             $option->add("expiry", $this->createColumnOption("expiry"));
             $option->add("date_created", $this->createColumnOption("date_created"));
             $option->add("date_updated", $this->createColumnOption("date_updated"));
-            $option->add("submitted_by_user_id", $this->createColumnOption("submitted_by_user_id"));
         }
 
         // Set up options default
@@ -1653,6 +1895,15 @@ class JdhMedicinesList extends JdhMedicines
                 $this->StopRecord = $this->TotalRecords;
             }
         }
+
+        // Restore number of post back records
+        if ($CurrentForm && ($this->isConfirm() || $this->EventCancelled)) {
+            $CurrentForm->Index = -1;
+            if ($CurrentForm->hasValue($this->FormKeyCountName) && ($this->isGridAdd() || $this->isGridEdit() || $this->isConfirm())) {
+                $this->KeyCount = $CurrentForm->getValue($this->FormKeyCountName);
+                $this->StopRecord = $this->StartRecord + $this->KeyCount - 1;
+            }
+        }
         $this->RecordCount = $this->StartRecord - 1;
         if ($this->Recordset && !$this->Recordset->EOF) {
             // Nothing to do
@@ -1666,6 +1917,9 @@ class JdhMedicinesList extends JdhMedicines
         $this->RowType = ROWTYPE_AGGREGATEINIT;
         $this->resetAttributes();
         $this->renderRow();
+        if ($this->isEdit()) {
+            $this->RowIndex = 1;
+        }
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
             $this->RowIndex = '$rowindex$';
         }
@@ -1722,6 +1976,24 @@ class JdhMedicinesList extends JdhMedicines
         if (($this->isAdd() || $this->isCopy()) && $this->InlineRowCount == 0 || $this->isGridAdd()) { // Add
             $this->RowType = ROWTYPE_ADD; // Render add
         }
+        if ($this->isEdit() || $this->isInlineUpdated() || $this->isInlineEditCancelled()) { // Inline edit/updated/cancelled
+            if ($this->checkInlineEditKey() && $this->InlineRowCount == 0) {
+                if ($this->isEdit()) { // Inline edit
+                    $this->RowAction = "edit";
+                    $this->RowType = ROWTYPE_EDIT; // Render edit
+                } else { // Inline updated
+                    $this->RowAction = "";
+                    $this->RowType = ROWTYPE_VIEW; // Render view
+                    $this->RowAttrs["data-oldkey"] = $this->getKey(); // Set up old key
+                }
+            } elseif ($this->UseInfiniteScroll) {
+                $this->RowAction = "hide";
+            }
+        }
+        if ($this->isEdit() && $this->RowType == ROWTYPE_EDIT && $this->EventCancelled) { // Update failed
+            $CurrentForm->Index = 1;
+            $this->restoreFormValues(); // Restore form values
+        }
 
         // Inline Add/Copy row (row 0)
         if ($this->RowType == ROWTYPE_ADD && ($this->isAdd() || $this->isCopy())) {
@@ -1757,6 +2029,11 @@ class JdhMedicinesList extends JdhMedicines
         $this->renderListOptions();
     }
 
+    // Load default values
+    protected function loadDefaultValues()
+    {
+    }
+
     // Load basic search values
     protected function loadBasicSearchValues()
     {
@@ -1765,6 +2042,112 @@ class JdhMedicinesList extends JdhMedicines
             $this->Command = "search";
         }
         $this->BasicSearch->setType(Get(Config("TABLE_BASIC_SEARCH_TYPE"), ""), false);
+    }
+
+    // Load form values
+    protected function loadFormValues()
+    {
+        // Load from form
+        global $CurrentForm;
+        $validate = !Config("SERVER_VALIDATE");
+
+        // Check field name 'id' first before field var 'x_id'
+        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
+        if (!$this->id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->id->setFormValue($val);
+        }
+
+        // Check field name 'category_id' first before field var 'x_category_id'
+        $val = $CurrentForm->hasValue("category_id") ? $CurrentForm->getValue("category_id") : $CurrentForm->getValue("x_category_id");
+        if (!$this->category_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->category_id->Visible = false; // Disable update for API request
+            } else {
+                $this->category_id->setFormValue($val);
+            }
+        }
+
+        // Check field name 'name' first before field var 'x_name'
+        $val = $CurrentForm->hasValue("name") ? $CurrentForm->getValue("name") : $CurrentForm->getValue("x_name");
+        if (!$this->name->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->name->Visible = false; // Disable update for API request
+            } else {
+                $this->name->setFormValue($val);
+            }
+        }
+
+        // Check field name 'selling_price' first before field var 'x_selling_price'
+        $val = $CurrentForm->hasValue("selling_price") ? $CurrentForm->getValue("selling_price") : $CurrentForm->getValue("x_selling_price");
+        if (!$this->selling_price->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->selling_price->Visible = false; // Disable update for API request
+            } else {
+                $this->selling_price->setFormValue($val, true, $validate);
+            }
+        }
+
+        // Check field name 'buying_price' first before field var 'x_buying_price'
+        $val = $CurrentForm->hasValue("buying_price") ? $CurrentForm->getValue("buying_price") : $CurrentForm->getValue("x_buying_price");
+        if (!$this->buying_price->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->buying_price->Visible = false; // Disable update for API request
+            } else {
+                $this->buying_price->setFormValue($val, true, $validate);
+            }
+        }
+
+        // Check field name 'expiry' first before field var 'x_expiry'
+        $val = $CurrentForm->hasValue("expiry") ? $CurrentForm->getValue("expiry") : $CurrentForm->getValue("x_expiry");
+        if (!$this->expiry->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->expiry->Visible = false; // Disable update for API request
+            } else {
+                $this->expiry->setFormValue($val, true, $validate);
+            }
+            $this->expiry->CurrentValue = UnFormatDateTime($this->expiry->CurrentValue, $this->expiry->formatPattern());
+        }
+
+        // Check field name 'date_created' first before field var 'x_date_created'
+        $val = $CurrentForm->hasValue("date_created") ? $CurrentForm->getValue("date_created") : $CurrentForm->getValue("x_date_created");
+        if (!$this->date_created->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->date_created->Visible = false; // Disable update for API request
+            } else {
+                $this->date_created->setFormValue($val, true, $validate);
+            }
+            $this->date_created->CurrentValue = UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern());
+        }
+
+        // Check field name 'date_updated' first before field var 'x_date_updated'
+        $val = $CurrentForm->hasValue("date_updated") ? $CurrentForm->getValue("date_updated") : $CurrentForm->getValue("x_date_updated");
+        if (!$this->date_updated->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->date_updated->Visible = false; // Disable update for API request
+            } else {
+                $this->date_updated->setFormValue($val, true, $validate);
+            }
+            $this->date_updated->CurrentValue = UnFormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern());
+        }
+    }
+
+    // Restore form values
+    public function restoreFormValues()
+    {
+        global $CurrentForm;
+        if (!$this->isGridAdd() && !$this->isAdd()) {
+            $this->id->CurrentValue = $this->id->FormValue;
+        }
+        $this->category_id->CurrentValue = $this->category_id->FormValue;
+        $this->name->CurrentValue = $this->name->FormValue;
+        $this->selling_price->CurrentValue = $this->selling_price->FormValue;
+        $this->buying_price->CurrentValue = $this->buying_price->FormValue;
+        $this->expiry->CurrentValue = $this->expiry->FormValue;
+        $this->expiry->CurrentValue = UnFormatDateTime($this->expiry->CurrentValue, $this->expiry->formatPattern());
+        $this->date_created->CurrentValue = $this->date_created->FormValue;
+        $this->date_created->CurrentValue = UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern());
+        $this->date_updated->CurrentValue = $this->date_updated->FormValue;
+        $this->date_updated->CurrentValue = UnFormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern());
     }
 
     // Load recordset
@@ -1827,6 +2210,9 @@ class JdhMedicinesList extends JdhMedicines
         if ($row) {
             $res = true;
             $this->loadRowValues($row); // Load row values
+            if (!$this->EventCancelled) {
+                $this->HashValue = $this->getRowHash($row); // Get hash value for record
+            }
         }
         return $res;
     }
@@ -1854,7 +2240,6 @@ class JdhMedicinesList extends JdhMedicines
         $this->rowSelected($row);
         $this->id->setDbValue($row['id']);
         $this->category_id->setDbValue($row['category_id']);
-        $this->subcategory_id->setDbValue($row['subcategory_id']);
         $this->name->setDbValue($row['name']);
         $this->selling_price->setDbValue($row['selling_price']);
         $this->buying_price->setDbValue($row['buying_price']);
@@ -1871,7 +2256,6 @@ class JdhMedicinesList extends JdhMedicines
         $row = [];
         $row['id'] = $this->id->DefaultValue;
         $row['category_id'] = $this->category_id->DefaultValue;
-        $row['subcategory_id'] = $this->subcategory_id->DefaultValue;
         $row['name'] = $this->name->DefaultValue;
         $row['selling_price'] = $this->selling_price->DefaultValue;
         $row['buying_price'] = $this->buying_price->DefaultValue;
@@ -1886,6 +2270,18 @@ class JdhMedicinesList extends JdhMedicines
     // Load old record
     protected function loadOldRecord()
     {
+        // Load old record
+        if ($this->OldKey != "") {
+            $this->setKey($this->OldKey);
+            $this->CurrentFilter = $this->getRecordFilter();
+            $sql = $this->getCurrentSql();
+            $conn = $this->getConnection();
+            $rs = LoadRecordset($sql, $conn);
+            if ($rs && ($row = $rs->fields)) {
+                $this->loadRowValues($row); // Load row values
+                return $row;
+            }
+        }
         $this->loadRowValues(); // Load default row values
         return null;
     }
@@ -1911,8 +2307,6 @@ class JdhMedicinesList extends JdhMedicines
         // id
 
         // category_id
-
-        // subcategory_id
 
         // name
 
@@ -1959,29 +2353,6 @@ class JdhMedicinesList extends JdhMedicines
                 $this->category_id->ViewValue = null;
             }
 
-            // subcategory_id
-            $curVal = strval($this->subcategory_id->CurrentValue);
-            if ($curVal != "") {
-                $this->subcategory_id->ViewValue = $this->subcategory_id->lookupCacheOption($curVal);
-                if ($this->subcategory_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`subcategory_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->subcategory_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->subcategory_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->subcategory_id->ViewValue = $this->subcategory_id->displayValue($arwrk);
-                    } else {
-                        $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->CurrentValue, $this->subcategory_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->subcategory_id->ViewValue = null;
-            }
-
             // name
             $this->name->ViewValue = $this->name->CurrentValue;
 
@@ -2017,10 +2388,6 @@ class JdhMedicinesList extends JdhMedicines
             $this->category_id->HrefValue = "";
             $this->category_id->TooltipValue = "";
 
-            // subcategory_id
-            $this->subcategory_id->HrefValue = "";
-            $this->subcategory_id->TooltipValue = "";
-
             // name
             $this->name->HrefValue = "";
             $this->name->TooltipValue = "";
@@ -2044,16 +2411,716 @@ class JdhMedicinesList extends JdhMedicines
             // date_updated
             $this->date_updated->HrefValue = "";
             $this->date_updated->TooltipValue = "";
+        } elseif ($this->RowType == ROWTYPE_ADD) {
+            // id
 
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
-            $this->submitted_by_user_id->TooltipValue = "";
+            // category_id
+            $this->category_id->setupEditAttributes();
+            $this->category_id->PlaceHolder = RemoveHtml($this->category_id->caption());
+
+            // name
+            $this->name->setupEditAttributes();
+            if (!$this->name->Raw) {
+                $this->name->CurrentValue = HtmlDecode($this->name->CurrentValue);
+            }
+            $this->name->EditValue = HtmlEncode($this->name->CurrentValue);
+            $this->name->PlaceHolder = RemoveHtml($this->name->caption());
+
+            // selling_price
+            $this->selling_price->setupEditAttributes();
+            $this->selling_price->EditValue = HtmlEncode($this->selling_price->CurrentValue);
+            $this->selling_price->PlaceHolder = RemoveHtml($this->selling_price->caption());
+            if (strval($this->selling_price->EditValue) != "" && is_numeric($this->selling_price->EditValue)) {
+                $this->selling_price->EditValue = FormatNumber($this->selling_price->EditValue, null);
+            }
+
+            // buying_price
+            $this->buying_price->setupEditAttributes();
+            $this->buying_price->EditValue = HtmlEncode($this->buying_price->CurrentValue);
+            $this->buying_price->PlaceHolder = RemoveHtml($this->buying_price->caption());
+            if (strval($this->buying_price->EditValue) != "" && is_numeric($this->buying_price->EditValue)) {
+                $this->buying_price->EditValue = FormatNumber($this->buying_price->EditValue, null);
+            }
+
+            // expiry
+            $this->expiry->setupEditAttributes();
+            $this->expiry->EditValue = HtmlEncode(FormatDateTime($this->expiry->CurrentValue, $this->expiry->formatPattern()));
+            $this->expiry->PlaceHolder = RemoveHtml($this->expiry->caption());
+
+            // date_created
+            $this->date_created->setupEditAttributes();
+            $this->date_created->EditValue = HtmlEncode(FormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()));
+            $this->date_created->PlaceHolder = RemoveHtml($this->date_created->caption());
+
+            // date_updated
+            $this->date_updated->setupEditAttributes();
+            $this->date_updated->EditValue = HtmlEncode(FormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern()));
+            $this->date_updated->PlaceHolder = RemoveHtml($this->date_updated->caption());
+
+            // Add refer script
+
+            // id
+            $this->id->HrefValue = "";
+
+            // category_id
+            $this->category_id->HrefValue = "";
+
+            // name
+            $this->name->HrefValue = "";
+
+            // selling_price
+            $this->selling_price->HrefValue = "";
+
+            // buying_price
+            $this->buying_price->HrefValue = "";
+
+            // expiry
+            $this->expiry->HrefValue = "";
+
+            // date_created
+            $this->date_created->HrefValue = "";
+
+            // date_updated
+            $this->date_updated->HrefValue = "";
+        } elseif ($this->RowType == ROWTYPE_EDIT) {
+            // id
+            $this->id->setupEditAttributes();
+            $this->id->EditValue = $this->id->CurrentValue;
+            $this->id->EditValue = FormatNumber($this->id->EditValue, $this->id->formatPattern());
+
+            // category_id
+            $this->category_id->setupEditAttributes();
+            $curVal = trim(strval($this->category_id->CurrentValue));
+            if ($curVal != "") {
+                $this->category_id->ViewValue = $this->category_id->lookupCacheOption($curVal);
+            } else {
+                $this->category_id->ViewValue = $this->category_id->Lookup !== null && is_array($this->category_id->lookupOptions()) ? $curVal : null;
+            }
+            if ($this->category_id->ViewValue !== null) { // Load from cache
+                $this->category_id->EditValue = array_values($this->category_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`category_id`", "=", $this->category_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $sqlWrk = $this->category_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                $this->category_id->EditValue = $arwrk;
+            }
+            $this->category_id->PlaceHolder = RemoveHtml($this->category_id->caption());
+
+            // name
+            $this->name->setupEditAttributes();
+            if (!$this->name->Raw) {
+                $this->name->CurrentValue = HtmlDecode($this->name->CurrentValue);
+            }
+            $this->name->EditValue = HtmlEncode($this->name->CurrentValue);
+            $this->name->PlaceHolder = RemoveHtml($this->name->caption());
+
+            // selling_price
+            $this->selling_price->setupEditAttributes();
+            $this->selling_price->EditValue = HtmlEncode($this->selling_price->CurrentValue);
+            $this->selling_price->PlaceHolder = RemoveHtml($this->selling_price->caption());
+            if (strval($this->selling_price->EditValue) != "" && is_numeric($this->selling_price->EditValue)) {
+                $this->selling_price->EditValue = FormatNumber($this->selling_price->EditValue, null);
+            }
+
+            // buying_price
+            $this->buying_price->setupEditAttributes();
+            $this->buying_price->EditValue = HtmlEncode($this->buying_price->CurrentValue);
+            $this->buying_price->PlaceHolder = RemoveHtml($this->buying_price->caption());
+            if (strval($this->buying_price->EditValue) != "" && is_numeric($this->buying_price->EditValue)) {
+                $this->buying_price->EditValue = FormatNumber($this->buying_price->EditValue, null);
+            }
+
+            // expiry
+            $this->expiry->setupEditAttributes();
+            $this->expiry->EditValue = HtmlEncode(FormatDateTime($this->expiry->CurrentValue, $this->expiry->formatPattern()));
+            $this->expiry->PlaceHolder = RemoveHtml($this->expiry->caption());
+
+            // date_created
+            $this->date_created->setupEditAttributes();
+            $this->date_created->EditValue = HtmlEncode(FormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()));
+            $this->date_created->PlaceHolder = RemoveHtml($this->date_created->caption());
+
+            // date_updated
+            $this->date_updated->setupEditAttributes();
+            $this->date_updated->EditValue = HtmlEncode(FormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern()));
+            $this->date_updated->PlaceHolder = RemoveHtml($this->date_updated->caption());
+
+            // Edit refer script
+
+            // id
+            $this->id->HrefValue = "";
+
+            // category_id
+            $this->category_id->HrefValue = "";
+
+            // name
+            $this->name->HrefValue = "";
+
+            // selling_price
+            $this->selling_price->HrefValue = "";
+
+            // buying_price
+            $this->buying_price->HrefValue = "";
+
+            // expiry
+            $this->expiry->HrefValue = "";
+
+            // date_created
+            $this->date_created->HrefValue = "";
+
+            // date_updated
+            $this->date_updated->HrefValue = "";
+        }
+        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+            $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
+    }
+
+    // Validate form
+    protected function validateForm()
+    {
+        global $Language, $Security;
+
+        // Check if validation required
+        if (!Config("SERVER_VALIDATE")) {
+            return true;
+        }
+        $validateForm = true;
+        if ($this->id->Required) {
+            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
+                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
+            }
+        }
+        if ($this->category_id->Required) {
+            if (!$this->category_id->IsDetailKey && EmptyValue($this->category_id->FormValue)) {
+                $this->category_id->addErrorMessage(str_replace("%s", $this->category_id->caption(), $this->category_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->name->Required) {
+            if (!$this->name->IsDetailKey && EmptyValue($this->name->FormValue)) {
+                $this->name->addErrorMessage(str_replace("%s", $this->name->caption(), $this->name->RequiredErrorMessage));
+            }
+        }
+        if ($this->selling_price->Required) {
+            if (!$this->selling_price->IsDetailKey && EmptyValue($this->selling_price->FormValue)) {
+                $this->selling_price->addErrorMessage(str_replace("%s", $this->selling_price->caption(), $this->selling_price->RequiredErrorMessage));
+            }
+        }
+        if (!CheckNumber($this->selling_price->FormValue)) {
+            $this->selling_price->addErrorMessage($this->selling_price->getErrorMessage(false));
+        }
+        if ($this->buying_price->Required) {
+            if (!$this->buying_price->IsDetailKey && EmptyValue($this->buying_price->FormValue)) {
+                $this->buying_price->addErrorMessage(str_replace("%s", $this->buying_price->caption(), $this->buying_price->RequiredErrorMessage));
+            }
+        }
+        if (!CheckNumber($this->buying_price->FormValue)) {
+            $this->buying_price->addErrorMessage($this->buying_price->getErrorMessage(false));
+        }
+        if ($this->expiry->Required) {
+            if (!$this->expiry->IsDetailKey && EmptyValue($this->expiry->FormValue)) {
+                $this->expiry->addErrorMessage(str_replace("%s", $this->expiry->caption(), $this->expiry->RequiredErrorMessage));
+            }
+        }
+        if (!CheckDate($this->expiry->FormValue, $this->expiry->formatPattern())) {
+            $this->expiry->addErrorMessage($this->expiry->getErrorMessage(false));
+        }
+        if ($this->date_created->Required) {
+            if (!$this->date_created->IsDetailKey && EmptyValue($this->date_created->FormValue)) {
+                $this->date_created->addErrorMessage(str_replace("%s", $this->date_created->caption(), $this->date_created->RequiredErrorMessage));
+            }
+        }
+        if (!CheckDate($this->date_created->FormValue, $this->date_created->formatPattern())) {
+            $this->date_created->addErrorMessage($this->date_created->getErrorMessage(false));
+        }
+        if ($this->date_updated->Required) {
+            if (!$this->date_updated->IsDetailKey && EmptyValue($this->date_updated->FormValue)) {
+                $this->date_updated->addErrorMessage(str_replace("%s", $this->date_updated->caption(), $this->date_updated->RequiredErrorMessage));
+            }
+        }
+        if (!CheckDate($this->date_updated->FormValue, $this->date_updated->formatPattern())) {
+            $this->date_updated->addErrorMessage($this->date_updated->getErrorMessage(false));
+        }
+
+        // Return validate result
+        $validateForm = $validateForm && !$this->hasInvalidFields();
+
+        // Call Form_CustomValidate event
+        $formCustomError = "";
+        $validateForm = $validateForm && $this->formCustomValidate($formCustomError);
+        if ($formCustomError != "") {
+            $this->setFailureMessage($formCustomError);
+        }
+        return $validateForm;
+    }
+
+    // Update record based on key values
+    protected function editRow()
+    {
+        global $Security, $Language;
+        $oldKeyFilter = $this->getRecordFilter();
+        $filter = $this->applyUserIDFilters($oldKeyFilter);
+        $conn = $this->getConnection();
+
+        // Load old row
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $rsold = $conn->fetchAssociative($sql);
+        if (!$rsold) {
+            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
+            return false; // Update Failed
+        } else {
+            // Save old values
+            $this->loadDbValues($rsold);
+        }
+
+        // Set new row
+        $rsnew = [];
+
+        // category_id
+        $this->category_id->setDbValueDef($rsnew, $this->category_id->CurrentValue, 0, $this->category_id->ReadOnly);
+
+        // name
+        $this->name->setDbValueDef($rsnew, $this->name->CurrentValue, "", $this->name->ReadOnly);
+
+        // selling_price
+        $this->selling_price->setDbValueDef($rsnew, $this->selling_price->CurrentValue, 0, $this->selling_price->ReadOnly);
+
+        // buying_price
+        $this->buying_price->setDbValueDef($rsnew, $this->buying_price->CurrentValue, 0, $this->buying_price->ReadOnly);
+
+        // expiry
+        $this->expiry->setDbValueDef($rsnew, UnFormatDateTime($this->expiry->CurrentValue, $this->expiry->formatPattern()), CurrentDate(), $this->expiry->ReadOnly);
+
+        // date_created
+        $this->date_created->setDbValueDef($rsnew, UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()), null, $this->date_created->ReadOnly);
+
+        // date_updated
+        $this->date_updated->setDbValueDef($rsnew, UnFormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern()), null, $this->date_updated->ReadOnly);
+
+        // Update current values
+        $this->setCurrentValues($rsnew);
+
+        // Call Row Updating event
+        $updateRow = $this->rowUpdating($rsold, $rsnew);
+        if ($updateRow) {
+            if (count($rsnew) > 0) {
+                $this->CurrentFilter = $filter; // Set up current filter
+                $editRow = $this->update($rsnew, "", $rsold);
+                if (!$editRow && !EmptyValue($this->DbErrorMessage)) { // Show database error
+                    $this->setFailureMessage($this->DbErrorMessage);
+                }
+            } else {
+                $editRow = true; // No field to update
+            }
+            if ($editRow) {
+            }
+        } else {
+            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
+                // Use the message, do nothing
+            } elseif ($this->CancelMessage != "") {
+                $this->setFailureMessage($this->CancelMessage);
+                $this->CancelMessage = "";
+            } else {
+                $this->setFailureMessage($Language->phrase("UpdateCancelled"));
+            }
+            $editRow = false;
+        }
+
+        // Call Row_Updated event
+        if ($editRow) {
+            $this->rowUpdated($rsold, $rsnew);
+        }
+        if ($editRow) {
+            if ($this->SendEmail) {
+                $this->sendEmailOnEdit($rsold, $rsnew);
+            }
+        }
+        return $editRow;
+    }
+
+    /**
+     * Import file
+     *
+     * @param string $filetoken File token to locate the uploaded import file
+     * @param bool $rollback Try import and then rollback
+     * @return bool
+     */
+    public function import($filetoken, $rollback = false)
+    {
+        global $Security, $Language;
+        if (!$Security->canImport()) {
+            return false; // Import not allowed
+        }
+
+        // Check if valid token
+        if (EmptyValue($filetoken)) {
+            return false;
+        }
+
+        // Get uploaded files by token
+        $files = GetUploadedFileNames($filetoken);
+        $exts = explode(",", Config("IMPORT_FILE_ALLOWED_EXTENSIONS"));
+        $result = [Config("API_FILE_TOKEN_NAME") => $filetoken, "files" => []];
+
+        // Set header
+        if (ob_get_length()) {
+            ob_clean();
+        }
+        header("Cache-Control: no-store");
+        header("Content-Type: text/event-stream");
+
+        // Import records
+        try {
+            foreach ($files as $file) {
+                $res = ["file" => basename($file)];
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+                // Ignore log file
+                if ($ext == "txt") {
+                    continue;
+                }
+
+                // Check file extension
+                if (!in_array($ext, $exts)) {
+                    $res = array_merge($res, ["error" => str_replace("%e", $ext, $Language->phrase("ImportInvalidFileExtension"))]);
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Set up options
+                $options = [
+                    "file" => $file,
+                    "inputEncoding" => "", // For CSV only
+                    "delimiter" => ",", // For CSV only
+                    "enclosure" => "\"", // For CSV only
+                    "escape" => "\\", // For CSV only
+                    "activeSheet" => null, // For PhpSpreadsheet only
+                    "readOnly" => true, // For PhpSpreadsheet only
+                    "maxRows" => null, // For PhpSpreadsheet only
+                    "headerRowNumber" => 0,
+                    "headers" => []
+                ];
+                foreach ($_GET as $key => $value) {
+                    if (!in_array($key, [Config("API_ACTION_NAME"), Config("API_FILE_TOKEN_NAME")])) {
+                        $options[$key] = $value;
+                    }
+                }
+
+                // Workflow builder
+                $builder = fn($workflow) => $workflow;
+
+                // Call Page Importing server event
+                if (!$this->pageImporting($builder, $options)) {
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Set max execution time
+                if (Config("IMPORT_MAX_EXECUTION_TIME") > 0) {
+                    ini_set("max_execution_time", Config("IMPORT_MAX_EXECUTION_TIME"));
+                }
+
+                // Reader
+                try {
+                    if ($ext == "csv") {
+                        $csv = file_get_contents($file);
+                        if ($csv !== false) {
+                            if (StartsString("\xEF\xBB\xBF", $csv)) { // UTF-8 BOM
+                                $csv = substr($csv, 3);
+                            } elseif ($options["inputEncoding"] != "" && !SameText($options["inputEncoding"], "UTF-8")) {
+                                $csv = Convert($options["inputEncoding"], "UTF-8", $csv);
+                            }
+                            file_put_contents($file, $csv);
+                        }
+                        $reader = new \Port\Csv\CsvReader(new \SplFileObject($file), $options["delimiter"], $options["enclosure"], $options["escape"]);
+                    } else {
+                        $reader = new \Port\Spreadsheet\SpreadsheetReader(new \SplFileObject($file), $options["headerRowNumber"], $options["activeSheet"], $options["readOnly"], $options["maxRows"]);
+                    }
+                    if (is_array($options["headers"]) && count($options["headers"]) > 0) {
+                        $reader->setColumnHeaders($options["headers"]);
+                    } elseif (is_int($options["headerRowNumber"])) {
+                        $reader->setHeaderRowNumber($options["headerRowNumber"]);
+                    }
+                } catch (\Exception $e) {
+                    $res = array_merge($res, ["error" => $e->getMessage()]);
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Column headers
+                $headers = $reader->getColumnHeaders();
+                if (count($headers) == 0) { // Missing headers
+                    $res["error"] = $Language->phrase("ImportNoHeaderRow");
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Counts
+                $recordCnt = $reader->count();
+                $cnt = 0;
+                $successCnt = 0;
+                $failCnt = 0;
+                $res = array_merge($res, ["totalCount" => $recordCnt, "count" => $cnt, "successCount" => 0, "failCount" => 0]);
+
+                // Writer
+                $writer = new \Port\Writer\CallbackWriter(function ($row) use (&$res, &$cnt, &$successCnt, &$failCnt) {
+                    try {
+                        $success = $this->importRow($row, ++$cnt); // Import row
+                        if ($success) {
+                            $successCnt++;
+                        } else {
+                            $failCnt++;
+                        }
+                        $err = "";
+                    } catch (\Port\Exception $e) { // Catch exception so the workflow continues
+                        $failCnt++;
+                        $err = $e->getMessage();
+                        if ($failCnt > $this->ImportMaxFailures) {
+                            throw $e; // Throw \Port\Exception to terminate the workflow
+                        }
+                    } finally {
+                        $res = array_merge($res, [
+                            "row" => $row, // Current row
+                            "success" => $success, // For current row
+                            "error" => $err, // For current row
+                            "count" => $cnt,
+                            "successCount" => $successCnt,
+                            "failCount" => $failCnt
+                        ]);
+                        SendEvent($res);
+                    }
+                });
+
+                // Connection
+                $conn = $this->getConnection();
+
+                // Begin transaction
+                if ($this->ImportUseTransaction) {
+                    $conn->beginTransaction();
+                }
+
+                // Workflow
+                $workflow = new \Port\Steps\StepAggregator($reader);
+                $workflow->setLogger(Logger());
+                $workflow->setSkipItemOnFailure(false); // Stop on exception
+                $workflow = $builder($workflow);
+                try {
+                    $info = @$workflow->addWriter($writer)->process();
+                } finally {
+                    // Rollback transaction
+                    if ($this->ImportUseTransaction) {
+                        if ($rollback || $failCnt > $this->ImportMaxFailures) {
+                            $res["rollbacked"] = $conn->rollback();
+                        } else {
+                            $conn->commit();
+                        }
+                    }
+                    unset($res["row"], $res["error"]); // Remove current row info
+                    $res["success"] = $cnt > 0 && $failCnt <= $this->ImportMaxFailures; // Set success status of current file
+                    SendEvent($res); // Current file imported
+                    $result["files"][] = $res;
+
+                    // Call Page Imported server event
+                    $this->pageImported($info, $res);
+                }
+            }
+        } finally {
+            $result["failCount"] = array_reduce($result["files"], fn($carry, $item) => $carry + $item["failCount"], 0); // For client side
+            $result["success"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"], true); // All files successful
+            $result["rollbacked"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"] && ($item["rollbacked"] ?? false), true); // All file rollbacked successfully
+            if ($result["success"] && !$result["rollbacked"]) {
+                CleanUploadTempPaths($filetoken);
+            }
+            SendEvent($result, "complete"); // All files imported
+            return $result["success"];
+        }
+    }
+
+    /**
+     * Import a row
+     *
+     * @param array $row Row to be imported
+     * @param int $cnt Index of the row (1-based)
+     * @return bool
+     */
+    protected function importRow(&$row, $cnt)
+    {
+        global $Language;
+
+        // Call Row Import server event
+        if (!$this->rowImport($row, $cnt)) {
+            return false;
+        }
+
+        // Check field names and values
+        foreach ($row as $name => $value) {
+            $fld = $this->Fields[$name];
+            if (!$fld) {
+                throw new \Port\Exception\UnexpectedValueException(str_replace("%f", $name, $Language->phrase("ImportInvalidFieldName")));
+            }
+            if (!$this->checkValue($fld, $value)) {
+                throw new \Port\Exception\UnexpectedValueException(str_replace(["%f", "%v"], [$name, $value], $Language->phrase("ImportInvalidFieldValue")));
+            }
+        }
+
+        // Insert/Update to database
+        $res = false;
+        if (!$this->ImportInsertOnly && $oldrow = $this->load($row)) {
+            if (!method_exists($this, "rowUpdating") || $this->rowUpdating($oldrow, $row)) {
+                if ($res = $this->update($row, "", $oldrow)) {
+                    if (method_exists($this, "rowUpdated")) {
+                        $this->rowUpdated($oldrow, $row);
+                    }
+                }
+            }
+        } else {
+            if (!method_exists($this, "rowInserting") || $this->rowInserting(null, $row)) {
+                if ($res = $this->insert($row)) {
+                    if (method_exists($this, "rowInserted")) {
+                        $this->rowInserted(null, $row);
+                    }
+                }
+            }
+        }
+        return $res;
+    }
+
+    /**
+     * Check field value
+     *
+     * @param object $fld Field object
+     * @param object $value
+     * @return bool
+     */
+    protected function checkValue($fld, $value)
+    {
+        if ($fld->DataType == DATATYPE_NUMBER && !is_numeric($value)) {
+            return false;
+        } elseif ($fld->DataType == DATATYPE_DATE && !CheckDate($value, $fld->formatPattern())) {
+            return false;
+        }
+        return true;
+    }
+
+    // Load row
+    protected function load($row)
+    {
+        $filter = $this->getRecordFilter($row);
+        if (!$filter) {
+            return null;
+        }
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $conn = $this->getConnection();
+        return $conn->fetchAssociative($sql);
+    }
+
+    // Load row hash
+    protected function loadRowHash()
+    {
+        $filter = $this->getRecordFilter();
+
+        // Load SQL based on filter
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $conn = $this->getConnection();
+        $row = $conn->fetchAssociative($sql);
+        $this->HashValue = $row ? $this->getRowHash($row) : ""; // Get hash value for record
+    }
+
+    // Get Row Hash
+    public function getRowHash(&$rs)
+    {
+        if (!$rs) {
+            return "";
+        }
+        $row = ($rs instanceof Recordset) ? $rs->fields : $rs;
+        $hash = "";
+        $hash .= GetFieldHash($row['category_id']); // category_id
+        $hash .= GetFieldHash($row['name']); // name
+        $hash .= GetFieldHash($row['selling_price']); // selling_price
+        $hash .= GetFieldHash($row['buying_price']); // buying_price
+        $hash .= GetFieldHash($row['expiry']); // expiry
+        $hash .= GetFieldHash($row['date_created']); // date_created
+        $hash .= GetFieldHash($row['date_updated']); // date_updated
+        return md5($hash);
+    }
+
+    // Add record
+    protected function addRow($rsold = null)
+    {
+        global $Language, $Security;
+
+        // Set new row
+        $rsnew = [];
+
+        // category_id
+        $this->category_id->setDbValueDef($rsnew, $this->category_id->CurrentValue, 0, false);
+
+        // name
+        $this->name->setDbValueDef($rsnew, $this->name->CurrentValue, "", false);
+
+        // selling_price
+        $this->selling_price->setDbValueDef($rsnew, $this->selling_price->CurrentValue, 0, false);
+
+        // buying_price
+        $this->buying_price->setDbValueDef($rsnew, $this->buying_price->CurrentValue, 0, false);
+
+        // expiry
+        $this->expiry->setDbValueDef($rsnew, UnFormatDateTime($this->expiry->CurrentValue, $this->expiry->formatPattern()), CurrentDate(), false);
+
+        // date_created
+        $this->date_created->setDbValueDef($rsnew, UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()), null, false);
+
+        // date_updated
+        $this->date_updated->setDbValueDef($rsnew, UnFormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern()), null, false);
+
+        // Update current values
+        $this->setCurrentValues($rsnew);
+        $conn = $this->getConnection();
+
+        // Load db values from old row
+        $this->loadDbValues($rsold);
+
+        // Call Row Inserting event
+        $insertRow = $this->rowInserting($rsold, $rsnew);
+        if ($insertRow) {
+            $addRow = $this->insert($rsnew);
+            if ($addRow) {
+            } elseif (!EmptyValue($this->DbErrorMessage)) { // Show database error
+                $this->setFailureMessage($this->DbErrorMessage);
+            }
+        } else {
+            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
+                // Use the message, do nothing
+            } elseif ($this->CancelMessage != "") {
+                $this->setFailureMessage($this->CancelMessage);
+                $this->CancelMessage = "";
+            } else {
+                $this->setFailureMessage($Language->phrase("InsertCancelled"));
+            }
+            $addRow = false;
+        }
+        if ($addRow) {
+            // Call Row Inserted event
+            $this->rowInserted($rsold, $rsnew);
+        }
+        return $addRow;
     }
 
     // Get export HTML tag
@@ -2216,6 +3283,25 @@ class JdhMedicinesList extends JdhMedicines
         }
     }
 
+    // Set up import options
+    protected function setupImportOptions()
+    {
+        global $Security, $Language;
+
+        // Import
+        $item = &$this->ImportOptions->add("import");
+        $item->Body = "<a class=\"ew-import-link ew-import\" role=\"button\" title=\"" . $Language->phrase("Import", true) . "\" data-caption=\"" . $Language->phrase("Import", true) . "\" data-ew-action=\"import\" data-hdr=\"" . $Language->phrase("Import", true) . "\">" . $Language->phrase("Import") . "</a>";
+        $item->Visible = $Security->canImport();
+        $this->ImportOptions->UseButtonGroup = true;
+        $this->ImportOptions->UseDropDownButton = false;
+        $this->ImportOptions->DropDownButtonPhrase = $Language->phrase("Import");
+
+        // Add group option item
+        $item = &$this->ImportOptions->addGroupOption();
+        $item->Body = "";
+        $item->Visible = false;
+    }
+
     /**
     * Export data in HTML/CSV/Word/Excel/XML/Email/PDF format
     *
@@ -2305,8 +3391,6 @@ class JdhMedicinesList extends JdhMedicines
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_category_id":
-                    break;
-                case "x_subcategory_id":
                     break;
                 default:
                     $lookupFilter = "";

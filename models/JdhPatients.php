@@ -28,6 +28,14 @@ class JdhPatients extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
+    // Audit trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Export
     public $UseAjaxActions = false;
     public $ModalSearch = false;
@@ -47,6 +55,7 @@ class JdhPatients extends DbTable
     public $patient_first_name;
     public $patient_last_name;
     public $patient_dob;
+    public $patient_age;
     public $patient_gender;
     public $patient_phone;
     public $patient_kin_name;
@@ -241,6 +250,30 @@ class JdhPatients extends DbTable
         $this->patient_dob->DefaultErrorMessage = str_replace("%s", DateFormat(7), $Language->phrase("IncorrectDate"));
         $this->patient_dob->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_dob'] = &$this->patient_dob;
+
+        // patient_age $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_age = new DbField(
+            $this, // Table
+            'x_patient_age', // Variable name
+            'patient_age', // Name
+            '(SELECT TIMESTAMPDIFF(YEAR, patient_dob, CURDATE()))', // Expression
+            '(SELECT TIMESTAMPDIFF(YEAR, patient_dob, CURDATE()))', // Basic search expression
+            20, // Type
+            21, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '(SELECT TIMESTAMPDIFF(YEAR, patient_dob, CURDATE()))', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->patient_age->InputTextType = "text";
+        $this->patient_age->IsCustom = true; // Custom field
+        $this->patient_age->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->patient_age->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->Fields['patient_age'] = &$this->patient_age;
 
         // patient_gender $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->patient_gender = new DbField(
@@ -503,7 +536,7 @@ class JdhPatients extends DbTable
 
     public function getSqlSelect() // Select
     {
-        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*");
+        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*, (SELECT TIMESTAMPDIFF(YEAR, patient_dob, CURDATE())) AS `patient_age`");
     }
 
     public function sqlSelect() // For backward compatibility
@@ -788,6 +821,9 @@ class JdhPatients extends DbTable
             // Get insert id if necessary
             $this->patient_id->setDbValue($conn->lastInsertId());
             $rs['patient_id'] = $this->patient_id->DbValue;
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailOnAdd($rs);
+            }
         }
         return $success;
     }
@@ -841,6 +877,14 @@ class JdhPatients extends DbTable
                 $rs['patient_id'] = $this->patient_id->CurrentValue;
             }
         }
+        if ($success && $this->AuditTrailOnEdit && $rsold) {
+            $rsaudit = $rs;
+            $fldname = 'patient_id';
+            if (!array_key_exists($fldname, $rsaudit)) {
+                $rsaudit[$fldname] = $rsold[$fldname];
+            }
+            $this->writeAuditTrailOnEdit($rsold, $rsaudit);
+        }
         return $success;
     }
 
@@ -882,6 +926,9 @@ class JdhPatients extends DbTable
                 $this->DbErrorMessage = $e->getMessage();
             }
         }
+        if ($success && $this->AuditTrailOnDelete) {
+            $this->writeAuditTrailOnDelete($rs);
+        }
         return $success;
     }
 
@@ -897,6 +944,7 @@ class JdhPatients extends DbTable
         $this->patient_first_name->DbValue = $row['patient_first_name'];
         $this->patient_last_name->DbValue = $row['patient_last_name'];
         $this->patient_dob->DbValue = $row['patient_dob'];
+        $this->patient_age->DbValue = $row['patient_age'];
         $this->patient_gender->DbValue = $row['patient_gender'];
         $this->patient_phone->DbValue = $row['patient_phone'];
         $this->patient_kin_name->DbValue = $row['patient_kin_name'];
@@ -1269,6 +1317,7 @@ class JdhPatients extends DbTable
         $this->patient_first_name->setDbValue($row['patient_first_name']);
         $this->patient_last_name->setDbValue($row['patient_last_name']);
         $this->patient_dob->setDbValue($row['patient_dob']);
+        $this->patient_age->setDbValue($row['patient_age']);
         $this->patient_gender->setDbValue($row['patient_gender']);
         $this->patient_phone->setDbValue($row['patient_phone']);
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
@@ -1316,6 +1365,8 @@ class JdhPatients extends DbTable
 
         // patient_dob
 
+        // patient_age
+
         // patient_gender
 
         // patient_phone
@@ -1353,6 +1404,10 @@ class JdhPatients extends DbTable
         // patient_dob
         $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
         $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
+
+        // patient_age
+        $this->patient_age->ViewValue = $this->patient_age->CurrentValue;
+        $this->patient_age->ViewValue = FormatNumber($this->patient_age->ViewValue, $this->patient_age->formatPattern());
 
         // patient_gender
         if (strval($this->patient_gender->CurrentValue) != "") {
@@ -1416,6 +1471,10 @@ class JdhPatients extends DbTable
         // patient_dob
         $this->patient_dob->HrefValue = "";
         $this->patient_dob->TooltipValue = "";
+
+        // patient_age
+        $this->patient_age->HrefValue = "";
+        $this->patient_age->TooltipValue = "";
 
         // patient_gender
         $this->patient_gender->HrefValue = "";
@@ -1498,6 +1557,11 @@ class JdhPatients extends DbTable
         $this->patient_dob->EditValue = FormatDateTime($this->patient_dob->CurrentValue, $this->patient_dob->formatPattern());
         $this->patient_dob->PlaceHolder = RemoveHtml($this->patient_dob->caption());
 
+        // patient_age
+        $this->patient_age->setupEditAttributes();
+        $this->patient_age->EditValue = $this->patient_age->CurrentValue;
+        $this->patient_age->EditValue = FormatNumber($this->patient_age->EditValue, $this->patient_age->formatPattern());
+
         // patient_gender
         $this->patient_gender->setupEditAttributes();
         $this->patient_gender->EditValue = $this->patient_gender->options(true);
@@ -1566,6 +1630,7 @@ class JdhPatients extends DbTable
                     $doc->exportCaption($this->patient_first_name);
                     $doc->exportCaption($this->patient_last_name);
                     $doc->exportCaption($this->patient_dob);
+                    $doc->exportCaption($this->patient_age);
                     $doc->exportCaption($this->patient_gender);
                     $doc->exportCaption($this->patient_phone);
                     $doc->exportCaption($this->patient_kin_name);
@@ -1577,6 +1642,7 @@ class JdhPatients extends DbTable
                     $doc->exportCaption($this->patient_first_name);
                     $doc->exportCaption($this->patient_last_name);
                     $doc->exportCaption($this->patient_dob);
+                    $doc->exportCaption($this->patient_age);
                     $doc->exportCaption($this->patient_gender);
                     $doc->exportCaption($this->patient_phone);
                     $doc->exportCaption($this->patient_kin_name);
@@ -1617,6 +1683,7 @@ class JdhPatients extends DbTable
                         $doc->exportField($this->patient_first_name);
                         $doc->exportField($this->patient_last_name);
                         $doc->exportField($this->patient_dob);
+                        $doc->exportField($this->patient_age);
                         $doc->exportField($this->patient_gender);
                         $doc->exportField($this->patient_phone);
                         $doc->exportField($this->patient_kin_name);
@@ -1628,6 +1695,7 @@ class JdhPatients extends DbTable
                         $doc->exportField($this->patient_first_name);
                         $doc->exportField($this->patient_last_name);
                         $doc->exportField($this->patient_dob);
+                        $doc->exportField($this->patient_age);
                         $doc->exportField($this->patient_gender);
                         $doc->exportField($this->patient_phone);
                         $doc->exportField($this->patient_kin_name);
@@ -1769,6 +1837,192 @@ class JdhPatients extends DbTable
             return true;
         }
         return false;
+    }
+
+    // Write audit trail start/end for grid update
+    public function writeAuditTrailDummy($typ)
+    {
+        WriteAuditLog(CurrentUser(), $typ, 'jdh_patients', "", "", "", "");
+    }
+
+    // Write audit trail (add page)
+    public function writeAuditTrailOnAdd(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnAdd) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['patient_id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $newvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo Field
+                    $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML Field
+                    $newvalue = "[XML]";
+                } else {
+                    $newvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "A", 'jdh_patients', $fldname, $key, "", $newvalue);
+            }
+        }
+    }
+
+    // Write audit trail (edit page)
+    public function writeAuditTrailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnEdit) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['patient_id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rsnew) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && array_key_exists($fldname, $rsold) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->DataType == DATATYPE_DATE) { // DateTime field
+                    $modified = (FormatDateTime($rsold[$fldname], 0) != FormatDateTime($rsnew[$fldname], 0));
+                } else {
+                    $modified = !CompareValue($rsold[$fldname], $rsnew[$fldname]);
+                }
+                if ($modified) {
+                    if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                        $oldvalue = $Language->phrase("PasswordMask");
+                        $newvalue = $Language->phrase("PasswordMask");
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                        $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsold[$fldname] : "[MEMO]";
+                        $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsnew[$fldname] : "[MEMO]";
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                        $oldvalue = "[XML]";
+                        $newvalue = "[XML]";
+                    } else {
+                        $oldvalue = $rsold[$fldname];
+                        $newvalue = $rsnew[$fldname];
+                    }
+                    WriteAuditLog($usr, "U", 'jdh_patients', $fldname, $key, $oldvalue, $newvalue);
+                }
+            }
+        }
+    }
+
+    // Write audit trail (delete page)
+    public function writeAuditTrailOnDelete(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnDelete) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['patient_id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $oldvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                    $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                    $oldvalue = "[XML]";
+                } else {
+                    $oldvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "D", 'jdh_patients', $fldname, $key, $oldvalue, "");
+            }
+        }
+    }
+
+    // Send email after add success
+    public function sendEmailOnAdd(&$rs)
+    {
+        global $Language;
+        $table = 'jdh_patients';
+        $subject = $table . " " . $Language->phrase("RecordInserted");
+        $action = $Language->phrase("ActionInserted");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['patient_id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = ["rsnew" => $rs];
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
+    }
+
+    // Send email after update success
+    public function sendEmailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        $table = 'jdh_patients';
+        $subject = $table . " ". $Language->phrase("RecordUpdated");
+        $action = $Language->phrase("ActionUpdated");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['patient_id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = [];
+        $args["rsold"] = &$rsold;
+        $args["rsnew"] = &$rsnew;
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
     }
 
     // Table level events

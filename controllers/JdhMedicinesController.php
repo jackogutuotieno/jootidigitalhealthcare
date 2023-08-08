@@ -13,4 +13,28 @@ class JdhMedicinesController extends ControllerBase
     {
         return $this->runPage($request, $response, $args, "JdhMedicinesList");
     }
+
+    // add
+    public function add(Request $request, Response $response, array $args): Response
+    {
+        return $this->runPage($request, $response, $args, "JdhMedicinesAdd");
+    }
+
+    // view
+    public function view(Request $request, Response $response, array $args): Response
+    {
+        return $this->runPage($request, $response, $args, "JdhMedicinesView");
+    }
+
+    // edit
+    public function edit(Request $request, Response $response, array $args): Response
+    {
+        return $this->runPage($request, $response, $args, "JdhMedicinesEdit");
+    }
+
+    // delete
+    public function delete(Request $request, Response $response, array $args): Response
+    {
+        return $this->runPage($request, $response, $args, "JdhMedicinesDelete");
+    }
 }

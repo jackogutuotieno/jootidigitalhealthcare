@@ -64,6 +64,17 @@ $jdh_patients = Container("jdh_patients");
 </td>
         </tr>
 <?php } ?>
+<?php if ($jdh_patients->patient_age->Visible) { // patient_age ?>
+        <tr id="r_patient_age"<?= $jdh_patients->patient_age->rowAttributes() ?>>
+            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_age->caption() ?></td>
+            <td<?= $jdh_patients->patient_age->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_age">
+<span<?= $jdh_patients->patient_age->viewAttributes() ?>>
+<?= $jdh_patients->patient_age->getViewValue() ?></span>
+</span>
+</td>
+        </tr>
+<?php } ?>
 <?php if ($jdh_patients->patient_gender->Visible) { // patient_gender ?>
         <tr id="r_patient_gender"<?= $jdh_patients->patient_gender->rowAttributes() ?>>
             <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_gender->caption() ?></td>

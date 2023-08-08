@@ -683,7 +683,6 @@ class JdhServicesList extends JdhServices
 
         // Set up lookup cache
         $this->setupLookupOptions($this->category_id);
-        $this->setupLookupOptions($this->subcategory_id);
 
         // Update form name to avoid conflict
         if ($this->IsModal) {
@@ -2019,27 +2018,8 @@ class JdhServicesList extends JdhServices
             }
 
             // subcategory_id
-            $curVal = strval($this->subcategory_id->CurrentValue);
-            if ($curVal != "") {
-                $this->subcategory_id->ViewValue = $this->subcategory_id->lookupCacheOption($curVal);
-                if ($this->subcategory_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`subcategory_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->subcategory_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->subcategory_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->subcategory_id->ViewValue = $this->subcategory_id->displayValue($arwrk);
-                    } else {
-                        $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->CurrentValue, $this->subcategory_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->subcategory_id->ViewValue = null;
-            }
+            $this->subcategory_id->ViewValue = $this->subcategory_id->CurrentValue;
+            $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->ViewValue, $this->subcategory_id->formatPattern());
 
             // service_name
             $this->service_name->ViewValue = $this->service_name->CurrentValue;
@@ -2344,8 +2324,6 @@ class JdhServicesList extends JdhServices
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_category_id":
-                    break;
-                case "x_subcategory_id":
                     break;
                 default:
                     $lookupFilter = "";

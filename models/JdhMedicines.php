@@ -28,6 +28,14 @@ class JdhMedicines extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
+    // Audit trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Export
     public $UseAjaxActions = false;
     public $ModalSearch = false;
@@ -43,7 +51,6 @@ class JdhMedicines extends DbTable
     // Fields
     public $id;
     public $category_id;
-    public $subcategory_id;
     public $name;
     public $selling_price;
     public $buying_price;
@@ -114,13 +121,13 @@ class JdhMedicines extends DbTable
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
+            'NO' // Edit Tag
         );
         $this->id->InputTextType = "text";
-        $this->id->Nullable = false; // NOT NULL field
-        $this->id->Required = true; // Required field
+        $this->id->IsAutoIncrement = true; // Autoincrement field
+        $this->id->IsPrimaryKey = true; // Primary key field
         $this->id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->Fields['id'] = &$this->id;
 
         // category_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
@@ -146,36 +153,10 @@ class JdhMedicines extends DbTable
         $this->category_id->Required = true; // Required field
         $this->category_id->UsePleaseSelect = true; // Use PleaseSelect by default
         $this->category_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->category_id->Lookup = new Lookup('category_id', 'jdh_medicine_categories', false, 'category_id', ["category_name","","",""], '', '', [], ["x_subcategory_id"], [], [], [], [], '', '', "`category_name`");
+        $this->category_id->Lookup = new Lookup('category_id', 'jdh_medicine_categories', false, 'category_id', ["category_name","","",""], '', '', [], [], [], [], [], [], '', '', "`category_name`");
         $this->category_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->category_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['category_id'] = &$this->category_id;
-
-        // subcategory_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->subcategory_id = new DbField(
-            $this, // Table
-            'x_subcategory_id', // Variable name
-            'subcategory_id', // Name
-            '`subcategory_id`', // Expression
-            '`subcategory_id`', // Basic search expression
-            3, // Type
-            11, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`subcategory_id`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'SELECT' // Edit Tag
-        );
-        $this->subcategory_id->InputTextType = "text";
-        $this->subcategory_id->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->subcategory_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->subcategory_id->Lookup = new Lookup('subcategory_id', 'jdh_medicine_subcategories', false, 'subcategory_id', ["subcategory_name","","",""], '', '', ["x_category_id"], [], ["category_id"], ["x_category_id"], [], [], '', '', "`subcategory_name`");
-        $this->subcategory_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->subcategory_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
-        $this->Fields['subcategory_id'] = &$this->subcategory_id;
 
         // name $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->name = new DbField(
@@ -279,10 +260,10 @@ class JdhMedicines extends DbTable
             'x_expiry', // Variable name
             'expiry', // Name
             '`expiry`', // Expression
-            CastDateFieldForLike("`expiry`", 0, "DB"), // Basic search expression
+            CastDateFieldForLike("`expiry`", 7, "DB"), // Basic search expression
             133, // Type
             10, // Size
-            0, // Date/Time format
+            7, // Date/Time format
             false, // Is upload field
             '`expiry`', // Virtual expression
             false, // Is virtual
@@ -294,7 +275,7 @@ class JdhMedicines extends DbTable
         $this->expiry->InputTextType = "text";
         $this->expiry->Nullable = false; // NOT NULL field
         $this->expiry->Required = true; // Required field
-        $this->expiry->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->expiry->DefaultErrorMessage = str_replace("%s", DateFormat(7), $Language->phrase("IncorrectDate"));
         $this->expiry->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['expiry'] = &$this->expiry;
 
@@ -304,10 +285,10 @@ class JdhMedicines extends DbTable
             'x_date_created', // Variable name
             'date_created', // Name
             '`date_created`', // Expression
-            CastDateFieldForLike("`date_created`", 1, "DB"), // Basic search expression
+            CastDateFieldForLike("`date_created`", 11, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            1, // Date/Time format
+            11, // Date/Time format
             false, // Is upload field
             '`date_created`', // Virtual expression
             false, // Is virtual
@@ -317,7 +298,7 @@ class JdhMedicines extends DbTable
             'TEXT' // Edit Tag
         );
         $this->date_created->InputTextType = "text";
-        $this->date_created->DefaultErrorMessage = str_replace("%s", DateFormat(1), $Language->phrase("IncorrectDate"));
+        $this->date_created->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->date_created->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->Fields['date_created'] = &$this->date_created;
 
@@ -327,10 +308,10 @@ class JdhMedicines extends DbTable
             'x_date_updated', // Variable name
             'date_updated', // Name
             '`date_updated`', // Expression
-            CastDateFieldForLike("`date_updated`", 1, "DB"), // Basic search expression
+            CastDateFieldForLike("`date_updated`", 11, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            1, // Date/Time format
+            11, // Date/Time format
             false, // Is upload field
             '`date_updated`', // Virtual expression
             false, // Is virtual
@@ -340,7 +321,7 @@ class JdhMedicines extends DbTable
             'TEXT' // Edit Tag
         );
         $this->date_updated->InputTextType = "text";
-        $this->date_updated->DefaultErrorMessage = str_replace("%s", DateFormat(1), $Language->phrase("IncorrectDate"));
+        $this->date_updated->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->date_updated->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->Fields['date_updated'] = &$this->date_updated;
 
@@ -733,6 +714,12 @@ class JdhMedicines extends DbTable
             $this->DbErrorMessage = $e->getMessage();
         }
         if ($success) {
+            // Get insert id if necessary
+            $this->id->setDbValue($conn->lastInsertId());
+            $rs['id'] = $this->id->DbValue;
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailOnAdd($rs);
+            }
         }
         return $success;
     }
@@ -779,6 +766,21 @@ class JdhMedicines extends DbTable
             $success = false;
             $this->DbErrorMessage = $e->getMessage();
         }
+
+        // Return auto increment field
+        if ($success) {
+            if (!isset($rs['id']) && !EmptyValue($this->id->CurrentValue)) {
+                $rs['id'] = $this->id->CurrentValue;
+            }
+        }
+        if ($success && $this->AuditTrailOnEdit && $rsold) {
+            $rsaudit = $rs;
+            $fldname = 'id';
+            if (!array_key_exists($fldname, $rsaudit)) {
+                $rsaudit[$fldname] = $rsold[$fldname];
+            }
+            $this->writeAuditTrailOnEdit($rsold, $rsaudit);
+        }
         return $success;
     }
 
@@ -798,6 +800,9 @@ class JdhMedicines extends DbTable
             $where = $this->arrayToFilter($where);
         }
         if ($rs) {
+            if (array_key_exists('id', $rs)) {
+                AddFilter($where, QuotedName('id', $this->Dbid) . '=' . QuotedValue($rs['id'], $this->id->DataType, $this->Dbid));
+            }
         }
         $filter = ($curfilter) ? $this->CurrentFilter : "";
         AddFilter($filter, $where);
@@ -817,6 +822,9 @@ class JdhMedicines extends DbTable
                 $this->DbErrorMessage = $e->getMessage();
             }
         }
+        if ($success && $this->AuditTrailOnDelete) {
+            $this->writeAuditTrailOnDelete($rs);
+        }
         return $success;
     }
 
@@ -828,7 +836,6 @@ class JdhMedicines extends DbTable
         }
         $this->id->DbValue = $row['id'];
         $this->category_id->DbValue = $row['category_id'];
-        $this->subcategory_id->DbValue = $row['subcategory_id'];
         $this->name->DbValue = $row['name'];
         $this->selling_price->DbValue = $row['selling_price'];
         $this->buying_price->DbValue = $row['buying_price'];
@@ -848,13 +855,19 @@ class JdhMedicines extends DbTable
     // Record filter WHERE clause
     protected function sqlKeyFilter()
     {
-        return "";
+        return "`id` = @id@";
     }
 
     // Get Key
     public function getKey($current = false)
     {
         $keys = [];
+        $val = $current ? $this->id->CurrentValue : $this->id->OldValue;
+        if (EmptyValue($val)) {
+            return "";
+        } else {
+            $keys[] = $val;
+        }
         return implode(Config("COMPOSITE_KEY_SEPARATOR"), $keys);
     }
 
@@ -863,7 +876,12 @@ class JdhMedicines extends DbTable
     {
         $this->OldKey = strval($key);
         $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
-        if (count($keys) == 0) {
+        if (count($keys) == 1) {
+            if ($current) {
+                $this->id->CurrentValue = $keys[0];
+            } else {
+                $this->id->OldValue = $keys[0];
+            }
         }
     }
 
@@ -871,6 +889,19 @@ class JdhMedicines extends DbTable
     public function getRecordFilter($row = null, $current = false)
     {
         $keyFilter = $this->sqlKeyFilter();
+        if (is_array($row)) {
+            $val = array_key_exists('id', $row) ? $row['id'] : null;
+        } else {
+            $val = !EmptyValue($this->id->OldValue) && !$current ? $this->id->OldValue : $this->id->CurrentValue;
+        }
+        if (!is_numeric($val)) {
+            return "0=1"; // Invalid key
+        }
+        if ($val === null) {
+            return "0=1"; // Invalid key
+        } else {
+            $keyFilter = str_replace("@id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
+        }
         return $keyFilter;
     }
 
@@ -1013,6 +1044,7 @@ class JdhMedicines extends DbTable
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
+        $json .= "\"id\":" . JsonEncode($this->id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -1023,6 +1055,11 @@ class JdhMedicines extends DbTable
     // Add key value to URL
     public function keyUrl($url, $parm = "")
     {
+        if ($this->id->CurrentValue !== null) {
+            $url .= "/" . $this->encodeKeyValue($this->id->CurrentValue);
+        } else {
+            return "javascript:ew.alert(ew.language.phrase('InvalidRecord'));";
+        }
         if ($parm != "") {
             $url .= "?" . $parm;
         }
@@ -1087,12 +1124,23 @@ class JdhMedicines extends DbTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
+            if (($keyValue = Param("id") ?? Route("id")) !== null) {
+                $arKeys[] = $keyValue;
+            } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
+                $arKeys[] = $keyValue;
+            } else {
+                $arKeys = null; // Do not setup
+            }
+
             //return $arKeys; // Do not return yet, so the values will also be checked by the following code
         }
         // Check keys
         $ar = [];
         if (is_array($arKeys)) {
             foreach ($arKeys as $key) {
+                if (!is_numeric($key)) {
+                    continue;
+                }
                 $ar[] = $key;
             }
         }
@@ -1121,6 +1169,11 @@ class JdhMedicines extends DbTable
             if ($keyFilter != "") {
                 $keyFilter .= " OR ";
             }
+            if ($setCurrent) {
+                $this->id->CurrentValue = $key;
+            } else {
+                $this->id->OldValue = $key;
+            }
             $keyFilter .= "(" . $this->getRecordFilter() . ")";
         }
         return $keyFilter;
@@ -1146,7 +1199,6 @@ class JdhMedicines extends DbTable
         }
         $this->id->setDbValue($row['id']);
         $this->category_id->setDbValue($row['category_id']);
-        $this->subcategory_id->setDbValue($row['subcategory_id']);
         $this->name->setDbValue($row['name']);
         $this->selling_price->setDbValue($row['selling_price']);
         $this->buying_price->setDbValue($row['buying_price']);
@@ -1188,8 +1240,6 @@ class JdhMedicines extends DbTable
         // id
 
         // category_id
-
-        // subcategory_id
 
         // name
 
@@ -1234,29 +1284,6 @@ class JdhMedicines extends DbTable
             $this->category_id->ViewValue = null;
         }
 
-        // subcategory_id
-        $curVal = strval($this->subcategory_id->CurrentValue);
-        if ($curVal != "") {
-            $this->subcategory_id->ViewValue = $this->subcategory_id->lookupCacheOption($curVal);
-            if ($this->subcategory_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`subcategory_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $sqlWrk = $this->subcategory_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->subcategory_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->subcategory_id->ViewValue = $this->subcategory_id->displayValue($arwrk);
-                } else {
-                    $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->CurrentValue, $this->subcategory_id->formatPattern());
-                }
-            }
-        } else {
-            $this->subcategory_id->ViewValue = null;
-        }
-
         // name
         $this->name->ViewValue = $this->name->CurrentValue;
 
@@ -1294,10 +1321,6 @@ class JdhMedicines extends DbTable
         // category_id
         $this->category_id->HrefValue = "";
         $this->category_id->TooltipValue = "";
-
-        // subcategory_id
-        $this->subcategory_id->HrefValue = "";
-        $this->subcategory_id->TooltipValue = "";
 
         // name
         $this->name->HrefValue = "";
@@ -1349,18 +1372,11 @@ class JdhMedicines extends DbTable
         // id
         $this->id->setupEditAttributes();
         $this->id->EditValue = $this->id->CurrentValue;
-        $this->id->PlaceHolder = RemoveHtml($this->id->caption());
-        if (strval($this->id->EditValue) != "" && is_numeric($this->id->EditValue)) {
-            $this->id->EditValue = FormatNumber($this->id->EditValue, null);
-        }
+        $this->id->EditValue = FormatNumber($this->id->EditValue, $this->id->formatPattern());
 
         // category_id
         $this->category_id->setupEditAttributes();
         $this->category_id->PlaceHolder = RemoveHtml($this->category_id->caption());
-
-        // subcategory_id
-        $this->subcategory_id->setupEditAttributes();
-        $this->subcategory_id->PlaceHolder = RemoveHtml($this->subcategory_id->caption());
 
         // name
         $this->name->setupEditAttributes();
@@ -1444,7 +1460,6 @@ class JdhMedicines extends DbTable
                 if ($exportPageType == "view") {
                     $doc->exportCaption($this->id);
                     $doc->exportCaption($this->category_id);
-                    $doc->exportCaption($this->subcategory_id);
                     $doc->exportCaption($this->name);
                     $doc->exportCaption($this->selling_price);
                     $doc->exportCaption($this->buying_price);
@@ -1452,11 +1467,9 @@ class JdhMedicines extends DbTable
                     $doc->exportCaption($this->expiry);
                     $doc->exportCaption($this->date_created);
                     $doc->exportCaption($this->date_updated);
-                    $doc->exportCaption($this->submitted_by_user_id);
                 } else {
                     $doc->exportCaption($this->id);
                     $doc->exportCaption($this->category_id);
-                    $doc->exportCaption($this->subcategory_id);
                     $doc->exportCaption($this->name);
                     $doc->exportCaption($this->selling_price);
                     $doc->exportCaption($this->buying_price);
@@ -1495,7 +1508,6 @@ class JdhMedicines extends DbTable
                     if ($exportPageType == "view") {
                         $doc->exportField($this->id);
                         $doc->exportField($this->category_id);
-                        $doc->exportField($this->subcategory_id);
                         $doc->exportField($this->name);
                         $doc->exportField($this->selling_price);
                         $doc->exportField($this->buying_price);
@@ -1503,11 +1515,9 @@ class JdhMedicines extends DbTable
                         $doc->exportField($this->expiry);
                         $doc->exportField($this->date_created);
                         $doc->exportField($this->date_updated);
-                        $doc->exportField($this->submitted_by_user_id);
                     } else {
                         $doc->exportField($this->id);
                         $doc->exportField($this->category_id);
-                        $doc->exportField($this->subcategory_id);
                         $doc->exportField($this->name);
                         $doc->exportField($this->selling_price);
                         $doc->exportField($this->buying_price);
@@ -1538,6 +1548,192 @@ class JdhMedicines extends DbTable
 
         // No binary fields
         return false;
+    }
+
+    // Write audit trail start/end for grid update
+    public function writeAuditTrailDummy($typ)
+    {
+        WriteAuditLog(CurrentUser(), $typ, 'jdh_medicines', "", "", "", "");
+    }
+
+    // Write audit trail (add page)
+    public function writeAuditTrailOnAdd(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnAdd) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $newvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo Field
+                    $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML Field
+                    $newvalue = "[XML]";
+                } else {
+                    $newvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "A", 'jdh_medicines', $fldname, $key, "", $newvalue);
+            }
+        }
+    }
+
+    // Write audit trail (edit page)
+    public function writeAuditTrailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnEdit) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rsnew) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && array_key_exists($fldname, $rsold) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->DataType == DATATYPE_DATE) { // DateTime field
+                    $modified = (FormatDateTime($rsold[$fldname], 0) != FormatDateTime($rsnew[$fldname], 0));
+                } else {
+                    $modified = !CompareValue($rsold[$fldname], $rsnew[$fldname]);
+                }
+                if ($modified) {
+                    if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                        $oldvalue = $Language->phrase("PasswordMask");
+                        $newvalue = $Language->phrase("PasswordMask");
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                        $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsold[$fldname] : "[MEMO]";
+                        $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsnew[$fldname] : "[MEMO]";
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                        $oldvalue = "[XML]";
+                        $newvalue = "[XML]";
+                    } else {
+                        $oldvalue = $rsold[$fldname];
+                        $newvalue = $rsnew[$fldname];
+                    }
+                    WriteAuditLog($usr, "U", 'jdh_medicines', $fldname, $key, $oldvalue, $newvalue);
+                }
+            }
+        }
+    }
+
+    // Write audit trail (delete page)
+    public function writeAuditTrailOnDelete(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnDelete) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $oldvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                    $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                    $oldvalue = "[XML]";
+                } else {
+                    $oldvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "D", 'jdh_medicines', $fldname, $key, $oldvalue, "");
+            }
+        }
+    }
+
+    // Send email after add success
+    public function sendEmailOnAdd(&$rs)
+    {
+        global $Language;
+        $table = 'jdh_medicines';
+        $subject = $table . " " . $Language->phrase("RecordInserted");
+        $action = $Language->phrase("ActionInserted");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = ["rsnew" => $rs];
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
+    }
+
+    // Send email after update success
+    public function sendEmailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        $table = 'jdh_medicines';
+        $subject = $table . " ". $Language->phrase("RecordUpdated");
+        $action = $Language->phrase("ActionUpdated");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = [];
+        $args["rsold"] = &$rsold;
+        $args["rsnew"] = &$rsnew;
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
     }
 
     // Table level events

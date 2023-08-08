@@ -74,29 +74,20 @@ return function (App $app) {
         }
     );
 
-    // jdh_medicine_subcategories
-    $app->map(["GET","POST","OPTIONS"], '/jdhmedicinesubcategorieslist[/{subcategory_id}]', JdhMedicineSubcategoriesController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhmedicinesubcategorieslist-jdh_medicine_subcategories-list'); // list
-    $app->map(["GET","POST","OPTIONS"], '/jdhmedicinesubcategoriesadd[/{subcategory_id}]', JdhMedicineSubcategoriesController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhmedicinesubcategoriesadd-jdh_medicine_subcategories-add'); // add
-    $app->map(["GET","POST","OPTIONS"], '/jdhmedicinesubcategoriesview[/{subcategory_id}]', JdhMedicineSubcategoriesController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhmedicinesubcategoriesview-jdh_medicine_subcategories-view'); // view
-    $app->map(["GET","POST","OPTIONS"], '/jdhmedicinesubcategoriesedit[/{subcategory_id}]', JdhMedicineSubcategoriesController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhmedicinesubcategoriesedit-jdh_medicine_subcategories-edit'); // edit
-    $app->map(["GET","POST","OPTIONS"], '/jdhmedicinesubcategoriesdelete[/{subcategory_id}]', JdhMedicineSubcategoriesController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhmedicinesubcategoriesdelete-jdh_medicine_subcategories-delete'); // delete
-    $app->group(
-        '/jdh_medicine_subcategories',
-        function (RouteCollectorProxy $group) {
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{subcategory_id}]', JdhMedicineSubcategoriesController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_medicine_subcategories/list-jdh_medicine_subcategories-list-2'); // list
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{subcategory_id}]', JdhMedicineSubcategoriesController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_medicine_subcategories/add-jdh_medicine_subcategories-add-2'); // add
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{subcategory_id}]', JdhMedicineSubcategoriesController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_medicine_subcategories/view-jdh_medicine_subcategories-view-2'); // view
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{subcategory_id}]', JdhMedicineSubcategoriesController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_medicine_subcategories/edit-jdh_medicine_subcategories-edit-2'); // edit
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{subcategory_id}]', JdhMedicineSubcategoriesController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_medicine_subcategories/delete-jdh_medicine_subcategories-delete-2'); // delete
-        }
-    );
-
     // jdh_medicines
-    $app->map(["GET","POST","OPTIONS"], '/jdhmedicineslist', JdhMedicinesController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhmedicineslist-jdh_medicines-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/jdhmedicineslist[/{id}]', JdhMedicinesController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhmedicineslist-jdh_medicines-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/jdhmedicinesadd[/{id}]', JdhMedicinesController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhmedicinesadd-jdh_medicines-add'); // add
+    $app->map(["GET","POST","OPTIONS"], '/jdhmedicinesview[/{id}]', JdhMedicinesController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhmedicinesview-jdh_medicines-view'); // view
+    $app->map(["GET","POST","OPTIONS"], '/jdhmedicinesedit[/{id}]', JdhMedicinesController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhmedicinesedit-jdh_medicines-edit'); // edit
+    $app->map(["GET","POST","OPTIONS"], '/jdhmedicinesdelete[/{id}]', JdhMedicinesController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhmedicinesdelete-jdh_medicines-delete'); // delete
     $app->group(
         '/jdh_medicines',
         function (RouteCollectorProxy $group) {
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '', JdhMedicinesController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_medicines/list-jdh_medicines-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{id}]', JdhMedicinesController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_medicines/list-jdh_medicines-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{id}]', JdhMedicinesController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_medicines/add-jdh_medicines-add-2'); // add
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{id}]', JdhMedicinesController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_medicines/view-jdh_medicines-view-2'); // view
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{id}]', JdhMedicinesController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_medicines/edit-jdh_medicines-edit-2'); // edit
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{id}]', JdhMedicinesController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_medicines/delete-jdh_medicines-delete-2'); // delete
         }
     );
 

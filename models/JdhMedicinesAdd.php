@@ -10,18 +10,18 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhServicesEdit extends JdhServices
+class JdhMedicinesAdd extends JdhMedicines
 {
     use MessagesTrait;
 
     // Page ID
-    public $PageID = "edit";
+    public $PageID = "add";
 
     // Project ID
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhServicesEdit";
+    public $PageObjName = "JdhMedicinesAdd";
 
     // View file path
     public $View = null;
@@ -33,7 +33,15 @@ class JdhServicesEdit extends JdhServices
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "jdhservicesedit";
+    public $CurrentPageName = "jdhmedicinesadd";
+
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
 
     // Page headings
     public $Heading = "";
@@ -118,11 +126,11 @@ class JdhServicesEdit extends JdhServices
     {
         parent::__construct();
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
-        $this->TableVar = 'jdh_services';
-        $this->TableName = 'jdh_services';
+        $this->TableVar = 'jdh_medicines';
+        $this->TableName = 'jdh_medicines';
 
         // Table CSS class
-        $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-desktop-table ew-edit-table";
+        $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-desktop-table ew-add-table";
 
         // Initialize
         $GLOBALS["Page"] = &$this;
@@ -130,14 +138,14 @@ class JdhServicesEdit extends JdhServices
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_services)
-        if (!isset($GLOBALS["jdh_services"]) || get_class($GLOBALS["jdh_services"]) == PROJECT_NAMESPACE . "jdh_services") {
-            $GLOBALS["jdh_services"] = &$this;
+        // Table object (jdh_medicines)
+        if (!isset($GLOBALS["jdh_medicines"]) || get_class($GLOBALS["jdh_medicines"]) == PROJECT_NAMESPACE . "jdh_medicines") {
+            $GLOBALS["jdh_medicines"] = &$this;
         }
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_services');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_medicines');
         }
 
         // Start timer
@@ -248,7 +256,7 @@ class JdhServicesEdit extends JdhServices
                 $pageName = GetPageName($url);
                 if ($pageName != $this->getListUrl()) { // Not List page => View page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhservicesview"; // If View page, no primary button
+                    $result["view"] = $pageName == "jdhmedicinesview"; // If View page, no primary button
                 } else { // List page
                     // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
@@ -338,7 +346,7 @@ class JdhServicesEdit extends JdhServices
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['service_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -351,7 +359,7 @@ class JdhServicesEdit extends JdhServices
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->service_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
 
@@ -424,20 +432,14 @@ class JdhServicesEdit extends JdhServices
         }
         return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
     }
-
-    // Properties
-    public $FormClassName = "ew-form ew-edit-form overlay-wrapper";
+    public $FormClassName = "ew-form ew-add-form";
     public $IsModal = false;
     public $IsMobileOrModal = false;
-    public $DbMasterFilter;
-    public $DbDetailFilter;
-    public $HashValue; // Hash Value
-    public $DisplayRecords = 1;
+    public $DbMasterFilter = "";
+    public $DbDetailFilter = "";
     public $StartRecord;
-    public $StopRecord;
-    public $TotalRecords = 0;
-    public $RecordRange = 10;
-    public $RecordCount;
+    public $Priv = 0;
+    public $CopyRecord;
 
     /**
      * Page run
@@ -461,12 +463,13 @@ class JdhServicesEdit extends JdhServices
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->service_id->setVisibility();
+        $this->id->Visible = false;
         $this->category_id->setVisibility();
-        $this->subcategory_id->setVisibility();
-        $this->service_name->setVisibility();
-        $this->service_cost->setVisibility();
-        $this->service_description->setVisibility();
+        $this->name->setVisibility();
+        $this->selling_price->setVisibility();
+        $this->buying_price->setVisibility();
+        $this->description->setVisibility();
+        $this->expiry->setVisibility();
         $this->date_created->Visible = false;
         $this->date_updated->Visible = false;
         $this->submitted_by_user_id->Visible = false;
@@ -496,125 +499,98 @@ class JdhServicesEdit extends JdhServices
         // Set up lookup cache
         $this->setupLookupOptions($this->category_id);
 
+        // Load default values for add
+        $this->loadDefaultValues();
+
         // Check modal
         if ($this->IsModal) {
             $SkipHeaderFooter = true;
         }
         $this->IsMobileOrModal = IsMobile() || $this->IsModal;
-        $loaded = false;
         $postBack = false;
 
-        // Set up current action and primary key
+        // Set up current action
         if (IsApi()) {
-            // Load key values
-            $loaded = true;
-            if (($keyValue = Get("service_id") ?? Key(0) ?? Route(2)) !== null) {
-                $this->service_id->setQueryStringValue($keyValue);
-                $this->service_id->setOldValue($this->service_id->QueryStringValue);
-            } elseif (Post("service_id") !== null) {
-                $this->service_id->setFormValue(Post("service_id"));
-                $this->service_id->setOldValue($this->service_id->FormValue);
-            } else {
-                $loaded = false; // Unable to load key
-            }
-
-            // Load record
-            if ($loaded) {
-                $loaded = $this->loadRow();
-            }
-            if (!$loaded) {
-                $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
-                $this->terminate();
-                return;
-            }
-            $this->CurrentAction = "update"; // Update record directly
-            $this->OldKey = $this->getKey(true); // Get from CurrentValue
+            $this->CurrentAction = "insert"; // Add record directly
+            $postBack = true;
+        } elseif (Post("action") !== null) {
+            $this->CurrentAction = Post("action"); // Get form action
+            $this->setKey(Post($this->OldKeyName));
             $postBack = true;
         } else {
-            if (Post("action") !== null) {
-                $this->CurrentAction = Post("action"); // Get action code
-                if (!$this->isShow()) { // Not reload record, handle as postback
-                    $postBack = true;
-                }
-
-                // Get key from Form
-                $this->setKey(Post($this->OldKeyName), $this->isShow());
-            } else {
-                $this->CurrentAction = "show"; // Default action is display
-
-                // Load key from QueryString
-                $loadByQuery = false;
-                if (($keyValue = Get("service_id") ?? Route("service_id")) !== null) {
-                    $this->service_id->setQueryStringValue($keyValue);
-                    $loadByQuery = true;
-                } else {
-                    $this->service_id->CurrentValue = null;
-                }
+            // Load key values from QueryString
+            if (($keyValue = Get("id") ?? Route("id")) !== null) {
+                $this->id->setQueryStringValue($keyValue);
             }
-
-            // Load recordset
-            if ($this->isShow()) {
-                    // Load current record
-                    $loaded = $this->loadRow();
-                $this->OldKey = $loaded ? $this->getKey(true) : ""; // Get from CurrentValue
+            $this->OldKey = $this->getKey(true); // Get from CurrentValue
+            $this->CopyRecord = !EmptyValue($this->OldKey);
+            if ($this->CopyRecord) {
+                $this->CurrentAction = "copy"; // Copy record
+            } else {
+                $this->CurrentAction = "show"; // Display blank record
             }
         }
 
-        // Process form if post back
+        // Load old record or default values
+        $rsold = $this->loadOldRecord();
+
+        // Load form values
         if ($postBack) {
-            $this->loadFormValues(); // Get form values
+            $this->loadFormValues(); // Load form values
         }
 
         // Validate form if post back
         if ($postBack) {
             if (!$this->validateForm()) {
                 $this->EventCancelled = true; // Event cancelled
-                $this->restoreFormValues();
+                $this->restoreFormValues(); // Restore form values
                 if (IsApi()) {
                     $this->terminate();
                     return;
                 } else {
-                    $this->CurrentAction = ""; // Form error, reset action
+                    $this->CurrentAction = "show"; // Form error, reset action
                 }
             }
         }
 
         // Perform current action
         switch ($this->CurrentAction) {
-            case "show": // Get a record to display
-                    if (!$loaded) { // Load record based on key
-                        if ($this->getFailureMessage() == "") {
-                            $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
-                        }
-                        $this->terminate("jdhserviceslist"); // No matching record, return to list
-                        return;
+            case "copy": // Copy an existing record
+                if (!$rsold) { // Record not loaded
+                    if ($this->getFailureMessage() == "") {
+                        $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
                     }
-                break;
-            case "update": // Update
-                $returnUrl = $this->getReturnUrl();
-                if (GetPageName($returnUrl) == "jdhserviceslist") {
-                    $returnUrl = $this->addMasterUrl($returnUrl); // List page, return to List page with correct master key if necessary
+                    $this->terminate("jdhmedicineslist"); // No matching record, return to list
+                    return;
                 }
-                $this->SendEmail = true; // Send email on update success
-                if ($this->editRow()) {
+                break;
+            case "insert": // Add new record
+                $this->SendEmail = true; // Send email on add success
+                if ($this->addRow($rsold)) {
                     // Do not return Json for UseAjaxActions
                     if ($this->IsModal && $this->UseAjaxActions) {
                         $this->IsModal = false;
                     }
+                    if ($this->getSuccessMessage() == "" && Post("addopt") != "1") { // Skip success message for addopt (done in JavaScript)
+                        $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up success message
+                    }
+                    $returnUrl = $this->getReturnUrl();
+                    if (GetPageName($returnUrl) == "jdhmedicineslist") {
+                        $returnUrl = $this->addMasterUrl($returnUrl); // List page, return to List page with correct master key if necessary
+                    } elseif (GetPageName($returnUrl) == "jdhmedicinesview") {
+                        $returnUrl = $this->getViewUrl(); // View page, return to View page with keyurl directly
+                    }
 
                     // Handle UseAjaxActions with return page
-                    if ($this->UseAjaxActions && GetPageName($returnUrl) != "jdhserviceslist") {
+                    if ($this->UseAjaxActions && GetPageName($returnUrl) != "jdhmedicineslist") {
                         Container("flash")->addMessage("Return-Url", $returnUrl); // Save return URL
-                        $returnUrl = "jdhserviceslist"; // Return list page content
+                        $returnUrl = "jdhmedicineslist"; // Return list page content
                     }
-                    if ($this->getSuccessMessage() == "") {
-                        $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Update success
-                    }
-                    if (IsJsonResponse()) {
+                    if (IsJsonResponse()) { // Return to caller
                         $this->terminate(true);
                         return;
                     } else {
-                        $this->terminate($returnUrl); // Return to caller
+                        $this->terminate($returnUrl);
                         return;
                     }
                 } elseif (IsApi()) { // API request, return
@@ -625,20 +601,19 @@ class JdhServicesEdit extends JdhServices
                     $this->clearFailureMessage();
                     $this->terminate();
                     return;
-                } elseif ($this->getFailureMessage() == $Language->phrase("NoRecord")) {
-                    $this->terminate($returnUrl); // Return to caller
-                    return;
                 } else {
                     $this->EventCancelled = true; // Event cancelled
-                    $this->restoreFormValues(); // Restore form values if update failed
+                    $this->restoreFormValues(); // Add failed, restore form values
                 }
         }
 
         // Set up Breadcrumb
         $this->setupBreadcrumb();
 
-        // Render the record
-        $this->RowType = ROWTYPE_EDIT; // Render as Edit
+        // Render row based on row type
+        $this->RowType = ROWTYPE_ADD; // Render add type
+
+        // Render row
         $this->resetAttributes();
         $this->renderRow();
 
@@ -671,18 +646,17 @@ class JdhServicesEdit extends JdhServices
         global $CurrentForm, $Language;
     }
 
+    // Load default values
+    protected function loadDefaultValues()
+    {
+    }
+
     // Load form values
     protected function loadFormValues()
     {
         // Load from form
         global $CurrentForm;
         $validate = !Config("SERVER_VALIDATE");
-
-        // Check field name 'service_id' first before field var 'x_service_id'
-        $val = $CurrentForm->hasValue("service_id") ? $CurrentForm->getValue("service_id") : $CurrentForm->getValue("x_service_id");
-        if (!$this->service_id->IsDetailKey) {
-            $this->service_id->setFormValue($val);
-        }
 
         // Check field name 'category_id' first before field var 'x_category_id'
         $val = $CurrentForm->hasValue("category_id") ? $CurrentForm->getValue("category_id") : $CurrentForm->getValue("x_category_id");
@@ -694,57 +668,72 @@ class JdhServicesEdit extends JdhServices
             }
         }
 
-        // Check field name 'subcategory_id' first before field var 'x_subcategory_id'
-        $val = $CurrentForm->hasValue("subcategory_id") ? $CurrentForm->getValue("subcategory_id") : $CurrentForm->getValue("x_subcategory_id");
-        if (!$this->subcategory_id->IsDetailKey) {
+        // Check field name 'name' first before field var 'x_name'
+        $val = $CurrentForm->hasValue("name") ? $CurrentForm->getValue("name") : $CurrentForm->getValue("x_name");
+        if (!$this->name->IsDetailKey) {
             if (IsApi() && $val === null) {
-                $this->subcategory_id->Visible = false; // Disable update for API request
+                $this->name->Visible = false; // Disable update for API request
             } else {
-                $this->subcategory_id->setFormValue($val, true, $validate);
+                $this->name->setFormValue($val);
             }
         }
 
-        // Check field name 'service_name' first before field var 'x_service_name'
-        $val = $CurrentForm->hasValue("service_name") ? $CurrentForm->getValue("service_name") : $CurrentForm->getValue("x_service_name");
-        if (!$this->service_name->IsDetailKey) {
+        // Check field name 'selling_price' first before field var 'x_selling_price'
+        $val = $CurrentForm->hasValue("selling_price") ? $CurrentForm->getValue("selling_price") : $CurrentForm->getValue("x_selling_price");
+        if (!$this->selling_price->IsDetailKey) {
             if (IsApi() && $val === null) {
-                $this->service_name->Visible = false; // Disable update for API request
+                $this->selling_price->Visible = false; // Disable update for API request
             } else {
-                $this->service_name->setFormValue($val);
+                $this->selling_price->setFormValue($val, true, $validate);
             }
         }
 
-        // Check field name 'service_cost' first before field var 'x_service_cost'
-        $val = $CurrentForm->hasValue("service_cost") ? $CurrentForm->getValue("service_cost") : $CurrentForm->getValue("x_service_cost");
-        if (!$this->service_cost->IsDetailKey) {
+        // Check field name 'buying_price' first before field var 'x_buying_price'
+        $val = $CurrentForm->hasValue("buying_price") ? $CurrentForm->getValue("buying_price") : $CurrentForm->getValue("x_buying_price");
+        if (!$this->buying_price->IsDetailKey) {
             if (IsApi() && $val === null) {
-                $this->service_cost->Visible = false; // Disable update for API request
+                $this->buying_price->Visible = false; // Disable update for API request
             } else {
-                $this->service_cost->setFormValue($val, true, $validate);
+                $this->buying_price->setFormValue($val, true, $validate);
             }
         }
 
-        // Check field name 'service_description' first before field var 'x_service_description'
-        $val = $CurrentForm->hasValue("service_description") ? $CurrentForm->getValue("service_description") : $CurrentForm->getValue("x_service_description");
-        if (!$this->service_description->IsDetailKey) {
+        // Check field name 'description' first before field var 'x_description'
+        $val = $CurrentForm->hasValue("description") ? $CurrentForm->getValue("description") : $CurrentForm->getValue("x_description");
+        if (!$this->description->IsDetailKey) {
             if (IsApi() && $val === null) {
-                $this->service_description->Visible = false; // Disable update for API request
+                $this->description->Visible = false; // Disable update for API request
             } else {
-                $this->service_description->setFormValue($val);
+                $this->description->setFormValue($val);
             }
         }
+
+        // Check field name 'expiry' first before field var 'x_expiry'
+        $val = $CurrentForm->hasValue("expiry") ? $CurrentForm->getValue("expiry") : $CurrentForm->getValue("x_expiry");
+        if (!$this->expiry->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->expiry->Visible = false; // Disable update for API request
+            } else {
+                $this->expiry->setFormValue($val, true, $validate);
+            }
+            $this->expiry->CurrentValue = UnFormatDateTime($this->expiry->CurrentValue, $this->expiry->formatPattern());
+        }
+
+        // Check field name 'id' first before field var 'x_id'
+        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
     }
 
     // Restore form values
     public function restoreFormValues()
     {
         global $CurrentForm;
-        $this->service_id->CurrentValue = $this->service_id->FormValue;
         $this->category_id->CurrentValue = $this->category_id->FormValue;
-        $this->subcategory_id->CurrentValue = $this->subcategory_id->FormValue;
-        $this->service_name->CurrentValue = $this->service_name->FormValue;
-        $this->service_cost->CurrentValue = $this->service_cost->FormValue;
-        $this->service_description->CurrentValue = $this->service_description->FormValue;
+        $this->name->CurrentValue = $this->name->FormValue;
+        $this->selling_price->CurrentValue = $this->selling_price->FormValue;
+        $this->buying_price->CurrentValue = $this->buying_price->FormValue;
+        $this->description->CurrentValue = $this->description->FormValue;
+        $this->expiry->CurrentValue = $this->expiry->FormValue;
+        $this->expiry->CurrentValue = UnFormatDateTime($this->expiry->CurrentValue, $this->expiry->formatPattern());
     }
 
     /**
@@ -794,12 +783,13 @@ class JdhServicesEdit extends JdhServices
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->service_id->setDbValue($row['service_id']);
+        $this->id->setDbValue($row['id']);
         $this->category_id->setDbValue($row['category_id']);
-        $this->subcategory_id->setDbValue($row['subcategory_id']);
-        $this->service_name->setDbValue($row['service_name']);
-        $this->service_cost->setDbValue($row['service_cost']);
-        $this->service_description->setDbValue($row['service_description']);
+        $this->name->setDbValue($row['name']);
+        $this->selling_price->setDbValue($row['selling_price']);
+        $this->buying_price->setDbValue($row['buying_price']);
+        $this->description->setDbValue($row['description']);
+        $this->expiry->setDbValue($row['expiry']);
         $this->date_created->setDbValue($row['date_created']);
         $this->date_updated->setDbValue($row['date_updated']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
@@ -809,12 +799,13 @@ class JdhServicesEdit extends JdhServices
     protected function newRow()
     {
         $row = [];
-        $row['service_id'] = $this->service_id->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
         $row['category_id'] = $this->category_id->DefaultValue;
-        $row['subcategory_id'] = $this->subcategory_id->DefaultValue;
-        $row['service_name'] = $this->service_name->DefaultValue;
-        $row['service_cost'] = $this->service_cost->DefaultValue;
-        $row['service_description'] = $this->service_description->DefaultValue;
+        $row['name'] = $this->name->DefaultValue;
+        $row['selling_price'] = $this->selling_price->DefaultValue;
+        $row['buying_price'] = $this->buying_price->DefaultValue;
+        $row['description'] = $this->description->DefaultValue;
+        $row['expiry'] = $this->expiry->DefaultValue;
         $row['date_created'] = $this->date_created->DefaultValue;
         $row['date_updated'] = $this->date_updated->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
@@ -852,23 +843,26 @@ class JdhServicesEdit extends JdhServices
 
         // Common render codes for all row types
 
-        // service_id
-        $this->service_id->RowCssClass = "row";
+        // id
+        $this->id->RowCssClass = "row";
 
         // category_id
         $this->category_id->RowCssClass = "row";
 
-        // subcategory_id
-        $this->subcategory_id->RowCssClass = "row";
+        // name
+        $this->name->RowCssClass = "row";
 
-        // service_name
-        $this->service_name->RowCssClass = "row";
+        // selling_price
+        $this->selling_price->RowCssClass = "row";
 
-        // service_cost
-        $this->service_cost->RowCssClass = "row";
+        // buying_price
+        $this->buying_price->RowCssClass = "row";
 
-        // service_description
-        $this->service_description->RowCssClass = "row";
+        // description
+        $this->description->RowCssClass = "row";
+
+        // expiry
+        $this->expiry->RowCssClass = "row";
 
         // date_created
         $this->date_created->RowCssClass = "row";
@@ -881,8 +875,9 @@ class JdhServicesEdit extends JdhServices
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // service_id
-            $this->service_id->ViewValue = $this->service_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
+            $this->id->ViewValue = FormatNumber($this->id->ViewValue, $this->id->formatPattern());
 
             // category_id
             $curVal = strval($this->category_id->CurrentValue);
@@ -907,19 +902,23 @@ class JdhServicesEdit extends JdhServices
                 $this->category_id->ViewValue = null;
             }
 
-            // subcategory_id
-            $this->subcategory_id->ViewValue = $this->subcategory_id->CurrentValue;
-            $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->ViewValue, $this->subcategory_id->formatPattern());
+            // name
+            $this->name->ViewValue = $this->name->CurrentValue;
 
-            // service_name
-            $this->service_name->ViewValue = $this->service_name->CurrentValue;
+            // selling_price
+            $this->selling_price->ViewValue = $this->selling_price->CurrentValue;
+            $this->selling_price->ViewValue = FormatNumber($this->selling_price->ViewValue, $this->selling_price->formatPattern());
 
-            // service_cost
-            $this->service_cost->ViewValue = $this->service_cost->CurrentValue;
-            $this->service_cost->ViewValue = FormatNumber($this->service_cost->ViewValue, $this->service_cost->formatPattern());
+            // buying_price
+            $this->buying_price->ViewValue = $this->buying_price->CurrentValue;
+            $this->buying_price->ViewValue = FormatNumber($this->buying_price->ViewValue, $this->buying_price->formatPattern());
 
-            // service_description
-            $this->service_description->ViewValue = $this->service_description->CurrentValue;
+            // description
+            $this->description->ViewValue = $this->description->CurrentValue;
+
+            // expiry
+            $this->expiry->ViewValue = $this->expiry->CurrentValue;
+            $this->expiry->ViewValue = FormatDateTime($this->expiry->ViewValue, $this->expiry->formatPattern());
 
             // date_created
             $this->date_created->ViewValue = $this->date_created->CurrentValue;
@@ -933,28 +932,24 @@ class JdhServicesEdit extends JdhServices
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
-            // service_id
-            $this->service_id->HrefValue = "";
-
             // category_id
             $this->category_id->HrefValue = "";
 
-            // subcategory_id
-            $this->subcategory_id->HrefValue = "";
+            // name
+            $this->name->HrefValue = "";
 
-            // service_name
-            $this->service_name->HrefValue = "";
+            // selling_price
+            $this->selling_price->HrefValue = "";
 
-            // service_cost
-            $this->service_cost->HrefValue = "";
+            // buying_price
+            $this->buying_price->HrefValue = "";
 
-            // service_description
-            $this->service_description->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // service_id
-            $this->service_id->setupEditAttributes();
-            $this->service_id->EditValue = $this->service_id->CurrentValue;
+            // description
+            $this->description->HrefValue = "";
 
+            // expiry
+            $this->expiry->HrefValue = "";
+        } elseif ($this->RowType == ROWTYPE_ADD) {
             // category_id
             $this->category_id->setupEditAttributes();
             $curVal = trim(strval($this->category_id->CurrentValue));
@@ -982,54 +977,59 @@ class JdhServicesEdit extends JdhServices
             }
             $this->category_id->PlaceHolder = RemoveHtml($this->category_id->caption());
 
-            // subcategory_id
-            $this->subcategory_id->setupEditAttributes();
-            $this->subcategory_id->EditValue = HtmlEncode($this->subcategory_id->CurrentValue);
-            $this->subcategory_id->PlaceHolder = RemoveHtml($this->subcategory_id->caption());
-            if (strval($this->subcategory_id->EditValue) != "" && is_numeric($this->subcategory_id->EditValue)) {
-                $this->subcategory_id->EditValue = FormatNumber($this->subcategory_id->EditValue, null);
+            // name
+            $this->name->setupEditAttributes();
+            if (!$this->name->Raw) {
+                $this->name->CurrentValue = HtmlDecode($this->name->CurrentValue);
+            }
+            $this->name->EditValue = HtmlEncode($this->name->CurrentValue);
+            $this->name->PlaceHolder = RemoveHtml($this->name->caption());
+
+            // selling_price
+            $this->selling_price->setupEditAttributes();
+            $this->selling_price->EditValue = HtmlEncode($this->selling_price->CurrentValue);
+            $this->selling_price->PlaceHolder = RemoveHtml($this->selling_price->caption());
+            if (strval($this->selling_price->EditValue) != "" && is_numeric($this->selling_price->EditValue)) {
+                $this->selling_price->EditValue = FormatNumber($this->selling_price->EditValue, null);
             }
 
-            // service_name
-            $this->service_name->setupEditAttributes();
-            if (!$this->service_name->Raw) {
-                $this->service_name->CurrentValue = HtmlDecode($this->service_name->CurrentValue);
-            }
-            $this->service_name->EditValue = HtmlEncode($this->service_name->CurrentValue);
-            $this->service_name->PlaceHolder = RemoveHtml($this->service_name->caption());
-
-            // service_cost
-            $this->service_cost->setupEditAttributes();
-            $this->service_cost->EditValue = HtmlEncode($this->service_cost->CurrentValue);
-            $this->service_cost->PlaceHolder = RemoveHtml($this->service_cost->caption());
-            if (strval($this->service_cost->EditValue) != "" && is_numeric($this->service_cost->EditValue)) {
-                $this->service_cost->EditValue = FormatNumber($this->service_cost->EditValue, null);
+            // buying_price
+            $this->buying_price->setupEditAttributes();
+            $this->buying_price->EditValue = HtmlEncode($this->buying_price->CurrentValue);
+            $this->buying_price->PlaceHolder = RemoveHtml($this->buying_price->caption());
+            if (strval($this->buying_price->EditValue) != "" && is_numeric($this->buying_price->EditValue)) {
+                $this->buying_price->EditValue = FormatNumber($this->buying_price->EditValue, null);
             }
 
-            // service_description
-            $this->service_description->setupEditAttributes();
-            $this->service_description->EditValue = HtmlEncode($this->service_description->CurrentValue);
-            $this->service_description->PlaceHolder = RemoveHtml($this->service_description->caption());
+            // description
+            $this->description->setupEditAttributes();
+            $this->description->EditValue = HtmlEncode($this->description->CurrentValue);
+            $this->description->PlaceHolder = RemoveHtml($this->description->caption());
 
-            // Edit refer script
+            // expiry
+            $this->expiry->setupEditAttributes();
+            $this->expiry->EditValue = HtmlEncode(FormatDateTime($this->expiry->CurrentValue, $this->expiry->formatPattern()));
+            $this->expiry->PlaceHolder = RemoveHtml($this->expiry->caption());
 
-            // service_id
-            $this->service_id->HrefValue = "";
+            // Add refer script
 
             // category_id
             $this->category_id->HrefValue = "";
 
-            // subcategory_id
-            $this->subcategory_id->HrefValue = "";
+            // name
+            $this->name->HrefValue = "";
 
-            // service_name
-            $this->service_name->HrefValue = "";
+            // selling_price
+            $this->selling_price->HrefValue = "";
 
-            // service_cost
-            $this->service_cost->HrefValue = "";
+            // buying_price
+            $this->buying_price->HrefValue = "";
 
-            // service_description
-            $this->service_description->HrefValue = "";
+            // description
+            $this->description->HrefValue = "";
+
+            // expiry
+            $this->expiry->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -1051,41 +1051,44 @@ class JdhServicesEdit extends JdhServices
             return true;
         }
         $validateForm = true;
-        if ($this->service_id->Required) {
-            if (!$this->service_id->IsDetailKey && EmptyValue($this->service_id->FormValue)) {
-                $this->service_id->addErrorMessage(str_replace("%s", $this->service_id->caption(), $this->service_id->RequiredErrorMessage));
-            }
-        }
         if ($this->category_id->Required) {
             if (!$this->category_id->IsDetailKey && EmptyValue($this->category_id->FormValue)) {
                 $this->category_id->addErrorMessage(str_replace("%s", $this->category_id->caption(), $this->category_id->RequiredErrorMessage));
             }
         }
-        if ($this->subcategory_id->Required) {
-            if (!$this->subcategory_id->IsDetailKey && EmptyValue($this->subcategory_id->FormValue)) {
-                $this->subcategory_id->addErrorMessage(str_replace("%s", $this->subcategory_id->caption(), $this->subcategory_id->RequiredErrorMessage));
+        if ($this->name->Required) {
+            if (!$this->name->IsDetailKey && EmptyValue($this->name->FormValue)) {
+                $this->name->addErrorMessage(str_replace("%s", $this->name->caption(), $this->name->RequiredErrorMessage));
             }
         }
-        if (!CheckInteger($this->subcategory_id->FormValue)) {
-            $this->subcategory_id->addErrorMessage($this->subcategory_id->getErrorMessage(false));
-        }
-        if ($this->service_name->Required) {
-            if (!$this->service_name->IsDetailKey && EmptyValue($this->service_name->FormValue)) {
-                $this->service_name->addErrorMessage(str_replace("%s", $this->service_name->caption(), $this->service_name->RequiredErrorMessage));
+        if ($this->selling_price->Required) {
+            if (!$this->selling_price->IsDetailKey && EmptyValue($this->selling_price->FormValue)) {
+                $this->selling_price->addErrorMessage(str_replace("%s", $this->selling_price->caption(), $this->selling_price->RequiredErrorMessage));
             }
         }
-        if ($this->service_cost->Required) {
-            if (!$this->service_cost->IsDetailKey && EmptyValue($this->service_cost->FormValue)) {
-                $this->service_cost->addErrorMessage(str_replace("%s", $this->service_cost->caption(), $this->service_cost->RequiredErrorMessage));
+        if (!CheckNumber($this->selling_price->FormValue)) {
+            $this->selling_price->addErrorMessage($this->selling_price->getErrorMessage(false));
+        }
+        if ($this->buying_price->Required) {
+            if (!$this->buying_price->IsDetailKey && EmptyValue($this->buying_price->FormValue)) {
+                $this->buying_price->addErrorMessage(str_replace("%s", $this->buying_price->caption(), $this->buying_price->RequiredErrorMessage));
             }
         }
-        if (!CheckInteger($this->service_cost->FormValue)) {
-            $this->service_cost->addErrorMessage($this->service_cost->getErrorMessage(false));
+        if (!CheckNumber($this->buying_price->FormValue)) {
+            $this->buying_price->addErrorMessage($this->buying_price->getErrorMessage(false));
         }
-        if ($this->service_description->Required) {
-            if (!$this->service_description->IsDetailKey && EmptyValue($this->service_description->FormValue)) {
-                $this->service_description->addErrorMessage(str_replace("%s", $this->service_description->caption(), $this->service_description->RequiredErrorMessage));
+        if ($this->description->Required) {
+            if (!$this->description->IsDetailKey && EmptyValue($this->description->FormValue)) {
+                $this->description->addErrorMessage(str_replace("%s", $this->description->caption(), $this->description->RequiredErrorMessage));
             }
+        }
+        if ($this->expiry->Required) {
+            if (!$this->expiry->IsDetailKey && EmptyValue($this->expiry->FormValue)) {
+                $this->expiry->addErrorMessage(str_replace("%s", $this->expiry->caption(), $this->expiry->RequiredErrorMessage));
+            }
+        }
+        if (!CheckDate($this->expiry->FormValue, $this->expiry->formatPattern())) {
+            $this->expiry->addErrorMessage($this->expiry->getErrorMessage(false));
         }
 
         // Return validate result
@@ -1100,60 +1103,46 @@ class JdhServicesEdit extends JdhServices
         return $validateForm;
     }
 
-    // Update record based on key values
-    protected function editRow()
+    // Add record
+    protected function addRow($rsold = null)
     {
-        global $Security, $Language;
-        $oldKeyFilter = $this->getRecordFilter();
-        $filter = $this->applyUserIDFilters($oldKeyFilter);
-        $conn = $this->getConnection();
-
-        // Load old row
-        $this->CurrentFilter = $filter;
-        $sql = $this->getCurrentSql();
-        $rsold = $conn->fetchAssociative($sql);
-        if (!$rsold) {
-            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
-            return false; // Update Failed
-        } else {
-            // Save old values
-            $this->loadDbValues($rsold);
-        }
+        global $Language, $Security;
 
         // Set new row
         $rsnew = [];
 
         // category_id
-        $this->category_id->setDbValueDef($rsnew, $this->category_id->CurrentValue, 0, $this->category_id->ReadOnly);
+        $this->category_id->setDbValueDef($rsnew, $this->category_id->CurrentValue, 0, false);
 
-        // subcategory_id
-        $this->subcategory_id->setDbValueDef($rsnew, $this->subcategory_id->CurrentValue, 0, $this->subcategory_id->ReadOnly);
+        // name
+        $this->name->setDbValueDef($rsnew, $this->name->CurrentValue, "", false);
 
-        // service_name
-        $this->service_name->setDbValueDef($rsnew, $this->service_name->CurrentValue, "", $this->service_name->ReadOnly);
+        // selling_price
+        $this->selling_price->setDbValueDef($rsnew, $this->selling_price->CurrentValue, 0, false);
 
-        // service_cost
-        $this->service_cost->setDbValueDef($rsnew, $this->service_cost->CurrentValue, 0, $this->service_cost->ReadOnly);
+        // buying_price
+        $this->buying_price->setDbValueDef($rsnew, $this->buying_price->CurrentValue, 0, false);
 
-        // service_description
-        $this->service_description->setDbValueDef($rsnew, $this->service_description->CurrentValue, null, $this->service_description->ReadOnly);
+        // description
+        $this->description->setDbValueDef($rsnew, $this->description->CurrentValue, null, false);
+
+        // expiry
+        $this->expiry->setDbValueDef($rsnew, UnFormatDateTime($this->expiry->CurrentValue, $this->expiry->formatPattern()), CurrentDate(), false);
 
         // Update current values
         $this->setCurrentValues($rsnew);
+        $conn = $this->getConnection();
 
-        // Call Row Updating event
-        $updateRow = $this->rowUpdating($rsold, $rsnew);
-        if ($updateRow) {
-            if (count($rsnew) > 0) {
-                $this->CurrentFilter = $filter; // Set up current filter
-                $editRow = $this->update($rsnew, "", $rsold);
-                if (!$editRow && !EmptyValue($this->DbErrorMessage)) { // Show database error
-                    $this->setFailureMessage($this->DbErrorMessage);
-                }
-            } else {
-                $editRow = true; // No field to update
-            }
-            if ($editRow) {
+        // Load db values from old row
+        $this->loadDbValues($rsold);
+
+        // Call Row Inserting event
+        $insertRow = $this->rowInserting($rsold, $rsnew);
+        if ($insertRow) {
+            $addRow = $this->insert($rsnew);
+            if ($addRow) {
+            } elseif (!EmptyValue($this->DbErrorMessage)) { // Show database error
+                $this->setFailureMessage($this->DbErrorMessage);
             }
         } else {
             if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
@@ -1162,23 +1151,25 @@ class JdhServicesEdit extends JdhServices
                 $this->setFailureMessage($this->CancelMessage);
                 $this->CancelMessage = "";
             } else {
-                $this->setFailureMessage($Language->phrase("UpdateCancelled"));
+                $this->setFailureMessage($Language->phrase("InsertCancelled"));
             }
-            $editRow = false;
+            $addRow = false;
         }
-
-        // Call Row_Updated event
-        if ($editRow) {
-            $this->rowUpdated($rsold, $rsnew);
+        if ($addRow) {
+            // Call Row Inserted event
+            $this->rowInserted($rsold, $rsnew);
+            if ($this->SendEmail) {
+                $this->sendEmailOnAdd($rsnew);
+            }
         }
 
         // Write JSON response
-        if (IsJsonResponse() && $editRow) {
+        if (IsJsonResponse() && $addRow) {
             $row = $this->getRecordsFromRecordset([$rsnew], true);
             $table = $this->TableVar;
-            WriteJson(["success" => true, "action" => Config("API_EDIT_ACTION"), $table => $row]);
+            WriteJson(["success" => true, "action" => Config("API_ADD_ACTION"), $table => $row]);
         }
-        return $editRow;
+        return $addRow;
     }
 
     // Set up Breadcrumb
@@ -1187,9 +1178,9 @@ class JdhServicesEdit extends JdhServices
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhserviceslist"), "", $this->TableVar, true);
-        $pageId = "edit";
-        $Breadcrumb->add("edit", $pageId, $url);
+        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhmedicineslist"), "", $this->TableVar, true);
+        $pageId = ($this->isCopy()) ? "Copy" : "Add";
+        $Breadcrumb->add("add", $pageId, $url);
     }
 
     // Setup lookup options
@@ -1234,40 +1225,6 @@ class JdhServicesEdit extends JdhServices
                 $fld->Lookup->Options = $ar;
             }
         }
-    }
-
-    // Set up starting record parameters
-    public function setupStartRecord()
-    {
-        if ($this->DisplayRecords == 0) {
-            return;
-        }
-        $pageNo = Get(Config("TABLE_PAGE_NUMBER"));
-        $startRec = Get(Config("TABLE_START_REC"));
-        $infiniteScroll = false;
-        $recordNo = $pageNo ?? $startRec; // Record number = page number or start record
-        if ($recordNo !== null && is_numeric($recordNo)) {
-            $this->StartRecord = $recordNo;
-        } else {
-            $this->StartRecord = $this->getStartRecordNumber();
-        }
-
-        // Check if correct start record counter
-        if (!is_numeric($this->StartRecord) || intval($this->StartRecord) <= 0) { // Avoid invalid start record counter
-            $this->StartRecord = 1; // Reset start record counter
-        } elseif ($this->StartRecord > $this->TotalRecords) { // Avoid starting record > total records
-            $this->StartRecord = (int)(($this->TotalRecords - 1) / $this->DisplayRecords) * $this->DisplayRecords + 1; // Point to last page first record
-        } elseif (($this->StartRecord - 1) % $this->DisplayRecords != 0) {
-            $this->StartRecord = (int)(($this->StartRecord - 1) / $this->DisplayRecords) * $this->DisplayRecords + 1; // Point to page boundary
-        }
-        if (!$infiniteScroll) {
-            $this->setStartRecordNumber($this->StartRecord);
-        }
-    }
-
-    // Get page count
-    public function pageCount() {
-        return ceil($this->TotalRecords / $this->DisplayRecords);
     }
 
     // Page Load event

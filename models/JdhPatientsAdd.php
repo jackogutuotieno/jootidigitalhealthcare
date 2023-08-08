@@ -35,6 +35,14 @@ class JdhPatientsAdd extends JdhPatients
     // CSS class/style
     public $CurrentPageName = "jdhpatientsadd";
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -461,6 +469,7 @@ class JdhPatientsAdd extends JdhPatients
         $this->patient_first_name->setVisibility();
         $this->patient_last_name->setVisibility();
         $this->patient_dob->setVisibility();
+        $this->patient_age->Visible = false;
         $this->patient_gender->setVisibility();
         $this->patient_phone->setVisibility();
         $this->patient_kin_name->setVisibility();
@@ -823,6 +832,7 @@ class JdhPatientsAdd extends JdhPatients
         $this->patient_first_name->setDbValue($row['patient_first_name']);
         $this->patient_last_name->setDbValue($row['patient_last_name']);
         $this->patient_dob->setDbValue($row['patient_dob']);
+        $this->patient_age->setDbValue($row['patient_age']);
         $this->patient_gender->setDbValue($row['patient_gender']);
         $this->patient_phone->setDbValue($row['patient_phone']);
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
@@ -840,6 +850,7 @@ class JdhPatientsAdd extends JdhPatients
         $row['patient_first_name'] = $this->patient_first_name->DefaultValue;
         $row['patient_last_name'] = $this->patient_last_name->DefaultValue;
         $row['patient_dob'] = $this->patient_dob->DefaultValue;
+        $row['patient_age'] = $this->patient_age->DefaultValue;
         $row['patient_gender'] = $this->patient_gender->DefaultValue;
         $row['patient_phone'] = $this->patient_phone->DefaultValue;
         $row['patient_kin_name'] = $this->patient_kin_name->DefaultValue;
@@ -897,6 +908,9 @@ class JdhPatientsAdd extends JdhPatients
         // patient_dob
         $this->patient_dob->RowCssClass = "row";
 
+        // patient_age
+        $this->patient_age->RowCssClass = "row";
+
         // patient_gender
         $this->patient_gender->RowCssClass = "row";
 
@@ -941,6 +955,10 @@ class JdhPatientsAdd extends JdhPatients
             // patient_dob
             $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
             $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
+
+            // patient_age
+            $this->patient_age->ViewValue = $this->patient_age->CurrentValue;
+            $this->patient_age->ViewValue = FormatNumber($this->patient_age->ViewValue, $this->patient_age->formatPattern());
 
             // patient_gender
             if (strval($this->patient_gender->CurrentValue) != "") {
@@ -1419,6 +1437,9 @@ class JdhPatientsAdd extends JdhPatients
         if ($addRow) {
             // Call Row Inserted event
             $this->rowInserted($rsold, $rsnew);
+            if ($this->SendEmail) {
+                $this->sendEmailOnAdd($rsnew);
+            }
         }
 
         // Write JSON response

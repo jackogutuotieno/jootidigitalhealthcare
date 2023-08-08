@@ -82,18 +82,12 @@ $Page->showMessage();
 <?php } ?>
 <?php if ($Page->category_description->Visible) { // category_description ?>
     <div id="r_category_description"<?= $Page->category_description->rowAttributes() ?>>
-        <label id="elh_jdh_medicine_categories_category_description" class="<?= $Page->LeftColumnClass ?>"><?= $Page->category_description->caption() ?><?= $Page->category_description->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <label id="elh_jdh_medicine_categories_category_description" for="x_category_description" class="<?= $Page->LeftColumnClass ?>"><?= $Page->category_description->caption() ?><?= $Page->category_description->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->category_description->cellAttributes() ?>>
 <span id="el_jdh_medicine_categories_category_description">
-<?php $Page->category_description->EditAttrs->appendClass("editor"); ?>
 <textarea data-table="jdh_medicine_categories" data-field="x_category_description" name="x_category_description" id="x_category_description" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->category_description->getPlaceHolder()) ?>"<?= $Page->category_description->editAttributes() ?> aria-describedby="x_category_description_help"><?= $Page->category_description->EditValue ?></textarea>
 <?= $Page->category_description->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->category_description->getErrorMessage() ?></div>
-<script>
-loadjs.ready(["fjdh_medicine_categoriesadd", "editor"], function() {
-    ew.createEditor("fjdh_medicine_categoriesadd", "x_category_description", 35, 4, <?= $Page->category_description->ReadOnly || false ? "true" : "false" ?>);
-});
-</script>
 </span>
 </div></div>
     </div>

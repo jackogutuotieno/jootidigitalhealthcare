@@ -38,7 +38,6 @@ loadjs.ready(["wrapper", "head"], function () {
             ["patient_national_id", [fields.patient_national_id.visible && fields.patient_national_id.required ? ew.Validators.required(fields.patient_national_id.caption) : null], fields.patient_national_id.isInvalid],
             ["patient_first_name", [fields.patient_first_name.visible && fields.patient_first_name.required ? ew.Validators.required(fields.patient_first_name.caption) : null], fields.patient_first_name.isInvalid],
             ["patient_last_name", [fields.patient_last_name.visible && fields.patient_last_name.required ? ew.Validators.required(fields.patient_last_name.caption) : null], fields.patient_last_name.isInvalid],
-            ["patient_dob", [fields.patient_dob.visible && fields.patient_dob.required ? ew.Validators.required(fields.patient_dob.caption) : null, ew.Validators.datetime(fields.patient_dob.clientFormatPattern)], fields.patient_dob.isInvalid],
             ["patient_gender", [fields.patient_gender.visible && fields.patient_gender.required ? ew.Validators.required(fields.patient_gender.caption) : null], fields.patient_gender.isInvalid],
             ["patient_phone", [fields.patient_phone.visible && fields.patient_phone.required ? ew.Validators.required(fields.patient_phone.caption) : null], fields.patient_phone.isInvalid],
             ["patient_kin_name", [fields.patient_kin_name.visible && fields.patient_kin_name.required ? ew.Validators.required(fields.patient_kin_name.caption) : null], fields.patient_kin_name.isInvalid],
@@ -157,48 +156,6 @@ loadjs.ready(["wrapper", "head"], function () {
 <input type="<?= $Page->patient_last_name->getInputTextType() ?>" name="x_patient_last_name" id="x_patient_last_name" data-table="jdh_patients" data-field="x_patient_last_name" value="<?= $Page->patient_last_name->EditValue ?>" size="30" maxlength="50" placeholder="<?= HtmlEncode($Page->patient_last_name->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_last_name->formatPattern()) ?>"<?= $Page->patient_last_name->editAttributes() ?> aria-describedby="x_patient_last_name_help">
 <?= $Page->patient_last_name->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->patient_last_name->getErrorMessage() ?></div>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->patient_dob->Visible) { // patient_dob ?>
-    <div id="r_patient_dob"<?= $Page->patient_dob->rowAttributes() ?>>
-        <label id="elh_jdh_patients_patient_dob" for="x_patient_dob" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_dob->caption() ?><?= $Page->patient_dob->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_dob->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_dob">
-<input type="<?= $Page->patient_dob->getInputTextType() ?>" name="x_patient_dob" id="x_patient_dob" data-table="jdh_patients" data-field="x_patient_dob" value="<?= $Page->patient_dob->EditValue ?>" placeholder="<?= HtmlEncode($Page->patient_dob->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_dob->formatPattern()) ?>"<?= $Page->patient_dob->editAttributes() ?> aria-describedby="x_patient_dob_help">
-<?= $Page->patient_dob->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->patient_dob->getErrorMessage() ?></div>
-<?php if (!$Page->patient_dob->ReadOnly && !$Page->patient_dob->Disabled && !isset($Page->patient_dob->EditAttrs["readonly"]) && !isset($Page->patient_dob->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["fjdh_patientsedit", "datetimepicker"], function () {
-    let format = "<?= DateFormat(7) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("fjdh_patientsedit", "x_patient_dob", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
 </span>
 </div></div>
     </div>

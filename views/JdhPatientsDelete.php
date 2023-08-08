@@ -65,6 +65,9 @@ $Page->showMessage();
 <?php if ($Page->patient_dob->Visible) { // patient_dob ?>
         <th class="<?= $Page->patient_dob->headerCellClass() ?>"><span id="elh_jdh_patients_patient_dob" class="jdh_patients_patient_dob"><?= $Page->patient_dob->caption() ?></span></th>
 <?php } ?>
+<?php if ($Page->patient_age->Visible) { // patient_age ?>
+        <th class="<?= $Page->patient_age->headerCellClass() ?>"><span id="elh_jdh_patients_patient_age" class="jdh_patients_patient_age"><?= $Page->patient_age->caption() ?></span></th>
+<?php } ?>
 <?php if ($Page->patient_gender->Visible) { // patient_gender ?>
         <th class="<?= $Page->patient_gender->headerCellClass() ?>"><span id="elh_jdh_patients_patient_gender" class="jdh_patients_patient_gender"><?= $Page->patient_gender->caption() ?></span></th>
 <?php } ?>
@@ -129,6 +132,14 @@ while (!$Page->Recordset->EOF) {
 <span id="el<?= $Page->RowCount ?>_jdh_patients_patient_dob" class="el_jdh_patients_patient_dob">
 <span<?= $Page->patient_dob->viewAttributes() ?>>
 <?= $Page->patient_dob->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->patient_age->Visible) { // patient_age ?>
+        <td<?= $Page->patient_age->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_age" class="el_jdh_patients_patient_age">
+<span<?= $Page->patient_age->viewAttributes() ?>>
+<?= $Page->patient_age->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

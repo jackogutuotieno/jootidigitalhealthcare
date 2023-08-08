@@ -59,6 +59,14 @@ class JdhPatientsList extends JdhPatients
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -650,6 +658,7 @@ class JdhPatientsList extends JdhPatients
         $this->patient_first_name->setVisibility();
         $this->patient_last_name->setVisibility();
         $this->patient_dob->setVisibility();
+        $this->patient_age->setVisibility();
         $this->patient_gender->setVisibility();
         $this->patient_phone->Visible = false;
         $this->patient_kin_name->Visible = false;
@@ -883,6 +892,13 @@ class JdhPatientsList extends JdhPatients
                     $this->setWarningMessage($Language->phrase("NoRecord"));
                 }
             }
+
+            // Audit trail on search
+            if ($this->AuditTrailOnSearch && $this->Command == "search" && !$this->RestoreSearch) {
+                $searchParm = ServerVar("QUERY_STRING");
+                $searchSql = $this->getSessionWhere();
+                $this->writeAuditTrailOnSearch($searchParm, $searchSql);
+            }
         }
 
         // Set up list action columns
@@ -1036,6 +1052,7 @@ class JdhPatientsList extends JdhPatients
         $filterList = Concat($filterList, $this->patient_first_name->AdvancedSearch->toJson(), ","); // Field patient_first_name
         $filterList = Concat($filterList, $this->patient_last_name->AdvancedSearch->toJson(), ","); // Field patient_last_name
         $filterList = Concat($filterList, $this->patient_dob->AdvancedSearch->toJson(), ","); // Field patient_dob
+        $filterList = Concat($filterList, $this->patient_age->AdvancedSearch->toJson(), ","); // Field patient_age
         $filterList = Concat($filterList, $this->patient_gender->AdvancedSearch->toJson(), ","); // Field patient_gender
         $filterList = Concat($filterList, $this->patient_phone->AdvancedSearch->toJson(), ","); // Field patient_phone
         $filterList = Concat($filterList, $this->patient_kin_name->AdvancedSearch->toJson(), ","); // Field patient_kin_name
@@ -1120,6 +1137,14 @@ class JdhPatientsList extends JdhPatients
         $this->patient_dob->AdvancedSearch->SearchValue2 = @$filter["y_patient_dob"];
         $this->patient_dob->AdvancedSearch->SearchOperator2 = @$filter["w_patient_dob"];
         $this->patient_dob->AdvancedSearch->save();
+
+        // Field patient_age
+        $this->patient_age->AdvancedSearch->SearchValue = @$filter["x_patient_age"];
+        $this->patient_age->AdvancedSearch->SearchOperator = @$filter["z_patient_age"];
+        $this->patient_age->AdvancedSearch->SearchCondition = @$filter["v_patient_age"];
+        $this->patient_age->AdvancedSearch->SearchValue2 = @$filter["y_patient_age"];
+        $this->patient_age->AdvancedSearch->SearchOperator2 = @$filter["w_patient_age"];
+        $this->patient_age->AdvancedSearch->save();
 
         // Field patient_gender
         $this->patient_gender->AdvancedSearch->SearchValue = @$filter["x_patient_gender"];
@@ -1288,6 +1313,7 @@ class JdhPatientsList extends JdhPatients
             $this->updateSort($this->patient_first_name); // patient_first_name
             $this->updateSort($this->patient_last_name); // patient_last_name
             $this->updateSort($this->patient_dob); // patient_dob
+            $this->updateSort($this->patient_age); // patient_age
             $this->updateSort($this->patient_gender); // patient_gender
             $this->updateSort($this->patient_registration_date); // patient_registration_date
             $this->setStartRecordNumber(1); // Reset start position
@@ -1319,6 +1345,7 @@ class JdhPatientsList extends JdhPatients
                 $this->patient_first_name->setSort("");
                 $this->patient_last_name->setSort("");
                 $this->patient_dob->setSort("");
+                $this->patient_age->setSort("");
                 $this->patient_gender->setSort("");
                 $this->patient_phone->setSort("");
                 $this->patient_kin_name->setSort("");
@@ -2210,6 +2237,7 @@ class JdhPatientsList extends JdhPatients
             $option->add("patient_first_name", $this->createColumnOption("patient_first_name"));
             $option->add("patient_last_name", $this->createColumnOption("patient_last_name"));
             $option->add("patient_dob", $this->createColumnOption("patient_dob"));
+            $option->add("patient_age", $this->createColumnOption("patient_age"));
             $option->add("patient_gender", $this->createColumnOption("patient_gender"));
             $option->add("patient_registration_date", $this->createColumnOption("patient_registration_date"));
         }
@@ -2602,6 +2630,7 @@ class JdhPatientsList extends JdhPatients
         $this->patient_first_name->setDbValue($row['patient_first_name']);
         $this->patient_last_name->setDbValue($row['patient_last_name']);
         $this->patient_dob->setDbValue($row['patient_dob']);
+        $this->patient_age->setDbValue($row['patient_age']);
         $this->patient_gender->setDbValue($row['patient_gender']);
         $this->patient_phone->setDbValue($row['patient_phone']);
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
@@ -2619,6 +2648,7 @@ class JdhPatientsList extends JdhPatients
         $row['patient_first_name'] = $this->patient_first_name->DefaultValue;
         $row['patient_last_name'] = $this->patient_last_name->DefaultValue;
         $row['patient_dob'] = $this->patient_dob->DefaultValue;
+        $row['patient_age'] = $this->patient_age->DefaultValue;
         $row['patient_gender'] = $this->patient_gender->DefaultValue;
         $row['patient_phone'] = $this->patient_phone->DefaultValue;
         $row['patient_kin_name'] = $this->patient_kin_name->DefaultValue;
@@ -2676,6 +2706,8 @@ class JdhPatientsList extends JdhPatients
 
         // patient_dob
 
+        // patient_age
+
         // patient_gender
 
         // patient_phone
@@ -2703,6 +2735,10 @@ class JdhPatientsList extends JdhPatients
             // patient_dob
             $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
             $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
+
+            // patient_age
+            $this->patient_age->ViewValue = $this->patient_age->CurrentValue;
+            $this->patient_age->ViewValue = FormatNumber($this->patient_age->ViewValue, $this->patient_age->formatPattern());
 
             // patient_gender
             if (strval($this->patient_gender->CurrentValue) != "") {
@@ -2752,6 +2788,10 @@ class JdhPatientsList extends JdhPatients
             // patient_dob
             $this->patient_dob->HrefValue = "";
             $this->patient_dob->TooltipValue = "";
+
+            // patient_age
+            $this->patient_age->HrefValue = "";
+            $this->patient_age->TooltipValue = "";
 
             // patient_gender
             $this->patient_gender->HrefValue = "";

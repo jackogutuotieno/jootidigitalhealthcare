@@ -35,6 +35,14 @@ class JdhPatientsDelete extends JdhPatients
     // CSS class/style
     public $CurrentPageName = "jdhpatientsdelete";
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -368,6 +376,7 @@ class JdhPatientsDelete extends JdhPatients
         $this->patient_first_name->setVisibility();
         $this->patient_last_name->setVisibility();
         $this->patient_dob->setVisibility();
+        $this->patient_age->setVisibility();
         $this->patient_gender->setVisibility();
         $this->patient_phone->Visible = false;
         $this->patient_kin_name->Visible = false;
@@ -586,6 +595,7 @@ class JdhPatientsDelete extends JdhPatients
         $this->patient_first_name->setDbValue($row['patient_first_name']);
         $this->patient_last_name->setDbValue($row['patient_last_name']);
         $this->patient_dob->setDbValue($row['patient_dob']);
+        $this->patient_age->setDbValue($row['patient_age']);
         $this->patient_gender->setDbValue($row['patient_gender']);
         $this->patient_phone->setDbValue($row['patient_phone']);
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
@@ -603,6 +613,7 @@ class JdhPatientsDelete extends JdhPatients
         $row['patient_first_name'] = $this->patient_first_name->DefaultValue;
         $row['patient_last_name'] = $this->patient_last_name->DefaultValue;
         $row['patient_dob'] = $this->patient_dob->DefaultValue;
+        $row['patient_age'] = $this->patient_age->DefaultValue;
         $row['patient_gender'] = $this->patient_gender->DefaultValue;
         $row['patient_phone'] = $this->patient_phone->DefaultValue;
         $row['patient_kin_name'] = $this->patient_kin_name->DefaultValue;
@@ -635,6 +646,8 @@ class JdhPatientsDelete extends JdhPatients
 
         // patient_dob
 
+        // patient_age
+
         // patient_gender
 
         // patient_phone
@@ -662,6 +675,10 @@ class JdhPatientsDelete extends JdhPatients
             // patient_dob
             $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
             $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
+
+            // patient_age
+            $this->patient_age->ViewValue = $this->patient_age->CurrentValue;
+            $this->patient_age->ViewValue = FormatNumber($this->patient_age->ViewValue, $this->patient_age->formatPattern());
 
             // patient_gender
             if (strval($this->patient_gender->CurrentValue) != "") {
@@ -703,6 +720,10 @@ class JdhPatientsDelete extends JdhPatients
             $this->patient_dob->HrefValue = "";
             $this->patient_dob->TooltipValue = "";
 
+            // patient_age
+            $this->patient_age->HrefValue = "";
+            $this->patient_age->TooltipValue = "";
+
             // patient_gender
             $this->patient_gender->HrefValue = "";
             $this->patient_gender->TooltipValue = "";
@@ -735,6 +756,9 @@ class JdhPatientsDelete extends JdhPatients
         }
         if ($this->UseTransaction) {
             $conn->beginTransaction();
+        }
+        if ($this->AuditTrailOnDelete) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
         }
 
         // Clone old rows
@@ -795,9 +819,35 @@ class JdhPatientsDelete extends JdhPatients
             if (count($failKeys) > 0) {
                 $this->setWarningMessage(str_replace("%k", explode(", ", $failKeys), $Language->phrase("DeleteRecordsFailed")));
             }
+            if ($this->AuditTrailOnDelete) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteSuccess")); // Batch delete success
+            }
+            $table = 'jdh_patients';
+            $subject = $table . " " . $Language->phrase("RecordDeleted");
+            $action = $Language->phrase("ActionDeleted");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", implode(", ", $successKeys));
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rs"] = &$rsold;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
         } else {
             if ($this->UseTransaction) { // Rollback transaction
                 $conn->rollback();
+            }
+            if ($this->AuditTrailOnDelete) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteRollback")); // Batch delete rollback
             }
         }
 

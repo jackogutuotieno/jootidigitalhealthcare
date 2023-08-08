@@ -142,7 +142,7 @@ $CONFIG = [
 
     // General
     "UNFORMAT_YEAR" => 50, // Unformat year
-    "RANDOM_KEY" => 'fNZZN2byvbmuVe7k', // Random key for encryption
+    "RANDOM_KEY" => '2oqEZFxrz6lLyT7C', // Random key for encryption
     "ENCRYPTION_KEY" => '', // Encryption key for data protection
     "PROJECT_STYLESHEET_FILENAME" => "css/jootidigitalhealthcare.css", // Project stylesheet file name
     "USE_COMPRESSED_STYLESHEET" => true, // Compressed stylesheet
@@ -419,7 +419,7 @@ $CONFIG = [
     "USER_PROFILE_FIELD_NAME" => "biography",
     "REGISTER_ACTIVATE_FIELD_NAME" => "",
     "USER_EMAIL_FIELD_NAME" => "email_address",
-    "USER_PHONE_FIELD_NAME" => "",
+    "USER_PHONE_FIELD_NAME" => "phone",
     "USER_IMAGE_FIELD_NAME" => "photo",
     "USER_IMAGE_SIZE" => 40,
     "USER_IMAGE_CROP" => true,
@@ -608,7 +608,7 @@ $CONFIG = [
     // Use two factor Authentication
     "USE_TWO_FACTOR_AUTHENTICATION" => false,
     "FORCE_TWO_FACTOR_AUTHENTICATION" => false,
-    "TWO_FACTOR_AUTHENTICATION_TYPE" => "google",
+    "TWO_FACTOR_AUTHENTICATION_TYPE" => "sms",
     "TWO_FACTOR_AUTHENTICATION_ISSUER" => PROJECT_NAME,
     "TWO_FACTOR_AUTHENTICATION_DISCREPANCY" => 1,
     "TWO_FACTOR_AUTHENTICATION_QRCODE_SIZE" => 200,

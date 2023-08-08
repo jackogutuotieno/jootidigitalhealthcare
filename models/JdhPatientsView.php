@@ -53,6 +53,14 @@ class JdhPatientsView extends JdhPatients
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -511,6 +519,7 @@ class JdhPatientsView extends JdhPatients
         $this->patient_first_name->setVisibility();
         $this->patient_last_name->setVisibility();
         $this->patient_dob->setVisibility();
+        $this->patient_age->setVisibility();
         $this->patient_gender->setVisibility();
         $this->patient_phone->setVisibility();
         $this->patient_kin_name->setVisibility();
@@ -1247,6 +1256,9 @@ class JdhPatientsView extends JdhPatients
 
         // Call Row Selected event
         $this->rowSelected($row);
+        if ($this->AuditTrailOnView) {
+            $this->writeAuditTrailOnView($row);
+        }
         $this->patient_id->setDbValue($row['patient_id']);
         $this->photo->Upload->DbValue = $row['photo'];
         if (is_resource($this->photo->Upload->DbValue) && get_resource_type($this->photo->Upload->DbValue) == "stream") { // Byte array
@@ -1256,6 +1268,7 @@ class JdhPatientsView extends JdhPatients
         $this->patient_first_name->setDbValue($row['patient_first_name']);
         $this->patient_last_name->setDbValue($row['patient_last_name']);
         $this->patient_dob->setDbValue($row['patient_dob']);
+        $this->patient_age->setDbValue($row['patient_age']);
         $this->patient_gender->setDbValue($row['patient_gender']);
         $this->patient_phone->setDbValue($row['patient_phone']);
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
@@ -1273,6 +1286,7 @@ class JdhPatientsView extends JdhPatients
         $row['patient_first_name'] = $this->patient_first_name->DefaultValue;
         $row['patient_last_name'] = $this->patient_last_name->DefaultValue;
         $row['patient_dob'] = $this->patient_dob->DefaultValue;
+        $row['patient_age'] = $this->patient_age->DefaultValue;
         $row['patient_gender'] = $this->patient_gender->DefaultValue;
         $row['patient_phone'] = $this->patient_phone->DefaultValue;
         $row['patient_kin_name'] = $this->patient_kin_name->DefaultValue;
@@ -1310,6 +1324,8 @@ class JdhPatientsView extends JdhPatients
         // patient_last_name
 
         // patient_dob
+
+        // patient_age
 
         // patient_gender
 
@@ -1350,6 +1366,10 @@ class JdhPatientsView extends JdhPatients
             // patient_dob
             $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
             $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
+
+            // patient_age
+            $this->patient_age->ViewValue = $this->patient_age->CurrentValue;
+            $this->patient_age->ViewValue = FormatNumber($this->patient_age->ViewValue, $this->patient_age->formatPattern());
 
             // patient_gender
             if (strval($this->patient_gender->CurrentValue) != "") {
@@ -1413,6 +1433,10 @@ class JdhPatientsView extends JdhPatients
             // patient_dob
             $this->patient_dob->HrefValue = "";
             $this->patient_dob->TooltipValue = "";
+
+            // patient_age
+            $this->patient_age->HrefValue = "";
+            $this->patient_age->TooltipValue = "";
 
             // patient_gender
             $this->patient_gender->HrefValue = "";

@@ -23,7 +23,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["category_id", [fields.category_id.visible && fields.category_id.required ? ew.Validators.required(fields.category_id.caption) : null], fields.category_id.isInvalid],
-            ["subcategory_id", [fields.subcategory_id.visible && fields.subcategory_id.required ? ew.Validators.required(fields.subcategory_id.caption) : null], fields.subcategory_id.isInvalid],
+            ["subcategory_id", [fields.subcategory_id.visible && fields.subcategory_id.required ? ew.Validators.required(fields.subcategory_id.caption) : null, ew.Validators.integer], fields.subcategory_id.isInvalid],
             ["service_name", [fields.service_name.visible && fields.service_name.required ? ew.Validators.required(fields.service_name.caption) : null], fields.service_name.isInvalid],
             ["service_cost", [fields.service_cost.visible && fields.service_cost.required ? ew.Validators.required(fields.service_cost.caption) : null, ew.Validators.integer], fields.service_cost.isInvalid],
             ["service_description", [fields.service_description.visible && fields.service_description.required ? ew.Validators.required(fields.service_description.caption) : null], fields.service_description.isInvalid]
@@ -43,7 +43,6 @@ loadjs.ready(["wrapper", "head"], function () {
         // Dynamic selection lists
         .setLists({
             "category_id": <?= $Page->category_id->toClientList($Page) ?>,
-            "subcategory_id": <?= $Page->subcategory_id->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -87,7 +86,6 @@ $Page->showMessage();
         data-field="x_category_id"
         data-value-separator="<?= $Page->category_id->displayValueSeparatorAttribute() ?>"
         data-placeholder="<?= HtmlEncode($Page->category_id->getPlaceHolder()) ?>"
-        data-ew-action="update-options"
         <?= $Page->category_id->editAttributes() ?>>
         <?= $Page->category_id->selectOptionListHtml("x_category_id") ?>
     </select>
@@ -119,37 +117,9 @@ loadjs.ready("fjdh_servicesadd", function() {
         <label id="elh_jdh_services_subcategory_id" for="x_subcategory_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->subcategory_id->caption() ?><?= $Page->subcategory_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->subcategory_id->cellAttributes() ?>>
 <span id="el_jdh_services_subcategory_id">
-    <select
-        id="x_subcategory_id"
-        name="x_subcategory_id"
-        class="form-select ew-select<?= $Page->subcategory_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_servicesadd_x_subcategory_id"
-        data-table="jdh_services"
-        data-field="x_subcategory_id"
-        data-value-separator="<?= $Page->subcategory_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->subcategory_id->getPlaceHolder()) ?>"
-        <?= $Page->subcategory_id->editAttributes() ?>>
-        <?= $Page->subcategory_id->selectOptionListHtml("x_subcategory_id") ?>
-    </select>
-    <?= $Page->subcategory_id->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->subcategory_id->getErrorMessage() ?></div>
-<?= $Page->subcategory_id->Lookup->getParamTag($Page, "p_x_subcategory_id") ?>
-<script>
-loadjs.ready("fjdh_servicesadd", function() {
-    var options = { name: "x_subcategory_id", selectId: "fjdh_servicesadd_x_subcategory_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_servicesadd.lists.subcategory_id?.lookupOptions.length) {
-        options.data = { id: "x_subcategory_id", form: "fjdh_servicesadd" };
-    } else {
-        options.ajax = { id: "x_subcategory_id", form: "fjdh_servicesadd", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_services.fields.subcategory_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<input type="<?= $Page->subcategory_id->getInputTextType() ?>" name="x_subcategory_id" id="x_subcategory_id" data-table="jdh_services" data-field="x_subcategory_id" value="<?= $Page->subcategory_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->subcategory_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->subcategory_id->formatPattern()) ?>"<?= $Page->subcategory_id->editAttributes() ?> aria-describedby="x_subcategory_id_help">
+<?= $Page->subcategory_id->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->subcategory_id->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

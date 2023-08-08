@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhServicesDelete extends JdhServices
+class JdhMedicinesDelete extends JdhMedicines
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhServicesDelete extends JdhServices
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhServicesDelete";
+    public $PageObjName = "JdhMedicinesDelete";
 
     // View file path
     public $View = null;
@@ -33,7 +33,15 @@ class JdhServicesDelete extends JdhServices
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "jdhservicesdelete";
+    public $CurrentPageName = "jdhmedicinesdelete";
+
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
 
     // Page headings
     public $Heading = "";
@@ -118,8 +126,8 @@ class JdhServicesDelete extends JdhServices
     {
         parent::__construct();
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
-        $this->TableVar = 'jdh_services';
-        $this->TableName = 'jdh_services';
+        $this->TableVar = 'jdh_medicines';
+        $this->TableName = 'jdh_medicines';
 
         // Table CSS class
         $this->TableClass = "table table-bordered table-hover table-sm ew-table";
@@ -130,14 +138,14 @@ class JdhServicesDelete extends JdhServices
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_services)
-        if (!isset($GLOBALS["jdh_services"]) || get_class($GLOBALS["jdh_services"]) == PROJECT_NAMESPACE . "jdh_services") {
-            $GLOBALS["jdh_services"] = &$this;
+        // Table object (jdh_medicines)
+        if (!isset($GLOBALS["jdh_medicines"]) || get_class($GLOBALS["jdh_medicines"]) == PROJECT_NAMESPACE . "jdh_medicines") {
+            $GLOBALS["jdh_medicines"] = &$this;
         }
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_services');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_medicines');
         }
 
         // Start timer
@@ -322,7 +330,7 @@ class JdhServicesDelete extends JdhServices
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['service_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -335,7 +343,7 @@ class JdhServicesDelete extends JdhServices
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->service_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
     public $DbMasterFilter = "";
@@ -362,12 +370,13 @@ class JdhServicesDelete extends JdhServices
         // View
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->service_id->setVisibility();
+        $this->id->setVisibility();
         $this->category_id->setVisibility();
-        $this->subcategory_id->setVisibility();
-        $this->service_name->setVisibility();
-        $this->service_cost->setVisibility();
-        $this->service_description->Visible = false;
+        $this->name->setVisibility();
+        $this->selling_price->setVisibility();
+        $this->buying_price->setVisibility();
+        $this->description->Visible = false;
+        $this->expiry->setVisibility();
         $this->date_created->setVisibility();
         $this->date_updated->setVisibility();
         $this->submitted_by_user_id->Visible = false;
@@ -404,7 +413,7 @@ class JdhServicesDelete extends JdhServices
         $this->RecKeys = $this->getRecordKeys(); // Load record keys
         $filter = $this->getFilterFromRecordKeys();
         if ($filter == "") {
-            $this->terminate("jdhserviceslist"); // Prevent SQL injection, return to list
+            $this->terminate("jdhmedicineslist"); // Prevent SQL injection, return to list
             return;
         }
 
@@ -462,7 +471,7 @@ class JdhServicesDelete extends JdhServices
                 if ($this->Recordset) {
                     $this->Recordset->close();
                 }
-                $this->terminate("jdhserviceslist"); // Return to list
+                $this->terminate("jdhmedicineslist"); // Return to list
                 return;
             }
         }
@@ -575,12 +584,13 @@ class JdhServicesDelete extends JdhServices
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->service_id->setDbValue($row['service_id']);
+        $this->id->setDbValue($row['id']);
         $this->category_id->setDbValue($row['category_id']);
-        $this->subcategory_id->setDbValue($row['subcategory_id']);
-        $this->service_name->setDbValue($row['service_name']);
-        $this->service_cost->setDbValue($row['service_cost']);
-        $this->service_description->setDbValue($row['service_description']);
+        $this->name->setDbValue($row['name']);
+        $this->selling_price->setDbValue($row['selling_price']);
+        $this->buying_price->setDbValue($row['buying_price']);
+        $this->description->setDbValue($row['description']);
+        $this->expiry->setDbValue($row['expiry']);
         $this->date_created->setDbValue($row['date_created']);
         $this->date_updated->setDbValue($row['date_updated']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
@@ -590,12 +600,13 @@ class JdhServicesDelete extends JdhServices
     protected function newRow()
     {
         $row = [];
-        $row['service_id'] = $this->service_id->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
         $row['category_id'] = $this->category_id->DefaultValue;
-        $row['subcategory_id'] = $this->subcategory_id->DefaultValue;
-        $row['service_name'] = $this->service_name->DefaultValue;
-        $row['service_cost'] = $this->service_cost->DefaultValue;
-        $row['service_description'] = $this->service_description->DefaultValue;
+        $row['name'] = $this->name->DefaultValue;
+        $row['selling_price'] = $this->selling_price->DefaultValue;
+        $row['buying_price'] = $this->buying_price->DefaultValue;
+        $row['description'] = $this->description->DefaultValue;
+        $row['expiry'] = $this->expiry->DefaultValue;
         $row['date_created'] = $this->date_created->DefaultValue;
         $row['date_updated'] = $this->date_updated->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
@@ -614,17 +625,19 @@ class JdhServicesDelete extends JdhServices
 
         // Common render codes for all row types
 
-        // service_id
+        // id
 
         // category_id
 
-        // subcategory_id
+        // name
 
-        // service_name
+        // selling_price
 
-        // service_cost
+        // buying_price
 
-        // service_description
+        // description
+
+        // expiry
 
         // date_created
 
@@ -634,8 +647,9 @@ class JdhServicesDelete extends JdhServices
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // service_id
-            $this->service_id->ViewValue = $this->service_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
+            $this->id->ViewValue = FormatNumber($this->id->ViewValue, $this->id->formatPattern());
 
             // category_id
             $curVal = strval($this->category_id->CurrentValue);
@@ -660,16 +674,20 @@ class JdhServicesDelete extends JdhServices
                 $this->category_id->ViewValue = null;
             }
 
-            // subcategory_id
-            $this->subcategory_id->ViewValue = $this->subcategory_id->CurrentValue;
-            $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->ViewValue, $this->subcategory_id->formatPattern());
+            // name
+            $this->name->ViewValue = $this->name->CurrentValue;
 
-            // service_name
-            $this->service_name->ViewValue = $this->service_name->CurrentValue;
+            // selling_price
+            $this->selling_price->ViewValue = $this->selling_price->CurrentValue;
+            $this->selling_price->ViewValue = FormatNumber($this->selling_price->ViewValue, $this->selling_price->formatPattern());
 
-            // service_cost
-            $this->service_cost->ViewValue = $this->service_cost->CurrentValue;
-            $this->service_cost->ViewValue = FormatNumber($this->service_cost->ViewValue, $this->service_cost->formatPattern());
+            // buying_price
+            $this->buying_price->ViewValue = $this->buying_price->CurrentValue;
+            $this->buying_price->ViewValue = FormatNumber($this->buying_price->ViewValue, $this->buying_price->formatPattern());
+
+            // expiry
+            $this->expiry->ViewValue = $this->expiry->CurrentValue;
+            $this->expiry->ViewValue = FormatDateTime($this->expiry->ViewValue, $this->expiry->formatPattern());
 
             // date_created
             $this->date_created->ViewValue = $this->date_created->CurrentValue;
@@ -683,25 +701,29 @@ class JdhServicesDelete extends JdhServices
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
-            // service_id
-            $this->service_id->HrefValue = "";
-            $this->service_id->TooltipValue = "";
+            // id
+            $this->id->HrefValue = "";
+            $this->id->TooltipValue = "";
 
             // category_id
             $this->category_id->HrefValue = "";
             $this->category_id->TooltipValue = "";
 
-            // subcategory_id
-            $this->subcategory_id->HrefValue = "";
-            $this->subcategory_id->TooltipValue = "";
+            // name
+            $this->name->HrefValue = "";
+            $this->name->TooltipValue = "";
 
-            // service_name
-            $this->service_name->HrefValue = "";
-            $this->service_name->TooltipValue = "";
+            // selling_price
+            $this->selling_price->HrefValue = "";
+            $this->selling_price->TooltipValue = "";
 
-            // service_cost
-            $this->service_cost->HrefValue = "";
-            $this->service_cost->TooltipValue = "";
+            // buying_price
+            $this->buying_price->HrefValue = "";
+            $this->buying_price->TooltipValue = "";
+
+            // expiry
+            $this->expiry->HrefValue = "";
+            $this->expiry->TooltipValue = "";
 
             // date_created
             $this->date_created->HrefValue = "";
@@ -736,6 +758,9 @@ class JdhServicesDelete extends JdhServices
         if ($this->UseTransaction) {
             $conn->beginTransaction();
         }
+        if ($this->AuditTrailOnDelete) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
+        }
 
         // Clone old rows
         $rsold = $rows;
@@ -746,7 +771,7 @@ class JdhServicesDelete extends JdhServices
             if ($thisKey != "") {
                 $thisKey .= Config("COMPOSITE_KEY_SEPARATOR");
             }
-            $thisKey .= $row['service_id'];
+            $thisKey .= $row['id'];
 
             // Call row deleting event
             $deleteRow = $this->rowDeleting($row);
@@ -795,9 +820,35 @@ class JdhServicesDelete extends JdhServices
             if (count($failKeys) > 0) {
                 $this->setWarningMessage(str_replace("%k", explode(", ", $failKeys), $Language->phrase("DeleteRecordsFailed")));
             }
+            if ($this->AuditTrailOnDelete) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteSuccess")); // Batch delete success
+            }
+            $table = 'jdh_medicines';
+            $subject = $table . " " . $Language->phrase("RecordDeleted");
+            $action = $Language->phrase("ActionDeleted");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", implode(", ", $successKeys));
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rs"] = &$rsold;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
         } else {
             if ($this->UseTransaction) { // Rollback transaction
                 $conn->rollback();
+            }
+            if ($this->AuditTrailOnDelete) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteRollback")); // Batch delete rollback
             }
         }
 
@@ -819,7 +870,7 @@ class JdhServicesDelete extends JdhServices
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhserviceslist"), "", $this->TableVar, true);
+        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhmedicineslist"), "", $this->TableVar, true);
         $pageId = "delete";
         $Breadcrumb->add("delete", $pageId, $url);
     }

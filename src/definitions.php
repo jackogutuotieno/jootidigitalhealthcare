@@ -39,7 +39,6 @@ return [
     "jdh_lab_test_categories" => \DI\create(JdhLabTestCategories::class),
     "jdh_lab_test_subcategories" => \DI\create(JdhLabTestSubcategories::class),
     "jdh_medicine_categories" => \DI\create(JdhMedicineCategories::class),
-    "jdh_medicine_subcategories" => \DI\create(JdhMedicineSubcategories::class),
     "jdh_medicines" => \DI\create(JdhMedicines::class),
     "jdh_patient_cases" => \DI\create(JdhPatientCases::class),
     "jdh_patient_visits" => \DI\create(JdhPatientVisits::class),

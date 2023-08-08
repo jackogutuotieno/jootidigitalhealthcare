@@ -120,6 +120,17 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->patient_age->Visible) { // patient_age ?>
+    <tr id="r_patient_age"<?= $Page->patient_age->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_patient_age"><?= $Page->patient_age->caption() ?></span></td>
+        <td data-name="patient_age"<?= $Page->patient_age->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_age">
+<span<?= $Page->patient_age->viewAttributes() ?>>
+<?= $Page->patient_age->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 <?php if ($Page->patient_gender->Visible) { // patient_gender ?>
     <tr id="r_patient_gender"<?= $Page->patient_gender->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_patient_gender"><?= $Page->patient_gender->caption() ?></span></td>
