@@ -49,6 +49,7 @@ class JdhInsurance extends DbTable
     public $insurance_physical_address;
     public $submission_date;
     public $date_updated;
+    public $submitted_by_user_id;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -292,6 +293,31 @@ class JdhInsurance extends DbTable
         $this->date_updated->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['date_updated'] = &$this->date_updated;
 
+        // submitted_by_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->submitted_by_user_id = new DbField(
+            $this, // Table
+            'x_submitted_by_user_id', // Variable name
+            'submitted_by_user_id', // Name
+            '`submitted_by_user_id`', // Expression
+            '`submitted_by_user_id`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`submitted_by_user_id`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'HIDDEN' // Edit Tag
+        );
+        $this->submitted_by_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
+        $this->submitted_by_user_id->InputTextType = "text";
+        $this->submitted_by_user_id->Nullable = false; // NOT NULL field
+        $this->submitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->submitted_by_user_id->SearchOperators = ["=", "<>"];
+        $this->Fields['submitted_by_user_id'] = &$this->submitted_by_user_id;
+
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
         $this->CacheProfile = new \Doctrine\DBAL\Cache\QueryCacheProfile(0, $this->TableVar);
@@ -453,6 +479,11 @@ class JdhInsurance extends DbTable
     // Apply User ID filters
     public function applyUserIDFilters($filter, $id = "")
     {
+        global $Security;
+        // Add User ID filter
+        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
+            $filter = $this->addUserIDFilter($filter, $id);
+        }
         return $filter;
     }
 
@@ -770,6 +801,7 @@ class JdhInsurance extends DbTable
         $this->insurance_physical_address->DbValue = $row['insurance_physical_address'];
         $this->submission_date->DbValue = $row['submission_date'];
         $this->date_updated->DbValue = $row['date_updated'];
+        $this->submitted_by_user_id->DbValue = $row['submitted_by_user_id'];
     }
 
     // Delete uploaded files
@@ -1131,6 +1163,7 @@ class JdhInsurance extends DbTable
         $this->insurance_physical_address->setDbValue($row['insurance_physical_address']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->date_updated->setDbValue($row['date_updated']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
     // Render list content
@@ -1177,6 +1210,8 @@ class JdhInsurance extends DbTable
 
         // date_updated
 
+        // submitted_by_user_id
+
         // insurance_id
         $this->insurance_id->ViewValue = $this->insurance_id->CurrentValue;
 
@@ -1202,6 +1237,10 @@ class JdhInsurance extends DbTable
         // date_updated
         $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
         $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
+
+        // submitted_by_user_id
+        $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+        $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
         // insurance_id
         $this->insurance_id->HrefValue = "";
@@ -1250,6 +1289,10 @@ class JdhInsurance extends DbTable
         // date_updated
         $this->date_updated->HrefValue = "";
         $this->date_updated->TooltipValue = "";
+
+        // submitted_by_user_id
+        $this->submitted_by_user_id->HrefValue = "";
+        $this->submitted_by_user_id->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1317,6 +1360,8 @@ class JdhInsurance extends DbTable
         $this->date_updated->EditValue = FormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern());
         $this->date_updated->PlaceHolder = RemoveHtml($this->date_updated->caption());
 
+        // submitted_by_user_id
+
         // Call Row Rendered event
         $this->rowRendered();
     }
@@ -1353,6 +1398,7 @@ class JdhInsurance extends DbTable
                     $doc->exportCaption($this->insurance_physical_address);
                     $doc->exportCaption($this->submission_date);
                     $doc->exportCaption($this->date_updated);
+                    $doc->exportCaption($this->submitted_by_user_id);
                 } else {
                     $doc->exportCaption($this->insurance_id);
                     $doc->exportCaption($this->insurance_name);
@@ -1361,6 +1407,7 @@ class JdhInsurance extends DbTable
                     $doc->exportCaption($this->insurance_contact_person_email);
                     $doc->exportCaption($this->submission_date);
                     $doc->exportCaption($this->date_updated);
+                    $doc->exportCaption($this->submitted_by_user_id);
                 }
                 $doc->endExportRow();
             }
@@ -1398,6 +1445,7 @@ class JdhInsurance extends DbTable
                         $doc->exportField($this->insurance_physical_address);
                         $doc->exportField($this->submission_date);
                         $doc->exportField($this->date_updated);
+                        $doc->exportField($this->submitted_by_user_id);
                     } else {
                         $doc->exportField($this->insurance_id);
                         $doc->exportField($this->insurance_name);
@@ -1406,6 +1454,7 @@ class JdhInsurance extends DbTable
                         $doc->exportField($this->insurance_contact_person_email);
                         $doc->exportField($this->submission_date);
                         $doc->exportField($this->date_updated);
+                        $doc->exportField($this->submitted_by_user_id);
                     }
                     $doc->endExportRow($rowCnt);
                 }
@@ -1420,6 +1469,57 @@ class JdhInsurance extends DbTable
         if (!$doc->ExportCustom) {
             $doc->exportTableFooter();
         }
+    }
+
+    // Add User ID filter
+    public function addUserIDFilter($filter = "", $id = "")
+    {
+        global $Security;
+        $filterWrk = "";
+        if ($id == "")
+            $id = (CurrentPageID() == "list") ? $this->CurrentAction : CurrentPageID();
+        if (!$this->userIDAllow($id) && !$Security->isAdmin()) {
+            $filterWrk = $Security->userIdList();
+            if ($filterWrk != "") {
+                $filterWrk = '`submitted_by_user_id` IN (' . $filterWrk . ')';
+            }
+        }
+
+        // Call User ID Filtering event
+        $this->userIdFiltering($filterWrk);
+        AddFilter($filter, $filterWrk);
+        return $filter;
+    }
+
+    // User ID subquery
+    public function getUserIDSubquery(&$fld, &$masterfld)
+    {
+        global $UserTable;
+        $wrk = "";
+        $sql = "SELECT " . $masterfld->Expression . " FROM `jdh_insurance`";
+        $filter = $this->addUserIDFilter("");
+        if ($filter != "") {
+            $sql .= " WHERE " . $filter;
+        }
+
+        // List all values
+        $conn = Conn($UserTable->Dbid);
+        $config = $conn->getConfiguration();
+        $config->setResultCacheImpl($this->Cache);
+        if ($rs = $conn->executeCacheQuery($sql, [], [], $this->CacheProfile)->fetchAllNumeric()) {
+            foreach ($rs as $row) {
+                if ($wrk != "") {
+                    $wrk .= ",";
+                }
+                $wrk .= QuotedValue($row[0], $masterfld->DataType, Config("USER_TABLE_DBID"));
+            }
+        }
+        if ($wrk != "") {
+            $wrk = $fld->Expression . " IN (" . $wrk . ")";
+        } else { // No User ID value found
+            $wrk = "0=1";
+        }
+        return $wrk;
     }
 
     // Get file data

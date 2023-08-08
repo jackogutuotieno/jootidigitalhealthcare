@@ -489,6 +489,7 @@ class JdhServicesAdd extends JdhServices
 
         // Set up lookup cache
         $this->setupLookupOptions($this->category_id);
+        $this->setupLookupOptions($this->subcategory_id);
 
         // Load default values for add
         $this->loadDefaultValues();
@@ -665,7 +666,7 @@ class JdhServicesAdd extends JdhServices
             if (IsApi() && $val === null) {
                 $this->subcategory_id->Visible = false; // Disable update for API request
             } else {
-                $this->subcategory_id->setFormValue($val, true, $validate);
+                $this->subcategory_id->setFormValue($val);
             }
         }
 
@@ -875,8 +876,27 @@ class JdhServicesAdd extends JdhServices
             }
 
             // subcategory_id
-            $this->subcategory_id->ViewValue = $this->subcategory_id->CurrentValue;
-            $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->ViewValue, $this->subcategory_id->formatPattern());
+            $curVal = strval($this->subcategory_id->CurrentValue);
+            if ($curVal != "") {
+                $this->subcategory_id->ViewValue = $this->subcategory_id->lookupCacheOption($curVal);
+                if ($this->subcategory_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`subcategory_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->subcategory_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->subcategory_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->subcategory_id->ViewValue = $this->subcategory_id->displayValue($arwrk);
+                    } else {
+                        $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->CurrentValue, $this->subcategory_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->subcategory_id->ViewValue = null;
+            }
 
             // service_name
             $this->service_name->ViewValue = $this->service_name->CurrentValue;
@@ -944,11 +964,30 @@ class JdhServicesAdd extends JdhServices
 
             // subcategory_id
             $this->subcategory_id->setupEditAttributes();
-            $this->subcategory_id->EditValue = HtmlEncode($this->subcategory_id->CurrentValue);
-            $this->subcategory_id->PlaceHolder = RemoveHtml($this->subcategory_id->caption());
-            if (strval($this->subcategory_id->EditValue) != "" && is_numeric($this->subcategory_id->EditValue)) {
-                $this->subcategory_id->EditValue = FormatNumber($this->subcategory_id->EditValue, null);
+            $curVal = trim(strval($this->subcategory_id->CurrentValue));
+            if ($curVal != "") {
+                $this->subcategory_id->ViewValue = $this->subcategory_id->lookupCacheOption($curVal);
+            } else {
+                $this->subcategory_id->ViewValue = $this->subcategory_id->Lookup !== null && is_array($this->subcategory_id->lookupOptions()) ? $curVal : null;
             }
+            if ($this->subcategory_id->ViewValue !== null) { // Load from cache
+                $this->subcategory_id->EditValue = array_values($this->subcategory_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`subcategory_id`", "=", $this->subcategory_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $sqlWrk = $this->subcategory_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                $this->subcategory_id->EditValue = $arwrk;
+            }
+            $this->subcategory_id->PlaceHolder = RemoveHtml($this->subcategory_id->caption());
 
             // service_name
             $this->service_name->setupEditAttributes();
@@ -1017,9 +1056,6 @@ class JdhServicesAdd extends JdhServices
             if (!$this->subcategory_id->IsDetailKey && EmptyValue($this->subcategory_id->FormValue)) {
                 $this->subcategory_id->addErrorMessage(str_replace("%s", $this->subcategory_id->caption(), $this->subcategory_id->RequiredErrorMessage));
             }
-        }
-        if (!CheckInteger($this->subcategory_id->FormValue)) {
-            $this->subcategory_id->addErrorMessage($this->subcategory_id->getErrorMessage(false));
         }
         if ($this->service_name->Required) {
             if (!$this->service_name->IsDetailKey && EmptyValue($this->service_name->FormValue)) {
@@ -1140,6 +1176,8 @@ class JdhServicesAdd extends JdhServices
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_category_id":
+                    break;
+                case "x_subcategory_id":
                     break;
                 default:
                     $lookupFilter = "";

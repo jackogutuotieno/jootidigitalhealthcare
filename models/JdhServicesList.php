@@ -641,7 +641,7 @@ class JdhServicesList extends JdhServices
 
         // Setup export options
         $this->setupExportOptions();
-        $this->service_id->setVisibility();
+        $this->service_id->Visible = false;
         $this->category_id->setVisibility();
         $this->subcategory_id->setVisibility();
         $this->service_name->setVisibility();
@@ -683,6 +683,7 @@ class JdhServicesList extends JdhServices
 
         // Set up lookup cache
         $this->setupLookupOptions($this->category_id);
+        $this->setupLookupOptions($this->subcategory_id);
 
         // Update form name to avoid conflict
         if ($this->IsModal) {
@@ -1258,7 +1259,6 @@ class JdhServicesList extends JdhServices
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
-            $this->updateSort($this->service_id); // service_id
             $this->updateSort($this->category_id); // category_id
             $this->updateSort($this->subcategory_id); // subcategory_id
             $this->updateSort($this->service_name); // service_name
@@ -1354,6 +1354,14 @@ class JdhServicesList extends JdhServices
         $item->ShowInDropDown = false;
         $item->ShowInButtonGroup = false;
 
+        // "sequence"
+        $item = &$this->ListOptions->add("sequence");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = true;
+        $item->OnLeft = true; // Always on left
+        $item->ShowInDropDown = false;
+        $item->ShowInButtonGroup = false;
+
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = true;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
@@ -1391,6 +1399,10 @@ class JdhServicesList extends JdhServices
 
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
+
+        // "sequence"
+        $opt = $this->ListOptions["sequence"];
+        $opt->Body = FormatSequenceNumber($this->RecordCount);
         $pageUrl = $this->pageUrl(false);
         if ($this->CurrentMode == "view") {
             // "view"
@@ -1519,7 +1531,6 @@ class JdhServicesList extends JdhServices
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("service_id", $this->createColumnOption("service_id"));
             $option->add("category_id", $this->createColumnOption("category_id"));
             $option->add("subcategory_id", $this->createColumnOption("subcategory_id"));
             $option->add("service_name", $this->createColumnOption("service_name"));
@@ -2018,8 +2029,27 @@ class JdhServicesList extends JdhServices
             }
 
             // subcategory_id
-            $this->subcategory_id->ViewValue = $this->subcategory_id->CurrentValue;
-            $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->ViewValue, $this->subcategory_id->formatPattern());
+            $curVal = strval($this->subcategory_id->CurrentValue);
+            if ($curVal != "") {
+                $this->subcategory_id->ViewValue = $this->subcategory_id->lookupCacheOption($curVal);
+                if ($this->subcategory_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`subcategory_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->subcategory_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->subcategory_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->subcategory_id->ViewValue = $this->subcategory_id->displayValue($arwrk);
+                    } else {
+                        $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->CurrentValue, $this->subcategory_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->subcategory_id->ViewValue = null;
+            }
 
             // service_name
             $this->service_name->ViewValue = $this->service_name->CurrentValue;
@@ -2039,10 +2069,6 @@ class JdhServicesList extends JdhServices
             // submitted_by_user_id
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
-
-            // service_id
-            $this->service_id->HrefValue = "";
-            $this->service_id->TooltipValue = "";
 
             // category_id
             $this->category_id->HrefValue = "";
@@ -2324,6 +2350,8 @@ class JdhServicesList extends JdhServices
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_category_id":
+                    break;
+                case "x_subcategory_id":
                     break;
                 default:
                     $lookupFilter = "";

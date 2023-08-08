@@ -165,13 +165,16 @@ class JdhServices extends DbTable
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
+            'SELECT' // Edit Tag
         );
         $this->subcategory_id->InputTextType = "text";
         $this->subcategory_id->Nullable = false; // NOT NULL field
         $this->subcategory_id->Required = true; // Required field
+        $this->subcategory_id->UsePleaseSelect = true; // Use PleaseSelect by default
+        $this->subcategory_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
+        $this->subcategory_id->Lookup = new Lookup('subcategory_id', 'jdh_service_subcategory', false, 'subcategory_id', ["subcategory_name","","",""], '', '', ["x_category_id"], [], ["category_id"], ["x_category_id"], [], [], '', '', "`subcategory_name`");
         $this->subcategory_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->subcategory_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->subcategory_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['subcategory_id'] = &$this->subcategory_id;
 
         // service_name $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
@@ -251,10 +254,10 @@ class JdhServices extends DbTable
             'x_date_created', // Variable name
             'date_created', // Name
             '`date_created`', // Expression
-            CastDateFieldForLike("`date_created`", 0, "DB"), // Basic search expression
+            CastDateFieldForLike("`date_created`", 11, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            0, // Date/Time format
+            11, // Date/Time format
             false, // Is upload field
             '`date_created`', // Virtual expression
             false, // Is virtual
@@ -266,7 +269,7 @@ class JdhServices extends DbTable
         $this->date_created->InputTextType = "text";
         $this->date_created->Nullable = false; // NOT NULL field
         $this->date_created->Required = true; // Required field
-        $this->date_created->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->date_created->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->date_created->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['date_created'] = &$this->date_created;
 
@@ -276,10 +279,10 @@ class JdhServices extends DbTable
             'x_date_updated', // Variable name
             'date_updated', // Name
             '`date_updated`', // Expression
-            CastDateFieldForLike("`date_updated`", 0, "DB"), // Basic search expression
+            CastDateFieldForLike("`date_updated`", 11, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            0, // Date/Time format
+            11, // Date/Time format
             false, // Is upload field
             '`date_updated`', // Virtual expression
             false, // Is virtual
@@ -291,7 +294,7 @@ class JdhServices extends DbTable
         $this->date_updated->InputTextType = "text";
         $this->date_updated->Nullable = false; // NOT NULL field
         $this->date_updated->Required = true; // Required field
-        $this->date_updated->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->date_updated->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->date_updated->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['date_updated'] = &$this->date_updated;
 
@@ -1236,8 +1239,27 @@ class JdhServices extends DbTable
         }
 
         // subcategory_id
-        $this->subcategory_id->ViewValue = $this->subcategory_id->CurrentValue;
-        $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->ViewValue, $this->subcategory_id->formatPattern());
+        $curVal = strval($this->subcategory_id->CurrentValue);
+        if ($curVal != "") {
+            $this->subcategory_id->ViewValue = $this->subcategory_id->lookupCacheOption($curVal);
+            if ($this->subcategory_id->ViewValue === null) { // Lookup from database
+                $filterWrk = SearchFilter("`subcategory_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                $sqlWrk = $this->subcategory_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                if ($ari > 0) { // Lookup values found
+                    $arwrk = $this->subcategory_id->Lookup->renderViewRow($rswrk[0]);
+                    $this->subcategory_id->ViewValue = $this->subcategory_id->displayValue($arwrk);
+                } else {
+                    $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->CurrentValue, $this->subcategory_id->formatPattern());
+                }
+            }
+        } else {
+            $this->subcategory_id->ViewValue = null;
+        }
 
         // service_name
         $this->service_name->ViewValue = $this->service_name->CurrentValue;
@@ -1322,11 +1344,7 @@ class JdhServices extends DbTable
 
         // subcategory_id
         $this->subcategory_id->setupEditAttributes();
-        $this->subcategory_id->EditValue = $this->subcategory_id->CurrentValue;
         $this->subcategory_id->PlaceHolder = RemoveHtml($this->subcategory_id->caption());
-        if (strval($this->subcategory_id->EditValue) != "" && is_numeric($this->subcategory_id->EditValue)) {
-            $this->subcategory_id->EditValue = FormatNumber($this->subcategory_id->EditValue, null);
-        }
 
         // service_name
         $this->service_name->setupEditAttributes();

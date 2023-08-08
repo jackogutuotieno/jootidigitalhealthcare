@@ -362,7 +362,7 @@ class JdhServicesDelete extends JdhServices
         // View
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->service_id->setVisibility();
+        $this->service_id->Visible = false;
         $this->category_id->setVisibility();
         $this->subcategory_id->setVisibility();
         $this->service_name->setVisibility();
@@ -396,6 +396,7 @@ class JdhServicesDelete extends JdhServices
 
         // Set up lookup cache
         $this->setupLookupOptions($this->category_id);
+        $this->setupLookupOptions($this->subcategory_id);
 
         // Set up Breadcrumb
         $this->setupBreadcrumb();
@@ -661,8 +662,27 @@ class JdhServicesDelete extends JdhServices
             }
 
             // subcategory_id
-            $this->subcategory_id->ViewValue = $this->subcategory_id->CurrentValue;
-            $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->ViewValue, $this->subcategory_id->formatPattern());
+            $curVal = strval($this->subcategory_id->CurrentValue);
+            if ($curVal != "") {
+                $this->subcategory_id->ViewValue = $this->subcategory_id->lookupCacheOption($curVal);
+                if ($this->subcategory_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`subcategory_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->subcategory_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->subcategory_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->subcategory_id->ViewValue = $this->subcategory_id->displayValue($arwrk);
+                    } else {
+                        $this->subcategory_id->ViewValue = FormatNumber($this->subcategory_id->CurrentValue, $this->subcategory_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->subcategory_id->ViewValue = null;
+            }
 
             // service_name
             $this->service_name->ViewValue = $this->service_name->CurrentValue;
@@ -682,10 +702,6 @@ class JdhServicesDelete extends JdhServices
             // submitted_by_user_id
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
-
-            // service_id
-            $this->service_id->HrefValue = "";
-            $this->service_id->TooltipValue = "";
 
             // category_id
             $this->category_id->HrefValue = "";
@@ -838,6 +854,8 @@ class JdhServicesDelete extends JdhServices
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_category_id":
+                    break;
+                case "x_subcategory_id":
                     break;
                 default:
                     $lookupFilter = "";

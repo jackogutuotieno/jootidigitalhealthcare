@@ -370,6 +370,7 @@ class JdhInsuranceDelete extends JdhInsurance
         $this->insurance_physical_address->Visible = false;
         $this->submission_date->setVisibility();
         $this->date_updated->setVisibility();
+        $this->submitted_by_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -406,6 +407,25 @@ class JdhInsuranceDelete extends JdhInsurance
 
         // Set up filter (WHERE Clause)
         $this->CurrentFilter = $filter;
+
+        // Check if valid User ID
+        $conn = $this->getConnection();
+        $sql = $this->getSql($this->CurrentFilter);
+        $rows = $conn->fetchAllAssociative($sql);
+        $res = true;
+        foreach ($rows as $row) {
+            $this->loadRowValues($row);
+            if (!$this->showOptionLink("delete")) {
+                $userIdMsg = $Language->phrase("NoDeletePermission");
+                $this->setFailureMessage($userIdMsg);
+                $res = false;
+                break;
+            }
+        }
+        if (!$res) {
+            $this->terminate("jdhinsurancelist"); // Return to list
+            return;
+        }
 
         // Get action
         if (IsApi()) {
@@ -579,6 +599,7 @@ class JdhInsuranceDelete extends JdhInsurance
         $this->insurance_physical_address->setDbValue($row['insurance_physical_address']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->date_updated->setDbValue($row['date_updated']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
     // Return a row with default values
@@ -593,6 +614,7 @@ class JdhInsuranceDelete extends JdhInsurance
         $row['insurance_physical_address'] = $this->insurance_physical_address->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['date_updated'] = $this->date_updated->DefaultValue;
+        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
     }
 
@@ -624,6 +646,8 @@ class JdhInsuranceDelete extends JdhInsurance
 
         // date_updated
 
+        // submitted_by_user_id
+
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
             // insurance_id
@@ -648,6 +672,10 @@ class JdhInsuranceDelete extends JdhInsurance
             // date_updated
             $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
             $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
+
+            // submitted_by_user_id
+            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
             // insurance_id
             $this->insurance_id->HrefValue = "";
@@ -793,6 +821,16 @@ class JdhInsuranceDelete extends JdhInsurance
             WriteJson(["success" => true, "action" => Config("API_DELETE_ACTION"), $table => $rows]);
         }
         return $deleteRows;
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->submitted_by_user_id->CurrentValue);
+        }
+        return true;
     }
 
     // Set up Breadcrumb

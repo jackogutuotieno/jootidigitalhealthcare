@@ -233,18 +233,12 @@ loadjs.ready("fjdh_usersadd", function() {
 <?php } ?>
 <?php if ($Page->biography->Visible) { // biography ?>
     <div id="r_biography"<?= $Page->biography->rowAttributes() ?>>
-        <label id="elh_jdh_users_biography" class="<?= $Page->LeftColumnClass ?>"><?= $Page->biography->caption() ?><?= $Page->biography->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <label id="elh_jdh_users_biography" for="x_biography" class="<?= $Page->LeftColumnClass ?>"><?= $Page->biography->caption() ?><?= $Page->biography->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->biography->cellAttributes() ?>>
 <span id="el_jdh_users_biography">
-<?php $Page->biography->EditAttrs->appendClass("editor"); ?>
 <textarea data-table="jdh_users" data-field="x_biography" name="x_biography" id="x_biography" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->biography->getPlaceHolder()) ?>"<?= $Page->biography->editAttributes() ?> aria-describedby="x_biography_help"><?= $Page->biography->EditValue ?></textarea>
 <?= $Page->biography->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->biography->getErrorMessage() ?></div>
-<script>
-loadjs.ready(["fjdh_usersadd", "editor"], function() {
-    ew.createEditor("fjdh_usersadd", "x_biography", 35, 4, <?= $Page->biography->ReadOnly || false ? "true" : "false" ?>);
-});
-</script>
 </span>
 </div></div>
     </div>

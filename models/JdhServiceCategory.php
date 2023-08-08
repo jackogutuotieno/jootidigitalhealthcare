@@ -158,9 +158,7 @@ class JdhServiceCategory extends DbTable
             'TEXTAREA' // Edit Tag
         );
         $this->category_description->InputTextType = "text";
-        $this->category_description->Nullable = false; // NOT NULL field
-        $this->category_description->Required = true; // Required field
-        $this->category_description->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->category_description->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
         $this->Fields['category_description'] = &$this->category_description;
 
         // Add Doctrine Cache

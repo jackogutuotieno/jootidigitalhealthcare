@@ -867,7 +867,7 @@ class JdhServiceCategoryAdd extends JdhServiceCategory
         $this->category_name->setDbValueDef($rsnew, $this->category_name->CurrentValue, "", false);
 
         // category_description
-        $this->category_description->setDbValueDef($rsnew, $this->category_description->CurrentValue, "", false);
+        $this->category_description->setDbValueDef($rsnew, $this->category_description->CurrentValue, null, false);
 
         // Update current values
         $this->setCurrentValues($rsnew);

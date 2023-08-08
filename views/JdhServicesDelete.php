@@ -50,9 +50,6 @@ $Page->showMessage();
 <table class="<?= $Page->TableClass ?>">
     <thead>
     <tr class="ew-table-header">
-<?php if ($Page->service_id->Visible) { // service_id ?>
-        <th class="<?= $Page->service_id->headerCellClass() ?>"><span id="elh_jdh_services_service_id" class="jdh_services_service_id"><?= $Page->service_id->caption() ?></span></th>
-<?php } ?>
 <?php if ($Page->category_id->Visible) { // category_id ?>
         <th class="<?= $Page->category_id->headerCellClass() ?>"><span id="elh_jdh_services_category_id" class="jdh_services_category_id"><?= $Page->category_id->caption() ?></span></th>
 <?php } ?>
@@ -92,14 +89,6 @@ while (!$Page->Recordset->EOF) {
     $Page->renderRow();
 ?>
     <tr <?= $Page->rowAttributes() ?>>
-<?php if ($Page->service_id->Visible) { // service_id ?>
-        <td<?= $Page->service_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_service_id" class="el_jdh_services_service_id">
-<span<?= $Page->service_id->viewAttributes() ?>>
-<?= $Page->service_id->getViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
 <?php if ($Page->category_id->Visible) { // category_id ?>
         <td<?= $Page->category_id->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_services_category_id" class="el_jdh_services_category_id">

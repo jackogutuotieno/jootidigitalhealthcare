@@ -513,6 +513,7 @@ class JdhInsuranceView extends JdhInsurance
         $this->insurance_physical_address->setVisibility();
         $this->submission_date->setVisibility();
         $this->date_updated->setVisibility();
+        $this->submitted_by_user_id->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -669,7 +670,7 @@ class JdhInsuranceView extends JdhInsurance
         } else {
             $item->Body = "<a class=\"ew-action ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("ViewPageEditLink") . "</a>";
         }
-        $item->Visible = $this->EditUrl != "" && $Security->canEdit();
+        $item->Visible = $this->EditUrl != "" && $Security->canEdit() && $this->showOptionLink("edit");
 
         // Copy
         $item = &$option->add("copy");
@@ -679,7 +680,7 @@ class JdhInsuranceView extends JdhInsurance
         } else {
             $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
         }
-        $item->Visible = $this->CopyUrl != "" && $Security->canAdd();
+        $item->Visible = $this->CopyUrl != "" && $Security->canAdd() && $this->showOptionLink("add");
 
         // Delete
         $item = &$option->add("delete");
@@ -688,7 +689,7 @@ class JdhInsuranceView extends JdhInsurance
             ($this->InlineDelete || $this->IsModal ? " data-ew-action=\"inline-delete\"" : "") .
             " title=\"" . HtmlTitle($Language->phrase("ViewPageDeleteLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("ViewPageDeleteLink")) .
             "\" href=\"" . HtmlEncode($url) . "\">" . $Language->phrase("ViewPageDeleteLink") . "</a>";
-        $item->Visible = $this->DeleteUrl != "" && $Security->canDelete();
+        $item->Visible = $this->DeleteUrl != "" && $Security->canDelete() && $this->showOptionLink("delete");
 
         // Set up action default
         $option = $options["action"];
@@ -793,6 +794,7 @@ class JdhInsuranceView extends JdhInsurance
         $this->insurance_physical_address->setDbValue($row['insurance_physical_address']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->date_updated->setDbValue($row['date_updated']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
     // Return a row with default values
@@ -807,6 +809,7 @@ class JdhInsuranceView extends JdhInsurance
         $row['insurance_physical_address'] = $this->insurance_physical_address->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['date_updated'] = $this->date_updated->DefaultValue;
+        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
     }
 
@@ -844,6 +847,8 @@ class JdhInsuranceView extends JdhInsurance
 
         // date_updated
 
+        // submitted_by_user_id
+
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
             // insurance_id
@@ -871,6 +876,10 @@ class JdhInsuranceView extends JdhInsurance
             // date_updated
             $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
             $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
+
+            // submitted_by_user_id
+            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
             // insurance_id
             $this->insurance_id->HrefValue = "";
@@ -919,6 +928,10 @@ class JdhInsuranceView extends JdhInsurance
             // date_updated
             $this->date_updated->HrefValue = "";
             $this->date_updated->TooltipValue = "";
+
+            // submitted_by_user_id
+            $this->submitted_by_user_id->HrefValue = "";
+            $this->submitted_by_user_id->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -1101,6 +1114,16 @@ class JdhInsuranceView extends JdhInsurance
 
         // Call Page Exported server event
         $this->pageExported($doc);
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->submitted_by_user_id->CurrentValue);
+        }
+        return true;
     }
 
     // Set up Breadcrumb

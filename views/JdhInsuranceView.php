@@ -151,6 +151,17 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
+    <tr id="r_submitted_by_user_id"<?= $Page->submitted_by_user_id->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_insurance_submitted_by_user_id"><?= $Page->submitted_by_user_id->caption() ?></span></td>
+        <td data-name="submitted_by_user_id"<?= $Page->submitted_by_user_id->cellAttributes() ?>>
+<span id="el_jdh_insurance_submitted_by_user_id">
+<span<?= $Page->submitted_by_user_id->viewAttributes() ?>>
+<?= $Page->submitted_by_user_id->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 </table>
 </form>
 </main>

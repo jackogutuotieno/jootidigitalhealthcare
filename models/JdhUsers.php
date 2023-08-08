@@ -394,7 +394,7 @@ class JdhUsers extends DbTable
         $this->role_id->UsePleaseSelect = true; // Use PleaseSelect by default
         $this->role_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
         $this->role_id->Lookup = new Lookup('role_id', 'jdh_roles', false, 'role_id', ["role_id","","",""], '', '', [], [], [], [], [], [], '', '', "`role_id`");
-        $this->role_id->OptionCount = 8;
+        $this->role_id->OptionCount = 9;
         $this->role_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->role_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['role_id'] = &$this->role_id;

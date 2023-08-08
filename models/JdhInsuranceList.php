@@ -448,6 +448,9 @@ class JdhInsuranceList extends JdhInsurance
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
             $this->insurance_id->Visible = false;
         }
+        if ($this->isAddOrEdit()) {
+            $this->submitted_by_user_id->Visible = false;
+        }
     }
 
     // Lookup data
@@ -649,6 +652,7 @@ class JdhInsuranceList extends JdhInsurance
         $this->insurance_physical_address->Visible = false;
         $this->submission_date->setVisibility();
         $this->date_updated->setVisibility();
+        $this->submitted_by_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -1023,6 +1027,7 @@ class JdhInsuranceList extends JdhInsurance
         $filterList = Concat($filterList, $this->insurance_physical_address->AdvancedSearch->toJson(), ","); // Field insurance_physical_address
         $filterList = Concat($filterList, $this->submission_date->AdvancedSearch->toJson(), ","); // Field submission_date
         $filterList = Concat($filterList, $this->date_updated->AdvancedSearch->toJson(), ","); // Field date_updated
+        $filterList = Concat($filterList, $this->submitted_by_user_id->AdvancedSearch->toJson(), ","); // Field submitted_by_user_id
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
             $filterList = Concat($filterList, $wrk, ",");
@@ -1126,6 +1131,14 @@ class JdhInsuranceList extends JdhInsurance
         $this->date_updated->AdvancedSearch->SearchValue2 = @$filter["y_date_updated"];
         $this->date_updated->AdvancedSearch->SearchOperator2 = @$filter["w_date_updated"];
         $this->date_updated->AdvancedSearch->save();
+
+        // Field submitted_by_user_id
+        $this->submitted_by_user_id->AdvancedSearch->SearchValue = @$filter["x_submitted_by_user_id"];
+        $this->submitted_by_user_id->AdvancedSearch->SearchOperator = @$filter["z_submitted_by_user_id"];
+        $this->submitted_by_user_id->AdvancedSearch->SearchCondition = @$filter["v_submitted_by_user_id"];
+        $this->submitted_by_user_id->AdvancedSearch->SearchValue2 = @$filter["y_submitted_by_user_id"];
+        $this->submitted_by_user_id->AdvancedSearch->SearchOperator2 = @$filter["w_submitted_by_user_id"];
+        $this->submitted_by_user_id->AdvancedSearch->save();
         $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
     }
@@ -1287,6 +1300,7 @@ class JdhInsuranceList extends JdhInsurance
                 $this->insurance_physical_address->setSort("");
                 $this->submission_date->setSort("");
                 $this->date_updated->setSort("");
+                $this->submitted_by_user_id->setSort("");
             }
 
             // Reset start position
@@ -1385,7 +1399,7 @@ class JdhInsuranceList extends JdhInsurance
             // "view"
             $opt = $this->ListOptions["view"];
             $viewcaption = HtmlTitle($Language->phrase("ViewLink"));
-            if ($Security->canView()) {
+            if ($Security->canView() && $this->showOptionLink("view")) {
                 if ($this->ModalView && !IsMobile()) {
                     $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_insurance\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
                 } else {
@@ -1398,7 +1412,7 @@ class JdhInsuranceList extends JdhInsurance
             // "edit"
             $opt = $this->ListOptions["edit"];
             $editcaption = HtmlTitle($Language->phrase("EditLink"));
-            if ($Security->canEdit()) {
+            if ($Security->canEdit() && $this->showOptionLink("edit")) {
                 if ($this->ModalEdit && !IsMobile()) {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_insurance\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
@@ -1411,7 +1425,7 @@ class JdhInsuranceList extends JdhInsurance
             // "copy"
             $opt = $this->ListOptions["copy"];
             $copycaption = HtmlTitle($Language->phrase("CopyLink"));
-            if ($Security->canAdd()) {
+            if ($Security->canAdd() && $this->showOptionLink("add")) {
                 if ($this->ModalAdd && !IsMobile()) {
                     $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_insurance\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
                 } else {
@@ -1904,6 +1918,7 @@ class JdhInsuranceList extends JdhInsurance
         $this->insurance_physical_address->setDbValue($row['insurance_physical_address']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->date_updated->setDbValue($row['date_updated']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
     // Return a row with default values
@@ -1918,6 +1933,7 @@ class JdhInsuranceList extends JdhInsurance
         $row['insurance_physical_address'] = $this->insurance_physical_address->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['date_updated'] = $this->date_updated->DefaultValue;
+        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
     }
 
@@ -1974,6 +1990,8 @@ class JdhInsuranceList extends JdhInsurance
 
         // date_updated
 
+        // submitted_by_user_id
+
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
             // insurance_id
@@ -1998,6 +2016,10 @@ class JdhInsuranceList extends JdhInsurance
             // date_updated
             $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
             $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
+
+            // submitted_by_user_id
+            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
             // insurance_id
             $this->insurance_id->HrefValue = "";
@@ -2273,6 +2295,16 @@ class JdhInsuranceList extends JdhInsurance
 
         // Call Page Exported server event
         $this->pageExported($doc);
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->submitted_by_user_id->CurrentValue);
+        }
+        return true;
     }
 
     // Set up Breadcrumb

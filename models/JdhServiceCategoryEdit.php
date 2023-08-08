@@ -930,7 +930,7 @@ class JdhServiceCategoryEdit extends JdhServiceCategory
         $this->category_name->setDbValueDef($rsnew, $this->category_name->CurrentValue, "", $this->category_name->ReadOnly);
 
         // category_description
-        $this->category_description->setDbValueDef($rsnew, $this->category_description->CurrentValue, "", $this->category_description->ReadOnly);
+        $this->category_description->setDbValueDef($rsnew, $this->category_description->CurrentValue, null, $this->category_description->ReadOnly);
 
         // Update current values
         $this->setCurrentValues($rsnew);

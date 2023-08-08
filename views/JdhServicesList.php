@@ -149,9 +149,6 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
-<?php if ($Page->service_id->Visible) { // service_id ?>
-        <th data-name="service_id" class="<?= $Page->service_id->headerCellClass() ?>"><div id="elh_jdh_services_service_id" class="jdh_services_service_id"><?= $Page->renderFieldHeader($Page->service_id) ?></div></th>
-<?php } ?>
 <?php if ($Page->category_id->Visible) { // category_id ?>
         <th data-name="category_id" class="<?= $Page->category_id->headerCellClass() ?>"><div id="elh_jdh_services_category_id" class="jdh_services_category_id"><?= $Page->renderFieldHeader($Page->category_id) ?></div></th>
 <?php } ?>
@@ -189,14 +186,6 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
-    <?php if ($Page->service_id->Visible) { // service_id ?>
-        <td data-name="service_id"<?= $Page->service_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_service_id" class="el_jdh_services_service_id">
-<span<?= $Page->service_id->viewAttributes() ?>>
-<?= $Page->service_id->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
     <?php if ($Page->category_id->Visible) { // category_id ?>
         <td data-name="category_id"<?= $Page->category_id->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_services_category_id" class="el_jdh_services_category_id">

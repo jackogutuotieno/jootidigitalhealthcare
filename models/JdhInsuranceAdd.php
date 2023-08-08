@@ -463,6 +463,7 @@ class JdhInsuranceAdd extends JdhInsurance
         $this->insurance_physical_address->setVisibility();
         $this->submission_date->Visible = false;
         $this->date_updated->Visible = false;
+        $this->submitted_by_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -733,6 +734,15 @@ class JdhInsuranceAdd extends JdhInsurance
             $res = true;
             $this->loadRowValues($row); // Load row values
         }
+
+        // Check if valid User ID
+        if ($res) {
+            $res = $this->showOptionLink("add");
+            if (!$res) {
+                $userIdMsg = DeniedMessage();
+                $this->setFailureMessage($userIdMsg);
+            }
+        }
         return $res;
     }
 
@@ -765,6 +775,7 @@ class JdhInsuranceAdd extends JdhInsurance
         $this->insurance_physical_address->setDbValue($row['insurance_physical_address']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->date_updated->setDbValue($row['date_updated']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
     // Return a row with default values
@@ -779,6 +790,7 @@ class JdhInsuranceAdd extends JdhInsurance
         $row['insurance_physical_address'] = $this->insurance_physical_address->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['date_updated'] = $this->date_updated->DefaultValue;
+        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
     }
 
@@ -837,6 +849,9 @@ class JdhInsuranceAdd extends JdhInsurance
         // date_updated
         $this->date_updated->RowCssClass = "row";
 
+        // submitted_by_user_id
+        $this->submitted_by_user_id->RowCssClass = "row";
+
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
             // insurance_id
@@ -864,6 +879,10 @@ class JdhInsuranceAdd extends JdhInsurance
             // date_updated
             $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
             $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
+
+            // submitted_by_user_id
+            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
             // insurance_name
             $this->insurance_name->HrefValue = "";
@@ -1047,6 +1066,11 @@ class JdhInsuranceAdd extends JdhInsurance
         // insurance_physical_address
         $this->insurance_physical_address->setDbValueDef($rsnew, $this->insurance_physical_address->CurrentValue, "", false);
 
+        // submitted_by_user_id
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['submitted_by_user_id'] = CurrentUserID();
+        }
+
         // Update current values
         $this->setCurrentValues($rsnew);
         $conn = $this->getConnection();
@@ -1085,6 +1109,16 @@ class JdhInsuranceAdd extends JdhInsurance
             WriteJson(["success" => true, "action" => Config("API_ADD_ACTION"), $table => $row]);
         }
         return $addRow;
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->submitted_by_user_id->CurrentValue);
+        }
+        return true;
     }
 
     // Set up Breadcrumb
