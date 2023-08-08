@@ -327,6 +327,30 @@ loadjs.ready("fjdh_patientsedit", function() {
 <?php } ?>
 <?php include_once "JdhChiefComplaintsGrid.php" ?>
 <?php } ?>
+<?php
+    if (in_array("jdh_examination_findings", explode(",", $Page->getCurrentDetailTable())) && $jdh_examination_findings->DetailEdit) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_examination_findings", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhExaminationFindingsGrid.php" ?>
+<?php } ?>
+<?php
+    if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailEdit) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhTestReportsGrid.php" ?>
+<?php } ?>
+<?php
+    if (in_array("jdh_prescriptions", explode(",", $Page->getCurrentDetailTable())) && $jdh_prescriptions->DetailEdit) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_prescriptions", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhPrescriptionsGrid.php" ?>
+<?php } ?>
 <?= $Page->IsModal ? '<template class="ew-modal-buttons">' : '<div class="row ew-buttons">' ?><!-- buttons .row -->
     <div class="<?= $Page->OffsetColumnClass ?>"><!-- buttons offset -->
 <button class="btn btn-primary ew-btn" name="btn-action" id="btn-action" type="submit" form="fjdh_patientsedit"><?= $Language->phrase("SaveBtn") ?></button>

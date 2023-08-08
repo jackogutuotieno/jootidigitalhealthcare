@@ -652,6 +652,7 @@ class JdhAppointmentsList extends JdhAppointments
         $this->appointment_title->setVisibility();
         $this->appointment_start_date->setVisibility();
         $this->appointment_end_date->setVisibility();
+        $this->appointment_all_day->setVisibility();
         $this->appointment_description->Visible = false;
         $this->submission_date->setVisibility();
         $this->subbmitted_by_user_id->Visible = false;
@@ -691,6 +692,7 @@ class JdhAppointmentsList extends JdhAppointments
 
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
+        $this->setupLookupOptions($this->appointment_all_day);
 
         // Update form name to avoid conflict
         if ($this->IsModal) {
@@ -1059,6 +1061,7 @@ class JdhAppointmentsList extends JdhAppointments
         $filterList = Concat($filterList, $this->appointment_title->AdvancedSearch->toJson(), ","); // Field appointment_title
         $filterList = Concat($filterList, $this->appointment_start_date->AdvancedSearch->toJson(), ","); // Field appointment_start_date
         $filterList = Concat($filterList, $this->appointment_end_date->AdvancedSearch->toJson(), ","); // Field appointment_end_date
+        $filterList = Concat($filterList, $this->appointment_all_day->AdvancedSearch->toJson(), ","); // Field appointment_all_day
         $filterList = Concat($filterList, $this->appointment_description->AdvancedSearch->toJson(), ","); // Field appointment_description
         $filterList = Concat($filterList, $this->submission_date->AdvancedSearch->toJson(), ","); // Field submission_date
         $filterList = Concat($filterList, $this->subbmitted_by_user_id->AdvancedSearch->toJson(), ","); // Field subbmitted_by_user_id
@@ -1141,6 +1144,14 @@ class JdhAppointmentsList extends JdhAppointments
         $this->appointment_end_date->AdvancedSearch->SearchValue2 = @$filter["y_appointment_end_date"];
         $this->appointment_end_date->AdvancedSearch->SearchOperator2 = @$filter["w_appointment_end_date"];
         $this->appointment_end_date->AdvancedSearch->save();
+
+        // Field appointment_all_day
+        $this->appointment_all_day->AdvancedSearch->SearchValue = @$filter["x_appointment_all_day"];
+        $this->appointment_all_day->AdvancedSearch->SearchOperator = @$filter["z_appointment_all_day"];
+        $this->appointment_all_day->AdvancedSearch->SearchCondition = @$filter["v_appointment_all_day"];
+        $this->appointment_all_day->AdvancedSearch->SearchValue2 = @$filter["y_appointment_all_day"];
+        $this->appointment_all_day->AdvancedSearch->SearchOperator2 = @$filter["w_appointment_all_day"];
+        $this->appointment_all_day->AdvancedSearch->save();
 
         // Field appointment_description
         $this->appointment_description->AdvancedSearch->SearchValue = @$filter["x_appointment_description"];
@@ -1289,6 +1300,7 @@ class JdhAppointmentsList extends JdhAppointments
             $this->updateSort($this->appointment_title); // appointment_title
             $this->updateSort($this->appointment_start_date); // appointment_start_date
             $this->updateSort($this->appointment_end_date); // appointment_end_date
+            $this->updateSort($this->appointment_all_day); // appointment_all_day
             $this->updateSort($this->submission_date); // submission_date
             $this->setStartRecordNumber(1); // Reset start position
         }
@@ -1327,6 +1339,7 @@ class JdhAppointmentsList extends JdhAppointments
                 $this->appointment_title->setSort("");
                 $this->appointment_start_date->setSort("");
                 $this->appointment_end_date->setSort("");
+                $this->appointment_all_day->setSort("");
                 $this->appointment_description->setSort("");
                 $this->submission_date->setSort("");
                 $this->subbmitted_by_user_id->setSort("");
@@ -1428,7 +1441,7 @@ class JdhAppointmentsList extends JdhAppointments
             // "view"
             $opt = $this->ListOptions["view"];
             $viewcaption = HtmlTitle($Language->phrase("ViewLink"));
-            if ($Security->canView()) {
+            if ($Security->canView() && $this->showOptionLink("view")) {
                 if ($this->ModalView && !IsMobile()) {
                     $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_appointments\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
                 } else {
@@ -1441,7 +1454,7 @@ class JdhAppointmentsList extends JdhAppointments
             // "edit"
             $opt = $this->ListOptions["edit"];
             $editcaption = HtmlTitle($Language->phrase("EditLink"));
-            if ($Security->canEdit()) {
+            if ($Security->canEdit() && $this->showOptionLink("edit")) {
                 if ($this->ModalEdit && !IsMobile()) {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_appointments\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
@@ -1454,7 +1467,7 @@ class JdhAppointmentsList extends JdhAppointments
             // "copy"
             $opt = $this->ListOptions["copy"];
             $copycaption = HtmlTitle($Language->phrase("CopyLink"));
-            if ($Security->canAdd()) {
+            if ($Security->canAdd() && $this->showOptionLink("add")) {
                 if ($this->ModalAdd && !IsMobile()) {
                     $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_appointments\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
                 } else {
@@ -1556,6 +1569,7 @@ class JdhAppointmentsList extends JdhAppointments
             $option->add("appointment_title", $this->createColumnOption("appointment_title"));
             $option->add("appointment_start_date", $this->createColumnOption("appointment_start_date"));
             $option->add("appointment_end_date", $this->createColumnOption("appointment_end_date"));
+            $option->add("appointment_all_day", $this->createColumnOption("appointment_all_day"));
             $option->add("submission_date", $this->createColumnOption("submission_date"));
         }
 
@@ -1943,6 +1957,7 @@ class JdhAppointmentsList extends JdhAppointments
         $this->appointment_title->setDbValue($row['appointment_title']);
         $this->appointment_start_date->setDbValue($row['appointment_start_date']);
         $this->appointment_end_date->setDbValue($row['appointment_end_date']);
+        $this->appointment_all_day->setDbValue($row['appointment_all_day']);
         $this->appointment_description->setDbValue($row['appointment_description']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
@@ -1957,6 +1972,7 @@ class JdhAppointmentsList extends JdhAppointments
         $row['appointment_title'] = $this->appointment_title->DefaultValue;
         $row['appointment_start_date'] = $this->appointment_start_date->DefaultValue;
         $row['appointment_end_date'] = $this->appointment_end_date->DefaultValue;
+        $row['appointment_all_day'] = $this->appointment_all_day->DefaultValue;
         $row['appointment_description'] = $this->appointment_description->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['subbmitted_by_user_id'] = $this->subbmitted_by_user_id->DefaultValue;
@@ -2010,6 +2026,8 @@ class JdhAppointmentsList extends JdhAppointments
 
         // appointment_end_date
 
+        // appointment_all_day
+
         // appointment_description
 
         // submission_date
@@ -2055,6 +2073,13 @@ class JdhAppointmentsList extends JdhAppointments
             $this->appointment_end_date->ViewValue = $this->appointment_end_date->CurrentValue;
             $this->appointment_end_date->ViewValue = FormatDateTime($this->appointment_end_date->ViewValue, $this->appointment_end_date->formatPattern());
 
+            // appointment_all_day
+            if (ConvertToBool($this->appointment_all_day->CurrentValue)) {
+                $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(1) != "" ? $this->appointment_all_day->tagCaption(1) : "Yes";
+            } else {
+                $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(2) != "" ? $this->appointment_all_day->tagCaption(2) : "No";
+            }
+
             // submission_date
             $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
             $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
@@ -2082,6 +2107,10 @@ class JdhAppointmentsList extends JdhAppointments
             // appointment_end_date
             $this->appointment_end_date->HrefValue = "";
             $this->appointment_end_date->TooltipValue = "";
+
+            // appointment_all_day
+            $this->appointment_all_day->HrefValue = "";
+            $this->appointment_all_day->TooltipValue = "";
 
             // submission_date
             $this->submission_date->HrefValue = "";
@@ -2632,6 +2661,16 @@ class JdhAppointmentsList extends JdhAppointments
         $this->pageExported($doc);
     }
 
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->subbmitted_by_user_id->CurrentValue);
+        }
+        return true;
+    }
+
     // Set up master/detail based on QueryString
     protected function setupMasterParms()
     {
@@ -2732,6 +2771,8 @@ class JdhAppointmentsList extends JdhAppointments
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_patient_id":
+                    break;
+                case "x_appointment_all_day":
                     break;
                 default:
                     $lookupFilter = "";

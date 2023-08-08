@@ -523,6 +523,10 @@ class JdhTestReportsAdd extends JdhTestReports
         // Load old record or default values
         $rsold = $this->loadOldRecord();
 
+        // Set up master/detail parameters
+        // NOTE: Must be after loadOldRecord to prevent master key values being overwritten
+        $this->setupMasterParms();
+
         // Load form values
         if ($postBack) {
             $this->loadFormValues(); // Load form values
@@ -740,6 +744,15 @@ class JdhTestReportsAdd extends JdhTestReports
             $res = true;
             $this->loadRowValues($row); // Load row values
         }
+
+        // Check if valid User ID
+        if ($res) {
+            $res = $this->showOptionLink("add");
+            if (!$res) {
+                $userIdMsg = DeniedMessage();
+                $this->setFailureMessage($userIdMsg);
+            }
+        }
         return $res;
     }
 
@@ -925,38 +938,69 @@ class JdhTestReportsAdd extends JdhTestReports
         } elseif ($this->RowType == ROWTYPE_ADD) {
             // request_id
             $this->request_id->setupEditAttributes();
-            $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
-            $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
-            if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
-                $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
+            if ($this->request_id->getSessionValue() != "") {
+                $this->request_id->CurrentValue = GetForeignKeyValue($this->request_id->getSessionValue());
+                $this->request_id->ViewValue = $this->request_id->CurrentValue;
+                $this->request_id->ViewValue = FormatNumber($this->request_id->ViewValue, $this->request_id->formatPattern());
+            } else {
+                $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
+                $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
+                if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
+                    $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
+                }
             }
 
             // patient_id
             $this->patient_id->setupEditAttributes();
-            $curVal = trim(strval($this->patient_id->CurrentValue));
-            if ($curVal != "") {
-                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-            } else {
-                $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
-            }
-            if ($this->patient_id->ViewValue !== null) { // Load from cache
-                $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
-            } else { // Lookup from database
-                if ($curVal == "") {
-                    $filterWrk = "0=1";
+            if ($this->patient_id->getSessionValue() != "") {
+                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
+                $curVal = strval($this->patient_id->CurrentValue);
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                    if ($this->patient_id->ViewValue === null) { // Lookup from database
+                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $conn = Conn();
+                        $config = $conn->getConfiguration();
+                        $config->setResultCacheImpl($this->Cache);
+                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                        $ari = count($rswrk);
+                        if ($ari > 0) { // Lookup values found
+                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
+                        } else {
+                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                        }
+                    }
                 } else {
-                    $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $this->patient_id->ViewValue = null;
                 }
-                $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                $arwrk = $rswrk;
-                $this->patient_id->EditValue = $arwrk;
+            } else {
+                $curVal = trim(strval($this->patient_id->CurrentValue));
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                } else {
+                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
+                }
+                if ($this->patient_id->ViewValue !== null) { // Load from cache
+                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
+                } else { // Lookup from database
+                    if ($curVal == "") {
+                        $filterWrk = "0=1";
+                    } else {
+                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
+                    }
+                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    $arwrk = $rswrk;
+                    $this->patient_id->EditValue = $arwrk;
+                }
+                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
             }
-            $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
 
             // report_findings
             $this->report_findings->setupEditAttributes();
@@ -977,10 +1021,16 @@ class JdhTestReportsAdd extends JdhTestReports
 
             // report_submittedby_user_id
             $this->report_submittedby_user_id->setupEditAttributes();
-            $this->report_submittedby_user_id->EditValue = HtmlEncode($this->report_submittedby_user_id->CurrentValue);
-            $this->report_submittedby_user_id->PlaceHolder = RemoveHtml($this->report_submittedby_user_id->caption());
-            if (strval($this->report_submittedby_user_id->EditValue) != "" && is_numeric($this->report_submittedby_user_id->EditValue)) {
-                $this->report_submittedby_user_id->EditValue = FormatNumber($this->report_submittedby_user_id->EditValue, null);
+            if (!$Security->isAdmin() && $Security->isLoggedIn() && !$this->userIDAllow("add")) { // Non system admin
+                $this->report_submittedby_user_id->CurrentValue = CurrentUserID();
+                $this->report_submittedby_user_id->EditValue = $this->report_submittedby_user_id->CurrentValue;
+                $this->report_submittedby_user_id->EditValue = FormatNumber($this->report_submittedby_user_id->EditValue, $this->report_submittedby_user_id->formatPattern());
+            } else {
+                $this->report_submittedby_user_id->EditValue = HtmlEncode($this->report_submittedby_user_id->CurrentValue);
+                $this->report_submittedby_user_id->PlaceHolder = RemoveHtml($this->report_submittedby_user_id->caption());
+                if (strval($this->report_submittedby_user_id->EditValue) != "" && is_numeric($this->report_submittedby_user_id->EditValue)) {
+                    $this->report_submittedby_user_id->EditValue = FormatNumber($this->report_submittedby_user_id->EditValue, null);
+                }
             }
 
             // report_date
@@ -1126,6 +1176,40 @@ class JdhTestReportsAdd extends JdhTestReports
 
         // Update current values
         $this->setCurrentValues($rsnew);
+
+        // Check if valid User ID
+        if (
+            !EmptyValue($Security->currentUserID()) &&
+            !$Security->isAdmin() && // Non system admin
+            !$Security->isValidUserID($this->report_submittedby_user_id->CurrentValue)
+        ) {
+            $userIdMsg = str_replace("%c", CurrentUserID(), $Language->phrase("UnAuthorizedUserID"));
+            $userIdMsg = str_replace("%u", strval($this->report_submittedby_user_id->CurrentValue), $userIdMsg);
+            $this->setFailureMessage($userIdMsg);
+            return false;
+        }
+
+        // Check if valid key values for master user
+        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
+            $detailKeys = [];
+            $detailKeys["request_id"] = $this->request_id->CurrentValue;
+            $masterTable = Container("jdh_test_requests");
+            $masterFilter = $this->getMasterFilter($masterTable, $detailKeys);
+            if (!EmptyValue($masterFilter)) {
+                $validMasterKey = true;
+                if ($rsmaster = $masterTable->loadRs($masterFilter)->fetchAssociative()) {
+                    $validMasterKey = $Security->isValidUserID($rsmaster['requested_by_user_id']);
+                } elseif ($this->getCurrentMasterTable() == "jdh_test_requests") {
+                    $validMasterKey = false;
+                }
+                if (!$validMasterKey) {
+                    $masterUserIdMsg = str_replace("%c", CurrentUserID(), $Language->phrase("UnAuthorizedMasterUserID"));
+                    $masterUserIdMsg = str_replace("%f", $masterFilter, $masterUserIdMsg);
+                    $this->setFailureMessage($masterUserIdMsg);
+                    return false;
+                }
+            }
+        }
         $conn = $this->getConnection();
 
         // Load db values from old row
@@ -1162,6 +1246,118 @@ class JdhTestReportsAdd extends JdhTestReports
             WriteJson(["success" => true, "action" => Config("API_ADD_ACTION"), $table => $row]);
         }
         return $addRow;
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->report_submittedby_user_id->CurrentValue);
+        }
+        return true;
+    }
+
+    // Set up master/detail based on QueryString
+    protected function setupMasterParms()
+    {
+        $validMaster = false;
+        // Get the keys for master table
+        if (($master = Get(Config("TABLE_SHOW_MASTER"), Get(Config("TABLE_MASTER")))) !== null) {
+            $masterTblVar = $master;
+            if ($masterTblVar == "") {
+                $validMaster = true;
+                $this->DbMasterFilter = "";
+                $this->DbDetailFilter = "";
+            }
+            if ($masterTblVar == "jdh_test_requests") {
+                $validMaster = true;
+                $masterTbl = Container("jdh_test_requests");
+                if (($parm = Get("fk_request_id", Get("request_id"))) !== null) {
+                    $masterTbl->request_id->setQueryStringValue($parm);
+                    $this->request_id->QueryStringValue = $masterTbl->request_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
+                    $this->request_id->setSessionValue($this->request_id->QueryStringValue);
+                    if (!is_numeric($masterTbl->request_id->QueryStringValue)) {
+                        $validMaster = false;
+                    }
+                } else {
+                    $validMaster = false;
+                }
+            }
+            if ($masterTblVar == "jdh_patients") {
+                $validMaster = true;
+                $masterTbl = Container("jdh_patients");
+                if (($parm = Get("fk_patient_id", Get("patient_id"))) !== null) {
+                    $masterTbl->patient_id->setQueryStringValue($parm);
+                    $this->patient_id->QueryStringValue = $masterTbl->patient_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
+                    $this->patient_id->setSessionValue($this->patient_id->QueryStringValue);
+                    if (!is_numeric($masterTbl->patient_id->QueryStringValue)) {
+                        $validMaster = false;
+                    }
+                } else {
+                    $validMaster = false;
+                }
+            }
+        } elseif (($master = Post(Config("TABLE_SHOW_MASTER"), Post(Config("TABLE_MASTER")))) !== null) {
+            $masterTblVar = $master;
+            if ($masterTblVar == "") {
+                    $validMaster = true;
+                    $this->DbMasterFilter = "";
+                    $this->DbDetailFilter = "";
+            }
+            if ($masterTblVar == "jdh_test_requests") {
+                $validMaster = true;
+                $masterTbl = Container("jdh_test_requests");
+                if (($parm = Post("fk_request_id", Post("request_id"))) !== null) {
+                    $masterTbl->request_id->setFormValue($parm);
+                    $this->request_id->setFormValue($masterTbl->request_id->FormValue);
+                    $this->request_id->setSessionValue($this->request_id->FormValue);
+                    if (!is_numeric($masterTbl->request_id->FormValue)) {
+                        $validMaster = false;
+                    }
+                } else {
+                    $validMaster = false;
+                }
+            }
+            if ($masterTblVar == "jdh_patients") {
+                $validMaster = true;
+                $masterTbl = Container("jdh_patients");
+                if (($parm = Post("fk_patient_id", Post("patient_id"))) !== null) {
+                    $masterTbl->patient_id->setFormValue($parm);
+                    $this->patient_id->setFormValue($masterTbl->patient_id->FormValue);
+                    $this->patient_id->setSessionValue($this->patient_id->FormValue);
+                    if (!is_numeric($masterTbl->patient_id->FormValue)) {
+                        $validMaster = false;
+                    }
+                } else {
+                    $validMaster = false;
+                }
+            }
+        }
+        if ($validMaster) {
+            // Save current master table
+            $this->setCurrentMasterTable($masterTblVar);
+
+            // Reset start record counter (new master key)
+            if (!$this->isAddOrEdit()) {
+                $this->StartRecord = 1;
+                $this->setStartRecordNumber($this->StartRecord);
+            }
+
+            // Clear previous master key from Session
+            if ($masterTblVar != "jdh_test_requests") {
+                if ($this->request_id->CurrentValue == "") {
+                    $this->request_id->setSessionValue("");
+                }
+            }
+            if ($masterTblVar != "jdh_patients") {
+                if ($this->patient_id->CurrentValue == "") {
+                    $this->patient_id->setSessionValue("");
+                }
+            }
+        }
+        $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Get master filter from session
+        $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Get detail filter from session
     }
 
     // Set up Breadcrumb

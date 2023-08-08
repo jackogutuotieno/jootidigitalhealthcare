@@ -35,6 +35,14 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
     // CSS class/style
     public $CurrentPageName = "jdhprescriptionsadd";
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -462,8 +470,8 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
         $this->tabs->setVisibility();
         $this->frequency->setVisibility();
         $this->prescription_time->setVisibility();
-        $this->prescription_date->setVisibility();
-        $this->submitted_by_user_id->setVisibility();
+        $this->prescription_date->Visible = false;
+        $this->submitted_by_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -527,6 +535,10 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
 
         // Load old record or default values
         $rsold = $this->loadOldRecord();
+
+        // Set up master/detail parameters
+        // NOTE: Must be after loadOldRecord to prevent master key values being overwritten
+        $this->setupMasterParms();
 
         // Load form values
         if ($postBack) {
@@ -712,27 +724,6 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
             }
         }
 
-        // Check field name 'prescription_date' first before field var 'x_prescription_date'
-        $val = $CurrentForm->hasValue("prescription_date") ? $CurrentForm->getValue("prescription_date") : $CurrentForm->getValue("x_prescription_date");
-        if (!$this->prescription_date->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->prescription_date->Visible = false; // Disable update for API request
-            } else {
-                $this->prescription_date->setFormValue($val, true, $validate);
-            }
-            $this->prescription_date->CurrentValue = UnFormatDateTime($this->prescription_date->CurrentValue, $this->prescription_date->formatPattern());
-        }
-
-        // Check field name 'submitted_by_user_id' first before field var 'x_submitted_by_user_id'
-        $val = $CurrentForm->hasValue("submitted_by_user_id") ? $CurrentForm->getValue("submitted_by_user_id") : $CurrentForm->getValue("x_submitted_by_user_id");
-        if (!$this->submitted_by_user_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->submitted_by_user_id->Visible = false; // Disable update for API request
-            } else {
-                $this->submitted_by_user_id->setFormValue($val, true, $validate);
-            }
-        }
-
         // Check field name 'prescription_id' first before field var 'x_prescription_id'
         $val = $CurrentForm->hasValue("prescription_id") ? $CurrentForm->getValue("prescription_id") : $CurrentForm->getValue("x_prescription_id");
     }
@@ -747,9 +738,6 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
         $this->tabs->CurrentValue = $this->tabs->FormValue;
         $this->frequency->CurrentValue = $this->frequency->FormValue;
         $this->prescription_time->CurrentValue = $this->prescription_time->FormValue;
-        $this->prescription_date->CurrentValue = $this->prescription_date->FormValue;
-        $this->prescription_date->CurrentValue = UnFormatDateTime($this->prescription_date->CurrentValue, $this->prescription_date->formatPattern());
-        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->FormValue;
     }
 
     /**
@@ -774,6 +762,15 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
         if ($row) {
             $res = true;
             $this->loadRowValues($row); // Load row values
+        }
+
+        // Check if valid User ID
+        if ($res) {
+            $res = $this->showOptionLink("add");
+            if (!$res) {
+                $userIdMsg = DeniedMessage();
+                $this->setFailureMessage($userIdMsg);
+            }
         }
         return $res;
     }
@@ -942,7 +939,11 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
             $this->tabs->ViewValue = $this->tabs->CurrentValue;
 
             // frequency
-            $this->frequency->ViewValue = $this->frequency->CurrentValue;
+            if (strval($this->frequency->CurrentValue) != "") {
+                $this->frequency->ViewValue = $this->frequency->optionCaption($this->frequency->CurrentValue);
+            } else {
+                $this->frequency->ViewValue = null;
+            }
 
             // prescription_time
             if (strval($this->prescription_time->CurrentValue) != "") {
@@ -976,39 +977,58 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
 
             // prescription_time
             $this->prescription_time->HrefValue = "";
-
-            // prescription_date
-            $this->prescription_date->HrefValue = "";
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
             // patient_id
             $this->patient_id->setupEditAttributes();
-            $curVal = trim(strval($this->patient_id->CurrentValue));
-            if ($curVal != "") {
-                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-            } else {
-                $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
-            }
-            if ($this->patient_id->ViewValue !== null) { // Load from cache
-                $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
-            } else { // Lookup from database
-                if ($curVal == "") {
-                    $filterWrk = "0=1";
+            if ($this->patient_id->getSessionValue() != "") {
+                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
+                $curVal = strval($this->patient_id->CurrentValue);
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                    if ($this->patient_id->ViewValue === null) { // Lookup from database
+                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $conn = Conn();
+                        $config = $conn->getConfiguration();
+                        $config->setResultCacheImpl($this->Cache);
+                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                        $ari = count($rswrk);
+                        if ($ari > 0) { // Lookup values found
+                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
+                        } else {
+                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                        }
+                    }
                 } else {
-                    $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $this->patient_id->ViewValue = null;
                 }
-                $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                $arwrk = $rswrk;
-                $this->patient_id->EditValue = $arwrk;
+            } else {
+                $curVal = trim(strval($this->patient_id->CurrentValue));
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                } else {
+                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
+                }
+                if ($this->patient_id->ViewValue !== null) { // Load from cache
+                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
+                } else { // Lookup from database
+                    if ($curVal == "") {
+                        $filterWrk = "0=1";
+                    } else {
+                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
+                    }
+                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    $arwrk = $rswrk;
+                    $this->patient_id->EditValue = $arwrk;
+                }
+                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
             }
-            $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
 
             // prescription_title
             $this->prescription_title->setupEditAttributes();
@@ -1055,29 +1075,13 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
 
             // frequency
             $this->frequency->setupEditAttributes();
-            if (!$this->frequency->Raw) {
-                $this->frequency->CurrentValue = HtmlDecode($this->frequency->CurrentValue);
-            }
-            $this->frequency->EditValue = HtmlEncode($this->frequency->CurrentValue);
+            $this->frequency->EditValue = $this->frequency->options(true);
             $this->frequency->PlaceHolder = RemoveHtml($this->frequency->caption());
 
             // prescription_time
             $this->prescription_time->setupEditAttributes();
             $this->prescription_time->EditValue = $this->prescription_time->options(true);
             $this->prescription_time->PlaceHolder = RemoveHtml($this->prescription_time->caption());
-
-            // prescription_date
-            $this->prescription_date->setupEditAttributes();
-            $this->prescription_date->EditValue = HtmlEncode(FormatDateTime($this->prescription_date->CurrentValue, $this->prescription_date->formatPattern()));
-            $this->prescription_date->PlaceHolder = RemoveHtml($this->prescription_date->caption());
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->setupEditAttributes();
-            $this->submitted_by_user_id->EditValue = HtmlEncode($this->submitted_by_user_id->CurrentValue);
-            $this->submitted_by_user_id->PlaceHolder = RemoveHtml($this->submitted_by_user_id->caption());
-            if (strval($this->submitted_by_user_id->EditValue) != "" && is_numeric($this->submitted_by_user_id->EditValue)) {
-                $this->submitted_by_user_id->EditValue = FormatNumber($this->submitted_by_user_id->EditValue, null);
-            }
 
             // Add refer script
 
@@ -1098,12 +1102,6 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
 
             // prescription_time
             $this->prescription_time->HrefValue = "";
-
-            // prescription_date
-            $this->prescription_date->HrefValue = "";
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -1155,22 +1153,6 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
                 $this->prescription_time->addErrorMessage(str_replace("%s", $this->prescription_time->caption(), $this->prescription_time->RequiredErrorMessage));
             }
         }
-        if ($this->prescription_date->Required) {
-            if (!$this->prescription_date->IsDetailKey && EmptyValue($this->prescription_date->FormValue)) {
-                $this->prescription_date->addErrorMessage(str_replace("%s", $this->prescription_date->caption(), $this->prescription_date->RequiredErrorMessage));
-            }
-        }
-        if (!CheckDate($this->prescription_date->FormValue, $this->prescription_date->formatPattern())) {
-            $this->prescription_date->addErrorMessage($this->prescription_date->getErrorMessage(false));
-        }
-        if ($this->submitted_by_user_id->Required) {
-            if (!$this->submitted_by_user_id->IsDetailKey && EmptyValue($this->submitted_by_user_id->FormValue)) {
-                $this->submitted_by_user_id->addErrorMessage(str_replace("%s", $this->submitted_by_user_id->caption(), $this->submitted_by_user_id->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->submitted_by_user_id->FormValue)) {
-            $this->submitted_by_user_id->addErrorMessage($this->submitted_by_user_id->getErrorMessage(false));
-        }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -1210,14 +1192,25 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
         // prescription_time
         $this->prescription_time->setDbValueDef($rsnew, $this->prescription_time->CurrentValue, "", false);
 
-        // prescription_date
-        $this->prescription_date->setDbValueDef($rsnew, UnFormatDateTime($this->prescription_date->CurrentValue, $this->prescription_date->formatPattern()), CurrentDate(), false);
-
         // submitted_by_user_id
-        $this->submitted_by_user_id->setDbValueDef($rsnew, $this->submitted_by_user_id->CurrentValue, 0, false);
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['submitted_by_user_id'] = CurrentUserID();
+        }
 
         // Update current values
         $this->setCurrentValues($rsnew);
+
+        // Check if valid User ID
+        if (
+            !EmptyValue($Security->currentUserID()) &&
+            !$Security->isAdmin() && // Non system admin
+            !$Security->isValidUserID($this->submitted_by_user_id->CurrentValue)
+        ) {
+            $userIdMsg = str_replace("%c", CurrentUserID(), $Language->phrase("UnAuthorizedUserID"));
+            $userIdMsg = str_replace("%u", strval($this->submitted_by_user_id->CurrentValue), $userIdMsg);
+            $this->setFailureMessage($userIdMsg);
+            return false;
+        }
         $conn = $this->getConnection();
 
         // Load db values from old row
@@ -1245,6 +1238,9 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
         if ($addRow) {
             // Call Row Inserted event
             $this->rowInserted($rsold, $rsnew);
+            if ($this->SendEmail) {
+                $this->sendEmailOnAdd($rsnew);
+            }
         }
 
         // Write JSON response
@@ -1254,6 +1250,85 @@ class JdhPrescriptionsAdd extends JdhPrescriptions
             WriteJson(["success" => true, "action" => Config("API_ADD_ACTION"), $table => $row]);
         }
         return $addRow;
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->submitted_by_user_id->CurrentValue);
+        }
+        return true;
+    }
+
+    // Set up master/detail based on QueryString
+    protected function setupMasterParms()
+    {
+        $validMaster = false;
+        // Get the keys for master table
+        if (($master = Get(Config("TABLE_SHOW_MASTER"), Get(Config("TABLE_MASTER")))) !== null) {
+            $masterTblVar = $master;
+            if ($masterTblVar == "") {
+                $validMaster = true;
+                $this->DbMasterFilter = "";
+                $this->DbDetailFilter = "";
+            }
+            if ($masterTblVar == "jdh_patients") {
+                $validMaster = true;
+                $masterTbl = Container("jdh_patients");
+                if (($parm = Get("fk_patient_id", Get("patient_id"))) !== null) {
+                    $masterTbl->patient_id->setQueryStringValue($parm);
+                    $this->patient_id->QueryStringValue = $masterTbl->patient_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
+                    $this->patient_id->setSessionValue($this->patient_id->QueryStringValue);
+                    if (!is_numeric($masterTbl->patient_id->QueryStringValue)) {
+                        $validMaster = false;
+                    }
+                } else {
+                    $validMaster = false;
+                }
+            }
+        } elseif (($master = Post(Config("TABLE_SHOW_MASTER"), Post(Config("TABLE_MASTER")))) !== null) {
+            $masterTblVar = $master;
+            if ($masterTblVar == "") {
+                    $validMaster = true;
+                    $this->DbMasterFilter = "";
+                    $this->DbDetailFilter = "";
+            }
+            if ($masterTblVar == "jdh_patients") {
+                $validMaster = true;
+                $masterTbl = Container("jdh_patients");
+                if (($parm = Post("fk_patient_id", Post("patient_id"))) !== null) {
+                    $masterTbl->patient_id->setFormValue($parm);
+                    $this->patient_id->setFormValue($masterTbl->patient_id->FormValue);
+                    $this->patient_id->setSessionValue($this->patient_id->FormValue);
+                    if (!is_numeric($masterTbl->patient_id->FormValue)) {
+                        $validMaster = false;
+                    }
+                } else {
+                    $validMaster = false;
+                }
+            }
+        }
+        if ($validMaster) {
+            // Save current master table
+            $this->setCurrentMasterTable($masterTblVar);
+
+            // Reset start record counter (new master key)
+            if (!$this->isAddOrEdit()) {
+                $this->StartRecord = 1;
+                $this->setStartRecordNumber($this->StartRecord);
+            }
+
+            // Clear previous master key from Session
+            if ($masterTblVar != "jdh_patients") {
+                if ($this->patient_id->CurrentValue == "") {
+                    $this->patient_id->setSessionValue("");
+                }
+            }
+        }
+        $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Get master filter from session
+        $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Get detail filter from session
     }
 
     // Set up Breadcrumb

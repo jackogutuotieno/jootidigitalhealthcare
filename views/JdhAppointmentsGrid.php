@@ -28,6 +28,7 @@ loadjs.ready(["wrapper", "head"], function () {
             ["appointment_title", [fields.appointment_title.visible && fields.appointment_title.required ? ew.Validators.required(fields.appointment_title.caption) : null], fields.appointment_title.isInvalid],
             ["appointment_start_date", [fields.appointment_start_date.visible && fields.appointment_start_date.required ? ew.Validators.required(fields.appointment_start_date.caption) : null, ew.Validators.datetime(fields.appointment_start_date.clientFormatPattern)], fields.appointment_start_date.isInvalid],
             ["appointment_end_date", [fields.appointment_end_date.visible && fields.appointment_end_date.required ? ew.Validators.required(fields.appointment_end_date.caption) : null, ew.Validators.datetime(fields.appointment_end_date.clientFormatPattern)], fields.appointment_end_date.isInvalid],
+            ["appointment_all_day", [fields.appointment_all_day.visible && fields.appointment_all_day.required ? ew.Validators.required(fields.appointment_all_day.caption) : null], fields.appointment_all_day.isInvalid],
             ["submission_date", [fields.submission_date.visible && fields.submission_date.required ? ew.Validators.required(fields.submission_date.caption) : null, ew.Validators.datetime(fields.submission_date.clientFormatPattern)], fields.submission_date.isInvalid]
         ])
 
@@ -35,7 +36,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setEmptyRow(
             function (rowIndex) {
                 let fobj = this.getForm(),
-                    fields = [["patient_id",false],["appointment_title",false],["appointment_start_date",false],["appointment_end_date",false],["submission_date",false]];
+                    fields = [["patient_id",false],["appointment_title",false],["appointment_start_date",false],["appointment_end_date",false],["appointment_all_day",true],["submission_date",false]];
                 if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
                     return false;
                 return true;
@@ -56,6 +57,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Dynamic selection lists
         .setLists({
             "patient_id": <?= $Grid->patient_id->toClientList($Grid) ?>,
+            "appointment_all_day": <?= $Grid->appointment_all_day->toClientList($Grid) ?>,
         })
         .build();
     window[form.id] = form;
@@ -96,6 +98,9 @@ $Grid->ListOptions->render("header", "left");
 <?php } ?>
 <?php if ($Grid->appointment_end_date->Visible) { // appointment_end_date ?>
         <th data-name="appointment_end_date" class="<?= $Grid->appointment_end_date->headerCellClass() ?>"><div id="elh_jdh_appointments_appointment_end_date" class="jdh_appointments_appointment_end_date"><?= $Grid->renderFieldHeader($Grid->appointment_end_date) ?></div></th>
+<?php } ?>
+<?php if ($Grid->appointment_all_day->Visible) { // appointment_all_day ?>
+        <th data-name="appointment_all_day" class="<?= $Grid->appointment_all_day->headerCellClass() ?>"><div id="elh_jdh_appointments_appointment_all_day" class="jdh_appointments_appointment_all_day"><?= $Grid->renderFieldHeader($Grid->appointment_all_day) ?></div></th>
 <?php } ?>
 <?php if ($Grid->submission_date->Visible) { // submission_date ?>
         <th data-name="submission_date" class="<?= $Grid->submission_date->headerCellClass() ?>"><div id="elh_jdh_appointments_submission_date" class="jdh_appointments_submission_date"><?= $Grid->renderFieldHeader($Grid->submission_date) ?></div></th>
@@ -446,6 +451,40 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
 <?php if ($Grid->isConfirm()) { ?>
 <input type="hidden" data-table="jdh_appointments" data-field="x_appointment_end_date" data-hidden="1" name="fjdh_appointmentsgrid$x<?= $Grid->RowIndex ?>_appointment_end_date" id="fjdh_appointmentsgrid$x<?= $Grid->RowIndex ?>_appointment_end_date" value="<?= HtmlEncode($Grid->appointment_end_date->FormValue) ?>">
 <input type="hidden" data-table="jdh_appointments" data-field="x_appointment_end_date" data-hidden="1" data-old name="fjdh_appointmentsgrid$o<?= $Grid->RowIndex ?>_appointment_end_date" id="fjdh_appointmentsgrid$o<?= $Grid->RowIndex ?>_appointment_end_date" value="<?= HtmlEncode($Grid->appointment_end_date->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->appointment_all_day->Visible) { // appointment_all_day ?>
+        <td data-name="appointment_all_day"<?= $Grid->appointment_all_day->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
+<div class="form-check d-inline-block">
+    <input type="checkbox" class="form-check-input<?= $Grid->appointment_all_day->isInvalidClass() ?>" data-table="jdh_appointments" data-field="x_appointment_all_day" data-boolean name="x<?= $Grid->RowIndex ?>_appointment_all_day" id="x<?= $Grid->RowIndex ?>_appointment_all_day" value="1"<?= ConvertToBool($Grid->appointment_all_day->CurrentValue) ? " checked" : "" ?><?= $Grid->appointment_all_day->editAttributes() ?>>
+    <div class="invalid-feedback"><?= $Grid->appointment_all_day->getErrorMessage() ?></div>
+</div>
+</span>
+<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_all_day" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_appointment_all_day" id="o<?= $Grid->RowIndex ?>_appointment_all_day" value="<?= HtmlEncode($Grid->appointment_all_day->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
+<div class="form-check d-inline-block">
+    <input type="checkbox" class="form-check-input<?= $Grid->appointment_all_day->isInvalidClass() ?>" data-table="jdh_appointments" data-field="x_appointment_all_day" data-boolean name="x<?= $Grid->RowIndex ?>_appointment_all_day" id="x<?= $Grid->RowIndex ?>_appointment_all_day" value="1"<?= ConvertToBool($Grid->appointment_all_day->CurrentValue) ? " checked" : "" ?><?= $Grid->appointment_all_day->editAttributes() ?>>
+    <div class="invalid-feedback"><?= $Grid->appointment_all_day->getErrorMessage() ?></div>
+</div>
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
+<span<?= $Grid->appointment_all_day->viewAttributes() ?>>
+<div class="form-check d-inline-block">
+    <input type="checkbox" id="x_appointment_all_day_<?= $Grid->RowCount ?>" class="form-check-input" value="<?= $Grid->appointment_all_day->getViewValue() ?>" disabled<?php if (ConvertToBool($Grid->appointment_all_day->CurrentValue)) { ?> checked<?php } ?>>
+    <label class="form-check-label" for="x_appointment_all_day_<?= $Grid->RowCount ?>"></label>
+</div></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_all_day" data-hidden="1" name="fjdh_appointmentsgrid$x<?= $Grid->RowIndex ?>_appointment_all_day" id="fjdh_appointmentsgrid$x<?= $Grid->RowIndex ?>_appointment_all_day" value="<?= HtmlEncode($Grid->appointment_all_day->FormValue) ?>">
+<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_all_day" data-hidden="1" data-old name="fjdh_appointmentsgrid$o<?= $Grid->RowIndex ?>_appointment_all_day" id="fjdh_appointmentsgrid$o<?= $Grid->RowIndex ?>_appointment_all_day" value="<?= HtmlEncode($Grid->appointment_all_day->OldValue) ?>">
 <?php } ?>
 <?php } ?>
 </td>

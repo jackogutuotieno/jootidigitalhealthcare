@@ -65,6 +65,9 @@ $Page->showMessage();
 <?php if ($Page->appointment_end_date->Visible) { // appointment_end_date ?>
         <th class="<?= $Page->appointment_end_date->headerCellClass() ?>"><span id="elh_jdh_appointments_appointment_end_date" class="jdh_appointments_appointment_end_date"><?= $Page->appointment_end_date->caption() ?></span></th>
 <?php } ?>
+<?php if ($Page->appointment_all_day->Visible) { // appointment_all_day ?>
+        <th class="<?= $Page->appointment_all_day->headerCellClass() ?>"><span id="elh_jdh_appointments_appointment_all_day" class="jdh_appointments_appointment_all_day"><?= $Page->appointment_all_day->caption() ?></span></th>
+<?php } ?>
 <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <th class="<?= $Page->submission_date->headerCellClass() ?>"><span id="elh_jdh_appointments_submission_date" class="jdh_appointments_submission_date"><?= $Page->submission_date->caption() ?></span></th>
 <?php } ?>
@@ -126,6 +129,17 @@ while (!$Page->Recordset->EOF) {
 <span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_end_date" class="el_jdh_appointments_appointment_end_date">
 <span<?= $Page->appointment_end_date->viewAttributes() ?>>
 <?= $Page->appointment_end_date->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->appointment_all_day->Visible) { // appointment_all_day ?>
+        <td<?= $Page->appointment_all_day->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
+<span<?= $Page->appointment_all_day->viewAttributes() ?>>
+<div class="form-check d-inline-block">
+    <input type="checkbox" id="x_appointment_all_day_<?= $Page->RowCount ?>" class="form-check-input" value="<?= $Page->appointment_all_day->getViewValue() ?>" disabled<?php if (ConvertToBool($Page->appointment_all_day->CurrentValue)) { ?> checked<?php } ?>>
+    <label class="form-check-label" for="x_appointment_all_day_<?= $Page->RowCount ?>"></label>
+</div></span>
 </span>
 </td>
 <?php } ?>

@@ -224,6 +224,30 @@ loadjs.ready(["wrapper", "head"], function () {
 <?php } ?>
 <?php include_once "JdhChiefComplaintsGrid.php" ?>
 <?php } ?>
+<?php
+    if (in_array("jdh_examination_findings", explode(",", $Page->getCurrentDetailTable())) && $jdh_examination_findings->DetailView) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_examination_findings", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhExaminationFindingsGrid.php" ?>
+<?php } ?>
+<?php
+    if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailView) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhTestReportsGrid.php" ?>
+<?php } ?>
+<?php
+    if (in_array("jdh_prescriptions", explode(",", $Page->getCurrentDetailTable())) && $jdh_prescriptions->DetailView) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_prescriptions", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhPrescriptionsGrid.php" ?>
+<?php } ?>
 </form>
 </main>
 <?php

@@ -130,6 +130,20 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->appointment_all_day->Visible) { // appointment_all_day ?>
+    <tr id="r_appointment_all_day"<?= $Page->appointment_all_day->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_Patient_Appointments_appointment_all_day"><?= $Page->appointment_all_day->caption() ?></span></td>
+        <td data-name="appointment_all_day"<?= $Page->appointment_all_day->cellAttributes() ?>>
+<span id="el_Patient_Appointments_appointment_all_day">
+<span<?= $Page->appointment_all_day->viewAttributes() ?>>
+<div class="form-check d-inline-block">
+    <input type="checkbox" id="x_appointment_all_day_<?= $Page->RowCount ?>" class="form-check-input" value="<?= $Page->appointment_all_day->getViewValue() ?>" disabled<?php if (ConvertToBool($Page->appointment_all_day->CurrentValue)) { ?> checked<?php } ?>>
+    <label class="form-check-label" for="x_appointment_all_day_<?= $Page->RowCount ?>"></label>
+</div></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 </table>
 </form>
 </main>

@@ -557,6 +557,7 @@ class PatientAppointmentsDelete extends PatientAppointments
         $this->appointment_description->setDbValue($row['appointment_description']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
+        $this->appointment_all_day->setDbValue($row['appointment_all_day']);
     }
 
     // Return a row with default values
@@ -571,6 +572,7 @@ class PatientAppointmentsDelete extends PatientAppointments
         $row['appointment_description'] = $this->appointment_description->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['subbmitted_by_user_id'] = $this->subbmitted_by_user_id->DefaultValue;
+        $row['appointment_all_day'] = $this->appointment_all_day->DefaultValue;
         return $row;
     }
 
@@ -602,6 +604,8 @@ class PatientAppointmentsDelete extends PatientAppointments
         $this->submission_date->CellCssStyle = "white-space: nowrap;";
 
         // subbmitted_by_user_id
+
+        // appointment_all_day
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -650,6 +654,13 @@ class PatientAppointmentsDelete extends PatientAppointments
             $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
             $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
 
+            // appointment_all_day
+            if (ConvertToBool($this->appointment_all_day->CurrentValue)) {
+                $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(1) != "" ? $this->appointment_all_day->tagCaption(1) : "Yes";
+            } else {
+                $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(2) != "" ? $this->appointment_all_day->tagCaption(2) : "No";
+            }
+
             // appointment_id
             $this->appointment_id->HrefValue = "";
             $this->appointment_id->TooltipValue = "";
@@ -673,6 +684,10 @@ class PatientAppointmentsDelete extends PatientAppointments
             // subbmitted_by_user_id
             $this->subbmitted_by_user_id->HrefValue = "";
             $this->subbmitted_by_user_id->TooltipValue = "";
+
+            // appointment_all_day
+            $this->appointment_all_day->HrefValue = "";
+            $this->appointment_all_day->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -804,6 +819,8 @@ class PatientAppointmentsDelete extends PatientAppointments
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_patient_id":
+                    break;
+                case "x_appointment_all_day":
                     break;
                 default:
                     $lookupFilter = "";

@@ -131,6 +131,14 @@ loadjs.ready(["wrapper", "head"], function () {
     </tr>
 <?php } ?>
 </table>
+<?php
+    if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailView) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhTestReportsGrid.php" ?>
+<?php } ?>
 </form>
 </main>
 <?php

@@ -420,6 +420,25 @@ class JdhChiefComplaintsDelete extends JdhChiefComplaints
         // Set up filter (WHERE Clause)
         $this->CurrentFilter = $filter;
 
+        // Check if valid User ID
+        $conn = $this->getConnection();
+        $sql = $this->getSql($this->CurrentFilter);
+        $rows = $conn->fetchAllAssociative($sql);
+        $res = true;
+        foreach ($rows as $row) {
+            $this->loadRowValues($row);
+            if (!$this->showOptionLink("delete")) {
+                $userIdMsg = $Language->phrase("NoDeletePermission");
+                $this->setFailureMessage($userIdMsg);
+                $res = false;
+                break;
+            }
+        }
+        if (!$res) {
+            $this->terminate("jdhchiefcomplaintslist"); // Return to list
+            return;
+        }
+
         // Get action
         if (IsApi()) {
             $this->CurrentAction = "delete"; // Delete record directly
@@ -822,6 +841,16 @@ class JdhChiefComplaintsDelete extends JdhChiefComplaints
             WriteJson(["success" => true, "action" => Config("API_DELETE_ACTION"), $table => $rows]);
         }
         return $deleteRows;
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->addedby_user_id->CurrentValue);
+        }
+        return true;
     }
 
     // Set up master/detail based on QueryString

@@ -484,6 +484,23 @@ return function (App $app) {
         }
     );
 
+    // jdh_examination_findings
+    $app->map(["GET","POST","OPTIONS"], '/jdhexaminationfindingslist[/{id}]', JdhExaminationFindingsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhexaminationfindingslist-jdh_examination_findings-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/jdhexaminationfindingsadd[/{id}]', JdhExaminationFindingsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhexaminationfindingsadd-jdh_examination_findings-add'); // add
+    $app->map(["GET","POST","OPTIONS"], '/jdhexaminationfindingsview[/{id}]', JdhExaminationFindingsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhexaminationfindingsview-jdh_examination_findings-view'); // view
+    $app->map(["GET","POST","OPTIONS"], '/jdhexaminationfindingsedit[/{id}]', JdhExaminationFindingsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhexaminationfindingsedit-jdh_examination_findings-edit'); // edit
+    $app->map(["GET","POST","OPTIONS"], '/jdhexaminationfindingsdelete[/{id}]', JdhExaminationFindingsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhexaminationfindingsdelete-jdh_examination_findings-delete'); // delete
+    $app->group(
+        '/jdh_examination_findings',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{id}]', JdhExaminationFindingsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_examination_findings/list-jdh_examination_findings-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{id}]', JdhExaminationFindingsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_examination_findings/add-jdh_examination_findings-add-2'); // add
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{id}]', JdhExaminationFindingsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_examination_findings/view-jdh_examination_findings-view-2'); // view
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{id}]', JdhExaminationFindingsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_examination_findings/edit-jdh_examination_findings-edit-2'); // edit
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{id}]', JdhExaminationFindingsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_examination_findings/delete-jdh_examination_findings-delete-2'); // delete
+        }
+    );
+
     // personal_data
     $app->map(["GET","POST","OPTIONS"], '/personaldata', OthersController::class . ':personaldata')->add(PermissionMiddleware::class)->setName('personaldata');
 

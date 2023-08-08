@@ -66,6 +66,7 @@ return [
     "jdh_test_costs" => \DI\create(JdhTestCosts::class),
     "jdh_chief_complaints" => \DI\create(JdhChiefComplaints::class),
     "Dashboard2" => \DI\create(Dashboard2::class),
+    "jdh_examination_findings" => \DI\create(JdhExaminationFindings::class),
 
     // User table
     "usertable" => \DI\get("jdh_users"),

@@ -27,9 +27,7 @@ loadjs.ready(["wrapper", "head"], function () {
             ["medicine_id", [fields.medicine_id.visible && fields.medicine_id.required ? ew.Validators.required(fields.medicine_id.caption) : null], fields.medicine_id.isInvalid],
             ["tabs", [fields.tabs.visible && fields.tabs.required ? ew.Validators.required(fields.tabs.caption) : null], fields.tabs.isInvalid],
             ["frequency", [fields.frequency.visible && fields.frequency.required ? ew.Validators.required(fields.frequency.caption) : null], fields.frequency.isInvalid],
-            ["prescription_time", [fields.prescription_time.visible && fields.prescription_time.required ? ew.Validators.required(fields.prescription_time.caption) : null], fields.prescription_time.isInvalid],
-            ["prescription_date", [fields.prescription_date.visible && fields.prescription_date.required ? ew.Validators.required(fields.prescription_date.caption) : null, ew.Validators.datetime(fields.prescription_date.clientFormatPattern)], fields.prescription_date.isInvalid],
-            ["submitted_by_user_id", [fields.submitted_by_user_id.visible && fields.submitted_by_user_id.required ? ew.Validators.required(fields.submitted_by_user_id.caption) : null, ew.Validators.integer], fields.submitted_by_user_id.isInvalid]
+            ["prescription_time", [fields.prescription_time.visible && fields.prescription_time.required ? ew.Validators.required(fields.prescription_time.caption) : null], fields.prescription_time.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -77,11 +75,20 @@ $Page->showMessage();
 <input type="hidden" name="json" value="1">
 <?php } ?>
 <input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
+<?php if ($Page->getCurrentMasterTable() == "jdh_patients") { ?>
+<input type="hidden" name="<?= Config("TABLE_SHOW_MASTER") ?>" value="jdh_patients">
+<input type="hidden" name="fk_patient_id" value="<?= HtmlEncode($Page->patient_id->getSessionValue()) ?>">
+<?php } ?>
 <div class="ew-add-div"><!-- page* -->
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
     <div id="r_patient_id"<?= $Page->patient_id->rowAttributes() ?>>
         <label id="elh_jdh_prescriptions_patient_id" for="x_patient_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_id->caption() ?><?= $Page->patient_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_id->cellAttributes() ?>>
+<?php if ($Page->patient_id->getSessionValue() != "") { ?>
+<span<?= $Page->patient_id->viewAttributes() ?>>
+<span class="form-control-plaintext"><?= $Page->patient_id->getDisplayValue($Page->patient_id->ViewValue) ?></span></span>
+<input type="hidden" id="x_patient_id" name="x_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>" data-hidden="1">
+<?php } else { ?>
 <span id="el_jdh_prescriptions_patient_id">
     <select
         id="x_patient_id"
@@ -115,6 +122,7 @@ loadjs.ready("fjdh_prescriptionsadd", function() {
 });
 </script>
 </span>
+<?php } ?>
 </div></div>
     </div>
 <?php } ?>
@@ -184,23 +192,37 @@ loadjs.ready("fjdh_prescriptionsadd", function() {
 <?php } ?>
 <?php if ($Page->frequency->Visible) { // frequency ?>
     <div id="r_frequency"<?= $Page->frequency->rowAttributes() ?>>
-        <label id="elh_jdh_prescriptions_frequency" class="<?= $Page->LeftColumnClass ?>"><?= $Page->frequency->caption() ?><?= $Page->frequency->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <label id="elh_jdh_prescriptions_frequency" for="x_frequency" class="<?= $Page->LeftColumnClass ?>"><?= $Page->frequency->caption() ?><?= $Page->frequency->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->frequency->cellAttributes() ?>>
 <span id="el_jdh_prescriptions_frequency">
-<?php
-if (IsRTL()) {
-    $Page->frequency->EditAttrs["dir"] = "rtl";
-}
-?>
-<span id="as_x_frequency" class="ew-auto-suggest">
-    <input type="<?= $Page->frequency->getInputTextType() ?>" class="form-control" name="sv_x_frequency" id="sv_x_frequency" value="<?= RemoveHtml($Page->frequency->EditValue) ?>" autocomplete="off" size="30" maxlength="100" placeholder="<?= HtmlEncode($Page->frequency->getPlaceHolder()) ?>" data-placeholder="<?= HtmlEncode($Page->frequency->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->frequency->formatPattern()) ?>"<?= $Page->frequency->editAttributes() ?> aria-describedby="x_frequency_help">
-</span>
-<selection-list hidden class="form-control" data-table="jdh_prescriptions" data-field="x_frequency" data-input="sv_x_frequency" data-value-separator="<?= $Page->frequency->displayValueSeparatorAttribute() ?>" name="x_frequency" id="x_frequency" value="<?= HtmlEncode($Page->frequency->CurrentValue) ?>"></selection-list>
-<?= $Page->frequency->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->frequency->getErrorMessage() ?></div>
+    <select
+        id="x_frequency"
+        name="x_frequency"
+        class="form-select ew-select<?= $Page->frequency->isInvalidClass() ?>"
+        data-select2-id="fjdh_prescriptionsadd_x_frequency"
+        data-table="jdh_prescriptions"
+        data-field="x_frequency"
+        data-value-separator="<?= $Page->frequency->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->frequency->getPlaceHolder()) ?>"
+        <?= $Page->frequency->editAttributes() ?>>
+        <?= $Page->frequency->selectOptionListHtml("x_frequency") ?>
+    </select>
+    <?= $Page->frequency->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->frequency->getErrorMessage() ?></div>
 <script>
 loadjs.ready("fjdh_prescriptionsadd", function() {
-    fjdh_prescriptionsadd.createAutoSuggest(Object.assign({"id":"x_frequency","forceSelect":false}, { lookupAllDisplayFields: <?= $Page->frequency->Lookup->LookupAllDisplayFields ? "true" : "false" ?> }, ew.vars.tables.jdh_prescriptions.fields.frequency.autoSuggestOptions));
+    var options = { name: "x_frequency", selectId: "fjdh_prescriptionsadd_x_frequency" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (fjdh_prescriptionsadd.lists.frequency?.lookupOptions.length) {
+        options.data = { id: "x_frequency", form: "fjdh_prescriptionsadd" };
+    } else {
+        options.ajax = { id: "x_frequency", form: "fjdh_prescriptionsadd", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_prescriptions.fields.frequency.selectOptions);
+    ew.createSelect(options);
 });
 </script>
 </span>
@@ -242,60 +264,6 @@ loadjs.ready("fjdh_prescriptionsadd", function() {
     ew.createSelect(options);
 });
 </script>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->prescription_date->Visible) { // prescription_date ?>
-    <div id="r_prescription_date"<?= $Page->prescription_date->rowAttributes() ?>>
-        <label id="elh_jdh_prescriptions_prescription_date" for="x_prescription_date" class="<?= $Page->LeftColumnClass ?>"><?= $Page->prescription_date->caption() ?><?= $Page->prescription_date->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->prescription_date->cellAttributes() ?>>
-<span id="el_jdh_prescriptions_prescription_date">
-<input type="<?= $Page->prescription_date->getInputTextType() ?>" name="x_prescription_date" id="x_prescription_date" data-table="jdh_prescriptions" data-field="x_prescription_date" value="<?= $Page->prescription_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->prescription_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->prescription_date->formatPattern()) ?>"<?= $Page->prescription_date->editAttributes() ?> aria-describedby="x_prescription_date_help">
-<?= $Page->prescription_date->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->prescription_date->getErrorMessage() ?></div>
-<?php if (!$Page->prescription_date->ReadOnly && !$Page->prescription_date->Disabled && !isset($Page->prescription_date->EditAttrs["readonly"]) && !isset($Page->prescription_date->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["fjdh_prescriptionsadd", "datetimepicker"], function () {
-    let format = "<?= DateFormat(0) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("fjdh_prescriptionsadd", "x_prescription_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
-    <div id="r_submitted_by_user_id"<?= $Page->submitted_by_user_id->rowAttributes() ?>>
-        <label id="elh_jdh_prescriptions_submitted_by_user_id" for="x_submitted_by_user_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->submitted_by_user_id->caption() ?><?= $Page->submitted_by_user_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->submitted_by_user_id->cellAttributes() ?>>
-<span id="el_jdh_prescriptions_submitted_by_user_id">
-<input type="<?= $Page->submitted_by_user_id->getInputTextType() ?>" name="x_submitted_by_user_id" id="x_submitted_by_user_id" data-table="jdh_prescriptions" data-field="x_submitted_by_user_id" value="<?= $Page->submitted_by_user_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->submitted_by_user_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->submitted_by_user_id->formatPattern()) ?>"<?= $Page->submitted_by_user_id->editAttributes() ?> aria-describedby="x_submitted_by_user_id_help">
-<?= $Page->submitted_by_user_id->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->submitted_by_user_id->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

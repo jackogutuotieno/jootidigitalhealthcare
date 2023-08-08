@@ -46,6 +46,7 @@ class JdhAppointments extends DbTable
     public $appointment_title;
     public $appointment_start_date;
     public $appointment_end_date;
+    public $appointment_all_day;
     public $appointment_description;
     public $submission_date;
     public $subbmitted_by_user_id;
@@ -222,6 +223,33 @@ class JdhAppointments extends DbTable
         $this->appointment_end_date->DefaultErrorMessage = str_replace("%s", DateFormat(1), $Language->phrase("IncorrectDate"));
         $this->appointment_end_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['appointment_end_date'] = &$this->appointment_end_date;
+
+        // appointment_all_day $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->appointment_all_day = new DbField(
+            $this, // Table
+            'x_appointment_all_day', // Variable name
+            'appointment_all_day', // Name
+            '`appointment_all_day`', // Expression
+            '`appointment_all_day`', // Basic search expression
+            16, // Type
+            1, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`appointment_all_day`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'CHECKBOX' // Edit Tag
+        );
+        $this->appointment_all_day->InputTextType = "text";
+        $this->appointment_all_day->Nullable = false; // NOT NULL field
+        $this->appointment_all_day->DataType = DATATYPE_BOOLEAN;
+        $this->appointment_all_day->Lookup = new Lookup('appointment_all_day', 'jdh_appointments', false, '', ["","","",""], '', '', [], [], [], [], [], [], '', '', "");
+        $this->appointment_all_day->OptionCount = 2;
+        $this->appointment_all_day->DefaultErrorMessage = $Language->phrase("IncorrectField");
+        $this->appointment_all_day->SearchOperators = ["=", "<>"];
+        $this->Fields['appointment_all_day'] = &$this->appointment_all_day;
 
         // appointment_description $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->appointment_description = new DbField(
@@ -540,6 +568,11 @@ class JdhAppointments extends DbTable
     // Apply User ID filters
     public function applyUserIDFilters($filter, $id = "")
     {
+        global $Security;
+        // Add User ID filter
+        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
+            $filter = $this->addUserIDFilter($filter, $id);
+        }
         return $filter;
     }
 
@@ -854,6 +887,7 @@ class JdhAppointments extends DbTable
         $this->appointment_title->DbValue = $row['appointment_title'];
         $this->appointment_start_date->DbValue = $row['appointment_start_date'];
         $this->appointment_end_date->DbValue = $row['appointment_end_date'];
+        $this->appointment_all_day->DbValue = $row['appointment_all_day'];
         $this->appointment_description->DbValue = $row['appointment_description'];
         $this->submission_date->DbValue = $row['submission_date'];
         $this->subbmitted_by_user_id->DbValue = $row['subbmitted_by_user_id'];
@@ -1219,6 +1253,7 @@ class JdhAppointments extends DbTable
         $this->appointment_title->setDbValue($row['appointment_title']);
         $this->appointment_start_date->setDbValue($row['appointment_start_date']);
         $this->appointment_end_date->setDbValue($row['appointment_end_date']);
+        $this->appointment_all_day->setDbValue($row['appointment_all_day']);
         $this->appointment_description->setDbValue($row['appointment_description']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
@@ -1261,6 +1296,8 @@ class JdhAppointments extends DbTable
         // appointment_start_date
 
         // appointment_end_date
+
+        // appointment_all_day
 
         // appointment_description
 
@@ -1305,6 +1342,13 @@ class JdhAppointments extends DbTable
         $this->appointment_end_date->ViewValue = $this->appointment_end_date->CurrentValue;
         $this->appointment_end_date->ViewValue = FormatDateTime($this->appointment_end_date->ViewValue, $this->appointment_end_date->formatPattern());
 
+        // appointment_all_day
+        if (ConvertToBool($this->appointment_all_day->CurrentValue)) {
+            $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(1) != "" ? $this->appointment_all_day->tagCaption(1) : "Yes";
+        } else {
+            $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(2) != "" ? $this->appointment_all_day->tagCaption(2) : "No";
+        }
+
         // appointment_description
         $this->appointment_description->ViewValue = $this->appointment_description->CurrentValue;
 
@@ -1335,6 +1379,10 @@ class JdhAppointments extends DbTable
         // appointment_end_date
         $this->appointment_end_date->HrefValue = "";
         $this->appointment_end_date->TooltipValue = "";
+
+        // appointment_all_day
+        $this->appointment_all_day->HrefValue = "";
+        $this->appointment_all_day->TooltipValue = "";
 
         // appointment_description
         $this->appointment_description->HrefValue = "";
@@ -1414,6 +1462,10 @@ class JdhAppointments extends DbTable
         $this->appointment_end_date->EditValue = FormatDateTime($this->appointment_end_date->CurrentValue, $this->appointment_end_date->formatPattern());
         $this->appointment_end_date->PlaceHolder = RemoveHtml($this->appointment_end_date->caption());
 
+        // appointment_all_day
+        $this->appointment_all_day->EditValue = $this->appointment_all_day->options(false);
+        $this->appointment_all_day->PlaceHolder = RemoveHtml($this->appointment_all_day->caption());
+
         // appointment_description
         $this->appointment_description->setupEditAttributes();
         $this->appointment_description->EditValue = $this->appointment_description->CurrentValue;
@@ -1459,6 +1511,7 @@ class JdhAppointments extends DbTable
                     $doc->exportCaption($this->appointment_title);
                     $doc->exportCaption($this->appointment_start_date);
                     $doc->exportCaption($this->appointment_end_date);
+                    $doc->exportCaption($this->appointment_all_day);
                     $doc->exportCaption($this->appointment_description);
                 } else {
                     $doc->exportCaption($this->appointment_id);
@@ -1466,6 +1519,7 @@ class JdhAppointments extends DbTable
                     $doc->exportCaption($this->appointment_title);
                     $doc->exportCaption($this->appointment_start_date);
                     $doc->exportCaption($this->appointment_end_date);
+                    $doc->exportCaption($this->appointment_all_day);
                     $doc->exportCaption($this->submission_date);
                     $doc->exportCaption($this->subbmitted_by_user_id);
                 }
@@ -1502,6 +1556,7 @@ class JdhAppointments extends DbTable
                         $doc->exportField($this->appointment_title);
                         $doc->exportField($this->appointment_start_date);
                         $doc->exportField($this->appointment_end_date);
+                        $doc->exportField($this->appointment_all_day);
                         $doc->exportField($this->appointment_description);
                     } else {
                         $doc->exportField($this->appointment_id);
@@ -1509,6 +1564,7 @@ class JdhAppointments extends DbTable
                         $doc->exportField($this->appointment_title);
                         $doc->exportField($this->appointment_start_date);
                         $doc->exportField($this->appointment_end_date);
+                        $doc->exportField($this->appointment_all_day);
                         $doc->exportField($this->submission_date);
                         $doc->exportField($this->subbmitted_by_user_id);
                     }
@@ -1525,6 +1581,57 @@ class JdhAppointments extends DbTable
         if (!$doc->ExportCustom) {
             $doc->exportTableFooter();
         }
+    }
+
+    // Add User ID filter
+    public function addUserIDFilter($filter = "", $id = "")
+    {
+        global $Security;
+        $filterWrk = "";
+        if ($id == "")
+            $id = (CurrentPageID() == "list") ? $this->CurrentAction : CurrentPageID();
+        if (!$this->userIDAllow($id) && !$Security->isAdmin()) {
+            $filterWrk = $Security->userIdList();
+            if ($filterWrk != "") {
+                $filterWrk = '`subbmitted_by_user_id` IN (' . $filterWrk . ')';
+            }
+        }
+
+        // Call User ID Filtering event
+        $this->userIdFiltering($filterWrk);
+        AddFilter($filter, $filterWrk);
+        return $filter;
+    }
+
+    // User ID subquery
+    public function getUserIDSubquery(&$fld, &$masterfld)
+    {
+        global $UserTable;
+        $wrk = "";
+        $sql = "SELECT " . $masterfld->Expression . " FROM `jdh_appointments`";
+        $filter = $this->addUserIDFilter("");
+        if ($filter != "") {
+            $sql .= " WHERE " . $filter;
+        }
+
+        // List all values
+        $conn = Conn($UserTable->Dbid);
+        $config = $conn->getConfiguration();
+        $config->setResultCacheImpl($this->Cache);
+        if ($rs = $conn->executeCacheQuery($sql, [], [], $this->CacheProfile)->fetchAllNumeric()) {
+            foreach ($rs as $row) {
+                if ($wrk != "") {
+                    $wrk .= ",";
+                }
+                $wrk .= QuotedValue($row[0], $masterfld->DataType, Config("USER_TABLE_DBID"));
+            }
+        }
+        if ($wrk != "") {
+            $wrk = $fld->Expression . " IN (" . $wrk . ")";
+        } else { // No User ID value found
+            $wrk = "0=1";
+        }
+        return $wrk;
     }
 
     // Get file data

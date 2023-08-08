@@ -28,7 +28,8 @@ loadjs.ready(["wrapper", "head"], function () {
             ["appointment_start_date", [fields.appointment_start_date.visible && fields.appointment_start_date.required ? ew.Validators.required(fields.appointment_start_date.caption) : null, ew.Validators.datetime(fields.appointment_start_date.clientFormatPattern)], fields.appointment_start_date.isInvalid],
             ["appointment_end_date", [fields.appointment_end_date.visible && fields.appointment_end_date.required ? ew.Validators.required(fields.appointment_end_date.caption) : null, ew.Validators.datetime(fields.appointment_end_date.clientFormatPattern), ew.Validators.minDate(() => fPatient_Appointmentsadd.getFieldElement("appointment_start_date"))], fields.appointment_end_date.isInvalid],
             ["appointment_description", [fields.appointment_description.visible && fields.appointment_description.required ? ew.Validators.required(fields.appointment_description.caption) : null], fields.appointment_description.isInvalid],
-            ["subbmitted_by_user_id", [fields.subbmitted_by_user_id.visible && fields.subbmitted_by_user_id.required ? ew.Validators.required(fields.subbmitted_by_user_id.caption) : null], fields.subbmitted_by_user_id.isInvalid]
+            ["subbmitted_by_user_id", [fields.subbmitted_by_user_id.visible && fields.subbmitted_by_user_id.required ? ew.Validators.required(fields.subbmitted_by_user_id.caption) : null], fields.subbmitted_by_user_id.isInvalid],
+            ["appointment_all_day", [fields.appointment_all_day.visible && fields.appointment_all_day.required ? ew.Validators.required(fields.appointment_all_day.caption) : null], fields.appointment_all_day.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -45,6 +46,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Dynamic selection lists
         .setLists({
             "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
+            "appointment_all_day": <?= $Page->appointment_all_day->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -230,6 +232,20 @@ loadjs.ready(["fPatient_Appointmentsadd", "editor"], function() {
     ew.createEditor("fPatient_Appointmentsadd", "x_appointment_description", 35, 4, <?= $Page->appointment_description->ReadOnly || false ? "true" : "false" ?>);
 });
 </script>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->appointment_all_day->Visible) { // appointment_all_day ?>
+    <div id="r_appointment_all_day"<?= $Page->appointment_all_day->rowAttributes() ?>>
+        <label id="elh_Patient_Appointments_appointment_all_day" class="<?= $Page->LeftColumnClass ?>"><?= $Page->appointment_all_day->caption() ?><?= $Page->appointment_all_day->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->appointment_all_day->cellAttributes() ?>>
+<span id="el_Patient_Appointments_appointment_all_day">
+<div class="form-check d-inline-block">
+    <input type="checkbox" class="form-check-input<?= $Page->appointment_all_day->isInvalidClass() ?>" data-table="Patient_Appointments" data-field="x_appointment_all_day" data-boolean name="x_appointment_all_day" id="x_appointment_all_day" value="1"<?= ConvertToBool($Page->appointment_all_day->CurrentValue) ? " checked" : "" ?><?= $Page->appointment_all_day->editAttributes() ?> aria-describedby="x_appointment_all_day_help">
+    <div class="invalid-feedback"><?= $Page->appointment_all_day->getErrorMessage() ?></div>
+</div>
+<?= $Page->appointment_all_day->getCustomMessage() ?>
 </span>
 </div></div>
     </div>

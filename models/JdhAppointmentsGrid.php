@@ -555,6 +555,7 @@ class JdhAppointmentsGrid extends JdhAppointments
         $this->appointment_title->setVisibility();
         $this->appointment_start_date->setVisibility();
         $this->appointment_end_date->setVisibility();
+        $this->appointment_all_day->setVisibility();
         $this->appointment_description->Visible = false;
         $this->submission_date->setVisibility();
         $this->subbmitted_by_user_id->Visible = false;
@@ -589,6 +590,7 @@ class JdhAppointmentsGrid extends JdhAppointments
 
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
+        $this->setupLookupOptions($this->appointment_all_day);
 
         // Load default values for add
         $this->loadDefaultValues();
@@ -1061,6 +1063,9 @@ class JdhAppointmentsGrid extends JdhAppointments
         if ($CurrentForm->hasValue("x_appointment_end_date") && $CurrentForm->hasValue("o_appointment_end_date") && $this->appointment_end_date->CurrentValue != $this->appointment_end_date->DefaultValue) {
             return false;
         }
+        if ($CurrentForm->hasValue("x_appointment_all_day") && $CurrentForm->hasValue("o_appointment_all_day") && ConvertToBool($this->appointment_all_day->CurrentValue) != ConvertToBool($this->appointment_all_day->DefaultValue)) {
+            return false;
+        }
         if ($CurrentForm->hasValue("x_submission_date") && $CurrentForm->hasValue("o_submission_date") && $this->submission_date->CurrentValue != $this->submission_date->DefaultValue) {
             return false;
         }
@@ -1154,6 +1159,7 @@ class JdhAppointmentsGrid extends JdhAppointments
         $this->appointment_title->clearErrorMessage();
         $this->appointment_start_date->clearErrorMessage();
         $this->appointment_end_date->clearErrorMessage();
+        $this->appointment_all_day->clearErrorMessage();
         $this->submission_date->clearErrorMessage();
     }
 
@@ -1316,7 +1322,7 @@ class JdhAppointmentsGrid extends JdhAppointments
             // "view"
             $opt = $this->ListOptions["view"];
             $viewcaption = HtmlTitle($Language->phrase("ViewLink"));
-            if ($Security->canView()) {
+            if ($Security->canView() && $this->showOptionLink("view")) {
                 if ($this->ModalView && !IsMobile()) {
                     $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_appointments\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
                 } else {
@@ -1329,7 +1335,7 @@ class JdhAppointmentsGrid extends JdhAppointments
             // "edit"
             $opt = $this->ListOptions["edit"];
             $editcaption = HtmlTitle($Language->phrase("EditLink"));
-            if ($Security->canEdit()) {
+            if ($Security->canEdit() && $this->showOptionLink("edit")) {
                 if ($this->ModalEdit && !IsMobile()) {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_appointments\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
@@ -1342,7 +1348,7 @@ class JdhAppointmentsGrid extends JdhAppointments
             // "copy"
             $opt = $this->ListOptions["copy"];
             $copycaption = HtmlTitle($Language->phrase("CopyLink"));
-            if ($Security->canAdd()) {
+            if ($Security->canAdd() && $this->showOptionLink("add")) {
                 if ($this->ModalAdd && !IsMobile()) {
                     $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_appointments\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
                 } else {
@@ -1580,6 +1586,8 @@ class JdhAppointmentsGrid extends JdhAppointments
     // Load default values
     protected function loadDefaultValues()
     {
+        $this->subbmitted_by_user_id->DefaultValue = CurrentUserID();
+        $this->subbmitted_by_user_id->OldValue = $this->subbmitted_by_user_id->DefaultValue;
     }
 
     // Load form values
@@ -1650,6 +1658,19 @@ class JdhAppointmentsGrid extends JdhAppointments
             $this->appointment_end_date->setOldValue($CurrentForm->getValue("o_appointment_end_date"));
         }
 
+        // Check field name 'appointment_all_day' first before field var 'x_appointment_all_day'
+        $val = $CurrentForm->hasValue("appointment_all_day") ? $CurrentForm->getValue("appointment_all_day") : $CurrentForm->getValue("x_appointment_all_day");
+        if (!$this->appointment_all_day->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->appointment_all_day->Visible = false; // Disable update for API request
+            } else {
+                $this->appointment_all_day->setFormValue($val);
+            }
+        }
+        if ($CurrentForm->hasValue("o_appointment_all_day")) {
+            $this->appointment_all_day->setOldValue($CurrentForm->getValue("o_appointment_all_day"));
+        }
+
         // Check field name 'submission_date' first before field var 'x_submission_date'
         $val = $CurrentForm->hasValue("submission_date") ? $CurrentForm->getValue("submission_date") : $CurrentForm->getValue("x_submission_date");
         if (!$this->submission_date->IsDetailKey) {
@@ -1678,6 +1699,7 @@ class JdhAppointmentsGrid extends JdhAppointments
         $this->appointment_start_date->CurrentValue = UnFormatDateTime($this->appointment_start_date->CurrentValue, $this->appointment_start_date->formatPattern());
         $this->appointment_end_date->CurrentValue = $this->appointment_end_date->FormValue;
         $this->appointment_end_date->CurrentValue = UnFormatDateTime($this->appointment_end_date->CurrentValue, $this->appointment_end_date->formatPattern());
+        $this->appointment_all_day->CurrentValue = $this->appointment_all_day->FormValue;
         $this->submission_date->CurrentValue = $this->submission_date->FormValue;
         $this->submission_date->CurrentValue = UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern());
     }
@@ -1772,6 +1794,7 @@ class JdhAppointmentsGrid extends JdhAppointments
         $this->appointment_title->setDbValue($row['appointment_title']);
         $this->appointment_start_date->setDbValue($row['appointment_start_date']);
         $this->appointment_end_date->setDbValue($row['appointment_end_date']);
+        $this->appointment_all_day->setDbValue($row['appointment_all_day']);
         $this->appointment_description->setDbValue($row['appointment_description']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
@@ -1786,6 +1809,7 @@ class JdhAppointmentsGrid extends JdhAppointments
         $row['appointment_title'] = $this->appointment_title->DefaultValue;
         $row['appointment_start_date'] = $this->appointment_start_date->DefaultValue;
         $row['appointment_end_date'] = $this->appointment_end_date->DefaultValue;
+        $row['appointment_all_day'] = $this->appointment_all_day->DefaultValue;
         $row['appointment_description'] = $this->appointment_description->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['subbmitted_by_user_id'] = $this->subbmitted_by_user_id->DefaultValue;
@@ -1837,6 +1861,8 @@ class JdhAppointmentsGrid extends JdhAppointments
 
         // appointment_end_date
 
+        // appointment_all_day
+
         // appointment_description
 
         // submission_date
@@ -1882,6 +1908,13 @@ class JdhAppointmentsGrid extends JdhAppointments
             $this->appointment_end_date->ViewValue = $this->appointment_end_date->CurrentValue;
             $this->appointment_end_date->ViewValue = FormatDateTime($this->appointment_end_date->ViewValue, $this->appointment_end_date->formatPattern());
 
+            // appointment_all_day
+            if (ConvertToBool($this->appointment_all_day->CurrentValue)) {
+                $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(1) != "" ? $this->appointment_all_day->tagCaption(1) : "Yes";
+            } else {
+                $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(2) != "" ? $this->appointment_all_day->tagCaption(2) : "No";
+            }
+
             // submission_date
             $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
             $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
@@ -1909,6 +1942,10 @@ class JdhAppointmentsGrid extends JdhAppointments
             // appointment_end_date
             $this->appointment_end_date->HrefValue = "";
             $this->appointment_end_date->TooltipValue = "";
+
+            // appointment_all_day
+            $this->appointment_all_day->HrefValue = "";
+            $this->appointment_all_day->TooltipValue = "";
 
             // submission_date
             $this->submission_date->HrefValue = "";
@@ -1987,6 +2024,10 @@ class JdhAppointmentsGrid extends JdhAppointments
             $this->appointment_end_date->EditValue = HtmlEncode(FormatDateTime($this->appointment_end_date->CurrentValue, $this->appointment_end_date->formatPattern()));
             $this->appointment_end_date->PlaceHolder = RemoveHtml($this->appointment_end_date->caption());
 
+            // appointment_all_day
+            $this->appointment_all_day->EditValue = $this->appointment_all_day->options(false);
+            $this->appointment_all_day->PlaceHolder = RemoveHtml($this->appointment_all_day->caption());
+
             // submission_date
             $this->submission_date->setupEditAttributes();
             $this->submission_date->EditValue = HtmlEncode(FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()));
@@ -2008,6 +2049,9 @@ class JdhAppointmentsGrid extends JdhAppointments
 
             // appointment_end_date
             $this->appointment_end_date->HrefValue = "";
+
+            // appointment_all_day
+            $this->appointment_all_day->HrefValue = "";
 
             // submission_date
             $this->submission_date->HrefValue = "";
@@ -2087,6 +2131,10 @@ class JdhAppointmentsGrid extends JdhAppointments
             $this->appointment_end_date->EditValue = HtmlEncode(FormatDateTime($this->appointment_end_date->CurrentValue, $this->appointment_end_date->formatPattern()));
             $this->appointment_end_date->PlaceHolder = RemoveHtml($this->appointment_end_date->caption());
 
+            // appointment_all_day
+            $this->appointment_all_day->EditValue = $this->appointment_all_day->options(false);
+            $this->appointment_all_day->PlaceHolder = RemoveHtml($this->appointment_all_day->caption());
+
             // submission_date
             $this->submission_date->setupEditAttributes();
             $this->submission_date->EditValue = HtmlEncode(FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()));
@@ -2108,6 +2156,9 @@ class JdhAppointmentsGrid extends JdhAppointments
 
             // appointment_end_date
             $this->appointment_end_date->HrefValue = "";
+
+            // appointment_all_day
+            $this->appointment_all_day->HrefValue = "";
 
             // submission_date
             $this->submission_date->HrefValue = "";
@@ -2162,6 +2213,11 @@ class JdhAppointmentsGrid extends JdhAppointments
         }
         if (!CheckDate($this->appointment_end_date->FormValue, $this->appointment_end_date->formatPattern())) {
             $this->appointment_end_date->addErrorMessage($this->appointment_end_date->getErrorMessage(false));
+        }
+        if ($this->appointment_all_day->Required) {
+            if ($this->appointment_all_day->FormValue == "") {
+                $this->appointment_all_day->addErrorMessage(str_replace("%s", $this->appointment_all_day->caption(), $this->appointment_all_day->RequiredErrorMessage));
+            }
         }
         if ($this->submission_date->Required) {
             if (!$this->submission_date->IsDetailKey && EmptyValue($this->submission_date->FormValue)) {
@@ -2290,6 +2346,13 @@ class JdhAppointmentsGrid extends JdhAppointments
         // appointment_end_date
         $this->appointment_end_date->setDbValueDef($rsnew, UnFormatDateTime($this->appointment_end_date->CurrentValue, $this->appointment_end_date->formatPattern()), CurrentDate(), $this->appointment_end_date->ReadOnly);
 
+        // appointment_all_day
+        $tmpBool = $this->appointment_all_day->CurrentValue;
+        if ($tmpBool != "1" && $tmpBool != "0") {
+            $tmpBool = !empty($tmpBool) ? "1" : "0";
+        }
+        $this->appointment_all_day->setDbValueDef($rsnew, $tmpBool, 0, $this->appointment_all_day->ReadOnly);
+
         // submission_date
         $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), $this->submission_date->ReadOnly);
 
@@ -2354,8 +2417,20 @@ class JdhAppointmentsGrid extends JdhAppointments
         // appointment_end_date
         $this->appointment_end_date->setDbValueDef($rsnew, UnFormatDateTime($this->appointment_end_date->CurrentValue, $this->appointment_end_date->formatPattern()), CurrentDate(), false);
 
+        // appointment_all_day
+        $tmpBool = $this->appointment_all_day->CurrentValue;
+        if ($tmpBool != "1" && $tmpBool != "0") {
+            $tmpBool = !empty($tmpBool) ? "1" : "0";
+        }
+        $this->appointment_all_day->setDbValueDef($rsnew, $tmpBool, 0, false);
+
         // submission_date
         $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), false);
+
+        // subbmitted_by_user_id
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['subbmitted_by_user_id'] = CurrentUserID();
+        }
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -2390,6 +2465,16 @@ class JdhAppointmentsGrid extends JdhAppointments
         return $addRow;
     }
 
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->subbmitted_by_user_id->CurrentValue);
+        }
+        return true;
+    }
+
     // Set up master/detail based on QueryString
     protected function setupMasterParms()
     {
@@ -2420,6 +2505,8 @@ class JdhAppointmentsGrid extends JdhAppointments
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_patient_id":
+                    break;
+                case "x_appointment_all_day":
                     break;
                 default:
                     $lookupFilter = "";

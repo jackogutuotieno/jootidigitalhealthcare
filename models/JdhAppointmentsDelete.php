@@ -367,6 +367,7 @@ class JdhAppointmentsDelete extends JdhAppointments
         $this->appointment_title->setVisibility();
         $this->appointment_start_date->setVisibility();
         $this->appointment_end_date->setVisibility();
+        $this->appointment_all_day->setVisibility();
         $this->appointment_description->Visible = false;
         $this->submission_date->setVisibility();
         $this->subbmitted_by_user_id->Visible = false;
@@ -395,6 +396,7 @@ class JdhAppointmentsDelete extends JdhAppointments
 
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
+        $this->setupLookupOptions($this->appointment_all_day);
 
         // Set up master/detail parameters
         $this->setupMasterParms();
@@ -412,6 +414,25 @@ class JdhAppointmentsDelete extends JdhAppointments
 
         // Set up filter (WHERE Clause)
         $this->CurrentFilter = $filter;
+
+        // Check if valid User ID
+        $conn = $this->getConnection();
+        $sql = $this->getSql($this->CurrentFilter);
+        $rows = $conn->fetchAllAssociative($sql);
+        $res = true;
+        foreach ($rows as $row) {
+            $this->loadRowValues($row);
+            if (!$this->showOptionLink("delete")) {
+                $userIdMsg = $Language->phrase("NoDeletePermission");
+                $this->setFailureMessage($userIdMsg);
+                $res = false;
+                break;
+            }
+        }
+        if (!$res) {
+            $this->terminate("jdhappointmentslist"); // Return to list
+            return;
+        }
 
         // Get action
         if (IsApi()) {
@@ -582,6 +603,7 @@ class JdhAppointmentsDelete extends JdhAppointments
         $this->appointment_title->setDbValue($row['appointment_title']);
         $this->appointment_start_date->setDbValue($row['appointment_start_date']);
         $this->appointment_end_date->setDbValue($row['appointment_end_date']);
+        $this->appointment_all_day->setDbValue($row['appointment_all_day']);
         $this->appointment_description->setDbValue($row['appointment_description']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
@@ -596,6 +618,7 @@ class JdhAppointmentsDelete extends JdhAppointments
         $row['appointment_title'] = $this->appointment_title->DefaultValue;
         $row['appointment_start_date'] = $this->appointment_start_date->DefaultValue;
         $row['appointment_end_date'] = $this->appointment_end_date->DefaultValue;
+        $row['appointment_all_day'] = $this->appointment_all_day->DefaultValue;
         $row['appointment_description'] = $this->appointment_description->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['subbmitted_by_user_id'] = $this->subbmitted_by_user_id->DefaultValue;
@@ -623,6 +646,8 @@ class JdhAppointmentsDelete extends JdhAppointments
         // appointment_start_date
 
         // appointment_end_date
+
+        // appointment_all_day
 
         // appointment_description
 
@@ -669,6 +694,13 @@ class JdhAppointmentsDelete extends JdhAppointments
             $this->appointment_end_date->ViewValue = $this->appointment_end_date->CurrentValue;
             $this->appointment_end_date->ViewValue = FormatDateTime($this->appointment_end_date->ViewValue, $this->appointment_end_date->formatPattern());
 
+            // appointment_all_day
+            if (ConvertToBool($this->appointment_all_day->CurrentValue)) {
+                $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(1) != "" ? $this->appointment_all_day->tagCaption(1) : "Yes";
+            } else {
+                $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(2) != "" ? $this->appointment_all_day->tagCaption(2) : "No";
+            }
+
             // submission_date
             $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
             $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
@@ -696,6 +728,10 @@ class JdhAppointmentsDelete extends JdhAppointments
             // appointment_end_date
             $this->appointment_end_date->HrefValue = "";
             $this->appointment_end_date->TooltipValue = "";
+
+            // appointment_all_day
+            $this->appointment_all_day->HrefValue = "";
+            $this->appointment_all_day->TooltipValue = "";
 
             // submission_date
             $this->submission_date->HrefValue = "";
@@ -803,6 +839,16 @@ class JdhAppointmentsDelete extends JdhAppointments
         return $deleteRows;
     }
 
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->subbmitted_by_user_id->CurrentValue);
+        }
+        return true;
+    }
+
     // Set up master/detail based on QueryString
     protected function setupMasterParms()
     {
@@ -897,6 +943,8 @@ class JdhAppointmentsDelete extends JdhAppointments
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_patient_id":
+                    break;
+                case "x_appointment_all_day":
                     break;
                 default:
                     $lookupFilter = "";

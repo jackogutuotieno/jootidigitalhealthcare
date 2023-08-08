@@ -49,6 +49,7 @@ class PatientAppointments extends DbTable
     public $appointment_description;
     public $submission_date;
     public $subbmitted_by_user_id;
+    public $appointment_all_day;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -291,6 +292,34 @@ class PatientAppointments extends DbTable
         $this->subbmitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->subbmitted_by_user_id->SourceTableVar = 'jdh_appointments';
         $this->Fields['subbmitted_by_user_id'] = &$this->subbmitted_by_user_id;
+
+        // appointment_all_day $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->appointment_all_day = new ReportField(
+            $this, // Table
+            'x_appointment_all_day', // Variable name
+            'appointment_all_day', // Name
+            '`appointment_all_day`', // Expression
+            '`appointment_all_day`', // Basic search expression
+            16, // Type
+            1, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`appointment_all_day`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'CHECKBOX' // Edit Tag
+        );
+        $this->appointment_all_day->InputTextType = "text";
+        $this->appointment_all_day->Nullable = false; // NOT NULL field
+        $this->appointment_all_day->DataType = DATATYPE_BOOLEAN;
+        $this->appointment_all_day->Lookup = new Lookup('appointment_all_day', 'Patient_Appointments', false, '', ["","","",""], '', '', [], [], [], [], [], [], '', '', "");
+        $this->appointment_all_day->OptionCount = 2;
+        $this->appointment_all_day->DefaultErrorMessage = $Language->phrase("IncorrectField");
+        $this->appointment_all_day->SearchOperators = ["=", "<>"];
+        $this->appointment_all_day->SourceTableVar = 'jdh_appointments';
+        $this->Fields['appointment_all_day'] = &$this->appointment_all_day;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -789,6 +818,7 @@ class PatientAppointments extends DbTable
         $this->appointment_description->DbValue = $row['appointment_description'];
         $this->submission_date->DbValue = $row['submission_date'];
         $this->subbmitted_by_user_id->DbValue = $row['subbmitted_by_user_id'];
+        $this->appointment_all_day->DbValue = $row['appointment_all_day'];
     }
 
     // Delete uploaded files

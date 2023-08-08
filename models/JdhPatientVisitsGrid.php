@@ -1521,6 +1521,8 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
     // Load default values
     protected function loadDefaultValues()
     {
+        $this->subbmitted_by_user_id->DefaultValue = CurrentUserID();
+        $this->subbmitted_by_user_id->OldValue = $this->subbmitted_by_user_id->DefaultValue;
     }
 
     // Load form values
@@ -2361,6 +2363,11 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
         // visit_date
         $this->visit_date->setDbValueDef($rsnew, UnFormatDateTime($this->visit_date->CurrentValue, $this->visit_date->formatPattern()), null, false);
 
+        // subbmitted_by_user_id
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['subbmitted_by_user_id'] = CurrentUserID();
+        }
+
         // Update current values
         $this->setCurrentValues($rsnew);
         $conn = $this->getConnection();
@@ -2392,6 +2399,16 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
             $this->rowInserted($rsold, $rsnew);
         }
         return $addRow;
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->subbmitted_by_user_id->CurrentValue);
+        }
+        return true;
     }
 
     // Set up master/detail based on QueryString

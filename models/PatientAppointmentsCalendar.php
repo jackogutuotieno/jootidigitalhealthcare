@@ -258,7 +258,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
     public $EventFields = [
         "id" => "appointment_id",
         "groupId" => "",
-        "allDay" => "",
+        "allDay" => "appointment_all_day",
         "start" => "appointment_start_date",
         "end" => "appointment_end_date",
         "startStr" => null,
@@ -382,6 +382,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
         $this->appointment_start_date->setDbValue($row['appointment_start_date']);
         $this->appointment_end_date->setDbValue($row['appointment_end_date']);
         $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
+        $this->appointment_all_day->setDbValue($row['appointment_all_day']);
     }
 
     /**
@@ -408,6 +409,8 @@ class PatientAppointmentsCalendar extends PatientAppointments
         // appointment_end_date
 
         // subbmitted_by_user_id
+
+        // appointment_all_day
         if ($this->RowType == ROWTYPE_VIEW) {
             // appointment_id
             $this->appointment_id->ViewValue = $this->appointment_id->CurrentValue;
@@ -450,6 +453,13 @@ class PatientAppointmentsCalendar extends PatientAppointments
             $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
             $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
 
+            // appointment_all_day
+            if (ConvertToBool($this->appointment_all_day->CurrentValue)) {
+                $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(1) != "" ? $this->appointment_all_day->tagCaption(1) : "Yes";
+            } else {
+                $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(2) != "" ? $this->appointment_all_day->tagCaption(2) : "No";
+            }
+
             // appointment_id
             $this->appointment_id->HrefValue = "";
             $this->appointment_id->TooltipValue = "";
@@ -473,6 +483,10 @@ class PatientAppointmentsCalendar extends PatientAppointments
             // subbmitted_by_user_id
             $this->subbmitted_by_user_id->HrefValue = "";
             $this->subbmitted_by_user_id->TooltipValue = "";
+
+            // appointment_all_day
+            $this->appointment_all_day->HrefValue = "";
+            $this->appointment_all_day->TooltipValue = "";
         }
 
         // Call Row_Rendered event
@@ -486,7 +500,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
      */
     protected function getEvent()
     {
-        $eventListFields = ["appointment_id","patient_id","appointment_title","appointment_start_date","appointment_end_date","subbmitted_by_user_id"];
+        $eventListFields = ["appointment_id","patient_id","appointment_title","appointment_start_date","appointment_end_date","subbmitted_by_user_id","appointment_all_day"];
         $event = [];
         foreach ($this->Fields as $fld) {
             if ($fld->DataType == DATATYPE_BLOB || !in_array($fld->Name, $eventListFields)) { // Skip blob fields / non list fields
@@ -547,6 +561,8 @@ class PatientAppointmentsCalendar extends PatientAppointments
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_patient_id":
+                    break;
+                case "x_appointment_all_day":
                     break;
                 default:
                     $lookupFilter = "";
@@ -699,6 +715,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
             $this->appointment_start_date->setSort("");
             $this->appointment_end_date->setSort("");
             $this->subbmitted_by_user_id->setSort("");
+            $this->appointment_all_day->setSort("");
 
         // Check for an Order parameter
         } elseif ($orderBy != "") {
@@ -710,6 +727,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
             $this->updateSort($this->appointment_start_date); // appointment_start_date
             $this->updateSort($this->appointment_end_date); // appointment_end_date
             $this->updateSort($this->subbmitted_by_user_id); // subbmitted_by_user_id
+            $this->updateSort($this->appointment_all_day); // appointment_all_day
             $sortSql = $this->sortSql();
             $this->setOrderBy($sortSql);
             $this->setStartGroup(1);

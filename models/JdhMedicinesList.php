@@ -647,6 +647,7 @@ class JdhMedicinesList extends JdhMedicines
         $this->expiry->setVisibility();
         $this->date_created->setVisibility();
         $this->date_updated->setVisibility();
+        $this->submitted_by_user_id->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -1027,6 +1028,7 @@ class JdhMedicinesList extends JdhMedicines
         $filterList = Concat($filterList, $this->expiry->AdvancedSearch->toJson(), ","); // Field expiry
         $filterList = Concat($filterList, $this->date_created->AdvancedSearch->toJson(), ","); // Field date_created
         $filterList = Concat($filterList, $this->date_updated->AdvancedSearch->toJson(), ","); // Field date_updated
+        $filterList = Concat($filterList, $this->submitted_by_user_id->AdvancedSearch->toJson(), ","); // Field submitted_by_user_id
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
             $filterList = Concat($filterList, $wrk, ",");
@@ -1146,6 +1148,14 @@ class JdhMedicinesList extends JdhMedicines
         $this->date_updated->AdvancedSearch->SearchValue2 = @$filter["y_date_updated"];
         $this->date_updated->AdvancedSearch->SearchOperator2 = @$filter["w_date_updated"];
         $this->date_updated->AdvancedSearch->save();
+
+        // Field submitted_by_user_id
+        $this->submitted_by_user_id->AdvancedSearch->SearchValue = @$filter["x_submitted_by_user_id"];
+        $this->submitted_by_user_id->AdvancedSearch->SearchOperator = @$filter["z_submitted_by_user_id"];
+        $this->submitted_by_user_id->AdvancedSearch->SearchCondition = @$filter["v_submitted_by_user_id"];
+        $this->submitted_by_user_id->AdvancedSearch->SearchValue2 = @$filter["y_submitted_by_user_id"];
+        $this->submitted_by_user_id->AdvancedSearch->SearchOperator2 = @$filter["w_submitted_by_user_id"];
+        $this->submitted_by_user_id->AdvancedSearch->save();
         $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
     }
@@ -1274,6 +1284,7 @@ class JdhMedicinesList extends JdhMedicines
             $this->updateSort($this->expiry); // expiry
             $this->updateSort($this->date_created); // date_created
             $this->updateSort($this->date_updated); // date_updated
+            $this->updateSort($this->submitted_by_user_id); // submitted_by_user_id
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1308,6 +1319,7 @@ class JdhMedicinesList extends JdhMedicines
                 $this->expiry->setSort("");
                 $this->date_created->setSort("");
                 $this->date_updated->setSort("");
+                $this->submitted_by_user_id->setSort("");
             }
 
             // Reset start position
@@ -1458,6 +1470,7 @@ class JdhMedicinesList extends JdhMedicines
             $option->add("expiry", $this->createColumnOption("expiry"));
             $option->add("date_created", $this->createColumnOption("date_created"));
             $option->add("date_updated", $this->createColumnOption("date_updated"));
+            $option->add("submitted_by_user_id", $this->createColumnOption("submitted_by_user_id"));
         }
 
         // Set up options default
@@ -1849,6 +1862,7 @@ class JdhMedicinesList extends JdhMedicines
         $this->expiry->setDbValue($row['expiry']);
         $this->date_created->setDbValue($row['date_created']);
         $this->date_updated->setDbValue($row['date_updated']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
     // Return a row with default values
@@ -1865,6 +1879,7 @@ class JdhMedicinesList extends JdhMedicines
         $row['expiry'] = $this->expiry->DefaultValue;
         $row['date_created'] = $this->date_created->DefaultValue;
         $row['date_updated'] = $this->date_updated->DefaultValue;
+        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
     }
 
@@ -1912,6 +1927,8 @@ class JdhMedicinesList extends JdhMedicines
         // date_created
 
         // date_updated
+
+        // submitted_by_user_id
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -1988,6 +2005,10 @@ class JdhMedicinesList extends JdhMedicines
             $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
             $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
 
+            // submitted_by_user_id
+            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
+
             // id
             $this->id->HrefValue = "";
             $this->id->TooltipValue = "";
@@ -2023,6 +2044,10 @@ class JdhMedicinesList extends JdhMedicines
             // date_updated
             $this->date_updated->HrefValue = "";
             $this->date_updated->TooltipValue = "";
+
+            // submitted_by_user_id
+            $this->submitted_by_user_id->HrefValue = "";
+            $this->submitted_by_user_id->TooltipValue = "";
         }
 
         // Call Row Rendered event

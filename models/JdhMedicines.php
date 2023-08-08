@@ -51,6 +51,7 @@ class JdhMedicines extends DbTable
     public $expiry;
     public $date_created;
     public $date_updated;
+    public $submitted_by_user_id;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -342,6 +343,31 @@ class JdhMedicines extends DbTable
         $this->date_updated->DefaultErrorMessage = str_replace("%s", DateFormat(1), $Language->phrase("IncorrectDate"));
         $this->date_updated->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->Fields['date_updated'] = &$this->date_updated;
+
+        // submitted_by_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->submitted_by_user_id = new DbField(
+            $this, // Table
+            'x_submitted_by_user_id', // Variable name
+            'submitted_by_user_id', // Name
+            '`submitted_by_user_id`', // Expression
+            '`submitted_by_user_id`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`submitted_by_user_id`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->submitted_by_user_id->InputTextType = "text";
+        $this->submitted_by_user_id->Nullable = false; // NOT NULL field
+        $this->submitted_by_user_id->Required = true; // Required field
+        $this->submitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->submitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['submitted_by_user_id'] = &$this->submitted_by_user_id;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -810,6 +836,7 @@ class JdhMedicines extends DbTable
         $this->expiry->DbValue = $row['expiry'];
         $this->date_created->DbValue = $row['date_created'];
         $this->date_updated->DbValue = $row['date_updated'];
+        $this->submitted_by_user_id->DbValue = $row['submitted_by_user_id'];
     }
 
     // Delete uploaded files
@@ -1127,6 +1154,7 @@ class JdhMedicines extends DbTable
         $this->expiry->setDbValue($row['expiry']);
         $this->date_created->setDbValue($row['date_created']);
         $this->date_updated->setDbValue($row['date_updated']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
     // Render list content
@@ -1176,6 +1204,8 @@ class JdhMedicines extends DbTable
         // date_created
 
         // date_updated
+
+        // submitted_by_user_id
 
         // id
         $this->id->ViewValue = $this->id->CurrentValue;
@@ -1253,6 +1283,10 @@ class JdhMedicines extends DbTable
         $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
         $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
 
+        // submitted_by_user_id
+        $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+        $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
+
         // id
         $this->id->HrefValue = "";
         $this->id->TooltipValue = "";
@@ -1292,6 +1326,10 @@ class JdhMedicines extends DbTable
         // date_updated
         $this->date_updated->HrefValue = "";
         $this->date_updated->TooltipValue = "";
+
+        // submitted_by_user_id
+        $this->submitted_by_user_id->HrefValue = "";
+        $this->submitted_by_user_id->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1368,6 +1406,14 @@ class JdhMedicines extends DbTable
         $this->date_updated->EditValue = FormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern());
         $this->date_updated->PlaceHolder = RemoveHtml($this->date_updated->caption());
 
+        // submitted_by_user_id
+        $this->submitted_by_user_id->setupEditAttributes();
+        $this->submitted_by_user_id->EditValue = $this->submitted_by_user_id->CurrentValue;
+        $this->submitted_by_user_id->PlaceHolder = RemoveHtml($this->submitted_by_user_id->caption());
+        if (strval($this->submitted_by_user_id->EditValue) != "" && is_numeric($this->submitted_by_user_id->EditValue)) {
+            $this->submitted_by_user_id->EditValue = FormatNumber($this->submitted_by_user_id->EditValue, null);
+        }
+
         // Call Row Rendered event
         $this->rowRendered();
     }
@@ -1406,6 +1452,7 @@ class JdhMedicines extends DbTable
                     $doc->exportCaption($this->expiry);
                     $doc->exportCaption($this->date_created);
                     $doc->exportCaption($this->date_updated);
+                    $doc->exportCaption($this->submitted_by_user_id);
                 } else {
                     $doc->exportCaption($this->id);
                     $doc->exportCaption($this->category_id);
@@ -1416,6 +1463,7 @@ class JdhMedicines extends DbTable
                     $doc->exportCaption($this->expiry);
                     $doc->exportCaption($this->date_created);
                     $doc->exportCaption($this->date_updated);
+                    $doc->exportCaption($this->submitted_by_user_id);
                 }
                 $doc->endExportRow();
             }
@@ -1455,6 +1503,7 @@ class JdhMedicines extends DbTable
                         $doc->exportField($this->expiry);
                         $doc->exportField($this->date_created);
                         $doc->exportField($this->date_updated);
+                        $doc->exportField($this->submitted_by_user_id);
                     } else {
                         $doc->exportField($this->id);
                         $doc->exportField($this->category_id);
@@ -1465,6 +1514,7 @@ class JdhMedicines extends DbTable
                         $doc->exportField($this->expiry);
                         $doc->exportField($this->date_created);
                         $doc->exportField($this->date_updated);
+                        $doc->exportField($this->submitted_by_user_id);
                     }
                     $doc->endExportRow($rowCnt);
                 }

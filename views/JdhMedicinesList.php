@@ -176,6 +176,9 @@ $Page->ListOptions->render("header", "left");
 <?php if ($Page->date_updated->Visible) { // date_updated ?>
         <th data-name="date_updated" class="<?= $Page->date_updated->headerCellClass() ?>"><div id="elh_jdh_medicines_date_updated" class="jdh_medicines_date_updated"><?= $Page->renderFieldHeader($Page->date_updated) ?></div></th>
 <?php } ?>
+<?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
+        <th data-name="submitted_by_user_id" class="<?= $Page->submitted_by_user_id->headerCellClass() ?>"><div id="elh_jdh_medicines_submitted_by_user_id" class="jdh_medicines_submitted_by_user_id"><?= $Page->renderFieldHeader($Page->submitted_by_user_id) ?></div></th>
+<?php } ?>
 <?php
 // Render list options (header, right)
 $Page->ListOptions->render("header", "right");
@@ -264,6 +267,14 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 <span id="el<?= $Page->RowCount ?>_jdh_medicines_date_updated" class="el_jdh_medicines_date_updated">
 <span<?= $Page->date_updated->viewAttributes() ?>>
 <?= $Page->date_updated->getViewValue() ?></span>
+</span>
+</td>
+    <?php } ?>
+    <?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
+        <td data-name="submitted_by_user_id"<?= $Page->submitted_by_user_id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_medicines_submitted_by_user_id" class="el_jdh_medicines_submitted_by_user_id">
+<span<?= $Page->submitted_by_user_id->viewAttributes() ?>>
+<?= $Page->submitted_by_user_id->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>

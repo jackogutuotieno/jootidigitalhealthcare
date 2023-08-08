@@ -177,6 +177,9 @@ $Page->ListOptions->render("header", "left");
 <?php if ($Page->appointment_end_date->Visible) { // appointment_end_date ?>
         <th data-name="appointment_end_date" class="<?= $Page->appointment_end_date->headerCellClass() ?>"><div id="elh_jdh_appointments_appointment_end_date" class="jdh_appointments_appointment_end_date"><?= $Page->renderFieldHeader($Page->appointment_end_date) ?></div></th>
 <?php } ?>
+<?php if ($Page->appointment_all_day->Visible) { // appointment_all_day ?>
+        <th data-name="appointment_all_day" class="<?= $Page->appointment_all_day->headerCellClass() ?>"><div id="elh_jdh_appointments_appointment_all_day" class="jdh_appointments_appointment_all_day"><?= $Page->renderFieldHeader($Page->appointment_all_day) ?></div></th>
+<?php } ?>
 <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <th data-name="submission_date" class="<?= $Page->submission_date->headerCellClass() ?>"><div id="elh_jdh_appointments_submission_date" class="jdh_appointments_submission_date"><?= $Page->renderFieldHeader($Page->submission_date) ?></div></th>
 <?php } ?>
@@ -236,6 +239,17 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 <span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_end_date" class="el_jdh_appointments_appointment_end_date">
 <span<?= $Page->appointment_end_date->viewAttributes() ?>>
 <?= $Page->appointment_end_date->getViewValue() ?></span>
+</span>
+</td>
+    <?php } ?>
+    <?php if ($Page->appointment_all_day->Visible) { // appointment_all_day ?>
+        <td data-name="appointment_all_day"<?= $Page->appointment_all_day->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
+<span<?= $Page->appointment_all_day->viewAttributes() ?>>
+<div class="form-check d-inline-block">
+    <input type="checkbox" id="x_appointment_all_day_<?= $Page->RowCount ?>" class="form-check-input" value="<?= $Page->appointment_all_day->getViewValue() ?>" disabled<?php if (ConvertToBool($Page->appointment_all_day->CurrentValue)) { ?> checked<?php } ?>>
+    <label class="form-check-label" for="x_appointment_all_day_<?= $Page->RowCount ?>"></label>
+</div></span>
 </span>
 </td>
     <?php } ?>

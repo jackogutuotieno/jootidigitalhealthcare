@@ -68,6 +68,9 @@ $Page->showMessage();
 <?php if ($Page->subbmitted_by_user_id->Visible) { // subbmitted_by_user_id ?>
         <th class="<?= $Page->subbmitted_by_user_id->headerCellClass() ?>"><span id="elh_Patient_Appointments_subbmitted_by_user_id" class="Patient_Appointments_subbmitted_by_user_id"><?= $Page->subbmitted_by_user_id->caption() ?></span></th>
 <?php } ?>
+<?php if ($Page->appointment_all_day->Visible) { // appointment_all_day ?>
+        <th class="<?= $Page->appointment_all_day->headerCellClass() ?>"><span id="elh_Patient_Appointments_appointment_all_day" class="Patient_Appointments_appointment_all_day"><?= $Page->appointment_all_day->caption() ?></span></th>
+<?php } ?>
     </tr>
     </thead>
     <tbody>
@@ -134,6 +137,17 @@ while (!$Page->Recordset->EOF) {
 <span id="el<?= $Page->RowCount ?>_Patient_Appointments_subbmitted_by_user_id" class="el_Patient_Appointments_subbmitted_by_user_id">
 <span<?= $Page->subbmitted_by_user_id->viewAttributes() ?>>
 <?= $Page->subbmitted_by_user_id->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->appointment_all_day->Visible) { // appointment_all_day ?>
+        <td<?= $Page->appointment_all_day->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_Patient_Appointments_appointment_all_day" class="el_Patient_Appointments_appointment_all_day">
+<span<?= $Page->appointment_all_day->viewAttributes() ?>>
+<div class="form-check d-inline-block">
+    <input type="checkbox" id="x_appointment_all_day_<?= $Page->RowCount ?>" class="form-check-input" value="<?= $Page->appointment_all_day->getViewValue() ?>" disabled<?php if (ConvertToBool($Page->appointment_all_day->CurrentValue)) { ?> checked<?php } ?>>
+    <label class="form-check-label" for="x_appointment_all_day_<?= $Page->RowCount ?>"></label>
+</div></span>
 </span>
 </td>
 <?php } ?>
