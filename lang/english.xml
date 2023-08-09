@@ -1310,7 +1310,7 @@
     <table id="jdh_lab_test_categories">
       <phrase id="tblcaption" value="Lab Test Categories" />
       <field id="test_category_id">
-        <phrase id="fldcaption" value="ID" />
+        <phrase id="fldcaption" value="No" />
       </field>
       <field id="test_category_name">
         <phrase id="fldcaption" value="Category" />
@@ -1349,7 +1349,7 @@
     <table id="jdh_medicines">
       <phrase id="tblcaption" value="Medicines" />
       <field id="id">
-        <phrase id="fldcaption" value="ID" />
+        <phrase id="fldcaption" value="No" />
       </field>
       <field id="category_id">
         <phrase id="fldcaption" value="Category" />
@@ -1415,7 +1415,7 @@
     <table id="jdh_patient_visits">
       <phrase id="tblcaption" value="Visits" />
       <field id="visit_id">
-        <phrase id="fldcaption" value="Visit ID" />
+        <phrase id="fldcaption" value="Visit No" />
       </field>
       <field id="patient_id">
         <phrase id="fldcaption" value="Patient" />
@@ -1483,7 +1483,7 @@
     <table id="jdh_prescriptions">
       <phrase id="tblcaption" value="Prescriptions" />
       <field id="prescription_id">
-        <phrase id="fldcaption" value="Prescription ID" />
+        <phrase id="fldcaption" value="Prescription No" />
       </field>
       <field id="patient_id">
         <phrase id="fldcaption" value="Patient" />
@@ -1525,7 +1525,7 @@
     <table id="jdh_service_category">
       <phrase id="tblcaption" value="Service Category" />
       <field id="category_id">
-        <phrase id="fldcaption" value="ID" />
+        <phrase id="fldcaption" value="No." />
       </field>
       <field id="category_name">
         <phrase id="fldcaption" value="Category" />
@@ -1537,7 +1537,7 @@
     <table id="jdh_service_subcategory">
       <phrase id="tblcaption" value="Service Subcategory" />
       <field id="subcategory_id">
-        <phrase id="fldcaption" value="ID" />
+        <phrase id="fldcaption" value="No." />
       </field>
       <field id="category_id">
         <phrase id="fldcaption" value="Category" />
@@ -1552,7 +1552,7 @@
     <table id="jdh_services">
       <phrase id="tblcaption" value="Services Costs" />
       <field id="service_id">
-        <phrase id="fldcaption" value="ID" />
+        <phrase id="fldcaption" value="No." />
       </field>
       <field id="category_id">
         <phrase id="fldcaption" value="Category" />
@@ -1580,7 +1580,7 @@
       </field>
     </table>
     <table id="jdh_test_reports">
-      <phrase id="tblcaption" value="Lab Reports" />
+      <phrase id="tblcaption" value="Test Reports" />
       <field id="report_id">
         <phrase id="fldcaption" value="Report No" />
       </field>
@@ -1606,7 +1606,7 @@
     <table id="jdh_test_requests">
       <phrase id="tblcaption" value="Test Requests" />
       <field id="request_id">
-        <phrase id="fldcaption" value="Request ID" />
+        <phrase id="fldcaption" value="Request No." />
       </field>
       <field id="patient_id">
         <phrase id="fldcaption" value="Patient" />
@@ -1614,11 +1614,8 @@
       <field id="request_title">
         <phrase id="fldcaption" value="Title" />
       </field>
-      <field id="request_category_id">
-        <phrase id="fldcaption" value="Category" />
-      </field>
-      <field id="request_subcategory_id">
-        <phrase id="fldcaption" value="Subcategory" />
+      <field id="request_service_id">
+        <phrase id="fldcaption" value="Service" />
       </field>
       <field id="request_description">
         <phrase id="fldcaption" value="Description" />
@@ -1633,7 +1630,7 @@
     <table id="jdh_users">
       <phrase id="tblcaption" value="Users" />
       <field id="user_id">
-        <phrase id="fldcaption" value="User ID" />
+        <phrase id="fldcaption" value="User No." />
       </field>
       <field id="photo">
         <phrase id="fldcaption" value="Photo" />
@@ -1690,7 +1687,7 @@
     <table id="jdh_visit_types">
       <phrase id="tblcaption" value="Visit Types" />
       <field id="visit_type_id">
-        <phrase id="fldcaption" value="ID" />
+        <phrase id="fldcaption" value="No" />
       </field>
       <field id="visit_type">
         <phrase id="fldcaption" value="Visit Type" />
@@ -1702,7 +1699,7 @@
     <table id="jdh_vitals">
       <phrase id="tblcaption" value="Patient Vitals" />
       <field id="vitals_id">
-        <phrase id="fldcaption" value="Vitals ID" />
+        <phrase id="fldcaption" value="No" />
       </field>
       <field id="patient_id">
         <phrase id="fldcaption" value="Patient" />
@@ -1774,7 +1771,7 @@
     <table id="jdh_patient_services">
       <phrase id="tblcaption" value="Patient Services" />
       <field id="patient_service_id">
-        <phrase id="fldcaption" value="ID" />
+        <phrase id="fldcaption" value="No." />
       </field>
       <field id="patient_id">
         <phrase id="fldcaption" value="Patient" />
@@ -1792,7 +1789,7 @@
     <table id="jdh_roles">
       <phrase id="tblcaption" value="Roles" />
       <field id="role_id">
-        <phrase id="fldcaption" value="Role ID" />
+        <phrase id="fldcaption" value="Role No" />
       </field>
       <field id="role_name">
         <phrase id="fldcaption" value="Role" />
@@ -1804,7 +1801,7 @@
     <table id="jdh_audittrail">
       <phrase id="tblcaption" value="System Logs" />
       <field id="id">
-        <phrase id="fldcaption" value="Id" />
+        <phrase id="fldcaption" value="No" />
       </field>
       <field id="datetime">
         <phrase id="fldcaption" value="Date Time" />
@@ -1837,7 +1834,7 @@
     <table id="jdh_notifications">
       <phrase id="tblcaption" value="Notifications" />
       <field id="id">
-        <phrase id="fldcaption" value="Id" />
+        <phrase id="fldcaption" value="No" />
       </field>
       <field id="user">
         <phrase id="fldcaption" value="User" />
@@ -1858,7 +1855,7 @@
     <table id="jdh_exportlog">
       <phrase id="tblcaption" value="Export Logs" />
       <field id="fileid">
-        <phrase id="fldcaption" value="File Id" />
+        <phrase id="fldcaption" value="No" />
       </field>
       <field id="datetime">
         <phrase id="fldcaption" value="Date Time" />
@@ -1885,7 +1882,7 @@
     <table id="jdh_test_categories">
       <phrase id="tblcaption" value="Test Categories" />
       <field id="category_id">
-        <phrase id="fldcaption" value="ID" />
+        <phrase id="fldcaption" value="No." />
       </field>
       <field id="category_name">
         <phrase id="fldcaption" value="Name" />
@@ -1961,7 +1958,7 @@
     <table id="jdh_test_costs">
       <phrase id="tblcaption" value="Test Costs" />
       <field id="test_id">
-        <phrase id="fldcaption" value="Test ID" />
+        <phrase id="fldcaption" value="Test No" />
       </field>
       <field id="test_category_id">
         <phrase id="fldcaption" value="Category" />

@@ -25,9 +25,7 @@ loadjs.ready(["wrapper", "head"], function () {
             ["request_id", [fields.request_id.visible && fields.request_id.required ? ew.Validators.required(fields.request_id.caption) : null, ew.Validators.integer], fields.request_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["report_findings", [fields.report_findings.visible && fields.report_findings.required ? ew.Validators.required(fields.report_findings.caption) : null], fields.report_findings.isInvalid],
-            ["report_attachment", [fields.report_attachment.visible && fields.report_attachment.required ? ew.Validators.fileRequired(fields.report_attachment.caption) : null], fields.report_attachment.isInvalid],
-            ["report_submittedby_user_id", [fields.report_submittedby_user_id.visible && fields.report_submittedby_user_id.required ? ew.Validators.required(fields.report_submittedby_user_id.caption) : null, ew.Validators.integer], fields.report_submittedby_user_id.isInvalid],
-            ["report_date", [fields.report_date.visible && fields.report_date.required ? ew.Validators.required(fields.report_date.caption) : null, ew.Validators.datetime(fields.report_date.clientFormatPattern)], fields.report_date.isInvalid]
+            ["report_attachment", [fields.report_attachment.visible && fields.report_attachment.required ? ew.Validators.fileRequired(fields.report_attachment.caption) : null], fields.report_attachment.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -72,10 +70,6 @@ $Page->showMessage();
 <input type="hidden" name="json" value="1">
 <?php } ?>
 <input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
-<?php if ($Page->getCurrentMasterTable() == "jdh_test_requests") { ?>
-<input type="hidden" name="<?= Config("TABLE_SHOW_MASTER") ?>" value="jdh_test_requests">
-<input type="hidden" name="fk_request_id" value="<?= HtmlEncode($Page->request_id->getSessionValue()) ?>">
-<?php } ?>
 <?php if ($Page->getCurrentMasterTable() == "jdh_patients") { ?>
 <input type="hidden" name="<?= Config("TABLE_SHOW_MASTER") ?>" value="jdh_patients">
 <input type="hidden" name="fk_patient_id" value="<?= HtmlEncode($Page->patient_id->getSessionValue()) ?>">
@@ -85,17 +79,11 @@ $Page->showMessage();
     <div id="r_request_id"<?= $Page->request_id->rowAttributes() ?>>
         <label id="elh_jdh_test_reports_request_id" for="x_request_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->request_id->caption() ?><?= $Page->request_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->request_id->cellAttributes() ?>>
-<?php if ($Page->request_id->getSessionValue() != "") { ?>
-<span<?= $Page->request_id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->request_id->getDisplayValue($Page->request_id->ViewValue))) ?>"></span>
-<input type="hidden" id="x_request_id" name="x_request_id" value="<?= HtmlEncode($Page->request_id->CurrentValue) ?>" data-hidden="1">
-<?php } else { ?>
 <span id="el_jdh_test_reports_request_id">
 <input type="<?= $Page->request_id->getInputTextType() ?>" name="x_request_id" id="x_request_id" data-table="jdh_test_reports" data-field="x_request_id" value="<?= $Page->request_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->request_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->request_id->formatPattern()) ?>"<?= $Page->request_id->editAttributes() ?> aria-describedby="x_request_id_help">
 <?= $Page->request_id->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->request_id->getErrorMessage() ?></div>
 </span>
-<?php } ?>
 </div></div>
     </div>
 <?php } ?>
@@ -147,18 +135,12 @@ loadjs.ready("fjdh_test_reportsadd", function() {
 <?php } ?>
 <?php if ($Page->report_findings->Visible) { // report_findings ?>
     <div id="r_report_findings"<?= $Page->report_findings->rowAttributes() ?>>
-        <label id="elh_jdh_test_reports_report_findings" class="<?= $Page->LeftColumnClass ?>"><?= $Page->report_findings->caption() ?><?= $Page->report_findings->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <label id="elh_jdh_test_reports_report_findings" for="x_report_findings" class="<?= $Page->LeftColumnClass ?>"><?= $Page->report_findings->caption() ?><?= $Page->report_findings->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->report_findings->cellAttributes() ?>>
 <span id="el_jdh_test_reports_report_findings">
-<?php $Page->report_findings->EditAttrs->appendClass("editor"); ?>
 <textarea data-table="jdh_test_reports" data-field="x_report_findings" name="x_report_findings" id="x_report_findings" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->report_findings->getPlaceHolder()) ?>"<?= $Page->report_findings->editAttributes() ?> aria-describedby="x_report_findings_help"><?= $Page->report_findings->EditValue ?></textarea>
 <?= $Page->report_findings->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->report_findings->getErrorMessage() ?></div>
-<script>
-loadjs.ready(["fjdh_test_reportsadd", "editor"], function() {
-    ew.createEditor("fjdh_test_reportsadd", "x_report_findings", 35, 4, <?= $Page->report_findings->ReadOnly || false ? "true" : "false" ?>);
-});
-</script>
 </span>
 </div></div>
     </div>
@@ -194,66 +176,6 @@ loadjs.ready(["fjdh_test_reportsadd", "editor"], function() {
 <input type="hidden" name="fn_x_report_attachment" id= "fn_x_report_attachment" value="<?= $Page->report_attachment->Upload->FileName ?>">
 <input type="hidden" name="fa_x_report_attachment" id= "fa_x_report_attachment" value="0">
 <table id="ft_x_report_attachment" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->report_submittedby_user_id->Visible) { // report_submittedby_user_id ?>
-    <div id="r_report_submittedby_user_id"<?= $Page->report_submittedby_user_id->rowAttributes() ?>>
-        <label id="elh_jdh_test_reports_report_submittedby_user_id" for="x_report_submittedby_user_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->report_submittedby_user_id->caption() ?><?= $Page->report_submittedby_user_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->report_submittedby_user_id->cellAttributes() ?>>
-<?php if (!$Security->isAdmin() && $Security->isLoggedIn() && !$Page->userIDAllow("add")) { // Non system admin ?>
-<span<?= $Page->report_submittedby_user_id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->report_submittedby_user_id->getDisplayValue($Page->report_submittedby_user_id->EditValue))) ?>"></span>
-<input type="hidden" data-table="jdh_test_reports" data-field="x_report_submittedby_user_id" data-hidden="1" name="x_report_submittedby_user_id" id="x_report_submittedby_user_id" value="<?= HtmlEncode($Page->report_submittedby_user_id->CurrentValue) ?>">
-<?php } else { ?>
-<span id="el_jdh_test_reports_report_submittedby_user_id">
-<input type="<?= $Page->report_submittedby_user_id->getInputTextType() ?>" name="x_report_submittedby_user_id" id="x_report_submittedby_user_id" data-table="jdh_test_reports" data-field="x_report_submittedby_user_id" value="<?= $Page->report_submittedby_user_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->report_submittedby_user_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->report_submittedby_user_id->formatPattern()) ?>"<?= $Page->report_submittedby_user_id->editAttributes() ?> aria-describedby="x_report_submittedby_user_id_help">
-<?= $Page->report_submittedby_user_id->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->report_submittedby_user_id->getErrorMessage() ?></div>
-</span>
-<?php } ?>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->report_date->Visible) { // report_date ?>
-    <div id="r_report_date"<?= $Page->report_date->rowAttributes() ?>>
-        <label id="elh_jdh_test_reports_report_date" for="x_report_date" class="<?= $Page->LeftColumnClass ?>"><?= $Page->report_date->caption() ?><?= $Page->report_date->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->report_date->cellAttributes() ?>>
-<span id="el_jdh_test_reports_report_date">
-<input type="<?= $Page->report_date->getInputTextType() ?>" name="x_report_date" id="x_report_date" data-table="jdh_test_reports" data-field="x_report_date" value="<?= $Page->report_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->report_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->report_date->formatPattern()) ?>"<?= $Page->report_date->editAttributes() ?> aria-describedby="x_report_date_help">
-<?= $Page->report_date->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->report_date->getErrorMessage() ?></div>
-<?php if (!$Page->report_date->ReadOnly && !$Page->report_date->Disabled && !isset($Page->report_date->EditAttrs["readonly"]) && !isset($Page->report_date->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["fjdh_test_reportsadd", "datetimepicker"], function () {
-    let format = "<?= DateFormat(0) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("fjdh_test_reportsadd", "x_report_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
 </span>
 </div></div>
     </div>

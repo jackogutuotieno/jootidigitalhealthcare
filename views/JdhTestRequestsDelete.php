@@ -59,11 +59,8 @@ $Page->showMessage();
 <?php if ($Page->request_title->Visible) { // request_title ?>
         <th class="<?= $Page->request_title->headerCellClass() ?>"><span id="elh_jdh_test_requests_request_title" class="jdh_test_requests_request_title"><?= $Page->request_title->caption() ?></span></th>
 <?php } ?>
-<?php if ($Page->request_category_id->Visible) { // request_category_id ?>
-        <th class="<?= $Page->request_category_id->headerCellClass() ?>"><span id="elh_jdh_test_requests_request_category_id" class="jdh_test_requests_request_category_id"><?= $Page->request_category_id->caption() ?></span></th>
-<?php } ?>
-<?php if ($Page->request_subcategory_id->Visible) { // request_subcategory_id ?>
-        <th class="<?= $Page->request_subcategory_id->headerCellClass() ?>"><span id="elh_jdh_test_requests_request_subcategory_id" class="jdh_test_requests_request_subcategory_id"><?= $Page->request_subcategory_id->caption() ?></span></th>
+<?php if ($Page->request_service_id->Visible) { // request_service_id ?>
+        <th class="<?= $Page->request_service_id->headerCellClass() ?>"><span id="elh_jdh_test_requests_request_service_id" class="jdh_test_requests_request_service_id"><?= $Page->request_service_id->caption() ?></span></th>
 <?php } ?>
 <?php if ($Page->request_description->Visible) { // request_description ?>
         <th class="<?= $Page->request_description->headerCellClass() ?>"><span id="elh_jdh_test_requests_request_description" class="jdh_test_requests_request_description"><?= $Page->request_description->caption() ?></span></th>
@@ -116,19 +113,11 @@ while (!$Page->Recordset->EOF) {
 </span>
 </td>
 <?php } ?>
-<?php if ($Page->request_category_id->Visible) { // request_category_id ?>
-        <td<?= $Page->request_category_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_category_id" class="el_jdh_test_requests_request_category_id">
-<span<?= $Page->request_category_id->viewAttributes() ?>>
-<?= $Page->request_category_id->getViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
-<?php if ($Page->request_subcategory_id->Visible) { // request_subcategory_id ?>
-        <td<?= $Page->request_subcategory_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_subcategory_id" class="el_jdh_test_requests_request_subcategory_id">
-<span<?= $Page->request_subcategory_id->viewAttributes() ?>>
-<?= $Page->request_subcategory_id->getViewValue() ?></span>
+<?php if ($Page->request_service_id->Visible) { // request_service_id ?>
+        <td<?= $Page->request_service_id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_service_id" class="el_jdh_test_requests_request_service_id">
+<span<?= $Page->request_service_id->viewAttributes() ?>>
+<?= $Page->request_service_id->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

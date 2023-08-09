@@ -212,14 +212,6 @@ loadjs.ready(["wrapper", "head"], function () {
 <?php include_once "JdhVitalsGrid.php" ?>
 <?php } ?>
 <?php
-    if (in_array("jdh_test_requests", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_requests->DetailView) {
-?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_test_requests", "TblCaption") ?></h4>
-<?php } ?>
-<?php include_once "JdhTestRequestsGrid.php" ?>
-<?php } ?>
-<?php
     if (in_array("jdh_patient_visits", explode(",", $Page->getCurrentDetailTable())) && $jdh_patient_visits->DetailView) {
 ?>
 <?php if ($Page->getCurrentDetailTable() != "") { ?>
@@ -244,20 +236,28 @@ loadjs.ready(["wrapper", "head"], function () {
 <?php include_once "JdhExaminationFindingsGrid.php" ?>
 <?php } ?>
 <?php
-    if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailView) {
-?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?></h4>
-<?php } ?>
-<?php include_once "JdhTestReportsGrid.php" ?>
-<?php } ?>
-<?php
     if (in_array("jdh_prescriptions", explode(",", $Page->getCurrentDetailTable())) && $jdh_prescriptions->DetailView) {
 ?>
 <?php if ($Page->getCurrentDetailTable() != "") { ?>
 <h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_prescriptions", "TblCaption") ?></h4>
 <?php } ?>
 <?php include_once "JdhPrescriptionsGrid.php" ?>
+<?php } ?>
+<?php
+    if (in_array("jdh_test_requests", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_requests->DetailView) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_test_requests", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhTestRequestsGrid.php" ?>
+<?php } ?>
+<?php
+    if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailView) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhTestReportsGrid.php" ?>
 <?php } ?>
 </form>
 </main>

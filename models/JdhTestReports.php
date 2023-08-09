@@ -28,6 +28,14 @@ class JdhTestReports extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
+    // Audit trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Export
     public $UseAjaxActions = false;
     public $ModalSearch = false;
@@ -137,7 +145,6 @@ class JdhTestReports extends DbTable
             'TEXT' // Edit Tag
         );
         $this->request_id->InputTextType = "text";
-        $this->request_id->IsForeignKey = true; // Foreign key field
         $this->request_id->Nullable = false; // NOT NULL field
         $this->request_id->Required = true; // Required field
         $this->request_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
@@ -237,13 +244,12 @@ class JdhTestReports extends DbTable
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
+            'HIDDEN' // Edit Tag
         );
         $this->report_submittedby_user_id->InputTextType = "text";
         $this->report_submittedby_user_id->Nullable = false; // NOT NULL field
-        $this->report_submittedby_user_id->Required = true; // Required field
         $this->report_submittedby_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->report_submittedby_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->report_submittedby_user_id->SearchOperators = ["=", "<>"];
         $this->Fields['report_submittedby_user_id'] = &$this->report_submittedby_user_id;
 
         // report_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
@@ -252,10 +258,10 @@ class JdhTestReports extends DbTable
             'x_report_date', // Variable name
             'report_date', // Name
             '`report_date`', // Expression
-            CastDateFieldForLike("`report_date`", 0, "DB"), // Basic search expression
+            CastDateFieldForLike("`report_date`", 11, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            0, // Date/Time format
+            11, // Date/Time format
             false, // Is upload field
             '`report_date`', // Virtual expression
             false, // Is virtual
@@ -267,7 +273,7 @@ class JdhTestReports extends DbTable
         $this->report_date->InputTextType = "text";
         $this->report_date->Nullable = false; // NOT NULL field
         $this->report_date->Required = true; // Required field
-        $this->report_date->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->report_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->report_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['report_date'] = &$this->report_date;
 
@@ -345,14 +351,6 @@ class JdhTestReports extends DbTable
     {
         // Master filter
         $masterFilter = "";
-        if ($this->getCurrentMasterTable() == "jdh_test_requests") {
-            $masterTable = Container("jdh_test_requests");
-            if ($this->request_id->getSessionValue() != "") {
-                $masterFilter .= "" . GetKeyFilter($masterTable->request_id, $this->request_id->getSessionValue(), $masterTable->request_id->DataType, $masterTable->Dbid);
-            } else {
-                return "";
-            }
-        }
         if ($this->getCurrentMasterTable() == "jdh_patients") {
             $masterTable = Container("jdh_patients");
             if ($this->patient_id->getSessionValue() != "") {
@@ -369,14 +367,6 @@ class JdhTestReports extends DbTable
     {
         // Detail filter
         $detailFilter = "";
-        if ($this->getCurrentMasterTable() == "jdh_test_requests") {
-            $masterTable = Container("jdh_test_requests");
-            if ($this->request_id->getSessionValue() != "") {
-                $detailFilter .= "" . GetKeyFilter($this->request_id, $this->request_id->getSessionValue(), $masterTable->request_id->DataType, $this->Dbid);
-            } else {
-                return "";
-            }
-        }
         if ($this->getCurrentMasterTable() == "jdh_patients") {
             $masterTable = Container("jdh_patients");
             if ($this->patient_id->getSessionValue() != "") {
@@ -399,20 +389,6 @@ class JdhTestReports extends DbTable
     {
         $validKeys = true;
         switch ($masterTable->TableVar) {
-            case "jdh_test_requests":
-                $key = $keys["request_id"] ?? "";
-                if (EmptyValue($key)) {
-                    if ($masterTable->request_id->Required) { // Required field and empty value
-                        return ""; // Return empty filter
-                    }
-                    $validKeys = false;
-                } elseif (!$validKeys) { // Already has empty key
-                    return ""; // Return empty filter
-                }
-                if ($validKeys) {
-                    return GetKeyFilter($masterTable->request_id, $keys["request_id"], $this->request_id->DataType, $this->Dbid);
-                }
-                break;
             case "jdh_patients":
                 $key = $keys["patient_id"] ?? "";
                 if (EmptyValue($key)) {
@@ -435,8 +411,6 @@ class JdhTestReports extends DbTable
     public function getDetailFilter($masterTable)
     {
         switch ($masterTable->TableVar) {
-            case "jdh_test_requests":
-                return GetKeyFilter($this->request_id, $masterTable->request_id->DbValue, $masterTable->request_id->DataType, $masterTable->Dbid);
             case "jdh_patients":
                 return GetKeyFilter($this->patient_id, $masterTable->patient_id->DbValue, $masterTable->patient_id->DataType, $masterTable->Dbid);
         }
@@ -757,6 +731,9 @@ class JdhTestReports extends DbTable
             // Get insert id if necessary
             $this->report_id->setDbValue($conn->lastInsertId());
             $rs['report_id'] = $this->report_id->DbValue;
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailOnAdd($rs);
+            }
         }
         return $success;
     }
@@ -810,6 +787,14 @@ class JdhTestReports extends DbTable
                 $rs['report_id'] = $this->report_id->CurrentValue;
             }
         }
+        if ($success && $this->AuditTrailOnEdit && $rsold) {
+            $rsaudit = $rs;
+            $fldname = 'report_id';
+            if (!array_key_exists($fldname, $rsaudit)) {
+                $rsaudit[$fldname] = $rsold[$fldname];
+            }
+            $this->writeAuditTrailOnEdit($rsold, $rsaudit);
+        }
         return $success;
     }
 
@@ -850,6 +835,9 @@ class JdhTestReports extends DbTable
                 $success = false;
                 $this->DbErrorMessage = $e->getMessage();
             }
+        }
+        if ($success && $this->AuditTrailOnDelete) {
+            $this->writeAuditTrailOnDelete($rs);
         }
         return $success;
     }
@@ -1061,10 +1049,6 @@ class JdhTestReports extends DbTable
     // Add master url
     public function addMasterUrl($url)
     {
-        if ($this->getCurrentMasterTable() == "jdh_test_requests" && !ContainsString($url, Config("TABLE_SHOW_MASTER") . "=")) {
-            $url .= (ContainsString($url, "?") ? "&" : "?") . Config("TABLE_SHOW_MASTER") . "=" . $this->getCurrentMasterTable();
-            $url .= "&" . GetForeignKeyUrl("fk_request_id", $this->request_id->getSessionValue()); // Use Session Value
-        }
         if ($this->getCurrentMasterTable() == "jdh_patients" && !ContainsString($url, Config("TABLE_SHOW_MASTER") . "=")) {
             $url .= (ContainsString($url, "?") ? "&" : "?") . Config("TABLE_SHOW_MASTER") . "=" . $this->getCurrentMasterTable();
             $url .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->getSessionValue()); // Use Session Value
@@ -1389,16 +1373,10 @@ class JdhTestReports extends DbTable
 
         // request_id
         $this->request_id->setupEditAttributes();
-        if ($this->request_id->getSessionValue() != "") {
-            $this->request_id->CurrentValue = GetForeignKeyValue($this->request_id->getSessionValue());
-            $this->request_id->ViewValue = $this->request_id->CurrentValue;
-            $this->request_id->ViewValue = FormatNumber($this->request_id->ViewValue, $this->request_id->formatPattern());
-        } else {
-            $this->request_id->EditValue = $this->request_id->CurrentValue;
-            $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
-            if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
-                $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
-            }
+        $this->request_id->EditValue = $this->request_id->CurrentValue;
+        $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
+        if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
+            $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
         }
 
         // patient_id
@@ -1446,16 +1424,9 @@ class JdhTestReports extends DbTable
 
         // report_submittedby_user_id
         $this->report_submittedby_user_id->setupEditAttributes();
-        if (!$Security->isAdmin() && $Security->isLoggedIn() && !$this->userIDAllow("info")) { // Non system admin
-            $this->report_submittedby_user_id->CurrentValue = CurrentUserID();
-            $this->report_submittedby_user_id->EditValue = $this->report_submittedby_user_id->CurrentValue;
-            $this->report_submittedby_user_id->EditValue = FormatNumber($this->report_submittedby_user_id->EditValue, $this->report_submittedby_user_id->formatPattern());
-        } else {
-            $this->report_submittedby_user_id->EditValue = $this->report_submittedby_user_id->CurrentValue;
-            $this->report_submittedby_user_id->PlaceHolder = RemoveHtml($this->report_submittedby_user_id->caption());
-            if (strval($this->report_submittedby_user_id->EditValue) != "" && is_numeric($this->report_submittedby_user_id->EditValue)) {
-                $this->report_submittedby_user_id->EditValue = FormatNumber($this->report_submittedby_user_id->EditValue, null);
-            }
+        $this->report_submittedby_user_id->CurrentValue = FormatNumber($this->report_submittedby_user_id->CurrentValue, $this->report_submittedby_user_id->formatPattern());
+        if (strval($this->report_submittedby_user_id->EditValue) != "" && is_numeric($this->report_submittedby_user_id->EditValue)) {
+            $this->report_submittedby_user_id->EditValue = FormatNumber($this->report_submittedby_user_id->EditValue, null);
         }
 
         // report_date
@@ -1611,30 +1582,6 @@ class JdhTestReports extends DbTable
         return $wrk;
     }
 
-    // Add master User ID filter
-    public function addMasterUserIDFilter($filter, $currentMasterTable)
-    {
-        $filterWrk = $filter;
-        if ($currentMasterTable == "jdh_test_requests") {
-            $filterWrk = Container("jdh_test_requests")->addUserIDFilter($filterWrk);
-        }
-        return $filterWrk;
-    }
-
-    // Add detail User ID filter
-    public function addDetailUserIDFilter($filter, $currentMasterTable)
-    {
-        $filterWrk = $filter;
-        if ($currentMasterTable == "jdh_test_requests") {
-            $mastertable = Container("jdh_test_requests");
-            if (!$mastertable->userIDAllow()) {
-                $subqueryWrk = $mastertable->getUserIDSubquery($this->request_id, $mastertable->request_id);
-                AddFilter($filterWrk, $subqueryWrk);
-            }
-        }
-        return $filterWrk;
-    }
-
     // Get file data
     public function getFileData($fldparm, $key, $resize, $width = 0, $height = 0, $plugins = [])
     {
@@ -1755,6 +1702,192 @@ class JdhTestReports extends DbTable
             return true;
         }
         return false;
+    }
+
+    // Write audit trail start/end for grid update
+    public function writeAuditTrailDummy($typ)
+    {
+        WriteAuditLog(CurrentUser(), $typ, 'jdh_test_reports', "", "", "", "");
+    }
+
+    // Write audit trail (add page)
+    public function writeAuditTrailOnAdd(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnAdd) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['report_id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $newvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo Field
+                    $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML Field
+                    $newvalue = "[XML]";
+                } else {
+                    $newvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "A", 'jdh_test_reports', $fldname, $key, "", $newvalue);
+            }
+        }
+    }
+
+    // Write audit trail (edit page)
+    public function writeAuditTrailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnEdit) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['report_id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rsnew) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && array_key_exists($fldname, $rsold) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->DataType == DATATYPE_DATE) { // DateTime field
+                    $modified = (FormatDateTime($rsold[$fldname], 0) != FormatDateTime($rsnew[$fldname], 0));
+                } else {
+                    $modified = !CompareValue($rsold[$fldname], $rsnew[$fldname]);
+                }
+                if ($modified) {
+                    if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                        $oldvalue = $Language->phrase("PasswordMask");
+                        $newvalue = $Language->phrase("PasswordMask");
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                        $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsold[$fldname] : "[MEMO]";
+                        $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsnew[$fldname] : "[MEMO]";
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                        $oldvalue = "[XML]";
+                        $newvalue = "[XML]";
+                    } else {
+                        $oldvalue = $rsold[$fldname];
+                        $newvalue = $rsnew[$fldname];
+                    }
+                    WriteAuditLog($usr, "U", 'jdh_test_reports', $fldname, $key, $oldvalue, $newvalue);
+                }
+            }
+        }
+    }
+
+    // Write audit trail (delete page)
+    public function writeAuditTrailOnDelete(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnDelete) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['report_id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $oldvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                    $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                    $oldvalue = "[XML]";
+                } else {
+                    $oldvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "D", 'jdh_test_reports', $fldname, $key, $oldvalue, "");
+            }
+        }
+    }
+
+    // Send email after add success
+    public function sendEmailOnAdd(&$rs)
+    {
+        global $Language;
+        $table = 'jdh_test_reports';
+        $subject = $table . " " . $Language->phrase("RecordInserted");
+        $action = $Language->phrase("ActionInserted");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['report_id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = ["rsnew" => $rs];
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
+    }
+
+    // Send email after update success
+    public function sendEmailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        $table = 'jdh_test_reports';
+        $subject = $table . " ". $Language->phrase("RecordUpdated");
+        $action = $Language->phrase("ActionUpdated");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['report_id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = [];
+        $args["rsold"] = &$rsold;
+        $args["rsnew"] = &$rsnew;
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
     }
 
     // Table level events

@@ -149,29 +149,17 @@ $Grid->ListOptions->render("body", "left", $Grid->RowCount);
     <?php if ($Grid->request_id->Visible) { // request_id ?>
         <td data-name="request_id"<?= $Grid->request_id->cellAttributes() ?>>
 <?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<?php if ($Grid->request_id->getSessionValue() != "") { ?>
-<span<?= $Grid->request_id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Grid->request_id->getDisplayValue($Grid->request_id->ViewValue))) ?>"></span>
-<input type="hidden" id="x<?= $Grid->RowIndex ?>_request_id" name="x<?= $Grid->RowIndex ?>_request_id" value="<?= HtmlEncode($Grid->request_id->CurrentValue) ?>" data-hidden="1">
-<?php } else { ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_test_reports_request_id" class="el_jdh_test_reports_request_id">
 <input type="<?= $Grid->request_id->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_request_id" id="x<?= $Grid->RowIndex ?>_request_id" data-table="jdh_test_reports" data-field="x_request_id" value="<?= $Grid->request_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->request_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->request_id->formatPattern()) ?>"<?= $Grid->request_id->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->request_id->getErrorMessage() ?></div>
 </span>
-<?php } ?>
 <input type="hidden" data-table="jdh_test_reports" data-field="x_request_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_request_id" id="o<?= $Grid->RowIndex ?>_request_id" value="<?= HtmlEncode($Grid->request_id->OldValue) ?>">
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<?php if ($Grid->request_id->getSessionValue() != "") { ?>
-<span<?= $Grid->request_id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Grid->request_id->getDisplayValue($Grid->request_id->ViewValue))) ?>"></span>
-<input type="hidden" id="x<?= $Grid->RowIndex ?>_request_id" name="x<?= $Grid->RowIndex ?>_request_id" value="<?= HtmlEncode($Grid->request_id->CurrentValue) ?>" data-hidden="1">
-<?php } else { ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_test_reports_request_id" class="el_jdh_test_reports_request_id">
 <input type="<?= $Grid->request_id->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_request_id" id="x<?= $Grid->RowIndex ?>_request_id" data-table="jdh_test_reports" data-field="x_request_id" value="<?= $Grid->request_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->request_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->request_id->formatPattern()) ?>"<?= $Grid->request_id->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->request_id->getErrorMessage() ?></div>
 </span>
-<?php } ?>
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_test_reports_request_id" class="el_jdh_test_reports_request_id">
@@ -289,7 +277,7 @@ loadjs.ready("fjdh_test_reportsgrid", function() {
 <?php if (!$Grid->report_date->ReadOnly && !$Grid->report_date->Disabled && !isset($Grid->report_date->EditAttrs["readonly"]) && !isset($Grid->report_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_test_reportsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(0) ?>",
+    let format = "<?= DateFormat(11) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
@@ -326,7 +314,7 @@ loadjs.ready(["fjdh_test_reportsgrid", "datetimepicker"], function () {
 <?php if (!$Grid->report_date->ReadOnly && !$Grid->report_date->Disabled && !isset($Grid->report_date->EditAttrs["readonly"]) && !isset($Grid->report_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_test_reportsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(0) ?>",
+    let format = "<?= DateFormat(11) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),

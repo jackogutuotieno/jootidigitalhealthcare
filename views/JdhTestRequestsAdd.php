@@ -24,8 +24,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setFields([
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["request_title", [fields.request_title.visible && fields.request_title.required ? ew.Validators.required(fields.request_title.caption) : null], fields.request_title.isInvalid],
-            ["request_category_id", [fields.request_category_id.visible && fields.request_category_id.required ? ew.Validators.required(fields.request_category_id.caption) : null], fields.request_category_id.isInvalid],
-            ["request_subcategory_id", [fields.request_subcategory_id.visible && fields.request_subcategory_id.required ? ew.Validators.required(fields.request_subcategory_id.caption) : null], fields.request_subcategory_id.isInvalid],
+            ["request_service_id", [fields.request_service_id.visible && fields.request_service_id.required ? ew.Validators.required(fields.request_service_id.caption) : null], fields.request_service_id.isInvalid],
             ["request_description", [fields.request_description.visible && fields.request_description.required ? ew.Validators.required(fields.request_description.caption) : null], fields.request_description.isInvalid],
             ["requested_by_user_id", [fields.requested_by_user_id.visible && fields.requested_by_user_id.required ? ew.Validators.required(fields.requested_by_user_id.caption) : null], fields.requested_by_user_id.isInvalid]
         ])
@@ -44,8 +43,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Dynamic selection lists
         .setLists({
             "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
-            "request_category_id": <?= $Page->request_category_id->toClientList($Page) ?>,
-            "request_subcategory_id": <?= $Page->request_subcategory_id->toClientList($Page) ?>,
+            "request_service_id": <?= $Page->request_service_id->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -137,80 +135,39 @@ loadjs.ready("fjdh_test_requestsadd", function() {
 </div></div>
     </div>
 <?php } ?>
-<?php if ($Page->request_category_id->Visible) { // request_category_id ?>
-    <div id="r_request_category_id"<?= $Page->request_category_id->rowAttributes() ?>>
-        <label id="elh_jdh_test_requests_request_category_id" for="x_request_category_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->request_category_id->caption() ?><?= $Page->request_category_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->request_category_id->cellAttributes() ?>>
-<span id="el_jdh_test_requests_request_category_id">
+<?php if ($Page->request_service_id->Visible) { // request_service_id ?>
+    <div id="r_request_service_id"<?= $Page->request_service_id->rowAttributes() ?>>
+        <label id="elh_jdh_test_requests_request_service_id" for="x_request_service_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->request_service_id->caption() ?><?= $Page->request_service_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->request_service_id->cellAttributes() ?>>
+<span id="el_jdh_test_requests_request_service_id">
     <select
-        id="x_request_category_id"
-        name="x_request_category_id"
-        class="form-select ew-select<?= $Page->request_category_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_test_requestsadd_x_request_category_id"
+        id="x_request_service_id"
+        name="x_request_service_id"
+        class="form-select ew-select<?= $Page->request_service_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_test_requestsadd_x_request_service_id"
         data-table="jdh_test_requests"
-        data-field="x_request_category_id"
-        data-value-separator="<?= $Page->request_category_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->request_category_id->getPlaceHolder()) ?>"
-        data-ew-action="update-options"
-        <?= $Page->request_category_id->editAttributes() ?>>
-        <?= $Page->request_category_id->selectOptionListHtml("x_request_category_id") ?>
+        data-field="x_request_service_id"
+        data-value-separator="<?= $Page->request_service_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->request_service_id->getPlaceHolder()) ?>"
+        <?= $Page->request_service_id->editAttributes() ?>>
+        <?= $Page->request_service_id->selectOptionListHtml("x_request_service_id") ?>
     </select>
-    <?= $Page->request_category_id->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->request_category_id->getErrorMessage() ?></div>
-<?= $Page->request_category_id->Lookup->getParamTag($Page, "p_x_request_category_id") ?>
+    <?= $Page->request_service_id->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->request_service_id->getErrorMessage() ?></div>
+<?= $Page->request_service_id->Lookup->getParamTag($Page, "p_x_request_service_id") ?>
 <script>
 loadjs.ready("fjdh_test_requestsadd", function() {
-    var options = { name: "x_request_category_id", selectId: "fjdh_test_requestsadd_x_request_category_id" },
+    var options = { name: "x_request_service_id", selectId: "fjdh_test_requestsadd_x_request_service_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_test_requestsadd.lists.request_category_id?.lookupOptions.length) {
-        options.data = { id: "x_request_category_id", form: "fjdh_test_requestsadd" };
+    if (fjdh_test_requestsadd.lists.request_service_id?.lookupOptions.length) {
+        options.data = { id: "x_request_service_id", form: "fjdh_test_requestsadd" };
     } else {
-        options.ajax = { id: "x_request_category_id", form: "fjdh_test_requestsadd", limit: ew.LOOKUP_PAGE_SIZE };
+        options.ajax = { id: "x_request_service_id", form: "fjdh_test_requestsadd", limit: ew.LOOKUP_PAGE_SIZE };
     }
     options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.request_category_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->request_subcategory_id->Visible) { // request_subcategory_id ?>
-    <div id="r_request_subcategory_id"<?= $Page->request_subcategory_id->rowAttributes() ?>>
-        <label id="elh_jdh_test_requests_request_subcategory_id" for="x_request_subcategory_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->request_subcategory_id->caption() ?><?= $Page->request_subcategory_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->request_subcategory_id->cellAttributes() ?>>
-<span id="el_jdh_test_requests_request_subcategory_id">
-    <select
-        id="x_request_subcategory_id"
-        name="x_request_subcategory_id"
-        class="form-select ew-select<?= $Page->request_subcategory_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_test_requestsadd_x_request_subcategory_id"
-        data-table="jdh_test_requests"
-        data-field="x_request_subcategory_id"
-        data-value-separator="<?= $Page->request_subcategory_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->request_subcategory_id->getPlaceHolder()) ?>"
-        <?= $Page->request_subcategory_id->editAttributes() ?>>
-        <?= $Page->request_subcategory_id->selectOptionListHtml("x_request_subcategory_id") ?>
-    </select>
-    <?= $Page->request_subcategory_id->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->request_subcategory_id->getErrorMessage() ?></div>
-<?= $Page->request_subcategory_id->Lookup->getParamTag($Page, "p_x_request_subcategory_id") ?>
-<script>
-loadjs.ready("fjdh_test_requestsadd", function() {
-    var options = { name: "x_request_subcategory_id", selectId: "fjdh_test_requestsadd_x_request_subcategory_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_test_requestsadd.lists.request_subcategory_id?.lookupOptions.length) {
-        options.data = { id: "x_request_subcategory_id", form: "fjdh_test_requestsadd" };
-    } else {
-        options.ajax = { id: "x_request_subcategory_id", form: "fjdh_test_requestsadd", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.request_subcategory_id.selectOptions);
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.request_service_id.selectOptions);
     ew.createSelect(options);
 });
 </script>
@@ -231,14 +188,6 @@ loadjs.ready("fjdh_test_requestsadd", function() {
     </div>
 <?php } ?>
 </div><!-- /page* -->
-<?php
-    if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailAdd) {
-?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?></h4>
-<?php } ?>
-<?php include_once "JdhTestReportsGrid.php" ?>
-<?php } ?>
 <?= $Page->IsModal ? '<template class="ew-modal-buttons">' : '<div class="row ew-buttons">' ?><!-- buttons .row -->
     <div class="<?= $Page->OffsetColumnClass ?>"><!-- buttons offset -->
 <button class="btn btn-primary ew-btn" name="btn-action" id="btn-action" type="submit" form="fjdh_test_requestsadd"><?= $Language->phrase("AddBtn") ?></button>

@@ -35,6 +35,14 @@ class JdhTestReportsAdd extends JdhTestReports
     // CSS class/style
     public $CurrentPageName = "jdhtestreportsadd";
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -460,8 +468,8 @@ class JdhTestReportsAdd extends JdhTestReports
         $this->patient_id->setVisibility();
         $this->report_findings->setVisibility();
         $this->report_attachment->setVisibility();
-        $this->report_submittedby_user_id->setVisibility();
-        $this->report_date->setVisibility();
+        $this->report_submittedby_user_id->Visible = false;
+        $this->report_date->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -683,27 +691,6 @@ class JdhTestReportsAdd extends JdhTestReports
             }
         }
 
-        // Check field name 'report_submittedby_user_id' first before field var 'x_report_submittedby_user_id'
-        $val = $CurrentForm->hasValue("report_submittedby_user_id") ? $CurrentForm->getValue("report_submittedby_user_id") : $CurrentForm->getValue("x_report_submittedby_user_id");
-        if (!$this->report_submittedby_user_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->report_submittedby_user_id->Visible = false; // Disable update for API request
-            } else {
-                $this->report_submittedby_user_id->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'report_date' first before field var 'x_report_date'
-        $val = $CurrentForm->hasValue("report_date") ? $CurrentForm->getValue("report_date") : $CurrentForm->getValue("x_report_date");
-        if (!$this->report_date->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->report_date->Visible = false; // Disable update for API request
-            } else {
-                $this->report_date->setFormValue($val, true, $validate);
-            }
-            $this->report_date->CurrentValue = UnFormatDateTime($this->report_date->CurrentValue, $this->report_date->formatPattern());
-        }
-
         // Check field name 'report_id' first before field var 'x_report_id'
         $val = $CurrentForm->hasValue("report_id") ? $CurrentForm->getValue("report_id") : $CurrentForm->getValue("x_report_id");
         $this->getUploadFiles(); // Get upload files
@@ -716,9 +703,6 @@ class JdhTestReportsAdd extends JdhTestReports
         $this->request_id->CurrentValue = $this->request_id->FormValue;
         $this->patient_id->CurrentValue = $this->patient_id->FormValue;
         $this->report_findings->CurrentValue = $this->report_findings->FormValue;
-        $this->report_submittedby_user_id->CurrentValue = $this->report_submittedby_user_id->FormValue;
-        $this->report_date->CurrentValue = $this->report_date->FormValue;
-        $this->report_date->CurrentValue = UnFormatDateTime($this->report_date->CurrentValue, $this->report_date->formatPattern());
     }
 
     /**
@@ -929,25 +913,13 @@ class JdhTestReportsAdd extends JdhTestReports
                 $this->report_attachment->HrefValue = "";
             }
             $this->report_attachment->ExportHrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
-
-            // report_submittedby_user_id
-            $this->report_submittedby_user_id->HrefValue = "";
-
-            // report_date
-            $this->report_date->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
             // request_id
             $this->request_id->setupEditAttributes();
-            if ($this->request_id->getSessionValue() != "") {
-                $this->request_id->CurrentValue = GetForeignKeyValue($this->request_id->getSessionValue());
-                $this->request_id->ViewValue = $this->request_id->CurrentValue;
-                $this->request_id->ViewValue = FormatNumber($this->request_id->ViewValue, $this->request_id->formatPattern());
-            } else {
-                $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
-                $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
-                if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
-                    $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
-                }
+            $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
+            $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
+            if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
+                $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
             }
 
             // patient_id
@@ -1019,25 +991,6 @@ class JdhTestReportsAdd extends JdhTestReports
                 RenderUploadField($this->report_attachment);
             }
 
-            // report_submittedby_user_id
-            $this->report_submittedby_user_id->setupEditAttributes();
-            if (!$Security->isAdmin() && $Security->isLoggedIn() && !$this->userIDAllow("add")) { // Non system admin
-                $this->report_submittedby_user_id->CurrentValue = CurrentUserID();
-                $this->report_submittedby_user_id->EditValue = $this->report_submittedby_user_id->CurrentValue;
-                $this->report_submittedby_user_id->EditValue = FormatNumber($this->report_submittedby_user_id->EditValue, $this->report_submittedby_user_id->formatPattern());
-            } else {
-                $this->report_submittedby_user_id->EditValue = HtmlEncode($this->report_submittedby_user_id->CurrentValue);
-                $this->report_submittedby_user_id->PlaceHolder = RemoveHtml($this->report_submittedby_user_id->caption());
-                if (strval($this->report_submittedby_user_id->EditValue) != "" && is_numeric($this->report_submittedby_user_id->EditValue)) {
-                    $this->report_submittedby_user_id->EditValue = FormatNumber($this->report_submittedby_user_id->EditValue, null);
-                }
-            }
-
-            // report_date
-            $this->report_date->setupEditAttributes();
-            $this->report_date->EditValue = HtmlEncode(FormatDateTime($this->report_date->CurrentValue, $this->report_date->formatPattern()));
-            $this->report_date->PlaceHolder = RemoveHtml($this->report_date->caption());
-
             // Add refer script
 
             // request_id
@@ -1063,12 +1016,6 @@ class JdhTestReportsAdd extends JdhTestReports
                 $this->report_attachment->HrefValue = "";
             }
             $this->report_attachment->ExportHrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
-
-            // report_submittedby_user_id
-            $this->report_submittedby_user_id->HrefValue = "";
-
-            // report_date
-            $this->report_date->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -1113,22 +1060,6 @@ class JdhTestReportsAdd extends JdhTestReports
                 $this->report_attachment->addErrorMessage(str_replace("%s", $this->report_attachment->caption(), $this->report_attachment->RequiredErrorMessage));
             }
         }
-        if ($this->report_submittedby_user_id->Required) {
-            if (!$this->report_submittedby_user_id->IsDetailKey && EmptyValue($this->report_submittedby_user_id->FormValue)) {
-                $this->report_submittedby_user_id->addErrorMessage(str_replace("%s", $this->report_submittedby_user_id->caption(), $this->report_submittedby_user_id->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->report_submittedby_user_id->FormValue)) {
-            $this->report_submittedby_user_id->addErrorMessage($this->report_submittedby_user_id->getErrorMessage(false));
-        }
-        if ($this->report_date->Required) {
-            if (!$this->report_date->IsDetailKey && EmptyValue($this->report_date->FormValue)) {
-                $this->report_date->addErrorMessage(str_replace("%s", $this->report_date->caption(), $this->report_date->RequiredErrorMessage));
-            }
-        }
-        if (!CheckDate($this->report_date->FormValue, $this->report_date->formatPattern())) {
-            $this->report_date->addErrorMessage($this->report_date->getErrorMessage(false));
-        }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -1169,10 +1100,9 @@ class JdhTestReportsAdd extends JdhTestReports
         }
 
         // report_submittedby_user_id
-        $this->report_submittedby_user_id->setDbValueDef($rsnew, $this->report_submittedby_user_id->CurrentValue, 0, false);
-
-        // report_date
-        $this->report_date->setDbValueDef($rsnew, UnFormatDateTime($this->report_date->CurrentValue, $this->report_date->formatPattern()), CurrentDate(), false);
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['report_submittedby_user_id'] = CurrentUserID();
+        }
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -1187,28 +1117,6 @@ class JdhTestReportsAdd extends JdhTestReports
             $userIdMsg = str_replace("%u", strval($this->report_submittedby_user_id->CurrentValue), $userIdMsg);
             $this->setFailureMessage($userIdMsg);
             return false;
-        }
-
-        // Check if valid key values for master user
-        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
-            $detailKeys = [];
-            $detailKeys["request_id"] = $this->request_id->CurrentValue;
-            $masterTable = Container("jdh_test_requests");
-            $masterFilter = $this->getMasterFilter($masterTable, $detailKeys);
-            if (!EmptyValue($masterFilter)) {
-                $validMasterKey = true;
-                if ($rsmaster = $masterTable->loadRs($masterFilter)->fetchAssociative()) {
-                    $validMasterKey = $Security->isValidUserID($rsmaster['requested_by_user_id']);
-                } elseif ($this->getCurrentMasterTable() == "jdh_test_requests") {
-                    $validMasterKey = false;
-                }
-                if (!$validMasterKey) {
-                    $masterUserIdMsg = str_replace("%c", CurrentUserID(), $Language->phrase("UnAuthorizedMasterUserID"));
-                    $masterUserIdMsg = str_replace("%f", $masterFilter, $masterUserIdMsg);
-                    $this->setFailureMessage($masterUserIdMsg);
-                    return false;
-                }
-            }
         }
         $conn = $this->getConnection();
 
@@ -1237,6 +1145,9 @@ class JdhTestReportsAdd extends JdhTestReports
         if ($addRow) {
             // Call Row Inserted event
             $this->rowInserted($rsold, $rsnew);
+            if ($this->SendEmail) {
+                $this->sendEmailOnAdd($rsnew);
+            }
         }
 
         // Write JSON response
@@ -1270,20 +1181,6 @@ class JdhTestReportsAdd extends JdhTestReports
                 $this->DbMasterFilter = "";
                 $this->DbDetailFilter = "";
             }
-            if ($masterTblVar == "jdh_test_requests") {
-                $validMaster = true;
-                $masterTbl = Container("jdh_test_requests");
-                if (($parm = Get("fk_request_id", Get("request_id"))) !== null) {
-                    $masterTbl->request_id->setQueryStringValue($parm);
-                    $this->request_id->QueryStringValue = $masterTbl->request_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
-                    $this->request_id->setSessionValue($this->request_id->QueryStringValue);
-                    if (!is_numeric($masterTbl->request_id->QueryStringValue)) {
-                        $validMaster = false;
-                    }
-                } else {
-                    $validMaster = false;
-                }
-            }
             if ($masterTblVar == "jdh_patients") {
                 $validMaster = true;
                 $masterTbl = Container("jdh_patients");
@@ -1304,20 +1201,6 @@ class JdhTestReportsAdd extends JdhTestReports
                     $validMaster = true;
                     $this->DbMasterFilter = "";
                     $this->DbDetailFilter = "";
-            }
-            if ($masterTblVar == "jdh_test_requests") {
-                $validMaster = true;
-                $masterTbl = Container("jdh_test_requests");
-                if (($parm = Post("fk_request_id", Post("request_id"))) !== null) {
-                    $masterTbl->request_id->setFormValue($parm);
-                    $this->request_id->setFormValue($masterTbl->request_id->FormValue);
-                    $this->request_id->setSessionValue($this->request_id->FormValue);
-                    if (!is_numeric($masterTbl->request_id->FormValue)) {
-                        $validMaster = false;
-                    }
-                } else {
-                    $validMaster = false;
-                }
             }
             if ($masterTblVar == "jdh_patients") {
                 $validMaster = true;
@@ -1345,11 +1228,6 @@ class JdhTestReportsAdd extends JdhTestReports
             }
 
             // Clear previous master key from Session
-            if ($masterTblVar != "jdh_test_requests") {
-                if ($this->request_id->CurrentValue == "") {
-                    $this->request_id->setSessionValue("");
-                }
-            }
             if ($masterTblVar != "jdh_patients") {
                 if ($this->patient_id->CurrentValue == "") {
                     $this->patient_id->setSessionValue("");

@@ -49,6 +49,14 @@ class JdhTestReportsGrid extends JdhTestReports
     public $CopyUrl;
     public $ListUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -656,34 +664,8 @@ class JdhTestReportsGrid extends JdhTestReports
         // Restore master/detail filter from session
         $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Restore master filter from session
         $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Restore detail filter from session
-
-        // Add master User ID filter
-        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
-                if ($this->getCurrentMasterTable() == "jdh_test_requests") {
-                    $this->DbMasterFilter = $this->addMasterUserIDFilter($this->DbMasterFilter, "jdh_test_requests"); // Add master User ID filter
-                }
-                if ($this->getCurrentMasterTable() == "jdh_patients") {
-                    $this->DbMasterFilter = $this->addMasterUserIDFilter($this->DbMasterFilter, "jdh_patients"); // Add master User ID filter
-                }
-        }
         AddFilter($filter, $this->DbDetailFilter);
         AddFilter($filter, $this->SearchWhere);
-
-        // Load master record
-        if ($this->CurrentMode != "add" && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_test_requests") {
-            $masterTbl = Container("jdh_test_requests");
-            $rsmaster = $masterTbl->loadRs($this->DbMasterFilter)->fetchAssociative();
-            $this->MasterRecordExists = $rsmaster !== false;
-            if (!$this->MasterRecordExists) {
-                $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record found
-                $this->terminate("jdhtestrequestslist"); // Return to master page
-                return;
-            } else {
-                $masterTbl->loadListRowValues($rsmaster);
-                $masterTbl->RowType = ROWTYPE_MASTER; // Master row
-                $masterTbl->renderListRow();
-            }
-        }
 
         // Load master record
         if ($this->CurrentMode != "add" && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_patients") {
@@ -876,6 +858,9 @@ class JdhTestReportsGrid extends JdhTestReports
             return false;
         }
         $this->loadDefaultValues();
+        if ($this->AuditTrailOnEdit) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchUpdateBegin")); // Batch update begin
+        }
         $wrkfilter = "";
         $key = "";
 
@@ -943,8 +928,39 @@ class JdhTestReportsGrid extends JdhTestReports
 
             // Call Grid_Updated event
             $this->gridUpdated($rsold, $rsnew);
+            if ($this->AuditTrailOnEdit) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchUpdateSuccess")); // Batch update success
+            }
             $this->clearInlineMode(); // Clear inline edit mode
+
+            // Send notify email
+            $table = 'jdh_test_reports';
+            $subject = $table . " " . $Language->phrase("RecordUpdated");
+            $action = $Language->phrase("ActionUpdatedGridEdit");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", $key);
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rsold"] = &$rsold;
+            $args["rsnew"] = &$rsnew;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+
+            // Set up error message
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
         } else {
+            if ($this->AuditTrailOnEdit) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchUpdateRollback")); // Batch update rollback
+            }
             if ($this->getFailureMessage() == "") {
                 $this->setFailureMessage($Language->phrase("UpdateFailed")); // Set update failed message
             }
@@ -1004,6 +1020,9 @@ class JdhTestReportsGrid extends JdhTestReports
         // Init key filter
         $wrkfilter = "";
         $addcnt = 0;
+        if ($this->AuditTrailOnAdd) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchInsertBegin")); // Batch insert begin
+        }
         $key = "";
 
         // Get row count
@@ -1058,8 +1077,36 @@ class JdhTestReportsGrid extends JdhTestReports
 
             // Call Grid_Inserted event
             $this->gridInserted($rsnew);
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchInsertSuccess")); // Batch insert success
+            }
             $this->clearInlineMode(); // Clear grid add mode
+
+            // Send notify email
+            $table = 'jdh_test_reports';
+            $subject = $table . " " . $Language->phrase("RecordInserted");
+            $action = $Language->phrase("ActionInsertedGridAdd");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", $key);
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rsnew"] = &$rsnew;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
         } else {
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchInsertRollback")); // Batch insert rollback
+            }
             if ($this->getFailureMessage() == "") {
                 $this->setFailureMessage($Language->phrase("InsertFailed")); // Set insert failed message
             }
@@ -1206,7 +1253,6 @@ class JdhTestReportsGrid extends JdhTestReports
                 $this->setCurrentMasterTable(""); // Clear master table
                 $this->DbMasterFilter = "";
                 $this->DbDetailFilter = "";
-                        $this->request_id->setSessionValue("");
                         $this->patient_id->setSessionValue("");
             }
 
@@ -1251,12 +1297,6 @@ class JdhTestReportsGrid extends JdhTestReports
         $item = &$this->ListOptions->add("edit");
         $item->CssClass = "text-nowrap";
         $item->Visible = $Security->canEdit();
-        $item->OnLeft = false;
-
-        // "copy"
-        $item = &$this->ListOptions->add("copy");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canAdd();
         $item->OnLeft = false;
 
         // Drop down button for ListOptions
@@ -1349,19 +1389,6 @@ class JdhTestReportsGrid extends JdhTestReports
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_test_reports\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
-
-            // "copy"
-            $opt = $this->ListOptions["copy"];
-            $copycaption = HtmlTitle($Language->phrase("CopyLink"));
-            if ($Security->canAdd() && $this->showOptionLink("add")) {
-                if ($this->ModalAdd && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_test_reports\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("CopyLink") . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1889,17 +1916,10 @@ class JdhTestReportsGrid extends JdhTestReports
 
             // request_id
             $this->request_id->setupEditAttributes();
-            if ($this->request_id->getSessionValue() != "") {
-                $this->request_id->CurrentValue = GetForeignKeyValue($this->request_id->getSessionValue());
-                $this->request_id->OldValue = $this->request_id->CurrentValue;
-                $this->request_id->ViewValue = $this->request_id->CurrentValue;
-                $this->request_id->ViewValue = FormatNumber($this->request_id->ViewValue, $this->request_id->formatPattern());
-            } else {
-                $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
-                $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
-                if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
-                    $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
-                }
+            $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
+            $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
+            if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
+                $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
             }
 
             // patient_id
@@ -1980,17 +2000,10 @@ class JdhTestReportsGrid extends JdhTestReports
 
             // request_id
             $this->request_id->setupEditAttributes();
-            if ($this->request_id->getSessionValue() != "") {
-                $this->request_id->CurrentValue = GetForeignKeyValue($this->request_id->getSessionValue());
-                $this->request_id->OldValue = $this->request_id->CurrentValue;
-                $this->request_id->ViewValue = $this->request_id->CurrentValue;
-                $this->request_id->ViewValue = FormatNumber($this->request_id->ViewValue, $this->request_id->formatPattern());
-            } else {
-                $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
-                $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
-                if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
-                    $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
-                }
+            $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
+            $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
+            if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
+                $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
             }
 
             // patient_id
@@ -2139,6 +2152,9 @@ class JdhTestReportsGrid extends JdhTestReports
             $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
             return false;
         }
+        if ($this->AuditTrailOnDelete) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
+        }
 
         // Clone old rows
         $rsold = $rows;
@@ -2216,9 +2232,6 @@ class JdhTestReportsGrid extends JdhTestReports
         $rsnew = [];
 
         // request_id
-        if ($this->request_id->getSessionValue() != "") {
-            $this->request_id->ReadOnly = true;
-        }
         $this->request_id->setDbValueDef($rsnew, $this->request_id->CurrentValue, 0, $this->request_id->ReadOnly);
 
         // patient_id
@@ -2272,9 +2285,6 @@ class JdhTestReportsGrid extends JdhTestReports
         global $Language, $Security;
 
         // Set up foreign key field value from Session
-        if ($this->getCurrentMasterTable() == "jdh_test_requests") {
-            $this->request_id->CurrentValue = $this->request_id->getSessionValue();
-        }
         if ($this->getCurrentMasterTable() == "jdh_patients") {
             $this->patient_id->CurrentValue = $this->patient_id->getSessionValue();
         }
@@ -2309,28 +2319,6 @@ class JdhTestReportsGrid extends JdhTestReports
             $userIdMsg = str_replace("%u", strval($this->report_submittedby_user_id->CurrentValue), $userIdMsg);
             $this->setFailureMessage($userIdMsg);
             return false;
-        }
-
-        // Check if valid key values for master user
-        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
-            $detailKeys = [];
-            $detailKeys["request_id"] = $this->request_id->CurrentValue;
-            $masterTable = Container("jdh_test_requests");
-            $masterFilter = $this->getMasterFilter($masterTable, $detailKeys);
-            if (!EmptyValue($masterFilter)) {
-                $validMasterKey = true;
-                if ($rsmaster = $masterTable->loadRs($masterFilter)->fetchAssociative()) {
-                    $validMasterKey = $Security->isValidUserID($rsmaster['requested_by_user_id']);
-                } elseif ($this->getCurrentMasterTable() == "jdh_test_requests") {
-                    $validMasterKey = false;
-                }
-                if (!$validMasterKey) {
-                    $masterUserIdMsg = str_replace("%c", CurrentUserID(), $Language->phrase("UnAuthorizedMasterUserID"));
-                    $masterUserIdMsg = str_replace("%f", $masterFilter, $masterUserIdMsg);
-                    $this->setFailureMessage($masterUserIdMsg);
-                    return false;
-                }
-            }
         }
         $conn = $this->getConnection();
 
@@ -2378,13 +2366,6 @@ class JdhTestReportsGrid extends JdhTestReports
     {
         // Hide foreign keys
         $masterTblVar = $this->getCurrentMasterTable();
-        if ($masterTblVar == "jdh_test_requests") {
-            $masterTbl = Container("jdh_test_requests");
-            $this->request_id->Visible = false;
-            if ($masterTbl->EventCancelled) {
-                $this->EventCancelled = true;
-            }
-        }
         if ($masterTblVar == "jdh_patients") {
             $masterTbl = Container("jdh_patients");
             $this->patient_id->Visible = false;

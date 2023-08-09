@@ -49,6 +49,14 @@ class JdhTestRequestsGrid extends JdhTestRequests
     public $CopyUrl;
     public $ListUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -553,8 +561,7 @@ class JdhTestRequestsGrid extends JdhTestRequests
         $this->request_id->setVisibility();
         $this->patient_id->setVisibility();
         $this->request_title->setVisibility();
-        $this->request_category_id->setVisibility();
-        $this->request_subcategory_id->setVisibility();
+        $this->request_service_id->setVisibility();
         $this->request_description->setVisibility();
         $this->requested_by_user_id->Visible = false;
         $this->request_date->setVisibility();
@@ -589,8 +596,7 @@ class JdhTestRequestsGrid extends JdhTestRequests
 
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
-        $this->setupLookupOptions($this->request_category_id);
-        $this->setupLookupOptions($this->request_subcategory_id);
+        $this->setupLookupOptions($this->request_service_id);
 
         // Load default values for add
         $this->loadDefaultValues();
@@ -856,6 +862,9 @@ class JdhTestRequestsGrid extends JdhTestRequests
             return false;
         }
         $this->loadDefaultValues();
+        if ($this->AuditTrailOnEdit) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchUpdateBegin")); // Batch update begin
+        }
         $wrkfilter = "";
         $key = "";
 
@@ -923,8 +932,39 @@ class JdhTestRequestsGrid extends JdhTestRequests
 
             // Call Grid_Updated event
             $this->gridUpdated($rsold, $rsnew);
+            if ($this->AuditTrailOnEdit) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchUpdateSuccess")); // Batch update success
+            }
             $this->clearInlineMode(); // Clear inline edit mode
+
+            // Send notify email
+            $table = 'jdh_test_requests';
+            $subject = $table . " " . $Language->phrase("RecordUpdated");
+            $action = $Language->phrase("ActionUpdatedGridEdit");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", $key);
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rsold"] = &$rsold;
+            $args["rsnew"] = &$rsnew;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+
+            // Set up error message
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
         } else {
+            if ($this->AuditTrailOnEdit) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchUpdateRollback")); // Batch update rollback
+            }
             if ($this->getFailureMessage() == "") {
                 $this->setFailureMessage($Language->phrase("UpdateFailed")); // Set update failed message
             }
@@ -984,6 +1024,9 @@ class JdhTestRequestsGrid extends JdhTestRequests
         // Init key filter
         $wrkfilter = "";
         $addcnt = 0;
+        if ($this->AuditTrailOnAdd) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchInsertBegin")); // Batch insert begin
+        }
         $key = "";
 
         // Get row count
@@ -1038,8 +1081,36 @@ class JdhTestRequestsGrid extends JdhTestRequests
 
             // Call Grid_Inserted event
             $this->gridInserted($rsnew);
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchInsertSuccess")); // Batch insert success
+            }
             $this->clearInlineMode(); // Clear grid add mode
+
+            // Send notify email
+            $table = 'jdh_test_requests';
+            $subject = $table . " " . $Language->phrase("RecordInserted");
+            $action = $Language->phrase("ActionInsertedGridAdd");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", $key);
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rsnew"] = &$rsnew;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
         } else {
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchInsertRollback")); // Batch insert rollback
+            }
             if ($this->getFailureMessage() == "") {
                 $this->setFailureMessage($Language->phrase("InsertFailed")); // Set insert failed message
             }
@@ -1057,10 +1128,7 @@ class JdhTestRequestsGrid extends JdhTestRequests
         if ($CurrentForm->hasValue("x_request_title") && $CurrentForm->hasValue("o_request_title") && $this->request_title->CurrentValue != $this->request_title->DefaultValue) {
             return false;
         }
-        if ($CurrentForm->hasValue("x_request_category_id") && $CurrentForm->hasValue("o_request_category_id") && $this->request_category_id->CurrentValue != $this->request_category_id->DefaultValue) {
-            return false;
-        }
-        if ($CurrentForm->hasValue("x_request_subcategory_id") && $CurrentForm->hasValue("o_request_subcategory_id") && $this->request_subcategory_id->CurrentValue != $this->request_subcategory_id->DefaultValue) {
+        if ($CurrentForm->hasValue("x_request_service_id") && $CurrentForm->hasValue("o_request_service_id") && $this->request_service_id->CurrentValue != $this->request_service_id->DefaultValue) {
             return false;
         }
         if ($CurrentForm->hasValue("x_request_description") && $CurrentForm->hasValue("o_request_description") && $this->request_description->CurrentValue != $this->request_description->DefaultValue) {
@@ -1157,8 +1225,7 @@ class JdhTestRequestsGrid extends JdhTestRequests
         $this->request_id->clearErrorMessage();
         $this->patient_id->clearErrorMessage();
         $this->request_title->clearErrorMessage();
-        $this->request_category_id->clearErrorMessage();
-        $this->request_subcategory_id->clearErrorMessage();
+        $this->request_service_id->clearErrorMessage();
         $this->request_description->clearErrorMessage();
         $this->request_date->clearErrorMessage();
     }
@@ -1242,12 +1309,6 @@ class JdhTestRequestsGrid extends JdhTestRequests
         $item = &$this->ListOptions->add("edit");
         $item->CssClass = "text-nowrap";
         $item->Visible = $Security->canEdit();
-        $item->OnLeft = false;
-
-        // "copy"
-        $item = &$this->ListOptions->add("copy");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canAdd();
         $item->OnLeft = false;
 
         // Drop down button for ListOptions
@@ -1340,19 +1401,6 @@ class JdhTestRequestsGrid extends JdhTestRequests
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_test_requests\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
-
-            // "copy"
-            $opt = $this->ListOptions["copy"];
-            $copycaption = HtmlTitle($Language->phrase("CopyLink"));
-            if ($Security->canAdd() && $this->showOptionLink("add")) {
-                if ($this->ModalAdd && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_test_requests\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("CopyLink") . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1630,30 +1678,17 @@ class JdhTestRequestsGrid extends JdhTestRequests
             $this->request_title->setOldValue($CurrentForm->getValue("o_request_title"));
         }
 
-        // Check field name 'request_category_id' first before field var 'x_request_category_id'
-        $val = $CurrentForm->hasValue("request_category_id") ? $CurrentForm->getValue("request_category_id") : $CurrentForm->getValue("x_request_category_id");
-        if (!$this->request_category_id->IsDetailKey) {
+        // Check field name 'request_service_id' first before field var 'x_request_service_id'
+        $val = $CurrentForm->hasValue("request_service_id") ? $CurrentForm->getValue("request_service_id") : $CurrentForm->getValue("x_request_service_id");
+        if (!$this->request_service_id->IsDetailKey) {
             if (IsApi() && $val === null) {
-                $this->request_category_id->Visible = false; // Disable update for API request
+                $this->request_service_id->Visible = false; // Disable update for API request
             } else {
-                $this->request_category_id->setFormValue($val);
+                $this->request_service_id->setFormValue($val);
             }
         }
-        if ($CurrentForm->hasValue("o_request_category_id")) {
-            $this->request_category_id->setOldValue($CurrentForm->getValue("o_request_category_id"));
-        }
-
-        // Check field name 'request_subcategory_id' first before field var 'x_request_subcategory_id'
-        $val = $CurrentForm->hasValue("request_subcategory_id") ? $CurrentForm->getValue("request_subcategory_id") : $CurrentForm->getValue("x_request_subcategory_id");
-        if (!$this->request_subcategory_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->request_subcategory_id->Visible = false; // Disable update for API request
-            } else {
-                $this->request_subcategory_id->setFormValue($val);
-            }
-        }
-        if ($CurrentForm->hasValue("o_request_subcategory_id")) {
-            $this->request_subcategory_id->setOldValue($CurrentForm->getValue("o_request_subcategory_id"));
+        if ($CurrentForm->hasValue("o_request_service_id")) {
+            $this->request_service_id->setOldValue($CurrentForm->getValue("o_request_service_id"));
         }
 
         // Check field name 'request_description' first before field var 'x_request_description'
@@ -1693,8 +1728,7 @@ class JdhTestRequestsGrid extends JdhTestRequests
         }
         $this->patient_id->CurrentValue = $this->patient_id->FormValue;
         $this->request_title->CurrentValue = $this->request_title->FormValue;
-        $this->request_category_id->CurrentValue = $this->request_category_id->FormValue;
-        $this->request_subcategory_id->CurrentValue = $this->request_subcategory_id->FormValue;
+        $this->request_service_id->CurrentValue = $this->request_service_id->FormValue;
         $this->request_description->CurrentValue = $this->request_description->FormValue;
         $this->request_date->CurrentValue = $this->request_date->FormValue;
         $this->request_date->CurrentValue = UnFormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern());
@@ -1788,8 +1822,7 @@ class JdhTestRequestsGrid extends JdhTestRequests
         $this->request_id->setDbValue($row['request_id']);
         $this->patient_id->setDbValue($row['patient_id']);
         $this->request_title->setDbValue($row['request_title']);
-        $this->request_category_id->setDbValue($row['request_category_id']);
-        $this->request_subcategory_id->setDbValue($row['request_subcategory_id']);
+        $this->request_service_id->setDbValue($row['request_service_id']);
         $this->request_description->setDbValue($row['request_description']);
         $this->requested_by_user_id->setDbValue($row['requested_by_user_id']);
         $this->request_date->setDbValue($row['request_date']);
@@ -1802,8 +1835,7 @@ class JdhTestRequestsGrid extends JdhTestRequests
         $row['request_id'] = $this->request_id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
         $row['request_title'] = $this->request_title->DefaultValue;
-        $row['request_category_id'] = $this->request_category_id->DefaultValue;
-        $row['request_subcategory_id'] = $this->request_subcategory_id->DefaultValue;
+        $row['request_service_id'] = $this->request_service_id->DefaultValue;
         $row['request_description'] = $this->request_description->DefaultValue;
         $row['requested_by_user_id'] = $this->requested_by_user_id->DefaultValue;
         $row['request_date'] = $this->request_date->DefaultValue;
@@ -1851,9 +1883,7 @@ class JdhTestRequestsGrid extends JdhTestRequests
 
         // request_title
 
-        // request_category_id
-
-        // request_subcategory_id
+        // request_service_id
 
         // request_description
 
@@ -1892,50 +1922,27 @@ class JdhTestRequestsGrid extends JdhTestRequests
             // request_title
             $this->request_title->ViewValue = $this->request_title->CurrentValue;
 
-            // request_category_id
-            $curVal = strval($this->request_category_id->CurrentValue);
+            // request_service_id
+            $curVal = strval($this->request_service_id->CurrentValue);
             if ($curVal != "") {
-                $this->request_category_id->ViewValue = $this->request_category_id->lookupCacheOption($curVal);
-                if ($this->request_category_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`test_category_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->request_category_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                $this->request_service_id->ViewValue = $this->request_service_id->lookupCacheOption($curVal);
+                if ($this->request_service_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->request_service_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
                     $config->setResultCacheImpl($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->request_category_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->request_category_id->ViewValue = $this->request_category_id->displayValue($arwrk);
+                        $arwrk = $this->request_service_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->request_service_id->ViewValue = $this->request_service_id->displayValue($arwrk);
                     } else {
-                        $this->request_category_id->ViewValue = FormatNumber($this->request_category_id->CurrentValue, $this->request_category_id->formatPattern());
+                        $this->request_service_id->ViewValue = FormatNumber($this->request_service_id->CurrentValue, $this->request_service_id->formatPattern());
                     }
                 }
             } else {
-                $this->request_category_id->ViewValue = null;
-            }
-
-            // request_subcategory_id
-            $curVal = strval($this->request_subcategory_id->CurrentValue);
-            if ($curVal != "") {
-                $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->lookupCacheOption($curVal);
-                if ($this->request_subcategory_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`test_subcategory_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->request_subcategory_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->request_subcategory_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->displayValue($arwrk);
-                    } else {
-                        $this->request_subcategory_id->ViewValue = FormatNumber($this->request_subcategory_id->CurrentValue, $this->request_subcategory_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->request_subcategory_id->ViewValue = null;
+                $this->request_service_id->ViewValue = null;
             }
 
             // request_description
@@ -1961,13 +1968,9 @@ class JdhTestRequestsGrid extends JdhTestRequests
             $this->request_title->HrefValue = "";
             $this->request_title->TooltipValue = "";
 
-            // request_category_id
-            $this->request_category_id->HrefValue = "";
-            $this->request_category_id->TooltipValue = "";
-
-            // request_subcategory_id
-            $this->request_subcategory_id->HrefValue = "";
-            $this->request_subcategory_id->TooltipValue = "";
+            // request_service_id
+            $this->request_service_id->HrefValue = "";
+            $this->request_service_id->TooltipValue = "";
 
             // request_description
             $this->request_description->HrefValue = "";
@@ -2040,59 +2043,32 @@ class JdhTestRequestsGrid extends JdhTestRequests
             $this->request_title->EditValue = HtmlEncode($this->request_title->CurrentValue);
             $this->request_title->PlaceHolder = RemoveHtml($this->request_title->caption());
 
-            // request_category_id
-            $this->request_category_id->setupEditAttributes();
-            $curVal = trim(strval($this->request_category_id->CurrentValue));
+            // request_service_id
+            $this->request_service_id->setupEditAttributes();
+            $curVal = trim(strval($this->request_service_id->CurrentValue));
             if ($curVal != "") {
-                $this->request_category_id->ViewValue = $this->request_category_id->lookupCacheOption($curVal);
+                $this->request_service_id->ViewValue = $this->request_service_id->lookupCacheOption($curVal);
             } else {
-                $this->request_category_id->ViewValue = $this->request_category_id->Lookup !== null && is_array($this->request_category_id->lookupOptions()) ? $curVal : null;
+                $this->request_service_id->ViewValue = $this->request_service_id->Lookup !== null && is_array($this->request_service_id->lookupOptions()) ? $curVal : null;
             }
-            if ($this->request_category_id->ViewValue !== null) { // Load from cache
-                $this->request_category_id->EditValue = array_values($this->request_category_id->lookupOptions());
+            if ($this->request_service_id->ViewValue !== null) { // Load from cache
+                $this->request_service_id->EditValue = array_values($this->request_service_id->lookupOptions());
             } else { // Lookup from database
                 if ($curVal == "") {
                     $filterWrk = "0=1";
                 } else {
-                    $filterWrk = SearchFilter("`test_category_id`", "=", $this->request_category_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter("`service_id`", "=", $this->request_service_id->CurrentValue, DATATYPE_NUMBER, "");
                 }
-                $sqlWrk = $this->request_category_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                $sqlWrk = $this->request_service_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
                 $config->setResultCacheImpl($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 $arwrk = $rswrk;
-                $this->request_category_id->EditValue = $arwrk;
+                $this->request_service_id->EditValue = $arwrk;
             }
-            $this->request_category_id->PlaceHolder = RemoveHtml($this->request_category_id->caption());
-
-            // request_subcategory_id
-            $this->request_subcategory_id->setupEditAttributes();
-            $curVal = trim(strval($this->request_subcategory_id->CurrentValue));
-            if ($curVal != "") {
-                $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->lookupCacheOption($curVal);
-            } else {
-                $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->Lookup !== null && is_array($this->request_subcategory_id->lookupOptions()) ? $curVal : null;
-            }
-            if ($this->request_subcategory_id->ViewValue !== null) { // Load from cache
-                $this->request_subcategory_id->EditValue = array_values($this->request_subcategory_id->lookupOptions());
-            } else { // Lookup from database
-                if ($curVal == "") {
-                    $filterWrk = "0=1";
-                } else {
-                    $filterWrk = SearchFilter("`test_subcategory_id`", "=", $this->request_subcategory_id->CurrentValue, DATATYPE_NUMBER, "");
-                }
-                $sqlWrk = $this->request_subcategory_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                $arwrk = $rswrk;
-                $this->request_subcategory_id->EditValue = $arwrk;
-            }
-            $this->request_subcategory_id->PlaceHolder = RemoveHtml($this->request_subcategory_id->caption());
+            $this->request_service_id->PlaceHolder = RemoveHtml($this->request_service_id->caption());
 
             // request_description
             $this->request_description->setupEditAttributes();
@@ -2115,11 +2091,8 @@ class JdhTestRequestsGrid extends JdhTestRequests
             // request_title
             $this->request_title->HrefValue = "";
 
-            // request_category_id
-            $this->request_category_id->HrefValue = "";
-
-            // request_subcategory_id
-            $this->request_subcategory_id->HrefValue = "";
+            // request_service_id
+            $this->request_service_id->HrefValue = "";
 
             // request_description
             $this->request_description->HrefValue = "";
@@ -2192,59 +2165,32 @@ class JdhTestRequestsGrid extends JdhTestRequests
             $this->request_title->EditValue = HtmlEncode($this->request_title->CurrentValue);
             $this->request_title->PlaceHolder = RemoveHtml($this->request_title->caption());
 
-            // request_category_id
-            $this->request_category_id->setupEditAttributes();
-            $curVal = trim(strval($this->request_category_id->CurrentValue));
+            // request_service_id
+            $this->request_service_id->setupEditAttributes();
+            $curVal = trim(strval($this->request_service_id->CurrentValue));
             if ($curVal != "") {
-                $this->request_category_id->ViewValue = $this->request_category_id->lookupCacheOption($curVal);
+                $this->request_service_id->ViewValue = $this->request_service_id->lookupCacheOption($curVal);
             } else {
-                $this->request_category_id->ViewValue = $this->request_category_id->Lookup !== null && is_array($this->request_category_id->lookupOptions()) ? $curVal : null;
+                $this->request_service_id->ViewValue = $this->request_service_id->Lookup !== null && is_array($this->request_service_id->lookupOptions()) ? $curVal : null;
             }
-            if ($this->request_category_id->ViewValue !== null) { // Load from cache
-                $this->request_category_id->EditValue = array_values($this->request_category_id->lookupOptions());
+            if ($this->request_service_id->ViewValue !== null) { // Load from cache
+                $this->request_service_id->EditValue = array_values($this->request_service_id->lookupOptions());
             } else { // Lookup from database
                 if ($curVal == "") {
                     $filterWrk = "0=1";
                 } else {
-                    $filterWrk = SearchFilter("`test_category_id`", "=", $this->request_category_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter("`service_id`", "=", $this->request_service_id->CurrentValue, DATATYPE_NUMBER, "");
                 }
-                $sqlWrk = $this->request_category_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                $sqlWrk = $this->request_service_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
                 $config->setResultCacheImpl($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 $arwrk = $rswrk;
-                $this->request_category_id->EditValue = $arwrk;
+                $this->request_service_id->EditValue = $arwrk;
             }
-            $this->request_category_id->PlaceHolder = RemoveHtml($this->request_category_id->caption());
-
-            // request_subcategory_id
-            $this->request_subcategory_id->setupEditAttributes();
-            $curVal = trim(strval($this->request_subcategory_id->CurrentValue));
-            if ($curVal != "") {
-                $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->lookupCacheOption($curVal);
-            } else {
-                $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->Lookup !== null && is_array($this->request_subcategory_id->lookupOptions()) ? $curVal : null;
-            }
-            if ($this->request_subcategory_id->ViewValue !== null) { // Load from cache
-                $this->request_subcategory_id->EditValue = array_values($this->request_subcategory_id->lookupOptions());
-            } else { // Lookup from database
-                if ($curVal == "") {
-                    $filterWrk = "0=1";
-                } else {
-                    $filterWrk = SearchFilter("`test_subcategory_id`", "=", $this->request_subcategory_id->CurrentValue, DATATYPE_NUMBER, "");
-                }
-                $sqlWrk = $this->request_subcategory_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                $arwrk = $rswrk;
-                $this->request_subcategory_id->EditValue = $arwrk;
-            }
-            $this->request_subcategory_id->PlaceHolder = RemoveHtml($this->request_subcategory_id->caption());
+            $this->request_service_id->PlaceHolder = RemoveHtml($this->request_service_id->caption());
 
             // request_description
             $this->request_description->setupEditAttributes();
@@ -2267,11 +2213,8 @@ class JdhTestRequestsGrid extends JdhTestRequests
             // request_title
             $this->request_title->HrefValue = "";
 
-            // request_category_id
-            $this->request_category_id->HrefValue = "";
-
-            // request_subcategory_id
-            $this->request_subcategory_id->HrefValue = "";
+            // request_service_id
+            $this->request_service_id->HrefValue = "";
 
             // request_description
             $this->request_description->HrefValue = "";
@@ -2314,14 +2257,9 @@ class JdhTestRequestsGrid extends JdhTestRequests
                 $this->request_title->addErrorMessage(str_replace("%s", $this->request_title->caption(), $this->request_title->RequiredErrorMessage));
             }
         }
-        if ($this->request_category_id->Required) {
-            if (!$this->request_category_id->IsDetailKey && EmptyValue($this->request_category_id->FormValue)) {
-                $this->request_category_id->addErrorMessage(str_replace("%s", $this->request_category_id->caption(), $this->request_category_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->request_subcategory_id->Required) {
-            if (!$this->request_subcategory_id->IsDetailKey && EmptyValue($this->request_subcategory_id->FormValue)) {
-                $this->request_subcategory_id->addErrorMessage(str_replace("%s", $this->request_subcategory_id->caption(), $this->request_subcategory_id->RequiredErrorMessage));
+        if ($this->request_service_id->Required) {
+            if (!$this->request_service_id->IsDetailKey && EmptyValue($this->request_service_id->FormValue)) {
+                $this->request_service_id->addErrorMessage(str_replace("%s", $this->request_service_id->caption(), $this->request_service_id->RequiredErrorMessage));
             }
         }
         if ($this->request_description->Required) {
@@ -2364,6 +2302,9 @@ class JdhTestRequestsGrid extends JdhTestRequests
         if (count($rows) == 0) {
             $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
             return false;
+        }
+        if ($this->AuditTrailOnDelete) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
         }
 
         // Clone old rows
@@ -2450,11 +2391,8 @@ class JdhTestRequestsGrid extends JdhTestRequests
         // request_title
         $this->request_title->setDbValueDef($rsnew, $this->request_title->CurrentValue, "", $this->request_title->ReadOnly);
 
-        // request_category_id
-        $this->request_category_id->setDbValueDef($rsnew, $this->request_category_id->CurrentValue, 0, $this->request_category_id->ReadOnly);
-
-        // request_subcategory_id
-        $this->request_subcategory_id->setDbValueDef($rsnew, $this->request_subcategory_id->CurrentValue, 0, $this->request_subcategory_id->ReadOnly);
+        // request_service_id
+        $this->request_service_id->setDbValueDef($rsnew, $this->request_service_id->CurrentValue, 0, $this->request_service_id->ReadOnly);
 
         // request_description
         $this->request_description->setDbValueDef($rsnew, $this->request_description->CurrentValue, null, $this->request_description->ReadOnly);
@@ -2517,11 +2455,8 @@ class JdhTestRequestsGrid extends JdhTestRequests
         // request_title
         $this->request_title->setDbValueDef($rsnew, $this->request_title->CurrentValue, "", false);
 
-        // request_category_id
-        $this->request_category_id->setDbValueDef($rsnew, $this->request_category_id->CurrentValue, 0, false);
-
-        // request_subcategory_id
-        $this->request_subcategory_id->setDbValueDef($rsnew, $this->request_subcategory_id->CurrentValue, 0, false);
+        // request_service_id
+        $this->request_service_id->setDbValueDef($rsnew, $this->request_service_id->CurrentValue, 0, false);
 
         // request_description
         $this->request_description->setDbValueDef($rsnew, $this->request_description->CurrentValue, null, false);
@@ -2608,9 +2543,7 @@ class JdhTestRequestsGrid extends JdhTestRequests
             switch ($fld->FieldVar) {
                 case "x_patient_id":
                     break;
-                case "x_request_category_id":
-                    break;
-                case "x_request_subcategory_id":
+                case "x_request_service_id":
                     break;
                 default:
                     $lookupFilter = "";

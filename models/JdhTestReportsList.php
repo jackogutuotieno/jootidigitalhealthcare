@@ -59,6 +59,14 @@ class JdhTestReportsList extends JdhTestReports
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -641,6 +649,9 @@ class JdhTestReportsList extends JdhTestReports
 
         // Setup export options
         $this->setupExportOptions();
+
+        // Setup import options
+        $this->setupImportOptions();
         $this->report_id->setVisibility();
         $this->request_id->setVisibility();
         $this->patient_id->setVisibility();
@@ -722,6 +733,13 @@ class JdhTestReportsList extends JdhTestReports
             $this->setupBreadcrumb();
         }
 
+        // Process import
+        if ($this->isImport()) {
+            $this->import(Param(Config("API_FILE_TOKEN_NAME")), ConvertToBool(Param("rollback")));
+            $this->terminate();
+            return;
+        }
+
         // Hide list options
         if ($this->isExport()) {
             $this->ListOptions->hideAllOptions(["sequence"]);
@@ -765,34 +783,8 @@ class JdhTestReportsList extends JdhTestReports
         // Restore master/detail filter from session
         $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Restore master filter from session
         $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Restore detail filter from session
-
-        // Add master User ID filter
-        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
-                if ($this->getCurrentMasterTable() == "jdh_test_requests") {
-                    $this->DbMasterFilter = $this->addMasterUserIDFilter($this->DbMasterFilter, "jdh_test_requests"); // Add master User ID filter
-                }
-                if ($this->getCurrentMasterTable() == "jdh_patients") {
-                    $this->DbMasterFilter = $this->addMasterUserIDFilter($this->DbMasterFilter, "jdh_patients"); // Add master User ID filter
-                }
-        }
         AddFilter($filter, $this->DbDetailFilter);
         AddFilter($filter, $this->SearchWhere);
-
-        // Load master record
-        if ($this->CurrentMode != "add" && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_test_requests") {
-            $masterTbl = Container("jdh_test_requests");
-            $rsmaster = $masterTbl->loadRs($this->DbMasterFilter)->fetchAssociative();
-            $this->MasterRecordExists = $rsmaster !== false;
-            if (!$this->MasterRecordExists) {
-                $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record found
-                $this->terminate("jdhtestrequestslist"); // Return to master page
-                return;
-            } else {
-                $masterTbl->loadListRowValues($rsmaster);
-                $masterTbl->RowType = ROWTYPE_MASTER; // Master row
-                $masterTbl->renderListRow();
-            }
-        }
 
         // Load master record
         if ($this->CurrentMode != "add" && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_patients") {
@@ -1038,7 +1030,6 @@ class JdhTestReportsList extends JdhTestReports
                 $this->setCurrentMasterTable(""); // Clear master table
                 $this->DbMasterFilter = "";
                 $this->DbDetailFilter = "";
-                        $this->request_id->setSessionValue("");
                         $this->patient_id->setSessionValue("");
             }
 
@@ -1081,12 +1072,6 @@ class JdhTestReportsList extends JdhTestReports
         $item = &$this->ListOptions->add("edit");
         $item->CssClass = "text-nowrap";
         $item->Visible = $Security->canEdit();
-        $item->OnLeft = false;
-
-        // "copy"
-        $item = &$this->ListOptions->add("copy");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canAdd();
         $item->OnLeft = false;
 
         // List actions
@@ -1168,19 +1153,6 @@ class JdhTestReportsList extends JdhTestReports
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_test_reports\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
-
-            // "copy"
-            $opt = $this->ListOptions["copy"];
-            $copycaption = HtmlTitle($Language->phrase("CopyLink"));
-            if ($Security->canAdd() && $this->showOptionLink("add")) {
-                if ($this->ModalAdd && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_test_reports\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("CopyLink") . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1788,6 +1760,283 @@ class JdhTestReportsList extends JdhTestReports
         }
     }
 
+    /**
+     * Import file
+     *
+     * @param string $filetoken File token to locate the uploaded import file
+     * @param bool $rollback Try import and then rollback
+     * @return bool
+     */
+    public function import($filetoken, $rollback = false)
+    {
+        global $Security, $Language;
+        if (!$Security->canImport()) {
+            return false; // Import not allowed
+        }
+
+        // Check if valid token
+        if (EmptyValue($filetoken)) {
+            return false;
+        }
+
+        // Get uploaded files by token
+        $files = GetUploadedFileNames($filetoken);
+        $exts = explode(",", Config("IMPORT_FILE_ALLOWED_EXTENSIONS"));
+        $result = [Config("API_FILE_TOKEN_NAME") => $filetoken, "files" => []];
+
+        // Set header
+        if (ob_get_length()) {
+            ob_clean();
+        }
+        header("Cache-Control: no-store");
+        header("Content-Type: text/event-stream");
+
+        // Import records
+        try {
+            foreach ($files as $file) {
+                $res = ["file" => basename($file)];
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+                // Ignore log file
+                if ($ext == "txt") {
+                    continue;
+                }
+
+                // Check file extension
+                if (!in_array($ext, $exts)) {
+                    $res = array_merge($res, ["error" => str_replace("%e", $ext, $Language->phrase("ImportInvalidFileExtension"))]);
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Set up options
+                $options = [
+                    "file" => $file,
+                    "inputEncoding" => "", // For CSV only
+                    "delimiter" => ",", // For CSV only
+                    "enclosure" => "\"", // For CSV only
+                    "escape" => "\\", // For CSV only
+                    "activeSheet" => null, // For PhpSpreadsheet only
+                    "readOnly" => true, // For PhpSpreadsheet only
+                    "maxRows" => null, // For PhpSpreadsheet only
+                    "headerRowNumber" => 0,
+                    "headers" => []
+                ];
+                foreach ($_GET as $key => $value) {
+                    if (!in_array($key, [Config("API_ACTION_NAME"), Config("API_FILE_TOKEN_NAME")])) {
+                        $options[$key] = $value;
+                    }
+                }
+
+                // Workflow builder
+                $builder = fn($workflow) => $workflow;
+
+                // Call Page Importing server event
+                if (!$this->pageImporting($builder, $options)) {
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Set max execution time
+                if (Config("IMPORT_MAX_EXECUTION_TIME") > 0) {
+                    ini_set("max_execution_time", Config("IMPORT_MAX_EXECUTION_TIME"));
+                }
+
+                // Reader
+                try {
+                    if ($ext == "csv") {
+                        $csv = file_get_contents($file);
+                        if ($csv !== false) {
+                            if (StartsString("\xEF\xBB\xBF", $csv)) { // UTF-8 BOM
+                                $csv = substr($csv, 3);
+                            } elseif ($options["inputEncoding"] != "" && !SameText($options["inputEncoding"], "UTF-8")) {
+                                $csv = Convert($options["inputEncoding"], "UTF-8", $csv);
+                            }
+                            file_put_contents($file, $csv);
+                        }
+                        $reader = new \Port\Csv\CsvReader(new \SplFileObject($file), $options["delimiter"], $options["enclosure"], $options["escape"]);
+                    } else {
+                        $reader = new \Port\Spreadsheet\SpreadsheetReader(new \SplFileObject($file), $options["headerRowNumber"], $options["activeSheet"], $options["readOnly"], $options["maxRows"]);
+                    }
+                    if (is_array($options["headers"]) && count($options["headers"]) > 0) {
+                        $reader->setColumnHeaders($options["headers"]);
+                    } elseif (is_int($options["headerRowNumber"])) {
+                        $reader->setHeaderRowNumber($options["headerRowNumber"]);
+                    }
+                } catch (\Exception $e) {
+                    $res = array_merge($res, ["error" => $e->getMessage()]);
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Column headers
+                $headers = $reader->getColumnHeaders();
+                if (count($headers) == 0) { // Missing headers
+                    $res["error"] = $Language->phrase("ImportNoHeaderRow");
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Counts
+                $recordCnt = $reader->count();
+                $cnt = 0;
+                $successCnt = 0;
+                $failCnt = 0;
+                $res = array_merge($res, ["totalCount" => $recordCnt, "count" => $cnt, "successCount" => 0, "failCount" => 0]);
+
+                // Writer
+                $writer = new \Port\Writer\CallbackWriter(function ($row) use (&$res, &$cnt, &$successCnt, &$failCnt) {
+                    try {
+                        $success = $this->importRow($row, ++$cnt); // Import row
+                        if ($success) {
+                            $successCnt++;
+                        } else {
+                            $failCnt++;
+                        }
+                        $err = "";
+                    } catch (\Port\Exception $e) { // Catch exception so the workflow continues
+                        $failCnt++;
+                        $err = $e->getMessage();
+                        if ($failCnt > $this->ImportMaxFailures) {
+                            throw $e; // Throw \Port\Exception to terminate the workflow
+                        }
+                    } finally {
+                        $res = array_merge($res, [
+                            "row" => $row, // Current row
+                            "success" => $success, // For current row
+                            "error" => $err, // For current row
+                            "count" => $cnt,
+                            "successCount" => $successCnt,
+                            "failCount" => $failCnt
+                        ]);
+                        SendEvent($res);
+                    }
+                });
+
+                // Connection
+                $conn = $this->getConnection();
+
+                // Begin transaction
+                if ($this->ImportUseTransaction) {
+                    $conn->beginTransaction();
+                }
+
+                // Workflow
+                $workflow = new \Port\Steps\StepAggregator($reader);
+                $workflow->setLogger(Logger());
+                $workflow->setSkipItemOnFailure(false); // Stop on exception
+                $workflow = $builder($workflow);
+                try {
+                    $info = @$workflow->addWriter($writer)->process();
+                } finally {
+                    // Rollback transaction
+                    if ($this->ImportUseTransaction) {
+                        if ($rollback || $failCnt > $this->ImportMaxFailures) {
+                            $res["rollbacked"] = $conn->rollback();
+                        } else {
+                            $conn->commit();
+                        }
+                    }
+                    unset($res["row"], $res["error"]); // Remove current row info
+                    $res["success"] = $cnt > 0 && $failCnt <= $this->ImportMaxFailures; // Set success status of current file
+                    SendEvent($res); // Current file imported
+                    $result["files"][] = $res;
+
+                    // Call Page Imported server event
+                    $this->pageImported($info, $res);
+                }
+            }
+        } finally {
+            $result["failCount"] = array_reduce($result["files"], fn($carry, $item) => $carry + $item["failCount"], 0); // For client side
+            $result["success"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"], true); // All files successful
+            $result["rollbacked"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"] && ($item["rollbacked"] ?? false), true); // All file rollbacked successfully
+            if ($result["success"] && !$result["rollbacked"]) {
+                CleanUploadTempPaths($filetoken);
+            }
+            SendEvent($result, "complete"); // All files imported
+            return $result["success"];
+        }
+    }
+
+    /**
+     * Import a row
+     *
+     * @param array $row Row to be imported
+     * @param int $cnt Index of the row (1-based)
+     * @return bool
+     */
+    protected function importRow(&$row, $cnt)
+    {
+        global $Language;
+
+        // Call Row Import server event
+        if (!$this->rowImport($row, $cnt)) {
+            return false;
+        }
+
+        // Check field names and values
+        foreach ($row as $name => $value) {
+            $fld = $this->Fields[$name];
+            if (!$fld) {
+                throw new \Port\Exception\UnexpectedValueException(str_replace("%f", $name, $Language->phrase("ImportInvalidFieldName")));
+            }
+            if (!$this->checkValue($fld, $value)) {
+                throw new \Port\Exception\UnexpectedValueException(str_replace(["%f", "%v"], [$name, $value], $Language->phrase("ImportInvalidFieldValue")));
+            }
+        }
+
+        // Insert/Update to database
+        $res = false;
+        if (!$this->ImportInsertOnly && $oldrow = $this->load($row)) {
+            if (!method_exists($this, "rowUpdating") || $this->rowUpdating($oldrow, $row)) {
+                if ($res = $this->update($row, "", $oldrow)) {
+                    if (method_exists($this, "rowUpdated")) {
+                        $this->rowUpdated($oldrow, $row);
+                    }
+                }
+            }
+        } else {
+            if (!method_exists($this, "rowInserting") || $this->rowInserting(null, $row)) {
+                if ($res = $this->insert($row)) {
+                    if (method_exists($this, "rowInserted")) {
+                        $this->rowInserted(null, $row);
+                    }
+                }
+            }
+        }
+        return $res;
+    }
+
+    /**
+     * Check field value
+     *
+     * @param object $fld Field object
+     * @param object $value
+     * @return bool
+     */
+    protected function checkValue($fld, $value)
+    {
+        if ($fld->DataType == DATATYPE_NUMBER && !is_numeric($value)) {
+            return false;
+        } elseif ($fld->DataType == DATATYPE_DATE && !CheckDate($value, $fld->formatPattern())) {
+            return false;
+        }
+        return true;
+    }
+
+    // Load row
+    protected function load($row)
+    {
+        $filter = $this->getRecordFilter($row);
+        if (!$filter) {
+            return null;
+        }
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $conn = $this->getConnection();
+        return $conn->fetchAssociative($sql);
+    }
+
     // Get export HTML tag
     protected function getExportTag($type, $custom = false)
     {
@@ -1933,6 +2182,25 @@ class JdhTestReportsList extends JdhTestReports
         }
     }
 
+    // Set up import options
+    protected function setupImportOptions()
+    {
+        global $Security, $Language;
+
+        // Import
+        $item = &$this->ImportOptions->add("import");
+        $item->Body = "<a class=\"ew-import-link ew-import\" role=\"button\" title=\"" . $Language->phrase("Import", true) . "\" data-caption=\"" . $Language->phrase("Import", true) . "\" data-ew-action=\"import\" data-hdr=\"" . $Language->phrase("Import", true) . "\">" . $Language->phrase("Import") . "</a>";
+        $item->Visible = $Security->canImport();
+        $this->ImportOptions->UseButtonGroup = true;
+        $this->ImportOptions->UseDropDownButton = false;
+        $this->ImportOptions->DropDownButtonPhrase = $Language->phrase("Import");
+
+        // Add group option item
+        $item = &$this->ImportOptions->addGroupOption();
+        $item->Body = "";
+        $item->Visible = false;
+    }
+
     /**
     * Export data in HTML/CSV/Word/Excel/XML/Email/PDF format
     *
@@ -1976,23 +2244,6 @@ class JdhTestReportsList extends JdhTestReports
 
         // Call Page Exporting server event
         $doc->ExportCustom = !$this->pageExporting($doc);
-
-        // Export master record
-        if (Config("EXPORT_MASTER_RECORD") && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_test_requests") {
-            $jdh_test_requests = new JdhTestRequestsList();
-            $rsmaster = $jdh_test_requests->loadRs($this->DbMasterFilter); // Load master record
-            if ($rsmaster) {
-                $exportStyle = $doc->Style;
-                $doc->setStyle("v"); // Change to vertical
-                if (!$this->isExport("csv") || Config("EXPORT_MASTER_RECORD_FOR_CSV")) {
-                    $doc->Table = $jdh_test_requests;
-                    $jdh_test_requests->exportDocument($doc, new Recordset($rsmaster));
-                    $doc->exportEmptyRow();
-                    $doc->Table = &$this;
-                }
-                $doc->setStyle($exportStyle); // Restore
-            }
-        }
 
         // Export master record
         if (Config("EXPORT_MASTER_RECORD") && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_patients") {
@@ -2054,20 +2305,6 @@ class JdhTestReportsList extends JdhTestReports
                 $this->DbMasterFilter = "";
                 $this->DbDetailFilter = "";
             }
-            if ($masterTblVar == "jdh_test_requests") {
-                $validMaster = true;
-                $masterTbl = Container("jdh_test_requests");
-                if (($parm = Get("fk_request_id", Get("request_id"))) !== null) {
-                    $masterTbl->request_id->setQueryStringValue($parm);
-                    $this->request_id->QueryStringValue = $masterTbl->request_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
-                    $this->request_id->setSessionValue($this->request_id->QueryStringValue);
-                    if (!is_numeric($masterTbl->request_id->QueryStringValue)) {
-                        $validMaster = false;
-                    }
-                } else {
-                    $validMaster = false;
-                }
-            }
             if ($masterTblVar == "jdh_patients") {
                 $validMaster = true;
                 $masterTbl = Container("jdh_patients");
@@ -2088,20 +2325,6 @@ class JdhTestReportsList extends JdhTestReports
                     $validMaster = true;
                     $this->DbMasterFilter = "";
                     $this->DbDetailFilter = "";
-            }
-            if ($masterTblVar == "jdh_test_requests") {
-                $validMaster = true;
-                $masterTbl = Container("jdh_test_requests");
-                if (($parm = Post("fk_request_id", Post("request_id"))) !== null) {
-                    $masterTbl->request_id->setFormValue($parm);
-                    $this->request_id->setFormValue($masterTbl->request_id->FormValue);
-                    $this->request_id->setSessionValue($this->request_id->FormValue);
-                    if (!is_numeric($masterTbl->request_id->FormValue)) {
-                        $validMaster = false;
-                    }
-                } else {
-                    $validMaster = false;
-                }
             }
             if ($masterTblVar == "jdh_patients") {
                 $validMaster = true;
@@ -2136,11 +2359,6 @@ class JdhTestReportsList extends JdhTestReports
             }
 
             // Clear previous master key from Session
-            if ($masterTblVar != "jdh_test_requests") {
-                if ($this->request_id->CurrentValue == "") {
-                    $this->request_id->setSessionValue("");
-                }
-            }
             if ($masterTblVar != "jdh_patients") {
                 if ($this->patient_id->CurrentValue == "") {
                     $this->patient_id->setSessionValue("");

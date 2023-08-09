@@ -59,6 +59,14 @@ class JdhTestRequestsList extends JdhTestRequests
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -175,7 +183,7 @@ class JdhTestRequestsList extends JdhTestRequests
         $pageUrl = $this->pageUrl(false);
 
         // Initialize URLs
-        $this->AddUrl = "jdhtestrequestsadd?" . Config("TABLE_SHOW_DETAIL") . "=";
+        $this->AddUrl = "jdhtestrequestsadd";
         $this->InlineAddUrl = $pageUrl . "action=add";
         $this->GridAddUrl = $pageUrl . "action=gridadd";
         $this->GridEditUrl = $pageUrl . "action=gridedit";
@@ -644,11 +652,13 @@ class JdhTestRequestsList extends JdhTestRequests
 
         // Setup export options
         $this->setupExportOptions();
+
+        // Setup import options
+        $this->setupImportOptions();
         $this->request_id->setVisibility();
         $this->patient_id->setVisibility();
         $this->request_title->setVisibility();
-        $this->request_category_id->setVisibility();
-        $this->request_subcategory_id->setVisibility();
+        $this->request_service_id->setVisibility();
         $this->request_description->setVisibility();
         $this->requested_by_user_id->Visible = false;
         $this->request_date->setVisibility();
@@ -688,8 +698,7 @@ class JdhTestRequestsList extends JdhTestRequests
 
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
-        $this->setupLookupOptions($this->request_category_id);
-        $this->setupLookupOptions($this->request_subcategory_id);
+        $this->setupLookupOptions($this->request_service_id);
 
         // Update form name to avoid conflict
         if ($this->IsModal) {
@@ -726,6 +735,13 @@ class JdhTestRequestsList extends JdhTestRequests
         // Set up Breadcrumb
         if (!$this->isExport()) {
             $this->setupBreadcrumb();
+        }
+
+        // Process import
+        if ($this->isImport()) {
+            $this->import(Param(Config("API_FILE_TOKEN_NAME")), ConvertToBool(Param("rollback")));
+            $this->terminate();
+            return;
         }
 
         // Hide list options
@@ -898,6 +914,13 @@ class JdhTestRequestsList extends JdhTestRequests
                     $this->setWarningMessage($Language->phrase("NoRecord"));
                 }
             }
+
+            // Audit trail on search
+            if ($this->AuditTrailOnSearch && $this->Command == "search" && !$this->RestoreSearch) {
+                $searchParm = ServerVar("QUERY_STRING");
+                $searchSql = $this->getSessionWhere();
+                $this->writeAuditTrailOnSearch($searchParm, $searchSql);
+            }
         }
 
         // Set up list action columns
@@ -1047,6 +1070,7 @@ class JdhTestRequestsList extends JdhTestRequests
             $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_test_requestssrch");
         }
         $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
+        $filterList = Concat($filterList, $this->request_service_id->AdvancedSearch->toJson(), ","); // Field request_service_id
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
             $filterList = Concat($filterList, $wrk, ",");
@@ -1094,6 +1118,14 @@ class JdhTestRequestsList extends JdhTestRequests
         $this->patient_id->AdvancedSearch->SearchValue2 = @$filter["y_patient_id"];
         $this->patient_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_id"];
         $this->patient_id->AdvancedSearch->save();
+
+        // Field request_service_id
+        $this->request_service_id->AdvancedSearch->SearchValue = @$filter["x_request_service_id"];
+        $this->request_service_id->AdvancedSearch->SearchOperator = @$filter["z_request_service_id"];
+        $this->request_service_id->AdvancedSearch->SearchCondition = @$filter["v_request_service_id"];
+        $this->request_service_id->AdvancedSearch->SearchValue2 = @$filter["y_request_service_id"];
+        $this->request_service_id->AdvancedSearch->SearchOperator2 = @$filter["w_request_service_id"];
+        $this->request_service_id->AdvancedSearch->save();
         $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
     }
@@ -1215,8 +1247,7 @@ class JdhTestRequestsList extends JdhTestRequests
             $this->updateSort($this->request_id); // request_id
             $this->updateSort($this->patient_id); // patient_id
             $this->updateSort($this->request_title); // request_title
-            $this->updateSort($this->request_category_id); // request_category_id
-            $this->updateSort($this->request_subcategory_id); // request_subcategory_id
+            $this->updateSort($this->request_service_id); // request_service_id
             $this->updateSort($this->request_description); // request_description
             $this->updateSort($this->request_date); // request_date
             $this->setStartRecordNumber(1); // Reset start position
@@ -1254,8 +1285,7 @@ class JdhTestRequestsList extends JdhTestRequests
                 $this->request_id->setSort("");
                 $this->patient_id->setSort("");
                 $this->request_title->setSort("");
-                $this->request_category_id->setSort("");
-                $this->request_subcategory_id->setSort("");
+                $this->request_service_id->setSort("");
                 $this->request_description->setSort("");
                 $this->requested_by_user_id->setSort("");
                 $this->request_date->setSort("");
@@ -1289,34 +1319,6 @@ class JdhTestRequestsList extends JdhTestRequests
         $item->CssClass = "text-nowrap";
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
-
-        // "copy"
-        $item = &$this->ListOptions->add("copy");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canAdd();
-        $item->OnLeft = false;
-
-        // "detail_jdh_test_reports"
-        $item = &$this->ListOptions->add("detail_jdh_test_reports");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_test_reports');
-        $item->OnLeft = false;
-        $item->ShowInButtonGroup = false;
-
-        // Multiple details
-        if ($this->ShowMultipleDetails) {
-            $item = &$this->ListOptions->add("details");
-            $item->CssClass = "text-nowrap";
-            $item->Visible = $this->ShowMultipleDetails && $this->ListOptions->detailVisible();
-            $item->OnLeft = false;
-            $item->ShowInButtonGroup = false;
-            $this->ListOptions->hideDetailItems();
-        }
-
-        // Set up detail pages
-        $pages = new SubPages();
-        $pages->add("jdh_test_reports");
-        $this->DetailPages = $pages;
 
         // List actions
         $item = &$this->ListOptions->add("listactions");
@@ -1401,19 +1403,6 @@ class JdhTestRequestsList extends JdhTestRequests
             } else {
                 $opt->Body = "";
             }
-
-            // "copy"
-            $opt = $this->ListOptions["copy"];
-            $copycaption = HtmlTitle($Language->phrase("CopyLink"));
-            if ($Security->canAdd() && $this->showOptionLink("add")) {
-                if ($this->ModalAdd && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_test_requests\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("CopyLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
         } // End View mode
 
         // Set up list action buttons
@@ -1449,77 +1438,6 @@ class JdhTestRequestsList extends JdhTestRequests
                 $opt->Body = $body;
             }
         }
-        $detailViewTblVar = "";
-        $detailCopyTblVar = "";
-        $detailEditTblVar = "";
-
-        // "detail_jdh_test_reports"
-        $opt = $this->ListOptions["detail_jdh_test_reports"];
-        if ($Security->allowList(CurrentProjectID() . 'jdh_test_reports') && $this->showOptionLink()) {
-            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_test_reports", "TblCaption");
-            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhtestreportslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_test_requests&" . GetForeignKeyUrl("fk_request_id", $this->request_id->CurrentValue) . "") . "\">" . $body . "</a>";
-            $links = "";
-            $detailPage = Container("JdhTestReportsGrid");
-            if ($detailPage->DetailView && $Security->canView() && $this->showOptionLink("view") && $Security->allowView(CurrentProjectID() . 'jdh_test_requests')) {
-                $caption = $Language->phrase("MasterDetailViewLink", null);
-                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailViewTblVar != "") {
-                    $detailViewTblVar .= ",";
-                }
-                $detailViewTblVar .= "jdh_test_reports";
-            }
-            if ($detailPage->DetailEdit && $Security->canEdit() && $this->showOptionLink("edit") && $Security->allowEdit(CurrentProjectID() . 'jdh_test_requests')) {
-                $caption = $Language->phrase("MasterDetailEditLink", null);
-                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailEditTblVar != "") {
-                    $detailEditTblVar .= ",";
-                }
-                $detailEditTblVar .= "jdh_test_reports";
-            }
-            if ($detailPage->DetailAdd && $Security->canAdd() && $this->showOptionLink("add") && $Security->allowAdd(CurrentProjectID() . 'jdh_test_requests')) {
-                $caption = $Language->phrase("MasterDetailCopyLink", null);
-                $url = $this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailCopyTblVar != "") {
-                    $detailCopyTblVar .= ",";
-                }
-                $detailCopyTblVar .= "jdh_test_reports";
-            }
-            if ($links != "") {
-                $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
-                $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
-            } else {
-                $body = preg_replace('/\b\s+dropdown-toggle\b/', "", $body);
-            }
-            $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">" . $body . "</div>";
-            $opt->Body = $body;
-            if ($this->ShowMultipleDetails) {
-                $opt->Visible = false;
-            }
-        }
-        if ($this->ShowMultipleDetails) {
-            $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">";
-            $links = "";
-            if ($detailViewTblVar != "") {
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlEncode($Language->phrase("MasterDetailViewLink", true)) . "\" href=\"" . HtmlEncode($this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=" . $detailViewTblVar)) . "\">" . $Language->phrase("MasterDetailViewLink", null) . "</a></li>";
-            }
-            if ($detailEditTblVar != "") {
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlEncode($Language->phrase("MasterDetailEditLink", true)) . "\" href=\"" . HtmlEncode($this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=" . $detailEditTblVar)) . "\">" . $Language->phrase("MasterDetailEditLink", null) . "</a></li>";
-            }
-            if ($detailCopyTblVar != "") {
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlEncode($Language->phrase("MasterDetailCopyLink", true)) . "\" href=\"" . HtmlEncode($this->GetCopyUrl(Config("TABLE_SHOW_DETAIL") . "=" . $detailCopyTblVar)) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
-            }
-            if ($links != "") {
-                $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-master-detail\" title=\"" . HtmlEncode($Language->phrase("MultipleMasterDetails", true)) . "\" data-bs-toggle=\"dropdown\">" . $Language->phrase("MultipleMasterDetails") . "</button>";
-                $body .= "<ul class=\"dropdown-menu ew-dropdown-menu\">" . $links . "</ul>";
-            }
-            $body .= "</div>";
-            // Multiple details
-            $opt = $this->ListOptions["details"];
-            $opt->Body = $body;
-        }
 
         // "checkbox"
         $opt = $this->ListOptions["checkbox"];
@@ -1553,37 +1471,6 @@ class JdhTestRequestsList extends JdhTestRequests
             $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
         }
         $item->Visible = $this->AddUrl != "" && $Security->canAdd();
-        $option = $options["detail"];
-        $detailTableLink = "";
-                $item = &$option->add("detailadd_jdh_test_reports");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports");
-                $detailPage = Container("JdhTestReportsGrid");
-                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
-                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_test_requests') && $Security->canAdd());
-                if ($item->Visible) {
-                    if ($detailTableLink != "") {
-                        $detailTableLink .= ",";
-                    }
-                    $detailTableLink .= "jdh_test_reports";
-                }
-
-        // Add multiple details
-        if ($this->ShowMultipleDetails) {
-            $item = &$option->add("detailsadd");
-            $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=" . $detailTableLink);
-            $caption = $Language->phrase("AddMasterDetailLink");
-            $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-            $item->Visible = $detailTableLink != "" && $Security->canAdd();
-            // Hide single master/detail items
-            $ar = explode(",", $detailTableLink);
-            $cnt = count($ar);
-            for ($i = 0; $i < $cnt; $i++) {
-                if ($item = $option["detailadd_" . $ar[$i]]) {
-                    $item->Visible = false;
-                }
-            }
-        }
         $option = $options["action"];
 
         // Add multi delete
@@ -1607,8 +1494,7 @@ class JdhTestRequestsList extends JdhTestRequests
             $option->add("request_id", $this->createColumnOption("request_id"));
             $option->add("patient_id", $this->createColumnOption("patient_id"));
             $option->add("request_title", $this->createColumnOption("request_title"));
-            $option->add("request_category_id", $this->createColumnOption("request_category_id"));
-            $option->add("request_subcategory_id", $this->createColumnOption("request_subcategory_id"));
+            $option->add("request_service_id", $this->createColumnOption("request_service_id"));
             $option->add("request_description", $this->createColumnOption("request_description"));
             $option->add("request_date", $this->createColumnOption("request_date"));
         }
@@ -1995,8 +1881,7 @@ class JdhTestRequestsList extends JdhTestRequests
         $this->request_id->setDbValue($row['request_id']);
         $this->patient_id->setDbValue($row['patient_id']);
         $this->request_title->setDbValue($row['request_title']);
-        $this->request_category_id->setDbValue($row['request_category_id']);
-        $this->request_subcategory_id->setDbValue($row['request_subcategory_id']);
+        $this->request_service_id->setDbValue($row['request_service_id']);
         $this->request_description->setDbValue($row['request_description']);
         $this->requested_by_user_id->setDbValue($row['requested_by_user_id']);
         $this->request_date->setDbValue($row['request_date']);
@@ -2009,8 +1894,7 @@ class JdhTestRequestsList extends JdhTestRequests
         $row['request_id'] = $this->request_id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
         $row['request_title'] = $this->request_title->DefaultValue;
-        $row['request_category_id'] = $this->request_category_id->DefaultValue;
-        $row['request_subcategory_id'] = $this->request_subcategory_id->DefaultValue;
+        $row['request_service_id'] = $this->request_service_id->DefaultValue;
         $row['request_description'] = $this->request_description->DefaultValue;
         $row['requested_by_user_id'] = $this->requested_by_user_id->DefaultValue;
         $row['request_date'] = $this->request_date->DefaultValue;
@@ -2060,9 +1944,7 @@ class JdhTestRequestsList extends JdhTestRequests
 
         // request_title
 
-        // request_category_id
-
-        // request_subcategory_id
+        // request_service_id
 
         // request_description
 
@@ -2101,50 +1983,27 @@ class JdhTestRequestsList extends JdhTestRequests
             // request_title
             $this->request_title->ViewValue = $this->request_title->CurrentValue;
 
-            // request_category_id
-            $curVal = strval($this->request_category_id->CurrentValue);
+            // request_service_id
+            $curVal = strval($this->request_service_id->CurrentValue);
             if ($curVal != "") {
-                $this->request_category_id->ViewValue = $this->request_category_id->lookupCacheOption($curVal);
-                if ($this->request_category_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`test_category_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->request_category_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                $this->request_service_id->ViewValue = $this->request_service_id->lookupCacheOption($curVal);
+                if ($this->request_service_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->request_service_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
                     $config->setResultCacheImpl($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->request_category_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->request_category_id->ViewValue = $this->request_category_id->displayValue($arwrk);
+                        $arwrk = $this->request_service_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->request_service_id->ViewValue = $this->request_service_id->displayValue($arwrk);
                     } else {
-                        $this->request_category_id->ViewValue = FormatNumber($this->request_category_id->CurrentValue, $this->request_category_id->formatPattern());
+                        $this->request_service_id->ViewValue = FormatNumber($this->request_service_id->CurrentValue, $this->request_service_id->formatPattern());
                     }
                 }
             } else {
-                $this->request_category_id->ViewValue = null;
-            }
-
-            // request_subcategory_id
-            $curVal = strval($this->request_subcategory_id->CurrentValue);
-            if ($curVal != "") {
-                $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->lookupCacheOption($curVal);
-                if ($this->request_subcategory_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`test_subcategory_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->request_subcategory_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->request_subcategory_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->displayValue($arwrk);
-                    } else {
-                        $this->request_subcategory_id->ViewValue = FormatNumber($this->request_subcategory_id->CurrentValue, $this->request_subcategory_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->request_subcategory_id->ViewValue = null;
+                $this->request_service_id->ViewValue = null;
             }
 
             // request_description
@@ -2170,13 +2029,9 @@ class JdhTestRequestsList extends JdhTestRequests
             $this->request_title->HrefValue = "";
             $this->request_title->TooltipValue = "";
 
-            // request_category_id
-            $this->request_category_id->HrefValue = "";
-            $this->request_category_id->TooltipValue = "";
-
-            // request_subcategory_id
-            $this->request_subcategory_id->HrefValue = "";
-            $this->request_subcategory_id->TooltipValue = "";
+            // request_service_id
+            $this->request_service_id->HrefValue = "";
+            $this->request_service_id->TooltipValue = "";
 
             // request_description
             $this->request_description->HrefValue = "";
@@ -2191,6 +2046,283 @@ class JdhTestRequestsList extends JdhTestRequests
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
+    }
+
+    /**
+     * Import file
+     *
+     * @param string $filetoken File token to locate the uploaded import file
+     * @param bool $rollback Try import and then rollback
+     * @return bool
+     */
+    public function import($filetoken, $rollback = false)
+    {
+        global $Security, $Language;
+        if (!$Security->canImport()) {
+            return false; // Import not allowed
+        }
+
+        // Check if valid token
+        if (EmptyValue($filetoken)) {
+            return false;
+        }
+
+        // Get uploaded files by token
+        $files = GetUploadedFileNames($filetoken);
+        $exts = explode(",", Config("IMPORT_FILE_ALLOWED_EXTENSIONS"));
+        $result = [Config("API_FILE_TOKEN_NAME") => $filetoken, "files" => []];
+
+        // Set header
+        if (ob_get_length()) {
+            ob_clean();
+        }
+        header("Cache-Control: no-store");
+        header("Content-Type: text/event-stream");
+
+        // Import records
+        try {
+            foreach ($files as $file) {
+                $res = ["file" => basename($file)];
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+                // Ignore log file
+                if ($ext == "txt") {
+                    continue;
+                }
+
+                // Check file extension
+                if (!in_array($ext, $exts)) {
+                    $res = array_merge($res, ["error" => str_replace("%e", $ext, $Language->phrase("ImportInvalidFileExtension"))]);
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Set up options
+                $options = [
+                    "file" => $file,
+                    "inputEncoding" => "", // For CSV only
+                    "delimiter" => ",", // For CSV only
+                    "enclosure" => "\"", // For CSV only
+                    "escape" => "\\", // For CSV only
+                    "activeSheet" => null, // For PhpSpreadsheet only
+                    "readOnly" => true, // For PhpSpreadsheet only
+                    "maxRows" => null, // For PhpSpreadsheet only
+                    "headerRowNumber" => 0,
+                    "headers" => []
+                ];
+                foreach ($_GET as $key => $value) {
+                    if (!in_array($key, [Config("API_ACTION_NAME"), Config("API_FILE_TOKEN_NAME")])) {
+                        $options[$key] = $value;
+                    }
+                }
+
+                // Workflow builder
+                $builder = fn($workflow) => $workflow;
+
+                // Call Page Importing server event
+                if (!$this->pageImporting($builder, $options)) {
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Set max execution time
+                if (Config("IMPORT_MAX_EXECUTION_TIME") > 0) {
+                    ini_set("max_execution_time", Config("IMPORT_MAX_EXECUTION_TIME"));
+                }
+
+                // Reader
+                try {
+                    if ($ext == "csv") {
+                        $csv = file_get_contents($file);
+                        if ($csv !== false) {
+                            if (StartsString("\xEF\xBB\xBF", $csv)) { // UTF-8 BOM
+                                $csv = substr($csv, 3);
+                            } elseif ($options["inputEncoding"] != "" && !SameText($options["inputEncoding"], "UTF-8")) {
+                                $csv = Convert($options["inputEncoding"], "UTF-8", $csv);
+                            }
+                            file_put_contents($file, $csv);
+                        }
+                        $reader = new \Port\Csv\CsvReader(new \SplFileObject($file), $options["delimiter"], $options["enclosure"], $options["escape"]);
+                    } else {
+                        $reader = new \Port\Spreadsheet\SpreadsheetReader(new \SplFileObject($file), $options["headerRowNumber"], $options["activeSheet"], $options["readOnly"], $options["maxRows"]);
+                    }
+                    if (is_array($options["headers"]) && count($options["headers"]) > 0) {
+                        $reader->setColumnHeaders($options["headers"]);
+                    } elseif (is_int($options["headerRowNumber"])) {
+                        $reader->setHeaderRowNumber($options["headerRowNumber"]);
+                    }
+                } catch (\Exception $e) {
+                    $res = array_merge($res, ["error" => $e->getMessage()]);
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Column headers
+                $headers = $reader->getColumnHeaders();
+                if (count($headers) == 0) { // Missing headers
+                    $res["error"] = $Language->phrase("ImportNoHeaderRow");
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Counts
+                $recordCnt = $reader->count();
+                $cnt = 0;
+                $successCnt = 0;
+                $failCnt = 0;
+                $res = array_merge($res, ["totalCount" => $recordCnt, "count" => $cnt, "successCount" => 0, "failCount" => 0]);
+
+                // Writer
+                $writer = new \Port\Writer\CallbackWriter(function ($row) use (&$res, &$cnt, &$successCnt, &$failCnt) {
+                    try {
+                        $success = $this->importRow($row, ++$cnt); // Import row
+                        if ($success) {
+                            $successCnt++;
+                        } else {
+                            $failCnt++;
+                        }
+                        $err = "";
+                    } catch (\Port\Exception $e) { // Catch exception so the workflow continues
+                        $failCnt++;
+                        $err = $e->getMessage();
+                        if ($failCnt > $this->ImportMaxFailures) {
+                            throw $e; // Throw \Port\Exception to terminate the workflow
+                        }
+                    } finally {
+                        $res = array_merge($res, [
+                            "row" => $row, // Current row
+                            "success" => $success, // For current row
+                            "error" => $err, // For current row
+                            "count" => $cnt,
+                            "successCount" => $successCnt,
+                            "failCount" => $failCnt
+                        ]);
+                        SendEvent($res);
+                    }
+                });
+
+                // Connection
+                $conn = $this->getConnection();
+
+                // Begin transaction
+                if ($this->ImportUseTransaction) {
+                    $conn->beginTransaction();
+                }
+
+                // Workflow
+                $workflow = new \Port\Steps\StepAggregator($reader);
+                $workflow->setLogger(Logger());
+                $workflow->setSkipItemOnFailure(false); // Stop on exception
+                $workflow = $builder($workflow);
+                try {
+                    $info = @$workflow->addWriter($writer)->process();
+                } finally {
+                    // Rollback transaction
+                    if ($this->ImportUseTransaction) {
+                        if ($rollback || $failCnt > $this->ImportMaxFailures) {
+                            $res["rollbacked"] = $conn->rollback();
+                        } else {
+                            $conn->commit();
+                        }
+                    }
+                    unset($res["row"], $res["error"]); // Remove current row info
+                    $res["success"] = $cnt > 0 && $failCnt <= $this->ImportMaxFailures; // Set success status of current file
+                    SendEvent($res); // Current file imported
+                    $result["files"][] = $res;
+
+                    // Call Page Imported server event
+                    $this->pageImported($info, $res);
+                }
+            }
+        } finally {
+            $result["failCount"] = array_reduce($result["files"], fn($carry, $item) => $carry + $item["failCount"], 0); // For client side
+            $result["success"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"], true); // All files successful
+            $result["rollbacked"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"] && ($item["rollbacked"] ?? false), true); // All file rollbacked successfully
+            if ($result["success"] && !$result["rollbacked"]) {
+                CleanUploadTempPaths($filetoken);
+            }
+            SendEvent($result, "complete"); // All files imported
+            return $result["success"];
+        }
+    }
+
+    /**
+     * Import a row
+     *
+     * @param array $row Row to be imported
+     * @param int $cnt Index of the row (1-based)
+     * @return bool
+     */
+    protected function importRow(&$row, $cnt)
+    {
+        global $Language;
+
+        // Call Row Import server event
+        if (!$this->rowImport($row, $cnt)) {
+            return false;
+        }
+
+        // Check field names and values
+        foreach ($row as $name => $value) {
+            $fld = $this->Fields[$name];
+            if (!$fld) {
+                throw new \Port\Exception\UnexpectedValueException(str_replace("%f", $name, $Language->phrase("ImportInvalidFieldName")));
+            }
+            if (!$this->checkValue($fld, $value)) {
+                throw new \Port\Exception\UnexpectedValueException(str_replace(["%f", "%v"], [$name, $value], $Language->phrase("ImportInvalidFieldValue")));
+            }
+        }
+
+        // Insert/Update to database
+        $res = false;
+        if (!$this->ImportInsertOnly && $oldrow = $this->load($row)) {
+            if (!method_exists($this, "rowUpdating") || $this->rowUpdating($oldrow, $row)) {
+                if ($res = $this->update($row, "", $oldrow)) {
+                    if (method_exists($this, "rowUpdated")) {
+                        $this->rowUpdated($oldrow, $row);
+                    }
+                }
+            }
+        } else {
+            if (!method_exists($this, "rowInserting") || $this->rowInserting(null, $row)) {
+                if ($res = $this->insert($row)) {
+                    if (method_exists($this, "rowInserted")) {
+                        $this->rowInserted(null, $row);
+                    }
+                }
+            }
+        }
+        return $res;
+    }
+
+    /**
+     * Check field value
+     *
+     * @param object $fld Field object
+     * @param object $value
+     * @return bool
+     */
+    protected function checkValue($fld, $value)
+    {
+        if ($fld->DataType == DATATYPE_NUMBER && !is_numeric($value)) {
+            return false;
+        } elseif ($fld->DataType == DATATYPE_DATE && !CheckDate($value, $fld->formatPattern())) {
+            return false;
+        }
+        return true;
+    }
+
+    // Load row
+    protected function load($row)
+    {
+        $filter = $this->getRecordFilter($row);
+        if (!$filter) {
+            return null;
+        }
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $conn = $this->getConnection();
+        return $conn->fetchAssociative($sql);
     }
 
     // Get export HTML tag
@@ -2351,6 +2483,25 @@ class JdhTestRequestsList extends JdhTestRequests
         if (!$this->hasSearchFields() && $this->SearchOptions["searchtoggle"]) {
             $this->SearchOptions["searchtoggle"]->Visible = false;
         }
+    }
+
+    // Set up import options
+    protected function setupImportOptions()
+    {
+        global $Security, $Language;
+
+        // Import
+        $item = &$this->ImportOptions->add("import");
+        $item->Body = "<a class=\"ew-import-link ew-import\" role=\"button\" title=\"" . $Language->phrase("Import", true) . "\" data-caption=\"" . $Language->phrase("Import", true) . "\" data-ew-action=\"import\" data-hdr=\"" . $Language->phrase("Import", true) . "\">" . $Language->phrase("Import") . "</a>";
+        $item->Visible = $Security->canImport();
+        $this->ImportOptions->UseButtonGroup = true;
+        $this->ImportOptions->UseDropDownButton = false;
+        $this->ImportOptions->DropDownButtonPhrase = $Language->phrase("Import");
+
+        // Add group option item
+        $item = &$this->ImportOptions->addGroupOption();
+        $item->Body = "";
+        $item->Visible = false;
     }
 
     /**
@@ -2546,9 +2697,7 @@ class JdhTestRequestsList extends JdhTestRequests
             switch ($fld->FieldVar) {
                 case "x_patient_id":
                     break;
-                case "x_request_category_id":
-                    break;
-                case "x_request_subcategory_id":
+                case "x_request_service_id":
                     break;
                 default:
                     $lookupFilter = "";

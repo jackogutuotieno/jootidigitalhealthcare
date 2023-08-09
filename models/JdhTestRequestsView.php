@@ -53,6 +53,14 @@ class JdhTestRequestsView extends JdhTestRequests
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -508,8 +516,7 @@ class JdhTestRequestsView extends JdhTestRequests
         $this->request_id->setVisibility();
         $this->patient_id->setVisibility();
         $this->request_title->setVisibility();
-        $this->request_category_id->setVisibility();
-        $this->request_subcategory_id->setVisibility();
+        $this->request_service_id->setVisibility();
         $this->request_description->setVisibility();
         $this->requested_by_user_id->setVisibility();
         $this->request_date->setVisibility();
@@ -538,8 +545,7 @@ class JdhTestRequestsView extends JdhTestRequests
 
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
-        $this->setupLookupOptions($this->request_category_id);
-        $this->setupLookupOptions($this->request_subcategory_id);
+        $this->setupLookupOptions($this->request_service_id);
 
         // Check modal
         if ($this->IsModal) {
@@ -607,9 +613,6 @@ class JdhTestRequestsView extends JdhTestRequests
         $this->RowType = ROWTYPE_VIEW;
         $this->resetAttributes();
         $this->renderRow();
-
-        // Set up detail parameters
-        $this->setupDetailParms();
 
         // Normal return
         if (IsApi()) {
@@ -682,16 +685,6 @@ class JdhTestRequestsView extends JdhTestRequests
         }
         $item->Visible = $this->EditUrl != "" && $Security->canEdit() && $this->showOptionLink("edit");
 
-        // Copy
-        $item = &$option->add("copy");
-        $copycaption = HtmlTitle($Language->phrase("ViewPageCopyLink"));
-        if ($this->IsModal) {
-            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
-        } else {
-            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
-        }
-        $item->Visible = $this->CopyUrl != "" && $Security->canAdd() && $this->showOptionLink("add");
-
         // Delete
         $item = &$option->add("delete");
         $url = GetUrl($this->DeleteUrl);
@@ -700,91 +693,6 @@ class JdhTestRequestsView extends JdhTestRequests
             " title=\"" . HtmlTitle($Language->phrase("ViewPageDeleteLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("ViewPageDeleteLink")) .
             "\" href=\"" . HtmlEncode($url) . "\">" . $Language->phrase("ViewPageDeleteLink") . "</a>";
         $item->Visible = $this->DeleteUrl != "" && $Security->canDelete() && $this->showOptionLink("delete");
-        $option = $options["detail"];
-        $detailTableLink = "";
-        $detailViewTblVar = "";
-        $detailCopyTblVar = "";
-        $detailEditTblVar = "";
-
-        // "detail_jdh_test_reports"
-        $item = &$option->add("detail_jdh_test_reports");
-        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_test_reports", "TblCaption");
-        $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhtestreportslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_test_requests&" . GetForeignKeyUrl("fk_request_id", $this->request_id->CurrentValue) . "")) . "\">" . $body . "</a>";
-        $links = "";
-        $detailPageObj = Container("JdhTestReportsGrid");
-        if ($detailPageObj->DetailView && $Security->canView() && $Security->allowView(CurrentProjectID() . 'jdh_test_requests')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailViewLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports"))) . "\">" . $Language->phrase("MasterDetailViewLink", null) . "</a></li>";
-            if ($detailViewTblVar != "") {
-                $detailViewTblVar .= ",";
-            }
-            $detailViewTblVar .= "jdh_test_reports";
-        }
-        if ($detailPageObj->DetailEdit && $Security->canEdit() && $Security->allowEdit(CurrentProjectID() . 'jdh_test_requests')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailEditLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports"))) . "\">" . $Language->phrase("MasterDetailEditLink", null) . "</a></li>";
-            if ($detailEditTblVar != "") {
-                $detailEditTblVar .= ",";
-            }
-            $detailEditTblVar .= "jdh_test_reports";
-        }
-        if ($detailPageObj->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_test_requests')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailCopyLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports"))) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
-            if ($detailCopyTblVar != "") {
-                $detailCopyTblVar .= ",";
-            }
-            $detailCopyTblVar .= "jdh_test_reports";
-        }
-        if ($links != "") {
-            $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
-            $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
-        } else {
-            $body = preg_replace('/\b\s+dropdown-toggle\b/', "", $body);
-        }
-        $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">" . $body . "</div>";
-        $item->Body = $body;
-        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_test_reports');
-        if ($item->Visible) {
-            if ($detailTableLink != "") {
-                $detailTableLink .= ",";
-            }
-            $detailTableLink .= "jdh_test_reports";
-        }
-        if ($this->ShowMultipleDetails) {
-            $item->Visible = false;
-        }
-
-        // Multiple details
-        if ($this->ShowMultipleDetails) {
-            $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">";
-            $links = "";
-            if ($detailViewTblVar != "") {
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlEncode($Language->phrase("MasterDetailViewLink", true)) . "\" href=\"" . HtmlEncode(GetUrl($this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=" . $detailViewTblVar))) . "\">" . $Language->phrase("MasterDetailViewLink", null) . "</a></li>";
-            }
-            if ($detailEditTblVar != "") {
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlEncode($Language->phrase("MasterDetailEditLink", true)) . "\" href=\"" . HtmlEncode(GetUrl($this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=" . $detailEditTblVar))) . "\">" . $Language->phrase("MasterDetailEditLink", null) . "</a></li>";
-            }
-            if ($detailCopyTblVar != "") {
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlEncode($Language->phrase("MasterDetailCopyLink", true)) . "\" href=\"" . HtmlEncode(GetUrl($this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=" . $detailCopyTblVar))) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
-            }
-            if ($links != "") {
-                $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-master-detail\" title=\"" . HtmlEncode($Language->phrase("MultipleMasterDetails", true)) . "\" data-bs-toggle=\"dropdown\">" . $Language->phrase("MultipleMasterDetails") . "</button>";
-                $body .= "<ul class=\"dropdown-menu ew-dropdown-menu\">" . $links . "</ul>";
-            }
-            $body .= "</div>";
-            // Multiple details
-            $item = &$option->add("details");
-            $item->Body = $body;
-        }
-
-        // Set up detail default
-        $option = $options["detail"];
-        $options["detail"]->DropDownButtonPhrase = $Language->phrase("ButtonDetails");
-        $ar = explode(",", $detailTableLink);
-        $cnt = count($ar);
-        $option->UseDropDownButton = ($cnt > 1);
-        $option->UseButtonGroup = true;
-        $item = &$option->addGroupOption();
-        $item->Body = "";
-        $item->Visible = false;
 
         // Set up action default
         $option = $options["action"];
@@ -881,11 +789,13 @@ class JdhTestRequestsView extends JdhTestRequests
 
         // Call Row Selected event
         $this->rowSelected($row);
+        if ($this->AuditTrailOnView) {
+            $this->writeAuditTrailOnView($row);
+        }
         $this->request_id->setDbValue($row['request_id']);
         $this->patient_id->setDbValue($row['patient_id']);
         $this->request_title->setDbValue($row['request_title']);
-        $this->request_category_id->setDbValue($row['request_category_id']);
-        $this->request_subcategory_id->setDbValue($row['request_subcategory_id']);
+        $this->request_service_id->setDbValue($row['request_service_id']);
         $this->request_description->setDbValue($row['request_description']);
         $this->requested_by_user_id->setDbValue($row['requested_by_user_id']);
         $this->request_date->setDbValue($row['request_date']);
@@ -898,8 +808,7 @@ class JdhTestRequestsView extends JdhTestRequests
         $row['request_id'] = $this->request_id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
         $row['request_title'] = $this->request_title->DefaultValue;
-        $row['request_category_id'] = $this->request_category_id->DefaultValue;
-        $row['request_subcategory_id'] = $this->request_subcategory_id->DefaultValue;
+        $row['request_service_id'] = $this->request_service_id->DefaultValue;
         $row['request_description'] = $this->request_description->DefaultValue;
         $row['requested_by_user_id'] = $this->requested_by_user_id->DefaultValue;
         $row['request_date'] = $this->request_date->DefaultValue;
@@ -930,9 +839,7 @@ class JdhTestRequestsView extends JdhTestRequests
 
         // request_title
 
-        // request_category_id
-
-        // request_subcategory_id
+        // request_service_id
 
         // request_description
 
@@ -971,50 +878,27 @@ class JdhTestRequestsView extends JdhTestRequests
             // request_title
             $this->request_title->ViewValue = $this->request_title->CurrentValue;
 
-            // request_category_id
-            $curVal = strval($this->request_category_id->CurrentValue);
+            // request_service_id
+            $curVal = strval($this->request_service_id->CurrentValue);
             if ($curVal != "") {
-                $this->request_category_id->ViewValue = $this->request_category_id->lookupCacheOption($curVal);
-                if ($this->request_category_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`test_category_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->request_category_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                $this->request_service_id->ViewValue = $this->request_service_id->lookupCacheOption($curVal);
+                if ($this->request_service_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->request_service_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
                     $config->setResultCacheImpl($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->request_category_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->request_category_id->ViewValue = $this->request_category_id->displayValue($arwrk);
+                        $arwrk = $this->request_service_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->request_service_id->ViewValue = $this->request_service_id->displayValue($arwrk);
                     } else {
-                        $this->request_category_id->ViewValue = FormatNumber($this->request_category_id->CurrentValue, $this->request_category_id->formatPattern());
+                        $this->request_service_id->ViewValue = FormatNumber($this->request_service_id->CurrentValue, $this->request_service_id->formatPattern());
                     }
                 }
             } else {
-                $this->request_category_id->ViewValue = null;
-            }
-
-            // request_subcategory_id
-            $curVal = strval($this->request_subcategory_id->CurrentValue);
-            if ($curVal != "") {
-                $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->lookupCacheOption($curVal);
-                if ($this->request_subcategory_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`test_subcategory_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->request_subcategory_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->request_subcategory_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->displayValue($arwrk);
-                    } else {
-                        $this->request_subcategory_id->ViewValue = FormatNumber($this->request_subcategory_id->CurrentValue, $this->request_subcategory_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->request_subcategory_id->ViewValue = null;
+                $this->request_service_id->ViewValue = null;
             }
 
             // request_description
@@ -1040,13 +924,9 @@ class JdhTestRequestsView extends JdhTestRequests
             $this->request_title->HrefValue = "";
             $this->request_title->TooltipValue = "";
 
-            // request_category_id
-            $this->request_category_id->HrefValue = "";
-            $this->request_category_id->TooltipValue = "";
-
-            // request_subcategory_id
-            $this->request_subcategory_id->HrefValue = "";
-            $this->request_subcategory_id->TooltipValue = "";
+            // request_service_id
+            $this->request_service_id->HrefValue = "";
+            $this->request_service_id->TooltipValue = "";
 
             // request_description
             $this->request_description->HrefValue = "";
@@ -1224,25 +1104,6 @@ class JdhTestRequestsView extends JdhTestRequests
         $doc->Text .= $header;
         $this->exportDocument($doc, $rs, $this->StartRecord, $this->StopRecord, "view");
 
-        // Export detail records (jdh_test_reports)
-        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_test_reports", explode(",", $this->getCurrentDetailTable() ?? ""))) {
-            $jdh_test_reports = new JdhTestReportsList();
-            $rsdetail = $jdh_test_reports->loadRs($jdh_test_reports->getDetailFilterFromSession()); // Load detail records
-            if ($rsdetail) {
-                $exportStyle = $doc->Style;
-                $doc->setStyle("h"); // Change to horizontal
-                if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
-                    $doc->exportEmptyRow();
-                    $detailcnt = $rsdetail->rowCount();
-                    $oldtbl = $doc->Table;
-                    $doc->Table = $jdh_test_reports;
-                    $jdh_test_reports->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
-                    $doc->Table = $oldtbl;
-                }
-                $doc->setStyle($exportStyle); // Restore
-            }
-        }
-
         // Close recordset
         $rs->close();
 
@@ -1338,36 +1199,6 @@ class JdhTestRequestsView extends JdhTestRequests
         $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Get detail filter from session
     }
 
-    // Set up detail parms based on QueryString
-    protected function setupDetailParms()
-    {
-        // Get the keys for master table
-        $detailTblVar = Get(Config("TABLE_SHOW_DETAIL"));
-        if ($detailTblVar !== null) {
-            $this->setCurrentDetailTable($detailTblVar);
-        } else {
-            $detailTblVar = $this->getCurrentDetailTable();
-        }
-        if ($detailTblVar != "") {
-            $detailTblVar = explode(",", $detailTblVar);
-            if (in_array("jdh_test_reports", $detailTblVar)) {
-                $detailPageObj = Container("JdhTestReportsGrid");
-                if ($detailPageObj->DetailView) {
-                    $detailPageObj->EventCancelled = $this->EventCancelled;
-                    $detailPageObj->CurrentMode = "view";
-
-                    // Save current master table to detail table
-                    $detailPageObj->setCurrentMasterTable($this->TableVar);
-                    $detailPageObj->setStartRecordNumber(1);
-                    $detailPageObj->request_id->IsDetailKey = true;
-                    $detailPageObj->request_id->CurrentValue = $this->request_id->CurrentValue;
-                    $detailPageObj->request_id->setSessionValue($detailPageObj->request_id->CurrentValue);
-                    $detailPageObj->patient_id->setSessionValue(""); // Clear session key
-                }
-            }
-        }
-    }
-
     // Set up Breadcrumb
     protected function setupBreadcrumb()
     {
@@ -1394,9 +1225,7 @@ class JdhTestRequestsView extends JdhTestRequests
             switch ($fld->FieldVar) {
                 case "x_patient_id":
                     break;
-                case "x_request_category_id":
-                    break;
-                case "x_request_subcategory_id":
+                case "x_request_service_id":
                     break;
                 default:
                     $lookupFilter = "";

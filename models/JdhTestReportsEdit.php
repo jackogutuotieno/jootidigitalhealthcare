@@ -35,6 +35,14 @@ class JdhTestReportsEdit extends JdhTestReports
     // CSS class/style
     public $CurrentPageName = "jdhtestreportsedit";
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -947,16 +955,10 @@ class JdhTestReportsEdit extends JdhTestReports
 
             // request_id
             $this->request_id->setupEditAttributes();
-            if ($this->request_id->getSessionValue() != "") {
-                $this->request_id->CurrentValue = GetForeignKeyValue($this->request_id->getSessionValue());
-                $this->request_id->ViewValue = $this->request_id->CurrentValue;
-                $this->request_id->ViewValue = FormatNumber($this->request_id->ViewValue, $this->request_id->formatPattern());
-            } else {
-                $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
-                $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
-                if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
-                    $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
-                }
+            $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
+            $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
+            if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
+                $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
             }
 
             // patient_id
@@ -1142,9 +1144,6 @@ class JdhTestReportsEdit extends JdhTestReports
         $rsnew = [];
 
         // request_id
-        if ($this->request_id->getSessionValue() != "") {
-            $this->request_id->ReadOnly = true;
-        }
         $this->request_id->setDbValueDef($rsnew, $this->request_id->CurrentValue, 0, $this->request_id->ReadOnly);
 
         // patient_id
@@ -1198,6 +1197,11 @@ class JdhTestReportsEdit extends JdhTestReports
         if ($editRow) {
             $this->rowUpdated($rsold, $rsnew);
         }
+        if ($editRow) {
+            if ($this->SendEmail) {
+                $this->sendEmailOnEdit($rsold, $rsnew);
+            }
+        }
 
         // Write JSON response
         if (IsJsonResponse() && $editRow) {
@@ -1230,20 +1234,6 @@ class JdhTestReportsEdit extends JdhTestReports
                 $this->DbMasterFilter = "";
                 $this->DbDetailFilter = "";
             }
-            if ($masterTblVar == "jdh_test_requests") {
-                $validMaster = true;
-                $masterTbl = Container("jdh_test_requests");
-                if (($parm = Get("fk_request_id", Get("request_id"))) !== null) {
-                    $masterTbl->request_id->setQueryStringValue($parm);
-                    $this->request_id->QueryStringValue = $masterTbl->request_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
-                    $this->request_id->setSessionValue($this->request_id->QueryStringValue);
-                    if (!is_numeric($masterTbl->request_id->QueryStringValue)) {
-                        $validMaster = false;
-                    }
-                } else {
-                    $validMaster = false;
-                }
-            }
             if ($masterTblVar == "jdh_patients") {
                 $validMaster = true;
                 $masterTbl = Container("jdh_patients");
@@ -1264,20 +1254,6 @@ class JdhTestReportsEdit extends JdhTestReports
                     $validMaster = true;
                     $this->DbMasterFilter = "";
                     $this->DbDetailFilter = "";
-            }
-            if ($masterTblVar == "jdh_test_requests") {
-                $validMaster = true;
-                $masterTbl = Container("jdh_test_requests");
-                if (($parm = Post("fk_request_id", Post("request_id"))) !== null) {
-                    $masterTbl->request_id->setFormValue($parm);
-                    $this->request_id->setFormValue($masterTbl->request_id->FormValue);
-                    $this->request_id->setSessionValue($this->request_id->FormValue);
-                    if (!is_numeric($masterTbl->request_id->FormValue)) {
-                        $validMaster = false;
-                    }
-                } else {
-                    $validMaster = false;
-                }
             }
             if ($masterTblVar == "jdh_patients") {
                 $validMaster = true;
@@ -1306,11 +1282,6 @@ class JdhTestReportsEdit extends JdhTestReports
             }
 
             // Clear previous master key from Session
-            if ($masterTblVar != "jdh_test_requests") {
-                if ($this->request_id->CurrentValue == "") {
-                    $this->request_id->setSessionValue("");
-                }
-            }
             if ($masterTblVar != "jdh_patients") {
                 if ($this->patient_id->CurrentValue == "") {
                     $this->patient_id->setSessionValue("");

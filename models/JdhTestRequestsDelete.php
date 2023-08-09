@@ -35,6 +35,14 @@ class JdhTestRequestsDelete extends JdhTestRequests
     // CSS class/style
     public $CurrentPageName = "jdhtestrequestsdelete";
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -365,8 +373,7 @@ class JdhTestRequestsDelete extends JdhTestRequests
         $this->request_id->setVisibility();
         $this->patient_id->setVisibility();
         $this->request_title->setVisibility();
-        $this->request_category_id->setVisibility();
-        $this->request_subcategory_id->setVisibility();
+        $this->request_service_id->setVisibility();
         $this->request_description->setVisibility();
         $this->requested_by_user_id->Visible = false;
         $this->request_date->setVisibility();
@@ -395,8 +402,7 @@ class JdhTestRequestsDelete extends JdhTestRequests
 
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
-        $this->setupLookupOptions($this->request_category_id);
-        $this->setupLookupOptions($this->request_subcategory_id);
+        $this->setupLookupOptions($this->request_service_id);
 
         // Set up master/detail parameters
         $this->setupMasterParms();
@@ -601,8 +607,7 @@ class JdhTestRequestsDelete extends JdhTestRequests
         $this->request_id->setDbValue($row['request_id']);
         $this->patient_id->setDbValue($row['patient_id']);
         $this->request_title->setDbValue($row['request_title']);
-        $this->request_category_id->setDbValue($row['request_category_id']);
-        $this->request_subcategory_id->setDbValue($row['request_subcategory_id']);
+        $this->request_service_id->setDbValue($row['request_service_id']);
         $this->request_description->setDbValue($row['request_description']);
         $this->requested_by_user_id->setDbValue($row['requested_by_user_id']);
         $this->request_date->setDbValue($row['request_date']);
@@ -615,8 +620,7 @@ class JdhTestRequestsDelete extends JdhTestRequests
         $row['request_id'] = $this->request_id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
         $row['request_title'] = $this->request_title->DefaultValue;
-        $row['request_category_id'] = $this->request_category_id->DefaultValue;
-        $row['request_subcategory_id'] = $this->request_subcategory_id->DefaultValue;
+        $row['request_service_id'] = $this->request_service_id->DefaultValue;
         $row['request_description'] = $this->request_description->DefaultValue;
         $row['requested_by_user_id'] = $this->requested_by_user_id->DefaultValue;
         $row['request_date'] = $this->request_date->DefaultValue;
@@ -641,9 +645,7 @@ class JdhTestRequestsDelete extends JdhTestRequests
 
         // request_title
 
-        // request_category_id
-
-        // request_subcategory_id
+        // request_service_id
 
         // request_description
 
@@ -682,50 +684,27 @@ class JdhTestRequestsDelete extends JdhTestRequests
             // request_title
             $this->request_title->ViewValue = $this->request_title->CurrentValue;
 
-            // request_category_id
-            $curVal = strval($this->request_category_id->CurrentValue);
+            // request_service_id
+            $curVal = strval($this->request_service_id->CurrentValue);
             if ($curVal != "") {
-                $this->request_category_id->ViewValue = $this->request_category_id->lookupCacheOption($curVal);
-                if ($this->request_category_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`test_category_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->request_category_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                $this->request_service_id->ViewValue = $this->request_service_id->lookupCacheOption($curVal);
+                if ($this->request_service_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->request_service_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
                     $config->setResultCacheImpl($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->request_category_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->request_category_id->ViewValue = $this->request_category_id->displayValue($arwrk);
+                        $arwrk = $this->request_service_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->request_service_id->ViewValue = $this->request_service_id->displayValue($arwrk);
                     } else {
-                        $this->request_category_id->ViewValue = FormatNumber($this->request_category_id->CurrentValue, $this->request_category_id->formatPattern());
+                        $this->request_service_id->ViewValue = FormatNumber($this->request_service_id->CurrentValue, $this->request_service_id->formatPattern());
                     }
                 }
             } else {
-                $this->request_category_id->ViewValue = null;
-            }
-
-            // request_subcategory_id
-            $curVal = strval($this->request_subcategory_id->CurrentValue);
-            if ($curVal != "") {
-                $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->lookupCacheOption($curVal);
-                if ($this->request_subcategory_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`test_subcategory_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->request_subcategory_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->request_subcategory_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->displayValue($arwrk);
-                    } else {
-                        $this->request_subcategory_id->ViewValue = FormatNumber($this->request_subcategory_id->CurrentValue, $this->request_subcategory_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->request_subcategory_id->ViewValue = null;
+                $this->request_service_id->ViewValue = null;
             }
 
             // request_description
@@ -751,13 +730,9 @@ class JdhTestRequestsDelete extends JdhTestRequests
             $this->request_title->HrefValue = "";
             $this->request_title->TooltipValue = "";
 
-            // request_category_id
-            $this->request_category_id->HrefValue = "";
-            $this->request_category_id->TooltipValue = "";
-
-            // request_subcategory_id
-            $this->request_subcategory_id->HrefValue = "";
-            $this->request_subcategory_id->TooltipValue = "";
+            // request_service_id
+            $this->request_service_id->HrefValue = "";
+            $this->request_service_id->TooltipValue = "";
 
             // request_description
             $this->request_description->HrefValue = "";
@@ -791,6 +766,9 @@ class JdhTestRequestsDelete extends JdhTestRequests
         }
         if ($this->UseTransaction) {
             $conn->beginTransaction();
+        }
+        if ($this->AuditTrailOnDelete) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
         }
 
         // Clone old rows
@@ -851,9 +829,35 @@ class JdhTestRequestsDelete extends JdhTestRequests
             if (count($failKeys) > 0) {
                 $this->setWarningMessage(str_replace("%k", explode(", ", $failKeys), $Language->phrase("DeleteRecordsFailed")));
             }
+            if ($this->AuditTrailOnDelete) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteSuccess")); // Batch delete success
+            }
+            $table = 'jdh_test_requests';
+            $subject = $table . " " . $Language->phrase("RecordDeleted");
+            $action = $Language->phrase("ActionDeleted");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", implode(", ", $successKeys));
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rs"] = &$rsold;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
         } else {
             if ($this->UseTransaction) { // Rollback transaction
                 $conn->rollback();
+            }
+            if ($this->AuditTrailOnDelete) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteRollback")); // Batch delete rollback
             }
         }
 
@@ -974,9 +978,7 @@ class JdhTestRequestsDelete extends JdhTestRequests
             switch ($fld->FieldVar) {
                 case "x_patient_id":
                     break;
-                case "x_request_category_id":
-                    break;
-                case "x_request_subcategory_id":
+                case "x_request_service_id":
                     break;
                 default:
                     $lookupFilter = "";

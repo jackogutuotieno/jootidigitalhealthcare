@@ -26,8 +26,7 @@ loadjs.ready(["wrapper", "head"], function () {
             ["request_id", [fields.request_id.visible && fields.request_id.required ? ew.Validators.required(fields.request_id.caption) : null], fields.request_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["request_title", [fields.request_title.visible && fields.request_title.required ? ew.Validators.required(fields.request_title.caption) : null], fields.request_title.isInvalid],
-            ["request_category_id", [fields.request_category_id.visible && fields.request_category_id.required ? ew.Validators.required(fields.request_category_id.caption) : null], fields.request_category_id.isInvalid],
-            ["request_subcategory_id", [fields.request_subcategory_id.visible && fields.request_subcategory_id.required ? ew.Validators.required(fields.request_subcategory_id.caption) : null], fields.request_subcategory_id.isInvalid],
+            ["request_service_id", [fields.request_service_id.visible && fields.request_service_id.required ? ew.Validators.required(fields.request_service_id.caption) : null], fields.request_service_id.isInvalid],
             ["request_description", [fields.request_description.visible && fields.request_description.required ? ew.Validators.required(fields.request_description.caption) : null], fields.request_description.isInvalid],
             ["request_date", [fields.request_date.visible && fields.request_date.required ? ew.Validators.required(fields.request_date.caption) : null, ew.Validators.datetime(fields.request_date.clientFormatPattern)], fields.request_date.isInvalid]
         ])
@@ -36,7 +35,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setEmptyRow(
             function (rowIndex) {
                 let fobj = this.getForm(),
-                    fields = [["patient_id",false],["request_title",false],["request_category_id",false],["request_subcategory_id",false],["request_description",false],["request_date",false]];
+                    fields = [["patient_id",false],["request_title",false],["request_service_id",false],["request_description",false],["request_date",false]];
                 if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
                     return false;
                 return true;
@@ -57,8 +56,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Dynamic selection lists
         .setLists({
             "patient_id": <?= $Grid->patient_id->toClientList($Grid) ?>,
-            "request_category_id": <?= $Grid->request_category_id->toClientList($Grid) ?>,
-            "request_subcategory_id": <?= $Grid->request_subcategory_id->toClientList($Grid) ?>,
+            "request_service_id": <?= $Grid->request_service_id->toClientList($Grid) ?>,
         })
         .build();
     window[form.id] = form;
@@ -94,11 +92,8 @@ $Grid->ListOptions->render("header", "left");
 <?php if ($Grid->request_title->Visible) { // request_title ?>
         <th data-name="request_title" class="<?= $Grid->request_title->headerCellClass() ?>"><div id="elh_jdh_test_requests_request_title" class="jdh_test_requests_request_title"><?= $Grid->renderFieldHeader($Grid->request_title) ?></div></th>
 <?php } ?>
-<?php if ($Grid->request_category_id->Visible) { // request_category_id ?>
-        <th data-name="request_category_id" class="<?= $Grid->request_category_id->headerCellClass() ?>"><div id="elh_jdh_test_requests_request_category_id" class="jdh_test_requests_request_category_id"><?= $Grid->renderFieldHeader($Grid->request_category_id) ?></div></th>
-<?php } ?>
-<?php if ($Grid->request_subcategory_id->Visible) { // request_subcategory_id ?>
-        <th data-name="request_subcategory_id" class="<?= $Grid->request_subcategory_id->headerCellClass() ?>"><div id="elh_jdh_test_requests_request_subcategory_id" class="jdh_test_requests_request_subcategory_id"><?= $Grid->renderFieldHeader($Grid->request_subcategory_id) ?></div></th>
+<?php if ($Grid->request_service_id->Visible) { // request_service_id ?>
+        <th data-name="request_service_id" class="<?= $Grid->request_service_id->headerCellClass() ?>"><div id="elh_jdh_test_requests_request_service_id" class="jdh_test_requests_request_service_id"><?= $Grid->renderFieldHeader($Grid->request_service_id) ?></div></th>
 <?php } ?>
 <?php if ($Grid->request_description->Visible) { // request_description ?>
         <th data-name="request_description" class="<?= $Grid->request_description->headerCellClass() ?>"><div id="elh_jdh_test_requests_request_description" class="jdh_test_requests_request_description"><?= $Grid->renderFieldHeader($Grid->request_description) ?></div></th>
@@ -282,170 +277,85 @@ loadjs.ready("fjdh_test_requestsgrid", function() {
 <?php } ?>
 </td>
     <?php } ?>
-    <?php if ($Grid->request_category_id->Visible) { // request_category_id ?>
-        <td data-name="request_category_id"<?= $Grid->request_category_id->cellAttributes() ?>>
+    <?php if ($Grid->request_service_id->Visible) { // request_service_id ?>
+        <td data-name="request_service_id"<?= $Grid->request_service_id->cellAttributes() ?>>
 <?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_category_id" class="el_jdh_test_requests_request_category_id">
+<span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_service_id" class="el_jdh_test_requests_request_service_id">
     <select
-        id="x<?= $Grid->RowIndex ?>_request_category_id"
-        name="x<?= $Grid->RowIndex ?>_request_category_id"
-        class="form-select ew-select<?= $Grid->request_category_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_category_id"
+        id="x<?= $Grid->RowIndex ?>_request_service_id"
+        name="x<?= $Grid->RowIndex ?>_request_service_id"
+        class="form-select ew-select<?= $Grid->request_service_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_service_id"
         data-table="jdh_test_requests"
-        data-field="x_request_category_id"
-        data-value-separator="<?= $Grid->request_category_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->request_category_id->getPlaceHolder()) ?>"
-        data-ew-action="update-options"
-        <?= $Grid->request_category_id->editAttributes() ?>>
-        <?= $Grid->request_category_id->selectOptionListHtml("x{$Grid->RowIndex}_request_category_id") ?>
+        data-field="x_request_service_id"
+        data-value-separator="<?= $Grid->request_service_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Grid->request_service_id->getPlaceHolder()) ?>"
+        <?= $Grid->request_service_id->editAttributes() ?>>
+        <?= $Grid->request_service_id->selectOptionListHtml("x{$Grid->RowIndex}_request_service_id") ?>
     </select>
-    <div class="invalid-feedback"><?= $Grid->request_category_id->getErrorMessage() ?></div>
-<?= $Grid->request_category_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_request_category_id") ?>
+    <div class="invalid-feedback"><?= $Grid->request_service_id->getErrorMessage() ?></div>
+<?= $Grid->request_service_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_request_service_id") ?>
 <script>
 loadjs.ready("fjdh_test_requestsgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_request_category_id", selectId: "fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_category_id" },
+    var options = { name: "x<?= $Grid->RowIndex ?>_request_service_id", selectId: "fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_service_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_test_requestsgrid.lists.request_category_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_request_category_id", form: "fjdh_test_requestsgrid" };
+    if (fjdh_test_requestsgrid.lists.request_service_id?.lookupOptions.length) {
+        options.data = { id: "x<?= $Grid->RowIndex ?>_request_service_id", form: "fjdh_test_requestsgrid" };
     } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_request_category_id", form: "fjdh_test_requestsgrid", limit: ew.LOOKUP_PAGE_SIZE };
+        options.ajax = { id: "x<?= $Grid->RowIndex ?>_request_service_id", form: "fjdh_test_requestsgrid", limit: ew.LOOKUP_PAGE_SIZE };
     }
     options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.request_category_id.selectOptions);
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.request_service_id.selectOptions);
     ew.createSelect(options);
 });
 </script>
 </span>
-<input type="hidden" data-table="jdh_test_requests" data-field="x_request_category_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_request_category_id" id="o<?= $Grid->RowIndex ?>_request_category_id" value="<?= HtmlEncode($Grid->request_category_id->OldValue) ?>">
+<input type="hidden" data-table="jdh_test_requests" data-field="x_request_service_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_request_service_id" id="o<?= $Grid->RowIndex ?>_request_service_id" value="<?= HtmlEncode($Grid->request_service_id->OldValue) ?>">
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_category_id" class="el_jdh_test_requests_request_category_id">
+<span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_service_id" class="el_jdh_test_requests_request_service_id">
     <select
-        id="x<?= $Grid->RowIndex ?>_request_category_id"
-        name="x<?= $Grid->RowIndex ?>_request_category_id"
-        class="form-select ew-select<?= $Grid->request_category_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_category_id"
+        id="x<?= $Grid->RowIndex ?>_request_service_id"
+        name="x<?= $Grid->RowIndex ?>_request_service_id"
+        class="form-select ew-select<?= $Grid->request_service_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_service_id"
         data-table="jdh_test_requests"
-        data-field="x_request_category_id"
-        data-value-separator="<?= $Grid->request_category_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->request_category_id->getPlaceHolder()) ?>"
-        data-ew-action="update-options"
-        <?= $Grid->request_category_id->editAttributes() ?>>
-        <?= $Grid->request_category_id->selectOptionListHtml("x{$Grid->RowIndex}_request_category_id") ?>
+        data-field="x_request_service_id"
+        data-value-separator="<?= $Grid->request_service_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Grid->request_service_id->getPlaceHolder()) ?>"
+        <?= $Grid->request_service_id->editAttributes() ?>>
+        <?= $Grid->request_service_id->selectOptionListHtml("x{$Grid->RowIndex}_request_service_id") ?>
     </select>
-    <div class="invalid-feedback"><?= $Grid->request_category_id->getErrorMessage() ?></div>
-<?= $Grid->request_category_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_request_category_id") ?>
+    <div class="invalid-feedback"><?= $Grid->request_service_id->getErrorMessage() ?></div>
+<?= $Grid->request_service_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_request_service_id") ?>
 <script>
 loadjs.ready("fjdh_test_requestsgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_request_category_id", selectId: "fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_category_id" },
+    var options = { name: "x<?= $Grid->RowIndex ?>_request_service_id", selectId: "fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_service_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_test_requestsgrid.lists.request_category_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_request_category_id", form: "fjdh_test_requestsgrid" };
+    if (fjdh_test_requestsgrid.lists.request_service_id?.lookupOptions.length) {
+        options.data = { id: "x<?= $Grid->RowIndex ?>_request_service_id", form: "fjdh_test_requestsgrid" };
     } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_request_category_id", form: "fjdh_test_requestsgrid", limit: ew.LOOKUP_PAGE_SIZE };
+        options.ajax = { id: "x<?= $Grid->RowIndex ?>_request_service_id", form: "fjdh_test_requestsgrid", limit: ew.LOOKUP_PAGE_SIZE };
     }
     options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.request_category_id.selectOptions);
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.request_service_id.selectOptions);
     ew.createSelect(options);
 });
 </script>
 </span>
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_category_id" class="el_jdh_test_requests_request_category_id">
-<span<?= $Grid->request_category_id->viewAttributes() ?>>
-<?= $Grid->request_category_id->getViewValue() ?></span>
+<span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_service_id" class="el_jdh_test_requests_request_service_id">
+<span<?= $Grid->request_service_id->viewAttributes() ?>>
+<?= $Grid->request_service_id->getViewValue() ?></span>
 </span>
 <?php if ($Grid->isConfirm()) { ?>
-<input type="hidden" data-table="jdh_test_requests" data-field="x_request_category_id" data-hidden="1" name="fjdh_test_requestsgrid$x<?= $Grid->RowIndex ?>_request_category_id" id="fjdh_test_requestsgrid$x<?= $Grid->RowIndex ?>_request_category_id" value="<?= HtmlEncode($Grid->request_category_id->FormValue) ?>">
-<input type="hidden" data-table="jdh_test_requests" data-field="x_request_category_id" data-hidden="1" data-old name="fjdh_test_requestsgrid$o<?= $Grid->RowIndex ?>_request_category_id" id="fjdh_test_requestsgrid$o<?= $Grid->RowIndex ?>_request_category_id" value="<?= HtmlEncode($Grid->request_category_id->OldValue) ?>">
-<?php } ?>
-<?php } ?>
-</td>
-    <?php } ?>
-    <?php if ($Grid->request_subcategory_id->Visible) { // request_subcategory_id ?>
-        <td data-name="request_subcategory_id"<?= $Grid->request_subcategory_id->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_subcategory_id" class="el_jdh_test_requests_request_subcategory_id">
-    <select
-        id="x<?= $Grid->RowIndex ?>_request_subcategory_id"
-        name="x<?= $Grid->RowIndex ?>_request_subcategory_id"
-        class="form-select ew-select<?= $Grid->request_subcategory_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_subcategory_id"
-        data-table="jdh_test_requests"
-        data-field="x_request_subcategory_id"
-        data-value-separator="<?= $Grid->request_subcategory_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->request_subcategory_id->getPlaceHolder()) ?>"
-        <?= $Grid->request_subcategory_id->editAttributes() ?>>
-        <?= $Grid->request_subcategory_id->selectOptionListHtml("x{$Grid->RowIndex}_request_subcategory_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Grid->request_subcategory_id->getErrorMessage() ?></div>
-<?= $Grid->request_subcategory_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_request_subcategory_id") ?>
-<script>
-loadjs.ready("fjdh_test_requestsgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_request_subcategory_id", selectId: "fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_subcategory_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_test_requestsgrid.lists.request_subcategory_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_request_subcategory_id", form: "fjdh_test_requestsgrid" };
-    } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_request_subcategory_id", form: "fjdh_test_requestsgrid", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.request_subcategory_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
-</span>
-<input type="hidden" data-table="jdh_test_requests" data-field="x_request_subcategory_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_request_subcategory_id" id="o<?= $Grid->RowIndex ?>_request_subcategory_id" value="<?= HtmlEncode($Grid->request_subcategory_id->OldValue) ?>">
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_subcategory_id" class="el_jdh_test_requests_request_subcategory_id">
-    <select
-        id="x<?= $Grid->RowIndex ?>_request_subcategory_id"
-        name="x<?= $Grid->RowIndex ?>_request_subcategory_id"
-        class="form-select ew-select<?= $Grid->request_subcategory_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_subcategory_id"
-        data-table="jdh_test_requests"
-        data-field="x_request_subcategory_id"
-        data-value-separator="<?= $Grid->request_subcategory_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->request_subcategory_id->getPlaceHolder()) ?>"
-        <?= $Grid->request_subcategory_id->editAttributes() ?>>
-        <?= $Grid->request_subcategory_id->selectOptionListHtml("x{$Grid->RowIndex}_request_subcategory_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Grid->request_subcategory_id->getErrorMessage() ?></div>
-<?= $Grid->request_subcategory_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_request_subcategory_id") ?>
-<script>
-loadjs.ready("fjdh_test_requestsgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_request_subcategory_id", selectId: "fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_subcategory_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_test_requestsgrid.lists.request_subcategory_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_request_subcategory_id", form: "fjdh_test_requestsgrid" };
-    } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_request_subcategory_id", form: "fjdh_test_requestsgrid", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.request_subcategory_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
-</span>
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_subcategory_id" class="el_jdh_test_requests_request_subcategory_id">
-<span<?= $Grid->request_subcategory_id->viewAttributes() ?>>
-<?= $Grid->request_subcategory_id->getViewValue() ?></span>
-</span>
-<?php if ($Grid->isConfirm()) { ?>
-<input type="hidden" data-table="jdh_test_requests" data-field="x_request_subcategory_id" data-hidden="1" name="fjdh_test_requestsgrid$x<?= $Grid->RowIndex ?>_request_subcategory_id" id="fjdh_test_requestsgrid$x<?= $Grid->RowIndex ?>_request_subcategory_id" value="<?= HtmlEncode($Grid->request_subcategory_id->FormValue) ?>">
-<input type="hidden" data-table="jdh_test_requests" data-field="x_request_subcategory_id" data-hidden="1" data-old name="fjdh_test_requestsgrid$o<?= $Grid->RowIndex ?>_request_subcategory_id" id="fjdh_test_requestsgrid$o<?= $Grid->RowIndex ?>_request_subcategory_id" value="<?= HtmlEncode($Grid->request_subcategory_id->OldValue) ?>">
+<input type="hidden" data-table="jdh_test_requests" data-field="x_request_service_id" data-hidden="1" name="fjdh_test_requestsgrid$x<?= $Grid->RowIndex ?>_request_service_id" id="fjdh_test_requestsgrid$x<?= $Grid->RowIndex ?>_request_service_id" value="<?= HtmlEncode($Grid->request_service_id->FormValue) ?>">
+<input type="hidden" data-table="jdh_test_requests" data-field="x_request_service_id" data-hidden="1" data-old name="fjdh_test_requestsgrid$o<?= $Grid->RowIndex ?>_request_service_id" id="fjdh_test_requestsgrid$o<?= $Grid->RowIndex ?>_request_service_id" value="<?= HtmlEncode($Grid->request_service_id->OldValue) ?>">
 <?php } ?>
 <?php } ?>
 </td>
@@ -486,7 +396,7 @@ loadjs.ready("fjdh_test_requestsgrid", function() {
 <?php if (!$Grid->request_date->ReadOnly && !$Grid->request_date->Disabled && !isset($Grid->request_date->EditAttrs["readonly"]) && !isset($Grid->request_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_test_requestsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
+    let format = "<?= DateFormat(11) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
@@ -523,7 +433,7 @@ loadjs.ready(["fjdh_test_requestsgrid", "datetimepicker"], function () {
 <?php if (!$Grid->request_date->ReadOnly && !$Grid->request_date->Disabled && !isset($Grid->request_date->EditAttrs["readonly"]) && !isset($Grid->request_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_test_requestsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
+    let format = "<?= DateFormat(11) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),

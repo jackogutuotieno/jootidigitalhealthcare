@@ -72,10 +72,6 @@ loadjs.ready(["wrapper", "head"], function () {
 <input type="hidden" name="json" value="1">
 <?php } ?>
 <input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
-<?php if ($Page->getCurrentMasterTable() == "jdh_test_requests") { ?>
-<input type="hidden" name="<?= Config("TABLE_SHOW_MASTER") ?>" value="jdh_test_requests">
-<input type="hidden" name="fk_request_id" value="<?= HtmlEncode($Page->request_id->getSessionValue()) ?>">
-<?php } ?>
 <?php if ($Page->getCurrentMasterTable() == "jdh_patients") { ?>
 <input type="hidden" name="<?= Config("TABLE_SHOW_MASTER") ?>" value="jdh_patients">
 <input type="hidden" name="fk_patient_id" value="<?= HtmlEncode($Page->patient_id->getSessionValue()) ?>">
@@ -97,17 +93,11 @@ loadjs.ready(["wrapper", "head"], function () {
     <div id="r_request_id"<?= $Page->request_id->rowAttributes() ?>>
         <label id="elh_jdh_test_reports_request_id" for="x_request_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->request_id->caption() ?><?= $Page->request_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->request_id->cellAttributes() ?>>
-<?php if ($Page->request_id->getSessionValue() != "") { ?>
-<span<?= $Page->request_id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->request_id->getDisplayValue($Page->request_id->ViewValue))) ?>"></span>
-<input type="hidden" id="x_request_id" name="x_request_id" value="<?= HtmlEncode($Page->request_id->CurrentValue) ?>" data-hidden="1">
-<?php } else { ?>
 <span id="el_jdh_test_reports_request_id">
 <input type="<?= $Page->request_id->getInputTextType() ?>" name="x_request_id" id="x_request_id" data-table="jdh_test_reports" data-field="x_request_id" value="<?= $Page->request_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->request_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->request_id->formatPattern()) ?>"<?= $Page->request_id->editAttributes() ?> aria-describedby="x_request_id_help">
 <?= $Page->request_id->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->request_id->getErrorMessage() ?></div>
 </span>
-<?php } ?>
 </div></div>
     </div>
 <?php } ?>
@@ -159,18 +149,12 @@ loadjs.ready("fjdh_test_reportsedit", function() {
 <?php } ?>
 <?php if ($Page->report_findings->Visible) { // report_findings ?>
     <div id="r_report_findings"<?= $Page->report_findings->rowAttributes() ?>>
-        <label id="elh_jdh_test_reports_report_findings" class="<?= $Page->LeftColumnClass ?>"><?= $Page->report_findings->caption() ?><?= $Page->report_findings->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <label id="elh_jdh_test_reports_report_findings" for="x_report_findings" class="<?= $Page->LeftColumnClass ?>"><?= $Page->report_findings->caption() ?><?= $Page->report_findings->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->report_findings->cellAttributes() ?>>
 <span id="el_jdh_test_reports_report_findings">
-<?php $Page->report_findings->EditAttrs->appendClass("editor"); ?>
 <textarea data-table="jdh_test_reports" data-field="x_report_findings" name="x_report_findings" id="x_report_findings" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->report_findings->getPlaceHolder()) ?>"<?= $Page->report_findings->editAttributes() ?> aria-describedby="x_report_findings_help"><?= $Page->report_findings->EditValue ?></textarea>
 <?= $Page->report_findings->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->report_findings->getErrorMessage() ?></div>
-<script>
-loadjs.ready(["fjdh_test_reportsedit", "editor"], function() {
-    ew.createEditor("fjdh_test_reportsedit", "x_report_findings", 35, 4, <?= $Page->report_findings->ReadOnly || false ? "true" : "false" ?>);
-});
-</script>
 </span>
 </div></div>
     </div>

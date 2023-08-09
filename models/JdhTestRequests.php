@@ -28,6 +28,14 @@ class JdhTestRequests extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
+    // Audit trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Export
     public $UseAjaxActions = false;
     public $ModalSearch = false;
@@ -44,8 +52,7 @@ class JdhTestRequests extends DbTable
     public $request_id;
     public $patient_id;
     public $request_title;
-    public $request_category_id;
-    public $request_subcategory_id;
+    public $request_service_id;
     public $request_description;
     public $requested_by_user_id;
     public $request_date;
@@ -92,6 +99,7 @@ class JdhTestRequests extends DbTable
         $this->GridAddRowCount = 5;
         $this->AllowAddDeleteRow = true; // Allow add/delete row
         $this->UseAjaxActions = $this->UseAjaxActions || Config("USE_AJAX_ACTIONS");
+        $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
         $this->BasicSearch = new BasicSearch($this);
 
         // request_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
@@ -115,7 +123,6 @@ class JdhTestRequests extends DbTable
         $this->request_id->InputTextType = "text";
         $this->request_id->IsAutoIncrement = true; // Autoincrement field
         $this->request_id->IsPrimaryKey = true; // Primary key field
-        $this->request_id->IsForeignKey = true; // Foreign key field
         $this->request_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->request_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->Fields['request_id'] = &$this->request_id;
@@ -173,61 +180,33 @@ class JdhTestRequests extends DbTable
         $this->request_title->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
         $this->Fields['request_title'] = &$this->request_title;
 
-        // request_category_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->request_category_id = new DbField(
+        // request_service_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->request_service_id = new DbField(
             $this, // Table
-            'x_request_category_id', // Variable name
-            'request_category_id', // Name
-            '`request_category_id`', // Expression
-            '`request_category_id`', // Basic search expression
+            'x_request_service_id', // Variable name
+            'request_service_id', // Name
+            '`request_service_id`', // Expression
+            '`request_service_id`', // Basic search expression
             3, // Type
             11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`request_category_id`', // Virtual expression
+            '`request_service_id`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'SELECT' // Edit Tag
         );
-        $this->request_category_id->InputTextType = "text";
-        $this->request_category_id->Nullable = false; // NOT NULL field
-        $this->request_category_id->Required = true; // Required field
-        $this->request_category_id->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->request_category_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->request_category_id->Lookup = new Lookup('request_category_id', 'jdh_lab_test_categories', false, 'test_category_id', ["test_category_name","","",""], '', '', [], ["x_request_subcategory_id"], [], [], [], [], '', '', "`test_category_name`");
-        $this->request_category_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->request_category_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['request_category_id'] = &$this->request_category_id;
-
-        // request_subcategory_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->request_subcategory_id = new DbField(
-            $this, // Table
-            'x_request_subcategory_id', // Variable name
-            'request_subcategory_id', // Name
-            '`request_subcategory_id`', // Expression
-            '`request_subcategory_id`', // Basic search expression
-            3, // Type
-            11, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`request_subcategory_id`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'SELECT' // Edit Tag
-        );
-        $this->request_subcategory_id->InputTextType = "text";
-        $this->request_subcategory_id->Nullable = false; // NOT NULL field
-        $this->request_subcategory_id->Required = true; // Required field
-        $this->request_subcategory_id->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->request_subcategory_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->request_subcategory_id->Lookup = new Lookup('request_subcategory_id', 'jdh_lab_test_subcategories', false, 'test_subcategory_id', ["test_subcategory_name","","",""], '', '', ["x_request_category_id"], [], ["test_category_id"], ["x_test_category_id"], [], [], '', '', "`test_subcategory_name`");
-        $this->request_subcategory_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->request_subcategory_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['request_subcategory_id'] = &$this->request_subcategory_id;
+        $this->request_service_id->InputTextType = "text";
+        $this->request_service_id->Nullable = false; // NOT NULL field
+        $this->request_service_id->Required = true; // Required field
+        $this->request_service_id->UsePleaseSelect = true; // Use PleaseSelect by default
+        $this->request_service_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
+        $this->request_service_id->Lookup = new Lookup('request_service_id', 'jdh_services', false, 'service_id', ["service_name","","",""], '', '', [], [], [], [], [], [], '', '', "`service_name`");
+        $this->request_service_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->request_service_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['request_service_id'] = &$this->request_service_id;
 
         // request_description $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->request_description = new DbField(
@@ -282,10 +261,10 @@ class JdhTestRequests extends DbTable
             'x_request_date', // Variable name
             'request_date', // Name
             '`request_date`', // Expression
-            CastDateFieldForLike("`request_date`", 1, "DB"), // Basic search expression
+            CastDateFieldForLike("`request_date`", 11, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            1, // Date/Time format
+            11, // Date/Time format
             false, // Is upload field
             '`request_date`', // Virtual expression
             false, // Is virtual
@@ -297,7 +276,7 @@ class JdhTestRequests extends DbTable
         $this->request_date->InputTextType = "text";
         $this->request_date->Nullable = false; // NOT NULL field
         $this->request_date->Required = true; // Required field
-        $this->request_date->DefaultErrorMessage = str_replace("%s", DateFormat(1), $Language->phrase("IncorrectDate"));
+        $this->request_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->request_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['request_date'] = &$this->request_date;
 
@@ -439,32 +418,6 @@ class JdhTestRequests extends DbTable
                 return GetKeyFilter($this->patient_id, $masterTable->patient_id->DbValue, $masterTable->patient_id->DataType, $masterTable->Dbid);
         }
         return "";
-    }
-
-    // Current detail table name
-    public function getCurrentDetailTable()
-    {
-        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_DETAIL_TABLE"));
-    }
-
-    public function setCurrentDetailTable($v)
-    {
-        $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_DETAIL_TABLE")] = $v;
-    }
-
-    // Get detail url
-    public function getDetailUrl()
-    {
-        // Detail url
-        $detailUrl = "";
-        if ($this->getCurrentDetailTable() == "jdh_test_reports") {
-            $detailUrl = Container("jdh_test_reports")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_request_id", $this->request_id->CurrentValue);
-        }
-        if ($detailUrl == "") {
-            $detailUrl = "jdhtestrequestslist";
-        }
-        return $detailUrl;
     }
 
     // Render X Axis for chart
@@ -781,6 +734,9 @@ class JdhTestRequests extends DbTable
             // Get insert id if necessary
             $this->request_id->setDbValue($conn->lastInsertId());
             $rs['request_id'] = $this->request_id->DbValue;
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailOnAdd($rs);
+            }
         }
         return $success;
     }
@@ -834,6 +790,14 @@ class JdhTestRequests extends DbTable
                 $rs['request_id'] = $this->request_id->CurrentValue;
             }
         }
+        if ($success && $this->AuditTrailOnEdit && $rsold) {
+            $rsaudit = $rs;
+            $fldname = 'request_id';
+            if (!array_key_exists($fldname, $rsaudit)) {
+                $rsaudit[$fldname] = $rsold[$fldname];
+            }
+            $this->writeAuditTrailOnEdit($rsold, $rsaudit);
+        }
         return $success;
     }
 
@@ -875,6 +839,9 @@ class JdhTestRequests extends DbTable
                 $this->DbErrorMessage = $e->getMessage();
             }
         }
+        if ($success && $this->AuditTrailOnDelete) {
+            $this->writeAuditTrailOnDelete($rs);
+        }
         return $success;
     }
 
@@ -887,8 +854,7 @@ class JdhTestRequests extends DbTable
         $this->request_id->DbValue = $row['request_id'];
         $this->patient_id->DbValue = $row['patient_id'];
         $this->request_title->DbValue = $row['request_title'];
-        $this->request_category_id->DbValue = $row['request_category_id'];
-        $this->request_subcategory_id->DbValue = $row['request_subcategory_id'];
+        $this->request_service_id->DbValue = $row['request_service_id'];
         $this->request_description->DbValue = $row['request_description'];
         $this->requested_by_user_id->DbValue = $row['requested_by_user_id'];
         $this->request_date->DbValue = $row['request_date'];
@@ -1048,11 +1014,7 @@ class JdhTestRequests extends DbTable
     // Edit URL
     public function getEditUrl($parm = "")
     {
-        if ($parm != "") {
-            $url = $this->keyUrl("jdhtestrequestsedit", $parm);
-        } else {
-            $url = $this->keyUrl("jdhtestrequestsedit", Config("TABLE_SHOW_DETAIL") . "=");
-        }
+        $url = $this->keyUrl("jdhtestrequestsedit", $parm);
         return $this->addMasterUrl($url);
     }
 
@@ -1066,11 +1028,7 @@ class JdhTestRequests extends DbTable
     // Copy URL
     public function getCopyUrl($parm = "")
     {
-        if ($parm != "") {
-            $url = $this->keyUrl("jdhtestrequestsadd", $parm);
-        } else {
-            $url = $this->keyUrl("jdhtestrequestsadd", Config("TABLE_SHOW_DETAIL") . "=");
-        }
+        $url = $this->keyUrl("jdhtestrequestsadd", $parm);
         return $this->addMasterUrl($url);
     }
 
@@ -1260,8 +1218,7 @@ class JdhTestRequests extends DbTable
         $this->request_id->setDbValue($row['request_id']);
         $this->patient_id->setDbValue($row['patient_id']);
         $this->request_title->setDbValue($row['request_title']);
-        $this->request_category_id->setDbValue($row['request_category_id']);
-        $this->request_subcategory_id->setDbValue($row['request_subcategory_id']);
+        $this->request_service_id->setDbValue($row['request_service_id']);
         $this->request_description->setDbValue($row['request_description']);
         $this->requested_by_user_id->setDbValue($row['requested_by_user_id']);
         $this->request_date->setDbValue($row['request_date']);
@@ -1301,9 +1258,7 @@ class JdhTestRequests extends DbTable
 
         // request_title
 
-        // request_category_id
-
-        // request_subcategory_id
+        // request_service_id
 
         // request_description
 
@@ -1340,50 +1295,27 @@ class JdhTestRequests extends DbTable
         // request_title
         $this->request_title->ViewValue = $this->request_title->CurrentValue;
 
-        // request_category_id
-        $curVal = strval($this->request_category_id->CurrentValue);
+        // request_service_id
+        $curVal = strval($this->request_service_id->CurrentValue);
         if ($curVal != "") {
-            $this->request_category_id->ViewValue = $this->request_category_id->lookupCacheOption($curVal);
-            if ($this->request_category_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`test_category_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $sqlWrk = $this->request_category_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+            $this->request_service_id->ViewValue = $this->request_service_id->lookupCacheOption($curVal);
+            if ($this->request_service_id->ViewValue === null) { // Lookup from database
+                $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                $sqlWrk = $this->request_service_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
                 $config->setResultCacheImpl($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->request_category_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->request_category_id->ViewValue = $this->request_category_id->displayValue($arwrk);
+                    $arwrk = $this->request_service_id->Lookup->renderViewRow($rswrk[0]);
+                    $this->request_service_id->ViewValue = $this->request_service_id->displayValue($arwrk);
                 } else {
-                    $this->request_category_id->ViewValue = FormatNumber($this->request_category_id->CurrentValue, $this->request_category_id->formatPattern());
+                    $this->request_service_id->ViewValue = FormatNumber($this->request_service_id->CurrentValue, $this->request_service_id->formatPattern());
                 }
             }
         } else {
-            $this->request_category_id->ViewValue = null;
-        }
-
-        // request_subcategory_id
-        $curVal = strval($this->request_subcategory_id->CurrentValue);
-        if ($curVal != "") {
-            $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->lookupCacheOption($curVal);
-            if ($this->request_subcategory_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`test_subcategory_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $sqlWrk = $this->request_subcategory_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->request_subcategory_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->request_subcategory_id->ViewValue = $this->request_subcategory_id->displayValue($arwrk);
-                } else {
-                    $this->request_subcategory_id->ViewValue = FormatNumber($this->request_subcategory_id->CurrentValue, $this->request_subcategory_id->formatPattern());
-                }
-            }
-        } else {
-            $this->request_subcategory_id->ViewValue = null;
+            $this->request_service_id->ViewValue = null;
         }
 
         // request_description
@@ -1409,13 +1341,9 @@ class JdhTestRequests extends DbTable
         $this->request_title->HrefValue = "";
         $this->request_title->TooltipValue = "";
 
-        // request_category_id
-        $this->request_category_id->HrefValue = "";
-        $this->request_category_id->TooltipValue = "";
-
-        // request_subcategory_id
-        $this->request_subcategory_id->HrefValue = "";
-        $this->request_subcategory_id->TooltipValue = "";
+        // request_service_id
+        $this->request_service_id->HrefValue = "";
+        $this->request_service_id->TooltipValue = "";
 
         // request_description
         $this->request_description->HrefValue = "";
@@ -1485,13 +1413,9 @@ class JdhTestRequests extends DbTable
         $this->request_title->EditValue = $this->request_title->CurrentValue;
         $this->request_title->PlaceHolder = RemoveHtml($this->request_title->caption());
 
-        // request_category_id
-        $this->request_category_id->setupEditAttributes();
-        $this->request_category_id->PlaceHolder = RemoveHtml($this->request_category_id->caption());
-
-        // request_subcategory_id
-        $this->request_subcategory_id->setupEditAttributes();
-        $this->request_subcategory_id->PlaceHolder = RemoveHtml($this->request_subcategory_id->caption());
+        // request_service_id
+        $this->request_service_id->setupEditAttributes();
+        $this->request_service_id->PlaceHolder = RemoveHtml($this->request_service_id->caption());
 
         // request_description
         $this->request_description->setupEditAttributes();
@@ -1536,16 +1460,14 @@ class JdhTestRequests extends DbTable
                     $doc->exportCaption($this->request_id);
                     $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->request_title);
-                    $doc->exportCaption($this->request_category_id);
-                    $doc->exportCaption($this->request_subcategory_id);
+                    $doc->exportCaption($this->request_service_id);
                     $doc->exportCaption($this->request_description);
                     $doc->exportCaption($this->request_date);
                 } else {
                     $doc->exportCaption($this->request_id);
                     $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->request_title);
-                    $doc->exportCaption($this->request_category_id);
-                    $doc->exportCaption($this->request_subcategory_id);
+                    $doc->exportCaption($this->request_service_id);
                     $doc->exportCaption($this->request_description);
                     $doc->exportCaption($this->requested_by_user_id);
                     $doc->exportCaption($this->request_date);
@@ -1581,16 +1503,14 @@ class JdhTestRequests extends DbTable
                         $doc->exportField($this->request_id);
                         $doc->exportField($this->patient_id);
                         $doc->exportField($this->request_title);
-                        $doc->exportField($this->request_category_id);
-                        $doc->exportField($this->request_subcategory_id);
+                        $doc->exportField($this->request_service_id);
                         $doc->exportField($this->request_description);
                         $doc->exportField($this->request_date);
                     } else {
                         $doc->exportField($this->request_id);
                         $doc->exportField($this->patient_id);
                         $doc->exportField($this->request_title);
-                        $doc->exportField($this->request_category_id);
-                        $doc->exportField($this->request_subcategory_id);
+                        $doc->exportField($this->request_service_id);
                         $doc->exportField($this->request_description);
                         $doc->exportField($this->requested_by_user_id);
                         $doc->exportField($this->request_date);
@@ -1668,6 +1588,192 @@ class JdhTestRequests extends DbTable
 
         // No binary fields
         return false;
+    }
+
+    // Write audit trail start/end for grid update
+    public function writeAuditTrailDummy($typ)
+    {
+        WriteAuditLog(CurrentUser(), $typ, 'jdh_test_requests', "", "", "", "");
+    }
+
+    // Write audit trail (add page)
+    public function writeAuditTrailOnAdd(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnAdd) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['request_id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $newvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo Field
+                    $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML Field
+                    $newvalue = "[XML]";
+                } else {
+                    $newvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "A", 'jdh_test_requests', $fldname, $key, "", $newvalue);
+            }
+        }
+    }
+
+    // Write audit trail (edit page)
+    public function writeAuditTrailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnEdit) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['request_id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rsnew) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && array_key_exists($fldname, $rsold) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->DataType == DATATYPE_DATE) { // DateTime field
+                    $modified = (FormatDateTime($rsold[$fldname], 0) != FormatDateTime($rsnew[$fldname], 0));
+                } else {
+                    $modified = !CompareValue($rsold[$fldname], $rsnew[$fldname]);
+                }
+                if ($modified) {
+                    if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                        $oldvalue = $Language->phrase("PasswordMask");
+                        $newvalue = $Language->phrase("PasswordMask");
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                        $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsold[$fldname] : "[MEMO]";
+                        $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsnew[$fldname] : "[MEMO]";
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                        $oldvalue = "[XML]";
+                        $newvalue = "[XML]";
+                    } else {
+                        $oldvalue = $rsold[$fldname];
+                        $newvalue = $rsnew[$fldname];
+                    }
+                    WriteAuditLog($usr, "U", 'jdh_test_requests', $fldname, $key, $oldvalue, $newvalue);
+                }
+            }
+        }
+    }
+
+    // Write audit trail (delete page)
+    public function writeAuditTrailOnDelete(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnDelete) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['request_id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $oldvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                    $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                    $oldvalue = "[XML]";
+                } else {
+                    $oldvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "D", 'jdh_test_requests', $fldname, $key, $oldvalue, "");
+            }
+        }
+    }
+
+    // Send email after add success
+    public function sendEmailOnAdd(&$rs)
+    {
+        global $Language;
+        $table = 'jdh_test_requests';
+        $subject = $table . " " . $Language->phrase("RecordInserted");
+        $action = $Language->phrase("ActionInserted");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['request_id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = ["rsnew" => $rs];
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
+    }
+
+    // Send email after update success
+    public function sendEmailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        $table = 'jdh_test_requests';
+        $subject = $table . " ". $Language->phrase("RecordUpdated");
+        $action = $Language->phrase("ActionUpdated");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['request_id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = [];
+        $args["rsold"] = &$rsold;
+        $args["rsnew"] = &$rsnew;
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
     }
 
     // Table level events

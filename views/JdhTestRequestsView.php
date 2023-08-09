@@ -86,24 +86,13 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->request_category_id->Visible) { // request_category_id ?>
-    <tr id="r_request_category_id"<?= $Page->request_category_id->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_test_requests_request_category_id"><?= $Page->request_category_id->caption() ?></span></td>
-        <td data-name="request_category_id"<?= $Page->request_category_id->cellAttributes() ?>>
-<span id="el_jdh_test_requests_request_category_id">
-<span<?= $Page->request_category_id->viewAttributes() ?>>
-<?= $Page->request_category_id->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
-<?php if ($Page->request_subcategory_id->Visible) { // request_subcategory_id ?>
-    <tr id="r_request_subcategory_id"<?= $Page->request_subcategory_id->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_test_requests_request_subcategory_id"><?= $Page->request_subcategory_id->caption() ?></span></td>
-        <td data-name="request_subcategory_id"<?= $Page->request_subcategory_id->cellAttributes() ?>>
-<span id="el_jdh_test_requests_request_subcategory_id">
-<span<?= $Page->request_subcategory_id->viewAttributes() ?>>
-<?= $Page->request_subcategory_id->getViewValue() ?></span>
+<?php if ($Page->request_service_id->Visible) { // request_service_id ?>
+    <tr id="r_request_service_id"<?= $Page->request_service_id->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_test_requests_request_service_id"><?= $Page->request_service_id->caption() ?></span></td>
+        <td data-name="request_service_id"<?= $Page->request_service_id->cellAttributes() ?>>
+<span id="el_jdh_test_requests_request_service_id">
+<span<?= $Page->request_service_id->viewAttributes() ?>>
+<?= $Page->request_service_id->getViewValue() ?></span>
 </span>
 </td>
     </tr>
@@ -131,14 +120,6 @@ loadjs.ready(["wrapper", "head"], function () {
     </tr>
 <?php } ?>
 </table>
-<?php
-    if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailView) {
-?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?></h4>
-<?php } ?>
-<?php include_once "JdhTestReportsGrid.php" ?>
-<?php } ?>
 </form>
 </main>
 <?php

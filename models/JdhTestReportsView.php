@@ -53,6 +53,14 @@ class JdhTestReportsView extends JdhTestReports
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -676,16 +684,6 @@ class JdhTestReportsView extends JdhTestReports
         }
         $item->Visible = $this->EditUrl != "" && $Security->canEdit() && $this->showOptionLink("edit");
 
-        // Copy
-        $item = &$option->add("copy");
-        $copycaption = HtmlTitle($Language->phrase("ViewPageCopyLink"));
-        if ($this->IsModal) {
-            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
-        } else {
-            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
-        }
-        $item->Visible = $this->CopyUrl != "" && $Security->canAdd() && $this->showOptionLink("add");
-
         // Delete
         $item = &$option->add("delete");
         $url = GetUrl($this->DeleteUrl);
@@ -790,6 +788,9 @@ class JdhTestReportsView extends JdhTestReports
 
         // Call Row Selected event
         $this->rowSelected($row);
+        if ($this->AuditTrailOnView) {
+            $this->writeAuditTrailOnView($row);
+        }
         $this->report_id->setDbValue($row['report_id']);
         $this->request_id->setDbValue($row['request_id']);
         $this->patient_id->setDbValue($row['patient_id']);
@@ -1140,20 +1141,6 @@ class JdhTestReportsView extends JdhTestReports
                 $this->DbMasterFilter = "";
                 $this->DbDetailFilter = "";
             }
-            if ($masterTblVar == "jdh_test_requests") {
-                $validMaster = true;
-                $masterTbl = Container("jdh_test_requests");
-                if (($parm = Get("fk_request_id", Get("request_id"))) !== null) {
-                    $masterTbl->request_id->setQueryStringValue($parm);
-                    $this->request_id->QueryStringValue = $masterTbl->request_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
-                    $this->request_id->setSessionValue($this->request_id->QueryStringValue);
-                    if (!is_numeric($masterTbl->request_id->QueryStringValue)) {
-                        $validMaster = false;
-                    }
-                } else {
-                    $validMaster = false;
-                }
-            }
             if ($masterTblVar == "jdh_patients") {
                 $validMaster = true;
                 $masterTbl = Container("jdh_patients");
@@ -1174,20 +1161,6 @@ class JdhTestReportsView extends JdhTestReports
                     $validMaster = true;
                     $this->DbMasterFilter = "";
                     $this->DbDetailFilter = "";
-            }
-            if ($masterTblVar == "jdh_test_requests") {
-                $validMaster = true;
-                $masterTbl = Container("jdh_test_requests");
-                if (($parm = Post("fk_request_id", Post("request_id"))) !== null) {
-                    $masterTbl->request_id->setFormValue($parm);
-                    $this->request_id->setFormValue($masterTbl->request_id->FormValue);
-                    $this->request_id->setSessionValue($this->request_id->FormValue);
-                    if (!is_numeric($masterTbl->request_id->FormValue)) {
-                        $validMaster = false;
-                    }
-                } else {
-                    $validMaster = false;
-                }
             }
             if ($masterTblVar == "jdh_patients") {
                 $validMaster = true;
@@ -1216,11 +1189,6 @@ class JdhTestReportsView extends JdhTestReports
             }
 
             // Clear previous master key from Session
-            if ($masterTblVar != "jdh_test_requests") {
-                if ($this->request_id->CurrentValue == "") {
-                    $this->request_id->setSessionValue("");
-                }
-            }
             if ($masterTblVar != "jdh_patients") {
                 if ($this->patient_id->CurrentValue == "") {
                     $this->patient_id->setSessionValue("");
