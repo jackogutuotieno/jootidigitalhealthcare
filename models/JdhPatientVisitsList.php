@@ -618,6 +618,9 @@ class JdhPatientVisitsList extends JdhPatientVisits
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Create form object
+        $CurrentForm = new HttpForm();
+
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -693,6 +696,9 @@ class JdhPatientVisitsList extends JdhPatientVisits
         $this->setupLookupOptions($this->visit_type_id);
         $this->setupLookupOptions($this->doctor_id);
 
+        // Load default values for add
+        $this->loadDefaultValues();
+
         // Update form name to avoid conflict
         if ($this->IsModal) {
             $this->FormName = "fjdh_patient_visitsgrid";
@@ -735,6 +741,50 @@ class JdhPatientVisitsList extends JdhPatientVisits
             $this->import(Param(Config("API_FILE_TOKEN_NAME")), ConvertToBool(Param("rollback")));
             $this->terminate();
             return;
+        }
+
+        // Check QueryString parameters
+        if (Get("action") !== null) {
+            $this->CurrentAction = Get("action");
+        } else {
+            if (Post("action") !== null) {
+                $this->CurrentAction = Post("action"); // Get action
+            }
+        }
+
+        // Clear inline mode
+        if ($this->isCancel()) {
+            $this->clearInlineMode();
+        }
+
+        // Switch to inline edit mode
+        if ($this->isEdit()) {
+            $this->inlineEditMode();
+        // Inline Update
+        } elseif (IsPost() && ($this->isUpdate() || $this->isOverwrite()) && Session(SESSION_INLINE_MODE) == "edit") {
+            $this->setKey(Post($this->OldKeyName));
+            // Return JSON error message if UseAjaxActions
+            if (!$this->inlineUpdate() && $this->UseAjaxActions) {
+                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                $this->clearFailureMessage();
+                $this->terminate();
+                return;
+            }
+        }
+
+        // Switch to inline add mode
+        if ($this->isAdd() || $this->isCopy()) {
+            $this->inlineAddMode();
+        // Insert Inline
+        } elseif (IsPost() && $this->isInsert() && Session(SESSION_INLINE_MODE) == "add") {
+            $this->setKey(Post($this->OldKeyName));
+            // Return JSON error message if UseAjaxActions
+            if (!$this->inlineInsert() && $this->UseAjaxActions) {
+                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                $this->clearFailureMessage();
+                $this->terminate();
+                return;
+            }
         }
 
         // Hide list options
@@ -957,6 +1007,126 @@ class JdhPatientVisitsList extends JdhPatientVisits
         }
     }
 
+    // Exit inline mode
+    protected function clearInlineMode()
+    {
+        $this->LastAction = $this->CurrentAction; // Save last action
+        $this->CurrentAction = ""; // Clear action
+        $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
+    }
+
+    // Switch to Inline Edit mode
+    protected function inlineEditMode()
+    {
+        global $Security, $Language;
+        if (!$Security->canEdit()) {
+            return false; // Edit not allowed
+        }
+        $inlineEdit = true;
+        if (($keyValue = Get("visit_id") ?? Route("visit_id")) !== null) {
+            $this->visit_id->setQueryStringValue($keyValue);
+        } elseif (IsApi() && ($keyValue = Route(2)) !== null) {
+            $this->visit_id->setQueryStringValue($keyValue);
+        } else {
+            $inlineEdit = false;
+        }
+        if ($inlineEdit) {
+            if ($this->loadRow()) {
+                    // Check if valid User ID
+                    if (!$this->showOptionLink("edit")) {
+                        $userIdMsg = $Language->phrase("NoEditPermission");
+                        $this->setFailureMessage($userIdMsg);
+                        $this->clearInlineMode(); // Clear inline edit mode
+                        return false;
+                    }
+                $this->OldKey = $this->getKey(true); // Get from CurrentValue
+                $this->setKey($this->OldKey); // Set to OldValue
+                $_SESSION[SESSION_INLINE_MODE] = "edit"; // Enable inline edit
+            }
+        }
+        return true;
+    }
+
+    // Perform update to Inline Edit record
+    protected function inlineUpdate()
+    {
+        global $Language, $CurrentForm;
+        $CurrentForm->Index = 1;
+        $this->loadFormValues(); // Get form values
+
+        // Validate form
+        $inlineUpdate = true;
+        if (!$this->validateForm()) {
+            $inlineUpdate = false; // Form error, reset action
+        } else {
+            $inlineUpdate = false;
+            $this->SendEmail = true; // Send email on update success
+            $inlineUpdate = $this->editRow(); // Update record
+        }
+        if ($inlineUpdate) { // Update success
+            if ($this->getSuccessMessage() == "") {
+                $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Set up success message
+            }
+            $this->clearInlineMode(); // Clear inline edit mode
+        } else {
+            if ($this->getFailureMessage() == "") {
+                $this->setFailureMessage($Language->phrase("UpdateFailed")); // Set update failed message
+            }
+            $this->EventCancelled = true; // Cancel event
+            $this->CurrentAction = "edit"; // Stay in edit mode
+        }
+        return $inlineUpdate;
+    }
+
+    // Check Inline Edit key
+    public function checkInlineEditKey()
+    {
+        if (!SameString($this->visit_id->OldValue, $this->visit_id->CurrentValue)) {
+            return false;
+        }
+        return true;
+    }
+
+    // Switch to Inline Add mode
+    protected function inlineAddMode()
+    {
+        global $Security, $Language;
+        if (!$Security->canAdd()) {
+            return false; // Add not allowed
+        }
+        $this->CurrentAction = "add";
+        $_SESSION[SESSION_INLINE_MODE] = "add"; // Enable inline add
+        return true;
+    }
+
+    // Perform update to Inline Add/Copy record
+    protected function inlineInsert()
+    {
+        global $Language, $CurrentForm;
+        $rsold = $this->loadOldRecord(); // Load old record
+        $CurrentForm->Index = 0;
+        $this->loadFormValues(); // Get form values
+
+        // Validate form
+        if (!$this->validateForm()) {
+            $this->EventCancelled = true; // Set event cancelled
+            $this->CurrentAction = "add"; // Stay in add mode
+            return false;
+        }
+        $this->SendEmail = true; // Send email on add success
+        if ($this->addRow($rsold)) { // Add record
+            if ($this->getSuccessMessage() == "") {
+                $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up add success message
+            }
+            $this->clearInlineMode(); // Clear inline add mode
+            return true;
+        } else { // Add failed
+            $this->EventCancelled = true; // Set event cancelled
+            $this->CurrentAction = "add"; // Stay in add mode
+            return false;
+        }
+    }
+
     // Build filter for all keys
     protected function buildKeyFilter()
     {
@@ -986,6 +1156,16 @@ class JdhPatientVisitsList extends JdhPatientVisits
             $thisKey = strval($CurrentForm->getValue($this->OldKeyName));
         }
         return $wrkFilter;
+    }
+
+    // Reset form status
+    public function resetFormError()
+    {
+        $this->visit_id->clearErrorMessage();
+        $this->patient_id->clearErrorMessage();
+        $this->visit_type_id->clearErrorMessage();
+        $this->doctor_id->clearErrorMessage();
+        $this->visit_date->clearErrorMessage();
     }
 
     // Set up sort parameters
@@ -1061,6 +1241,18 @@ class JdhPatientVisitsList extends JdhPatientVisits
         $item->OnLeft = false;
         $item->Visible = false;
 
+        // "edit"
+        $item = &$this->ListOptions->add("edit");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->canEdit();
+        $item->OnLeft = false;
+
+        // "copy"
+        $item = &$this->ListOptions->add("copy");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->canAdd() && $this->isAdd();
+        $item->OnLeft = false;
+
         // List actions
         $item = &$this->ListOptions->add("listactions");
         $item->CssClass = "text-nowrap";
@@ -1081,9 +1273,9 @@ class JdhPatientVisitsList extends JdhPatientVisits
         $item->ShowInButtonGroup = false;
 
         // Drop down button for ListOptions
-        $this->ListOptions->UseDropDownButton = true;
+        $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
-        $this->ListOptions->UseButtonGroup = false;
+        $this->ListOptions->UseButtonGroup = true;
         if ($this->ListOptions->UseButtonGroup && IsMobile()) {
             $this->ListOptions->UseDropDownButton = true;
         }
@@ -1117,8 +1309,103 @@ class JdhPatientVisitsList extends JdhPatientVisits
 
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
+
+        // Set up row action and key
+        if ($CurrentForm && is_numeric($this->RowIndex) && $this->RowType != "view") {
+            $CurrentForm->Index = $this->RowIndex;
+            $actionName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormActionName);
+            $oldKeyName = str_replace("k_", "k" . $this->RowIndex . "_", $this->OldKeyName);
+            $blankRowName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormBlankRowName);
+            if ($this->RowAction != "") {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $actionName . "\" id=\"" . $actionName . "\" value=\"" . $this->RowAction . "\">";
+            }
+            $oldKey = $this->getKey(false); // Get from OldValue
+            if ($oldKeyName != "" && $oldKey != "") {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $oldKeyName . "\" id=\"" . $oldKeyName . "\" value=\"" . HtmlEncode($oldKey) . "\">";
+            }
+            if ($this->RowAction == "insert" && $this->isConfirm() && $this->emptyRow()) {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $blankRowName . "\" id=\"" . $blankRowName . "\" value=\"1\">";
+            }
+        }
         $pageUrl = $this->pageUrl(false);
-        if ($this->CurrentMode == "view") { // Check view mode
+
+        // "copy"
+        $opt = $this->ListOptions["copy"];
+        if ($this->isInlineAddRow() || $this->isInlineCopyRow()) { // Inline Add/Copy
+            $this->ListOptions->CustomItem = "copy"; // Show copy column only
+            $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
+            $insertCaption = $Language->phrase("InsertLink");
+            $insertTitle = HtmlTitle($insertCaption);
+            $cancelCaption = $Language->phrase("CancelLink");
+            $cancelTitle = HtmlTitle($cancelCaption);
+            $inlineInsertUrl = GetUrl($this->pageName());
+            if ($this->UseAjaxActions) {
+                $opt->Body = <<<INLINEADDAJAX
+                    <div{$divClass}>
+                        <button type="button" class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" data-ew-action="inline" data-action="insert" data-key="" data-url="{$inlineInsertUrl}">{$insertCaption}</button>
+                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel">{$cancelCaption}</button>
+                    </div>
+                    INLINEADDAJAX;
+            } else {
+                $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
+                $opt->Body = <<<INLINEADD
+                    <div{$divClass}>
+                        <button class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" form="fjdh_patient_visitslist" formaction="{$inlineInsertUrl}">{$insertCaption}</button>
+                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$insertTitle}" href="{$cancelurl}">{$cancelCaption}</a>
+                        <input type="hidden" name="action" id="action" value="insert">
+                    </div>
+                    INLINEADD;
+            }
+            return;
+        }
+
+        // "edit"
+        $opt = $this->ListOptions["edit"];
+        if ($this->isInlineEditRow()) { // Inline-Edit
+            $this->ListOptions->CustomItem = "edit"; // Show edit column only
+            $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
+                $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
+                $updateCaption = $Language->phrase("UpdateLink");
+                $updateTitle = HtmlTitle($updateCaption);
+                $cancelCaption = $Language->phrase("CancelLink");
+                $cancelTitle = HtmlTitle($cancelCaption);
+                $oldKey = HtmlEncode($this->getKey(true));
+                $inlineUpdateUrl = HtmlEncode(GetUrl($this->urlAddHash($this->pageName(), "r" . $this->RowCount . "_" . $this->TableVar)));
+                if ($this->UseAjaxActions) {
+                    $inlineCancelUrl = $this->InlineEditUrl . "?action=cancel";
+                    $opt->Body = <<<INLINEEDITAJAX
+                    <div{$divClass}>
+                        <button type="button" class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" data-ew-action="inline" data-action="update" data-key="{$oldKey}" data-url="{$inlineUpdateUrl}">{$updateCaption}</button>
+                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel" data-key="{$oldKey}" data-url="{$inlineCancelUrl}">{$cancelCaption}</button>
+                    </div>
+                    INLINEEDITAJAX;
+                } else {
+                    $opt->Body = <<<INLINEEDIT
+                    <div{$divClass}>
+                        <button class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" form="fjdh_patient_visitslist" formaction="{$inlineUpdateUrl}">{$updateCaption}</button>
+                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$updateTitle}" href="{$cancelurl}">{$cancelCaption}</a>
+                        <input type="hidden" name="action" id="action" value="update">
+                    </div>
+                    INLINEEDIT;
+                }
+            $opt->Body .= "<input type=\"hidden\" name=\"" . $this->OldKeyName . "\" id=\"" . $this->OldKeyName . "\" value=\"" . HtmlEncode($this->visit_id->CurrentValue) . "\">";
+            return;
+        }
+        if ($this->CurrentMode == "view") {
+            // "edit"
+            $opt = $this->ListOptions["edit"];
+            $editcaption = HtmlTitle($Language->phrase("EditLink"));
+            if ($Security->canEdit() && $this->showOptionLink("edit")) {
+                $inlineEditCaption = $Language->phrase("InlineEditLink");
+                $inlineEditTitle = HtmlTitle($inlineEditCaption);
+                if ($this->UseAjaxActions) {
+                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" data-ew-action=\"inline\" data-action=\"edit\" data-key=\"" . HtmlEncode($this->getKey(true)) . "\" data-url=\"" . HtmlEncode($this->InlineEditUrl) . "\">" . $inlineEditCaption . "</a>";
+                } else {
+                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" href=\"" . HtmlEncode($this->urlAddHash(GetUrl($this->InlineEditUrl), "r" . $this->RowCount . "_" . $this->TableVar)) . "\">" . $inlineEditCaption . "</a>";
+                }
+            } else {
+                $opt->Body = "";
+            }
         } // End View mode
 
         // Set up list action buttons
@@ -1187,6 +1474,15 @@ class JdhPatientVisitsList extends JdhPatientVisits
             $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
         }
         $item->Visible = $this->AddUrl != "" && $Security->canAdd();
+
+        // Inline Add
+        $item = &$option->add("inlineadd");
+        if ($this->UseAjaxActions) {
+            $item->Body = "<button class=\"ew-add-edit ew-inline-add\" title=\"" . $Language->phrase("InlineAddLink", true) . "\" data-caption=\"" . $Language->phrase("InlineAddLink", true) . "\" data-ew-action=\"inline\" data-action=\"add\" data-position=\"top\" data-url=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</button>";
+        } else {
+            $item->Body = "<a class=\"ew-add-edit ew-inline-add\" title=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</a>";
+        }
+        $item->Visible = $this->InlineAddUrl != "" && $Security->canAdd();
         $option = $options["action"];
 
         // Show column list for column visibility
@@ -1382,6 +1678,15 @@ class JdhPatientVisitsList extends JdhPatientVisits
                 $this->StopRecord = $this->TotalRecords;
             }
         }
+
+        // Restore number of post back records
+        if ($CurrentForm && ($this->isConfirm() || $this->EventCancelled)) {
+            $CurrentForm->Index = -1;
+            if ($CurrentForm->hasValue($this->FormKeyCountName) && ($this->isGridAdd() || $this->isGridEdit() || $this->isConfirm())) {
+                $this->KeyCount = $CurrentForm->getValue($this->FormKeyCountName);
+                $this->StopRecord = $this->StartRecord + $this->KeyCount - 1;
+            }
+        }
         $this->RecordCount = $this->StartRecord - 1;
         if ($this->Recordset && !$this->Recordset->EOF) {
             // Nothing to do
@@ -1395,6 +1700,15 @@ class JdhPatientVisitsList extends JdhPatientVisits
         $this->RowType = ROWTYPE_AGGREGATEINIT;
         $this->resetAttributes();
         $this->renderRow();
+        if ($this->isAdd() || $this->isCopy() || $this->isInlineInserted()) {
+            $this->RowIndex = 0;
+            if ($this->UseInfiniteScroll) {
+                $this->StopRecord = $this->StartRecord; // Show this record only
+            }
+        }
+        if ($this->isEdit()) {
+            $this->RowIndex = 1;
+        }
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
             $this->RowIndex = '$rowindex$';
         }
@@ -1451,6 +1765,24 @@ class JdhPatientVisitsList extends JdhPatientVisits
         if (($this->isAdd() || $this->isCopy()) && $this->InlineRowCount == 0 || $this->isGridAdd()) { // Add
             $this->RowType = ROWTYPE_ADD; // Render add
         }
+        if ($this->isEdit() || $this->isInlineUpdated() || $this->isInlineEditCancelled()) { // Inline edit/updated/cancelled
+            if ($this->checkInlineEditKey() && $this->InlineRowCount == 0) {
+                if ($this->isEdit()) { // Inline edit
+                    $this->RowAction = "edit";
+                    $this->RowType = ROWTYPE_EDIT; // Render edit
+                } else { // Inline updated
+                    $this->RowAction = "";
+                    $this->RowType = ROWTYPE_VIEW; // Render view
+                    $this->RowAttrs["data-oldkey"] = $this->getKey(); // Set up old key
+                }
+            } elseif ($this->UseInfiniteScroll) {
+                $this->RowAction = "hide";
+            }
+        }
+        if ($this->isEdit() && $this->RowType == ROWTYPE_EDIT && $this->EventCancelled) { // Update failed
+            $CurrentForm->Index = 1;
+            $this->restoreFormValues(); // Restore form values
+        }
 
         // Inline Add/Copy row (row 0)
         if ($this->RowType == ROWTYPE_ADD && ($this->isAdd() || $this->isCopy())) {
@@ -1484,6 +1816,80 @@ class JdhPatientVisitsList extends JdhPatientVisits
 
         // Render list options
         $this->renderListOptions();
+    }
+
+    // Load default values
+    protected function loadDefaultValues()
+    {
+    }
+
+    // Load form values
+    protected function loadFormValues()
+    {
+        // Load from form
+        global $CurrentForm;
+        $validate = !Config("SERVER_VALIDATE");
+
+        // Check field name 'visit_id' first before field var 'x_visit_id'
+        $val = $CurrentForm->hasValue("visit_id") ? $CurrentForm->getValue("visit_id") : $CurrentForm->getValue("x_visit_id");
+        if (!$this->visit_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->visit_id->setFormValue($val);
+        }
+
+        // Check field name 'patient_id' first before field var 'x_patient_id'
+        $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
+        if (!$this->patient_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->patient_id->Visible = false; // Disable update for API request
+            } else {
+                $this->patient_id->setFormValue($val);
+            }
+        }
+
+        // Check field name 'visit_type_id' first before field var 'x_visit_type_id'
+        $val = $CurrentForm->hasValue("visit_type_id") ? $CurrentForm->getValue("visit_type_id") : $CurrentForm->getValue("x_visit_type_id");
+        if (!$this->visit_type_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->visit_type_id->Visible = false; // Disable update for API request
+            } else {
+                $this->visit_type_id->setFormValue($val);
+            }
+        }
+
+        // Check field name 'doctor_id' first before field var 'x_doctor_id'
+        $val = $CurrentForm->hasValue("doctor_id") ? $CurrentForm->getValue("doctor_id") : $CurrentForm->getValue("x_doctor_id");
+        if (!$this->doctor_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->doctor_id->Visible = false; // Disable update for API request
+            } else {
+                $this->doctor_id->setFormValue($val);
+            }
+        }
+
+        // Check field name 'visit_date' first before field var 'x_visit_date'
+        $val = $CurrentForm->hasValue("visit_date") ? $CurrentForm->getValue("visit_date") : $CurrentForm->getValue("x_visit_date");
+        if (!$this->visit_date->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->visit_date->Visible = false; // Disable update for API request
+            } else {
+                $this->visit_date->setFormValue($val, true, $validate);
+            }
+            $this->visit_date->CurrentValue = UnFormatDateTime($this->visit_date->CurrentValue, $this->visit_date->formatPattern());
+        }
+    }
+
+    // Restore form values
+    public function restoreFormValues()
+    {
+        global $CurrentForm;
+        if (!$this->isGridAdd() && !$this->isAdd()) {
+            $this->visit_id->CurrentValue = $this->visit_id->FormValue;
+        }
+        $this->patient_id->CurrentValue = $this->patient_id->FormValue;
+        $this->visit_type_id->CurrentValue = $this->visit_type_id->FormValue;
+        $this->doctor_id->CurrentValue = $this->doctor_id->FormValue;
+        $this->visit_date->CurrentValue = $this->visit_date->FormValue;
+        $this->visit_date->CurrentValue = UnFormatDateTime($this->visit_date->CurrentValue, $this->visit_date->formatPattern());
     }
 
     // Load recordset
@@ -1546,6 +1952,9 @@ class JdhPatientVisitsList extends JdhPatientVisits
         if ($row) {
             $res = true;
             $this->loadRowValues($row); // Load row values
+            if (!$this->EventCancelled) {
+                $this->HashValue = $this->getRowHash($row); // Get hash value for record
+            }
         }
         return $res;
     }
@@ -1748,12 +2157,405 @@ class JdhPatientVisitsList extends JdhPatientVisits
             // visit_date
             $this->visit_date->HrefValue = "";
             $this->visit_date->TooltipValue = "";
+        } elseif ($this->RowType == ROWTYPE_ADD) {
+            // visit_id
+
+            // patient_id
+            $this->patient_id->setupEditAttributes();
+            if ($this->patient_id->getSessionValue() != "") {
+                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
+                $curVal = strval($this->patient_id->CurrentValue);
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                    if ($this->patient_id->ViewValue === null) { // Lookup from database
+                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $conn = Conn();
+                        $config = $conn->getConfiguration();
+                        $config->setResultCacheImpl($this->Cache);
+                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                        $ari = count($rswrk);
+                        if ($ari > 0) { // Lookup values found
+                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
+                        } else {
+                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                        }
+                    }
+                } else {
+                    $this->patient_id->ViewValue = null;
+                }
+            } else {
+                $curVal = trim(strval($this->patient_id->CurrentValue));
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                } else {
+                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
+                }
+                if ($this->patient_id->ViewValue !== null) { // Load from cache
+                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
+                } else { // Lookup from database
+                    if ($curVal == "") {
+                        $filterWrk = "0=1";
+                    } else {
+                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
+                    }
+                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    $arwrk = $rswrk;
+                    $this->patient_id->EditValue = $arwrk;
+                }
+                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+            }
+
+            // visit_type_id
+            $this->visit_type_id->setupEditAttributes();
+            $curVal = trim(strval($this->visit_type_id->CurrentValue));
+            if ($curVal != "") {
+                $this->visit_type_id->ViewValue = $this->visit_type_id->lookupCacheOption($curVal);
+            } else {
+                $this->visit_type_id->ViewValue = $this->visit_type_id->Lookup !== null && is_array($this->visit_type_id->lookupOptions()) ? $curVal : null;
+            }
+            if ($this->visit_type_id->ViewValue !== null) { // Load from cache
+                $this->visit_type_id->EditValue = array_values($this->visit_type_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`visit_type_id`", "=", $this->visit_type_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $sqlWrk = $this->visit_type_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                $this->visit_type_id->EditValue = $arwrk;
+            }
+            $this->visit_type_id->PlaceHolder = RemoveHtml($this->visit_type_id->caption());
+
+            // doctor_id
+            $this->doctor_id->setupEditAttributes();
+            $curVal = trim(strval($this->doctor_id->CurrentValue));
+            if ($curVal != "") {
+                $this->doctor_id->ViewValue = $this->doctor_id->lookupCacheOption($curVal);
+            } else {
+                $this->doctor_id->ViewValue = $this->doctor_id->Lookup !== null && is_array($this->doctor_id->lookupOptions()) ? $curVal : null;
+            }
+            if ($this->doctor_id->ViewValue !== null) { // Load from cache
+                $this->doctor_id->EditValue = array_values($this->doctor_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`user_id`", "=", $this->doctor_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $lookupFilter = $this->doctor_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->doctor_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                $this->doctor_id->EditValue = $arwrk;
+            }
+            $this->doctor_id->PlaceHolder = RemoveHtml($this->doctor_id->caption());
+
+            // visit_date
+            $this->visit_date->setupEditAttributes();
+            $this->visit_date->EditValue = HtmlEncode(FormatDateTime($this->visit_date->CurrentValue, $this->visit_date->formatPattern()));
+            $this->visit_date->PlaceHolder = RemoveHtml($this->visit_date->caption());
+
+            // Add refer script
+
+            // visit_id
+            $this->visit_id->HrefValue = "";
+
+            // patient_id
+            $this->patient_id->HrefValue = "";
+
+            // visit_type_id
+            $this->visit_type_id->HrefValue = "";
+
+            // doctor_id
+            $this->doctor_id->HrefValue = "";
+
+            // visit_date
+            $this->visit_date->HrefValue = "";
+        } elseif ($this->RowType == ROWTYPE_EDIT) {
+            // visit_id
+            $this->visit_id->setupEditAttributes();
+            $this->visit_id->EditValue = $this->visit_id->CurrentValue;
+            $this->visit_id->EditValue = FormatNumber($this->visit_id->EditValue, $this->visit_id->formatPattern());
+
+            // patient_id
+            $this->patient_id->setupEditAttributes();
+            if ($this->patient_id->getSessionValue() != "") {
+                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
+                $curVal = strval($this->patient_id->CurrentValue);
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                    if ($this->patient_id->ViewValue === null) { // Lookup from database
+                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $conn = Conn();
+                        $config = $conn->getConfiguration();
+                        $config->setResultCacheImpl($this->Cache);
+                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                        $ari = count($rswrk);
+                        if ($ari > 0) { // Lookup values found
+                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
+                        } else {
+                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                        }
+                    }
+                } else {
+                    $this->patient_id->ViewValue = null;
+                }
+            } else {
+                $curVal = trim(strval($this->patient_id->CurrentValue));
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                } else {
+                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
+                }
+                if ($this->patient_id->ViewValue !== null) { // Load from cache
+                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
+                } else { // Lookup from database
+                    if ($curVal == "") {
+                        $filterWrk = "0=1";
+                    } else {
+                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
+                    }
+                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    $arwrk = $rswrk;
+                    $this->patient_id->EditValue = $arwrk;
+                }
+                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+            }
+
+            // visit_type_id
+            $this->visit_type_id->setupEditAttributes();
+            $curVal = trim(strval($this->visit_type_id->CurrentValue));
+            if ($curVal != "") {
+                $this->visit_type_id->ViewValue = $this->visit_type_id->lookupCacheOption($curVal);
+            } else {
+                $this->visit_type_id->ViewValue = $this->visit_type_id->Lookup !== null && is_array($this->visit_type_id->lookupOptions()) ? $curVal : null;
+            }
+            if ($this->visit_type_id->ViewValue !== null) { // Load from cache
+                $this->visit_type_id->EditValue = array_values($this->visit_type_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`visit_type_id`", "=", $this->visit_type_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $sqlWrk = $this->visit_type_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                $this->visit_type_id->EditValue = $arwrk;
+            }
+            $this->visit_type_id->PlaceHolder = RemoveHtml($this->visit_type_id->caption());
+
+            // doctor_id
+            $this->doctor_id->setupEditAttributes();
+            $curVal = trim(strval($this->doctor_id->CurrentValue));
+            if ($curVal != "") {
+                $this->doctor_id->ViewValue = $this->doctor_id->lookupCacheOption($curVal);
+            } else {
+                $this->doctor_id->ViewValue = $this->doctor_id->Lookup !== null && is_array($this->doctor_id->lookupOptions()) ? $curVal : null;
+            }
+            if ($this->doctor_id->ViewValue !== null) { // Load from cache
+                $this->doctor_id->EditValue = array_values($this->doctor_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`user_id`", "=", $this->doctor_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $lookupFilter = $this->doctor_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->doctor_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                $this->doctor_id->EditValue = $arwrk;
+            }
+            $this->doctor_id->PlaceHolder = RemoveHtml($this->doctor_id->caption());
+
+            // visit_date
+            $this->visit_date->setupEditAttributes();
+            $this->visit_date->EditValue = HtmlEncode(FormatDateTime($this->visit_date->CurrentValue, $this->visit_date->formatPattern()));
+            $this->visit_date->PlaceHolder = RemoveHtml($this->visit_date->caption());
+
+            // Edit refer script
+
+            // visit_id
+            $this->visit_id->HrefValue = "";
+
+            // patient_id
+            $this->patient_id->HrefValue = "";
+
+            // visit_type_id
+            $this->visit_type_id->HrefValue = "";
+
+            // doctor_id
+            $this->doctor_id->HrefValue = "";
+
+            // visit_date
+            $this->visit_date->HrefValue = "";
+        }
+        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+            $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
+    }
+
+    // Validate form
+    protected function validateForm()
+    {
+        global $Language, $Security;
+
+        // Check if validation required
+        if (!Config("SERVER_VALIDATE")) {
+            return true;
+        }
+        $validateForm = true;
+        if ($this->visit_id->Required) {
+            if (!$this->visit_id->IsDetailKey && EmptyValue($this->visit_id->FormValue)) {
+                $this->visit_id->addErrorMessage(str_replace("%s", $this->visit_id->caption(), $this->visit_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->patient_id->Required) {
+            if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
+                $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->visit_type_id->Required) {
+            if (!$this->visit_type_id->IsDetailKey && EmptyValue($this->visit_type_id->FormValue)) {
+                $this->visit_type_id->addErrorMessage(str_replace("%s", $this->visit_type_id->caption(), $this->visit_type_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->doctor_id->Required) {
+            if (!$this->doctor_id->IsDetailKey && EmptyValue($this->doctor_id->FormValue)) {
+                $this->doctor_id->addErrorMessage(str_replace("%s", $this->doctor_id->caption(), $this->doctor_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->visit_date->Required) {
+            if (!$this->visit_date->IsDetailKey && EmptyValue($this->visit_date->FormValue)) {
+                $this->visit_date->addErrorMessage(str_replace("%s", $this->visit_date->caption(), $this->visit_date->RequiredErrorMessage));
+            }
+        }
+        if (!CheckDate($this->visit_date->FormValue, $this->visit_date->formatPattern())) {
+            $this->visit_date->addErrorMessage($this->visit_date->getErrorMessage(false));
+        }
+
+        // Return validate result
+        $validateForm = $validateForm && !$this->hasInvalidFields();
+
+        // Call Form_CustomValidate event
+        $formCustomError = "";
+        $validateForm = $validateForm && $this->formCustomValidate($formCustomError);
+        if ($formCustomError != "") {
+            $this->setFailureMessage($formCustomError);
+        }
+        return $validateForm;
+    }
+
+    // Update record based on key values
+    protected function editRow()
+    {
+        global $Security, $Language;
+        $oldKeyFilter = $this->getRecordFilter();
+        $filter = $this->applyUserIDFilters($oldKeyFilter);
+        $conn = $this->getConnection();
+
+        // Load old row
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $rsold = $conn->fetchAssociative($sql);
+        if (!$rsold) {
+            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
+            return false; // Update Failed
+        } else {
+            // Save old values
+            $this->loadDbValues($rsold);
+        }
+
+        // Set new row
+        $rsnew = [];
+
+        // patient_id
+        if ($this->patient_id->getSessionValue() != "") {
+            $this->patient_id->ReadOnly = true;
+        }
+        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, $this->patient_id->ReadOnly);
+
+        // visit_type_id
+        $this->visit_type_id->setDbValueDef($rsnew, $this->visit_type_id->CurrentValue, 0, $this->visit_type_id->ReadOnly);
+
+        // doctor_id
+        $this->doctor_id->setDbValueDef($rsnew, $this->doctor_id->CurrentValue, 0, $this->doctor_id->ReadOnly);
+
+        // visit_date
+        $this->visit_date->setDbValueDef($rsnew, UnFormatDateTime($this->visit_date->CurrentValue, $this->visit_date->formatPattern()), null, $this->visit_date->ReadOnly);
+
+        // Update current values
+        $this->setCurrentValues($rsnew);
+
+        // Call Row Updating event
+        $updateRow = $this->rowUpdating($rsold, $rsnew);
+        if ($updateRow) {
+            if (count($rsnew) > 0) {
+                $this->CurrentFilter = $filter; // Set up current filter
+                $editRow = $this->update($rsnew, "", $rsold);
+                if (!$editRow && !EmptyValue($this->DbErrorMessage)) { // Show database error
+                    $this->setFailureMessage($this->DbErrorMessage);
+                }
+            } else {
+                $editRow = true; // No field to update
+            }
+            if ($editRow) {
+            }
+        } else {
+            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
+                // Use the message, do nothing
+            } elseif ($this->CancelMessage != "") {
+                $this->setFailureMessage($this->CancelMessage);
+                $this->CancelMessage = "";
+            } else {
+                $this->setFailureMessage($Language->phrase("UpdateCancelled"));
+            }
+            $editRow = false;
+        }
+
+        // Call Row_Updated event
+        if ($editRow) {
+            $this->rowUpdated($rsold, $rsnew);
+        }
+        return $editRow;
     }
 
     /**
@@ -2031,6 +2833,92 @@ class JdhPatientVisitsList extends JdhPatientVisits
         $sql = $this->getCurrentSql();
         $conn = $this->getConnection();
         return $conn->fetchAssociative($sql);
+    }
+
+    // Load row hash
+    protected function loadRowHash()
+    {
+        $filter = $this->getRecordFilter();
+
+        // Load SQL based on filter
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $conn = $this->getConnection();
+        $row = $conn->fetchAssociative($sql);
+        $this->HashValue = $row ? $this->getRowHash($row) : ""; // Get hash value for record
+    }
+
+    // Get Row Hash
+    public function getRowHash(&$rs)
+    {
+        if (!$rs) {
+            return "";
+        }
+        $row = ($rs instanceof Recordset) ? $rs->fields : $rs;
+        $hash = "";
+        $hash .= GetFieldHash($row['patient_id']); // patient_id
+        $hash .= GetFieldHash($row['visit_type_id']); // visit_type_id
+        $hash .= GetFieldHash($row['doctor_id']); // doctor_id
+        $hash .= GetFieldHash($row['visit_date']); // visit_date
+        return md5($hash);
+    }
+
+    // Add record
+    protected function addRow($rsold = null)
+    {
+        global $Language, $Security;
+
+        // Set new row
+        $rsnew = [];
+
+        // patient_id
+        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, false);
+
+        // visit_type_id
+        $this->visit_type_id->setDbValueDef($rsnew, $this->visit_type_id->CurrentValue, 0, false);
+
+        // doctor_id
+        $this->doctor_id->setDbValueDef($rsnew, $this->doctor_id->CurrentValue, 0, false);
+
+        // visit_date
+        $this->visit_date->setDbValueDef($rsnew, UnFormatDateTime($this->visit_date->CurrentValue, $this->visit_date->formatPattern()), null, false);
+
+        // subbmitted_by_user_id
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['subbmitted_by_user_id'] = CurrentUserID();
+        }
+
+        // Update current values
+        $this->setCurrentValues($rsnew);
+        $conn = $this->getConnection();
+
+        // Load db values from old row
+        $this->loadDbValues($rsold);
+
+        // Call Row Inserting event
+        $insertRow = $this->rowInserting($rsold, $rsnew);
+        if ($insertRow) {
+            $addRow = $this->insert($rsnew);
+            if ($addRow) {
+            } elseif (!EmptyValue($this->DbErrorMessage)) { // Show database error
+                $this->setFailureMessage($this->DbErrorMessage);
+            }
+        } else {
+            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
+                // Use the message, do nothing
+            } elseif ($this->CancelMessage != "") {
+                $this->setFailureMessage($this->CancelMessage);
+                $this->CancelMessage = "";
+            } else {
+                $this->setFailureMessage($Language->phrase("InsertCancelled"));
+            }
+            $addRow = false;
+        }
+        if ($addRow) {
+            // Call Row Inserted event
+            $this->rowInserted($rsold, $rsnew);
+        }
+        return $addRow;
     }
 
     // Get export HTML tag

@@ -34,7 +34,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["id", [fields.id.visible && fields.id.required ? ew.Validators.required(fields.id.caption) : null], fields.id.isInvalid],
-            ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
+            ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null, ew.Validators.integer], fields.patient_id.isInvalid],
             ["general_exams", [fields.general_exams.visible && fields.general_exams.required ? ew.Validators.required(fields.general_exams.caption) : null], fields.general_exams.isInvalid],
             ["systematic_exams", [fields.systematic_exams.visible && fields.systematic_exams.required ? ew.Validators.required(fields.systematic_exams.caption) : null], fields.systematic_exams.isInvalid]
         ])
@@ -90,7 +90,7 @@ loadjs.ready(["wrapper", "head"], function () {
 <?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
     <div id="r_patient_id"<?= $Page->patient_id->rowAttributes() ?>>
-        <label id="elh_jdh_examination_findings_patient_id" for="x_patient_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_id->caption() ?><?= $Page->patient_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <label id="elh_jdh_examination_findings_patient_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_id->caption() ?><?= $Page->patient_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_id->cellAttributes() ?>>
 <?php if ($Page->patient_id->getSessionValue() != "") { ?>
 <span<?= $Page->patient_id->viewAttributes() ?>>
@@ -98,37 +98,23 @@ loadjs.ready(["wrapper", "head"], function () {
 <input type="hidden" id="x_patient_id" name="x_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>" data-hidden="1">
 <?php } else { ?>
 <span id="el_jdh_examination_findings_patient_id">
-    <select
-        id="x_patient_id"
-        name="x_patient_id"
-        class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_examination_findingsedit_x_patient_id"
-        data-table="jdh_examination_findings"
-        data-field="x_patient_id"
-        data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>"
-        <?= $Page->patient_id->editAttributes() ?>>
-        <?= $Page->patient_id->selectOptionListHtml("x_patient_id") ?>
-    </select>
-    <?= $Page->patient_id->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
-<?= $Page->patient_id->Lookup->getParamTag($Page, "p_x_patient_id") ?>
+<?php
+if (IsRTL()) {
+    $Page->patient_id->EditAttrs["dir"] = "rtl";
+}
+?>
+<span id="as_x_patient_id" class="ew-auto-suggest">
+    <input type="<?= $Page->patient_id->getInputTextType() ?>" class="form-control" name="sv_x_patient_id" id="sv_x_patient_id" value="<?= RemoveHtml($Page->patient_id->EditValue) ?>" autocomplete="off" size="30" placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>" data-placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_id->formatPattern()) ?>"<?= $Page->patient_id->editAttributes() ?> aria-describedby="x_patient_id_help">
+</span>
+<selection-list hidden class="form-control" data-table="jdh_examination_findings" data-field="x_patient_id" data-input="sv_x_patient_id" data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>" name="x_patient_id" id="x_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>"></selection-list>
+<?= $Page->patient_id->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
 <script>
 loadjs.ready("fjdh_examination_findingsedit", function() {
-    var options = { name: "x_patient_id", selectId: "fjdh_examination_findingsedit_x_patient_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_examination_findingsedit.lists.patient_id?.lookupOptions.length) {
-        options.data = { id: "x_patient_id", form: "fjdh_examination_findingsedit" };
-    } else {
-        options.ajax = { id: "x_patient_id", form: "fjdh_examination_findingsedit", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumInputLength = ew.selectMinimumInputLength;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_examination_findings.fields.patient_id.selectOptions);
-    ew.createSelect(options);
+    fjdh_examination_findingsedit.createAutoSuggest(Object.assign({"id":"x_patient_id","forceSelect":false}, { lookupAllDisplayFields: <?= $Page->patient_id->Lookup->LookupAllDisplayFields ? "true" : "false" ?> }, ew.vars.tables.jdh_examination_findings.fields.patient_id.autoSuggestOptions));
 });
 </script>
+<?= $Page->patient_id->Lookup->getParamTag($Page, "p_x_patient_id") ?>
 </span>
 <?php } ?>
 </div></div>

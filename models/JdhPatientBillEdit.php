@@ -489,9 +489,6 @@ class JdhPatientBillEdit extends JdhPatientBill
             $this->InlineDelete = true;
         }
 
-        // Set up lookup cache
-        $this->setupLookupOptions($this->patient_id);
-
         // Check modal
         if ($this->IsModal) {
             $SkipHeaderFooter = true;
@@ -686,7 +683,7 @@ class JdhPatientBillEdit extends JdhPatientBill
             if (IsApi() && $val === null) {
                 $this->patient_id->Visible = false; // Disable update for API request
             } else {
-                $this->patient_id->setFormValue($val);
+                $this->patient_id->setFormValue($val, true, $validate);
             }
         }
 
@@ -850,27 +847,8 @@ class JdhPatientBillEdit extends JdhPatientBill
             $this->bill_id->ViewValue = $this->bill_id->CurrentValue;
 
             // patient_id
-            $curVal = strval($this->patient_id->CurrentValue);
-            if ($curVal != "") {
-                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                    } else {
-                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->patient_id->ViewValue = null;
-            }
+            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
+            $this->patient_id->ViewValue = FormatNumber($this->patient_id->ViewValue, $this->patient_id->formatPattern());
 
             // bill_description
             $this->bill_description->ViewValue = $this->bill_description->CurrentValue;
@@ -901,30 +879,11 @@ class JdhPatientBillEdit extends JdhPatientBill
 
             // patient_id
             $this->patient_id->setupEditAttributes();
-            $curVal = trim(strval($this->patient_id->CurrentValue));
-            if ($curVal != "") {
-                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-            } else {
-                $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
-            }
-            if ($this->patient_id->ViewValue !== null) { // Load from cache
-                $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
-            } else { // Lookup from database
-                if ($curVal == "") {
-                    $filterWrk = "0=1";
-                } else {
-                    $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
-                }
-                $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                $arwrk = $rswrk;
-                $this->patient_id->EditValue = $arwrk;
-            }
+            $this->patient_id->EditValue = HtmlEncode($this->patient_id->CurrentValue);
             $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+            if (strval($this->patient_id->EditValue) != "" && is_numeric($this->patient_id->EditValue)) {
+                $this->patient_id->EditValue = FormatNumber($this->patient_id->EditValue, null);
+            }
 
             // bill_description
             $this->bill_description->setupEditAttributes();
@@ -979,6 +938,9 @@ class JdhPatientBillEdit extends JdhPatientBill
             if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
                 $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
             }
+        }
+        if (!CheckInteger($this->patient_id->FormValue)) {
+            $this->patient_id->addErrorMessage($this->patient_id->getErrorMessage(false));
         }
         if ($this->bill_description->Required) {
             if (!$this->bill_description->IsDetailKey && EmptyValue($this->bill_description->FormValue)) {
@@ -1115,8 +1077,6 @@ class JdhPatientBillEdit extends JdhPatientBill
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
-                case "x_patient_id":
-                    break;
                 default:
                     $lookupFilter = "";
                     break;

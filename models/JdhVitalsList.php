@@ -761,6 +761,21 @@ class JdhVitalsList extends JdhVitals
             $this->clearInlineMode();
         }
 
+        // Switch to inline edit mode
+        if ($this->isEdit()) {
+            $this->inlineEditMode();
+        // Inline Update
+        } elseif (IsPost() && ($this->isUpdate() || $this->isOverwrite()) && Session(SESSION_INLINE_MODE) == "edit") {
+            $this->setKey(Post($this->OldKeyName));
+            // Return JSON error message if UseAjaxActions
+            if (!$this->inlineUpdate() && $this->UseAjaxActions) {
+                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                $this->clearFailureMessage();
+                $this->terminate();
+                return;
+            }
+        }
+
         // Switch to inline add mode
         if ($this->isAdd() || $this->isCopy()) {
             $this->inlineAddMode();
@@ -1059,6 +1074,71 @@ class JdhVitalsList extends JdhVitals
         $this->LastAction = $this->CurrentAction; // Save last action
         $this->CurrentAction = ""; // Clear action
         $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
+    }
+
+    // Switch to Inline Edit mode
+    protected function inlineEditMode()
+    {
+        global $Security, $Language;
+        if (!$Security->canEdit()) {
+            return false; // Edit not allowed
+        }
+        $inlineEdit = true;
+        if (($keyValue = Get("vitals_id") ?? Route("vitals_id")) !== null) {
+            $this->vitals_id->setQueryStringValue($keyValue);
+        } elseif (IsApi() && ($keyValue = Route(2)) !== null) {
+            $this->vitals_id->setQueryStringValue($keyValue);
+        } else {
+            $inlineEdit = false;
+        }
+        if ($inlineEdit) {
+            if ($this->loadRow()) {
+                $this->OldKey = $this->getKey(true); // Get from CurrentValue
+                $this->setKey($this->OldKey); // Set to OldValue
+                $_SESSION[SESSION_INLINE_MODE] = "edit"; // Enable inline edit
+            }
+        }
+        return true;
+    }
+
+    // Perform update to Inline Edit record
+    protected function inlineUpdate()
+    {
+        global $Language, $CurrentForm;
+        $CurrentForm->Index = 1;
+        $this->loadFormValues(); // Get form values
+
+        // Validate form
+        $inlineUpdate = true;
+        if (!$this->validateForm()) {
+            $inlineUpdate = false; // Form error, reset action
+        } else {
+            $inlineUpdate = false;
+            $this->SendEmail = true; // Send email on update success
+            $inlineUpdate = $this->editRow(); // Update record
+        }
+        if ($inlineUpdate) { // Update success
+            if ($this->getSuccessMessage() == "") {
+                $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Set up success message
+            }
+            $this->clearInlineMode(); // Clear inline edit mode
+        } else {
+            if ($this->getFailureMessage() == "") {
+                $this->setFailureMessage($Language->phrase("UpdateFailed")); // Set update failed message
+            }
+            $this->EventCancelled = true; // Cancel event
+            $this->CurrentAction = "edit"; // Stay in edit mode
+        }
+        return $inlineUpdate;
+    }
+
+    // Check Inline Edit key
+    public function checkInlineEditKey()
+    {
+        if (!SameString($this->vitals_id->OldValue, $this->vitals_id->CurrentValue)) {
+            return false;
+        }
+        return true;
     }
 
     // Switch to Inline Add mode
@@ -1549,9 +1629,9 @@ class JdhVitalsList extends JdhVitals
         $item->ShowInButtonGroup = false;
 
         // Drop down button for ListOptions
-        $this->ListOptions->UseDropDownButton = true;
+        $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
-        $this->ListOptions->UseButtonGroup = false;
+        $this->ListOptions->UseButtonGroup = true;
         if ($this->ListOptions->UseButtonGroup && IsMobile()) {
             $this->ListOptions->UseDropDownButton = true;
         }
@@ -1634,6 +1714,39 @@ class JdhVitalsList extends JdhVitals
             }
             return;
         }
+
+        // "edit"
+        $opt = $this->ListOptions["edit"];
+        if ($this->isInlineEditRow()) { // Inline-Edit
+            $this->ListOptions->CustomItem = "edit"; // Show edit column only
+            $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
+                $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
+                $updateCaption = $Language->phrase("UpdateLink");
+                $updateTitle = HtmlTitle($updateCaption);
+                $cancelCaption = $Language->phrase("CancelLink");
+                $cancelTitle = HtmlTitle($cancelCaption);
+                $oldKey = HtmlEncode($this->getKey(true));
+                $inlineUpdateUrl = HtmlEncode(GetUrl($this->urlAddHash($this->pageName(), "r" . $this->RowCount . "_" . $this->TableVar)));
+                if ($this->UseAjaxActions) {
+                    $inlineCancelUrl = $this->InlineEditUrl . "?action=cancel";
+                    $opt->Body = <<<INLINEEDITAJAX
+                    <div{$divClass}>
+                        <button type="button" class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" data-ew-action="inline" data-action="update" data-key="{$oldKey}" data-url="{$inlineUpdateUrl}">{$updateCaption}</button>
+                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel" data-key="{$oldKey}" data-url="{$inlineCancelUrl}">{$cancelCaption}</button>
+                    </div>
+                    INLINEEDITAJAX;
+                } else {
+                    $opt->Body = <<<INLINEEDIT
+                    <div{$divClass}>
+                        <button class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" form="fjdh_vitalslist" formaction="{$inlineUpdateUrl}">{$updateCaption}</button>
+                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$updateTitle}" href="{$cancelurl}">{$cancelCaption}</a>
+                        <input type="hidden" name="action" id="action" value="update">
+                    </div>
+                    INLINEEDIT;
+                }
+            $opt->Body .= "<input type=\"hidden\" name=\"" . $this->OldKeyName . "\" id=\"" . $this->OldKeyName . "\" value=\"" . HtmlEncode($this->vitals_id->CurrentValue) . "\">";
+            return;
+        }
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1656,6 +1769,13 @@ class JdhVitalsList extends JdhVitals
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_vitals\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
+                }
+                $inlineEditCaption = $Language->phrase("InlineEditLink");
+                $inlineEditTitle = HtmlTitle($inlineEditCaption);
+                if ($this->UseAjaxActions) {
+                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" data-ew-action=\"inline\" data-action=\"edit\" data-key=\"" . HtmlEncode($this->getKey(true)) . "\" data-url=\"" . HtmlEncode($this->InlineEditUrl) . "\">" . $inlineEditCaption . "</a>";
+                } else {
+                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" href=\"" . HtmlEncode($this->urlAddHash(GetUrl($this->InlineEditUrl), "r" . $this->RowCount . "_" . $this->TableVar)) . "\">" . $inlineEditCaption . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1991,6 +2111,9 @@ class JdhVitalsList extends JdhVitals
                 $this->StopRecord = $this->StartRecord; // Show this record only
             }
         }
+        if ($this->isEdit()) {
+            $this->RowIndex = 1;
+        }
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
             $this->RowIndex = '$rowindex$';
         }
@@ -2046,6 +2169,24 @@ class JdhVitalsList extends JdhVitals
         $this->RowType = ROWTYPE_VIEW; // Render view
         if (($this->isAdd() || $this->isCopy()) && $this->InlineRowCount == 0 || $this->isGridAdd()) { // Add
             $this->RowType = ROWTYPE_ADD; // Render add
+        }
+        if ($this->isEdit() || $this->isInlineUpdated() || $this->isInlineEditCancelled()) { // Inline edit/updated/cancelled
+            if ($this->checkInlineEditKey() && $this->InlineRowCount == 0) {
+                if ($this->isEdit()) { // Inline edit
+                    $this->RowAction = "edit";
+                    $this->RowType = ROWTYPE_EDIT; // Render edit
+                } else { // Inline updated
+                    $this->RowAction = "";
+                    $this->RowType = ROWTYPE_VIEW; // Render view
+                    $this->RowAttrs["data-oldkey"] = $this->getKey(); // Set up old key
+                }
+            } elseif ($this->UseInfiniteScroll) {
+                $this->RowAction = "hide";
+            }
+        }
+        if ($this->isEdit() && $this->RowType == ROWTYPE_EDIT && $this->EventCancelled) { // Update failed
+            $CurrentForm->Index = 1;
+            $this->restoreFormValues(); // Restore form values
         }
 
         // Inline Add/Copy row (row 0)
@@ -2292,6 +2433,9 @@ class JdhVitalsList extends JdhVitals
         if ($row) {
             $res = true;
             $this->loadRowValues($row); // Load row values
+            if (!$this->EventCancelled) {
+                $this->HashValue = $this->getRowHash($row); // Get hash value for record
+            }
         }
         return $res;
     }
@@ -2686,6 +2830,164 @@ class JdhVitalsList extends JdhVitals
 
             // submission_date
             $this->submission_date->HrefValue = "";
+        } elseif ($this->RowType == ROWTYPE_EDIT) {
+            // vitals_id
+            $this->vitals_id->setupEditAttributes();
+            $this->vitals_id->EditValue = $this->vitals_id->CurrentValue;
+
+            // patient_id
+            $this->patient_id->setupEditAttributes();
+            if ($this->patient_id->getSessionValue() != "") {
+                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
+                $curVal = strval($this->patient_id->CurrentValue);
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                    if ($this->patient_id->ViewValue === null) { // Lookup from database
+                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $conn = Conn();
+                        $config = $conn->getConfiguration();
+                        $config->setResultCacheImpl($this->Cache);
+                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                        $ari = count($rswrk);
+                        if ($ari > 0) { // Lookup values found
+                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
+                        } else {
+                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                        }
+                    }
+                } else {
+                    $this->patient_id->ViewValue = null;
+                }
+            } else {
+                $curVal = trim(strval($this->patient_id->CurrentValue));
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                } else {
+                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
+                }
+                if ($this->patient_id->ViewValue !== null) { // Load from cache
+                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
+                } else { // Lookup from database
+                    if ($curVal == "") {
+                        $filterWrk = "0=1";
+                    } else {
+                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
+                    }
+                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    $arwrk = $rswrk;
+                    $this->patient_id->EditValue = $arwrk;
+                }
+                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+            }
+
+            // pressure
+            $this->pressure->setupEditAttributes();
+            if (!$this->pressure->Raw) {
+                $this->pressure->CurrentValue = HtmlDecode($this->pressure->CurrentValue);
+            }
+            $this->pressure->EditValue = HtmlEncode($this->pressure->CurrentValue);
+            $this->pressure->PlaceHolder = RemoveHtml($this->pressure->caption());
+
+            // height
+            $this->height->setupEditAttributes();
+            $this->height->EditValue = HtmlEncode($this->height->CurrentValue);
+            $this->height->PlaceHolder = RemoveHtml($this->height->caption());
+            if (strval($this->height->EditValue) != "" && is_numeric($this->height->EditValue)) {
+                $this->height->EditValue = FormatNumber($this->height->EditValue, null);
+            }
+
+            // weight
+            $this->weight->setupEditAttributes();
+            $this->weight->EditValue = HtmlEncode($this->weight->CurrentValue);
+            $this->weight->PlaceHolder = RemoveHtml($this->weight->caption());
+            if (strval($this->weight->EditValue) != "" && is_numeric($this->weight->EditValue)) {
+                $this->weight->EditValue = FormatNumber($this->weight->EditValue, null);
+            }
+
+            // body_mass_index
+            $this->body_mass_index->setupEditAttributes();
+            $this->body_mass_index->EditValue = $this->body_mass_index->CurrentValue;
+            $this->body_mass_index->EditValue = FormatNumber($this->body_mass_index->EditValue, $this->body_mass_index->formatPattern());
+
+            // pulse_rate
+            $this->pulse_rate->setupEditAttributes();
+            $this->pulse_rate->EditValue = HtmlEncode($this->pulse_rate->CurrentValue);
+            $this->pulse_rate->PlaceHolder = RemoveHtml($this->pulse_rate->caption());
+            if (strval($this->pulse_rate->EditValue) != "" && is_numeric($this->pulse_rate->EditValue)) {
+                $this->pulse_rate->EditValue = FormatNumber($this->pulse_rate->EditValue, null);
+            }
+
+            // respiratory_rate
+            $this->respiratory_rate->setupEditAttributes();
+            $this->respiratory_rate->EditValue = HtmlEncode($this->respiratory_rate->CurrentValue);
+            $this->respiratory_rate->PlaceHolder = RemoveHtml($this->respiratory_rate->caption());
+            if (strval($this->respiratory_rate->EditValue) != "" && is_numeric($this->respiratory_rate->EditValue)) {
+                $this->respiratory_rate->EditValue = FormatNumber($this->respiratory_rate->EditValue, null);
+            }
+
+            // temperature
+            $this->temperature->setupEditAttributes();
+            $this->temperature->EditValue = HtmlEncode($this->temperature->CurrentValue);
+            $this->temperature->PlaceHolder = RemoveHtml($this->temperature->caption());
+            if (strval($this->temperature->EditValue) != "" && is_numeric($this->temperature->EditValue)) {
+                $this->temperature->EditValue = FormatNumber($this->temperature->EditValue, null);
+            }
+
+            // random_blood_sugar
+            $this->random_blood_sugar->setupEditAttributes();
+            if (!$this->random_blood_sugar->Raw) {
+                $this->random_blood_sugar->CurrentValue = HtmlDecode($this->random_blood_sugar->CurrentValue);
+            }
+            $this->random_blood_sugar->EditValue = HtmlEncode($this->random_blood_sugar->CurrentValue);
+            $this->random_blood_sugar->PlaceHolder = RemoveHtml($this->random_blood_sugar->caption());
+
+            // submission_date
+            $this->submission_date->setupEditAttributes();
+            $this->submission_date->EditValue = HtmlEncode(FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()));
+            $this->submission_date->PlaceHolder = RemoveHtml($this->submission_date->caption());
+
+            // Edit refer script
+
+            // vitals_id
+            $this->vitals_id->HrefValue = "";
+
+            // patient_id
+            $this->patient_id->HrefValue = "";
+
+            // pressure
+            $this->pressure->HrefValue = "";
+
+            // height
+            $this->height->HrefValue = "";
+
+            // weight
+            $this->weight->HrefValue = "";
+
+            // body_mass_index
+            $this->body_mass_index->HrefValue = "";
+            $this->body_mass_index->TooltipValue = "";
+
+            // pulse_rate
+            $this->pulse_rate->HrefValue = "";
+
+            // respiratory_rate
+            $this->respiratory_rate->HrefValue = "";
+
+            // temperature
+            $this->temperature->HrefValue = "";
+
+            // random_blood_sugar
+            $this->random_blood_sugar->HrefValue = "";
+
+            // submission_date
+            $this->submission_date->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -2791,6 +3093,95 @@ class JdhVitalsList extends JdhVitals
             $this->setFailureMessage($formCustomError);
         }
         return $validateForm;
+    }
+
+    // Update record based on key values
+    protected function editRow()
+    {
+        global $Security, $Language;
+        $oldKeyFilter = $this->getRecordFilter();
+        $filter = $this->applyUserIDFilters($oldKeyFilter);
+        $conn = $this->getConnection();
+
+        // Load old row
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $rsold = $conn->fetchAssociative($sql);
+        if (!$rsold) {
+            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
+            return false; // Update Failed
+        } else {
+            // Save old values
+            $this->loadDbValues($rsold);
+        }
+
+        // Set new row
+        $rsnew = [];
+
+        // patient_id
+        if ($this->patient_id->getSessionValue() != "") {
+            $this->patient_id->ReadOnly = true;
+        }
+        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, null, $this->patient_id->ReadOnly);
+
+        // pressure
+        $this->pressure->setDbValueDef($rsnew, $this->pressure->CurrentValue, "", $this->pressure->ReadOnly);
+
+        // height
+        $this->height->setDbValueDef($rsnew, $this->height->CurrentValue, 0, $this->height->ReadOnly);
+
+        // weight
+        $this->weight->setDbValueDef($rsnew, $this->weight->CurrentValue, 0, $this->weight->ReadOnly);
+
+        // pulse_rate
+        $this->pulse_rate->setDbValueDef($rsnew, $this->pulse_rate->CurrentValue, 0, $this->pulse_rate->ReadOnly);
+
+        // respiratory_rate
+        $this->respiratory_rate->setDbValueDef($rsnew, $this->respiratory_rate->CurrentValue, 0, $this->respiratory_rate->ReadOnly);
+
+        // temperature
+        $this->temperature->setDbValueDef($rsnew, $this->temperature->CurrentValue, 0, $this->temperature->ReadOnly);
+
+        // random_blood_sugar
+        $this->random_blood_sugar->setDbValueDef($rsnew, $this->random_blood_sugar->CurrentValue, "", $this->random_blood_sugar->ReadOnly);
+
+        // submission_date
+        $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), $this->submission_date->ReadOnly);
+
+        // Update current values
+        $this->setCurrentValues($rsnew);
+
+        // Call Row Updating event
+        $updateRow = $this->rowUpdating($rsold, $rsnew);
+        if ($updateRow) {
+            if (count($rsnew) > 0) {
+                $this->CurrentFilter = $filter; // Set up current filter
+                $editRow = $this->update($rsnew, "", $rsold);
+                if (!$editRow && !EmptyValue($this->DbErrorMessage)) { // Show database error
+                    $this->setFailureMessage($this->DbErrorMessage);
+                }
+            } else {
+                $editRow = true; // No field to update
+            }
+            if ($editRow) {
+            }
+        } else {
+            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
+                // Use the message, do nothing
+            } elseif ($this->CancelMessage != "") {
+                $this->setFailureMessage($this->CancelMessage);
+                $this->CancelMessage = "";
+            } else {
+                $this->setFailureMessage($Language->phrase("UpdateCancelled"));
+            }
+            $editRow = false;
+        }
+
+        // Call Row_Updated event
+        if ($editRow) {
+            $this->rowUpdated($rsold, $rsnew);
+        }
+        return $editRow;
     }
 
     /**
@@ -3068,6 +3459,39 @@ class JdhVitalsList extends JdhVitals
         $sql = $this->getCurrentSql();
         $conn = $this->getConnection();
         return $conn->fetchAssociative($sql);
+    }
+
+    // Load row hash
+    protected function loadRowHash()
+    {
+        $filter = $this->getRecordFilter();
+
+        // Load SQL based on filter
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $conn = $this->getConnection();
+        $row = $conn->fetchAssociative($sql);
+        $this->HashValue = $row ? $this->getRowHash($row) : ""; // Get hash value for record
+    }
+
+    // Get Row Hash
+    public function getRowHash(&$rs)
+    {
+        if (!$rs) {
+            return "";
+        }
+        $row = ($rs instanceof Recordset) ? $rs->fields : $rs;
+        $hash = "";
+        $hash .= GetFieldHash($row['patient_id']); // patient_id
+        $hash .= GetFieldHash($row['pressure']); // pressure
+        $hash .= GetFieldHash($row['height']); // height
+        $hash .= GetFieldHash($row['weight']); // weight
+        $hash .= GetFieldHash($row['pulse_rate']); // pulse_rate
+        $hash .= GetFieldHash($row['respiratory_rate']); // respiratory_rate
+        $hash .= GetFieldHash($row['temperature']); // temperature
+        $hash .= GetFieldHash($row['random_blood_sugar']); // random_blood_sugar
+        $hash .= GetFieldHash($row['submission_date']); // submission_date
+        return md5($hash);
     }
 
     // Add record

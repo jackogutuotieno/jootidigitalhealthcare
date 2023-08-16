@@ -441,23 +441,6 @@ return function (App $app) {
     $app->map(["GET","POST","OPTIONS"], '/patientappointmentsedit[/{appointment_id}]', PatientAppointmentsController::class . ':edit')->add(PermissionMiddleware::class)->setName('patientappointmentsedit-Patient_Appointments-edit'); // edit
     $app->map(["GET","POST","OPTIONS"], '/patientappointmentsdelete[/{appointment_id}]', PatientAppointmentsController::class . ':delete')->add(PermissionMiddleware::class)->setName('patientappointmentsdelete-Patient_Appointments-delete'); // delete
 
-    // jdh_test_costs
-    $app->map(["GET","POST","OPTIONS"], '/jdhtestcostslist[/{test_id}]', JdhTestCostsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhtestcostslist-jdh_test_costs-list'); // list
-    $app->map(["GET","POST","OPTIONS"], '/jdhtestcostsadd[/{test_id}]', JdhTestCostsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhtestcostsadd-jdh_test_costs-add'); // add
-    $app->map(["GET","POST","OPTIONS"], '/jdhtestcostsview[/{test_id}]', JdhTestCostsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhtestcostsview-jdh_test_costs-view'); // view
-    $app->map(["GET","POST","OPTIONS"], '/jdhtestcostsedit[/{test_id}]', JdhTestCostsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhtestcostsedit-jdh_test_costs-edit'); // edit
-    $app->map(["GET","POST","OPTIONS"], '/jdhtestcostsdelete[/{test_id}]', JdhTestCostsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhtestcostsdelete-jdh_test_costs-delete'); // delete
-    $app->group(
-        '/jdh_test_costs',
-        function (RouteCollectorProxy $group) {
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{test_id}]', JdhTestCostsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_test_costs/list-jdh_test_costs-list-2'); // list
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{test_id}]', JdhTestCostsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_test_costs/add-jdh_test_costs-add-2'); // add
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{test_id}]', JdhTestCostsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_test_costs/view-jdh_test_costs-view-2'); // view
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{test_id}]', JdhTestCostsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_test_costs/edit-jdh_test_costs-edit-2'); // edit
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{test_id}]', JdhTestCostsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_test_costs/delete-jdh_test_costs-delete-2'); // delete
-        }
-    );
-
     // jdh_chief_complaints
     $app->map(["GET","POST","OPTIONS"], '/jdhchiefcomplaintslist[/{id}]', JdhChiefComplaintsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhchiefcomplaintslist-jdh_chief_complaints-list'); // list
     $app->map(["GET","POST","OPTIONS"], '/jdhchiefcomplaintsadd[/{id}]', JdhChiefComplaintsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhchiefcomplaintsadd-jdh_chief_complaints-add'); // add

@@ -22,6 +22,28 @@ loadjs.ready(["wrapper", "head"], function () {
         .setPageId("list")
         .setSubmitWithFetch(<?= $Page->UseAjaxActions ? "true" : "false" ?>)
         .setFormKeyCountName("<?= $Page->FormKeyCountName ?>")
+
+        // Add fields
+        .setFields([
+            ["bill_id", [fields.bill_id.visible && fields.bill_id.required ? ew.Validators.required(fields.bill_id.caption) : null], fields.bill_id.isInvalid],
+            ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null, ew.Validators.integer], fields.patient_id.isInvalid],
+            ["bill_date", [fields.bill_date.visible && fields.bill_date.required ? ew.Validators.required(fields.bill_date.caption) : null, ew.Validators.datetime(fields.bill_date.clientFormatPattern)], fields.bill_date.isInvalid]
+        ])
+
+        // Form_CustomValidate
+        .setCustomValidate(
+            function (fobj) { // DO NOT CHANGE THIS LINE! (except for adding "async" keyword)!
+                    // Your custom validation code here, return false if invalid.
+                    return true;
+                }
+        )
+
+        // Use JavaScript validation or not
+        .setValidateRequired(ew.CLIENT_VALIDATE)
+
+        // Dynamic selection lists
+        .setLists({
+        })
         .build();
     window[form.id] = form;
     currentForm = form;
@@ -68,7 +90,7 @@ $Page->showMessage();
 <input type="hidden" name="modal" value="1">
 <?php } ?>
 <div id="gmp_jdh_patient_bill" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
-<?php if ($Page->TotalRecords > 0 || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
+<?php if ($Page->TotalRecords > 0 || $Page->isAdd() || $Page->isCopy() || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
 <table id="tbl_jdh_patient_billlist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
 <thead>
     <tr class="ew-table-header">
@@ -112,26 +134,131 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
     <?php if ($Page->bill_id->Visible) { // bill_id ?>
         <td data-name="bill_id"<?= $Page->bill_id->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_patient_bill_bill_id" class="el_jdh_patient_bill_bill_id"></span>
+<input type="hidden" data-table="jdh_patient_bill" data-field="x_bill_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_bill_id" id="o<?= $Page->RowIndex ?>_bill_id" value="<?= HtmlEncode($Page->bill_id->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_patient_bill_bill_id" class="el_jdh_patient_bill_bill_id">
+<span<?= $Page->bill_id->viewAttributes() ?>>
+<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->bill_id->getDisplayValue($Page->bill_id->EditValue))) ?>"></span>
+<input type="hidden" data-table="jdh_patient_bill" data-field="x_bill_id" data-hidden="1" name="x<?= $Page->RowIndex ?>_bill_id" id="x<?= $Page->RowIndex ?>_bill_id" value="<?= HtmlEncode($Page->bill_id->CurrentValue) ?>">
+</span>
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_patient_bill_bill_id" class="el_jdh_patient_bill_bill_id">
 <span<?= $Page->bill_id->viewAttributes() ?>>
 <?= $Page->bill_id->getViewValue() ?></span>
 </span>
+<?php } ?>
 </td>
+    <?php } else { ?>
+            <input type="hidden" data-table="jdh_patient_bill" data-field="x_bill_id" data-hidden="1" name="x<?= $Page->RowIndex ?>_bill_id" id="x<?= $Page->RowIndex ?>_bill_id" value="<?= HtmlEncode($Page->bill_id->CurrentValue) ?>">
     <?php } ?>
     <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_patient_bill_patient_id" class="el_jdh_patient_bill_patient_id">
+<input type="<?= $Page->patient_id->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_patient_id" id="x<?= $Page->RowIndex ?>_patient_id" data-table="jdh_patient_bill" data-field="x_patient_id" value="<?= $Page->patient_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_id->formatPattern()) ?>"<?= $Page->patient_id->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_patient_bill" data-field="x_patient_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_patient_id" id="o<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_patient_bill_patient_id" class="el_jdh_patient_bill_patient_id">
+<input type="<?= $Page->patient_id->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_patient_id" id="x<?= $Page->RowIndex ?>_patient_id" data-table="jdh_patient_bill" data-field="x_patient_id" value="<?= $Page->patient_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_id->formatPattern()) ?>"<?= $Page->patient_id->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
+</span>
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_patient_bill_patient_id" class="el_jdh_patient_bill_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
+<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->bill_date->Visible) { // bill_date ?>
         <td data-name="bill_date"<?= $Page->bill_date->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_patient_bill_bill_date" class="el_jdh_patient_bill_bill_date">
+<input type="<?= $Page->bill_date->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_bill_date" id="x<?= $Page->RowIndex ?>_bill_date" data-table="jdh_patient_bill" data-field="x_bill_date" value="<?= $Page->bill_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->bill_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->bill_date->formatPattern()) ?>"<?= $Page->bill_date->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->bill_date->getErrorMessage() ?></div>
+<?php if (!$Page->bill_date->ReadOnly && !$Page->bill_date->Disabled && !isset($Page->bill_date->EditAttrs["readonly"]) && !isset($Page->bill_date->EditAttrs["disabled"])) { ?>
+<script>
+loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
+    let format = "<?= DateFormat(0) ?>",
+        options = {
+            localization: {
+                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                ...ew.language.phrase("datetimepicker")
+            },
+            display: {
+                icons: {
+                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
+                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
+                },
+                components: {
+                    hours: !!format.match(/h/i),
+                    minutes: !!format.match(/m/),
+                    seconds: !!format.match(/s/i),
+                    useTwentyfourHour: !!format.match(/H/)
+                },
+                theme: ew.isDark() ? "dark" : "auto"
+            },
+            meta: {
+                format
+            }
+        };
+    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_bill_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+});
+</script>
+<?php } ?>
+</span>
+<input type="hidden" data-table="jdh_patient_bill" data-field="x_bill_date" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_bill_date" id="o<?= $Page->RowIndex ?>_bill_date" value="<?= HtmlEncode($Page->bill_date->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_patient_bill_bill_date" class="el_jdh_patient_bill_bill_date">
+<input type="<?= $Page->bill_date->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_bill_date" id="x<?= $Page->RowIndex ?>_bill_date" data-table="jdh_patient_bill" data-field="x_bill_date" value="<?= $Page->bill_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->bill_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->bill_date->formatPattern()) ?>"<?= $Page->bill_date->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->bill_date->getErrorMessage() ?></div>
+<?php if (!$Page->bill_date->ReadOnly && !$Page->bill_date->Disabled && !isset($Page->bill_date->EditAttrs["readonly"]) && !isset($Page->bill_date->EditAttrs["disabled"])) { ?>
+<script>
+loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
+    let format = "<?= DateFormat(0) ?>",
+        options = {
+            localization: {
+                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                ...ew.language.phrase("datetimepicker")
+            },
+            display: {
+                icons: {
+                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
+                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
+                },
+                components: {
+                    hours: !!format.match(/h/i),
+                    minutes: !!format.match(/m/),
+                    seconds: !!format.match(/s/i),
+                    useTwentyfourHour: !!format.match(/H/)
+                },
+                theme: ew.isDark() ? "dark" : "auto"
+            },
+            meta: {
+                format
+            }
+        };
+    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_bill_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+});
+</script>
+<?php } ?>
+</span>
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_patient_bill_bill_date" class="el_jdh_patient_bill_bill_date">
 <span<?= $Page->bill_date->viewAttributes() ?>>
 <?= $Page->bill_date->getViewValue() ?></span>
 </span>
+<?php } ?>
 </td>
     <?php } ?>
 <?php
@@ -139,6 +266,11 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 $Page->ListOptions->render("body", "right", $Page->RowCount);
 ?>
     </tr>
+<?php if ($Page->RowType == ROWTYPE_ADD || $Page->RowType == ROWTYPE_EDIT) { ?>
+<script data-rowindex="<?= $Page->RowIndex ?>">
+loadjs.ready(["<?= $Page->FormName ?>","load"], () => <?= $Page->FormName ?>.updateLists(<?= $Page->RowIndex ?><?= $Page->RowIndex === '$rowindex$' ? ", true" : "" ?>));
+</script>
+<?php } ?>
 <?php
     }
     if (!$Page->isGridAdd()) {
@@ -148,6 +280,13 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
 ?>
 </tbody>
 </table><!-- /.ew-table -->
+<?php } ?>
+<?php if ($Page->isAdd() || $Page->isCopy()) { ?>
+<input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
+<input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
+<?php } ?>
+<?php if ($Page->isEdit()) { ?>
+<input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
 <?php } ?>
 </div><!-- /.ew-grid-middle-panel -->
 <?php if (!$Page->CurrentAction && !$Page->UseAjaxActions) { ?>

@@ -654,13 +654,12 @@ class JdhPatientsList extends JdhPatients
         $this->setupImportOptions();
         $this->patient_id->setVisibility();
         $this->photo->Visible = false;
+        $this->patient_name->setVisibility();
         $this->patient_national_id->setVisibility();
-        $this->patient_first_name->setVisibility();
-        $this->patient_last_name->setVisibility();
         $this->patient_dob->setVisibility();
         $this->patient_age->setVisibility();
         $this->patient_gender->setVisibility();
-        $this->patient_phone->Visible = false;
+        $this->patient_phone->setVisibility();
         $this->patient_kin_name->Visible = false;
         $this->patient_kin_phone->Visible = false;
         $this->patient_registration_date->setVisibility();
@@ -1048,9 +1047,8 @@ class JdhPatientsList extends JdhPatients
             $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_patientssrch");
         }
         $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
+        $filterList = Concat($filterList, $this->patient_name->AdvancedSearch->toJson(), ","); // Field patient_name
         $filterList = Concat($filterList, $this->patient_national_id->AdvancedSearch->toJson(), ","); // Field patient_national_id
-        $filterList = Concat($filterList, $this->patient_first_name->AdvancedSearch->toJson(), ","); // Field patient_first_name
-        $filterList = Concat($filterList, $this->patient_last_name->AdvancedSearch->toJson(), ","); // Field patient_last_name
         $filterList = Concat($filterList, $this->patient_dob->AdvancedSearch->toJson(), ","); // Field patient_dob
         $filterList = Concat($filterList, $this->patient_age->AdvancedSearch->toJson(), ","); // Field patient_age
         $filterList = Concat($filterList, $this->patient_gender->AdvancedSearch->toJson(), ","); // Field patient_gender
@@ -1106,6 +1104,14 @@ class JdhPatientsList extends JdhPatients
         $this->patient_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_id"];
         $this->patient_id->AdvancedSearch->save();
 
+        // Field patient_name
+        $this->patient_name->AdvancedSearch->SearchValue = @$filter["x_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchOperator = @$filter["z_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchCondition = @$filter["v_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchValue2 = @$filter["y_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchOperator2 = @$filter["w_patient_name"];
+        $this->patient_name->AdvancedSearch->save();
+
         // Field patient_national_id
         $this->patient_national_id->AdvancedSearch->SearchValue = @$filter["x_patient_national_id"];
         $this->patient_national_id->AdvancedSearch->SearchOperator = @$filter["z_patient_national_id"];
@@ -1113,22 +1119,6 @@ class JdhPatientsList extends JdhPatients
         $this->patient_national_id->AdvancedSearch->SearchValue2 = @$filter["y_patient_national_id"];
         $this->patient_national_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_national_id"];
         $this->patient_national_id->AdvancedSearch->save();
-
-        // Field patient_first_name
-        $this->patient_first_name->AdvancedSearch->SearchValue = @$filter["x_patient_first_name"];
-        $this->patient_first_name->AdvancedSearch->SearchOperator = @$filter["z_patient_first_name"];
-        $this->patient_first_name->AdvancedSearch->SearchCondition = @$filter["v_patient_first_name"];
-        $this->patient_first_name->AdvancedSearch->SearchValue2 = @$filter["y_patient_first_name"];
-        $this->patient_first_name->AdvancedSearch->SearchOperator2 = @$filter["w_patient_first_name"];
-        $this->patient_first_name->AdvancedSearch->save();
-
-        // Field patient_last_name
-        $this->patient_last_name->AdvancedSearch->SearchValue = @$filter["x_patient_last_name"];
-        $this->patient_last_name->AdvancedSearch->SearchOperator = @$filter["z_patient_last_name"];
-        $this->patient_last_name->AdvancedSearch->SearchCondition = @$filter["v_patient_last_name"];
-        $this->patient_last_name->AdvancedSearch->SearchValue2 = @$filter["y_patient_last_name"];
-        $this->patient_last_name->AdvancedSearch->SearchOperator2 = @$filter["w_patient_last_name"];
-        $this->patient_last_name->AdvancedSearch->save();
 
         // Field patient_dob
         $this->patient_dob->AdvancedSearch->SearchValue = @$filter["x_patient_dob"];
@@ -1224,9 +1214,8 @@ class JdhPatientsList extends JdhPatients
 
         // Fields to search
         $searchFlds = [];
+        $searchFlds[] = &$this->patient_name;
         $searchFlds[] = &$this->patient_national_id;
-        $searchFlds[] = &$this->patient_first_name;
-        $searchFlds[] = &$this->patient_last_name;
         $searchFlds[] = &$this->patient_gender;
         $searchFlds[] = &$this->patient_phone;
         $searchFlds[] = &$this->patient_kin_name;
@@ -1309,12 +1298,12 @@ class JdhPatientsList extends JdhPatients
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
             $this->updateSort($this->patient_id); // patient_id
+            $this->updateSort($this->patient_name); // patient_name
             $this->updateSort($this->patient_national_id); // patient_national_id
-            $this->updateSort($this->patient_first_name); // patient_first_name
-            $this->updateSort($this->patient_last_name); // patient_last_name
             $this->updateSort($this->patient_dob); // patient_dob
             $this->updateSort($this->patient_age); // patient_age
             $this->updateSort($this->patient_gender); // patient_gender
+            $this->updateSort($this->patient_phone); // patient_phone
             $this->updateSort($this->patient_registration_date); // patient_registration_date
             $this->setStartRecordNumber(1); // Reset start position
         }
@@ -1341,9 +1330,8 @@ class JdhPatientsList extends JdhPatients
                 $orderBy = "";
                 $this->setSessionOrderBy($orderBy);
                 $this->patient_id->setSort("");
+                $this->patient_name->setSort("");
                 $this->patient_national_id->setSort("");
-                $this->patient_first_name->setSort("");
-                $this->patient_last_name->setSort("");
                 $this->patient_dob->setSort("");
                 $this->patient_age->setSort("");
                 $this->patient_gender->setSort("");
@@ -1380,12 +1368,6 @@ class JdhPatientsList extends JdhPatients
         $item = &$this->ListOptions->add("edit");
         $item->CssClass = "text-nowrap";
         $item->Visible = $Security->canEdit();
-        $item->OnLeft = false;
-
-        // "copy"
-        $item = &$this->ListOptions->add("copy");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canAdd();
         $item->OnLeft = false;
 
         // "detail_jdh_appointments"
@@ -1494,9 +1476,9 @@ class JdhPatientsList extends JdhPatients
         $item->ShowInButtonGroup = false;
 
         // Drop down button for ListOptions
-        $this->ListOptions->UseDropDownButton = true;
+        $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
-        $this->ListOptions->UseButtonGroup = false;
+        $this->ListOptions->UseButtonGroup = true;
         if ($this->ListOptions->UseButtonGroup && IsMobile()) {
             $this->ListOptions->UseDropDownButton = true;
         }
@@ -1553,19 +1535,6 @@ class JdhPatientsList extends JdhPatients
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_patients\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
-
-            // "copy"
-            $opt = $this->ListOptions["copy"];
-            $copycaption = HtmlTitle($Language->phrase("CopyLink"));
-            if ($Security->canAdd()) {
-                if ($this->ModalAdd && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_patients\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("CopyLink") . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1634,15 +1603,6 @@ class JdhPatientsList extends JdhPatients
                 }
                 $detailEditTblVar .= "jdh_appointments";
             }
-            if ($detailPage->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailCopyLink", null);
-                $url = $this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_appointments");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailCopyTblVar != "") {
-                    $detailCopyTblVar .= ",";
-                }
-                $detailCopyTblVar .= "jdh_appointments";
-            }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
                 $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
@@ -1680,15 +1640,6 @@ class JdhPatientsList extends JdhPatients
                     $detailEditTblVar .= ",";
                 }
                 $detailEditTblVar .= "jdh_patient_cases";
-            }
-            if ($detailPage->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailCopyLink", null);
-                $url = $this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_cases");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailCopyTblVar != "") {
-                    $detailCopyTblVar .= ",";
-                }
-                $detailCopyTblVar .= "jdh_patient_cases";
             }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -1728,15 +1679,6 @@ class JdhPatientsList extends JdhPatients
                 }
                 $detailEditTblVar .= "jdh_vitals";
             }
-            if ($detailPage->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailCopyLink", null);
-                $url = $this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailCopyTblVar != "") {
-                    $detailCopyTblVar .= ",";
-                }
-                $detailCopyTblVar .= "jdh_vitals";
-            }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
                 $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
@@ -1774,15 +1716,6 @@ class JdhPatientsList extends JdhPatients
                     $detailEditTblVar .= ",";
                 }
                 $detailEditTblVar .= "jdh_patient_visits";
-            }
-            if ($detailPage->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailCopyLink", null);
-                $url = $this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_visits");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailCopyTblVar != "") {
-                    $detailCopyTblVar .= ",";
-                }
-                $detailCopyTblVar .= "jdh_patient_visits";
             }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -1822,15 +1755,6 @@ class JdhPatientsList extends JdhPatients
                 }
                 $detailEditTblVar .= "jdh_chief_complaints";
             }
-            if ($detailPage->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailCopyLink", null);
-                $url = $this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_chief_complaints");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailCopyTblVar != "") {
-                    $detailCopyTblVar .= ",";
-                }
-                $detailCopyTblVar .= "jdh_chief_complaints";
-            }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
                 $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
@@ -1868,15 +1792,6 @@ class JdhPatientsList extends JdhPatients
                     $detailEditTblVar .= ",";
                 }
                 $detailEditTblVar .= "jdh_examination_findings";
-            }
-            if ($detailPage->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailCopyLink", null);
-                $url = $this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_examination_findings");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailCopyTblVar != "") {
-                    $detailCopyTblVar .= ",";
-                }
-                $detailCopyTblVar .= "jdh_examination_findings";
             }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -1916,15 +1831,6 @@ class JdhPatientsList extends JdhPatients
                 }
                 $detailEditTblVar .= "jdh_prescriptions";
             }
-            if ($detailPage->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailCopyLink", null);
-                $url = $this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_prescriptions");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailCopyTblVar != "") {
-                    $detailCopyTblVar .= ",";
-                }
-                $detailCopyTblVar .= "jdh_prescriptions";
-            }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
                 $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
@@ -1963,15 +1869,6 @@ class JdhPatientsList extends JdhPatients
                 }
                 $detailEditTblVar .= "jdh_test_requests";
             }
-            if ($detailPage->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailCopyLink", null);
-                $url = $this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_requests");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailCopyTblVar != "") {
-                    $detailCopyTblVar .= ",";
-                }
-                $detailCopyTblVar .= "jdh_test_requests";
-            }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
                 $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
@@ -2009,15 +1906,6 @@ class JdhPatientsList extends JdhPatients
                     $detailEditTblVar .= ",";
                 }
                 $detailEditTblVar .= "jdh_test_reports";
-            }
-            if ($detailPage->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailCopyLink", null);
-                $url = $this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailCopyTblVar != "") {
-                    $detailCopyTblVar .= ",";
-                }
-                $detailCopyTblVar .= "jdh_test_reports";
             }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -2233,12 +2121,12 @@ class JdhPatientsList extends JdhPatients
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
             $option->add("patient_id", $this->createColumnOption("patient_id"));
+            $option->add("patient_name", $this->createColumnOption("patient_name"));
             $option->add("patient_national_id", $this->createColumnOption("patient_national_id"));
-            $option->add("patient_first_name", $this->createColumnOption("patient_first_name"));
-            $option->add("patient_last_name", $this->createColumnOption("patient_last_name"));
             $option->add("patient_dob", $this->createColumnOption("patient_dob"));
             $option->add("patient_age", $this->createColumnOption("patient_age"));
             $option->add("patient_gender", $this->createColumnOption("patient_gender"));
+            $option->add("patient_phone", $this->createColumnOption("patient_phone"));
             $option->add("patient_registration_date", $this->createColumnOption("patient_registration_date"));
         }
 
@@ -2626,9 +2514,8 @@ class JdhPatientsList extends JdhPatients
         if (is_resource($this->photo->Upload->DbValue) && get_resource_type($this->photo->Upload->DbValue) == "stream") { // Byte array
             $this->photo->Upload->DbValue = stream_get_contents($this->photo->Upload->DbValue);
         }
+        $this->patient_name->setDbValue($row['patient_name']);
         $this->patient_national_id->setDbValue($row['patient_national_id']);
-        $this->patient_first_name->setDbValue($row['patient_first_name']);
-        $this->patient_last_name->setDbValue($row['patient_last_name']);
         $this->patient_dob->setDbValue($row['patient_dob']);
         $this->patient_age->setDbValue($row['patient_age']);
         $this->patient_gender->setDbValue($row['patient_gender']);
@@ -2644,9 +2531,8 @@ class JdhPatientsList extends JdhPatients
         $row = [];
         $row['patient_id'] = $this->patient_id->DefaultValue;
         $row['photo'] = $this->photo->DefaultValue;
+        $row['patient_name'] = $this->patient_name->DefaultValue;
         $row['patient_national_id'] = $this->patient_national_id->DefaultValue;
-        $row['patient_first_name'] = $this->patient_first_name->DefaultValue;
-        $row['patient_last_name'] = $this->patient_last_name->DefaultValue;
         $row['patient_dob'] = $this->patient_dob->DefaultValue;
         $row['patient_age'] = $this->patient_age->DefaultValue;
         $row['patient_gender'] = $this->patient_gender->DefaultValue;
@@ -2698,11 +2584,9 @@ class JdhPatientsList extends JdhPatients
 
         // photo
 
+        // patient_name
+
         // patient_national_id
-
-        // patient_first_name
-
-        // patient_last_name
 
         // patient_dob
 
@@ -2723,14 +2607,11 @@ class JdhPatientsList extends JdhPatients
             // patient_id
             $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
+            // patient_name
+            $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
+
             // patient_national_id
             $this->patient_national_id->ViewValue = $this->patient_national_id->CurrentValue;
-
-            // patient_first_name
-            $this->patient_first_name->ViewValue = $this->patient_first_name->CurrentValue;
-
-            // patient_last_name
-            $this->patient_last_name->ViewValue = $this->patient_last_name->CurrentValue;
 
             // patient_dob
             $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
@@ -2761,28 +2642,29 @@ class JdhPatientsList extends JdhPatients
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
             // patient_id
-            $this->patient_id->HrefValue = "";
+            if (!EmptyValue($this->patient_id->CurrentValue)) {
+                $this->patient_id->HrefValue = $this->patient_id->CurrentValue; // Add prefix/suffix
+                $this->patient_id->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->patient_id->HrefValue = FullUrl($this->patient_id->HrefValue, "href");
+                }
+            } else {
+                $this->patient_id->HrefValue = "";
+            }
             $this->patient_id->TooltipValue = "";
+
+            // patient_name
+            $this->patient_name->HrefValue = "";
+            $this->patient_name->TooltipValue = "";
+            if (!$this->isExport()) {
+                $this->patient_name->ViewValue = $this->highlightValue($this->patient_name);
+            }
 
             // patient_national_id
             $this->patient_national_id->HrefValue = "";
             $this->patient_national_id->TooltipValue = "";
             if (!$this->isExport()) {
                 $this->patient_national_id->ViewValue = $this->highlightValue($this->patient_national_id);
-            }
-
-            // patient_first_name
-            $this->patient_first_name->HrefValue = "";
-            $this->patient_first_name->TooltipValue = "";
-            if (!$this->isExport()) {
-                $this->patient_first_name->ViewValue = $this->highlightValue($this->patient_first_name);
-            }
-
-            // patient_last_name
-            $this->patient_last_name->HrefValue = "";
-            $this->patient_last_name->TooltipValue = "";
-            if (!$this->isExport()) {
-                $this->patient_last_name->ViewValue = $this->highlightValue($this->patient_last_name);
             }
 
             // patient_dob
@@ -2796,6 +2678,13 @@ class JdhPatientsList extends JdhPatients
             // patient_gender
             $this->patient_gender->HrefValue = "";
             $this->patient_gender->TooltipValue = "";
+
+            // patient_phone
+            $this->patient_phone->HrefValue = "";
+            $this->patient_phone->TooltipValue = "";
+            if (!$this->isExport()) {
+                $this->patient_phone->ViewValue = $this->highlightValue($this->patient_phone);
+            }
 
             // patient_registration_date
             $this->patient_registration_date->HrefValue = "";

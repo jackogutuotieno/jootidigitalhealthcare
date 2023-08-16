@@ -95,9 +95,9 @@ class JdhPatientCases extends DbTable
         $this->ExportWordPageOrientation = ""; // Page orientation (PHPWord only)
         $this->ExportWordPageSize = ""; // Page orientation (PHPWord only)
         $this->ExportWordColumnWidth = null; // Cell width (PHPWord only)
-        $this->DetailAdd = false; // Allow detail add
-        $this->DetailEdit = false; // Allow detail edit
-        $this->DetailView = false; // Allow detail view
+        $this->DetailAdd = true; // Allow detail add
+        $this->DetailEdit = true; // Allow detail edit
+        $this->DetailView = true; // Allow detail view
         $this->ShowMultipleDetails = false; // Show multiple details
         $this->GridAddRowCount = 5;
         $this->AllowAddDeleteRow = true; // Allow add/delete row
@@ -154,7 +154,7 @@ class JdhPatientCases extends DbTable
         $this->patient_id->Required = true; // Required field
         $this->patient_id->UsePleaseSelect = true; // Use PleaseSelect by default
         $this->patient_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->patient_id->Lookup = new Lookup('patient_id', 'jdh_patients', false, 'patient_id', ["patient_first_name","patient_last_name","",""], '', '', [], [], [], [], [], [], '', '', "CONCAT(COALESCE(`patient_first_name`, ''),'" . ValueSeparator(1, $this->patient_id) . "',COALESCE(`patient_last_name`,''))");
+        $this->patient_id->Lookup = new Lookup('patient_id', 'jdh_patients', false, 'patient_id', ["patient_id","patient_name","",""], '', '', [], [], [], [], [], [], '', '', "CONCAT(COALESCE(`patient_id`, ''),'" . ValueSeparator(1, $this->patient_id) . "',COALESCE(`patient_name`,''))");
         $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->patient_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_id'] = &$this->patient_id;

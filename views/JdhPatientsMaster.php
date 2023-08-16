@@ -15,7 +15,23 @@ $jdh_patients = Container("jdh_patients");
             <td<?= $jdh_patients->patient_id->cellAttributes() ?>>
 <span id="el_jdh_patients_patient_id">
 <span<?= $jdh_patients->patient_id->viewAttributes() ?>>
-<?= $jdh_patients->patient_id->getViewValue() ?></span>
+<?php if (!EmptyString($jdh_patients->patient_id->getViewValue()) && $jdh_patients->patient_id->linkAttributes() != "") { ?>
+<a<?= $jdh_patients->patient_id->linkAttributes() ?>><?= $jdh_patients->patient_id->getViewValue() ?></a>
+<?php } else { ?>
+<?= $jdh_patients->patient_id->getViewValue() ?>
+<?php } ?>
+</span>
+</span>
+</td>
+        </tr>
+<?php } ?>
+<?php if ($jdh_patients->patient_name->Visible) { // patient_name ?>
+        <tr id="r_patient_name"<?= $jdh_patients->patient_name->rowAttributes() ?>>
+            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_name->caption() ?></td>
+            <td<?= $jdh_patients->patient_name->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_name">
+<span<?= $jdh_patients->patient_name->viewAttributes() ?>>
+<?= $jdh_patients->patient_name->getViewValue() ?></span>
 </span>
 </td>
         </tr>
@@ -27,28 +43,6 @@ $jdh_patients = Container("jdh_patients");
 <span id="el_jdh_patients_patient_national_id">
 <span<?= $jdh_patients->patient_national_id->viewAttributes() ?>>
 <?= $jdh_patients->patient_national_id->getViewValue() ?></span>
-</span>
-</td>
-        </tr>
-<?php } ?>
-<?php if ($jdh_patients->patient_first_name->Visible) { // patient_first_name ?>
-        <tr id="r_patient_first_name"<?= $jdh_patients->patient_first_name->rowAttributes() ?>>
-            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_first_name->caption() ?></td>
-            <td<?= $jdh_patients->patient_first_name->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_first_name">
-<span<?= $jdh_patients->patient_first_name->viewAttributes() ?>>
-<?= $jdh_patients->patient_first_name->getViewValue() ?></span>
-</span>
-</td>
-        </tr>
-<?php } ?>
-<?php if ($jdh_patients->patient_last_name->Visible) { // patient_last_name ?>
-        <tr id="r_patient_last_name"<?= $jdh_patients->patient_last_name->rowAttributes() ?>>
-            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_last_name->caption() ?></td>
-            <td<?= $jdh_patients->patient_last_name->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_last_name">
-<span<?= $jdh_patients->patient_last_name->viewAttributes() ?>>
-<?= $jdh_patients->patient_last_name->getViewValue() ?></span>
 </span>
 </td>
         </tr>
@@ -82,6 +76,17 @@ $jdh_patients = Container("jdh_patients");
 <span id="el_jdh_patients_patient_gender">
 <span<?= $jdh_patients->patient_gender->viewAttributes() ?>>
 <?= $jdh_patients->patient_gender->getViewValue() ?></span>
+</span>
+</td>
+        </tr>
+<?php } ?>
+<?php if ($jdh_patients->patient_phone->Visible) { // patient_phone ?>
+        <tr id="r_patient_phone"<?= $jdh_patients->patient_phone->rowAttributes() ?>>
+            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_phone->caption() ?></td>
+            <td<?= $jdh_patients->patient_phone->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_phone">
+<span<?= $jdh_patients->patient_phone->viewAttributes() ?>>
+<?= $jdh_patients->patient_phone->getViewValue() ?></span>
 </span>
 </td>
         </tr>

@@ -634,6 +634,7 @@ class JdhExaminationFindingsDelete extends JdhExaminationFindings
             $this->id->ViewValue = $this->id->CurrentValue;
 
             // patient_id
+            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
             $curVal = strval($this->patient_id->CurrentValue);
             if ($curVal != "") {
                 $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);

@@ -82,9 +82,9 @@ class JdhPatientServices extends DbTable
         $this->ExportWordPageOrientation = ""; // Page orientation (PHPWord only)
         $this->ExportWordPageSize = ""; // Page orientation (PHPWord only)
         $this->ExportWordColumnWidth = null; // Cell width (PHPWord only)
-        $this->DetailAdd = false; // Allow detail add
-        $this->DetailEdit = false; // Allow detail edit
-        $this->DetailView = false; // Allow detail view
+        $this->DetailAdd = true; // Allow detail add
+        $this->DetailEdit = true; // Allow detail edit
+        $this->DetailView = true; // Allow detail view
         $this->ShowMultipleDetails = false; // Show multiple details
         $this->GridAddRowCount = 5;
         $this->AllowAddDeleteRow = true; // Allow add/delete row
@@ -133,16 +133,13 @@ class JdhPatientServices extends DbTable
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'SELECT' // Edit Tag
+            'TEXT' // Edit Tag
         );
         $this->patient_id->InputTextType = "text";
         $this->patient_id->Nullable = false; // NOT NULL field
         $this->patient_id->Required = true; // Required field
-        $this->patient_id->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->patient_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->patient_id->Lookup = new Lookup('patient_id', 'jdh_patients', false, 'patient_id', ["patient_id","patient_first_name","patient_last_name",""], '', '', [], [], [], [], [], [], '', '', "CONCAT(COALESCE(`patient_id`, ''),'" . ValueSeparator(1, $this->patient_id) . "',COALESCE(`patient_first_name`,''),'" . ValueSeparator(2, $this->patient_id) . "',COALESCE(`patient_last_name`,''))");
         $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->patient_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->patient_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_id'] = &$this->patient_id;
 
         // service_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
@@ -384,6 +381,11 @@ class JdhPatientServices extends DbTable
     // Apply User ID filters
     public function applyUserIDFilters($filter, $id = "")
     {
+        global $Security;
+        // Add User ID filter
+        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
+            $filter = $this->addUserIDFilter($filter, $id);
+        }
         return $filter;
     }
 
@@ -1100,27 +1102,8 @@ class JdhPatientServices extends DbTable
         $this->patient_service_id->ViewValue = $this->patient_service_id->CurrentValue;
 
         // patient_id
-        $curVal = strval($this->patient_id->CurrentValue);
-        if ($curVal != "") {
-            $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-            if ($this->patient_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                } else {
-                    $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                }
-            }
-        } else {
-            $this->patient_id->ViewValue = null;
-        }
+        $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
+        $this->patient_id->ViewValue = FormatNumber($this->patient_id->ViewValue, $this->patient_id->formatPattern());
 
         // service_id
         $curVal = strval($this->service_id->CurrentValue);
@@ -1194,7 +1177,11 @@ class JdhPatientServices extends DbTable
 
         // patient_id
         $this->patient_id->setupEditAttributes();
+        $this->patient_id->EditValue = $this->patient_id->CurrentValue;
         $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+        if (strval($this->patient_id->EditValue) != "" && is_numeric($this->patient_id->EditValue)) {
+            $this->patient_id->EditValue = FormatNumber($this->patient_id->EditValue, null);
+        }
 
         // service_id
         $this->service_id->setupEditAttributes();
@@ -1207,10 +1194,16 @@ class JdhPatientServices extends DbTable
 
         // submittedby_user_id
         $this->submittedby_user_id->setupEditAttributes();
-        $this->submittedby_user_id->EditValue = $this->submittedby_user_id->CurrentValue;
-        $this->submittedby_user_id->PlaceHolder = RemoveHtml($this->submittedby_user_id->caption());
-        if (strval($this->submittedby_user_id->EditValue) != "" && is_numeric($this->submittedby_user_id->EditValue)) {
-            $this->submittedby_user_id->EditValue = FormatNumber($this->submittedby_user_id->EditValue, null);
+        if (!$Security->isAdmin() && $Security->isLoggedIn() && !$this->userIDAllow("info")) { // Non system admin
+            $this->submittedby_user_id->CurrentValue = CurrentUserID();
+            $this->submittedby_user_id->EditValue = $this->submittedby_user_id->CurrentValue;
+            $this->submittedby_user_id->EditValue = FormatNumber($this->submittedby_user_id->EditValue, $this->submittedby_user_id->formatPattern());
+        } else {
+            $this->submittedby_user_id->EditValue = $this->submittedby_user_id->CurrentValue;
+            $this->submittedby_user_id->PlaceHolder = RemoveHtml($this->submittedby_user_id->caption());
+            if (strval($this->submittedby_user_id->EditValue) != "" && is_numeric($this->submittedby_user_id->EditValue)) {
+                $this->submittedby_user_id->EditValue = FormatNumber($this->submittedby_user_id->EditValue, null);
+            }
         }
 
         // Call Row Rendered event
@@ -1304,6 +1297,57 @@ class JdhPatientServices extends DbTable
         if (!$doc->ExportCustom) {
             $doc->exportTableFooter();
         }
+    }
+
+    // Add User ID filter
+    public function addUserIDFilter($filter = "", $id = "")
+    {
+        global $Security;
+        $filterWrk = "";
+        if ($id == "")
+            $id = (CurrentPageID() == "list") ? $this->CurrentAction : CurrentPageID();
+        if (!$this->userIDAllow($id) && !$Security->isAdmin()) {
+            $filterWrk = $Security->userIdList();
+            if ($filterWrk != "") {
+                $filterWrk = '`submittedby_user_id` IN (' . $filterWrk . ')';
+            }
+        }
+
+        // Call User ID Filtering event
+        $this->userIdFiltering($filterWrk);
+        AddFilter($filter, $filterWrk);
+        return $filter;
+    }
+
+    // User ID subquery
+    public function getUserIDSubquery(&$fld, &$masterfld)
+    {
+        global $UserTable;
+        $wrk = "";
+        $sql = "SELECT " . $masterfld->Expression . " FROM `jdh_patient_services`";
+        $filter = $this->addUserIDFilter("");
+        if ($filter != "") {
+            $sql .= " WHERE " . $filter;
+        }
+
+        // List all values
+        $conn = Conn($UserTable->Dbid);
+        $config = $conn->getConfiguration();
+        $config->setResultCacheImpl($this->Cache);
+        if ($rs = $conn->executeCacheQuery($sql, [], [], $this->CacheProfile)->fetchAllNumeric()) {
+            foreach ($rs as $row) {
+                if ($wrk != "") {
+                    $wrk .= ",";
+                }
+                $wrk .= QuotedValue($row[0], $masterfld->DataType, Config("USER_TABLE_DBID"));
+            }
+        }
+        if ($wrk != "") {
+            $wrk = $fld->Expression . " IN (" . $wrk . ")";
+        } else { // No User ID value found
+            $wrk = "0=1";
+        }
+        return $wrk;
     }
 
     // Get file data

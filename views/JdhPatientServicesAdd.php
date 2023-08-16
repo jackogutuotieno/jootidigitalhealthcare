@@ -22,7 +22,7 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Add fields
         .setFields([
-            ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
+            ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null, ew.Validators.integer], fields.patient_id.isInvalid],
             ["service_id", [fields.service_id.visible && fields.service_id.required ? ew.Validators.required(fields.service_id.caption) : null], fields.service_id.isInvalid]
         ])
 
@@ -39,7 +39,6 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Dynamic selection lists
         .setLists({
-            "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
             "service_id": <?= $Page->service_id->toClientList($Page) ?>,
         })
         .build();
@@ -75,37 +74,9 @@ $Page->showMessage();
         <label id="elh_jdh_patient_services_patient_id" for="x_patient_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_id->caption() ?><?= $Page->patient_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_id->cellAttributes() ?>>
 <span id="el_jdh_patient_services_patient_id">
-    <select
-        id="x_patient_id"
-        name="x_patient_id"
-        class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_patient_servicesadd_x_patient_id"
-        data-table="jdh_patient_services"
-        data-field="x_patient_id"
-        data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>"
-        <?= $Page->patient_id->editAttributes() ?>>
-        <?= $Page->patient_id->selectOptionListHtml("x_patient_id") ?>
-    </select>
-    <?= $Page->patient_id->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
-<?= $Page->patient_id->Lookup->getParamTag($Page, "p_x_patient_id") ?>
-<script>
-loadjs.ready("fjdh_patient_servicesadd", function() {
-    var options = { name: "x_patient_id", selectId: "fjdh_patient_servicesadd_x_patient_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_patient_servicesadd.lists.patient_id?.lookupOptions.length) {
-        options.data = { id: "x_patient_id", form: "fjdh_patient_servicesadd" };
-    } else {
-        options.ajax = { id: "x_patient_id", form: "fjdh_patient_servicesadd", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumInputLength = ew.selectMinimumInputLength;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_services.fields.patient_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<input type="<?= $Page->patient_id->getInputTextType() ?>" name="x_patient_id" id="x_patient_id" data-table="jdh_patient_services" data-field="x_patient_id" value="<?= $Page->patient_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_id->formatPattern()) ?>"<?= $Page->patient_id->editAttributes() ?> aria-describedby="x_patient_id_help">
+<?= $Page->patient_id->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

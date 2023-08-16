@@ -391,7 +391,6 @@ class JdhPatientServicesDelete extends JdhPatientServices
         }
 
         // Set up lookup cache
-        $this->setupLookupOptions($this->patient_id);
         $this->setupLookupOptions($this->service_id);
 
         // Set up Breadcrumb
@@ -407,6 +406,25 @@ class JdhPatientServicesDelete extends JdhPatientServices
 
         // Set up filter (WHERE Clause)
         $this->CurrentFilter = $filter;
+
+        // Check if valid User ID
+        $conn = $this->getConnection();
+        $sql = $this->getSql($this->CurrentFilter);
+        $rows = $conn->fetchAllAssociative($sql);
+        $res = true;
+        foreach ($rows as $row) {
+            $this->loadRowValues($row);
+            if (!$this->showOptionLink("delete")) {
+                $userIdMsg = $Language->phrase("NoDeletePermission");
+                $this->setFailureMessage($userIdMsg);
+                $res = false;
+                break;
+            }
+        }
+        if (!$res) {
+            $this->terminate("jdhpatientserviceslist"); // Return to list
+            return;
+        }
 
         // Get action
         if (IsApi()) {
@@ -619,27 +637,8 @@ class JdhPatientServicesDelete extends JdhPatientServices
             $this->patient_service_id->ViewValue = $this->patient_service_id->CurrentValue;
 
             // patient_id
-            $curVal = strval($this->patient_id->CurrentValue);
-            if ($curVal != "") {
-                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                    } else {
-                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->patient_id->ViewValue = null;
-            }
+            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
+            $this->patient_id->ViewValue = FormatNumber($this->patient_id->ViewValue, $this->patient_id->formatPattern());
 
             // service_id
             $curVal = strval($this->service_id->CurrentValue);
@@ -790,6 +789,16 @@ class JdhPatientServicesDelete extends JdhPatientServices
         return $deleteRows;
     }
 
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->submittedby_user_id->CurrentValue);
+        }
+        return true;
+    }
+
     // Set up Breadcrumb
     protected function setupBreadcrumb()
     {
@@ -814,8 +823,6 @@ class JdhPatientServicesDelete extends JdhPatientServices
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
-                case "x_patient_id":
-                    break;
                 case "x_service_id":
                     break;
                 default:

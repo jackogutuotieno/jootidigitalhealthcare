@@ -34,7 +34,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["appointment_id", [fields.appointment_id.visible && fields.appointment_id.required ? ew.Validators.required(fields.appointment_id.caption) : null], fields.appointment_id.isInvalid],
-            ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
+            ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null, ew.Validators.integer], fields.patient_id.isInvalid],
             ["appointment_title", [fields.appointment_title.visible && fields.appointment_title.required ? ew.Validators.required(fields.appointment_title.caption) : null], fields.appointment_title.isInvalid],
             ["appointment_start_date", [fields.appointment_start_date.visible && fields.appointment_start_date.required ? ew.Validators.required(fields.appointment_start_date.caption) : null, ew.Validators.datetime(fields.appointment_start_date.clientFormatPattern)], fields.appointment_start_date.isInvalid],
             ["appointment_end_date", [fields.appointment_end_date.visible && fields.appointment_end_date.required ? ew.Validators.required(fields.appointment_end_date.caption) : null, ew.Validators.datetime(fields.appointment_end_date.clientFormatPattern), ew.Validators.minDate(() => fPatient_Appointmentsedit.getFieldElement("appointment_start_date"))], fields.appointment_end_date.isInvalid],
@@ -56,7 +56,6 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Dynamic selection lists
         .setLists({
-            "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
             "appointment_all_day": <?= $Page->appointment_all_day->toClientList($Page) ?>,
         })
         .build();
@@ -94,37 +93,9 @@ loadjs.ready(["wrapper", "head"], function () {
         <label id="elh_Patient_Appointments_patient_id" for="x_patient_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_id->caption() ?><?= $Page->patient_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_id->cellAttributes() ?>>
 <span id="el_Patient_Appointments_patient_id">
-    <select
-        id="x_patient_id"
-        name="x_patient_id"
-        class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
-        data-select2-id="fPatient_Appointmentsedit_x_patient_id"
-        data-table="Patient_Appointments"
-        data-field="x_patient_id"
-        data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>"
-        <?= $Page->patient_id->editAttributes() ?>>
-        <?= $Page->patient_id->selectOptionListHtml("x_patient_id") ?>
-    </select>
-    <?= $Page->patient_id->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
-<?= $Page->patient_id->Lookup->getParamTag($Page, "p_x_patient_id") ?>
-<script>
-loadjs.ready("fPatient_Appointmentsedit", function() {
-    var options = { name: "x_patient_id", selectId: "fPatient_Appointmentsedit_x_patient_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fPatient_Appointmentsedit.lists.patient_id?.lookupOptions.length) {
-        options.data = { id: "x_patient_id", form: "fPatient_Appointmentsedit" };
-    } else {
-        options.ajax = { id: "x_patient_id", form: "fPatient_Appointmentsedit", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumInputLength = ew.selectMinimumInputLength;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.Patient_Appointments.fields.patient_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<input type="<?= $Page->patient_id->getInputTextType() ?>" name="x_patient_id" id="x_patient_id" data-table="Patient_Appointments" data-field="x_patient_id" value="<?= $Page->patient_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_id->formatPattern()) ?>"<?= $Page->patient_id->editAttributes() ?> aria-describedby="x_patient_id_help">
+<?= $Page->patient_id->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

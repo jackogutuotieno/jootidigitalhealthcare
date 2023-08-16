@@ -701,7 +701,7 @@ class JdhAppointmentsView extends JdhAppointments
         // Set up action default
         $option = $options["action"];
         $option->DropDownButtonPhrase = $Language->phrase("ButtonActions");
-        $option->UseDropDownButton = !IsJsonResponse() && true;
+        $option->UseDropDownButton = !IsJsonResponse() && false;
         $option->UseButtonGroup = true;
         $item = &$option->addGroupOption();
         $item->Body = "";
@@ -862,6 +862,7 @@ class JdhAppointmentsView extends JdhAppointments
             $this->appointment_id->ViewValue = $this->appointment_id->CurrentValue;
 
             // patient_id
+            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
             $curVal = strval($this->patient_id->CurrentValue);
             if ($curVal != "") {
                 $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);

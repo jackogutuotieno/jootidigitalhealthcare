@@ -91,9 +91,9 @@ class JdhExaminationFindings extends DbTable
         $this->ExportWordPageOrientation = ""; // Page orientation (PHPWord only)
         $this->ExportWordPageSize = ""; // Page orientation (PHPWord only)
         $this->ExportWordColumnWidth = null; // Cell width (PHPWord only)
-        $this->DetailAdd = false; // Allow detail add
-        $this->DetailEdit = false; // Allow detail edit
-        $this->DetailView = false; // Allow detail view
+        $this->DetailAdd = true; // Allow detail add
+        $this->DetailEdit = true; // Allow detail edit
+        $this->DetailView = true; // Allow detail view
         $this->ShowMultipleDetails = false; // Show multiple details
         $this->GridAddRowCount = 5;
         $this->AllowAddDeleteRow = true; // Allow add/delete row
@@ -142,17 +142,15 @@ class JdhExaminationFindings extends DbTable
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'SELECT' // Edit Tag
+            'TEXT' // Edit Tag
         );
         $this->patient_id->InputTextType = "text";
         $this->patient_id->IsForeignKey = true; // Foreign key field
         $this->patient_id->Nullable = false; // NOT NULL field
         $this->patient_id->Required = true; // Required field
-        $this->patient_id->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->patient_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->patient_id->Lookup = new Lookup('patient_id', 'jdh_patients', false, 'patient_id', ["patient_id","patient_first_name","patient_last_name",""], '', '', [], [], [], [], [], [], '', '', "CONCAT(COALESCE(`patient_id`, ''),'" . ValueSeparator(1, $this->patient_id) . "',COALESCE(`patient_first_name`,''),'" . ValueSeparator(2, $this->patient_id) . "',COALESCE(`patient_last_name`,''))");
+        $this->patient_id->Lookup = new Lookup('patient_id', 'jdh_patients', false, 'patient_id', ["patient_name","","",""], '', '', [], [], [], [], [], [], '', '', "`patient_name`");
         $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->patient_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->patient_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_id'] = &$this->patient_id;
 
         // general_exams $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
@@ -1234,6 +1232,7 @@ class JdhExaminationFindings extends DbTable
         $this->id->ViewValue = $this->id->CurrentValue;
 
         // patient_id
+        $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
         $curVal = strval($this->patient_id->CurrentValue);
         if ($curVal != "") {
             $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
@@ -1317,6 +1316,7 @@ class JdhExaminationFindings extends DbTable
         $this->patient_id->setupEditAttributes();
         if ($this->patient_id->getSessionValue() != "") {
             $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
+            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
             $curVal = strval($this->patient_id->CurrentValue);
             if ($curVal != "") {
                 $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
@@ -1339,6 +1339,7 @@ class JdhExaminationFindings extends DbTable
                 $this->patient_id->ViewValue = null;
             }
         } else {
+            $this->patient_id->EditValue = $this->patient_id->CurrentValue;
             $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
         }
 

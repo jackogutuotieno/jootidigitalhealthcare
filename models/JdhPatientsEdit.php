@@ -446,6 +446,7 @@ class JdhPatientsEdit extends JdhPatients
     public $TotalRecords = 0;
     public $RecordRange = 10;
     public $RecordCount;
+    public $DetailPages; // Detail pages object
 
     /**
      * Page run
@@ -471,9 +472,8 @@ class JdhPatientsEdit extends JdhPatients
         $this->CurrentAction = Param("action"); // Set up current action
         $this->patient_id->setVisibility();
         $this->photo->setVisibility();
+        $this->patient_name->setVisibility();
         $this->patient_national_id->setVisibility();
-        $this->patient_first_name->setVisibility();
-        $this->patient_last_name->setVisibility();
         $this->patient_dob->Visible = false;
         $this->patient_age->Visible = false;
         $this->patient_gender->setVisibility();
@@ -486,6 +486,9 @@ class JdhPatientsEdit extends JdhPatients
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
             $this->setUseLookupCache(false);
         }
+
+        // Set up detail page object
+        $this->setupDetailPages();
 
         // Global Page Loading event (in userfn*.php)
         Page_Loading();
@@ -710,6 +713,16 @@ class JdhPatientsEdit extends JdhPatients
             $this->patient_id->setFormValue($val);
         }
 
+        // Check field name 'patient_name' first before field var 'x_patient_name'
+        $val = $CurrentForm->hasValue("patient_name") ? $CurrentForm->getValue("patient_name") : $CurrentForm->getValue("x_patient_name");
+        if (!$this->patient_name->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->patient_name->Visible = false; // Disable update for API request
+            } else {
+                $this->patient_name->setFormValue($val);
+            }
+        }
+
         // Check field name 'patient_national_id' first before field var 'x_patient_national_id'
         $val = $CurrentForm->hasValue("patient_national_id") ? $CurrentForm->getValue("patient_national_id") : $CurrentForm->getValue("x_patient_national_id");
         if (!$this->patient_national_id->IsDetailKey) {
@@ -717,26 +730,6 @@ class JdhPatientsEdit extends JdhPatients
                 $this->patient_national_id->Visible = false; // Disable update for API request
             } else {
                 $this->patient_national_id->setFormValue($val);
-            }
-        }
-
-        // Check field name 'patient_first_name' first before field var 'x_patient_first_name'
-        $val = $CurrentForm->hasValue("patient_first_name") ? $CurrentForm->getValue("patient_first_name") : $CurrentForm->getValue("x_patient_first_name");
-        if (!$this->patient_first_name->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->patient_first_name->Visible = false; // Disable update for API request
-            } else {
-                $this->patient_first_name->setFormValue($val);
-            }
-        }
-
-        // Check field name 'patient_last_name' first before field var 'x_patient_last_name'
-        $val = $CurrentForm->hasValue("patient_last_name") ? $CurrentForm->getValue("patient_last_name") : $CurrentForm->getValue("x_patient_last_name");
-        if (!$this->patient_last_name->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->patient_last_name->Visible = false; // Disable update for API request
-            } else {
-                $this->patient_last_name->setFormValue($val);
             }
         }
 
@@ -787,9 +780,8 @@ class JdhPatientsEdit extends JdhPatients
     {
         global $CurrentForm;
         $this->patient_id->CurrentValue = $this->patient_id->FormValue;
+        $this->patient_name->CurrentValue = $this->patient_name->FormValue;
         $this->patient_national_id->CurrentValue = $this->patient_national_id->FormValue;
-        $this->patient_first_name->CurrentValue = $this->patient_first_name->FormValue;
-        $this->patient_last_name->CurrentValue = $this->patient_last_name->FormValue;
         $this->patient_gender->CurrentValue = $this->patient_gender->FormValue;
         $this->patient_phone->CurrentValue = $this->patient_phone->FormValue;
         $this->patient_kin_name->CurrentValue = $this->patient_kin_name->FormValue;
@@ -848,9 +840,8 @@ class JdhPatientsEdit extends JdhPatients
         if (is_resource($this->photo->Upload->DbValue) && get_resource_type($this->photo->Upload->DbValue) == "stream") { // Byte array
             $this->photo->Upload->DbValue = stream_get_contents($this->photo->Upload->DbValue);
         }
+        $this->patient_name->setDbValue($row['patient_name']);
         $this->patient_national_id->setDbValue($row['patient_national_id']);
-        $this->patient_first_name->setDbValue($row['patient_first_name']);
-        $this->patient_last_name->setDbValue($row['patient_last_name']);
         $this->patient_dob->setDbValue($row['patient_dob']);
         $this->patient_age->setDbValue($row['patient_age']);
         $this->patient_gender->setDbValue($row['patient_gender']);
@@ -866,9 +857,8 @@ class JdhPatientsEdit extends JdhPatients
         $row = [];
         $row['patient_id'] = $this->patient_id->DefaultValue;
         $row['photo'] = $this->photo->DefaultValue;
+        $row['patient_name'] = $this->patient_name->DefaultValue;
         $row['patient_national_id'] = $this->patient_national_id->DefaultValue;
-        $row['patient_first_name'] = $this->patient_first_name->DefaultValue;
-        $row['patient_last_name'] = $this->patient_last_name->DefaultValue;
         $row['patient_dob'] = $this->patient_dob->DefaultValue;
         $row['patient_age'] = $this->patient_age->DefaultValue;
         $row['patient_gender'] = $this->patient_gender->DefaultValue;
@@ -916,14 +906,11 @@ class JdhPatientsEdit extends JdhPatients
         // photo
         $this->photo->RowCssClass = "row";
 
+        // patient_name
+        $this->patient_name->RowCssClass = "row";
+
         // patient_national_id
         $this->patient_national_id->RowCssClass = "row";
-
-        // patient_first_name
-        $this->patient_first_name->RowCssClass = "row";
-
-        // patient_last_name
-        $this->patient_last_name->RowCssClass = "row";
 
         // patient_dob
         $this->patient_dob->RowCssClass = "row";
@@ -963,14 +950,11 @@ class JdhPatientsEdit extends JdhPatients
                 $this->photo->ViewValue = "";
             }
 
+            // patient_name
+            $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
+
             // patient_national_id
             $this->patient_national_id->ViewValue = $this->patient_national_id->CurrentValue;
-
-            // patient_first_name
-            $this->patient_first_name->ViewValue = $this->patient_first_name->CurrentValue;
-
-            // patient_last_name
-            $this->patient_last_name->ViewValue = $this->patient_last_name->CurrentValue;
 
             // patient_dob
             $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
@@ -1001,7 +985,15 @@ class JdhPatientsEdit extends JdhPatients
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
             // patient_id
-            $this->patient_id->HrefValue = "";
+            if (!EmptyValue($this->patient_id->CurrentValue)) {
+                $this->patient_id->HrefValue = $this->patient_id->CurrentValue; // Add prefix/suffix
+                $this->patient_id->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->patient_id->HrefValue = FullUrl($this->patient_id->HrefValue, "href");
+                }
+            } else {
+                $this->patient_id->HrefValue = "";
+            }
 
             // photo
             if (!empty($this->photo->Upload->DbValue)) {
@@ -1018,14 +1010,11 @@ class JdhPatientsEdit extends JdhPatients
             }
             $this->photo->ExportHrefValue = GetFileUploadUrl($this->photo, $this->patient_id->CurrentValue);
 
+            // patient_name
+            $this->patient_name->HrefValue = "";
+
             // patient_national_id
             $this->patient_national_id->HrefValue = "";
-
-            // patient_first_name
-            $this->patient_first_name->HrefValue = "";
-
-            // patient_last_name
-            $this->patient_last_name->HrefValue = "";
 
             // patient_gender
             $this->patient_gender->HrefValue = "";
@@ -1059,6 +1048,14 @@ class JdhPatientsEdit extends JdhPatients
                 RenderUploadField($this->photo);
             }
 
+            // patient_name
+            $this->patient_name->setupEditAttributes();
+            if (!$this->patient_name->Raw) {
+                $this->patient_name->CurrentValue = HtmlDecode($this->patient_name->CurrentValue);
+            }
+            $this->patient_name->EditValue = HtmlEncode($this->patient_name->CurrentValue);
+            $this->patient_name->PlaceHolder = RemoveHtml($this->patient_name->caption());
+
             // patient_national_id
             $this->patient_national_id->setupEditAttributes();
             if (!$this->patient_national_id->Raw) {
@@ -1066,22 +1063,6 @@ class JdhPatientsEdit extends JdhPatients
             }
             $this->patient_national_id->EditValue = HtmlEncode($this->patient_national_id->CurrentValue);
             $this->patient_national_id->PlaceHolder = RemoveHtml($this->patient_national_id->caption());
-
-            // patient_first_name
-            $this->patient_first_name->setupEditAttributes();
-            if (!$this->patient_first_name->Raw) {
-                $this->patient_first_name->CurrentValue = HtmlDecode($this->patient_first_name->CurrentValue);
-            }
-            $this->patient_first_name->EditValue = HtmlEncode($this->patient_first_name->CurrentValue);
-            $this->patient_first_name->PlaceHolder = RemoveHtml($this->patient_first_name->caption());
-
-            // patient_last_name
-            $this->patient_last_name->setupEditAttributes();
-            if (!$this->patient_last_name->Raw) {
-                $this->patient_last_name->CurrentValue = HtmlDecode($this->patient_last_name->CurrentValue);
-            }
-            $this->patient_last_name->EditValue = HtmlEncode($this->patient_last_name->CurrentValue);
-            $this->patient_last_name->PlaceHolder = RemoveHtml($this->patient_last_name->caption());
 
             // patient_gender
             $this->patient_gender->setupEditAttributes();
@@ -1115,7 +1096,15 @@ class JdhPatientsEdit extends JdhPatients
             // Edit refer script
 
             // patient_id
-            $this->patient_id->HrefValue = "";
+            if (!EmptyValue($this->patient_id->CurrentValue)) {
+                $this->patient_id->HrefValue = $this->patient_id->CurrentValue; // Add prefix/suffix
+                $this->patient_id->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->patient_id->HrefValue = FullUrl($this->patient_id->HrefValue, "href");
+                }
+            } else {
+                $this->patient_id->HrefValue = "";
+            }
 
             // photo
             if (!empty($this->photo->Upload->DbValue)) {
@@ -1132,14 +1121,11 @@ class JdhPatientsEdit extends JdhPatients
             }
             $this->photo->ExportHrefValue = GetFileUploadUrl($this->photo, $this->patient_id->CurrentValue);
 
+            // patient_name
+            $this->patient_name->HrefValue = "";
+
             // patient_national_id
             $this->patient_national_id->HrefValue = "";
-
-            // patient_first_name
-            $this->patient_first_name->HrefValue = "";
-
-            // patient_last_name
-            $this->patient_last_name->HrefValue = "";
 
             // patient_gender
             $this->patient_gender->HrefValue = "";
@@ -1183,19 +1169,14 @@ class JdhPatientsEdit extends JdhPatients
                 $this->photo->addErrorMessage(str_replace("%s", $this->photo->caption(), $this->photo->RequiredErrorMessage));
             }
         }
+        if ($this->patient_name->Required) {
+            if (!$this->patient_name->IsDetailKey && EmptyValue($this->patient_name->FormValue)) {
+                $this->patient_name->addErrorMessage(str_replace("%s", $this->patient_name->caption(), $this->patient_name->RequiredErrorMessage));
+            }
+        }
         if ($this->patient_national_id->Required) {
             if (!$this->patient_national_id->IsDetailKey && EmptyValue($this->patient_national_id->FormValue)) {
                 $this->patient_national_id->addErrorMessage(str_replace("%s", $this->patient_national_id->caption(), $this->patient_national_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->patient_first_name->Required) {
-            if (!$this->patient_first_name->IsDetailKey && EmptyValue($this->patient_first_name->FormValue)) {
-                $this->patient_first_name->addErrorMessage(str_replace("%s", $this->patient_first_name->caption(), $this->patient_first_name->RequiredErrorMessage));
-            }
-        }
-        if ($this->patient_last_name->Required) {
-            if (!$this->patient_last_name->IsDetailKey && EmptyValue($this->patient_last_name->FormValue)) {
-                $this->patient_last_name->addErrorMessage(str_replace("%s", $this->patient_last_name->caption(), $this->patient_last_name->RequiredErrorMessage));
             }
         }
         if ($this->patient_gender->Required) {
@@ -1302,14 +1283,11 @@ class JdhPatientsEdit extends JdhPatients
             }
         }
 
+        // patient_name
+        $this->patient_name->setDbValueDef($rsnew, $this->patient_name->CurrentValue, "", $this->patient_name->ReadOnly);
+
         // patient_national_id
         $this->patient_national_id->setDbValueDef($rsnew, $this->patient_national_id->CurrentValue, null, $this->patient_national_id->ReadOnly);
-
-        // patient_first_name
-        $this->patient_first_name->setDbValueDef($rsnew, $this->patient_first_name->CurrentValue, "", $this->patient_first_name->ReadOnly);
-
-        // patient_last_name
-        $this->patient_last_name->setDbValueDef($rsnew, $this->patient_last_name->CurrentValue, "", $this->patient_last_name->ReadOnly);
 
         // patient_gender
         $this->patient_gender->setDbValueDef($rsnew, $this->patient_gender->CurrentValue, "", $this->patient_gender->ReadOnly);
@@ -1623,6 +1601,23 @@ class JdhPatientsEdit extends JdhPatients
         $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhpatientslist"), "", $this->TableVar, true);
         $pageId = "edit";
         $Breadcrumb->add("edit", $pageId, $url);
+    }
+
+    // Set up detail pages
+    protected function setupDetailPages()
+    {
+        $pages = new SubPages();
+        $pages->Style = "tabs";
+        $pages->add('jdh_appointments');
+        $pages->add('jdh_patient_cases');
+        $pages->add('jdh_vitals');
+        $pages->add('jdh_patient_visits');
+        $pages->add('jdh_chief_complaints');
+        $pages->add('jdh_examination_findings');
+        $pages->add('jdh_prescriptions');
+        $pages->add('jdh_test_requests');
+        $pages->add('jdh_test_reports');
+        $this->DetailPages = $pages;
     }
 
     // Setup lookup options

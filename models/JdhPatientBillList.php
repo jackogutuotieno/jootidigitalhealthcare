@@ -615,6 +615,9 @@ class JdhPatientBillList extends JdhPatientBill
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Create form object
+        $CurrentForm = new HttpForm();
+
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -680,8 +683,8 @@ class JdhPatientBillList extends JdhPatientBill
             $this->ListActions->add($name, $action);
         }
 
-        // Set up lookup cache
-        $this->setupLookupOptions($this->patient_id);
+        // Load default values for add
+        $this->loadDefaultValues();
 
         // Update form name to avoid conflict
         if ($this->IsModal) {
@@ -725,6 +728,50 @@ class JdhPatientBillList extends JdhPatientBill
             $this->import(Param(Config("API_FILE_TOKEN_NAME")), ConvertToBool(Param("rollback")));
             $this->terminate();
             return;
+        }
+
+        // Check QueryString parameters
+        if (Get("action") !== null) {
+            $this->CurrentAction = Get("action");
+        } else {
+            if (Post("action") !== null) {
+                $this->CurrentAction = Post("action"); // Get action
+            }
+        }
+
+        // Clear inline mode
+        if ($this->isCancel()) {
+            $this->clearInlineMode();
+        }
+
+        // Switch to inline edit mode
+        if ($this->isEdit()) {
+            $this->inlineEditMode();
+        // Inline Update
+        } elseif (IsPost() && ($this->isUpdate() || $this->isOverwrite()) && Session(SESSION_INLINE_MODE) == "edit") {
+            $this->setKey(Post($this->OldKeyName));
+            // Return JSON error message if UseAjaxActions
+            if (!$this->inlineUpdate() && $this->UseAjaxActions) {
+                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                $this->clearFailureMessage();
+                $this->terminate();
+                return;
+            }
+        }
+
+        // Switch to inline add mode
+        if ($this->isAdd() || $this->isCopy()) {
+            $this->inlineAddMode();
+        // Insert Inline
+        } elseif (IsPost() && $this->isInsert() && Session(SESSION_INLINE_MODE) == "add") {
+            $this->setKey(Post($this->OldKeyName));
+            // Return JSON error message if UseAjaxActions
+            if (!$this->inlineInsert() && $this->UseAjaxActions) {
+                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                $this->clearFailureMessage();
+                $this->terminate();
+                return;
+            }
         }
 
         // Hide list options
@@ -927,6 +974,126 @@ class JdhPatientBillList extends JdhPatientBill
         }
     }
 
+    // Exit inline mode
+    protected function clearInlineMode()
+    {
+        $this->LastAction = $this->CurrentAction; // Save last action
+        $this->CurrentAction = ""; // Clear action
+        $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
+    }
+
+    // Switch to Inline Edit mode
+    protected function inlineEditMode()
+    {
+        global $Security, $Language;
+        if (!$Security->canEdit()) {
+            return false; // Edit not allowed
+        }
+        $inlineEdit = true;
+        if (($keyValue = Get("bill_id") ?? Route("bill_id")) !== null) {
+            $this->bill_id->setQueryStringValue($keyValue);
+        } elseif (IsApi() && ($keyValue = Route(2)) !== null) {
+            $this->bill_id->setQueryStringValue($keyValue);
+        } else {
+            $inlineEdit = false;
+        }
+        if ($inlineEdit) {
+            if ($this->loadRow()) {
+                    // Check if valid User ID
+                    if (!$this->showOptionLink("edit")) {
+                        $userIdMsg = $Language->phrase("NoEditPermission");
+                        $this->setFailureMessage($userIdMsg);
+                        $this->clearInlineMode(); // Clear inline edit mode
+                        return false;
+                    }
+                $this->OldKey = $this->getKey(true); // Get from CurrentValue
+                $this->setKey($this->OldKey); // Set to OldValue
+                $_SESSION[SESSION_INLINE_MODE] = "edit"; // Enable inline edit
+            }
+        }
+        return true;
+    }
+
+    // Perform update to Inline Edit record
+    protected function inlineUpdate()
+    {
+        global $Language, $CurrentForm;
+        $CurrentForm->Index = 1;
+        $this->loadFormValues(); // Get form values
+
+        // Validate form
+        $inlineUpdate = true;
+        if (!$this->validateForm()) {
+            $inlineUpdate = false; // Form error, reset action
+        } else {
+            $inlineUpdate = false;
+            $this->SendEmail = true; // Send email on update success
+            $inlineUpdate = $this->editRow(); // Update record
+        }
+        if ($inlineUpdate) { // Update success
+            if ($this->getSuccessMessage() == "") {
+                $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Set up success message
+            }
+            $this->clearInlineMode(); // Clear inline edit mode
+        } else {
+            if ($this->getFailureMessage() == "") {
+                $this->setFailureMessage($Language->phrase("UpdateFailed")); // Set update failed message
+            }
+            $this->EventCancelled = true; // Cancel event
+            $this->CurrentAction = "edit"; // Stay in edit mode
+        }
+        return $inlineUpdate;
+    }
+
+    // Check Inline Edit key
+    public function checkInlineEditKey()
+    {
+        if (!SameString($this->bill_id->OldValue, $this->bill_id->CurrentValue)) {
+            return false;
+        }
+        return true;
+    }
+
+    // Switch to Inline Add mode
+    protected function inlineAddMode()
+    {
+        global $Security, $Language;
+        if (!$Security->canAdd()) {
+            return false; // Add not allowed
+        }
+        $this->CurrentAction = "add";
+        $_SESSION[SESSION_INLINE_MODE] = "add"; // Enable inline add
+        return true;
+    }
+
+    // Perform update to Inline Add/Copy record
+    protected function inlineInsert()
+    {
+        global $Language, $CurrentForm;
+        $rsold = $this->loadOldRecord(); // Load old record
+        $CurrentForm->Index = 0;
+        $this->loadFormValues(); // Get form values
+
+        // Validate form
+        if (!$this->validateForm()) {
+            $this->EventCancelled = true; // Set event cancelled
+            $this->CurrentAction = "add"; // Stay in add mode
+            return false;
+        }
+        $this->SendEmail = true; // Send email on add success
+        if ($this->addRow($rsold)) { // Add record
+            if ($this->getSuccessMessage() == "") {
+                $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up add success message
+            }
+            $this->clearInlineMode(); // Clear inline add mode
+            return true;
+        } else { // Add failed
+            $this->EventCancelled = true; // Set event cancelled
+            $this->CurrentAction = "add"; // Stay in add mode
+            return false;
+        }
+    }
+
     // Build filter for all keys
     protected function buildKeyFilter()
     {
@@ -956,6 +1123,14 @@ class JdhPatientBillList extends JdhPatientBill
             $thisKey = strval($CurrentForm->getValue($this->OldKeyName));
         }
         return $wrkFilter;
+    }
+
+    // Reset form status
+    public function resetFormError()
+    {
+        $this->bill_id->clearErrorMessage();
+        $this->patient_id->clearErrorMessage();
+        $this->bill_date->clearErrorMessage();
     }
 
     // Set up sort parameters
@@ -1057,9 +1232,9 @@ class JdhPatientBillList extends JdhPatientBill
         $item->ShowInButtonGroup = false;
 
         // Drop down button for ListOptions
-        $this->ListOptions->UseDropDownButton = true;
+        $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
-        $this->ListOptions->UseButtonGroup = false;
+        $this->ListOptions->UseButtonGroup = true;
         if ($this->ListOptions->UseButtonGroup && IsMobile()) {
             $this->ListOptions->UseDropDownButton = true;
         }
@@ -1093,7 +1268,88 @@ class JdhPatientBillList extends JdhPatientBill
 
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
+
+        // Set up row action and key
+        if ($CurrentForm && is_numeric($this->RowIndex) && $this->RowType != "view") {
+            $CurrentForm->Index = $this->RowIndex;
+            $actionName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormActionName);
+            $oldKeyName = str_replace("k_", "k" . $this->RowIndex . "_", $this->OldKeyName);
+            $blankRowName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormBlankRowName);
+            if ($this->RowAction != "") {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $actionName . "\" id=\"" . $actionName . "\" value=\"" . $this->RowAction . "\">";
+            }
+            $oldKey = $this->getKey(false); // Get from OldValue
+            if ($oldKeyName != "" && $oldKey != "") {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $oldKeyName . "\" id=\"" . $oldKeyName . "\" value=\"" . HtmlEncode($oldKey) . "\">";
+            }
+            if ($this->RowAction == "insert" && $this->isConfirm() && $this->emptyRow()) {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $blankRowName . "\" id=\"" . $blankRowName . "\" value=\"1\">";
+            }
+        }
         $pageUrl = $this->pageUrl(false);
+
+        // "copy"
+        $opt = $this->ListOptions["copy"];
+        if ($this->isInlineAddRow() || $this->isInlineCopyRow()) { // Inline Add/Copy
+            $this->ListOptions->CustomItem = "copy"; // Show copy column only
+            $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
+            $insertCaption = $Language->phrase("InsertLink");
+            $insertTitle = HtmlTitle($insertCaption);
+            $cancelCaption = $Language->phrase("CancelLink");
+            $cancelTitle = HtmlTitle($cancelCaption);
+            $inlineInsertUrl = GetUrl($this->pageName());
+            if ($this->UseAjaxActions) {
+                $opt->Body = <<<INLINEADDAJAX
+                    <div{$divClass}>
+                        <button type="button" class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" data-ew-action="inline" data-action="insert" data-key="" data-url="{$inlineInsertUrl}">{$insertCaption}</button>
+                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel">{$cancelCaption}</button>
+                    </div>
+                    INLINEADDAJAX;
+            } else {
+                $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
+                $opt->Body = <<<INLINEADD
+                    <div{$divClass}>
+                        <button class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" form="fjdh_patient_billlist" formaction="{$inlineInsertUrl}">{$insertCaption}</button>
+                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$insertTitle}" href="{$cancelurl}">{$cancelCaption}</a>
+                        <input type="hidden" name="action" id="action" value="insert">
+                    </div>
+                    INLINEADD;
+            }
+            return;
+        }
+
+        // "edit"
+        $opt = $this->ListOptions["edit"];
+        if ($this->isInlineEditRow()) { // Inline-Edit
+            $this->ListOptions->CustomItem = "edit"; // Show edit column only
+            $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
+                $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
+                $updateCaption = $Language->phrase("UpdateLink");
+                $updateTitle = HtmlTitle($updateCaption);
+                $cancelCaption = $Language->phrase("CancelLink");
+                $cancelTitle = HtmlTitle($cancelCaption);
+                $oldKey = HtmlEncode($this->getKey(true));
+                $inlineUpdateUrl = HtmlEncode(GetUrl($this->urlAddHash($this->pageName(), "r" . $this->RowCount . "_" . $this->TableVar)));
+                if ($this->UseAjaxActions) {
+                    $inlineCancelUrl = $this->InlineEditUrl . "?action=cancel";
+                    $opt->Body = <<<INLINEEDITAJAX
+                    <div{$divClass}>
+                        <button type="button" class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" data-ew-action="inline" data-action="update" data-key="{$oldKey}" data-url="{$inlineUpdateUrl}">{$updateCaption}</button>
+                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel" data-key="{$oldKey}" data-url="{$inlineCancelUrl}">{$cancelCaption}</button>
+                    </div>
+                    INLINEEDITAJAX;
+                } else {
+                    $opt->Body = <<<INLINEEDIT
+                    <div{$divClass}>
+                        <button class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" form="fjdh_patient_billlist" formaction="{$inlineUpdateUrl}">{$updateCaption}</button>
+                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$updateTitle}" href="{$cancelurl}">{$cancelCaption}</a>
+                        <input type="hidden" name="action" id="action" value="update">
+                    </div>
+                    INLINEEDIT;
+                }
+            $opt->Body .= "<input type=\"hidden\" name=\"" . $this->OldKeyName . "\" id=\"" . $this->OldKeyName . "\" value=\"" . HtmlEncode($this->bill_id->CurrentValue) . "\">";
+            return;
+        }
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1116,6 +1372,13 @@ class JdhPatientBillList extends JdhPatientBill
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_patient_bill\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
+                }
+                $inlineEditCaption = $Language->phrase("InlineEditLink");
+                $inlineEditTitle = HtmlTitle($inlineEditCaption);
+                if ($this->UseAjaxActions) {
+                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" data-ew-action=\"inline\" data-action=\"edit\" data-key=\"" . HtmlEncode($this->getKey(true)) . "\" data-url=\"" . HtmlEncode($this->InlineEditUrl) . "\">" . $inlineEditCaption . "</a>";
+                } else {
+                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" href=\"" . HtmlEncode($this->urlAddHash(GetUrl($this->InlineEditUrl), "r" . $this->RowCount . "_" . $this->TableVar)) . "\">" . $inlineEditCaption . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1201,6 +1464,15 @@ class JdhPatientBillList extends JdhPatientBill
             $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
         }
         $item->Visible = $this->AddUrl != "" && $Security->canAdd();
+
+        // Inline Add
+        $item = &$option->add("inlineadd");
+        if ($this->UseAjaxActions) {
+            $item->Body = "<button class=\"ew-add-edit ew-inline-add\" title=\"" . $Language->phrase("InlineAddLink", true) . "\" data-caption=\"" . $Language->phrase("InlineAddLink", true) . "\" data-ew-action=\"inline\" data-action=\"add\" data-position=\"top\" data-url=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</button>";
+        } else {
+            $item->Body = "<a class=\"ew-add-edit ew-inline-add\" title=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</a>";
+        }
+        $item->Visible = $this->InlineAddUrl != "" && $Security->canAdd();
         $option = $options["action"];
 
         // Add multi delete
@@ -1406,6 +1678,15 @@ class JdhPatientBillList extends JdhPatientBill
                 $this->StopRecord = $this->TotalRecords;
             }
         }
+
+        // Restore number of post back records
+        if ($CurrentForm && ($this->isConfirm() || $this->EventCancelled)) {
+            $CurrentForm->Index = -1;
+            if ($CurrentForm->hasValue($this->FormKeyCountName) && ($this->isGridAdd() || $this->isGridEdit() || $this->isConfirm())) {
+                $this->KeyCount = $CurrentForm->getValue($this->FormKeyCountName);
+                $this->StopRecord = $this->StartRecord + $this->KeyCount - 1;
+            }
+        }
         $this->RecordCount = $this->StartRecord - 1;
         if ($this->Recordset && !$this->Recordset->EOF) {
             // Nothing to do
@@ -1419,6 +1700,15 @@ class JdhPatientBillList extends JdhPatientBill
         $this->RowType = ROWTYPE_AGGREGATEINIT;
         $this->resetAttributes();
         $this->renderRow();
+        if ($this->isAdd() || $this->isCopy() || $this->isInlineInserted()) {
+            $this->RowIndex = 0;
+            if ($this->UseInfiniteScroll) {
+                $this->StopRecord = $this->StartRecord; // Show this record only
+            }
+        }
+        if ($this->isEdit()) {
+            $this->RowIndex = 1;
+        }
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
             $this->RowIndex = '$rowindex$';
         }
@@ -1475,6 +1765,24 @@ class JdhPatientBillList extends JdhPatientBill
         if (($this->isAdd() || $this->isCopy()) && $this->InlineRowCount == 0 || $this->isGridAdd()) { // Add
             $this->RowType = ROWTYPE_ADD; // Render add
         }
+        if ($this->isEdit() || $this->isInlineUpdated() || $this->isInlineEditCancelled()) { // Inline edit/updated/cancelled
+            if ($this->checkInlineEditKey() && $this->InlineRowCount == 0) {
+                if ($this->isEdit()) { // Inline edit
+                    $this->RowAction = "edit";
+                    $this->RowType = ROWTYPE_EDIT; // Render edit
+                } else { // Inline updated
+                    $this->RowAction = "";
+                    $this->RowType = ROWTYPE_VIEW; // Render view
+                    $this->RowAttrs["data-oldkey"] = $this->getKey(); // Set up old key
+                }
+            } elseif ($this->UseInfiniteScroll) {
+                $this->RowAction = "hide";
+            }
+        }
+        if ($this->isEdit() && $this->RowType == ROWTYPE_EDIT && $this->EventCancelled) { // Update failed
+            $CurrentForm->Index = 1;
+            $this->restoreFormValues(); // Restore form values
+        }
 
         // Inline Add/Copy row (row 0)
         if ($this->RowType == ROWTYPE_ADD && ($this->isAdd() || $this->isCopy())) {
@@ -1508,6 +1816,58 @@ class JdhPatientBillList extends JdhPatientBill
 
         // Render list options
         $this->renderListOptions();
+    }
+
+    // Load default values
+    protected function loadDefaultValues()
+    {
+    }
+
+    // Load form values
+    protected function loadFormValues()
+    {
+        // Load from form
+        global $CurrentForm;
+        $validate = !Config("SERVER_VALIDATE");
+
+        // Check field name 'bill_id' first before field var 'x_bill_id'
+        $val = $CurrentForm->hasValue("bill_id") ? $CurrentForm->getValue("bill_id") : $CurrentForm->getValue("x_bill_id");
+        if (!$this->bill_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->bill_id->setFormValue($val);
+        }
+
+        // Check field name 'patient_id' first before field var 'x_patient_id'
+        $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
+        if (!$this->patient_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->patient_id->Visible = false; // Disable update for API request
+            } else {
+                $this->patient_id->setFormValue($val, true, $validate);
+            }
+        }
+
+        // Check field name 'bill_date' first before field var 'x_bill_date'
+        $val = $CurrentForm->hasValue("bill_date") ? $CurrentForm->getValue("bill_date") : $CurrentForm->getValue("x_bill_date");
+        if (!$this->bill_date->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->bill_date->Visible = false; // Disable update for API request
+            } else {
+                $this->bill_date->setFormValue($val, true, $validate);
+            }
+            $this->bill_date->CurrentValue = UnFormatDateTime($this->bill_date->CurrentValue, $this->bill_date->formatPattern());
+        }
+    }
+
+    // Restore form values
+    public function restoreFormValues()
+    {
+        global $CurrentForm;
+        if (!$this->isGridAdd() && !$this->isAdd()) {
+            $this->bill_id->CurrentValue = $this->bill_id->FormValue;
+        }
+        $this->patient_id->CurrentValue = $this->patient_id->FormValue;
+        $this->bill_date->CurrentValue = $this->bill_date->FormValue;
+        $this->bill_date->CurrentValue = UnFormatDateTime($this->bill_date->CurrentValue, $this->bill_date->formatPattern());
     }
 
     // Load recordset
@@ -1570,6 +1930,9 @@ class JdhPatientBillList extends JdhPatientBill
         if ($row) {
             $res = true;
             $this->loadRowValues($row); // Load row values
+            if (!$this->EventCancelled) {
+                $this->HashValue = $this->getRowHash($row); // Get hash value for record
+            }
         }
         return $res;
     }
@@ -1667,27 +2030,8 @@ class JdhPatientBillList extends JdhPatientBill
             $this->bill_id->ViewValue = $this->bill_id->CurrentValue;
 
             // patient_id
-            $curVal = strval($this->patient_id->CurrentValue);
-            if ($curVal != "") {
-                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                    } else {
-                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->patient_id->ViewValue = null;
-            }
+            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
+            $this->patient_id->ViewValue = FormatNumber($this->patient_id->ViewValue, $this->patient_id->formatPattern());
 
             // bill_date
             $this->bill_date->ViewValue = $this->bill_date->CurrentValue;
@@ -1708,12 +2052,178 @@ class JdhPatientBillList extends JdhPatientBill
             // bill_date
             $this->bill_date->HrefValue = "";
             $this->bill_date->TooltipValue = "";
+        } elseif ($this->RowType == ROWTYPE_ADD) {
+            // bill_id
+
+            // patient_id
+            $this->patient_id->setupEditAttributes();
+            $this->patient_id->EditValue = HtmlEncode($this->patient_id->CurrentValue);
+            $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+            if (strval($this->patient_id->EditValue) != "" && is_numeric($this->patient_id->EditValue)) {
+                $this->patient_id->EditValue = FormatNumber($this->patient_id->EditValue, null);
+            }
+
+            // bill_date
+            $this->bill_date->setupEditAttributes();
+            $this->bill_date->EditValue = HtmlEncode(FormatDateTime($this->bill_date->CurrentValue, $this->bill_date->formatPattern()));
+            $this->bill_date->PlaceHolder = RemoveHtml($this->bill_date->caption());
+
+            // Add refer script
+
+            // bill_id
+            $this->bill_id->HrefValue = "";
+
+            // patient_id
+            $this->patient_id->HrefValue = "";
+
+            // bill_date
+            $this->bill_date->HrefValue = "";
+        } elseif ($this->RowType == ROWTYPE_EDIT) {
+            // bill_id
+            $this->bill_id->setupEditAttributes();
+            $this->bill_id->EditValue = $this->bill_id->CurrentValue;
+
+            // patient_id
+            $this->patient_id->setupEditAttributes();
+            $this->patient_id->EditValue = HtmlEncode($this->patient_id->CurrentValue);
+            $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+            if (strval($this->patient_id->EditValue) != "" && is_numeric($this->patient_id->EditValue)) {
+                $this->patient_id->EditValue = FormatNumber($this->patient_id->EditValue, null);
+            }
+
+            // bill_date
+            $this->bill_date->setupEditAttributes();
+            $this->bill_date->EditValue = HtmlEncode(FormatDateTime($this->bill_date->CurrentValue, $this->bill_date->formatPattern()));
+            $this->bill_date->PlaceHolder = RemoveHtml($this->bill_date->caption());
+
+            // Edit refer script
+
+            // bill_id
+            $this->bill_id->HrefValue = "";
+
+            // patient_id
+            $this->patient_id->HrefValue = "";
+
+            // bill_date
+            $this->bill_date->HrefValue = "";
+        }
+        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+            $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
+    }
+
+    // Validate form
+    protected function validateForm()
+    {
+        global $Language, $Security;
+
+        // Check if validation required
+        if (!Config("SERVER_VALIDATE")) {
+            return true;
+        }
+        $validateForm = true;
+        if ($this->bill_id->Required) {
+            if (!$this->bill_id->IsDetailKey && EmptyValue($this->bill_id->FormValue)) {
+                $this->bill_id->addErrorMessage(str_replace("%s", $this->bill_id->caption(), $this->bill_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->patient_id->Required) {
+            if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
+                $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
+            }
+        }
+        if (!CheckInteger($this->patient_id->FormValue)) {
+            $this->patient_id->addErrorMessage($this->patient_id->getErrorMessage(false));
+        }
+        if ($this->bill_date->Required) {
+            if (!$this->bill_date->IsDetailKey && EmptyValue($this->bill_date->FormValue)) {
+                $this->bill_date->addErrorMessage(str_replace("%s", $this->bill_date->caption(), $this->bill_date->RequiredErrorMessage));
+            }
+        }
+        if (!CheckDate($this->bill_date->FormValue, $this->bill_date->formatPattern())) {
+            $this->bill_date->addErrorMessage($this->bill_date->getErrorMessage(false));
+        }
+
+        // Return validate result
+        $validateForm = $validateForm && !$this->hasInvalidFields();
+
+        // Call Form_CustomValidate event
+        $formCustomError = "";
+        $validateForm = $validateForm && $this->formCustomValidate($formCustomError);
+        if ($formCustomError != "") {
+            $this->setFailureMessage($formCustomError);
+        }
+        return $validateForm;
+    }
+
+    // Update record based on key values
+    protected function editRow()
+    {
+        global $Security, $Language;
+        $oldKeyFilter = $this->getRecordFilter();
+        $filter = $this->applyUserIDFilters($oldKeyFilter);
+        $conn = $this->getConnection();
+
+        // Load old row
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $rsold = $conn->fetchAssociative($sql);
+        if (!$rsold) {
+            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
+            return false; // Update Failed
+        } else {
+            // Save old values
+            $this->loadDbValues($rsold);
+        }
+
+        // Set new row
+        $rsnew = [];
+
+        // patient_id
+        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, $this->patient_id->ReadOnly);
+
+        // bill_date
+        $this->bill_date->setDbValueDef($rsnew, UnFormatDateTime($this->bill_date->CurrentValue, $this->bill_date->formatPattern()), CurrentDate(), $this->bill_date->ReadOnly);
+
+        // Update current values
+        $this->setCurrentValues($rsnew);
+
+        // Call Row Updating event
+        $updateRow = $this->rowUpdating($rsold, $rsnew);
+        if ($updateRow) {
+            if (count($rsnew) > 0) {
+                $this->CurrentFilter = $filter; // Set up current filter
+                $editRow = $this->update($rsnew, "", $rsold);
+                if (!$editRow && !EmptyValue($this->DbErrorMessage)) { // Show database error
+                    $this->setFailureMessage($this->DbErrorMessage);
+                }
+            } else {
+                $editRow = true; // No field to update
+            }
+            if ($editRow) {
+            }
+        } else {
+            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
+                // Use the message, do nothing
+            } elseif ($this->CancelMessage != "") {
+                $this->setFailureMessage($this->CancelMessage);
+                $this->CancelMessage = "";
+            } else {
+                $this->setFailureMessage($Language->phrase("UpdateCancelled"));
+            }
+            $editRow = false;
+        }
+
+        // Call Row_Updated event
+        if ($editRow) {
+            $this->rowUpdated($rsold, $rsnew);
+        }
+        return $editRow;
     }
 
     /**
@@ -1993,6 +2503,96 @@ class JdhPatientBillList extends JdhPatientBill
         return $conn->fetchAssociative($sql);
     }
 
+    // Load row hash
+    protected function loadRowHash()
+    {
+        $filter = $this->getRecordFilter();
+
+        // Load SQL based on filter
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $conn = $this->getConnection();
+        $row = $conn->fetchAssociative($sql);
+        $this->HashValue = $row ? $this->getRowHash($row) : ""; // Get hash value for record
+    }
+
+    // Get Row Hash
+    public function getRowHash(&$rs)
+    {
+        if (!$rs) {
+            return "";
+        }
+        $row = ($rs instanceof Recordset) ? $rs->fields : $rs;
+        $hash = "";
+        $hash .= GetFieldHash($row['patient_id']); // patient_id
+        $hash .= GetFieldHash($row['bill_date']); // bill_date
+        return md5($hash);
+    }
+
+    // Add record
+    protected function addRow($rsold = null)
+    {
+        global $Language, $Security;
+
+        // Set new row
+        $rsnew = [];
+
+        // patient_id
+        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, false);
+
+        // bill_date
+        $this->bill_date->setDbValueDef($rsnew, UnFormatDateTime($this->bill_date->CurrentValue, $this->bill_date->formatPattern()), CurrentDate(), false);
+
+        // submitted_by_user_id
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['submitted_by_user_id'] = CurrentUserID();
+        }
+
+        // Update current values
+        $this->setCurrentValues($rsnew);
+
+        // Check if valid User ID
+        if (
+            !EmptyValue($Security->currentUserID()) &&
+            !$Security->isAdmin() && // Non system admin
+            !$Security->isValidUserID($this->submitted_by_user_id->CurrentValue)
+        ) {
+            $userIdMsg = str_replace("%c", CurrentUserID(), $Language->phrase("UnAuthorizedUserID"));
+            $userIdMsg = str_replace("%u", strval($this->submitted_by_user_id->CurrentValue), $userIdMsg);
+            $this->setFailureMessage($userIdMsg);
+            return false;
+        }
+        $conn = $this->getConnection();
+
+        // Load db values from old row
+        $this->loadDbValues($rsold);
+
+        // Call Row Inserting event
+        $insertRow = $this->rowInserting($rsold, $rsnew);
+        if ($insertRow) {
+            $addRow = $this->insert($rsnew);
+            if ($addRow) {
+            } elseif (!EmptyValue($this->DbErrorMessage)) { // Show database error
+                $this->setFailureMessage($this->DbErrorMessage);
+            }
+        } else {
+            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
+                // Use the message, do nothing
+            } elseif ($this->CancelMessage != "") {
+                $this->setFailureMessage($this->CancelMessage);
+                $this->CancelMessage = "";
+            } else {
+                $this->setFailureMessage($Language->phrase("InsertCancelled"));
+            }
+            $addRow = false;
+        }
+        if ($addRow) {
+            // Call Row Inserted event
+            $this->rowInserted($rsold, $rsnew);
+        }
+        return $addRow;
+    }
+
     // Get export HTML tag
     protected function getExportTag($type, $custom = false)
     {
@@ -2255,8 +2855,6 @@ class JdhPatientBillList extends JdhPatientBill
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
-                case "x_patient_id":
-                    break;
                 default:
                     $lookupFilter = "";
                     break;

@@ -207,7 +207,7 @@ loadjs.ready("fjdh_test_reportsgrid", function() {
     } else {
         options.ajax = { id: "x<?= $Grid->RowIndex ?>_patient_id", form: "fjdh_test_reportsgrid", limit: ew.LOOKUP_PAGE_SIZE };
     }
-    options.minimumResultsForSearch = Infinity;
+    options.minimumInputLength = ew.selectMinimumInputLength;
     options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_reports.fields.patient_id.selectOptions);
     ew.createSelect(options);
 });
@@ -248,7 +248,7 @@ loadjs.ready("fjdh_test_reportsgrid", function() {
     } else {
         options.ajax = { id: "x<?= $Grid->RowIndex ?>_patient_id", form: "fjdh_test_reportsgrid", limit: ew.LOOKUP_PAGE_SIZE };
     }
-    options.minimumResultsForSearch = Infinity;
+    options.minimumInputLength = ew.selectMinimumInputLength;
     options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_reports.fields.patient_id.selectOptions);
     ew.createSelect(options);
 });

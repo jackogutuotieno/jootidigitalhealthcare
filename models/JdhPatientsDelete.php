@@ -372,13 +372,12 @@ class JdhPatientsDelete extends JdhPatients
         $this->CurrentAction = Param("action"); // Set up current action
         $this->patient_id->setVisibility();
         $this->photo->Visible = false;
+        $this->patient_name->setVisibility();
         $this->patient_national_id->setVisibility();
-        $this->patient_first_name->setVisibility();
-        $this->patient_last_name->setVisibility();
         $this->patient_dob->setVisibility();
         $this->patient_age->setVisibility();
         $this->patient_gender->setVisibility();
-        $this->patient_phone->Visible = false;
+        $this->patient_phone->setVisibility();
         $this->patient_kin_name->Visible = false;
         $this->patient_kin_phone->Visible = false;
         $this->patient_registration_date->setVisibility();
@@ -591,9 +590,8 @@ class JdhPatientsDelete extends JdhPatients
         if (is_resource($this->photo->Upload->DbValue) && get_resource_type($this->photo->Upload->DbValue) == "stream") { // Byte array
             $this->photo->Upload->DbValue = stream_get_contents($this->photo->Upload->DbValue);
         }
+        $this->patient_name->setDbValue($row['patient_name']);
         $this->patient_national_id->setDbValue($row['patient_national_id']);
-        $this->patient_first_name->setDbValue($row['patient_first_name']);
-        $this->patient_last_name->setDbValue($row['patient_last_name']);
         $this->patient_dob->setDbValue($row['patient_dob']);
         $this->patient_age->setDbValue($row['patient_age']);
         $this->patient_gender->setDbValue($row['patient_gender']);
@@ -609,9 +607,8 @@ class JdhPatientsDelete extends JdhPatients
         $row = [];
         $row['patient_id'] = $this->patient_id->DefaultValue;
         $row['photo'] = $this->photo->DefaultValue;
+        $row['patient_name'] = $this->patient_name->DefaultValue;
         $row['patient_national_id'] = $this->patient_national_id->DefaultValue;
-        $row['patient_first_name'] = $this->patient_first_name->DefaultValue;
-        $row['patient_last_name'] = $this->patient_last_name->DefaultValue;
         $row['patient_dob'] = $this->patient_dob->DefaultValue;
         $row['patient_age'] = $this->patient_age->DefaultValue;
         $row['patient_gender'] = $this->patient_gender->DefaultValue;
@@ -638,11 +635,9 @@ class JdhPatientsDelete extends JdhPatients
 
         // photo
 
+        // patient_name
+
         // patient_national_id
-
-        // patient_first_name
-
-        // patient_last_name
 
         // patient_dob
 
@@ -663,14 +658,11 @@ class JdhPatientsDelete extends JdhPatients
             // patient_id
             $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
+            // patient_name
+            $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
+
             // patient_national_id
             $this->patient_national_id->ViewValue = $this->patient_national_id->CurrentValue;
-
-            // patient_first_name
-            $this->patient_first_name->ViewValue = $this->patient_first_name->CurrentValue;
-
-            // patient_last_name
-            $this->patient_last_name->ViewValue = $this->patient_last_name->CurrentValue;
 
             // patient_dob
             $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
@@ -701,20 +693,24 @@ class JdhPatientsDelete extends JdhPatients
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
             // patient_id
-            $this->patient_id->HrefValue = "";
+            if (!EmptyValue($this->patient_id->CurrentValue)) {
+                $this->patient_id->HrefValue = $this->patient_id->CurrentValue; // Add prefix/suffix
+                $this->patient_id->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->patient_id->HrefValue = FullUrl($this->patient_id->HrefValue, "href");
+                }
+            } else {
+                $this->patient_id->HrefValue = "";
+            }
             $this->patient_id->TooltipValue = "";
+
+            // patient_name
+            $this->patient_name->HrefValue = "";
+            $this->patient_name->TooltipValue = "";
 
             // patient_national_id
             $this->patient_national_id->HrefValue = "";
             $this->patient_national_id->TooltipValue = "";
-
-            // patient_first_name
-            $this->patient_first_name->HrefValue = "";
-            $this->patient_first_name->TooltipValue = "";
-
-            // patient_last_name
-            $this->patient_last_name->HrefValue = "";
-            $this->patient_last_name->TooltipValue = "";
 
             // patient_dob
             $this->patient_dob->HrefValue = "";
@@ -727,6 +723,10 @@ class JdhPatientsDelete extends JdhPatients
             // patient_gender
             $this->patient_gender->HrefValue = "";
             $this->patient_gender->TooltipValue = "";
+
+            // patient_phone
+            $this->patient_phone->HrefValue = "";
+            $this->patient_phone->TooltipValue = "";
 
             // patient_registration_date
             $this->patient_registration_date->HrefValue = "";

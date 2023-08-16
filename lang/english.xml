@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/8/8">
+<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/8/16">
   <!--
     IMPORTANT NOTES:
     1. Language ID must be RFC 4646 language tags (which use hyphen, not underscore), e.g. en-US, fr-CA, fr-FR,
@@ -1228,9 +1228,6 @@
     <menu id="4">
       <phrase id="menutext" value="Test Subcategories" />
     </menu>
-    <menu id="103">
-      <phrase id="menutext" value="Test Costs" />
-    </menu>
     <menu id="17">
       <phrase id="menutext" value="Test Requests" />
     </menu>
@@ -1279,7 +1276,7 @@
         <phrase id="fldcaption" value="No" />
       </field>
       <field id="patient_id">
-        <phrase id="fldcaption" value="Patient" />
+        <phrase id="fldcaption" value="Patient Name" />
       </field>
       <field id="appointment_title">
         <phrase id="fldcaption" value="Title" />
@@ -1380,12 +1377,12 @@
       </field>
     </table>
     <table id="jdh_patient_cases">
-      <phrase id="tblcaption" value="Patient Cases" />
+      <phrase id="tblcaption" value="Cases" />
       <field id="case_id">
         <phrase id="fldcaption" value="Case No." />
       </field>
       <field id="patient_id">
-        <phrase id="fldcaption" value="Patient" />
+        <phrase id="fldcaption" value="Patient Name" />
       </field>
       <field id="history">
         <phrase id="fldcaption" value="History of Presenting Illness" />
@@ -1439,20 +1436,17 @@
     <table id="jdh_patients">
       <phrase id="tblcaption" value="Patients" />
       <field id="patient_id">
-        <phrase id="fldcaption" value="Patient" />
+        <phrase id="fldcaption" value="No" />
       </field>
       <field id="photo">
         <phrase id="fldcaption" value="Photo" />
         <phrase id="fldalt" value="Patient Photo" />
       </field>
+      <field id="patient_name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
       <field id="patient_national_id">
         <phrase id="fldcaption" value="National ID/Passport No" />
-      </field>
-      <field id="patient_first_name">
-        <phrase id="fldcaption" value="First Name" />
-      </field>
-      <field id="patient_last_name">
-        <phrase id="fldcaption" value="Last Name" />
       </field>
       <field id="patient_dob">
         <phrase id="fldcaption" value="Date of Birth" />
@@ -1486,7 +1480,7 @@
         <phrase id="fldcaption" value="Prescription No" />
       </field>
       <field id="patient_id">
-        <phrase id="fldcaption" value="Patient" />
+        <phrase id="fldcaption" value="Patient Name" />
       </field>
       <field id="prescription_title">
         <phrase id="fldcaption" value="Title" />
@@ -1582,13 +1576,13 @@
     <table id="jdh_test_reports">
       <phrase id="tblcaption" value="Test Reports" />
       <field id="report_id">
-        <phrase id="fldcaption" value="Report No" />
+        <phrase id="fldcaption" value="No." />
       </field>
       <field id="request_id">
         <phrase id="fldcaption" value="Request No" />
       </field>
       <field id="patient_id">
-        <phrase id="fldcaption" value="Patient" />
+        <phrase id="fldcaption" value="Patient Name" />
       </field>
       <field id="report_findings">
         <phrase id="fldcaption" value="Findings" />
@@ -1697,12 +1691,12 @@
       </field>
     </table>
     <table id="jdh_vitals">
-      <phrase id="tblcaption" value="Patient Vitals" />
+      <phrase id="tblcaption" value="Vitals" />
       <field id="vitals_id">
         <phrase id="fldcaption" value="No" />
       </field>
       <field id="patient_id">
-        <phrase id="fldcaption" value="Patient" />
+        <phrase id="fldcaption" value="Patient Name" />
       </field>
       <field id="pressure">
         <phrase id="fldcaption" value="Pressure (mmHg)" />
@@ -1955,37 +1949,13 @@
         <phrase id="fldtagcaption2" value="No" />
       </field>
     </table>
-    <table id="jdh_test_costs">
-      <phrase id="tblcaption" value="Test Costs" />
-      <field id="test_id">
-        <phrase id="fldcaption" value="Test No" />
-      </field>
-      <field id="test_category_id">
-        <phrase id="fldcaption" value="Category" />
-      </field>
-      <field id="test_subcategory_id">
-        <phrase id="fldcaption" value="Subcategory" />
-      </field>
-      <field id="test_cost">
-        <phrase id="fldcaption" value="Cost (KES)" />
-      </field>
-      <field id="date_submitted">
-        <phrase id="fldcaption" value="Submission Date" />
-      </field>
-      <field id="date_updated">
-        <phrase id="fldcaption" value="Last Updated" />
-      </field>
-      <field id="submitted_by_user_id">
-        <phrase id="fldcaption" value="Height(metres)" />
-      </field>
-    </table>
     <table id="jdh_chief_complaints">
       <phrase id="tblcaption" value="Chief Complaints" />
       <field id="id">
         <phrase id="fldcaption" value="No" />
       </field>
       <field id="patient_id">
-        <phrase id="fldcaption" value="Patient No" />
+        <phrase id="fldcaption" value="Patient Name" />
       </field>
       <field id="chief_compaints">
         <phrase id="fldcaption" value="Chief Complaint" />
@@ -2012,7 +1982,7 @@
         <phrase id="fldcaption" value="No" />
       </field>
       <field id="patient_id">
-        <phrase id="fldcaption" value="Patient" />
+        <phrase id="fldcaption" value="Patient Name" />
       </field>
       <field id="general_exams">
         <phrase id="fldcaption" value="General Exams" />

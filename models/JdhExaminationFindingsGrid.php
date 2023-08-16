@@ -1308,9 +1308,9 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
         $item->OnLeft = false;
 
         // Drop down button for ListOptions
-        $this->ListOptions->UseDropDownButton = true;
+        $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
-        $this->ListOptions->UseButtonGroup = false;
+        $this->ListOptions->UseButtonGroup = true;
         if ($this->ListOptions->UseButtonGroup && IsMobile()) {
             $this->ListOptions->UseDropDownButton = true;
         }
@@ -1665,7 +1665,7 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
             if (IsApi() && $val === null) {
                 $this->patient_id->Visible = false; // Disable update for API request
             } else {
-                $this->patient_id->setFormValue($val);
+                $this->patient_id->setFormValue($val, true, $validate);
             }
         }
         if ($CurrentForm->hasValue("o_patient_id")) {
@@ -1870,6 +1870,7 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
             $this->id->ViewValue = $this->id->CurrentValue;
 
             // patient_id
+            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
             $curVal = strval($this->patient_id->CurrentValue);
             if ($curVal != "") {
                 $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
@@ -1929,6 +1930,7 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
             if ($this->patient_id->getSessionValue() != "") {
                 $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
                 $this->patient_id->OldValue = $this->patient_id->CurrentValue;
+                $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
                 $curVal = strval($this->patient_id->CurrentValue);
                 if ($curVal != "") {
                     $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
@@ -1951,28 +1953,27 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
                     $this->patient_id->ViewValue = null;
                 }
             } else {
-                $curVal = trim(strval($this->patient_id->CurrentValue));
+                $this->patient_id->EditValue = HtmlEncode($this->patient_id->CurrentValue);
+                $curVal = strval($this->patient_id->CurrentValue);
                 if ($curVal != "") {
-                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                } else {
-                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
-                }
-                if ($this->patient_id->ViewValue !== null) { // Load from cache
-                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
-                } else { // Lookup from database
-                    if ($curVal == "") {
-                        $filterWrk = "0=1";
-                    } else {
-                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $this->patient_id->EditValue = $this->patient_id->lookupCacheOption($curVal);
+                    if ($this->patient_id->EditValue === null) { // Lookup from database
+                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $conn = Conn();
+                        $config = $conn->getConfiguration();
+                        $config->setResultCacheImpl($this->Cache);
+                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                        $ari = count($rswrk);
+                        if ($ari > 0) { // Lookup values found
+                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                            $this->patient_id->EditValue = $this->patient_id->displayValue($arwrk);
+                        } else {
+                            $this->patient_id->EditValue = HtmlEncode(FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern()));
+                        }
                     }
-                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    $arwrk = $rswrk;
-                    $this->patient_id->EditValue = $arwrk;
+                } else {
+                    $this->patient_id->EditValue = null;
                 }
                 $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
             }
@@ -2016,6 +2017,7 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
             if ($this->patient_id->getSessionValue() != "") {
                 $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
                 $this->patient_id->OldValue = $this->patient_id->CurrentValue;
+                $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
                 $curVal = strval($this->patient_id->CurrentValue);
                 if ($curVal != "") {
                     $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
@@ -2038,28 +2040,27 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
                     $this->patient_id->ViewValue = null;
                 }
             } else {
-                $curVal = trim(strval($this->patient_id->CurrentValue));
+                $this->patient_id->EditValue = HtmlEncode($this->patient_id->CurrentValue);
+                $curVal = strval($this->patient_id->CurrentValue);
                 if ($curVal != "") {
-                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                } else {
-                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
-                }
-                if ($this->patient_id->ViewValue !== null) { // Load from cache
-                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
-                } else { // Lookup from database
-                    if ($curVal == "") {
-                        $filterWrk = "0=1";
-                    } else {
-                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $this->patient_id->EditValue = $this->patient_id->lookupCacheOption($curVal);
+                    if ($this->patient_id->EditValue === null) { // Lookup from database
+                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $conn = Conn();
+                        $config = $conn->getConfiguration();
+                        $config->setResultCacheImpl($this->Cache);
+                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                        $ari = count($rswrk);
+                        if ($ari > 0) { // Lookup values found
+                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                            $this->patient_id->EditValue = $this->patient_id->displayValue($arwrk);
+                        } else {
+                            $this->patient_id->EditValue = HtmlEncode(FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern()));
+                        }
                     }
-                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    $arwrk = $rswrk;
-                    $this->patient_id->EditValue = $arwrk;
+                } else {
+                    $this->patient_id->EditValue = null;
                 }
                 $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
             }
@@ -2123,6 +2124,9 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
             if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
                 $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
             }
+        }
+        if (!CheckInteger($this->patient_id->FormValue)) {
+            $this->patient_id->addErrorMessage($this->patient_id->getErrorMessage(false));
         }
         if ($this->general_exams->Required) {
             if (!$this->general_exams->IsDetailKey && EmptyValue($this->general_exams->FormValue)) {

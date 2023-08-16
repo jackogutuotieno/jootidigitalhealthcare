@@ -123,7 +123,7 @@ loadjs.ready("fjdh_test_reportsadd", function() {
     } else {
         options.ajax = { id: "x_patient_id", form: "fjdh_test_reportsadd", limit: ew.LOOKUP_PAGE_SIZE };
     }
-    options.minimumResultsForSearch = Infinity;
+    options.minimumInputLength = ew.selectMinimumInputLength;
     options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_reports.fields.patient_id.selectOptions);
     ew.createSelect(options);
 });

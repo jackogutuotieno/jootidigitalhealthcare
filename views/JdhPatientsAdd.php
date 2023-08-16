@@ -23,9 +23,8 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["photo", [fields.photo.visible && fields.photo.required ? ew.Validators.fileRequired(fields.photo.caption) : null], fields.photo.isInvalid],
+            ["patient_name", [fields.patient_name.visible && fields.patient_name.required ? ew.Validators.required(fields.patient_name.caption) : null], fields.patient_name.isInvalid],
             ["patient_national_id", [fields.patient_national_id.visible && fields.patient_national_id.required ? ew.Validators.required(fields.patient_national_id.caption) : null], fields.patient_national_id.isInvalid],
-            ["patient_first_name", [fields.patient_first_name.visible && fields.patient_first_name.required ? ew.Validators.required(fields.patient_first_name.caption) : null], fields.patient_first_name.isInvalid],
-            ["patient_last_name", [fields.patient_last_name.visible && fields.patient_last_name.required ? ew.Validators.required(fields.patient_last_name.caption) : null], fields.patient_last_name.isInvalid],
             ["patient_dob", [fields.patient_dob.visible && fields.patient_dob.required ? ew.Validators.required(fields.patient_dob.caption) : null, ew.Validators.datetime(fields.patient_dob.clientFormatPattern)], fields.patient_dob.isInvalid],
             ["patient_gender", [fields.patient_gender.visible && fields.patient_gender.required ? ew.Validators.required(fields.patient_gender.caption) : null], fields.patient_gender.isInvalid],
             ["patient_phone", [fields.patient_phone.visible && fields.patient_phone.required ? ew.Validators.required(fields.patient_phone.caption) : null], fields.patient_phone.isInvalid],
@@ -111,6 +110,18 @@ $Page->showMessage();
 </div></div>
     </div>
 <?php } ?>
+<?php if ($Page->patient_name->Visible) { // patient_name ?>
+    <div id="r_patient_name"<?= $Page->patient_name->rowAttributes() ?>>
+        <label id="elh_jdh_patients_patient_name" for="x_patient_name" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_name->caption() ?><?= $Page->patient_name->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_name->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_name">
+<input type="<?= $Page->patient_name->getInputTextType() ?>" name="x_patient_name" id="x_patient_name" data-table="jdh_patients" data-field="x_patient_name" value="<?= $Page->patient_name->EditValue ?>" size="30" maxlength="50" placeholder="<?= HtmlEncode($Page->patient_name->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_name->formatPattern()) ?>"<?= $Page->patient_name->editAttributes() ?> aria-describedby="x_patient_name_help">
+<?= $Page->patient_name->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->patient_name->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
 <?php if ($Page->patient_national_id->Visible) { // patient_national_id ?>
     <div id="r_patient_national_id"<?= $Page->patient_national_id->rowAttributes() ?>>
         <label id="elh_jdh_patients_patient_national_id" for="x_patient_national_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_national_id->caption() ?><?= $Page->patient_national_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
@@ -119,30 +130,6 @@ $Page->showMessage();
 <input type="<?= $Page->patient_national_id->getInputTextType() ?>" name="x_patient_national_id" id="x_patient_national_id" data-table="jdh_patients" data-field="x_patient_national_id" value="<?= $Page->patient_national_id->EditValue ?>" size="30" maxlength="13" placeholder="<?= HtmlEncode($Page->patient_national_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_national_id->formatPattern()) ?>"<?= $Page->patient_national_id->editAttributes() ?> aria-describedby="x_patient_national_id_help">
 <?= $Page->patient_national_id->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->patient_national_id->getErrorMessage() ?></div>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->patient_first_name->Visible) { // patient_first_name ?>
-    <div id="r_patient_first_name"<?= $Page->patient_first_name->rowAttributes() ?>>
-        <label id="elh_jdh_patients_patient_first_name" for="x_patient_first_name" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_first_name->caption() ?><?= $Page->patient_first_name->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_first_name->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_first_name">
-<input type="<?= $Page->patient_first_name->getInputTextType() ?>" name="x_patient_first_name" id="x_patient_first_name" data-table="jdh_patients" data-field="x_patient_first_name" value="<?= $Page->patient_first_name->EditValue ?>" size="30" maxlength="50" placeholder="<?= HtmlEncode($Page->patient_first_name->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_first_name->formatPattern()) ?>"<?= $Page->patient_first_name->editAttributes() ?> aria-describedby="x_patient_first_name_help">
-<?= $Page->patient_first_name->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->patient_first_name->getErrorMessage() ?></div>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->patient_last_name->Visible) { // patient_last_name ?>
-    <div id="r_patient_last_name"<?= $Page->patient_last_name->rowAttributes() ?>>
-        <label id="elh_jdh_patients_patient_last_name" for="x_patient_last_name" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_last_name->caption() ?><?= $Page->patient_last_name->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_last_name->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_last_name">
-<input type="<?= $Page->patient_last_name->getInputTextType() ?>" name="x_patient_last_name" id="x_patient_last_name" data-table="jdh_patients" data-field="x_patient_last_name" value="<?= $Page->patient_last_name->EditValue ?>" size="30" maxlength="50" placeholder="<?= HtmlEncode($Page->patient_last_name->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_last_name->formatPattern()) ?>"<?= $Page->patient_last_name->editAttributes() ?> aria-describedby="x_patient_last_name_help">
-<?= $Page->patient_last_name->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->patient_last_name->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>
@@ -265,77 +252,144 @@ loadjs.ready("fjdh_patientsadd", function() {
     </div>
 <?php } ?>
 </div><!-- /page* -->
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<?php
+    $Page->DetailPages->ValidKeys = explode(",", $Page->getCurrentDetailTable());
+?>
+<div class="ew-detail-pages"><!-- detail-pages -->
+<div class="ew-nav<?= $Page->DetailPages->containerClasses() ?>" id="details_Page"><!-- tabs -->
+    <ul class="<?= $Page->DetailPages->navClasses() ?>" role="tablist"><!-- .nav -->
 <?php
     if (in_array("jdh_appointments", explode(",", $Page->getCurrentDetailTable())) && $jdh_appointments->DetailAdd) {
 ?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_appointments", "TblCaption") ?></h4>
-<?php } ?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_appointments") ?><?= $Page->DetailPages->activeClasses("jdh_appointments") ?>" data-bs-target="#tab_jdh_appointments" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_appointments" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_appointments")) ?>"><?= $Language->tablePhrase("jdh_appointments", "TblCaption") ?></button></li>
+<?php
+    }
+?>
+<?php
+    if (in_array("jdh_patient_cases", explode(",", $Page->getCurrentDetailTable())) && $jdh_patient_cases->DetailAdd) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_patient_cases") ?><?= $Page->DetailPages->activeClasses("jdh_patient_cases") ?>" data-bs-target="#tab_jdh_patient_cases" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_patient_cases" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_patient_cases")) ?>"><?= $Language->tablePhrase("jdh_patient_cases", "TblCaption") ?></button></li>
+<?php
+    }
+?>
+<?php
+    if (in_array("jdh_vitals", explode(",", $Page->getCurrentDetailTable())) && $jdh_vitals->DetailAdd) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" data-bs-target="#tab_jdh_vitals" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_vitals" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_vitals")) ?>"><?= $Language->tablePhrase("jdh_vitals", "TblCaption") ?></button></li>
+<?php
+    }
+?>
+<?php
+    if (in_array("jdh_patient_visits", explode(",", $Page->getCurrentDetailTable())) && $jdh_patient_visits->DetailAdd) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_patient_visits") ?><?= $Page->DetailPages->activeClasses("jdh_patient_visits") ?>" data-bs-target="#tab_jdh_patient_visits" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_patient_visits" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_patient_visits")) ?>"><?= $Language->tablePhrase("jdh_patient_visits", "TblCaption") ?></button></li>
+<?php
+    }
+?>
+<?php
+    if (in_array("jdh_chief_complaints", explode(",", $Page->getCurrentDetailTable())) && $jdh_chief_complaints->DetailAdd) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_chief_complaints") ?><?= $Page->DetailPages->activeClasses("jdh_chief_complaints") ?>" data-bs-target="#tab_jdh_chief_complaints" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_chief_complaints" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_chief_complaints")) ?>"><?= $Language->tablePhrase("jdh_chief_complaints", "TblCaption") ?></button></li>
+<?php
+    }
+?>
+<?php
+    if (in_array("jdh_examination_findings", explode(",", $Page->getCurrentDetailTable())) && $jdh_examination_findings->DetailAdd) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_examination_findings") ?><?= $Page->DetailPages->activeClasses("jdh_examination_findings") ?>" data-bs-target="#tab_jdh_examination_findings" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_examination_findings" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_examination_findings")) ?>"><?= $Language->tablePhrase("jdh_examination_findings", "TblCaption") ?></button></li>
+<?php
+    }
+?>
+<?php
+    if (in_array("jdh_prescriptions", explode(",", $Page->getCurrentDetailTable())) && $jdh_prescriptions->DetailAdd) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_prescriptions") ?><?= $Page->DetailPages->activeClasses("jdh_prescriptions") ?>" data-bs-target="#tab_jdh_prescriptions" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_prescriptions" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_prescriptions")) ?>"><?= $Language->tablePhrase("jdh_prescriptions", "TblCaption") ?></button></li>
+<?php
+    }
+?>
+<?php
+    if (in_array("jdh_test_requests", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_requests->DetailAdd) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_test_requests") ?><?= $Page->DetailPages->activeClasses("jdh_test_requests") ?>" data-bs-target="#tab_jdh_test_requests" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_test_requests" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_test_requests")) ?>"><?= $Language->tablePhrase("jdh_test_requests", "TblCaption") ?></button></li>
+<?php
+    }
+?>
+<?php
+    if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailAdd) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_test_reports") ?><?= $Page->DetailPages->activeClasses("jdh_test_reports") ?>" data-bs-target="#tab_jdh_test_reports" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_test_reports" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_test_reports")) ?>"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?></button></li>
+<?php
+    }
+?>
+    </ul><!-- /.nav -->
+    <div class="<?= $Page->DetailPages->tabContentClasses() ?>"><!-- .tab-content -->
+<?php
+    if (in_array("jdh_appointments", explode(",", $Page->getCurrentDetailTable())) && $jdh_appointments->DetailAdd) {
+?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_appointments") ?><?= $Page->DetailPages->activeClasses("jdh_appointments") ?>" id="tab_jdh_appointments" role="tabpanel"><!-- page* -->
 <?php include_once "JdhAppointmentsGrid.php" ?>
+        </div><!-- /page* -->
 <?php } ?>
 <?php
     if (in_array("jdh_patient_cases", explode(",", $Page->getCurrentDetailTable())) && $jdh_patient_cases->DetailAdd) {
 ?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_patient_cases", "TblCaption") ?></h4>
-<?php } ?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_patient_cases") ?><?= $Page->DetailPages->activeClasses("jdh_patient_cases") ?>" id="tab_jdh_patient_cases" role="tabpanel"><!-- page* -->
 <?php include_once "JdhPatientCasesGrid.php" ?>
+        </div><!-- /page* -->
 <?php } ?>
 <?php
     if (in_array("jdh_vitals", explode(",", $Page->getCurrentDetailTable())) && $jdh_vitals->DetailAdd) {
 ?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_vitals", "TblCaption") ?></h4>
-<?php } ?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" id="tab_jdh_vitals" role="tabpanel"><!-- page* -->
 <?php include_once "JdhVitalsGrid.php" ?>
+        </div><!-- /page* -->
 <?php } ?>
 <?php
     if (in_array("jdh_patient_visits", explode(",", $Page->getCurrentDetailTable())) && $jdh_patient_visits->DetailAdd) {
 ?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_patient_visits", "TblCaption") ?></h4>
-<?php } ?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_patient_visits") ?><?= $Page->DetailPages->activeClasses("jdh_patient_visits") ?>" id="tab_jdh_patient_visits" role="tabpanel"><!-- page* -->
 <?php include_once "JdhPatientVisitsGrid.php" ?>
+        </div><!-- /page* -->
 <?php } ?>
 <?php
     if (in_array("jdh_chief_complaints", explode(",", $Page->getCurrentDetailTable())) && $jdh_chief_complaints->DetailAdd) {
 ?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_chief_complaints", "TblCaption") ?></h4>
-<?php } ?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_chief_complaints") ?><?= $Page->DetailPages->activeClasses("jdh_chief_complaints") ?>" id="tab_jdh_chief_complaints" role="tabpanel"><!-- page* -->
 <?php include_once "JdhChiefComplaintsGrid.php" ?>
+        </div><!-- /page* -->
 <?php } ?>
 <?php
     if (in_array("jdh_examination_findings", explode(",", $Page->getCurrentDetailTable())) && $jdh_examination_findings->DetailAdd) {
 ?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_examination_findings", "TblCaption") ?></h4>
-<?php } ?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_examination_findings") ?><?= $Page->DetailPages->activeClasses("jdh_examination_findings") ?>" id="tab_jdh_examination_findings" role="tabpanel"><!-- page* -->
 <?php include_once "JdhExaminationFindingsGrid.php" ?>
+        </div><!-- /page* -->
 <?php } ?>
 <?php
     if (in_array("jdh_prescriptions", explode(",", $Page->getCurrentDetailTable())) && $jdh_prescriptions->DetailAdd) {
 ?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_prescriptions", "TblCaption") ?></h4>
-<?php } ?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_prescriptions") ?><?= $Page->DetailPages->activeClasses("jdh_prescriptions") ?>" id="tab_jdh_prescriptions" role="tabpanel"><!-- page* -->
 <?php include_once "JdhPrescriptionsGrid.php" ?>
+        </div><!-- /page* -->
 <?php } ?>
 <?php
     if (in_array("jdh_test_requests", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_requests->DetailAdd) {
 ?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_test_requests", "TblCaption") ?></h4>
-<?php } ?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_test_requests") ?><?= $Page->DetailPages->activeClasses("jdh_test_requests") ?>" id="tab_jdh_test_requests" role="tabpanel"><!-- page* -->
 <?php include_once "JdhTestRequestsGrid.php" ?>
+        </div><!-- /page* -->
 <?php } ?>
 <?php
     if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailAdd) {
 ?>
-<?php if ($Page->getCurrentDetailTable() != "") { ?>
-<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?></h4>
-<?php } ?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_test_reports") ?><?= $Page->DetailPages->activeClasses("jdh_test_reports") ?>" id="tab_jdh_test_reports" role="tabpanel"><!-- page* -->
 <?php include_once "JdhTestReportsGrid.php" ?>
+        </div><!-- /page* -->
+<?php } ?>
+    </div><!-- /.tab-content -->
+</div><!-- /tabs -->
+</div><!-- /detail-pages -->
 <?php } ?>
 <?= $Page->IsModal ? '<template class="ew-modal-buttons">' : '<div class="row ew-buttons">' ?><!-- buttons .row -->
     <div class="<?= $Page->OffsetColumnClass ?>"><!-- buttons offset -->

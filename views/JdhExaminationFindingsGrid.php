@@ -24,7 +24,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["id", [fields.id.visible && fields.id.required ? ew.Validators.required(fields.id.caption) : null], fields.id.isInvalid],
-            ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
+            ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null, ew.Validators.integer], fields.patient_id.isInvalid],
             ["general_exams", [fields.general_exams.visible && fields.general_exams.required ? ew.Validators.required(fields.general_exams.caption) : null], fields.general_exams.isInvalid],
             ["systematic_exams", [fields.systematic_exams.visible && fields.systematic_exams.required ? ew.Validators.required(fields.systematic_exams.caption) : null], fields.systematic_exams.isInvalid]
         ])
@@ -155,36 +155,22 @@ $Grid->ListOptions->render("body", "left", $Grid->RowCount);
 <input type="hidden" id="x<?= $Grid->RowIndex ?>_patient_id" name="x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->CurrentValue) ?>" data-hidden="1">
 <?php } else { ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
-    <select
-        id="x<?= $Grid->RowIndex ?>_patient_id"
-        name="x<?= $Grid->RowIndex ?>_patient_id"
-        class="form-select ew-select<?= $Grid->patient_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_examination_findingsgrid_x<?= $Grid->RowIndex ?>_patient_id"
-        data-table="jdh_examination_findings"
-        data-field="x_patient_id"
-        data-value-separator="<?= $Grid->patient_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->patient_id->getPlaceHolder()) ?>"
-        <?= $Grid->patient_id->editAttributes() ?>>
-        <?= $Grid->patient_id->selectOptionListHtml("x{$Grid->RowIndex}_patient_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Grid->patient_id->getErrorMessage() ?></div>
-<?= $Grid->patient_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_patient_id") ?>
+<?php
+if (IsRTL()) {
+    $Grid->patient_id->EditAttrs["dir"] = "rtl";
+}
+?>
+<span id="as_x<?= $Grid->RowIndex ?>_patient_id" class="ew-auto-suggest">
+    <input type="<?= $Grid->patient_id->getInputTextType() ?>" class="form-control" name="sv_x<?= $Grid->RowIndex ?>_patient_id" id="sv_x<?= $Grid->RowIndex ?>_patient_id" value="<?= RemoveHtml($Grid->patient_id->EditValue) ?>" autocomplete="off" size="30" placeholder="<?= HtmlEncode($Grid->patient_id->getPlaceHolder()) ?>" data-placeholder="<?= HtmlEncode($Grid->patient_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->patient_id->formatPattern()) ?>"<?= $Grid->patient_id->editAttributes() ?>>
+</span>
+<selection-list hidden class="form-control" data-table="jdh_examination_findings" data-field="x_patient_id" data-input="sv_x<?= $Grid->RowIndex ?>_patient_id" data-value-separator="<?= $Grid->patient_id->displayValueSeparatorAttribute() ?>" name="x<?= $Grid->RowIndex ?>_patient_id" id="x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->CurrentValue) ?>"></selection-list>
+<div class="invalid-feedback"><?= $Grid->patient_id->getErrorMessage() ?></div>
 <script>
 loadjs.ready("fjdh_examination_findingsgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_patient_id", selectId: "fjdh_examination_findingsgrid_x<?= $Grid->RowIndex ?>_patient_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_examination_findingsgrid.lists.patient_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_patient_id", form: "fjdh_examination_findingsgrid" };
-    } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_patient_id", form: "fjdh_examination_findingsgrid", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumInputLength = ew.selectMinimumInputLength;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_examination_findings.fields.patient_id.selectOptions);
-    ew.createSelect(options);
+    fjdh_examination_findingsgrid.createAutoSuggest(Object.assign({"id":"x<?= $Grid->RowIndex ?>_patient_id","forceSelect":false}, { lookupAllDisplayFields: <?= $Grid->patient_id->Lookup->LookupAllDisplayFields ? "true" : "false" ?> }, ew.vars.tables.jdh_examination_findings.fields.patient_id.autoSuggestOptions));
 });
 </script>
+<?= $Grid->patient_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_patient_id") ?>
 </span>
 <?php } ?>
 <input type="hidden" data-table="jdh_examination_findings" data-field="x_patient_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_patient_id" id="o<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->OldValue) ?>">
@@ -196,36 +182,22 @@ loadjs.ready("fjdh_examination_findingsgrid", function() {
 <input type="hidden" id="x<?= $Grid->RowIndex ?>_patient_id" name="x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->CurrentValue) ?>" data-hidden="1">
 <?php } else { ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
-    <select
-        id="x<?= $Grid->RowIndex ?>_patient_id"
-        name="x<?= $Grid->RowIndex ?>_patient_id"
-        class="form-select ew-select<?= $Grid->patient_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_examination_findingsgrid_x<?= $Grid->RowIndex ?>_patient_id"
-        data-table="jdh_examination_findings"
-        data-field="x_patient_id"
-        data-value-separator="<?= $Grid->patient_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->patient_id->getPlaceHolder()) ?>"
-        <?= $Grid->patient_id->editAttributes() ?>>
-        <?= $Grid->patient_id->selectOptionListHtml("x{$Grid->RowIndex}_patient_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Grid->patient_id->getErrorMessage() ?></div>
-<?= $Grid->patient_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_patient_id") ?>
+<?php
+if (IsRTL()) {
+    $Grid->patient_id->EditAttrs["dir"] = "rtl";
+}
+?>
+<span id="as_x<?= $Grid->RowIndex ?>_patient_id" class="ew-auto-suggest">
+    <input type="<?= $Grid->patient_id->getInputTextType() ?>" class="form-control" name="sv_x<?= $Grid->RowIndex ?>_patient_id" id="sv_x<?= $Grid->RowIndex ?>_patient_id" value="<?= RemoveHtml($Grid->patient_id->EditValue) ?>" autocomplete="off" size="30" placeholder="<?= HtmlEncode($Grid->patient_id->getPlaceHolder()) ?>" data-placeholder="<?= HtmlEncode($Grid->patient_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->patient_id->formatPattern()) ?>"<?= $Grid->patient_id->editAttributes() ?>>
+</span>
+<selection-list hidden class="form-control" data-table="jdh_examination_findings" data-field="x_patient_id" data-input="sv_x<?= $Grid->RowIndex ?>_patient_id" data-value-separator="<?= $Grid->patient_id->displayValueSeparatorAttribute() ?>" name="x<?= $Grid->RowIndex ?>_patient_id" id="x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->CurrentValue) ?>"></selection-list>
+<div class="invalid-feedback"><?= $Grid->patient_id->getErrorMessage() ?></div>
 <script>
 loadjs.ready("fjdh_examination_findingsgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_patient_id", selectId: "fjdh_examination_findingsgrid_x<?= $Grid->RowIndex ?>_patient_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_examination_findingsgrid.lists.patient_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_patient_id", form: "fjdh_examination_findingsgrid" };
-    } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_patient_id", form: "fjdh_examination_findingsgrid", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumInputLength = ew.selectMinimumInputLength;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_examination_findings.fields.patient_id.selectOptions);
-    ew.createSelect(options);
+    fjdh_examination_findingsgrid.createAutoSuggest(Object.assign({"id":"x<?= $Grid->RowIndex ?>_patient_id","forceSelect":false}, { lookupAllDisplayFields: <?= $Grid->patient_id->Lookup->LookupAllDisplayFields ? "true" : "false" ?> }, ew.vars.tables.jdh_examination_findings.fields.patient_id.autoSuggestOptions));
 });
 </script>
+<?= $Grid->patient_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_patient_id") ?>
 </span>
 <?php } ?>
 <?php } ?>

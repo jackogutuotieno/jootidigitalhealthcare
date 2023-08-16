@@ -479,6 +479,7 @@ class JdhPatientsView extends JdhPatients
     public $RecordRange = 10;
     public $RecKey = [];
     public $IsModal = false;
+    public $DetailPages; // Detail pages object
 
     /**
      * Page run
@@ -515,9 +516,8 @@ class JdhPatientsView extends JdhPatients
         $this->CurrentAction = Param("action"); // Set up current action
         $this->patient_id->setVisibility();
         $this->photo->setVisibility();
+        $this->patient_name->setVisibility();
         $this->patient_national_id->setVisibility();
-        $this->patient_first_name->setVisibility();
-        $this->patient_last_name->setVisibility();
         $this->patient_dob->setVisibility();
         $this->patient_age->setVisibility();
         $this->patient_gender->setVisibility();
@@ -530,6 +530,9 @@ class JdhPatientsView extends JdhPatients
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
             $this->setUseLookupCache(false);
         }
+
+        // Set up detail page object
+        $this->setupDetailPages();
 
         // Global Page Loading event (in userfn*.php)
         Page_Loading();
@@ -689,16 +692,6 @@ class JdhPatientsView extends JdhPatients
         }
         $item->Visible = $this->EditUrl != "" && $Security->canEdit();
 
-        // Copy
-        $item = &$option->add("copy");
-        $copycaption = HtmlTitle($Language->phrase("ViewPageCopyLink"));
-        if ($this->IsModal) {
-            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
-        } else {
-            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
-        }
-        $item->Visible = $this->CopyUrl != "" && $Security->canAdd();
-
         // Delete
         $item = &$option->add("delete");
         $url = GetUrl($this->DeleteUrl);
@@ -732,13 +725,6 @@ class JdhPatientsView extends JdhPatients
                 $detailEditTblVar .= ",";
             }
             $detailEditTblVar .= "jdh_appointments";
-        }
-        if ($detailPageObj->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailCopyLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_appointments"))) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
-            if ($detailCopyTblVar != "") {
-                $detailCopyTblVar .= ",";
-            }
-            $detailCopyTblVar .= "jdh_appointments";
         }
         if ($links != "") {
             $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -779,13 +765,6 @@ class JdhPatientsView extends JdhPatients
             }
             $detailEditTblVar .= "jdh_patient_cases";
         }
-        if ($detailPageObj->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailCopyLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_cases"))) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
-            if ($detailCopyTblVar != "") {
-                $detailCopyTblVar .= ",";
-            }
-            $detailCopyTblVar .= "jdh_patient_cases";
-        }
         if ($links != "") {
             $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
             $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
@@ -824,13 +803,6 @@ class JdhPatientsView extends JdhPatients
                 $detailEditTblVar .= ",";
             }
             $detailEditTblVar .= "jdh_vitals";
-        }
-        if ($detailPageObj->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailCopyLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals"))) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
-            if ($detailCopyTblVar != "") {
-                $detailCopyTblVar .= ",";
-            }
-            $detailCopyTblVar .= "jdh_vitals";
         }
         if ($links != "") {
             $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -871,13 +843,6 @@ class JdhPatientsView extends JdhPatients
             }
             $detailEditTblVar .= "jdh_patient_visits";
         }
-        if ($detailPageObj->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailCopyLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_visits"))) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
-            if ($detailCopyTblVar != "") {
-                $detailCopyTblVar .= ",";
-            }
-            $detailCopyTblVar .= "jdh_patient_visits";
-        }
         if ($links != "") {
             $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
             $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
@@ -916,13 +881,6 @@ class JdhPatientsView extends JdhPatients
                 $detailEditTblVar .= ",";
             }
             $detailEditTblVar .= "jdh_chief_complaints";
-        }
-        if ($detailPageObj->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailCopyLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_chief_complaints"))) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
-            if ($detailCopyTblVar != "") {
-                $detailCopyTblVar .= ",";
-            }
-            $detailCopyTblVar .= "jdh_chief_complaints";
         }
         if ($links != "") {
             $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -963,13 +921,6 @@ class JdhPatientsView extends JdhPatients
             }
             $detailEditTblVar .= "jdh_examination_findings";
         }
-        if ($detailPageObj->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailCopyLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_examination_findings"))) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
-            if ($detailCopyTblVar != "") {
-                $detailCopyTblVar .= ",";
-            }
-            $detailCopyTblVar .= "jdh_examination_findings";
-        }
         if ($links != "") {
             $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
             $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
@@ -1008,13 +959,6 @@ class JdhPatientsView extends JdhPatients
                 $detailEditTblVar .= ",";
             }
             $detailEditTblVar .= "jdh_prescriptions";
-        }
-        if ($detailPageObj->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailCopyLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_prescriptions"))) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
-            if ($detailCopyTblVar != "") {
-                $detailCopyTblVar .= ",";
-            }
-            $detailCopyTblVar .= "jdh_prescriptions";
         }
         if ($links != "") {
             $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -1055,13 +999,6 @@ class JdhPatientsView extends JdhPatients
             }
             $detailEditTblVar .= "jdh_test_requests";
         }
-        if ($detailPageObj->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailCopyLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_requests"))) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
-            if ($detailCopyTblVar != "") {
-                $detailCopyTblVar .= ",";
-            }
-            $detailCopyTblVar .= "jdh_test_requests";
-        }
         if ($links != "") {
             $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
             $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
@@ -1100,13 +1037,6 @@ class JdhPatientsView extends JdhPatients
                 $detailEditTblVar .= ",";
             }
             $detailEditTblVar .= "jdh_test_reports";
-        }
-        if ($detailPageObj->DetailAdd && $Security->canAdd() && $Security->allowAdd(CurrentProjectID() . 'jdh_patients')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailCopyLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports"))) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
-            if ($detailCopyTblVar != "") {
-                $detailCopyTblVar .= ",";
-            }
-            $detailCopyTblVar .= "jdh_test_reports";
         }
         if ($links != "") {
             $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -1164,7 +1094,7 @@ class JdhPatientsView extends JdhPatients
         // Set up action default
         $option = $options["action"];
         $option->DropDownButtonPhrase = $Language->phrase("ButtonActions");
-        $option->UseDropDownButton = !IsJsonResponse() && true;
+        $option->UseDropDownButton = !IsJsonResponse() && false;
         $option->UseButtonGroup = true;
         $item = &$option->addGroupOption();
         $item->Body = "";
@@ -1264,9 +1194,8 @@ class JdhPatientsView extends JdhPatients
         if (is_resource($this->photo->Upload->DbValue) && get_resource_type($this->photo->Upload->DbValue) == "stream") { // Byte array
             $this->photo->Upload->DbValue = stream_get_contents($this->photo->Upload->DbValue);
         }
+        $this->patient_name->setDbValue($row['patient_name']);
         $this->patient_national_id->setDbValue($row['patient_national_id']);
-        $this->patient_first_name->setDbValue($row['patient_first_name']);
-        $this->patient_last_name->setDbValue($row['patient_last_name']);
         $this->patient_dob->setDbValue($row['patient_dob']);
         $this->patient_age->setDbValue($row['patient_age']);
         $this->patient_gender->setDbValue($row['patient_gender']);
@@ -1282,9 +1211,8 @@ class JdhPatientsView extends JdhPatients
         $row = [];
         $row['patient_id'] = $this->patient_id->DefaultValue;
         $row['photo'] = $this->photo->DefaultValue;
+        $row['patient_name'] = $this->patient_name->DefaultValue;
         $row['patient_national_id'] = $this->patient_national_id->DefaultValue;
-        $row['patient_first_name'] = $this->patient_first_name->DefaultValue;
-        $row['patient_last_name'] = $this->patient_last_name->DefaultValue;
         $row['patient_dob'] = $this->patient_dob->DefaultValue;
         $row['patient_age'] = $this->patient_age->DefaultValue;
         $row['patient_gender'] = $this->patient_gender->DefaultValue;
@@ -1317,11 +1245,9 @@ class JdhPatientsView extends JdhPatients
 
         // photo
 
+        // patient_name
+
         // patient_national_id
-
-        // patient_first_name
-
-        // patient_last_name
 
         // patient_dob
 
@@ -1342,26 +1268,11 @@ class JdhPatientsView extends JdhPatients
             // patient_id
             $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
-            // photo
-            if (!EmptyValue($this->photo->Upload->DbValue)) {
-                $this->photo->ImageWidth = 150;
-                $this->photo->ImageHeight = 150;
-                $this->photo->ImageAlt = $this->photo->alt();
-                $this->photo->ImageCssClass = "ew-image";
-                $this->photo->ViewValue = $this->patient_id->CurrentValue;
-                $this->photo->IsBlobImage = IsImageFile(ContentExtension($this->photo->Upload->DbValue));
-            } else {
-                $this->photo->ViewValue = "";
-            }
+            // patient_name
+            $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
 
             // patient_national_id
             $this->patient_national_id->ViewValue = $this->patient_national_id->CurrentValue;
-
-            // patient_first_name
-            $this->patient_first_name->ViewValue = $this->patient_first_name->CurrentValue;
-
-            // patient_last_name
-            $this->patient_last_name->ViewValue = $this->patient_last_name->CurrentValue;
 
             // patient_dob
             $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
@@ -1392,47 +1303,20 @@ class JdhPatientsView extends JdhPatients
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
             // patient_id
-            $this->patient_id->HrefValue = "";
-            $this->patient_id->TooltipValue = "";
-
-            // photo
-            if (!empty($this->photo->Upload->DbValue)) {
-                $this->photo->HrefValue = GetFileUploadUrl($this->photo, $this->patient_id->CurrentValue);
-                $this->photo->LinkAttrs["target"] = "";
-                if ($this->photo->IsBlobImage && empty($this->photo->LinkAttrs["target"])) {
-                    $this->photo->LinkAttrs["target"] = "_blank";
-                }
+            if (!EmptyValue($this->patient_id->CurrentValue)) {
+                $this->patient_id->HrefValue = $this->patient_id->CurrentValue; // Add prefix/suffix
+                $this->patient_id->LinkAttrs["target"] = ""; // Add target
                 if ($this->isExport()) {
-                    $this->photo->HrefValue = FullUrl($this->photo->HrefValue, "href");
+                    $this->patient_id->HrefValue = FullUrl($this->patient_id->HrefValue, "href");
                 }
             } else {
-                $this->photo->HrefValue = "";
+                $this->patient_id->HrefValue = "";
             }
-            $this->photo->ExportHrefValue = GetFileUploadUrl($this->photo, $this->patient_id->CurrentValue);
-            $this->photo->TooltipValue = "";
-            if ($this->photo->UseColorbox) {
-                if (EmptyValue($this->photo->TooltipValue)) {
-                    $this->photo->LinkAttrs["title"] = $Language->phrase("ViewImageGallery");
-                }
-                $this->photo->LinkAttrs["data-rel"] = "jdh_patients_x_photo";
-                $this->photo->LinkAttrs->appendClass("ew-lightbox");
-            }
+            $this->patient_id->TooltipValue = "";
 
-            // patient_national_id
-            $this->patient_national_id->HrefValue = "";
-            $this->patient_national_id->TooltipValue = "";
-
-            // patient_first_name
-            $this->patient_first_name->HrefValue = "";
-            $this->patient_first_name->TooltipValue = "";
-
-            // patient_last_name
-            $this->patient_last_name->HrefValue = "";
-            $this->patient_last_name->TooltipValue = "";
-
-            // patient_dob
-            $this->patient_dob->HrefValue = "";
-            $this->patient_dob->TooltipValue = "";
+            // patient_name
+            $this->patient_name->HrefValue = "";
+            $this->patient_name->TooltipValue = "";
 
             // patient_age
             $this->patient_age->HrefValue = "";
@@ -1441,22 +1325,6 @@ class JdhPatientsView extends JdhPatients
             // patient_gender
             $this->patient_gender->HrefValue = "";
             $this->patient_gender->TooltipValue = "";
-
-            // patient_phone
-            $this->patient_phone->HrefValue = "";
-            $this->patient_phone->TooltipValue = "";
-
-            // patient_kin_name
-            $this->patient_kin_name->HrefValue = "";
-            $this->patient_kin_name->TooltipValue = "";
-
-            // patient_kin_phone
-            $this->patient_kin_phone->HrefValue = "";
-            $this->patient_kin_phone->TooltipValue = "";
-
-            // patient_registration_date
-            $this->patient_registration_date->HrefValue = "";
-            $this->patient_registration_date->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -1962,6 +1830,23 @@ class JdhPatientsView extends JdhPatients
         $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhpatientslist"), "", $this->TableVar, true);
         $pageId = "view";
         $Breadcrumb->add("view", $pageId, $url);
+    }
+
+    // Set up detail pages
+    protected function setupDetailPages()
+    {
+        $pages = new SubPages();
+        $pages->Style = "tabs";
+        $pages->add('jdh_appointments');
+        $pages->add('jdh_patient_cases');
+        $pages->add('jdh_vitals');
+        $pages->add('jdh_patient_visits');
+        $pages->add('jdh_chief_complaints');
+        $pages->add('jdh_examination_findings');
+        $pages->add('jdh_prescriptions');
+        $pages->add('jdh_test_requests');
+        $pages->add('jdh_test_reports');
+        $this->DetailPages = $pages;
     }
 
     // Setup lookup options

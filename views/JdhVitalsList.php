@@ -251,6 +251,13 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_vitals_id" class="el_jdh_vitals_vitals_id"></span>
 <input type="hidden" data-table="jdh_vitals" data-field="x_vitals_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_vitals_id" id="o<?= $Page->RowIndex ?>_vitals_id" value="<?= HtmlEncode($Page->vitals_id->OldValue) ?>">
 <?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_vitals_id" class="el_jdh_vitals_vitals_id">
+<span<?= $Page->vitals_id->viewAttributes() ?>>
+<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->vitals_id->getDisplayValue($Page->vitals_id->EditValue))) ?>"></span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_vitals_id" data-hidden="1" name="x<?= $Page->RowIndex ?>_vitals_id" id="x<?= $Page->RowIndex ?>_vitals_id" value="<?= HtmlEncode($Page->vitals_id->CurrentValue) ?>">
+</span>
+<?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_vitals_id" class="el_jdh_vitals_vitals_id">
 <span<?= $Page->vitals_id->viewAttributes() ?>>
@@ -258,6 +265,8 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 </span>
 <?php } ?>
 </td>
+    <?php } else { ?>
+            <input type="hidden" data-table="jdh_vitals" data-field="x_vitals_id" data-hidden="1" name="x<?= $Page->RowIndex ?>_vitals_id" id="x<?= $Page->RowIndex ?>_vitals_id" value="<?= HtmlEncode($Page->vitals_id->CurrentValue) ?>">
     <?php } ?>
     <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
@@ -302,6 +311,46 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 <?php } ?>
 <input type="hidden" data-table="jdh_vitals" data-field="x_patient_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_patient_id" id="o<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->OldValue) ?>">
 <?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<?php if ($Page->patient_id->getSessionValue() != "") { ?>
+<span<?= $Page->patient_id->viewAttributes() ?>>
+<span class="form-control-plaintext"><?= $Page->patient_id->getDisplayValue($Page->patient_id->ViewValue) ?></span></span>
+<input type="hidden" id="x<?= $Page->RowIndex ?>_patient_id" name="x<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>" data-hidden="1">
+<?php } else { ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_patient_id" class="el_jdh_vitals_patient_id">
+    <select
+        id="x<?= $Page->RowIndex ?>_patient_id"
+        name="x<?= $Page->RowIndex ?>_patient_id"
+        class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
+        data-select2-id="<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_patient_id"
+        data-table="jdh_vitals"
+        data-field="x_patient_id"
+        data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>"
+        <?= $Page->patient_id->editAttributes() ?>>
+        <?= $Page->patient_id->selectOptionListHtml("x{$Page->RowIndex}_patient_id") ?>
+    </select>
+    <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
+<?= $Page->patient_id->Lookup->getParamTag($Page, "p_x" . $Page->RowIndex . "_patient_id") ?>
+<script>
+loadjs.ready("<?= $Page->FormName ?>", function() {
+    var options = { name: "x<?= $Page->RowIndex ?>_patient_id", selectId: "<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_patient_id" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (<?= $Page->FormName ?>.lists.patient_id?.lookupOptions.length) {
+        options.data = { id: "x<?= $Page->RowIndex ?>_patient_id", form: "<?= $Page->FormName ?>" };
+    } else {
+        options.ajax = { id: "x<?= $Page->RowIndex ?>_patient_id", form: "<?= $Page->FormName ?>", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumInputLength = ew.selectMinimumInputLength;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_vitals.fields.patient_id.selectOptions);
+    ew.createSelect(options);
+});
+</script>
+</span>
+<?php } ?>
+<?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_patient_id" class="el_jdh_vitals_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
@@ -318,6 +367,12 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 <div class="invalid-feedback"><?= $Page->pressure->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_vitals" data-field="x_pressure" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_pressure" id="o<?= $Page->RowIndex ?>_pressure" value="<?= HtmlEncode($Page->pressure->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_pressure" class="el_jdh_vitals_pressure">
+<input type="<?= $Page->pressure->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_pressure" id="x<?= $Page->RowIndex ?>_pressure" data-table="jdh_vitals" data-field="x_pressure" value="<?= $Page->pressure->EditValue ?>" size="30" maxlength="30" placeholder="<?= HtmlEncode($Page->pressure->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->pressure->formatPattern()) ?>"<?= $Page->pressure->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->pressure->getErrorMessage() ?></div>
+</span>
 <?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_pressure" class="el_jdh_vitals_pressure">
@@ -336,6 +391,12 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 </span>
 <input type="hidden" data-table="jdh_vitals" data-field="x_height" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_height" id="o<?= $Page->RowIndex ?>_height" value="<?= HtmlEncode($Page->height->OldValue) ?>">
 <?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_height" class="el_jdh_vitals_height">
+<input type="<?= $Page->height->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_height" id="x<?= $Page->RowIndex ?>_height" data-table="jdh_vitals" data-field="x_height" value="<?= $Page->height->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->height->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->height->formatPattern()) ?>"<?= $Page->height->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->height->getErrorMessage() ?></div>
+</span>
+<?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_height" class="el_jdh_vitals_height">
 <span<?= $Page->height->viewAttributes() ?>>
@@ -352,6 +413,12 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 <div class="invalid-feedback"><?= $Page->weight->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_vitals" data-field="x_weight" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_weight" id="o<?= $Page->RowIndex ?>_weight" value="<?= HtmlEncode($Page->weight->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_weight" class="el_jdh_vitals_weight">
+<input type="<?= $Page->weight->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_weight" id="x<?= $Page->RowIndex ?>_weight" data-table="jdh_vitals" data-field="x_weight" value="<?= $Page->weight->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->weight->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->weight->formatPattern()) ?>"<?= $Page->weight->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->weight->getErrorMessage() ?></div>
+</span>
 <?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_weight" class="el_jdh_vitals_weight">
@@ -370,6 +437,13 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 </span>
 <input type="hidden" data-table="jdh_vitals" data-field="x_body_mass_index" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_body_mass_index" id="o<?= $Page->RowIndex ?>_body_mass_index" value="<?= HtmlEncode($Page->body_mass_index->OldValue) ?>">
 <?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_body_mass_index" class="el_jdh_vitals_body_mass_index">
+<span<?= $Page->body_mass_index->viewAttributes() ?>>
+<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->body_mass_index->getDisplayValue($Page->body_mass_index->EditValue))) ?>"></span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_body_mass_index" data-hidden="1" name="x<?= $Page->RowIndex ?>_body_mass_index" id="x<?= $Page->RowIndex ?>_body_mass_index" value="<?= HtmlEncode($Page->body_mass_index->CurrentValue) ?>">
+</span>
+<?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_body_mass_index" class="el_jdh_vitals_body_mass_index">
 <span<?= $Page->body_mass_index->viewAttributes() ?>>
@@ -386,6 +460,12 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 <div class="invalid-feedback"><?= $Page->pulse_rate->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_vitals" data-field="x_pulse_rate" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_pulse_rate" id="o<?= $Page->RowIndex ?>_pulse_rate" value="<?= HtmlEncode($Page->pulse_rate->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_pulse_rate" class="el_jdh_vitals_pulse_rate">
+<input type="<?= $Page->pulse_rate->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_pulse_rate" id="x<?= $Page->RowIndex ?>_pulse_rate" data-table="jdh_vitals" data-field="x_pulse_rate" value="<?= $Page->pulse_rate->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->pulse_rate->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->pulse_rate->formatPattern()) ?>"<?= $Page->pulse_rate->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->pulse_rate->getErrorMessage() ?></div>
+</span>
 <?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_pulse_rate" class="el_jdh_vitals_pulse_rate">
@@ -404,6 +484,12 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 </span>
 <input type="hidden" data-table="jdh_vitals" data-field="x_respiratory_rate" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_respiratory_rate" id="o<?= $Page->RowIndex ?>_respiratory_rate" value="<?= HtmlEncode($Page->respiratory_rate->OldValue) ?>">
 <?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_respiratory_rate" class="el_jdh_vitals_respiratory_rate">
+<input type="<?= $Page->respiratory_rate->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_respiratory_rate" id="x<?= $Page->RowIndex ?>_respiratory_rate" data-table="jdh_vitals" data-field="x_respiratory_rate" value="<?= $Page->respiratory_rate->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->respiratory_rate->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->respiratory_rate->formatPattern()) ?>"<?= $Page->respiratory_rate->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->respiratory_rate->getErrorMessage() ?></div>
+</span>
+<?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_respiratory_rate" class="el_jdh_vitals_respiratory_rate">
 <span<?= $Page->respiratory_rate->viewAttributes() ?>>
@@ -421,6 +507,12 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 </span>
 <input type="hidden" data-table="jdh_vitals" data-field="x_temperature" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_temperature" id="o<?= $Page->RowIndex ?>_temperature" value="<?= HtmlEncode($Page->temperature->OldValue) ?>">
 <?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_temperature" class="el_jdh_vitals_temperature">
+<input type="<?= $Page->temperature->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_temperature" id="x<?= $Page->RowIndex ?>_temperature" data-table="jdh_vitals" data-field="x_temperature" value="<?= $Page->temperature->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->temperature->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->temperature->formatPattern()) ?>"<?= $Page->temperature->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->temperature->getErrorMessage() ?></div>
+</span>
+<?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_temperature" class="el_jdh_vitals_temperature">
 <span<?= $Page->temperature->viewAttributes() ?>>
@@ -437,6 +529,12 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 <div class="invalid-feedback"><?= $Page->random_blood_sugar->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_vitals" data-field="x_random_blood_sugar" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_random_blood_sugar" id="o<?= $Page->RowIndex ?>_random_blood_sugar" value="<?= HtmlEncode($Page->random_blood_sugar->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_random_blood_sugar" class="el_jdh_vitals_random_blood_sugar">
+<input type="<?= $Page->random_blood_sugar->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_random_blood_sugar" id="x<?= $Page->RowIndex ?>_random_blood_sugar" data-table="jdh_vitals" data-field="x_random_blood_sugar" value="<?= $Page->random_blood_sugar->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Page->random_blood_sugar->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->random_blood_sugar->formatPattern()) ?>"<?= $Page->random_blood_sugar->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->random_blood_sugar->getErrorMessage() ?></div>
+</span>
 <?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_random_blood_sugar" class="el_jdh_vitals_random_blood_sugar">
@@ -485,6 +583,42 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
 </span>
 <input type="hidden" data-table="jdh_vitals" data-field="x_submission_date" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_submission_date" id="o<?= $Page->RowIndex ?>_submission_date" value="<?= HtmlEncode($Page->submission_date->OldValue) ?>">
 <?php } ?>
+<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_submission_date" class="el_jdh_vitals_submission_date">
+<input type="<?= $Page->submission_date->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_submission_date" id="x<?= $Page->RowIndex ?>_submission_date" data-table="jdh_vitals" data-field="x_submission_date" value="<?= $Page->submission_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->submission_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->submission_date->formatPattern()) ?>"<?= $Page->submission_date->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->submission_date->getErrorMessage() ?></div>
+<?php if (!$Page->submission_date->ReadOnly && !$Page->submission_date->Disabled && !isset($Page->submission_date->EditAttrs["readonly"]) && !isset($Page->submission_date->EditAttrs["disabled"])) { ?>
+<script>
+loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
+    let format = "<?= DateFormat(1) ?>",
+        options = {
+            localization: {
+                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                ...ew.language.phrase("datetimepicker")
+            },
+            display: {
+                icons: {
+                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
+                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
+                },
+                components: {
+                    hours: !!format.match(/h/i),
+                    minutes: !!format.match(/m/),
+                    seconds: !!format.match(/s/i),
+                    useTwentyfourHour: !!format.match(/H/)
+                },
+                theme: ew.isDark() ? "dark" : "auto"
+            },
+            meta: {
+                format
+            }
+        };
+    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_submission_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+});
+</script>
+<?php } ?>
+</span>
+<?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_submission_date" class="el_jdh_vitals_submission_date">
 <span<?= $Page->submission_date->viewAttributes() ?>>
@@ -498,6 +632,11 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
 $Page->ListOptions->render("body", "right", $Page->RowCount);
 ?>
     </tr>
+<?php if ($Page->RowType == ROWTYPE_ADD || $Page->RowType == ROWTYPE_EDIT) { ?>
+<script data-rowindex="<?= $Page->RowIndex ?>">
+loadjs.ready(["<?= $Page->FormName ?>","load"], () => <?= $Page->FormName ?>.updateLists(<?= $Page->RowIndex ?><?= $Page->RowIndex === '$rowindex$' ? ", true" : "" ?>));
+</script>
+<?php } ?>
 <?php
     }
     if (!$Page->isGridAdd()) {
@@ -511,6 +650,9 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
 <?php if ($Page->isAdd() || $Page->isCopy()) { ?>
 <input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
 <input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
+<?php } ?>
+<?php if ($Page->isEdit()) { ?>
+<input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
 <?php } ?>
 </div><!-- /.ew-grid-middle-panel -->
 <?php if (!$Page->CurrentAction && !$Page->UseAjaxActions) { ?>
