@@ -55,6 +55,7 @@ class JdhPrescriptions extends DbTable
     public $medicine_id;
     public $tabs;
     public $frequency;
+    public $prescription_days;
     public $prescription_time;
     public $prescription_date;
     public $submitted_by_user_id;
@@ -217,8 +218,8 @@ class JdhPrescriptions extends DbTable
             'tabs', // Name
             '`tabs`', // Expression
             '`tabs`', // Basic search expression
-            200, // Type
-            100, // Size
+            3, // Type
+            11, // Size
             -1, // Date/Time format
             false, // Is upload field
             '`tabs`', // Virtual expression
@@ -231,7 +232,8 @@ class JdhPrescriptions extends DbTable
         $this->tabs->InputTextType = "text";
         $this->tabs->Nullable = false; // NOT NULL field
         $this->tabs->Required = true; // Required field
-        $this->tabs->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->tabs->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->tabs->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['tabs'] = &$this->tabs;
 
         // frequency $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
@@ -241,8 +243,8 @@ class JdhPrescriptions extends DbTable
             'frequency', // Name
             '`frequency`', // Expression
             '`frequency`', // Basic search expression
-            200, // Type
-            100, // Size
+            3, // Type
+            11, // Size
             -1, // Date/Time format
             false, // Is upload field
             '`frequency`', // Virtual expression
@@ -250,17 +252,39 @@ class JdhPrescriptions extends DbTable
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'SELECT' // Edit Tag
+            'TEXT' // Edit Tag
         );
-        $this->frequency->InputTextType = "text";
+        $this->frequency->InputTextType = "number";
         $this->frequency->Nullable = false; // NOT NULL field
         $this->frequency->Required = true; // Required field
-        $this->frequency->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->frequency->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->frequency->Lookup = new Lookup('frequency', 'jdh_prescriptions', false, '', ["","","",""], '', '', [], [], [], [], [], [], '', '', "");
-        $this->frequency->OptionCount = 4;
-        $this->frequency->SearchOperators = ["=", "<>"];
+        $this->frequency->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->frequency->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['frequency'] = &$this->frequency;
+
+        // prescription_days $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->prescription_days = new DbField(
+            $this, // Table
+            'x_prescription_days', // Variable name
+            'prescription_days', // Name
+            '`prescription_days`', // Expression
+            '`prescription_days`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`prescription_days`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->prescription_days->InputTextType = "text";
+        $this->prescription_days->Nullable = false; // NOT NULL field
+        $this->prescription_days->Required = true; // Required field
+        $this->prescription_days->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->prescription_days->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['prescription_days'] = &$this->prescription_days;
 
         // prescription_time $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->prescription_time = new DbField(
@@ -333,9 +357,9 @@ class JdhPrescriptions extends DbTable
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
+        $this->submitted_by_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
         $this->submitted_by_user_id->InputTextType = "text";
         $this->submitted_by_user_id->Nullable = false; // NOT NULL field
-        $this->submitted_by_user_id->Required = true; // Required field
         $this->submitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->submitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['submitted_by_user_id'] = &$this->submitted_by_user_id;
@@ -917,6 +941,7 @@ class JdhPrescriptions extends DbTable
         $this->medicine_id->DbValue = $row['medicine_id'];
         $this->tabs->DbValue = $row['tabs'];
         $this->frequency->DbValue = $row['frequency'];
+        $this->prescription_days->DbValue = $row['prescription_days'];
         $this->prescription_time->DbValue = $row['prescription_time'];
         $this->prescription_date->DbValue = $row['prescription_date'];
         $this->submitted_by_user_id->DbValue = $row['submitted_by_user_id'];
@@ -1283,6 +1308,7 @@ class JdhPrescriptions extends DbTable
         $this->medicine_id->setDbValue($row['medicine_id']);
         $this->tabs->setDbValue($row['tabs']);
         $this->frequency->setDbValue($row['frequency']);
+        $this->prescription_days->setDbValue($row['prescription_days']);
         $this->prescription_time->setDbValue($row['prescription_time']);
         $this->prescription_date->setDbValue($row['prescription_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
@@ -1327,6 +1353,8 @@ class JdhPrescriptions extends DbTable
         // tabs
 
         // frequency
+
+        // prescription_days
 
         // prescription_time
 
@@ -1388,13 +1416,15 @@ class JdhPrescriptions extends DbTable
 
         // tabs
         $this->tabs->ViewValue = $this->tabs->CurrentValue;
+        $this->tabs->ViewValue = FormatNumber($this->tabs->ViewValue, $this->tabs->formatPattern());
 
         // frequency
-        if (strval($this->frequency->CurrentValue) != "") {
-            $this->frequency->ViewValue = $this->frequency->optionCaption($this->frequency->CurrentValue);
-        } else {
-            $this->frequency->ViewValue = null;
-        }
+        $this->frequency->ViewValue = $this->frequency->CurrentValue;
+        $this->frequency->ViewValue = FormatNumber($this->frequency->ViewValue, $this->frequency->formatPattern());
+
+        // prescription_days
+        $this->prescription_days->ViewValue = $this->prescription_days->CurrentValue;
+        $this->prescription_days->ViewValue = FormatNumber($this->prescription_days->ViewValue, $this->prescription_days->formatPattern());
 
         // prescription_time
         if (strval($this->prescription_time->CurrentValue) != "") {
@@ -1434,6 +1464,10 @@ class JdhPrescriptions extends DbTable
         // frequency
         $this->frequency->HrefValue = "";
         $this->frequency->TooltipValue = "";
+
+        // prescription_days
+        $this->prescription_days->HrefValue = "";
+        $this->prescription_days->TooltipValue = "";
 
         // prescription_time
         $this->prescription_time->HrefValue = "";
@@ -1509,16 +1543,27 @@ class JdhPrescriptions extends DbTable
 
         // tabs
         $this->tabs->setupEditAttributes();
-        if (!$this->tabs->Raw) {
-            $this->tabs->CurrentValue = HtmlDecode($this->tabs->CurrentValue);
-        }
         $this->tabs->EditValue = $this->tabs->CurrentValue;
         $this->tabs->PlaceHolder = RemoveHtml($this->tabs->caption());
+        if (strval($this->tabs->EditValue) != "" && is_numeric($this->tabs->EditValue)) {
+            $this->tabs->EditValue = FormatNumber($this->tabs->EditValue, null);
+        }
 
         // frequency
         $this->frequency->setupEditAttributes();
-        $this->frequency->EditValue = $this->frequency->options(true);
+        $this->frequency->EditValue = $this->frequency->CurrentValue;
         $this->frequency->PlaceHolder = RemoveHtml($this->frequency->caption());
+        if (strval($this->frequency->EditValue) != "" && is_numeric($this->frequency->EditValue)) {
+            $this->frequency->EditValue = FormatNumber($this->frequency->EditValue, null);
+        }
+
+        // prescription_days
+        $this->prescription_days->setupEditAttributes();
+        $this->prescription_days->EditValue = $this->prescription_days->CurrentValue;
+        $this->prescription_days->PlaceHolder = RemoveHtml($this->prescription_days->caption());
+        if (strval($this->prescription_days->EditValue) != "" && is_numeric($this->prescription_days->EditValue)) {
+            $this->prescription_days->EditValue = FormatNumber($this->prescription_days->EditValue, null);
+        }
 
         // prescription_time
         $this->prescription_time->setupEditAttributes();
@@ -1531,18 +1576,6 @@ class JdhPrescriptions extends DbTable
         $this->prescription_date->PlaceHolder = RemoveHtml($this->prescription_date->caption());
 
         // submitted_by_user_id
-        $this->submitted_by_user_id->setupEditAttributes();
-        if (!$Security->isAdmin() && $Security->isLoggedIn() && !$this->userIDAllow("info")) { // Non system admin
-            $this->submitted_by_user_id->CurrentValue = CurrentUserID();
-            $this->submitted_by_user_id->EditValue = $this->submitted_by_user_id->CurrentValue;
-            $this->submitted_by_user_id->EditValue = FormatNumber($this->submitted_by_user_id->EditValue, $this->submitted_by_user_id->formatPattern());
-        } else {
-            $this->submitted_by_user_id->EditValue = $this->submitted_by_user_id->CurrentValue;
-            $this->submitted_by_user_id->PlaceHolder = RemoveHtml($this->submitted_by_user_id->caption());
-            if (strval($this->submitted_by_user_id->EditValue) != "" && is_numeric($this->submitted_by_user_id->EditValue)) {
-                $this->submitted_by_user_id->EditValue = FormatNumber($this->submitted_by_user_id->EditValue, null);
-            }
-        }
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1578,6 +1611,7 @@ class JdhPrescriptions extends DbTable
                     $doc->exportCaption($this->medicine_id);
                     $doc->exportCaption($this->tabs);
                     $doc->exportCaption($this->frequency);
+                    $doc->exportCaption($this->prescription_days);
                     $doc->exportCaption($this->prescription_time);
                     $doc->exportCaption($this->prescription_date);
                 } else {
@@ -1587,6 +1621,7 @@ class JdhPrescriptions extends DbTable
                     $doc->exportCaption($this->medicine_id);
                     $doc->exportCaption($this->tabs);
                     $doc->exportCaption($this->frequency);
+                    $doc->exportCaption($this->prescription_days);
                     $doc->exportCaption($this->prescription_time);
                     $doc->exportCaption($this->prescription_date);
                     $doc->exportCaption($this->submitted_by_user_id);
@@ -1625,6 +1660,7 @@ class JdhPrescriptions extends DbTable
                         $doc->exportField($this->medicine_id);
                         $doc->exportField($this->tabs);
                         $doc->exportField($this->frequency);
+                        $doc->exportField($this->prescription_days);
                         $doc->exportField($this->prescription_time);
                         $doc->exportField($this->prescription_date);
                     } else {
@@ -1634,6 +1670,7 @@ class JdhPrescriptions extends DbTable
                         $doc->exportField($this->medicine_id);
                         $doc->exportField($this->tabs);
                         $doc->exportField($this->frequency);
+                        $doc->exportField($this->prescription_days);
                         $doc->exportField($this->prescription_time);
                         $doc->exportField($this->prescription_date);
                         $doc->exportField($this->submitted_by_user_id);

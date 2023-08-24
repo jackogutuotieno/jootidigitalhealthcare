@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhMedicineStockDelete extends JdhMedicineStock
+class JdhPrescriptionsActionsDelete extends JdhPrescriptionsActions
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhMedicineStockDelete extends JdhMedicineStock
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhMedicineStockDelete";
+    public $PageObjName = "JdhPrescriptionsActionsDelete";
 
     // View file path
     public $View = null;
@@ -33,15 +33,7 @@ class JdhMedicineStockDelete extends JdhMedicineStock
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "jdhmedicinestockdelete";
-
-    // Audit Trail
-    public $AuditTrailOnAdd = true;
-    public $AuditTrailOnEdit = true;
-    public $AuditTrailOnDelete = true;
-    public $AuditTrailOnView = false;
-    public $AuditTrailOnViewData = false;
-    public $AuditTrailOnSearch = false;
+    public $CurrentPageName = "jdhprescriptionsactionsdelete";
 
     // Page headings
     public $Heading = "";
@@ -126,8 +118,8 @@ class JdhMedicineStockDelete extends JdhMedicineStock
     {
         parent::__construct();
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
-        $this->TableVar = 'jdh_medicine_stock';
-        $this->TableName = 'jdh_medicine_stock';
+        $this->TableVar = 'jdh_prescriptions_actions';
+        $this->TableName = 'jdh_prescriptions_actions';
 
         // Table CSS class
         $this->TableClass = "table table-bordered table-hover table-sm ew-table";
@@ -138,14 +130,14 @@ class JdhMedicineStockDelete extends JdhMedicineStock
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_medicine_stock)
-        if (!isset($GLOBALS["jdh_medicine_stock"]) || get_class($GLOBALS["jdh_medicine_stock"]) == PROJECT_NAMESPACE . "jdh_medicine_stock") {
-            $GLOBALS["jdh_medicine_stock"] = &$this;
+        // Table object (jdh_prescriptions_actions)
+        if (!isset($GLOBALS["jdh_prescriptions_actions"]) || get_class($GLOBALS["jdh_prescriptions_actions"]) == PROJECT_NAMESPACE . "jdh_prescriptions_actions") {
+            $GLOBALS["jdh_prescriptions_actions"] = &$this;
         }
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_medicine_stock');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_prescriptions_actions');
         }
 
         // Start timer
@@ -372,10 +364,10 @@ class JdhMedicineStockDelete extends JdhMedicineStock
         $this->CurrentAction = Param("action"); // Set up current action
         $this->id->setVisibility();
         $this->medicine_id->setVisibility();
-        $this->units_available->setVisibility();
+        $this->patient_id->setVisibility();
+        $this->units_given->setVisibility();
         $this->submittedby_user_id->Visible = false;
-        $this->date_created->setVisibility();
-        $this->date_updated->setVisibility();
+        $this->submission_date->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -401,6 +393,10 @@ class JdhMedicineStockDelete extends JdhMedicineStock
 
         // Set up lookup cache
         $this->setupLookupOptions($this->medicine_id);
+        $this->setupLookupOptions($this->patient_id);
+
+        // Set up master/detail parameters
+        $this->setupMasterParms();
 
         // Set up Breadcrumb
         $this->setupBreadcrumb();
@@ -409,7 +405,7 @@ class JdhMedicineStockDelete extends JdhMedicineStock
         $this->RecKeys = $this->getRecordKeys(); // Load record keys
         $filter = $this->getFilterFromRecordKeys();
         if ($filter == "") {
-            $this->terminate("jdhmedicinestocklist"); // Prevent SQL injection, return to list
+            $this->terminate("jdhprescriptionsactionslist"); // Prevent SQL injection, return to list
             return;
         }
 
@@ -431,7 +427,7 @@ class JdhMedicineStockDelete extends JdhMedicineStock
             }
         }
         if (!$res) {
-            $this->terminate("jdhmedicinestocklist"); // Return to list
+            $this->terminate("jdhprescriptionsactionslist"); // Return to list
             return;
         }
 
@@ -486,7 +482,7 @@ class JdhMedicineStockDelete extends JdhMedicineStock
                 if ($this->Recordset) {
                     $this->Recordset->close();
                 }
-                $this->terminate("jdhmedicinestocklist"); // Return to list
+                $this->terminate("jdhprescriptionsactionslist"); // Return to list
                 return;
             }
         }
@@ -601,10 +597,10 @@ class JdhMedicineStockDelete extends JdhMedicineStock
         $this->rowSelected($row);
         $this->id->setDbValue($row['id']);
         $this->medicine_id->setDbValue($row['medicine_id']);
-        $this->units_available->setDbValue($row['units_available']);
+        $this->patient_id->setDbValue($row['patient_id']);
+        $this->units_given->setDbValue($row['units_given']);
         $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
-        $this->date_created->setDbValue($row['date_created']);
-        $this->date_updated->setDbValue($row['date_updated']);
+        $this->submission_date->setDbValue($row['submission_date']);
     }
 
     // Return a row with default values
@@ -613,10 +609,10 @@ class JdhMedicineStockDelete extends JdhMedicineStock
         $row = [];
         $row['id'] = $this->id->DefaultValue;
         $row['medicine_id'] = $this->medicine_id->DefaultValue;
-        $row['units_available'] = $this->units_available->DefaultValue;
+        $row['patient_id'] = $this->patient_id->DefaultValue;
+        $row['units_given'] = $this->units_given->DefaultValue;
         $row['submittedby_user_id'] = $this->submittedby_user_id->DefaultValue;
-        $row['date_created'] = $this->date_created->DefaultValue;
-        $row['date_updated'] = $this->date_updated->DefaultValue;
+        $row['submission_date'] = $this->submission_date->DefaultValue;
         return $row;
     }
 
@@ -636,13 +632,13 @@ class JdhMedicineStockDelete extends JdhMedicineStock
 
         // medicine_id
 
-        // units_available
+        // patient_id
+
+        // units_given
 
         // submittedby_user_id
 
-        // date_created
-
-        // date_updated
+        // submission_date
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -672,21 +668,40 @@ class JdhMedicineStockDelete extends JdhMedicineStock
                 $this->medicine_id->ViewValue = null;
             }
 
-            // units_available
-            $this->units_available->ViewValue = $this->units_available->CurrentValue;
-            $this->units_available->ViewValue = FormatNumber($this->units_available->ViewValue, $this->units_available->formatPattern());
+            // patient_id
+            $curVal = strval($this->patient_id->CurrentValue);
+            if ($curVal != "") {
+                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                if ($this->patient_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
+                    } else {
+                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->patient_id->ViewValue = null;
+            }
+
+            // units_given
+            $this->units_given->ViewValue = $this->units_given->CurrentValue;
+            $this->units_given->ViewValue = FormatNumber($this->units_given->ViewValue, $this->units_given->formatPattern());
 
             // submittedby_user_id
             $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
             $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
 
-            // date_created
-            $this->date_created->ViewValue = $this->date_created->CurrentValue;
-            $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
-
-            // date_updated
-            $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
-            $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
+            // submission_date
+            $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
+            $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
 
             // id
             $this->id->HrefValue = "";
@@ -696,17 +711,13 @@ class JdhMedicineStockDelete extends JdhMedicineStock
             $this->medicine_id->HrefValue = "";
             $this->medicine_id->TooltipValue = "";
 
-            // units_available
-            $this->units_available->HrefValue = "";
-            $this->units_available->TooltipValue = "";
+            // patient_id
+            $this->patient_id->HrefValue = "";
+            $this->patient_id->TooltipValue = "";
 
-            // date_created
-            $this->date_created->HrefValue = "";
-            $this->date_created->TooltipValue = "";
-
-            // date_updated
-            $this->date_updated->HrefValue = "";
-            $this->date_updated->TooltipValue = "";
+            // units_given
+            $this->units_given->HrefValue = "";
+            $this->units_given->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -732,9 +743,6 @@ class JdhMedicineStockDelete extends JdhMedicineStock
         }
         if ($this->UseTransaction) {
             $conn->beginTransaction();
-        }
-        if ($this->AuditTrailOnDelete) {
-            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
         }
 
         // Clone old rows
@@ -795,35 +803,9 @@ class JdhMedicineStockDelete extends JdhMedicineStock
             if (count($failKeys) > 0) {
                 $this->setWarningMessage(str_replace("%k", explode(", ", $failKeys), $Language->phrase("DeleteRecordsFailed")));
             }
-            if ($this->AuditTrailOnDelete) {
-                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteSuccess")); // Batch delete success
-            }
-            $table = 'jdh_medicine_stock';
-            $subject = $table . " " . $Language->phrase("RecordDeleted");
-            $action = $Language->phrase("ActionDeleted");
-            $email = new Email();
-            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-            $email->replaceSubject($subject); // Replace Subject
-            $email->replaceContent("<!--table-->", $table);
-            $email->replaceContent("<!--key-->", implode(", ", $successKeys));
-            $email->replaceContent("<!--action-->", $action);
-            $args = [];
-            $args["rs"] = &$rsold;
-            $emailSent = false;
-            if ($this->emailSending($email, $args)) {
-                $emailSent = $email->send();
-            }
-            if (!$emailSent) {
-                $this->setFailureMessage($email->SendErrDescription);
-            }
         } else {
             if ($this->UseTransaction) { // Rollback transaction
                 $conn->rollback();
-            }
-            if ($this->AuditTrailOnDelete) {
-                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteRollback")); // Batch delete rollback
             }
         }
 
@@ -849,13 +831,82 @@ class JdhMedicineStockDelete extends JdhMedicineStock
         return true;
     }
 
+    // Set up master/detail based on QueryString
+    protected function setupMasterParms()
+    {
+        $validMaster = false;
+        // Get the keys for master table
+        if (($master = Get(Config("TABLE_SHOW_MASTER"), Get(Config("TABLE_MASTER")))) !== null) {
+            $masterTblVar = $master;
+            if ($masterTblVar == "") {
+                $validMaster = true;
+                $this->DbMasterFilter = "";
+                $this->DbDetailFilter = "";
+            }
+            if ($masterTblVar == "jdh_patients") {
+                $validMaster = true;
+                $masterTbl = Container("jdh_patients");
+                if (($parm = Get("fk_patient_id", Get("patient_id"))) !== null) {
+                    $masterTbl->patient_id->setQueryStringValue($parm);
+                    $this->patient_id->QueryStringValue = $masterTbl->patient_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
+                    $this->patient_id->setSessionValue($this->patient_id->QueryStringValue);
+                    if (!is_numeric($masterTbl->patient_id->QueryStringValue)) {
+                        $validMaster = false;
+                    }
+                } else {
+                    $validMaster = false;
+                }
+            }
+        } elseif (($master = Post(Config("TABLE_SHOW_MASTER"), Post(Config("TABLE_MASTER")))) !== null) {
+            $masterTblVar = $master;
+            if ($masterTblVar == "") {
+                    $validMaster = true;
+                    $this->DbMasterFilter = "";
+                    $this->DbDetailFilter = "";
+            }
+            if ($masterTblVar == "jdh_patients") {
+                $validMaster = true;
+                $masterTbl = Container("jdh_patients");
+                if (($parm = Post("fk_patient_id", Post("patient_id"))) !== null) {
+                    $masterTbl->patient_id->setFormValue($parm);
+                    $this->patient_id->setFormValue($masterTbl->patient_id->FormValue);
+                    $this->patient_id->setSessionValue($this->patient_id->FormValue);
+                    if (!is_numeric($masterTbl->patient_id->FormValue)) {
+                        $validMaster = false;
+                    }
+                } else {
+                    $validMaster = false;
+                }
+            }
+        }
+        if ($validMaster) {
+            // Save current master table
+            $this->setCurrentMasterTable($masterTblVar);
+
+            // Reset start record counter (new master key)
+            if (!$this->isAddOrEdit()) {
+                $this->StartRecord = 1;
+                $this->setStartRecordNumber($this->StartRecord);
+            }
+
+            // Clear previous master key from Session
+            if ($masterTblVar != "jdh_patients") {
+                if ($this->patient_id->CurrentValue == "") {
+                    $this->patient_id->setSessionValue("");
+                }
+            }
+        }
+        $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Get master filter from session
+        $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Get detail filter from session
+    }
+
     // Set up Breadcrumb
     protected function setupBreadcrumb()
     {
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhmedicinestocklist"), "", $this->TableVar, true);
+        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhprescriptionsactionslist"), "", $this->TableVar, true);
         $pageId = "delete";
         $Breadcrumb->add("delete", $pageId, $url);
     }
@@ -874,6 +925,8 @@ class JdhMedicineStockDelete extends JdhMedicineStock
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_medicine_id":
+                    break;
+                case "x_patient_id":
                     break;
                 default:
                     $lookupFilter = "";

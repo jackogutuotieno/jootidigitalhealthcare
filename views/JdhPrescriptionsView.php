@@ -119,6 +119,17 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->prescription_days->Visible) { // prescription_days ?>
+    <tr id="r_prescription_days"<?= $Page->prescription_days->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_prescriptions_prescription_days"><?= $Page->prescription_days->caption() ?></span></td>
+        <td data-name="prescription_days"<?= $Page->prescription_days->cellAttributes() ?>>
+<span id="el_jdh_prescriptions_prescription_days">
+<span<?= $Page->prescription_days->viewAttributes() ?>>
+<?= $Page->prescription_days->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 <?php if ($Page->prescription_time->Visible) { // prescription_time ?>
     <tr id="r_prescription_time"<?= $Page->prescription_time->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_prescriptions_prescription_time"><?= $Page->prescription_time->caption() ?></span></td>

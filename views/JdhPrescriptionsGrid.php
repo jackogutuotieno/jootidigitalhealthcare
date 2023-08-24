@@ -27,8 +27,9 @@ loadjs.ready(["wrapper", "head"], function () {
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["prescription_title", [fields.prescription_title.visible && fields.prescription_title.required ? ew.Validators.required(fields.prescription_title.caption) : null], fields.prescription_title.isInvalid],
             ["medicine_id", [fields.medicine_id.visible && fields.medicine_id.required ? ew.Validators.required(fields.medicine_id.caption) : null], fields.medicine_id.isInvalid],
-            ["tabs", [fields.tabs.visible && fields.tabs.required ? ew.Validators.required(fields.tabs.caption) : null], fields.tabs.isInvalid],
-            ["frequency", [fields.frequency.visible && fields.frequency.required ? ew.Validators.required(fields.frequency.caption) : null], fields.frequency.isInvalid],
+            ["tabs", [fields.tabs.visible && fields.tabs.required ? ew.Validators.required(fields.tabs.caption) : null, ew.Validators.integer], fields.tabs.isInvalid],
+            ["frequency", [fields.frequency.visible && fields.frequency.required ? ew.Validators.required(fields.frequency.caption) : null, ew.Validators.integer], fields.frequency.isInvalid],
+            ["prescription_days", [fields.prescription_days.visible && fields.prescription_days.required ? ew.Validators.required(fields.prescription_days.caption) : null, ew.Validators.integer], fields.prescription_days.isInvalid],
             ["prescription_time", [fields.prescription_time.visible && fields.prescription_time.required ? ew.Validators.required(fields.prescription_time.caption) : null], fields.prescription_time.isInvalid],
             ["prescription_date", [fields.prescription_date.visible && fields.prescription_date.required ? ew.Validators.required(fields.prescription_date.caption) : null, ew.Validators.datetime(fields.prescription_date.clientFormatPattern)], fields.prescription_date.isInvalid]
         ])
@@ -37,7 +38,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setEmptyRow(
             function (rowIndex) {
                 let fobj = this.getForm(),
-                    fields = [["patient_id",false],["prescription_title",false],["medicine_id",false],["tabs",false],["frequency",false],["prescription_time",false],["prescription_date",false]];
+                    fields = [["patient_id",false],["prescription_title",false],["medicine_id",false],["tabs",false],["frequency",false],["prescription_days",false],["prescription_time",false],["prescription_date",false]];
                 if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
                     return false;
                 return true;
@@ -59,7 +60,6 @@ loadjs.ready(["wrapper", "head"], function () {
         .setLists({
             "patient_id": <?= $Grid->patient_id->toClientList($Grid) ?>,
             "medicine_id": <?= $Grid->medicine_id->toClientList($Grid) ?>,
-            "frequency": <?= $Grid->frequency->toClientList($Grid) ?>,
             "prescription_time": <?= $Grid->prescription_time->toClientList($Grid) ?>,
         })
         .build();
@@ -104,6 +104,9 @@ $Grid->ListOptions->render("header", "left");
 <?php } ?>
 <?php if ($Grid->frequency->Visible) { // frequency ?>
         <th data-name="frequency" class="<?= $Grid->frequency->headerCellClass() ?>"><div id="elh_jdh_prescriptions_frequency" class="jdh_prescriptions_frequency"><?= $Grid->renderFieldHeader($Grid->frequency) ?></div></th>
+<?php } ?>
+<?php if ($Grid->prescription_days->Visible) { // prescription_days ?>
+        <th data-name="prescription_days" class="<?= $Grid->prescription_days->headerCellClass() ?>"><div id="elh_jdh_prescriptions_prescription_days" class="jdh_prescriptions_prescription_days"><?= $Grid->renderFieldHeader($Grid->prescription_days) ?></div></th>
 <?php } ?>
 <?php if ($Grid->prescription_time->Visible) { // prescription_time ?>
         <th data-name="prescription_time" class="<?= $Grid->prescription_time->headerCellClass() ?>"><div id="elh_jdh_prescriptions_prescription_time" class="jdh_prescriptions_prescription_time"><?= $Grid->renderFieldHeader($Grid->prescription_time) ?></div></th>
@@ -401,69 +404,15 @@ loadjs.ready("fjdh_prescriptionsgrid", function() {
         <td data-name="frequency"<?= $Grid->frequency->cellAttributes() ?>>
 <?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_prescriptions_frequency" class="el_jdh_prescriptions_frequency">
-    <select
-        id="x<?= $Grid->RowIndex ?>_frequency"
-        name="x<?= $Grid->RowIndex ?>_frequency"
-        class="form-select ew-select<?= $Grid->frequency->isInvalidClass() ?>"
-        data-select2-id="fjdh_prescriptionsgrid_x<?= $Grid->RowIndex ?>_frequency"
-        data-table="jdh_prescriptions"
-        data-field="x_frequency"
-        data-value-separator="<?= $Grid->frequency->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->frequency->getPlaceHolder()) ?>"
-        <?= $Grid->frequency->editAttributes() ?>>
-        <?= $Grid->frequency->selectOptionListHtml("x{$Grid->RowIndex}_frequency") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Grid->frequency->getErrorMessage() ?></div>
-<script>
-loadjs.ready("fjdh_prescriptionsgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_frequency", selectId: "fjdh_prescriptionsgrid_x<?= $Grid->RowIndex ?>_frequency" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_prescriptionsgrid.lists.frequency?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_frequency", form: "fjdh_prescriptionsgrid" };
-    } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_frequency", form: "fjdh_prescriptionsgrid", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_prescriptions.fields.frequency.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<input type="<?= $Grid->frequency->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_frequency" id="x<?= $Grid->RowIndex ?>_frequency" data-table="jdh_prescriptions" data-field="x_frequency" value="<?= $Grid->frequency->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Grid->frequency->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->frequency->formatPattern()) ?>"<?= $Grid->frequency->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->frequency->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_prescriptions" data-field="x_frequency" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_frequency" id="o<?= $Grid->RowIndex ?>_frequency" value="<?= HtmlEncode($Grid->frequency->OldValue) ?>">
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_prescriptions_frequency" class="el_jdh_prescriptions_frequency">
-    <select
-        id="x<?= $Grid->RowIndex ?>_frequency"
-        name="x<?= $Grid->RowIndex ?>_frequency"
-        class="form-select ew-select<?= $Grid->frequency->isInvalidClass() ?>"
-        data-select2-id="fjdh_prescriptionsgrid_x<?= $Grid->RowIndex ?>_frequency"
-        data-table="jdh_prescriptions"
-        data-field="x_frequency"
-        data-value-separator="<?= $Grid->frequency->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->frequency->getPlaceHolder()) ?>"
-        <?= $Grid->frequency->editAttributes() ?>>
-        <?= $Grid->frequency->selectOptionListHtml("x{$Grid->RowIndex}_frequency") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Grid->frequency->getErrorMessage() ?></div>
-<script>
-loadjs.ready("fjdh_prescriptionsgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_frequency", selectId: "fjdh_prescriptionsgrid_x<?= $Grid->RowIndex ?>_frequency" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_prescriptionsgrid.lists.frequency?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_frequency", form: "fjdh_prescriptionsgrid" };
-    } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_frequency", form: "fjdh_prescriptionsgrid", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_prescriptions.fields.frequency.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<input type="<?= $Grid->frequency->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_frequency" id="x<?= $Grid->RowIndex ?>_frequency" data-table="jdh_prescriptions" data-field="x_frequency" value="<?= $Grid->frequency->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Grid->frequency->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->frequency->formatPattern()) ?>"<?= $Grid->frequency->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->frequency->getErrorMessage() ?></div>
 </span>
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
@@ -474,6 +423,33 @@ loadjs.ready("fjdh_prescriptionsgrid", function() {
 <?php if ($Grid->isConfirm()) { ?>
 <input type="hidden" data-table="jdh_prescriptions" data-field="x_frequency" data-hidden="1" name="fjdh_prescriptionsgrid$x<?= $Grid->RowIndex ?>_frequency" id="fjdh_prescriptionsgrid$x<?= $Grid->RowIndex ?>_frequency" value="<?= HtmlEncode($Grid->frequency->FormValue) ?>">
 <input type="hidden" data-table="jdh_prescriptions" data-field="x_frequency" data-hidden="1" data-old name="fjdh_prescriptionsgrid$o<?= $Grid->RowIndex ?>_frequency" id="fjdh_prescriptionsgrid$o<?= $Grid->RowIndex ?>_frequency" value="<?= HtmlEncode($Grid->frequency->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->prescription_days->Visible) { // prescription_days ?>
+        <td data-name="prescription_days"<?= $Grid->prescription_days->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_prescriptions_prescription_days" class="el_jdh_prescriptions_prescription_days">
+<input type="<?= $Grid->prescription_days->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_prescription_days" id="x<?= $Grid->RowIndex ?>_prescription_days" data-table="jdh_prescriptions" data-field="x_prescription_days" value="<?= $Grid->prescription_days->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->prescription_days->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->prescription_days->formatPattern()) ?>"<?= $Grid->prescription_days->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->prescription_days->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_prescriptions" data-field="x_prescription_days" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_prescription_days" id="o<?= $Grid->RowIndex ?>_prescription_days" value="<?= HtmlEncode($Grid->prescription_days->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_prescriptions_prescription_days" class="el_jdh_prescriptions_prescription_days">
+<input type="<?= $Grid->prescription_days->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_prescription_days" id="x<?= $Grid->RowIndex ?>_prescription_days" data-table="jdh_prescriptions" data-field="x_prescription_days" value="<?= $Grid->prescription_days->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->prescription_days->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->prescription_days->formatPattern()) ?>"<?= $Grid->prescription_days->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->prescription_days->getErrorMessage() ?></div>
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_prescriptions_prescription_days" class="el_jdh_prescriptions_prescription_days">
+<span<?= $Grid->prescription_days->viewAttributes() ?>>
+<?= $Grid->prescription_days->getViewValue() ?></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_prescriptions" data-field="x_prescription_days" data-hidden="1" name="fjdh_prescriptionsgrid$x<?= $Grid->RowIndex ?>_prescription_days" id="fjdh_prescriptionsgrid$x<?= $Grid->RowIndex ?>_prescription_days" value="<?= HtmlEncode($Grid->prescription_days->FormValue) ?>">
+<input type="hidden" data-table="jdh_prescriptions" data-field="x_prescription_days" data-hidden="1" data-old name="fjdh_prescriptionsgrid$o<?= $Grid->RowIndex ?>_prescription_days" id="fjdh_prescriptionsgrid$o<?= $Grid->RowIndex ?>_prescription_days" value="<?= HtmlEncode($Grid->prescription_days->OldValue) ?>">
 <?php } ?>
 <?php } ?>
 </td>

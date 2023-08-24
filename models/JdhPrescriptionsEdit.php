@@ -475,6 +475,7 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
         $this->medicine_id->setVisibility();
         $this->tabs->setVisibility();
         $this->frequency->setVisibility();
+        $this->prescription_days->setVisibility();
         $this->prescription_time->setVisibility();
         $this->prescription_date->Visible = false;
         $this->submitted_by_user_id->Visible = false;
@@ -504,7 +505,6 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
         $this->setupLookupOptions($this->medicine_id);
-        $this->setupLookupOptions($this->frequency);
         $this->setupLookupOptions($this->prescription_time);
 
         // Check modal
@@ -734,7 +734,7 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
             if (IsApi() && $val === null) {
                 $this->tabs->Visible = false; // Disable update for API request
             } else {
-                $this->tabs->setFormValue($val);
+                $this->tabs->setFormValue($val, true, $validate);
             }
         }
 
@@ -744,7 +744,17 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
             if (IsApi() && $val === null) {
                 $this->frequency->Visible = false; // Disable update for API request
             } else {
-                $this->frequency->setFormValue($val);
+                $this->frequency->setFormValue($val, true, $validate);
+            }
+        }
+
+        // Check field name 'prescription_days' first before field var 'x_prescription_days'
+        $val = $CurrentForm->hasValue("prescription_days") ? $CurrentForm->getValue("prescription_days") : $CurrentForm->getValue("x_prescription_days");
+        if (!$this->prescription_days->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->prescription_days->Visible = false; // Disable update for API request
+            } else {
+                $this->prescription_days->setFormValue($val, true, $validate);
             }
         }
 
@@ -769,6 +779,7 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
         $this->medicine_id->CurrentValue = $this->medicine_id->FormValue;
         $this->tabs->CurrentValue = $this->tabs->FormValue;
         $this->frequency->CurrentValue = $this->frequency->FormValue;
+        $this->prescription_days->CurrentValue = $this->prescription_days->FormValue;
         $this->prescription_time->CurrentValue = $this->prescription_time->FormValue;
     }
 
@@ -834,6 +845,7 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
         $this->medicine_id->setDbValue($row['medicine_id']);
         $this->tabs->setDbValue($row['tabs']);
         $this->frequency->setDbValue($row['frequency']);
+        $this->prescription_days->setDbValue($row['prescription_days']);
         $this->prescription_time->setDbValue($row['prescription_time']);
         $this->prescription_date->setDbValue($row['prescription_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
@@ -849,6 +861,7 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
         $row['medicine_id'] = $this->medicine_id->DefaultValue;
         $row['tabs'] = $this->tabs->DefaultValue;
         $row['frequency'] = $this->frequency->DefaultValue;
+        $row['prescription_days'] = $this->prescription_days->DefaultValue;
         $row['prescription_time'] = $this->prescription_time->DefaultValue;
         $row['prescription_date'] = $this->prescription_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
@@ -903,6 +916,9 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
 
         // frequency
         $this->frequency->RowCssClass = "row";
+
+        // prescription_days
+        $this->prescription_days->RowCssClass = "row";
 
         // prescription_time
         $this->prescription_time->RowCssClass = "row";
@@ -969,13 +985,15 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
 
             // tabs
             $this->tabs->ViewValue = $this->tabs->CurrentValue;
+            $this->tabs->ViewValue = FormatNumber($this->tabs->ViewValue, $this->tabs->formatPattern());
 
             // frequency
-            if (strval($this->frequency->CurrentValue) != "") {
-                $this->frequency->ViewValue = $this->frequency->optionCaption($this->frequency->CurrentValue);
-            } else {
-                $this->frequency->ViewValue = null;
-            }
+            $this->frequency->ViewValue = $this->frequency->CurrentValue;
+            $this->frequency->ViewValue = FormatNumber($this->frequency->ViewValue, $this->frequency->formatPattern());
+
+            // prescription_days
+            $this->prescription_days->ViewValue = $this->prescription_days->CurrentValue;
+            $this->prescription_days->ViewValue = FormatNumber($this->prescription_days->ViewValue, $this->prescription_days->formatPattern());
 
             // prescription_time
             if (strval($this->prescription_time->CurrentValue) != "") {
@@ -1009,6 +1027,9 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
 
             // frequency
             $this->frequency->HrefValue = "";
+
+            // prescription_days
+            $this->prescription_days->HrefValue = "";
 
             // prescription_time
             $this->prescription_time->HrefValue = "";
@@ -1106,16 +1127,27 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
 
             // tabs
             $this->tabs->setupEditAttributes();
-            if (!$this->tabs->Raw) {
-                $this->tabs->CurrentValue = HtmlDecode($this->tabs->CurrentValue);
-            }
             $this->tabs->EditValue = HtmlEncode($this->tabs->CurrentValue);
             $this->tabs->PlaceHolder = RemoveHtml($this->tabs->caption());
+            if (strval($this->tabs->EditValue) != "" && is_numeric($this->tabs->EditValue)) {
+                $this->tabs->EditValue = FormatNumber($this->tabs->EditValue, null);
+            }
 
             // frequency
             $this->frequency->setupEditAttributes();
-            $this->frequency->EditValue = $this->frequency->options(true);
+            $this->frequency->EditValue = HtmlEncode($this->frequency->CurrentValue);
             $this->frequency->PlaceHolder = RemoveHtml($this->frequency->caption());
+            if (strval($this->frequency->EditValue) != "" && is_numeric($this->frequency->EditValue)) {
+                $this->frequency->EditValue = FormatNumber($this->frequency->EditValue, null);
+            }
+
+            // prescription_days
+            $this->prescription_days->setupEditAttributes();
+            $this->prescription_days->EditValue = HtmlEncode($this->prescription_days->CurrentValue);
+            $this->prescription_days->PlaceHolder = RemoveHtml($this->prescription_days->caption());
+            if (strval($this->prescription_days->EditValue) != "" && is_numeric($this->prescription_days->EditValue)) {
+                $this->prescription_days->EditValue = FormatNumber($this->prescription_days->EditValue, null);
+            }
 
             // prescription_time
             $this->prescription_time->setupEditAttributes();
@@ -1141,6 +1173,9 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
 
             // frequency
             $this->frequency->HrefValue = "";
+
+            // prescription_days
+            $this->prescription_days->HrefValue = "";
 
             // prescription_time
             $this->prescription_time->HrefValue = "";
@@ -1190,10 +1225,24 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
                 $this->tabs->addErrorMessage(str_replace("%s", $this->tabs->caption(), $this->tabs->RequiredErrorMessage));
             }
         }
+        if (!CheckInteger($this->tabs->FormValue)) {
+            $this->tabs->addErrorMessage($this->tabs->getErrorMessage(false));
+        }
         if ($this->frequency->Required) {
             if (!$this->frequency->IsDetailKey && EmptyValue($this->frequency->FormValue)) {
                 $this->frequency->addErrorMessage(str_replace("%s", $this->frequency->caption(), $this->frequency->RequiredErrorMessage));
             }
+        }
+        if (!CheckInteger($this->frequency->FormValue)) {
+            $this->frequency->addErrorMessage($this->frequency->getErrorMessage(false));
+        }
+        if ($this->prescription_days->Required) {
+            if (!$this->prescription_days->IsDetailKey && EmptyValue($this->prescription_days->FormValue)) {
+                $this->prescription_days->addErrorMessage(str_replace("%s", $this->prescription_days->caption(), $this->prescription_days->RequiredErrorMessage));
+            }
+        }
+        if (!CheckInteger($this->prescription_days->FormValue)) {
+            $this->prescription_days->addErrorMessage($this->prescription_days->getErrorMessage(false));
         }
         if ($this->prescription_time->Required) {
             if (!$this->prescription_time->IsDetailKey && EmptyValue($this->prescription_time->FormValue)) {
@@ -1249,10 +1298,13 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
         $this->medicine_id->setDbValueDef($rsnew, $this->medicine_id->CurrentValue, 0, $this->medicine_id->ReadOnly);
 
         // tabs
-        $this->tabs->setDbValueDef($rsnew, $this->tabs->CurrentValue, "", $this->tabs->ReadOnly);
+        $this->tabs->setDbValueDef($rsnew, $this->tabs->CurrentValue, 0, $this->tabs->ReadOnly);
 
         // frequency
-        $this->frequency->setDbValueDef($rsnew, $this->frequency->CurrentValue, "", $this->frequency->ReadOnly);
+        $this->frequency->setDbValueDef($rsnew, $this->frequency->CurrentValue, 0, $this->frequency->ReadOnly);
+
+        // prescription_days
+        $this->prescription_days->setDbValueDef($rsnew, $this->prescription_days->CurrentValue, 0, $this->prescription_days->ReadOnly);
 
         // prescription_time
         $this->prescription_time->setDbValueDef($rsnew, $this->prescription_time->CurrentValue, "", $this->prescription_time->ReadOnly);
@@ -1412,8 +1464,6 @@ class JdhPrescriptionsEdit extends JdhPrescriptions
                 case "x_patient_id":
                     break;
                 case "x_medicine_id":
-                    break;
-                case "x_frequency":
                     break;
                 case "x_prescription_time":
                     break;

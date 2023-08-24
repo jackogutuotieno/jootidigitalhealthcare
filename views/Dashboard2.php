@@ -153,6 +153,60 @@ $Page->showMessage();
                 </div>
             </div>
         </div>
+        <div class="col-lg-3 col-md-6 col-sm-12">
+            <div class="card counters">
+                <div class="card-header">
+                    Accountants
+                </div>
+                <div class="card-body d-flex align-items-center pt-0 pb-0">
+                    <p class="card-text"><i class="fas fa-user-nurse"></i></p>
+                    <p class="record-count">
+                        <?php
+                            $conn =& DbHelper();
+                            $sql = "SELECT COUNT(*) FROM jdh_users WHERE role_id=6";
+                            $total_accountants = ExecuteScalar($sql);
+                            echo $total_accountants;
+                        ?>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-sm-12">
+            <div class="card counters">
+                <div class="card-header">
+                    Lab Income(KES)
+                </div>
+                <div class="card-body d-flex align-items-center pt-0 pb-0">
+                    <p class="card-text"><i class="fas fa-user-nurse"></i></p>
+                    <p class="record-count">
+                        <?php
+                            $conn =& DbHelper();
+                            $sql = "SELECT SUM(service_cost) FROM jdh_lab_billing";
+                            $income_lab = ExecuteScalar($sql);
+                            echo $income_lab;
+                        ?>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-sm-12">
+            <div class="card counters">
+                <div class="card-header">
+                    Pharmacy Income(KES)
+                </div>
+                <div class="card-body d-flex align-items-center pt-0 pb-0">
+                    <p class="card-text"><i class="fas fa-user-nurse"></i></p>
+                    <p class="record-count">
+                        <?php
+                            $conn =& DbHelper();
+                            $sql = "SELECT SUM(selling_price * units_given) FROM jdh_pharmacy_income";
+                            $pharmacy_income = ExecuteScalar($sql);
+                            echo $pharmacy_income;
+                        ?>
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <div class="container">

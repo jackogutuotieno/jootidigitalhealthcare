@@ -1198,10 +1198,6 @@ class JdhPatientsEdit extends JdhPatients
         if (in_array("jdh_vitals", $detailTblVar) && $detailPage->DetailEdit) {
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
-        $detailPage = Container("JdhPatientVisitsGrid");
-        if (in_array("jdh_patient_visits", $detailTblVar) && $detailPage->DetailEdit) {
-            $validateForm = $validateForm && $detailPage->validateGridForm();
-        }
         $detailPage = Container("JdhChiefComplaintsGrid");
         if (in_array("jdh_chief_complaints", $detailTblVar) && $detailPage->DetailEdit) {
             $validateForm = $validateForm && $detailPage->validateGridForm();
@@ -1220,6 +1216,14 @@ class JdhPatientsEdit extends JdhPatients
         }
         $detailPage = Container("JdhTestReportsGrid");
         if (in_array("jdh_test_reports", $detailTblVar) && $detailPage->DetailEdit) {
+            $validateForm = $validateForm && $detailPage->validateGridForm();
+        }
+        $detailPage = Container("JdhPrescriptionsActionsGrid");
+        if (in_array("jdh_prescriptions_actions", $detailTblVar) && $detailPage->DetailEdit) {
+            $validateForm = $validateForm && $detailPage->validateGridForm();
+        }
+        $detailPage = Container("JdhPatientVisitsGrid");
+        if (in_array("jdh_patient_visits", $detailTblVar) && $detailPage->DetailEdit) {
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
 
@@ -1335,14 +1339,6 @@ class JdhPatientsEdit extends JdhPatients
                 }
             }
             if ($editRow) {
-                $detailPage = Container("JdhPatientVisitsGrid");
-                if (in_array("jdh_patient_visits", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_patient_visits"); // Load user level of detail table
-                    $editRow = $detailPage->gridUpdate();
-                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                }
-            }
-            if ($editRow) {
                 $detailPage = Container("JdhChiefComplaintsGrid");
                 if (in_array("jdh_chief_complaints", $detailTblVar) && $detailPage->DetailEdit) {
                     $Security->loadCurrentUserLevel($this->ProjectID . "jdh_chief_complaints"); // Load user level of detail table
@@ -1378,6 +1374,22 @@ class JdhPatientsEdit extends JdhPatients
                 $detailPage = Container("JdhTestReportsGrid");
                 if (in_array("jdh_test_reports", $detailTblVar) && $detailPage->DetailEdit) {
                     $Security->loadCurrentUserLevel($this->ProjectID . "jdh_test_reports"); // Load user level of detail table
+                    $editRow = $detailPage->gridUpdate();
+                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
+                }
+            }
+            if ($editRow) {
+                $detailPage = Container("JdhPrescriptionsActionsGrid");
+                if (in_array("jdh_prescriptions_actions", $detailTblVar) && $detailPage->DetailEdit) {
+                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_prescriptions_actions"); // Load user level of detail table
+                    $editRow = $detailPage->gridUpdate();
+                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
+                }
+            }
+            if ($editRow) {
+                $detailPage = Container("JdhPatientVisitsGrid");
+                if (in_array("jdh_patient_visits", $detailTblVar) && $detailPage->DetailEdit) {
+                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_patient_visits"); // Load user level of detail table
                     $editRow = $detailPage->gridUpdate();
                     $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
                 }
@@ -1483,21 +1495,6 @@ class JdhPatientsEdit extends JdhPatients
                     $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
                 }
             }
-            if (in_array("jdh_patient_visits", $detailTblVar)) {
-                $detailPageObj = Container("JdhPatientVisitsGrid");
-                if ($detailPageObj->DetailEdit) {
-                    $detailPageObj->EventCancelled = $this->EventCancelled;
-                    $detailPageObj->CurrentMode = "edit";
-                    $detailPageObj->CurrentAction = "gridedit";
-
-                    // Save current master table to detail table
-                    $detailPageObj->setCurrentMasterTable($this->TableVar);
-                    $detailPageObj->setStartRecordNumber(1);
-                    $detailPageObj->patient_id->IsDetailKey = true;
-                    $detailPageObj->patient_id->CurrentValue = $this->patient_id->CurrentValue;
-                    $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
-                }
-            }
             if (in_array("jdh_chief_complaints", $detailTblVar)) {
                 $detailPageObj = Container("JdhChiefComplaintsGrid");
                 if ($detailPageObj->DetailEdit) {
@@ -1573,6 +1570,36 @@ class JdhPatientsEdit extends JdhPatients
                     $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
                 }
             }
+            if (in_array("jdh_prescriptions_actions", $detailTblVar)) {
+                $detailPageObj = Container("JdhPrescriptionsActionsGrid");
+                if ($detailPageObj->DetailEdit) {
+                    $detailPageObj->EventCancelled = $this->EventCancelled;
+                    $detailPageObj->CurrentMode = "edit";
+                    $detailPageObj->CurrentAction = "gridedit";
+
+                    // Save current master table to detail table
+                    $detailPageObj->setCurrentMasterTable($this->TableVar);
+                    $detailPageObj->setStartRecordNumber(1);
+                    $detailPageObj->patient_id->IsDetailKey = true;
+                    $detailPageObj->patient_id->CurrentValue = $this->patient_id->CurrentValue;
+                    $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
+                }
+            }
+            if (in_array("jdh_patient_visits", $detailTblVar)) {
+                $detailPageObj = Container("JdhPatientVisitsGrid");
+                if ($detailPageObj->DetailEdit) {
+                    $detailPageObj->EventCancelled = $this->EventCancelled;
+                    $detailPageObj->CurrentMode = "edit";
+                    $detailPageObj->CurrentAction = "gridedit";
+
+                    // Save current master table to detail table
+                    $detailPageObj->setCurrentMasterTable($this->TableVar);
+                    $detailPageObj->setStartRecordNumber(1);
+                    $detailPageObj->patient_id->IsDetailKey = true;
+                    $detailPageObj->patient_id->CurrentValue = $this->patient_id->CurrentValue;
+                    $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
+                }
+            }
         }
     }
 
@@ -1595,12 +1622,13 @@ class JdhPatientsEdit extends JdhPatients
         $pages->add('jdh_appointments');
         $pages->add('jdh_patient_cases');
         $pages->add('jdh_vitals');
-        $pages->add('jdh_patient_visits');
         $pages->add('jdh_chief_complaints');
         $pages->add('jdh_examination_findings');
         $pages->add('jdh_prescriptions');
         $pages->add('jdh_test_requests');
         $pages->add('jdh_test_reports');
+        $pages->add('jdh_prescriptions_actions');
+        $pages->add('jdh_patient_visits');
         $this->DetailPages = $pages;
     }
 

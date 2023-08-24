@@ -376,6 +376,7 @@ class JdhPrescriptionsDelete extends JdhPrescriptions
         $this->medicine_id->setVisibility();
         $this->tabs->setVisibility();
         $this->frequency->setVisibility();
+        $this->prescription_days->setVisibility();
         $this->prescription_time->setVisibility();
         $this->prescription_date->setVisibility();
         $this->submitted_by_user_id->Visible = false;
@@ -405,7 +406,6 @@ class JdhPrescriptionsDelete extends JdhPrescriptions
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
         $this->setupLookupOptions($this->medicine_id);
-        $this->setupLookupOptions($this->frequency);
         $this->setupLookupOptions($this->prescription_time);
 
         // Set up master/detail parameters
@@ -614,6 +614,7 @@ class JdhPrescriptionsDelete extends JdhPrescriptions
         $this->medicine_id->setDbValue($row['medicine_id']);
         $this->tabs->setDbValue($row['tabs']);
         $this->frequency->setDbValue($row['frequency']);
+        $this->prescription_days->setDbValue($row['prescription_days']);
         $this->prescription_time->setDbValue($row['prescription_time']);
         $this->prescription_date->setDbValue($row['prescription_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
@@ -629,6 +630,7 @@ class JdhPrescriptionsDelete extends JdhPrescriptions
         $row['medicine_id'] = $this->medicine_id->DefaultValue;
         $row['tabs'] = $this->tabs->DefaultValue;
         $row['frequency'] = $this->frequency->DefaultValue;
+        $row['prescription_days'] = $this->prescription_days->DefaultValue;
         $row['prescription_time'] = $this->prescription_time->DefaultValue;
         $row['prescription_date'] = $this->prescription_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
@@ -658,6 +660,8 @@ class JdhPrescriptionsDelete extends JdhPrescriptions
         // tabs
 
         // frequency
+
+        // prescription_days
 
         // prescription_time
 
@@ -721,13 +725,15 @@ class JdhPrescriptionsDelete extends JdhPrescriptions
 
             // tabs
             $this->tabs->ViewValue = $this->tabs->CurrentValue;
+            $this->tabs->ViewValue = FormatNumber($this->tabs->ViewValue, $this->tabs->formatPattern());
 
             // frequency
-            if (strval($this->frequency->CurrentValue) != "") {
-                $this->frequency->ViewValue = $this->frequency->optionCaption($this->frequency->CurrentValue);
-            } else {
-                $this->frequency->ViewValue = null;
-            }
+            $this->frequency->ViewValue = $this->frequency->CurrentValue;
+            $this->frequency->ViewValue = FormatNumber($this->frequency->ViewValue, $this->frequency->formatPattern());
+
+            // prescription_days
+            $this->prescription_days->ViewValue = $this->prescription_days->CurrentValue;
+            $this->prescription_days->ViewValue = FormatNumber($this->prescription_days->ViewValue, $this->prescription_days->formatPattern());
 
             // prescription_time
             if (strval($this->prescription_time->CurrentValue) != "") {
@@ -767,6 +773,10 @@ class JdhPrescriptionsDelete extends JdhPrescriptions
             // frequency
             $this->frequency->HrefValue = "";
             $this->frequency->TooltipValue = "";
+
+            // prescription_days
+            $this->prescription_days->HrefValue = "";
+            $this->prescription_days->TooltipValue = "";
 
             // prescription_time
             $this->prescription_time->HrefValue = "";
@@ -1013,8 +1023,6 @@ class JdhPrescriptionsDelete extends JdhPrescriptions
                 case "x_patient_id":
                     break;
                 case "x_medicine_id":
-                    break;
-                case "x_frequency":
                     break;
                 case "x_prescription_time":
                     break;

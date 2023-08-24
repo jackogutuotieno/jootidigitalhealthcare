@@ -1159,9 +1159,6 @@
   <project>
     <phrase id="bodytitle" value="Jooti Digital | Healthcare - Supporting effective health information management" />
     <phrase id="footertext" value="&amp;copy;2023 Jooti Digital | Healthcare. All rights reserved." />
-    <menu id="272">
-      <phrase id="menutext" value="Latest Appointments" />
-    </menu>
     <menu id="271">
       <phrase id="menutext" value="Dashboard" />
     </menu>
@@ -1249,6 +1246,9 @@
     <menu id="7">
       <phrase id="menutext" value="Medicines" />
     </menu>
+    <menu id="273">
+      <phrase id="menutext" value="Patients Prescriptions" />
+    </menu>
     <menu id="141">
       <phrase id="menutext" value="Services" />
     </menu>
@@ -1281,6 +1281,12 @@
     </menu>
     <menu id="190">
       <phrase id="menutext" value="Reports" />
+    </menu>
+    <menu id="274">
+      <phrase id="menutext" value="Pharmacy Income" />
+    </menu>
+    <menu id="272">
+      <phrase id="menutext" value="Latest Appointments" />
     </menu>
     <table id="jdh_appointments">
       <phrase id="tblcaption" value="Appointments" />
@@ -1508,14 +1514,9 @@
       </field>
       <field id="frequency">
         <phrase id="fldcaption" value="Frequency" />
-        <phrase id="fldtagvalue1" value="1" />
-        <phrase id="fldtagcaption1" value="1X a day" />
-        <phrase id="fldtagvalue2" value="2" />
-        <phrase id="fldtagcaption2" value="2X a day" />
-        <phrase id="fldtagvalue3" value="3" />
-        <phrase id="fldtagcaption3" value="3X a day" />
-        <phrase id="fldtagvalue4" value="4" />
-        <phrase id="fldtagcaption4" value="4X a day" />
+      </field>
+      <field id="prescription_days">
+        <phrase id="fldcaption" value="No. of Days" />
       </field>
       <field id="prescription_time">
         <phrase id="fldcaption" value="Before/After Meals" />
@@ -2058,6 +2059,57 @@
       </field>
       <field id="subbmitted_by_user_id">
         <phrase id="fldcaption" value="User ID" />
+      </field>
+    </table>
+    <table id="jdh_prescriptions_actions">
+      <phrase id="tblcaption" value="Patients Prescriptions" />
+      <field id="id">
+        <phrase id="fldcaption" value="ID" />
+      </field>
+      <field id="medicine_id">
+        <phrase id="fldcaption" value="Medicine" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient Name" />
+      </field>
+      <field id="units_given">
+        <phrase id="fldcaption" value="Units" />
+      </field>
+      <field id="submittedby_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="submission_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+    </table>
+    <table id="jdh_pharmacy_income">
+      <phrase id="tblcaption" value="Pharmacy Income" />
+      <field id="patient_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="selling_price">
+        <phrase id="fldcaption" value="Selling Price (KES)" />
+      </field>
+      <field id="units_available">
+        <phrase id="fldcaption" value="Units" />
+      </field>
+      <field id="units_given">
+        <phrase id="fldcaption" value="Units" />
+      </field>
+      <field id="units_remaining">
+        <phrase id="fldcaption" value="Remaining Units" />
+      </field>
+      <field id="submission_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="line_total_cost">
+        <phrase id="fldcaption" value="Line Total (KES)" />
       </field>
     </table>
   </project>

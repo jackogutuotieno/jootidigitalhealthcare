@@ -37,8 +37,9 @@ loadjs.ready(["wrapper", "head"], function () {
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["prescription_title", [fields.prescription_title.visible && fields.prescription_title.required ? ew.Validators.required(fields.prescription_title.caption) : null], fields.prescription_title.isInvalid],
             ["medicine_id", [fields.medicine_id.visible && fields.medicine_id.required ? ew.Validators.required(fields.medicine_id.caption) : null], fields.medicine_id.isInvalid],
-            ["tabs", [fields.tabs.visible && fields.tabs.required ? ew.Validators.required(fields.tabs.caption) : null], fields.tabs.isInvalid],
-            ["frequency", [fields.frequency.visible && fields.frequency.required ? ew.Validators.required(fields.frequency.caption) : null], fields.frequency.isInvalid],
+            ["tabs", [fields.tabs.visible && fields.tabs.required ? ew.Validators.required(fields.tabs.caption) : null, ew.Validators.integer], fields.tabs.isInvalid],
+            ["frequency", [fields.frequency.visible && fields.frequency.required ? ew.Validators.required(fields.frequency.caption) : null, ew.Validators.integer], fields.frequency.isInvalid],
+            ["prescription_days", [fields.prescription_days.visible && fields.prescription_days.required ? ew.Validators.required(fields.prescription_days.caption) : null, ew.Validators.integer], fields.prescription_days.isInvalid],
             ["prescription_time", [fields.prescription_time.visible && fields.prescription_time.required ? ew.Validators.required(fields.prescription_time.caption) : null], fields.prescription_time.isInvalid]
         ])
 
@@ -57,7 +58,6 @@ loadjs.ready(["wrapper", "head"], function () {
         .setLists({
             "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
             "medicine_id": <?= $Page->medicine_id->toClientList($Page) ?>,
-            "frequency": <?= $Page->frequency->toClientList($Page) ?>,
             "prescription_time": <?= $Page->prescription_time->toClientList($Page) ?>,
         })
         .build();
@@ -209,36 +209,21 @@ loadjs.ready("fjdh_prescriptionsedit", function() {
         <label id="elh_jdh_prescriptions_frequency" for="x_frequency" class="<?= $Page->LeftColumnClass ?>"><?= $Page->frequency->caption() ?><?= $Page->frequency->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->frequency->cellAttributes() ?>>
 <span id="el_jdh_prescriptions_frequency">
-    <select
-        id="x_frequency"
-        name="x_frequency"
-        class="form-select ew-select<?= $Page->frequency->isInvalidClass() ?>"
-        data-select2-id="fjdh_prescriptionsedit_x_frequency"
-        data-table="jdh_prescriptions"
-        data-field="x_frequency"
-        data-value-separator="<?= $Page->frequency->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->frequency->getPlaceHolder()) ?>"
-        <?= $Page->frequency->editAttributes() ?>>
-        <?= $Page->frequency->selectOptionListHtml("x_frequency") ?>
-    </select>
-    <?= $Page->frequency->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->frequency->getErrorMessage() ?></div>
-<script>
-loadjs.ready("fjdh_prescriptionsedit", function() {
-    var options = { name: "x_frequency", selectId: "fjdh_prescriptionsedit_x_frequency" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_prescriptionsedit.lists.frequency?.lookupOptions.length) {
-        options.data = { id: "x_frequency", form: "fjdh_prescriptionsedit" };
-    } else {
-        options.ajax = { id: "x_frequency", form: "fjdh_prescriptionsedit", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_prescriptions.fields.frequency.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<input type="<?= $Page->frequency->getInputTextType() ?>" name="x_frequency" id="x_frequency" data-table="jdh_prescriptions" data-field="x_frequency" value="<?= $Page->frequency->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Page->frequency->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->frequency->formatPattern()) ?>"<?= $Page->frequency->editAttributes() ?> aria-describedby="x_frequency_help">
+<?= $Page->frequency->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->frequency->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->prescription_days->Visible) { // prescription_days ?>
+    <div id="r_prescription_days"<?= $Page->prescription_days->rowAttributes() ?>>
+        <label id="elh_jdh_prescriptions_prescription_days" for="x_prescription_days" class="<?= $Page->LeftColumnClass ?>"><?= $Page->prescription_days->caption() ?><?= $Page->prescription_days->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->prescription_days->cellAttributes() ?>>
+<span id="el_jdh_prescriptions_prescription_days">
+<input type="<?= $Page->prescription_days->getInputTextType() ?>" name="x_prescription_days" id="x_prescription_days" data-table="jdh_prescriptions" data-field="x_prescription_days" value="<?= $Page->prescription_days->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->prescription_days->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->prescription_days->formatPattern()) ?>"<?= $Page->prescription_days->editAttributes() ?> aria-describedby="x_prescription_days_help">
+<?= $Page->prescription_days->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->prescription_days->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

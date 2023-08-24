@@ -709,6 +709,15 @@ class JdhMedicineStockAdd extends JdhMedicineStock
             $res = true;
             $this->loadRowValues($row); // Load row values
         }
+
+        // Check if valid User ID
+        if ($res) {
+            $res = $this->showOptionLink("add");
+            if (!$res) {
+                $userIdMsg = DeniedMessage();
+                $this->setFailureMessage($userIdMsg);
+            }
+        }
         return $res;
     }
 
@@ -956,6 +965,11 @@ class JdhMedicineStockAdd extends JdhMedicineStock
         // units_available
         $this->units_available->setDbValueDef($rsnew, $this->units_available->CurrentValue, 0, false);
 
+        // submittedby_user_id
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['submittedby_user_id'] = CurrentUserID();
+        }
+
         // Update current values
         $this->setCurrentValues($rsnew);
         $conn = $this->getConnection();
@@ -997,6 +1011,16 @@ class JdhMedicineStockAdd extends JdhMedicineStock
             WriteJson(["success" => true, "action" => Config("API_ADD_ACTION"), $table => $row]);
         }
         return $addRow;
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->submittedby_user_id->CurrentValue);
+        }
+        return true;
     }
 
     // Set up Breadcrumb

@@ -180,6 +180,9 @@ $Page->ListOptions->render("header", "left");
 <?php if ($Page->frequency->Visible) { // frequency ?>
         <th data-name="frequency" class="<?= $Page->frequency->headerCellClass() ?>"><div id="elh_jdh_prescriptions_frequency" class="jdh_prescriptions_frequency"><?= $Page->renderFieldHeader($Page->frequency) ?></div></th>
 <?php } ?>
+<?php if ($Page->prescription_days->Visible) { // prescription_days ?>
+        <th data-name="prescription_days" class="<?= $Page->prescription_days->headerCellClass() ?>"><div id="elh_jdh_prescriptions_prescription_days" class="jdh_prescriptions_prescription_days"><?= $Page->renderFieldHeader($Page->prescription_days) ?></div></th>
+<?php } ?>
 <?php if ($Page->prescription_time->Visible) { // prescription_time ?>
         <th data-name="prescription_time" class="<?= $Page->prescription_time->headerCellClass() ?>"><div id="elh_jdh_prescriptions_prescription_time" class="jdh_prescriptions_prescription_time"><?= $Page->renderFieldHeader($Page->prescription_time) ?></div></th>
 <?php } ?>
@@ -250,6 +253,14 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 <span id="el<?= $Page->RowCount ?>_jdh_prescriptions_frequency" class="el_jdh_prescriptions_frequency">
 <span<?= $Page->frequency->viewAttributes() ?>>
 <?= $Page->frequency->getViewValue() ?></span>
+</span>
+</td>
+    <?php } ?>
+    <?php if ($Page->prescription_days->Visible) { // prescription_days ?>
+        <td data-name="prescription_days"<?= $Page->prescription_days->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_prescription_days" class="el_jdh_prescriptions_prescription_days">
+<span<?= $Page->prescription_days->viewAttributes() ?>>
+<?= $Page->prescription_days->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>

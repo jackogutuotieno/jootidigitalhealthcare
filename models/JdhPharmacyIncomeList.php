@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhPrescriptionsList extends JdhPrescriptions
+class JdhPharmacyIncomeList extends JdhPharmacyIncome
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhPrescriptionsList";
+    public $PageObjName = "JdhPharmacyIncomeList";
 
     // View file path
     public $View = null;
@@ -33,13 +33,13 @@ class JdhPrescriptionsList extends JdhPrescriptions
     public $RenderingView = false;
 
     // Grid form hidden field names
-    public $FormName = "fjdh_prescriptionslist";
+    public $FormName = "fjdh_pharmacy_incomelist";
     public $FormActionName = "";
     public $FormBlankRowName = "";
     public $FormKeyCountName = "";
 
     // CSS class/style
-    public $CurrentPageName = "jdhprescriptionslist";
+    public $CurrentPageName = "jdhpharmacyincomelist";
 
     // Page URLs
     public $AddUrl;
@@ -58,14 +58,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
     public $MultiEditUrl;
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
-
-    // Audit Trail
-    public $AuditTrailOnAdd = true;
-    public $AuditTrailOnEdit = true;
-    public $AuditTrailOnDelete = true;
-    public $AuditTrailOnView = false;
-    public $AuditTrailOnViewData = false;
-    public $AuditTrailOnSearch = false;
 
     // Page headings
     public $Heading = "";
@@ -153,8 +145,8 @@ class JdhPrescriptionsList extends JdhPrescriptions
         $this->FormActionName = Config("FORM_ROW_ACTION_NAME");
         $this->FormBlankRowName = Config("FORM_BLANK_ROW_NAME");
         $this->FormKeyCountName = Config("FORM_KEY_COUNT_NAME");
-        $this->TableVar = 'jdh_prescriptions';
-        $this->TableName = 'jdh_prescriptions';
+        $this->TableVar = 'jdh_pharmacy_income';
+        $this->TableName = 'jdh_pharmacy_income';
 
         // Table CSS class
         $this->TableClass = "table table-bordered table-hover table-sm ew-table";
@@ -174,26 +166,26 @@ class JdhPrescriptionsList extends JdhPrescriptions
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_prescriptions)
-        if (!isset($GLOBALS["jdh_prescriptions"]) || get_class($GLOBALS["jdh_prescriptions"]) == PROJECT_NAMESPACE . "jdh_prescriptions") {
-            $GLOBALS["jdh_prescriptions"] = &$this;
+        // Table object (jdh_pharmacy_income)
+        if (!isset($GLOBALS["jdh_pharmacy_income"]) || get_class($GLOBALS["jdh_pharmacy_income"]) == PROJECT_NAMESPACE . "jdh_pharmacy_income") {
+            $GLOBALS["jdh_pharmacy_income"] = &$this;
         }
 
         // Page URL
         $pageUrl = $this->pageUrl(false);
 
         // Initialize URLs
-        $this->AddUrl = "jdhprescriptionsadd";
+        $this->AddUrl = "jdhpharmacyincomeadd";
         $this->InlineAddUrl = $pageUrl . "action=add";
         $this->GridAddUrl = $pageUrl . "action=gridadd";
         $this->GridEditUrl = $pageUrl . "action=gridedit";
         $this->MultiEditUrl = $pageUrl . "action=multiedit";
-        $this->MultiDeleteUrl = "jdhprescriptionsdelete";
-        $this->MultiUpdateUrl = "jdhprescriptionsupdate";
+        $this->MultiDeleteUrl = "jdhpharmacyincomedelete";
+        $this->MultiUpdateUrl = "jdhpharmacyincomeupdate";
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_prescriptions');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_pharmacy_income');
         }
 
         // Start timer
@@ -348,7 +340,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
                 $pageName = GetPageName($url);
                 if ($pageName != $this->getListUrl()) { // Not List page => View page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhprescriptionsview"; // If View page, no primary button
+                    $result["view"] = $pageName == "jdhpharmacyincomeview"; // If View page, no primary button
                 } else { // List page
                     // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
@@ -441,7 +433,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['prescription_id'];
+            $key .= @$ar['patient_id'];
         }
         return $key;
     }
@@ -454,10 +446,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->prescription_id->Visible = false;
-        }
-        if ($this->isAddOrEdit()) {
-            $this->submitted_by_user_id->Visible = false;
+            $this->patient_id->Visible = false;
         }
     }
 
@@ -652,19 +641,15 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
         // Setup export options
         $this->setupExportOptions();
-
-        // Setup import options
-        $this->setupImportOptions();
-        $this->prescription_id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->prescription_title->setVisibility();
-        $this->medicine_id->setVisibility();
-        $this->tabs->setVisibility();
-        $this->frequency->setVisibility();
-        $this->prescription_days->setVisibility();
-        $this->prescription_time->setVisibility();
-        $this->prescription_date->setVisibility();
-        $this->submitted_by_user_id->Visible = false;
+        $this->patient_name->setVisibility();
+        $this->name->setVisibility();
+        $this->selling_price->setVisibility();
+        $this->units_available->setVisibility();
+        $this->units_given->setVisibility();
+        $this->units_remaining->setVisibility();
+        $this->submission_date->Visible = false;
+        $this->line_total_cost->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -688,9 +673,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
             $this->InlineDelete = true;
         }
 
-        // Set up master detail parameters
-        $this->setupMasterParms();
-
         // Setup other options
         $this->setupOtherOptions();
 
@@ -699,14 +681,9 @@ class JdhPrescriptionsList extends JdhPrescriptions
             $this->ListActions->add($name, $action);
         }
 
-        // Set up lookup cache
-        $this->setupLookupOptions($this->patient_id);
-        $this->setupLookupOptions($this->medicine_id);
-        $this->setupLookupOptions($this->prescription_time);
-
         // Update form name to avoid conflict
         if ($this->IsModal) {
-            $this->FormName = "fjdh_prescriptionsgrid";
+            $this->FormName = "fjdh_pharmacy_incomegrid";
         }
 
         // Set up page action
@@ -739,13 +716,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
         // Set up Breadcrumb
         if (!$this->isExport()) {
             $this->setupBreadcrumb();
-        }
-
-        // Process import
-        if ($this->isImport()) {
-            $this->import(Param(Config("API_FILE_TOKEN_NAME")), ConvertToBool(Param("rollback")));
-            $this->terminate();
-            return;
         }
 
         // Hide list options
@@ -841,28 +811,8 @@ class JdhPrescriptionsList extends JdhPrescriptions
         if (!$Security->canList()) {
             $filter = "(0=1)"; // Filter all records
         }
-
-        // Restore master/detail filter from session
-        $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Restore master filter from session
-        $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Restore detail filter from session
         AddFilter($filter, $this->DbDetailFilter);
         AddFilter($filter, $this->SearchWhere);
-
-        // Load master record
-        if ($this->CurrentMode != "add" && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_patients") {
-            $masterTbl = Container("jdh_patients");
-            $rsmaster = $masterTbl->loadRs($this->DbMasterFilter)->fetchAssociative();
-            $this->MasterRecordExists = $rsmaster !== false;
-            if (!$this->MasterRecordExists) {
-                $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record found
-                $this->terminate("jdhpatientslist"); // Return to master page
-                return;
-            } else {
-                $masterTbl->loadListRowValues($rsmaster);
-                $masterTbl->RowType = ROWTYPE_MASTER; // Master row
-                $masterTbl->renderListRow();
-            }
-        }
 
         // Set up filter
         if ($this->Command == "json") {
@@ -917,13 +867,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
                 } else {
                     $this->setWarningMessage($Language->phrase("NoRecord"));
                 }
-            }
-
-            // Audit trail on search
-            if ($this->AuditTrailOnSearch && $this->Command == "search" && !$this->RestoreSearch) {
-                $searchParm = ServerVar("QUERY_STRING");
-                $searchSql = $this->getSessionWhere();
-                $this->writeAuditTrailOnSearch($searchParm, $searchSql);
             }
         }
 
@@ -1071,18 +1014,17 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
         // Load server side filters
         if (Config("SEARCH_FILTER_OPTION") == "Server" && isset($UserProfile)) {
-            $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_prescriptionssrch");
+            $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_pharmacy_incomesrch");
         }
-        $filterList = Concat($filterList, $this->prescription_id->AdvancedSearch->toJson(), ","); // Field prescription_id
         $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
-        $filterList = Concat($filterList, $this->prescription_title->AdvancedSearch->toJson(), ","); // Field prescription_title
-        $filterList = Concat($filterList, $this->medicine_id->AdvancedSearch->toJson(), ","); // Field medicine_id
-        $filterList = Concat($filterList, $this->tabs->AdvancedSearch->toJson(), ","); // Field tabs
-        $filterList = Concat($filterList, $this->frequency->AdvancedSearch->toJson(), ","); // Field frequency
-        $filterList = Concat($filterList, $this->prescription_days->AdvancedSearch->toJson(), ","); // Field prescription_days
-        $filterList = Concat($filterList, $this->prescription_time->AdvancedSearch->toJson(), ","); // Field prescription_time
-        $filterList = Concat($filterList, $this->prescription_date->AdvancedSearch->toJson(), ","); // Field prescription_date
-        $filterList = Concat($filterList, $this->submitted_by_user_id->AdvancedSearch->toJson(), ","); // Field submitted_by_user_id
+        $filterList = Concat($filterList, $this->patient_name->AdvancedSearch->toJson(), ","); // Field patient_name
+        $filterList = Concat($filterList, $this->name->AdvancedSearch->toJson(), ","); // Field name
+        $filterList = Concat($filterList, $this->selling_price->AdvancedSearch->toJson(), ","); // Field selling_price
+        $filterList = Concat($filterList, $this->units_available->AdvancedSearch->toJson(), ","); // Field units_available
+        $filterList = Concat($filterList, $this->units_given->AdvancedSearch->toJson(), ","); // Field units_given
+        $filterList = Concat($filterList, $this->units_remaining->AdvancedSearch->toJson(), ","); // Field units_remaining
+        $filterList = Concat($filterList, $this->submission_date->AdvancedSearch->toJson(), ","); // Field submission_date
+        $filterList = Concat($filterList, $this->line_total_cost->AdvancedSearch->toJson(), ","); // Field line_total_cost
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
             $filterList = Concat($filterList, $wrk, ",");
@@ -1104,7 +1046,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
         global $UserProfile;
         if (Post("ajax") == "savefilters") { // Save filter request (Ajax)
             $filters = Post("filters");
-            $UserProfile->setSearchFilters(CurrentUserName(), "fjdh_prescriptionssrch", $filters);
+            $UserProfile->setSearchFilters(CurrentUserName(), "fjdh_pharmacy_incomesrch", $filters);
             WriteJson([["success" => true]]); // Success
             return true;
         } elseif (Post("cmd") == "resetfilter") {
@@ -1123,14 +1065,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
         $filter = json_decode(Post("filter"), true);
         $this->Command = "search";
 
-        // Field prescription_id
-        $this->prescription_id->AdvancedSearch->SearchValue = @$filter["x_prescription_id"];
-        $this->prescription_id->AdvancedSearch->SearchOperator = @$filter["z_prescription_id"];
-        $this->prescription_id->AdvancedSearch->SearchCondition = @$filter["v_prescription_id"];
-        $this->prescription_id->AdvancedSearch->SearchValue2 = @$filter["y_prescription_id"];
-        $this->prescription_id->AdvancedSearch->SearchOperator2 = @$filter["w_prescription_id"];
-        $this->prescription_id->AdvancedSearch->save();
-
         // Field patient_id
         $this->patient_id->AdvancedSearch->SearchValue = @$filter["x_patient_id"];
         $this->patient_id->AdvancedSearch->SearchOperator = @$filter["z_patient_id"];
@@ -1139,69 +1073,69 @@ class JdhPrescriptionsList extends JdhPrescriptions
         $this->patient_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_id"];
         $this->patient_id->AdvancedSearch->save();
 
-        // Field prescription_title
-        $this->prescription_title->AdvancedSearch->SearchValue = @$filter["x_prescription_title"];
-        $this->prescription_title->AdvancedSearch->SearchOperator = @$filter["z_prescription_title"];
-        $this->prescription_title->AdvancedSearch->SearchCondition = @$filter["v_prescription_title"];
-        $this->prescription_title->AdvancedSearch->SearchValue2 = @$filter["y_prescription_title"];
-        $this->prescription_title->AdvancedSearch->SearchOperator2 = @$filter["w_prescription_title"];
-        $this->prescription_title->AdvancedSearch->save();
+        // Field patient_name
+        $this->patient_name->AdvancedSearch->SearchValue = @$filter["x_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchOperator = @$filter["z_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchCondition = @$filter["v_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchValue2 = @$filter["y_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchOperator2 = @$filter["w_patient_name"];
+        $this->patient_name->AdvancedSearch->save();
 
-        // Field medicine_id
-        $this->medicine_id->AdvancedSearch->SearchValue = @$filter["x_medicine_id"];
-        $this->medicine_id->AdvancedSearch->SearchOperator = @$filter["z_medicine_id"];
-        $this->medicine_id->AdvancedSearch->SearchCondition = @$filter["v_medicine_id"];
-        $this->medicine_id->AdvancedSearch->SearchValue2 = @$filter["y_medicine_id"];
-        $this->medicine_id->AdvancedSearch->SearchOperator2 = @$filter["w_medicine_id"];
-        $this->medicine_id->AdvancedSearch->save();
+        // Field name
+        $this->name->AdvancedSearch->SearchValue = @$filter["x_name"];
+        $this->name->AdvancedSearch->SearchOperator = @$filter["z_name"];
+        $this->name->AdvancedSearch->SearchCondition = @$filter["v_name"];
+        $this->name->AdvancedSearch->SearchValue2 = @$filter["y_name"];
+        $this->name->AdvancedSearch->SearchOperator2 = @$filter["w_name"];
+        $this->name->AdvancedSearch->save();
 
-        // Field tabs
-        $this->tabs->AdvancedSearch->SearchValue = @$filter["x_tabs"];
-        $this->tabs->AdvancedSearch->SearchOperator = @$filter["z_tabs"];
-        $this->tabs->AdvancedSearch->SearchCondition = @$filter["v_tabs"];
-        $this->tabs->AdvancedSearch->SearchValue2 = @$filter["y_tabs"];
-        $this->tabs->AdvancedSearch->SearchOperator2 = @$filter["w_tabs"];
-        $this->tabs->AdvancedSearch->save();
+        // Field selling_price
+        $this->selling_price->AdvancedSearch->SearchValue = @$filter["x_selling_price"];
+        $this->selling_price->AdvancedSearch->SearchOperator = @$filter["z_selling_price"];
+        $this->selling_price->AdvancedSearch->SearchCondition = @$filter["v_selling_price"];
+        $this->selling_price->AdvancedSearch->SearchValue2 = @$filter["y_selling_price"];
+        $this->selling_price->AdvancedSearch->SearchOperator2 = @$filter["w_selling_price"];
+        $this->selling_price->AdvancedSearch->save();
 
-        // Field frequency
-        $this->frequency->AdvancedSearch->SearchValue = @$filter["x_frequency"];
-        $this->frequency->AdvancedSearch->SearchOperator = @$filter["z_frequency"];
-        $this->frequency->AdvancedSearch->SearchCondition = @$filter["v_frequency"];
-        $this->frequency->AdvancedSearch->SearchValue2 = @$filter["y_frequency"];
-        $this->frequency->AdvancedSearch->SearchOperator2 = @$filter["w_frequency"];
-        $this->frequency->AdvancedSearch->save();
+        // Field units_available
+        $this->units_available->AdvancedSearch->SearchValue = @$filter["x_units_available"];
+        $this->units_available->AdvancedSearch->SearchOperator = @$filter["z_units_available"];
+        $this->units_available->AdvancedSearch->SearchCondition = @$filter["v_units_available"];
+        $this->units_available->AdvancedSearch->SearchValue2 = @$filter["y_units_available"];
+        $this->units_available->AdvancedSearch->SearchOperator2 = @$filter["w_units_available"];
+        $this->units_available->AdvancedSearch->save();
 
-        // Field prescription_days
-        $this->prescription_days->AdvancedSearch->SearchValue = @$filter["x_prescription_days"];
-        $this->prescription_days->AdvancedSearch->SearchOperator = @$filter["z_prescription_days"];
-        $this->prescription_days->AdvancedSearch->SearchCondition = @$filter["v_prescription_days"];
-        $this->prescription_days->AdvancedSearch->SearchValue2 = @$filter["y_prescription_days"];
-        $this->prescription_days->AdvancedSearch->SearchOperator2 = @$filter["w_prescription_days"];
-        $this->prescription_days->AdvancedSearch->save();
+        // Field units_given
+        $this->units_given->AdvancedSearch->SearchValue = @$filter["x_units_given"];
+        $this->units_given->AdvancedSearch->SearchOperator = @$filter["z_units_given"];
+        $this->units_given->AdvancedSearch->SearchCondition = @$filter["v_units_given"];
+        $this->units_given->AdvancedSearch->SearchValue2 = @$filter["y_units_given"];
+        $this->units_given->AdvancedSearch->SearchOperator2 = @$filter["w_units_given"];
+        $this->units_given->AdvancedSearch->save();
 
-        // Field prescription_time
-        $this->prescription_time->AdvancedSearch->SearchValue = @$filter["x_prescription_time"];
-        $this->prescription_time->AdvancedSearch->SearchOperator = @$filter["z_prescription_time"];
-        $this->prescription_time->AdvancedSearch->SearchCondition = @$filter["v_prescription_time"];
-        $this->prescription_time->AdvancedSearch->SearchValue2 = @$filter["y_prescription_time"];
-        $this->prescription_time->AdvancedSearch->SearchOperator2 = @$filter["w_prescription_time"];
-        $this->prescription_time->AdvancedSearch->save();
+        // Field units_remaining
+        $this->units_remaining->AdvancedSearch->SearchValue = @$filter["x_units_remaining"];
+        $this->units_remaining->AdvancedSearch->SearchOperator = @$filter["z_units_remaining"];
+        $this->units_remaining->AdvancedSearch->SearchCondition = @$filter["v_units_remaining"];
+        $this->units_remaining->AdvancedSearch->SearchValue2 = @$filter["y_units_remaining"];
+        $this->units_remaining->AdvancedSearch->SearchOperator2 = @$filter["w_units_remaining"];
+        $this->units_remaining->AdvancedSearch->save();
 
-        // Field prescription_date
-        $this->prescription_date->AdvancedSearch->SearchValue = @$filter["x_prescription_date"];
-        $this->prescription_date->AdvancedSearch->SearchOperator = @$filter["z_prescription_date"];
-        $this->prescription_date->AdvancedSearch->SearchCondition = @$filter["v_prescription_date"];
-        $this->prescription_date->AdvancedSearch->SearchValue2 = @$filter["y_prescription_date"];
-        $this->prescription_date->AdvancedSearch->SearchOperator2 = @$filter["w_prescription_date"];
-        $this->prescription_date->AdvancedSearch->save();
+        // Field submission_date
+        $this->submission_date->AdvancedSearch->SearchValue = @$filter["x_submission_date"];
+        $this->submission_date->AdvancedSearch->SearchOperator = @$filter["z_submission_date"];
+        $this->submission_date->AdvancedSearch->SearchCondition = @$filter["v_submission_date"];
+        $this->submission_date->AdvancedSearch->SearchValue2 = @$filter["y_submission_date"];
+        $this->submission_date->AdvancedSearch->SearchOperator2 = @$filter["w_submission_date"];
+        $this->submission_date->AdvancedSearch->save();
 
-        // Field submitted_by_user_id
-        $this->submitted_by_user_id->AdvancedSearch->SearchValue = @$filter["x_submitted_by_user_id"];
-        $this->submitted_by_user_id->AdvancedSearch->SearchOperator = @$filter["z_submitted_by_user_id"];
-        $this->submitted_by_user_id->AdvancedSearch->SearchCondition = @$filter["v_submitted_by_user_id"];
-        $this->submitted_by_user_id->AdvancedSearch->SearchValue2 = @$filter["y_submitted_by_user_id"];
-        $this->submitted_by_user_id->AdvancedSearch->SearchOperator2 = @$filter["w_submitted_by_user_id"];
-        $this->submitted_by_user_id->AdvancedSearch->save();
+        // Field line_total_cost
+        $this->line_total_cost->AdvancedSearch->SearchValue = @$filter["x_line_total_cost"];
+        $this->line_total_cost->AdvancedSearch->SearchOperator = @$filter["z_line_total_cost"];
+        $this->line_total_cost->AdvancedSearch->SearchCondition = @$filter["v_line_total_cost"];
+        $this->line_total_cost->AdvancedSearch->SearchValue2 = @$filter["y_line_total_cost"];
+        $this->line_total_cost->AdvancedSearch->SearchOperator2 = @$filter["w_line_total_cost"];
+        $this->line_total_cost->AdvancedSearch->save();
         $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
     }
@@ -1241,10 +1175,8 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
         // Fields to search
         $searchFlds = [];
-        $searchFlds[] = &$this->prescription_title;
-        $searchFlds[] = &$this->tabs;
-        $searchFlds[] = &$this->frequency;
-        $searchFlds[] = &$this->prescription_time;
+        $searchFlds[] = &$this->patient_name;
+        $searchFlds[] = &$this->name;
         $searchKeyword = $default ? $this->BasicSearch->KeywordDefault : $this->BasicSearch->Keyword;
         $searchType = $default ? $this->BasicSearch->TypeDefault : $this->BasicSearch->Type;
 
@@ -1323,15 +1255,14 @@ class JdhPrescriptionsList extends JdhPrescriptions
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
-            $this->updateSort($this->prescription_id); // prescription_id
             $this->updateSort($this->patient_id); // patient_id
-            $this->updateSort($this->prescription_title); // prescription_title
-            $this->updateSort($this->medicine_id); // medicine_id
-            $this->updateSort($this->tabs); // tabs
-            $this->updateSort($this->frequency); // frequency
-            $this->updateSort($this->prescription_days); // prescription_days
-            $this->updateSort($this->prescription_time); // prescription_time
-            $this->updateSort($this->prescription_date); // prescription_date
+            $this->updateSort($this->patient_name); // patient_name
+            $this->updateSort($this->name); // name
+            $this->updateSort($this->selling_price); // selling_price
+            $this->updateSort($this->units_available); // units_available
+            $this->updateSort($this->units_given); // units_given
+            $this->updateSort($this->units_remaining); // units_remaining
+            $this->updateSort($this->line_total_cost); // line_total_cost
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1352,28 +1283,19 @@ class JdhPrescriptionsList extends JdhPrescriptions
                 $this->resetSearchParms();
             }
 
-            // Reset master/detail keys
-            if ($this->Command == "resetall") {
-                $this->setCurrentMasterTable(""); // Clear master table
-                $this->DbMasterFilter = "";
-                $this->DbDetailFilter = "";
-                        $this->patient_id->setSessionValue("");
-            }
-
             // Reset (clear) sorting order
             if ($this->Command == "resetsort") {
                 $orderBy = "";
                 $this->setSessionOrderBy($orderBy);
-                $this->prescription_id->setSort("");
                 $this->patient_id->setSort("");
-                $this->prescription_title->setSort("");
-                $this->medicine_id->setSort("");
-                $this->tabs->setSort("");
-                $this->frequency->setSort("");
-                $this->prescription_days->setSort("");
-                $this->prescription_time->setSort("");
-                $this->prescription_date->setSort("");
-                $this->submitted_by_user_id->setSort("");
+                $this->patient_name->setSort("");
+                $this->name->setSort("");
+                $this->selling_price->setSort("");
+                $this->units_available->setSort("");
+                $this->units_given->setSort("");
+                $this->units_remaining->setSort("");
+                $this->submission_date->setSort("");
+                $this->line_total_cost->setSort("");
             }
 
             // Reset start position
@@ -1393,18 +1315,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
         $item->OnLeft = false;
         $item->Visible = false;
 
-        // "view"
-        $item = &$this->ListOptions->add("view");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canView();
-        $item->OnLeft = false;
-
-        // "edit"
-        $item = &$this->ListOptions->add("edit");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canEdit();
-        $item->OnLeft = false;
-
         // List actions
         $item = &$this->ListOptions->add("listactions");
         $item->CssClass = "text-nowrap";
@@ -1415,7 +1325,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
         // "checkbox"
         $item = &$this->ListOptions->add("checkbox");
-        $item->Visible = $Security->canDelete();
+        $item->Visible = false;
         $item->OnLeft = false;
         $item->Header = "<div class=\"form-check\"><input type=\"checkbox\" name=\"key\" id=\"key\" class=\"form-check-input\" data-ew-action=\"select-all-keys\"></div>";
         if ($item->OnLeft) {
@@ -1462,32 +1372,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
         $pageUrl = $this->pageUrl(false);
-        if ($this->CurrentMode == "view") {
-            // "view"
-            $opt = $this->ListOptions["view"];
-            $viewcaption = HtmlTitle($Language->phrase("ViewLink"));
-            if ($Security->canView() && $this->showOptionLink("view")) {
-                if ($this->ModalView && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_prescriptions\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-caption=\"" . $viewcaption . "\" href=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\">" . $Language->phrase("ViewLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
-
-            // "edit"
-            $opt = $this->ListOptions["edit"];
-            $editcaption = HtmlTitle($Language->phrase("EditLink"));
-            if ($Security->canEdit() && $this->showOptionLink("edit")) {
-                if ($this->ModalEdit && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_prescriptions\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
+        if ($this->CurrentMode == "view") { // Check view mode
         } // End View mode
 
         // Set up list action buttons
@@ -1501,11 +1386,11 @@ class JdhPrescriptionsList extends JdhPrescriptions
                 if ($listaction->Select == ACTION_SINGLE && $allowed) {
                     $caption = $listaction->Caption;
                     $icon = ($listaction->Icon != "") ? "<i class=\"" . HtmlEncode(str_replace(" ew-icon", "", $listaction->Icon)) . "\" data-caption=\"" . HtmlTitle($caption) . "\"></i> " : "";
-                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_prescriptionslist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
+                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_pharmacy_incomelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
                     if ($link != "") {
                         $links[] = $link;
                         if ($body == "") { // Setup first button
-                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_prescriptionslist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
+                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_pharmacy_incomelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
                         }
                     }
                 }
@@ -1526,7 +1411,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
         // "checkbox"
         $opt = $this->ListOptions["checkbox"];
-        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->prescription_id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
+        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->patient_id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
         $this->renderListOptionsExt();
 
         // Call ListOptions_Rendered event
@@ -1545,30 +1430,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
     {
         global $Language, $Security;
         $options = &$this->OtherOptions;
-        $option = $options["addedit"];
-
-        // Add
-        $item = &$option->add("add");
-        $addcaption = HtmlTitle($Language->phrase("AddLink"));
-        if ($this->ModalAdd && !IsMobile()) {
-            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-table=\"jdh_prescriptions\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("AddLink") . "</a>";
-        } else {
-            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
-        }
-        $item->Visible = $this->AddUrl != "" && $Security->canAdd();
         $option = $options["action"];
-
-        // Add multi delete
-        $item = &$option->add("multidelete");
-        $item->Body = "<button type=\"button\" class=\"ew-action ew-multi-delete\" title=\"" .
-            HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" data-caption=\"" .
-            HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" form=\"fjdh_prescriptionslist\"" .
-            " data-ew-action=\"" . ($this->UseAjaxActions ? "inline" : "submit") . "\"" .
-            ($this->UseAjaxActions ? " data-action=\"delete\"" : "") .
-            " data-url=\"" . GetUrl($this->MultiDeleteUrl) . "\"" .
-            ($this->InlineDelete ? " data-msg=\"" . HtmlEncode($Language->phrase("DeleteConfirm")) . "\" data-data='{\"action\":\"delete\"}'" : " data-data='{\"action\":\"show\"}'") .
-            ">" . $Language->phrase("DeleteSelectedLink") . "</button>";
-        $item->Visible = $Security->canDelete();
 
         // Show column list for column visibility
         if ($this->UseColumnVisibility) {
@@ -1576,15 +1438,14 @@ class JdhPrescriptionsList extends JdhPrescriptions
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("prescription_id", $this->createColumnOption("prescription_id"));
             $option->add("patient_id", $this->createColumnOption("patient_id"));
-            $option->add("prescription_title", $this->createColumnOption("prescription_title"));
-            $option->add("medicine_id", $this->createColumnOption("medicine_id"));
-            $option->add("tabs", $this->createColumnOption("tabs"));
-            $option->add("frequency", $this->createColumnOption("frequency"));
-            $option->add("prescription_days", $this->createColumnOption("prescription_days"));
-            $option->add("prescription_time", $this->createColumnOption("prescription_time"));
-            $option->add("prescription_date", $this->createColumnOption("prescription_date"));
+            $option->add("patient_name", $this->createColumnOption("patient_name"));
+            $option->add("name", $this->createColumnOption("name"));
+            $option->add("selling_price", $this->createColumnOption("selling_price"));
+            $option->add("units_available", $this->createColumnOption("units_available"));
+            $option->add("units_given", $this->createColumnOption("units_given"));
+            $option->add("units_remaining", $this->createColumnOption("units_remaining"));
+            $option->add("line_total_cost", $this->createColumnOption("line_total_cost"));
         }
 
         // Set up options default
@@ -1604,10 +1465,10 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
         // Filter button
         $item = &$this->FilterOptions->add("savecurrentfilter");
-        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_prescriptionssrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
+        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_pharmacy_incomesrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
         $item->Visible = true;
         $item = &$this->FilterOptions->add("deletefilter");
-        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_prescriptionssrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
+        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_pharmacy_incomesrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
         $item->Visible = true;
         $this->FilterOptions->UseDropDownButton = true;
         $this->FilterOptions->UseButtonGroup = !$this->FilterOptions->UseDropDownButton;
@@ -1646,7 +1507,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
                 $item = &$option->add("custom_" . $listaction->Action);
                 $caption = $listaction->Caption;
                 $icon = ($listaction->Icon != "") ? '<i class="' . HtmlEncode($listaction->Icon) . '" data-caption="' . HtmlEncode($caption) . '"></i>' . $caption : $caption;
-                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_prescriptionslist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
+                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_pharmacy_incomelist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
                 $item->Visible = $listaction->Allow;
             }
         }
@@ -1795,7 +1656,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
                 // Set row properties
                 $this->resetAttributes();
-                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_prescriptions", "data-rowtype" => ROWTYPE_ADD]);
+                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_pharmacy_income", "data-rowtype" => ROWTYPE_ADD]);
                 $this->RowAttrs->appendClass("ew-template");
                 // Render row
                 $this->RowType = ROWTYPE_ADD;
@@ -1856,7 +1717,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
         $this->RowAttrs->merge([
             "data-rowindex" => $this->RowCount,
             "data-key" => $this->getKey(true),
-            "id" => "r" . $this->RowCount . "_jdh_prescriptions",
+            "id" => "r" . $this->RowCount . "_jdh_pharmacy_income",
             "data-rowtype" => $this->RowType,
             "class" => ($this->RowCount % 2 != 1) ? "ew-table-alt-row" : "",
         ]);
@@ -1966,32 +1827,30 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->prescription_id->setDbValue($row['prescription_id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->prescription_title->setDbValue($row['prescription_title']);
-        $this->medicine_id->setDbValue($row['medicine_id']);
-        $this->tabs->setDbValue($row['tabs']);
-        $this->frequency->setDbValue($row['frequency']);
-        $this->prescription_days->setDbValue($row['prescription_days']);
-        $this->prescription_time->setDbValue($row['prescription_time']);
-        $this->prescription_date->setDbValue($row['prescription_date']);
-        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->patient_name->setDbValue($row['patient_name']);
+        $this->name->setDbValue($row['name']);
+        $this->selling_price->setDbValue($row['selling_price']);
+        $this->units_available->setDbValue($row['units_available']);
+        $this->units_given->setDbValue($row['units_given']);
+        $this->units_remaining->setDbValue($row['units_remaining']);
+        $this->submission_date->setDbValue($row['submission_date']);
+        $this->line_total_cost->setDbValue($row['line_total_cost']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['prescription_id'] = $this->prescription_id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['prescription_title'] = $this->prescription_title->DefaultValue;
-        $row['medicine_id'] = $this->medicine_id->DefaultValue;
-        $row['tabs'] = $this->tabs->DefaultValue;
-        $row['frequency'] = $this->frequency->DefaultValue;
-        $row['prescription_days'] = $this->prescription_days->DefaultValue;
-        $row['prescription_time'] = $this->prescription_time->DefaultValue;
-        $row['prescription_date'] = $this->prescription_date->DefaultValue;
-        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['patient_name'] = $this->patient_name->DefaultValue;
+        $row['name'] = $this->name->DefaultValue;
+        $row['selling_price'] = $this->selling_price->DefaultValue;
+        $row['units_available'] = $this->units_available->DefaultValue;
+        $row['units_given'] = $this->units_given->DefaultValue;
+        $row['units_remaining'] = $this->units_remaining->DefaultValue;
+        $row['submission_date'] = $this->submission_date->DefaultValue;
+        $row['line_total_cost'] = $this->line_total_cost->DefaultValue;
         return $row;
     }
 
@@ -2032,425 +1891,96 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
         // Common render codes for all row types
 
-        // prescription_id
-
         // patient_id
 
-        // prescription_title
+        // patient_name
 
-        // medicine_id
+        // name
 
-        // tabs
+        // selling_price
 
-        // frequency
+        // units_available
 
-        // prescription_days
+        // units_given
 
-        // prescription_time
+        // units_remaining
 
-        // prescription_date
+        // submission_date
 
-        // submitted_by_user_id
+        // line_total_cost
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // prescription_id
-            $this->prescription_id->ViewValue = $this->prescription_id->CurrentValue;
-
             // patient_id
-            $curVal = strval($this->patient_id->CurrentValue);
-            if ($curVal != "") {
-                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                    } else {
-                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->patient_id->ViewValue = null;
-            }
+            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
-            // prescription_title
-            $this->prescription_title->ViewValue = $this->prescription_title->CurrentValue;
+            // patient_name
+            $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
 
-            // medicine_id
-            $curVal = strval($this->medicine_id->CurrentValue);
-            if ($curVal != "") {
-                $this->medicine_id->ViewValue = $this->medicine_id->lookupCacheOption($curVal);
-                if ($this->medicine_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->medicine_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->medicine_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->medicine_id->ViewValue = $this->medicine_id->displayValue($arwrk);
-                    } else {
-                        $this->medicine_id->ViewValue = FormatNumber($this->medicine_id->CurrentValue, $this->medicine_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->medicine_id->ViewValue = null;
-            }
+            // name
+            $this->name->ViewValue = $this->name->CurrentValue;
 
-            // tabs
-            $this->tabs->ViewValue = $this->tabs->CurrentValue;
-            $this->tabs->ViewValue = FormatNumber($this->tabs->ViewValue, $this->tabs->formatPattern());
+            // selling_price
+            $this->selling_price->ViewValue = $this->selling_price->CurrentValue;
+            $this->selling_price->ViewValue = FormatNumber($this->selling_price->ViewValue, $this->selling_price->formatPattern());
 
-            // frequency
-            $this->frequency->ViewValue = $this->frequency->CurrentValue;
-            $this->frequency->ViewValue = FormatNumber($this->frequency->ViewValue, $this->frequency->formatPattern());
+            // units_available
+            $this->units_available->ViewValue = $this->units_available->CurrentValue;
+            $this->units_available->ViewValue = FormatNumber($this->units_available->ViewValue, $this->units_available->formatPattern());
 
-            // prescription_days
-            $this->prescription_days->ViewValue = $this->prescription_days->CurrentValue;
-            $this->prescription_days->ViewValue = FormatNumber($this->prescription_days->ViewValue, $this->prescription_days->formatPattern());
+            // units_given
+            $this->units_given->ViewValue = $this->units_given->CurrentValue;
+            $this->units_given->ViewValue = FormatNumber($this->units_given->ViewValue, $this->units_given->formatPattern());
 
-            // prescription_time
-            if (strval($this->prescription_time->CurrentValue) != "") {
-                $this->prescription_time->ViewValue = $this->prescription_time->optionCaption($this->prescription_time->CurrentValue);
-            } else {
-                $this->prescription_time->ViewValue = null;
-            }
+            // units_remaining
+            $this->units_remaining->ViewValue = $this->units_remaining->CurrentValue;
+            $this->units_remaining->ViewValue = FormatNumber($this->units_remaining->ViewValue, $this->units_remaining->formatPattern());
 
-            // prescription_date
-            $this->prescription_date->ViewValue = $this->prescription_date->CurrentValue;
-            $this->prescription_date->ViewValue = FormatDateTime($this->prescription_date->ViewValue, $this->prescription_date->formatPattern());
+            // submission_date
+            $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
+            $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
 
-            // submitted_by_user_id
-            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
-            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
-
-            // prescription_id
-            $this->prescription_id->HrefValue = "";
-            $this->prescription_id->TooltipValue = "";
+            // line_total_cost
+            $this->line_total_cost->ViewValue = $this->line_total_cost->CurrentValue;
+            $this->line_total_cost->ViewValue = FormatNumber($this->line_total_cost->ViewValue, $this->line_total_cost->formatPattern());
 
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
 
-            // prescription_title
-            $this->prescription_title->HrefValue = "";
-            $this->prescription_title->TooltipValue = "";
+            // patient_name
+            $this->patient_name->HrefValue = "";
+            $this->patient_name->TooltipValue = "";
 
-            // medicine_id
-            $this->medicine_id->HrefValue = "";
-            $this->medicine_id->TooltipValue = "";
+            // name
+            $this->name->HrefValue = "";
+            $this->name->TooltipValue = "";
 
-            // tabs
-            $this->tabs->HrefValue = "";
-            $this->tabs->TooltipValue = "";
+            // selling_price
+            $this->selling_price->HrefValue = "";
+            $this->selling_price->TooltipValue = "";
 
-            // frequency
-            $this->frequency->HrefValue = "";
-            $this->frequency->TooltipValue = "";
+            // units_available
+            $this->units_available->HrefValue = "";
+            $this->units_available->TooltipValue = "";
 
-            // prescription_days
-            $this->prescription_days->HrefValue = "";
-            $this->prescription_days->TooltipValue = "";
+            // units_given
+            $this->units_given->HrefValue = "";
+            $this->units_given->TooltipValue = "";
 
-            // prescription_time
-            $this->prescription_time->HrefValue = "";
-            $this->prescription_time->TooltipValue = "";
+            // units_remaining
+            $this->units_remaining->HrefValue = "";
+            $this->units_remaining->TooltipValue = "";
 
-            // prescription_date
-            $this->prescription_date->HrefValue = "";
-            $this->prescription_date->TooltipValue = "";
+            // line_total_cost
+            $this->line_total_cost->HrefValue = "";
+            $this->line_total_cost->TooltipValue = "";
         }
 
         // Call Row Rendered event
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
-    }
-
-    /**
-     * Import file
-     *
-     * @param string $filetoken File token to locate the uploaded import file
-     * @param bool $rollback Try import and then rollback
-     * @return bool
-     */
-    public function import($filetoken, $rollback = false)
-    {
-        global $Security, $Language;
-        if (!$Security->canImport()) {
-            return false; // Import not allowed
-        }
-
-        // Check if valid token
-        if (EmptyValue($filetoken)) {
-            return false;
-        }
-
-        // Get uploaded files by token
-        $files = GetUploadedFileNames($filetoken);
-        $exts = explode(",", Config("IMPORT_FILE_ALLOWED_EXTENSIONS"));
-        $result = [Config("API_FILE_TOKEN_NAME") => $filetoken, "files" => []];
-
-        // Set header
-        if (ob_get_length()) {
-            ob_clean();
-        }
-        header("Cache-Control: no-store");
-        header("Content-Type: text/event-stream");
-
-        // Import records
-        try {
-            foreach ($files as $file) {
-                $res = ["file" => basename($file)];
-                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-
-                // Ignore log file
-                if ($ext == "txt") {
-                    continue;
-                }
-
-                // Check file extension
-                if (!in_array($ext, $exts)) {
-                    $res = array_merge($res, ["error" => str_replace("%e", $ext, $Language->phrase("ImportInvalidFileExtension"))]);
-                    SendEvent($res, "error");
-                    return false;
-                }
-
-                // Set up options
-                $options = [
-                    "file" => $file,
-                    "inputEncoding" => "", // For CSV only
-                    "delimiter" => ",", // For CSV only
-                    "enclosure" => "\"", // For CSV only
-                    "escape" => "\\", // For CSV only
-                    "activeSheet" => null, // For PhpSpreadsheet only
-                    "readOnly" => true, // For PhpSpreadsheet only
-                    "maxRows" => null, // For PhpSpreadsheet only
-                    "headerRowNumber" => 0,
-                    "headers" => []
-                ];
-                foreach ($_GET as $key => $value) {
-                    if (!in_array($key, [Config("API_ACTION_NAME"), Config("API_FILE_TOKEN_NAME")])) {
-                        $options[$key] = $value;
-                    }
-                }
-
-                // Workflow builder
-                $builder = fn($workflow) => $workflow;
-
-                // Call Page Importing server event
-                if (!$this->pageImporting($builder, $options)) {
-                    SendEvent($res, "error");
-                    return false;
-                }
-
-                // Set max execution time
-                if (Config("IMPORT_MAX_EXECUTION_TIME") > 0) {
-                    ini_set("max_execution_time", Config("IMPORT_MAX_EXECUTION_TIME"));
-                }
-
-                // Reader
-                try {
-                    if ($ext == "csv") {
-                        $csv = file_get_contents($file);
-                        if ($csv !== false) {
-                            if (StartsString("\xEF\xBB\xBF", $csv)) { // UTF-8 BOM
-                                $csv = substr($csv, 3);
-                            } elseif ($options["inputEncoding"] != "" && !SameText($options["inputEncoding"], "UTF-8")) {
-                                $csv = Convert($options["inputEncoding"], "UTF-8", $csv);
-                            }
-                            file_put_contents($file, $csv);
-                        }
-                        $reader = new \Port\Csv\CsvReader(new \SplFileObject($file), $options["delimiter"], $options["enclosure"], $options["escape"]);
-                    } else {
-                        $reader = new \Port\Spreadsheet\SpreadsheetReader(new \SplFileObject($file), $options["headerRowNumber"], $options["activeSheet"], $options["readOnly"], $options["maxRows"]);
-                    }
-                    if (is_array($options["headers"]) && count($options["headers"]) > 0) {
-                        $reader->setColumnHeaders($options["headers"]);
-                    } elseif (is_int($options["headerRowNumber"])) {
-                        $reader->setHeaderRowNumber($options["headerRowNumber"]);
-                    }
-                } catch (\Exception $e) {
-                    $res = array_merge($res, ["error" => $e->getMessage()]);
-                    SendEvent($res, "error");
-                    return false;
-                }
-
-                // Column headers
-                $headers = $reader->getColumnHeaders();
-                if (count($headers) == 0) { // Missing headers
-                    $res["error"] = $Language->phrase("ImportNoHeaderRow");
-                    SendEvent($res, "error");
-                    return false;
-                }
-
-                // Counts
-                $recordCnt = $reader->count();
-                $cnt = 0;
-                $successCnt = 0;
-                $failCnt = 0;
-                $res = array_merge($res, ["totalCount" => $recordCnt, "count" => $cnt, "successCount" => 0, "failCount" => 0]);
-
-                // Writer
-                $writer = new \Port\Writer\CallbackWriter(function ($row) use (&$res, &$cnt, &$successCnt, &$failCnt) {
-                    try {
-                        $success = $this->importRow($row, ++$cnt); // Import row
-                        if ($success) {
-                            $successCnt++;
-                        } else {
-                            $failCnt++;
-                        }
-                        $err = "";
-                    } catch (\Port\Exception $e) { // Catch exception so the workflow continues
-                        $failCnt++;
-                        $err = $e->getMessage();
-                        if ($failCnt > $this->ImportMaxFailures) {
-                            throw $e; // Throw \Port\Exception to terminate the workflow
-                        }
-                    } finally {
-                        $res = array_merge($res, [
-                            "row" => $row, // Current row
-                            "success" => $success, // For current row
-                            "error" => $err, // For current row
-                            "count" => $cnt,
-                            "successCount" => $successCnt,
-                            "failCount" => $failCnt
-                        ]);
-                        SendEvent($res);
-                    }
-                });
-
-                // Connection
-                $conn = $this->getConnection();
-
-                // Begin transaction
-                if ($this->ImportUseTransaction) {
-                    $conn->beginTransaction();
-                }
-
-                // Workflow
-                $workflow = new \Port\Steps\StepAggregator($reader);
-                $workflow->setLogger(Logger());
-                $workflow->setSkipItemOnFailure(false); // Stop on exception
-                $workflow = $builder($workflow);
-                try {
-                    $info = @$workflow->addWriter($writer)->process();
-                } finally {
-                    // Rollback transaction
-                    if ($this->ImportUseTransaction) {
-                        if ($rollback || $failCnt > $this->ImportMaxFailures) {
-                            $res["rollbacked"] = $conn->rollback();
-                        } else {
-                            $conn->commit();
-                        }
-                    }
-                    unset($res["row"], $res["error"]); // Remove current row info
-                    $res["success"] = $cnt > 0 && $failCnt <= $this->ImportMaxFailures; // Set success status of current file
-                    SendEvent($res); // Current file imported
-                    $result["files"][] = $res;
-
-                    // Call Page Imported server event
-                    $this->pageImported($info, $res);
-                }
-            }
-        } finally {
-            $result["failCount"] = array_reduce($result["files"], fn($carry, $item) => $carry + $item["failCount"], 0); // For client side
-            $result["success"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"], true); // All files successful
-            $result["rollbacked"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"] && ($item["rollbacked"] ?? false), true); // All file rollbacked successfully
-            if ($result["success"] && !$result["rollbacked"]) {
-                CleanUploadTempPaths($filetoken);
-            }
-            SendEvent($result, "complete"); // All files imported
-            return $result["success"];
-        }
-    }
-
-    /**
-     * Import a row
-     *
-     * @param array $row Row to be imported
-     * @param int $cnt Index of the row (1-based)
-     * @return bool
-     */
-    protected function importRow(&$row, $cnt)
-    {
-        global $Language;
-
-        // Call Row Import server event
-        if (!$this->rowImport($row, $cnt)) {
-            return false;
-        }
-
-        // Check field names and values
-        foreach ($row as $name => $value) {
-            $fld = $this->Fields[$name];
-            if (!$fld) {
-                throw new \Port\Exception\UnexpectedValueException(str_replace("%f", $name, $Language->phrase("ImportInvalidFieldName")));
-            }
-            if (!$this->checkValue($fld, $value)) {
-                throw new \Port\Exception\UnexpectedValueException(str_replace(["%f", "%v"], [$name, $value], $Language->phrase("ImportInvalidFieldValue")));
-            }
-        }
-
-        // Insert/Update to database
-        $res = false;
-        if (!$this->ImportInsertOnly && $oldrow = $this->load($row)) {
-            if (!method_exists($this, "rowUpdating") || $this->rowUpdating($oldrow, $row)) {
-                if ($res = $this->update($row, "", $oldrow)) {
-                    if (method_exists($this, "rowUpdated")) {
-                        $this->rowUpdated($oldrow, $row);
-                    }
-                }
-            }
-        } else {
-            if (!method_exists($this, "rowInserting") || $this->rowInserting(null, $row)) {
-                if ($res = $this->insert($row)) {
-                    if (method_exists($this, "rowInserted")) {
-                        $this->rowInserted(null, $row);
-                    }
-                }
-            }
-        }
-        return $res;
-    }
-
-    /**
-     * Check field value
-     *
-     * @param object $fld Field object
-     * @param object $value
-     * @return bool
-     */
-    protected function checkValue($fld, $value)
-    {
-        if ($fld->DataType == DATATYPE_NUMBER && !is_numeric($value)) {
-            return false;
-        } elseif ($fld->DataType == DATATYPE_DATE && !CheckDate($value, $fld->formatPattern())) {
-            return false;
-        }
-        return true;
-    }
-
-    // Load row
-    protected function load($row)
-    {
-        $filter = $this->getRecordFilter($row);
-        if (!$filter) {
-            return null;
-        }
-        $this->CurrentFilter = $filter;
-        $sql = $this->getCurrentSql();
-        $conn = $this->getConnection();
-        return $conn->fetchAssociative($sql);
     }
 
     // Get export HTML tag
@@ -2465,19 +1995,19 @@ class JdhPrescriptionsList extends JdhPrescriptions
         }
         if (SameText($type, "excel")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_prescriptionslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_pharmacy_incomelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\">" . $Language->phrase("ExportToExcel") . "</a>";
             }
         } elseif (SameText($type, "word")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_prescriptionslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_pharmacy_incomelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\">" . $Language->phrase("ExportToWord") . "</a>";
             }
         } elseif (SameText($type, "pdf")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_prescriptionslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_pharmacy_incomelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\">" . $Language->phrase("ExportToPdf") . "</a>";
             }
@@ -2489,7 +2019,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-csv\" title=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\">" . $Language->phrase("ExportToCsv") . "</a>";
         } elseif (SameText($type, "email")) {
             $url = $custom ? ' data-url="' . $exportUrl . '"' : '';
-            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_prescriptionslist" data-ew-action="email" data-custom="false" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
+            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_pharmacy_incomelist" data-ew-action="email" data-custom="false" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
         } elseif (SameText($type, "print")) {
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-print\" title=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\">" . $Language->phrase("PrinterFriendly") . "</a>";
         }
@@ -2567,7 +2097,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
         // Search button
         $item = &$this->SearchOptions->add("searchtoggle");
         $searchToggleClass = ($this->SearchWhere != "") ? " active" : " active";
-        $item->Body = "<a class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" role=\"button\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-ew-action=\"search-toggle\" data-form=\"fjdh_prescriptionssrch\" aria-pressed=\"" . ($searchToggleClass == " active" ? "true" : "false") . "\">" . $Language->phrase("SearchLink") . "</a>";
+        $item->Body = "<a class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" role=\"button\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-ew-action=\"search-toggle\" data-form=\"fjdh_pharmacy_incomesrch\" aria-pressed=\"" . ($searchToggleClass == " active" ? "true" : "false") . "\">" . $Language->phrase("SearchLink") . "</a>";
         $item->Visible = true;
 
         // Show all button
@@ -2611,25 +2141,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
         if (!$this->hasSearchFields() && $this->SearchOptions["searchtoggle"]) {
             $this->SearchOptions["searchtoggle"]->Visible = false;
         }
-    }
-
-    // Set up import options
-    protected function setupImportOptions()
-    {
-        global $Security, $Language;
-
-        // Import
-        $item = &$this->ImportOptions->add("import");
-        $item->Body = "<a class=\"ew-import-link ew-import\" role=\"button\" title=\"" . $Language->phrase("Import", true) . "\" data-caption=\"" . $Language->phrase("Import", true) . "\" data-ew-action=\"import\" data-hdr=\"" . $Language->phrase("Import", true) . "\">" . $Language->phrase("Import") . "</a>";
-        $item->Visible = $Security->canImport();
-        $this->ImportOptions->UseButtonGroup = true;
-        $this->ImportOptions->UseDropDownButton = false;
-        $this->ImportOptions->DropDownButtonPhrase = $Language->phrase("Import");
-
-        // Add group option item
-        $item = &$this->ImportOptions->addGroupOption();
-        $item->Body = "";
-        $item->Visible = false;
     }
 
     /**
@@ -2676,23 +2187,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
         // Call Page Exporting server event
         $doc->ExportCustom = !$this->pageExporting($doc);
 
-        // Export master record
-        if (Config("EXPORT_MASTER_RECORD") && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_patients") {
-            $jdh_patients = new JdhPatientsList();
-            $rsmaster = $jdh_patients->loadRs($this->DbMasterFilter); // Load master record
-            if ($rsmaster) {
-                $exportStyle = $doc->Style;
-                $doc->setStyle("v"); // Change to vertical
-                if (!$this->isExport("csv") || Config("EXPORT_MASTER_RECORD_FOR_CSV")) {
-                    $doc->Table = $jdh_patients;
-                    $jdh_patients->exportDocument($doc, new Recordset($rsmaster));
-                    $doc->exportEmptyRow();
-                    $doc->Table = &$this;
-                }
-                $doc->setStyle($exportStyle); // Restore
-            }
-        }
-
         // Page header
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
@@ -2712,92 +2206,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
         // Call Page Exported server event
         $this->pageExported($doc);
-    }
-
-    // Show link optionally based on User ID
-    protected function showOptionLink($id = "")
-    {
-        global $Security;
-        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
-            return $Security->isValidUserID($this->submitted_by_user_id->CurrentValue);
-        }
-        return true;
-    }
-
-    // Set up master/detail based on QueryString
-    protected function setupMasterParms()
-    {
-        $validMaster = false;
-        // Get the keys for master table
-        if (($master = Get(Config("TABLE_SHOW_MASTER"), Get(Config("TABLE_MASTER")))) !== null) {
-            $masterTblVar = $master;
-            if ($masterTblVar == "") {
-                $validMaster = true;
-                $this->DbMasterFilter = "";
-                $this->DbDetailFilter = "";
-            }
-            if ($masterTblVar == "jdh_patients") {
-                $validMaster = true;
-                $masterTbl = Container("jdh_patients");
-                if (($parm = Get("fk_patient_id", Get("patient_id"))) !== null) {
-                    $masterTbl->patient_id->setQueryStringValue($parm);
-                    $this->patient_id->QueryStringValue = $masterTbl->patient_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
-                    $this->patient_id->setSessionValue($this->patient_id->QueryStringValue);
-                    if (!is_numeric($masterTbl->patient_id->QueryStringValue)) {
-                        $validMaster = false;
-                    }
-                } else {
-                    $validMaster = false;
-                }
-            }
-        } elseif (($master = Post(Config("TABLE_SHOW_MASTER"), Post(Config("TABLE_MASTER")))) !== null) {
-            $masterTblVar = $master;
-            if ($masterTblVar == "") {
-                    $validMaster = true;
-                    $this->DbMasterFilter = "";
-                    $this->DbDetailFilter = "";
-            }
-            if ($masterTblVar == "jdh_patients") {
-                $validMaster = true;
-                $masterTbl = Container("jdh_patients");
-                if (($parm = Post("fk_patient_id", Post("patient_id"))) !== null) {
-                    $masterTbl->patient_id->setFormValue($parm);
-                    $this->patient_id->setFormValue($masterTbl->patient_id->FormValue);
-                    $this->patient_id->setSessionValue($this->patient_id->FormValue);
-                    if (!is_numeric($masterTbl->patient_id->FormValue)) {
-                        $validMaster = false;
-                    }
-                } else {
-                    $validMaster = false;
-                }
-            }
-        }
-        if ($validMaster) {
-            // Save current master table
-            $this->setCurrentMasterTable($masterTblVar);
-
-            // Update URL
-            $this->AddUrl = $this->addMasterUrl($this->AddUrl);
-            $this->InlineAddUrl = $this->addMasterUrl($this->InlineAddUrl);
-            $this->GridAddUrl = $this->addMasterUrl($this->GridAddUrl);
-            $this->GridEditUrl = $this->addMasterUrl($this->GridEditUrl);
-            $this->MultiEditUrl = $this->addMasterUrl($this->MultiEditUrl);
-
-            // Reset start record counter (new master key)
-            if (!$this->isAddOrEdit()) {
-                $this->StartRecord = 1;
-                $this->setStartRecordNumber($this->StartRecord);
-            }
-
-            // Clear previous master key from Session
-            if ($masterTblVar != "jdh_patients") {
-                if ($this->patient_id->CurrentValue == "") {
-                    $this->patient_id->setSessionValue("");
-                }
-            }
-        }
-        $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Get master filter from session
-        $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Get detail filter from session
     }
 
     // Set up Breadcrumb
@@ -2823,12 +2231,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
-                case "x_patient_id":
-                    break;
-                case "x_medicine_id":
-                    break;
-                case "x_prescription_time":
-                    break;
                 default:
                     $lookupFilter = "";
                     break;

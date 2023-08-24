@@ -473,6 +473,32 @@ return function (App $app) {
     // Latest_Appointments
     $app->map(["GET", "POST", "OPTIONS"], '/latestappointments', LatestAppointmentsController::class . ':summary')->add(PermissionMiddleware::class)->setName('latestappointments-Latest_Appointments-summary'); // summary
 
+    // jdh_prescriptions_actions
+    $app->map(["GET","POST","OPTIONS"], '/jdhprescriptionsactionslist[/{id}]', JdhPrescriptionsActionsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhprescriptionsactionslist-jdh_prescriptions_actions-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/jdhprescriptionsactionsadd[/{id}]', JdhPrescriptionsActionsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhprescriptionsactionsadd-jdh_prescriptions_actions-add'); // add
+    $app->map(["GET","POST","OPTIONS"], '/jdhprescriptionsactionsview[/{id}]', JdhPrescriptionsActionsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhprescriptionsactionsview-jdh_prescriptions_actions-view'); // view
+    $app->map(["GET","POST","OPTIONS"], '/jdhprescriptionsactionsedit[/{id}]', JdhPrescriptionsActionsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhprescriptionsactionsedit-jdh_prescriptions_actions-edit'); // edit
+    $app->map(["GET","POST","OPTIONS"], '/jdhprescriptionsactionsdelete[/{id}]', JdhPrescriptionsActionsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhprescriptionsactionsdelete-jdh_prescriptions_actions-delete'); // delete
+    $app->group(
+        '/jdh_prescriptions_actions',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{id}]', JdhPrescriptionsActionsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_prescriptions_actions/list-jdh_prescriptions_actions-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{id}]', JdhPrescriptionsActionsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_prescriptions_actions/add-jdh_prescriptions_actions-add-2'); // add
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{id}]', JdhPrescriptionsActionsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_prescriptions_actions/view-jdh_prescriptions_actions-view-2'); // view
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{id}]', JdhPrescriptionsActionsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_prescriptions_actions/edit-jdh_prescriptions_actions-edit-2'); // edit
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{id}]', JdhPrescriptionsActionsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_prescriptions_actions/delete-jdh_prescriptions_actions-delete-2'); // delete
+        }
+    );
+
+    // jdh_pharmacy_income
+    $app->map(["GET","POST","OPTIONS"], '/jdhpharmacyincomelist[/{patient_id}]', JdhPharmacyIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhpharmacyincomelist-jdh_pharmacy_income-list'); // list
+    $app->group(
+        '/jdh_pharmacy_income',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{patient_id}]', JdhPharmacyIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_pharmacy_income/list-jdh_pharmacy_income-list-2'); // list
+        }
+    );
+
     // personal_data
     $app->map(["GET","POST","OPTIONS"], '/personaldata', OthersController::class . ':personaldata')->add(PermissionMiddleware::class)->setName('personaldata');
 

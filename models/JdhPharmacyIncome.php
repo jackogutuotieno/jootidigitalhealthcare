@@ -8,9 +8,9 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 
 /**
- * Table class for jdh_medicine_stock
+ * Table class for jdh_pharmacy_income
  */
-class JdhMedicineStock extends DbTable
+class JdhPharmacyIncome extends DbTable
 {
     protected $SqlFrom = "";
     protected $SqlSelect = null;
@@ -28,14 +28,6 @@ class JdhMedicineStock extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
-    // Audit trail
-    public $AuditTrailOnAdd = true;
-    public $AuditTrailOnEdit = true;
-    public $AuditTrailOnDelete = true;
-    public $AuditTrailOnView = false;
-    public $AuditTrailOnViewData = false;
-    public $AuditTrailOnSearch = false;
-
     // Export
     public $UseAjaxActions = false;
     public $ModalSearch = false;
@@ -49,12 +41,15 @@ class JdhMedicineStock extends DbTable
     public $ModalMultiEdit = false;
 
     // Fields
-    public $id;
-    public $medicine_id;
+    public $patient_id;
+    public $patient_name;
+    public $name;
+    public $selling_price;
     public $units_available;
-    public $submittedby_user_id;
-    public $date_created;
-    public $date_updated;
+    public $units_given;
+    public $units_remaining;
+    public $submission_date;
+    public $line_total_cost;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -67,14 +62,14 @@ class JdhMedicineStock extends DbTable
 
         // Language object
         $Language = Container("language");
-        $this->TableVar = "jdh_medicine_stock";
-        $this->TableName = 'jdh_medicine_stock';
-        $this->TableType = "TABLE";
+        $this->TableVar = "jdh_pharmacy_income";
+        $this->TableName = 'jdh_pharmacy_income';
+        $this->TableType = "VIEW";
         $this->ImportUseTransaction = $this->supportsTransaction() && Config("IMPORT_USE_TRANSACTION");
         $this->UseTransaction = $this->supportsTransaction() && Config("USE_TRANSACTION");
 
         // Update Table
-        $this->UpdateTable = "`jdh_medicine_stock`";
+        $this->UpdateTable = "`jdh_pharmacy_income`";
         $this->Dbid = 'DB';
         $this->ExportAll = true;
         $this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
@@ -101,58 +96,103 @@ class JdhMedicineStock extends DbTable
         $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
         $this->BasicSearch = new BasicSearch($this);
 
-        // id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->id = new DbField(
+        // patient_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_id = new DbField(
             $this, // Table
-            'x_id', // Variable name
-            'id', // Name
-            '`id`', // Expression
-            '`id`', // Basic search expression
-            3, // Type
-            11, // Size
+            'x_patient_id', // Variable name
+            'patient_id', // Name
+            '`patient_id`', // Expression
+            '`patient_id`', // Basic search expression
+            20, // Type
+            20, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`id`', // Virtual expression
+            '`patient_id`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'NO' // Edit Tag
         );
-        $this->id->InputTextType = "text";
-        $this->id->IsAutoIncrement = true; // Autoincrement field
-        $this->id->IsPrimaryKey = true; // Primary key field
-        $this->id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
-        $this->Fields['id'] = &$this->id;
+        $this->patient_id->InputTextType = "text";
+        $this->patient_id->IsAutoIncrement = true; // Autoincrement field
+        $this->patient_id->IsPrimaryKey = true; // Primary key field
+        $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->patient_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->Fields['patient_id'] = &$this->patient_id;
 
-        // medicine_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->medicine_id = new DbField(
+        // patient_name $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_name = new DbField(
             $this, // Table
-            'x_medicine_id', // Variable name
-            'medicine_id', // Name
-            '`medicine_id`', // Expression
-            '`medicine_id`', // Basic search expression
-            3, // Type
-            11, // Size
+            'x_patient_name', // Variable name
+            'patient_name', // Name
+            '`patient_name`', // Expression
+            '`patient_name`', // Basic search expression
+            200, // Type
+            50, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`medicine_id`', // Virtual expression
+            '`patient_name`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'SELECT' // Edit Tag
+            'TEXT' // Edit Tag
         );
-        $this->medicine_id->InputTextType = "text";
-        $this->medicine_id->Nullable = false; // NOT NULL field
-        $this->medicine_id->Required = true; // Required field
-        $this->medicine_id->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->medicine_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->medicine_id->Lookup = new Lookup('medicine_id', 'jdh_medicines', false, 'id', ["name","","",""], '', '', [], [], [], [], [], [], '', '', "`name`");
-        $this->medicine_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->medicine_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['medicine_id'] = &$this->medicine_id;
+        $this->patient_name->InputTextType = "text";
+        $this->patient_name->Nullable = false; // NOT NULL field
+        $this->patient_name->Required = true; // Required field
+        $this->patient_name->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['patient_name'] = &$this->patient_name;
+
+        // name $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->name = new DbField(
+            $this, // Table
+            'x_name', // Variable name
+            'name', // Name
+            '`name`', // Expression
+            '`name`', // Basic search expression
+            200, // Type
+            191, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`name`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->name->InputTextType = "text";
+        $this->name->Nullable = false; // NOT NULL field
+        $this->name->Required = true; // Required field
+        $this->name->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['name'] = &$this->name;
+
+        // selling_price $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->selling_price = new DbField(
+            $this, // Table
+            'x_selling_price', // Variable name
+            'selling_price', // Name
+            '`selling_price`', // Expression
+            '`selling_price`', // Basic search expression
+            5, // Type
+            22, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`selling_price`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->selling_price->InputTextType = "text";
+        $this->selling_price->Nullable = false; // NOT NULL field
+        $this->selling_price->Required = true; // Required field
+        $this->selling_price->DefaultErrorMessage = $Language->phrase("IncorrectFloat");
+        $this->selling_price->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['selling_price'] = &$this->selling_price;
 
         // units_available $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->units_available = new DbField(
@@ -179,80 +219,103 @@ class JdhMedicineStock extends DbTable
         $this->units_available->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['units_available'] = &$this->units_available;
 
-        // submittedby_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->submittedby_user_id = new DbField(
+        // units_given $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->units_given = new DbField(
             $this, // Table
-            'x_submittedby_user_id', // Variable name
-            'submittedby_user_id', // Name
-            '`submittedby_user_id`', // Expression
-            '`submittedby_user_id`', // Basic search expression
+            'x_units_given', // Variable name
+            'units_given', // Name
+            '`units_given`', // Expression
+            '`units_given`', // Basic search expression
             3, // Type
             11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`submittedby_user_id`', // Virtual expression
+            '`units_given`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->submittedby_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
-        $this->submittedby_user_id->InputTextType = "text";
-        $this->submittedby_user_id->Nullable = false; // NOT NULL field
-        $this->submittedby_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->submittedby_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['submittedby_user_id'] = &$this->submittedby_user_id;
+        $this->units_given->InputTextType = "text";
+        $this->units_given->Nullable = false; // NOT NULL field
+        $this->units_given->Required = true; // Required field
+        $this->units_given->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->units_given->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['units_given'] = &$this->units_given;
 
-        // date_created $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->date_created = new DbField(
+        // units_remaining $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->units_remaining = new DbField(
             $this, // Table
-            'x_date_created', // Variable name
-            'date_created', // Name
-            '`date_created`', // Expression
-            CastDateFieldForLike("`date_created`", 11, "DB"), // Basic search expression
+            'x_units_remaining', // Variable name
+            'units_remaining', // Name
+            'units_available - units_given', // Expression
+            'units_available - units_given', // Basic search expression
+            20, // Type
+            12, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            'units_available - units_given', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->units_remaining->InputTextType = "text";
+        $this->units_remaining->IsCustom = true; // Custom field
+        $this->units_remaining->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->units_remaining->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->Fields['units_remaining'] = &$this->units_remaining;
+
+        // submission_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->submission_date = new DbField(
+            $this, // Table
+            'x_submission_date', // Variable name
+            'submission_date', // Name
+            '`submission_date`', // Expression
+            CastDateFieldForLike("`submission_date`", 17, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            11, // Date/Time format
+            17, // Date/Time format
             false, // Is upload field
-            '`date_created`', // Virtual expression
+            '`submission_date`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->date_created->InputTextType = "text";
-        $this->date_created->Nullable = false; // NOT NULL field
-        $this->date_created->Required = true; // Required field
-        $this->date_created->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
-        $this->date_created->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['date_created'] = &$this->date_created;
+        $this->submission_date->InputTextType = "text";
+        $this->submission_date->Nullable = false; // NOT NULL field
+        $this->submission_date->Required = true; // Required field
+        $this->submission_date->DefaultErrorMessage = str_replace("%s", DateFormat(17), $Language->phrase("IncorrectDate"));
+        $this->submission_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['submission_date'] = &$this->submission_date;
 
-        // date_updated $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->date_updated = new DbField(
+        // line_total_cost $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->line_total_cost = new DbField(
             $this, // Table
-            'x_date_updated', // Variable name
-            'date_updated', // Name
-            '`date_updated`', // Expression
-            CastDateFieldForLike("`date_updated`", 11, "DB"), // Basic search expression
-            135, // Type
-            19, // Size
-            11, // Date/Time format
+            'x_line_total_cost', // Variable name
+            'line_total_cost', // Name
+            'selling_price * units_given', // Expression
+            'selling_price * units_given', // Basic search expression
+            5, // Type
+            23, // Size
+            -1, // Date/Time format
             false, // Is upload field
-            '`date_updated`', // Virtual expression
+            'selling_price * units_given', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->date_updated->InputTextType = "text";
-        $this->date_updated->Nullable = false; // NOT NULL field
-        $this->date_updated->Required = true; // Required field
-        $this->date_updated->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
-        $this->date_updated->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['date_updated'] = &$this->date_updated;
+        $this->line_total_cost->InputTextType = "text";
+        $this->line_total_cost->IsCustom = true; // Custom field
+        $this->line_total_cost->DefaultErrorMessage = $Language->phrase("IncorrectFloat");
+        $this->line_total_cost->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->Fields['line_total_cost'] = &$this->line_total_cost;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -321,7 +384,7 @@ class JdhMedicineStock extends DbTable
     // Table level SQL
     public function getSqlFrom() // From
     {
-        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_medicine_stock`";
+        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_pharmacy_income`";
     }
 
     public function sqlFrom() // For backward compatibility
@@ -336,7 +399,7 @@ class JdhMedicineStock extends DbTable
 
     public function getSqlSelect() // Select
     {
-        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*");
+        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*, units_available - units_given AS `units_remaining`, selling_price * units_given AS `line_total_cost`");
     }
 
     public function sqlSelect() // For backward compatibility
@@ -415,11 +478,6 @@ class JdhMedicineStock extends DbTable
     // Apply User ID filters
     public function applyUserIDFilters($filter, $id = "")
     {
-        global $Security;
-        // Add User ID filter
-        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
-            $filter = $this->addUserIDFilter($filter, $id);
-        }
         return $filter;
     }
 
@@ -624,11 +682,8 @@ class JdhMedicineStock extends DbTable
         }
         if ($success) {
             // Get insert id if necessary
-            $this->id->setDbValue($conn->lastInsertId());
-            $rs['id'] = $this->id->DbValue;
-            if ($this->AuditTrailOnAdd) {
-                $this->writeAuditTrailOnAdd($rs);
-            }
+            $this->patient_id->setDbValue($conn->lastInsertId());
+            $rs['patient_id'] = $this->patient_id->DbValue;
         }
         return $success;
     }
@@ -678,17 +733,9 @@ class JdhMedicineStock extends DbTable
 
         // Return auto increment field
         if ($success) {
-            if (!isset($rs['id']) && !EmptyValue($this->id->CurrentValue)) {
-                $rs['id'] = $this->id->CurrentValue;
+            if (!isset($rs['patient_id']) && !EmptyValue($this->patient_id->CurrentValue)) {
+                $rs['patient_id'] = $this->patient_id->CurrentValue;
             }
-        }
-        if ($success && $this->AuditTrailOnEdit && $rsold) {
-            $rsaudit = $rs;
-            $fldname = 'id';
-            if (!array_key_exists($fldname, $rsaudit)) {
-                $rsaudit[$fldname] = $rsold[$fldname];
-            }
-            $this->writeAuditTrailOnEdit($rsold, $rsaudit);
         }
         return $success;
     }
@@ -709,8 +756,8 @@ class JdhMedicineStock extends DbTable
             $where = $this->arrayToFilter($where);
         }
         if ($rs) {
-            if (array_key_exists('id', $rs)) {
-                AddFilter($where, QuotedName('id', $this->Dbid) . '=' . QuotedValue($rs['id'], $this->id->DataType, $this->Dbid));
+            if (array_key_exists('patient_id', $rs)) {
+                AddFilter($where, QuotedName('patient_id', $this->Dbid) . '=' . QuotedValue($rs['patient_id'], $this->patient_id->DataType, $this->Dbid));
             }
         }
         $filter = ($curfilter) ? $this->CurrentFilter : "";
@@ -731,9 +778,6 @@ class JdhMedicineStock extends DbTable
                 $this->DbErrorMessage = $e->getMessage();
             }
         }
-        if ($success && $this->AuditTrailOnDelete) {
-            $this->writeAuditTrailOnDelete($rs);
-        }
         return $success;
     }
 
@@ -743,12 +787,15 @@ class JdhMedicineStock extends DbTable
         if (!is_array($row)) {
             return;
         }
-        $this->id->DbValue = $row['id'];
-        $this->medicine_id->DbValue = $row['medicine_id'];
+        $this->patient_id->DbValue = $row['patient_id'];
+        $this->patient_name->DbValue = $row['patient_name'];
+        $this->name->DbValue = $row['name'];
+        $this->selling_price->DbValue = $row['selling_price'];
         $this->units_available->DbValue = $row['units_available'];
-        $this->submittedby_user_id->DbValue = $row['submittedby_user_id'];
-        $this->date_created->DbValue = $row['date_created'];
-        $this->date_updated->DbValue = $row['date_updated'];
+        $this->units_given->DbValue = $row['units_given'];
+        $this->units_remaining->DbValue = $row['units_remaining'];
+        $this->submission_date->DbValue = $row['submission_date'];
+        $this->line_total_cost->DbValue = $row['line_total_cost'];
     }
 
     // Delete uploaded files
@@ -760,14 +807,14 @@ class JdhMedicineStock extends DbTable
     // Record filter WHERE clause
     protected function sqlKeyFilter()
     {
-        return "`id` = @id@";
+        return "`patient_id` = @patient_id@";
     }
 
     // Get Key
     public function getKey($current = false)
     {
         $keys = [];
-        $val = $current ? $this->id->CurrentValue : $this->id->OldValue;
+        $val = $current ? $this->patient_id->CurrentValue : $this->patient_id->OldValue;
         if (EmptyValue($val)) {
             return "";
         } else {
@@ -783,9 +830,9 @@ class JdhMedicineStock extends DbTable
         $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
         if (count($keys) == 1) {
             if ($current) {
-                $this->id->CurrentValue = $keys[0];
+                $this->patient_id->CurrentValue = $keys[0];
             } else {
-                $this->id->OldValue = $keys[0];
+                $this->patient_id->OldValue = $keys[0];
             }
         }
     }
@@ -795,9 +842,9 @@ class JdhMedicineStock extends DbTable
     {
         $keyFilter = $this->sqlKeyFilter();
         if (is_array($row)) {
-            $val = array_key_exists('id', $row) ? $row['id'] : null;
+            $val = array_key_exists('patient_id', $row) ? $row['patient_id'] : null;
         } else {
-            $val = !EmptyValue($this->id->OldValue) && !$current ? $this->id->OldValue : $this->id->CurrentValue;
+            $val = !EmptyValue($this->patient_id->OldValue) && !$current ? $this->patient_id->OldValue : $this->patient_id->CurrentValue;
         }
         if (!is_numeric($val)) {
             return "0=1"; // Invalid key
@@ -805,7 +852,7 @@ class JdhMedicineStock extends DbTable
         if ($val === null) {
             return "0=1"; // Invalid key
         } else {
-            $keyFilter = str_replace("@id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
+            $keyFilter = str_replace("@patient_id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
         }
         return $keyFilter;
     }
@@ -820,7 +867,7 @@ class JdhMedicineStock extends DbTable
         if ($referUrl != "" && $referPageName != CurrentPageName() && $referPageName != "login") { // Referer not same page or login page
             $_SESSION[$name] = $referUrl; // Save to Session
         }
-        return $_SESSION[$name] ?? GetUrl("jdhmedicinestocklist");
+        return $_SESSION[$name] ?? GetUrl("jdhpharmacyincomelist");
     }
 
     // Set return page URL
@@ -833,11 +880,11 @@ class JdhMedicineStock extends DbTable
     public function getModalCaption($pageName)
     {
         global $Language;
-        if ($pageName == "jdhmedicinestockview") {
+        if ($pageName == "jdhpharmacyincomeview") {
             return $Language->phrase("View");
-        } elseif ($pageName == "jdhmedicinestockedit") {
+        } elseif ($pageName == "jdhpharmacyincomeedit") {
             return $Language->phrase("Edit");
-        } elseif ($pageName == "jdhmedicinestockadd") {
+        } elseif ($pageName == "jdhpharmacyincomeadd") {
             return $Language->phrase("Add");
         }
         return "";
@@ -848,15 +895,15 @@ class JdhMedicineStock extends DbTable
     {
         switch (strtolower($action)) {
             case Config("API_VIEW_ACTION"):
-                return "JdhMedicineStockView";
+                return "JdhPharmacyIncomeView";
             case Config("API_ADD_ACTION"):
-                return "JdhMedicineStockAdd";
+                return "JdhPharmacyIncomeAdd";
             case Config("API_EDIT_ACTION"):
-                return "JdhMedicineStockEdit";
+                return "JdhPharmacyIncomeEdit";
             case Config("API_DELETE_ACTION"):
-                return "JdhMedicineStockDelete";
+                return "JdhPharmacyIncomeDelete";
             case Config("API_LIST_ACTION"):
-                return "JdhMedicineStockList";
+                return "JdhPharmacyIncomeList";
             default:
                 return "";
         }
@@ -877,16 +924,16 @@ class JdhMedicineStock extends DbTable
     // List URL
     public function getListUrl()
     {
-        return "jdhmedicinestocklist";
+        return "jdhpharmacyincomelist";
     }
 
     // View URL
     public function getViewUrl($parm = "")
     {
         if ($parm != "") {
-            $url = $this->keyUrl("jdhmedicinestockview", $parm);
+            $url = $this->keyUrl("jdhpharmacyincomeview", $parm);
         } else {
-            $url = $this->keyUrl("jdhmedicinestockview", Config("TABLE_SHOW_DETAIL") . "=");
+            $url = $this->keyUrl("jdhpharmacyincomeview", Config("TABLE_SHOW_DETAIL") . "=");
         }
         return $this->addMasterUrl($url);
     }
@@ -895,9 +942,9 @@ class JdhMedicineStock extends DbTable
     public function getAddUrl($parm = "")
     {
         if ($parm != "") {
-            $url = "jdhmedicinestockadd?" . $parm;
+            $url = "jdhpharmacyincomeadd?" . $parm;
         } else {
-            $url = "jdhmedicinestockadd";
+            $url = "jdhpharmacyincomeadd";
         }
         return $this->addMasterUrl($url);
     }
@@ -905,28 +952,28 @@ class JdhMedicineStock extends DbTable
     // Edit URL
     public function getEditUrl($parm = "")
     {
-        $url = $this->keyUrl("jdhmedicinestockedit", $parm);
+        $url = $this->keyUrl("jdhpharmacyincomeedit", $parm);
         return $this->addMasterUrl($url);
     }
 
     // Inline edit URL
     public function getInlineEditUrl()
     {
-        $url = $this->keyUrl("jdhmedicinestocklist", "action=edit");
+        $url = $this->keyUrl("jdhpharmacyincomelist", "action=edit");
         return $this->addMasterUrl($url);
     }
 
     // Copy URL
     public function getCopyUrl($parm = "")
     {
-        $url = $this->keyUrl("jdhmedicinestockadd", $parm);
+        $url = $this->keyUrl("jdhpharmacyincomeadd", $parm);
         return $this->addMasterUrl($url);
     }
 
     // Inline copy URL
     public function getInlineCopyUrl()
     {
-        $url = $this->keyUrl("jdhmedicinestocklist", "action=copy");
+        $url = $this->keyUrl("jdhpharmacyincomelist", "action=copy");
         return $this->addMasterUrl($url);
     }
 
@@ -936,7 +983,7 @@ class JdhMedicineStock extends DbTable
         if ($this->UseAjaxActions && ConvertToBool(Param("infinitescroll")) && CurrentPageID() == "list") {
             return $this->keyUrl(GetApiUrl(Config("API_DELETE_ACTION") . "/" . $this->TableVar));
         } else {
-            return $this->keyUrl("jdhmedicinestockdelete");
+            return $this->keyUrl("jdhpharmacyincomedelete");
         }
     }
 
@@ -949,7 +996,7 @@ class JdhMedicineStock extends DbTable
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
-        $json .= "\"id\":" . JsonEncode($this->id->CurrentValue, "number");
+        $json .= "\"patient_id\":" . JsonEncode($this->patient_id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -960,8 +1007,8 @@ class JdhMedicineStock extends DbTable
     // Add key value to URL
     public function keyUrl($url, $parm = "")
     {
-        if ($this->id->CurrentValue !== null) {
-            $url .= "/" . $this->encodeKeyValue($this->id->CurrentValue);
+        if ($this->patient_id->CurrentValue !== null) {
+            $url .= "/" . $this->encodeKeyValue($this->patient_id->CurrentValue);
         } else {
             return "javascript:ew.alert(ew.language.phrase('InvalidRecord'));";
         }
@@ -1029,7 +1076,7 @@ class JdhMedicineStock extends DbTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
-            if (($keyValue = Param("id") ?? Route("id")) !== null) {
+            if (($keyValue = Param("patient_id") ?? Route("patient_id")) !== null) {
                 $arKeys[] = $keyValue;
             } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
                 $arKeys[] = $keyValue;
@@ -1075,9 +1122,9 @@ class JdhMedicineStock extends DbTable
                 $keyFilter .= " OR ";
             }
             if ($setCurrent) {
-                $this->id->CurrentValue = $key;
+                $this->patient_id->CurrentValue = $key;
             } else {
-                $this->id->OldValue = $key;
+                $this->patient_id->OldValue = $key;
             }
             $keyFilter .= "(" . $this->getRecordFilter() . ")";
         }
@@ -1102,19 +1149,22 @@ class JdhMedicineStock extends DbTable
         } else {
             return;
         }
-        $this->id->setDbValue($row['id']);
-        $this->medicine_id->setDbValue($row['medicine_id']);
+        $this->patient_id->setDbValue($row['patient_id']);
+        $this->patient_name->setDbValue($row['patient_name']);
+        $this->name->setDbValue($row['name']);
+        $this->selling_price->setDbValue($row['selling_price']);
         $this->units_available->setDbValue($row['units_available']);
-        $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
-        $this->date_created->setDbValue($row['date_created']);
-        $this->date_updated->setDbValue($row['date_updated']);
+        $this->units_given->setDbValue($row['units_given']);
+        $this->units_remaining->setDbValue($row['units_remaining']);
+        $this->submission_date->setDbValue($row['submission_date']);
+        $this->line_total_cost->setDbValue($row['line_total_cost']);
     }
 
     // Render list content
     public function renderListContent($filter)
     {
         global $Response;
-        $listPage = "JdhMedicineStockList";
+        $listPage = "JdhPharmacyIncomeList";
         $listClass = PROJECT_NAMESPACE . $listPage;
         $page = new $listClass();
         $page->loadRecordsetFromFilter($filter);
@@ -1138,83 +1188,92 @@ class JdhMedicineStock extends DbTable
 
         // Common render codes
 
-        // id
+        // patient_id
 
-        // medicine_id
+        // patient_name
+
+        // name
+
+        // selling_price
 
         // units_available
 
-        // submittedby_user_id
+        // units_given
 
-        // date_created
+        // units_remaining
 
-        // date_updated
+        // submission_date
 
-        // id
-        $this->id->ViewValue = $this->id->CurrentValue;
+        // line_total_cost
 
-        // medicine_id
-        $curVal = strval($this->medicine_id->CurrentValue);
-        if ($curVal != "") {
-            $this->medicine_id->ViewValue = $this->medicine_id->lookupCacheOption($curVal);
-            if ($this->medicine_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $sqlWrk = $this->medicine_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->medicine_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->medicine_id->ViewValue = $this->medicine_id->displayValue($arwrk);
-                } else {
-                    $this->medicine_id->ViewValue = FormatNumber($this->medicine_id->CurrentValue, $this->medicine_id->formatPattern());
-                }
-            }
-        } else {
-            $this->medicine_id->ViewValue = null;
-        }
+        // patient_id
+        $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
+
+        // patient_name
+        $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
+
+        // name
+        $this->name->ViewValue = $this->name->CurrentValue;
+
+        // selling_price
+        $this->selling_price->ViewValue = $this->selling_price->CurrentValue;
+        $this->selling_price->ViewValue = FormatNumber($this->selling_price->ViewValue, $this->selling_price->formatPattern());
 
         // units_available
         $this->units_available->ViewValue = $this->units_available->CurrentValue;
         $this->units_available->ViewValue = FormatNumber($this->units_available->ViewValue, $this->units_available->formatPattern());
 
-        // submittedby_user_id
-        $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
-        $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
+        // units_given
+        $this->units_given->ViewValue = $this->units_given->CurrentValue;
+        $this->units_given->ViewValue = FormatNumber($this->units_given->ViewValue, $this->units_given->formatPattern());
 
-        // date_created
-        $this->date_created->ViewValue = $this->date_created->CurrentValue;
-        $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
+        // units_remaining
+        $this->units_remaining->ViewValue = $this->units_remaining->CurrentValue;
+        $this->units_remaining->ViewValue = FormatNumber($this->units_remaining->ViewValue, $this->units_remaining->formatPattern());
 
-        // date_updated
-        $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
-        $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
+        // submission_date
+        $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
+        $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
 
-        // id
-        $this->id->HrefValue = "";
-        $this->id->TooltipValue = "";
+        // line_total_cost
+        $this->line_total_cost->ViewValue = $this->line_total_cost->CurrentValue;
+        $this->line_total_cost->ViewValue = FormatNumber($this->line_total_cost->ViewValue, $this->line_total_cost->formatPattern());
 
-        // medicine_id
-        $this->medicine_id->HrefValue = "";
-        $this->medicine_id->TooltipValue = "";
+        // patient_id
+        $this->patient_id->HrefValue = "";
+        $this->patient_id->TooltipValue = "";
+
+        // patient_name
+        $this->patient_name->HrefValue = "";
+        $this->patient_name->TooltipValue = "";
+
+        // name
+        $this->name->HrefValue = "";
+        $this->name->TooltipValue = "";
+
+        // selling_price
+        $this->selling_price->HrefValue = "";
+        $this->selling_price->TooltipValue = "";
 
         // units_available
         $this->units_available->HrefValue = "";
         $this->units_available->TooltipValue = "";
 
-        // submittedby_user_id
-        $this->submittedby_user_id->HrefValue = "";
-        $this->submittedby_user_id->TooltipValue = "";
+        // units_given
+        $this->units_given->HrefValue = "";
+        $this->units_given->TooltipValue = "";
 
-        // date_created
-        $this->date_created->HrefValue = "";
-        $this->date_created->TooltipValue = "";
+        // units_remaining
+        $this->units_remaining->HrefValue = "";
+        $this->units_remaining->TooltipValue = "";
 
-        // date_updated
-        $this->date_updated->HrefValue = "";
-        $this->date_updated->TooltipValue = "";
+        // submission_date
+        $this->submission_date->HrefValue = "";
+        $this->submission_date->TooltipValue = "";
+
+        // line_total_cost
+        $this->line_total_cost->HrefValue = "";
+        $this->line_total_cost->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1231,13 +1290,33 @@ class JdhMedicineStock extends DbTable
         // Call Row Rendering event
         $this->rowRendering();
 
-        // id
-        $this->id->setupEditAttributes();
-        $this->id->EditValue = $this->id->CurrentValue;
+        // patient_id
+        $this->patient_id->setupEditAttributes();
+        $this->patient_id->EditValue = $this->patient_id->CurrentValue;
 
-        // medicine_id
-        $this->medicine_id->setupEditAttributes();
-        $this->medicine_id->PlaceHolder = RemoveHtml($this->medicine_id->caption());
+        // patient_name
+        $this->patient_name->setupEditAttributes();
+        if (!$this->patient_name->Raw) {
+            $this->patient_name->CurrentValue = HtmlDecode($this->patient_name->CurrentValue);
+        }
+        $this->patient_name->EditValue = $this->patient_name->CurrentValue;
+        $this->patient_name->PlaceHolder = RemoveHtml($this->patient_name->caption());
+
+        // name
+        $this->name->setupEditAttributes();
+        if (!$this->name->Raw) {
+            $this->name->CurrentValue = HtmlDecode($this->name->CurrentValue);
+        }
+        $this->name->EditValue = $this->name->CurrentValue;
+        $this->name->PlaceHolder = RemoveHtml($this->name->caption());
+
+        // selling_price
+        $this->selling_price->setupEditAttributes();
+        $this->selling_price->EditValue = $this->selling_price->CurrentValue;
+        $this->selling_price->PlaceHolder = RemoveHtml($this->selling_price->caption());
+        if (strval($this->selling_price->EditValue) != "" && is_numeric($this->selling_price->EditValue)) {
+            $this->selling_price->EditValue = FormatNumber($this->selling_price->EditValue, null);
+        }
 
         // units_available
         $this->units_available->setupEditAttributes();
@@ -1247,17 +1326,34 @@ class JdhMedicineStock extends DbTable
             $this->units_available->EditValue = FormatNumber($this->units_available->EditValue, null);
         }
 
-        // submittedby_user_id
+        // units_given
+        $this->units_given->setupEditAttributes();
+        $this->units_given->EditValue = $this->units_given->CurrentValue;
+        $this->units_given->PlaceHolder = RemoveHtml($this->units_given->caption());
+        if (strval($this->units_given->EditValue) != "" && is_numeric($this->units_given->EditValue)) {
+            $this->units_given->EditValue = FormatNumber($this->units_given->EditValue, null);
+        }
 
-        // date_created
-        $this->date_created->setupEditAttributes();
-        $this->date_created->EditValue = FormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern());
-        $this->date_created->PlaceHolder = RemoveHtml($this->date_created->caption());
+        // units_remaining
+        $this->units_remaining->setupEditAttributes();
+        $this->units_remaining->EditValue = $this->units_remaining->CurrentValue;
+        $this->units_remaining->PlaceHolder = RemoveHtml($this->units_remaining->caption());
+        if (strval($this->units_remaining->EditValue) != "" && is_numeric($this->units_remaining->EditValue)) {
+            $this->units_remaining->EditValue = FormatNumber($this->units_remaining->EditValue, null);
+        }
 
-        // date_updated
-        $this->date_updated->setupEditAttributes();
-        $this->date_updated->EditValue = FormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern());
-        $this->date_updated->PlaceHolder = RemoveHtml($this->date_updated->caption());
+        // submission_date
+        $this->submission_date->setupEditAttributes();
+        $this->submission_date->EditValue = FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern());
+        $this->submission_date->PlaceHolder = RemoveHtml($this->submission_date->caption());
+
+        // line_total_cost
+        $this->line_total_cost->setupEditAttributes();
+        $this->line_total_cost->EditValue = $this->line_total_cost->CurrentValue;
+        $this->line_total_cost->PlaceHolder = RemoveHtml($this->line_total_cost->caption());
+        if (strval($this->line_total_cost->EditValue) != "" && is_numeric($this->line_total_cost->EditValue)) {
+            $this->line_total_cost->EditValue = FormatNumber($this->line_total_cost->EditValue, null);
+        }
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1287,18 +1383,25 @@ class JdhMedicineStock extends DbTable
             if ($doc->Horizontal) { // Horizontal format, write header
                 $doc->beginExportRow();
                 if ($exportPageType == "view") {
-                    $doc->exportCaption($this->id);
-                    $doc->exportCaption($this->medicine_id);
+                    $doc->exportCaption($this->patient_id);
+                    $doc->exportCaption($this->patient_name);
+                    $doc->exportCaption($this->name);
+                    $doc->exportCaption($this->selling_price);
                     $doc->exportCaption($this->units_available);
-                    $doc->exportCaption($this->date_created);
-                    $doc->exportCaption($this->date_updated);
+                    $doc->exportCaption($this->units_given);
+                    $doc->exportCaption($this->units_remaining);
+                    $doc->exportCaption($this->submission_date);
+                    $doc->exportCaption($this->line_total_cost);
                 } else {
-                    $doc->exportCaption($this->id);
-                    $doc->exportCaption($this->medicine_id);
+                    $doc->exportCaption($this->patient_id);
+                    $doc->exportCaption($this->patient_name);
+                    $doc->exportCaption($this->name);
+                    $doc->exportCaption($this->selling_price);
                     $doc->exportCaption($this->units_available);
-                    $doc->exportCaption($this->submittedby_user_id);
-                    $doc->exportCaption($this->date_created);
-                    $doc->exportCaption($this->date_updated);
+                    $doc->exportCaption($this->units_given);
+                    $doc->exportCaption($this->units_remaining);
+                    $doc->exportCaption($this->submission_date);
+                    $doc->exportCaption($this->line_total_cost);
                 }
                 $doc->endExportRow();
             }
@@ -1328,18 +1431,25 @@ class JdhMedicineStock extends DbTable
                 if (!$doc->ExportCustom) {
                     $doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
                     if ($exportPageType == "view") {
-                        $doc->exportField($this->id);
-                        $doc->exportField($this->medicine_id);
+                        $doc->exportField($this->patient_id);
+                        $doc->exportField($this->patient_name);
+                        $doc->exportField($this->name);
+                        $doc->exportField($this->selling_price);
                         $doc->exportField($this->units_available);
-                        $doc->exportField($this->date_created);
-                        $doc->exportField($this->date_updated);
+                        $doc->exportField($this->units_given);
+                        $doc->exportField($this->units_remaining);
+                        $doc->exportField($this->submission_date);
+                        $doc->exportField($this->line_total_cost);
                     } else {
-                        $doc->exportField($this->id);
-                        $doc->exportField($this->medicine_id);
+                        $doc->exportField($this->patient_id);
+                        $doc->exportField($this->patient_name);
+                        $doc->exportField($this->name);
+                        $doc->exportField($this->selling_price);
                         $doc->exportField($this->units_available);
-                        $doc->exportField($this->submittedby_user_id);
-                        $doc->exportField($this->date_created);
-                        $doc->exportField($this->date_updated);
+                        $doc->exportField($this->units_given);
+                        $doc->exportField($this->units_remaining);
+                        $doc->exportField($this->submission_date);
+                        $doc->exportField($this->line_total_cost);
                     }
                     $doc->endExportRow($rowCnt);
                 }
@@ -1356,57 +1466,6 @@ class JdhMedicineStock extends DbTable
         }
     }
 
-    // Add User ID filter
-    public function addUserIDFilter($filter = "", $id = "")
-    {
-        global $Security;
-        $filterWrk = "";
-        if ($id == "")
-            $id = (CurrentPageID() == "list") ? $this->CurrentAction : CurrentPageID();
-        if (!$this->userIDAllow($id) && !$Security->isAdmin()) {
-            $filterWrk = $Security->userIdList();
-            if ($filterWrk != "") {
-                $filterWrk = '`submittedby_user_id` IN (' . $filterWrk . ')';
-            }
-        }
-
-        // Call User ID Filtering event
-        $this->userIdFiltering($filterWrk);
-        AddFilter($filter, $filterWrk);
-        return $filter;
-    }
-
-    // User ID subquery
-    public function getUserIDSubquery(&$fld, &$masterfld)
-    {
-        global $UserTable;
-        $wrk = "";
-        $sql = "SELECT " . $masterfld->Expression . " FROM `jdh_medicine_stock`";
-        $filter = $this->addUserIDFilter("");
-        if ($filter != "") {
-            $sql .= " WHERE " . $filter;
-        }
-
-        // List all values
-        $conn = Conn($UserTable->Dbid);
-        $config = $conn->getConfiguration();
-        $config->setResultCacheImpl($this->Cache);
-        if ($rs = $conn->executeCacheQuery($sql, [], [], $this->CacheProfile)->fetchAllNumeric()) {
-            foreach ($rs as $row) {
-                if ($wrk != "") {
-                    $wrk .= ",";
-                }
-                $wrk .= QuotedValue($row[0], $masterfld->DataType, Config("USER_TABLE_DBID"));
-            }
-        }
-        if ($wrk != "") {
-            $wrk = $fld->Expression . " IN (" . $wrk . ")";
-        } else { // No User ID value found
-            $wrk = "0=1";
-        }
-        return $wrk;
-    }
-
     // Get file data
     public function getFileData($fldparm, $key, $resize, $width = 0, $height = 0, $plugins = [])
     {
@@ -1414,192 +1473,6 @@ class JdhMedicineStock extends DbTable
 
         // No binary fields
         return false;
-    }
-
-    // Write audit trail start/end for grid update
-    public function writeAuditTrailDummy($typ)
-    {
-        WriteAuditLog(CurrentUser(), $typ, 'jdh_medicine_stock', "", "", "", "");
-    }
-
-    // Write audit trail (add page)
-    public function writeAuditTrailOnAdd(&$rs)
-    {
-        global $Language;
-        if (!$this->AuditTrailOnAdd) {
-            return;
-        }
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rs['id'];
-
-        // Write audit trail
-        $usr = CurrentUser();
-        foreach (array_keys($rs) as $fldname) {
-            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
-                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
-                    $newvalue = $Language->phrase("PasswordMask");
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo Field
-                    $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML Field
-                    $newvalue = "[XML]";
-                } else {
-                    $newvalue = $rs[$fldname];
-                }
-                WriteAuditLog($usr, "A", 'jdh_medicine_stock', $fldname, $key, "", $newvalue);
-            }
-        }
-    }
-
-    // Write audit trail (edit page)
-    public function writeAuditTrailOnEdit(&$rsold, &$rsnew)
-    {
-        global $Language;
-        if (!$this->AuditTrailOnEdit) {
-            return;
-        }
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rsold['id'];
-
-        // Write audit trail
-        $usr = CurrentUser();
-        foreach (array_keys($rsnew) as $fldname) {
-            if (array_key_exists($fldname, $this->Fields) && array_key_exists($fldname, $rsold) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
-                if ($this->Fields[$fldname]->DataType == DATATYPE_DATE) { // DateTime field
-                    $modified = (FormatDateTime($rsold[$fldname], 0) != FormatDateTime($rsnew[$fldname], 0));
-                } else {
-                    $modified = !CompareValue($rsold[$fldname], $rsnew[$fldname]);
-                }
-                if ($modified) {
-                    if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
-                        $oldvalue = $Language->phrase("PasswordMask");
-                        $newvalue = $Language->phrase("PasswordMask");
-                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
-                        $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsold[$fldname] : "[MEMO]";
-                        $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsnew[$fldname] : "[MEMO]";
-                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
-                        $oldvalue = "[XML]";
-                        $newvalue = "[XML]";
-                    } else {
-                        $oldvalue = $rsold[$fldname];
-                        $newvalue = $rsnew[$fldname];
-                    }
-                    WriteAuditLog($usr, "U", 'jdh_medicine_stock', $fldname, $key, $oldvalue, $newvalue);
-                }
-            }
-        }
-    }
-
-    // Write audit trail (delete page)
-    public function writeAuditTrailOnDelete(&$rs)
-    {
-        global $Language;
-        if (!$this->AuditTrailOnDelete) {
-            return;
-        }
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rs['id'];
-
-        // Write audit trail
-        $usr = CurrentUser();
-        foreach (array_keys($rs) as $fldname) {
-            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
-                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
-                    $oldvalue = $Language->phrase("PasswordMask");
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
-                    $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
-                    $oldvalue = "[XML]";
-                } else {
-                    $oldvalue = $rs[$fldname];
-                }
-                WriteAuditLog($usr, "D", 'jdh_medicine_stock', $fldname, $key, $oldvalue, "");
-            }
-        }
-    }
-
-    // Send email after add success
-    public function sendEmailOnAdd(&$rs)
-    {
-        global $Language;
-        $table = 'jdh_medicine_stock';
-        $subject = $table . " " . $Language->phrase("RecordInserted");
-        $action = $Language->phrase("ActionInserted");
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rs['id'];
-        $email = new Email();
-        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-        $email->replaceSubject($subject); // Replace Subject
-        $email->replaceContent("<!--table-->", $table);
-        $email->replaceContent("<!--key-->", $key);
-        $email->replaceContent("<!--action-->", $action);
-        $args = ["rsnew" => $rs];
-        $emailSent = false;
-        if ($this->emailSending($email, $args)) {
-            $emailSent = $email->send();
-        }
-
-        // Send email failed
-        if (!$emailSent) {
-            $this->setFailureMessage($email->SendErrDescription);
-        }
-    }
-
-    // Send email after update success
-    public function sendEmailOnEdit(&$rsold, &$rsnew)
-    {
-        global $Language;
-        $table = 'jdh_medicine_stock';
-        $subject = $table . " ". $Language->phrase("RecordUpdated");
-        $action = $Language->phrase("ActionUpdated");
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rsold['id'];
-        $email = new Email();
-        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-        $email->replaceSubject($subject); // Replace Subject
-        $email->replaceContent("<!--table-->", $table);
-        $email->replaceContent("<!--key-->", $key);
-        $email->replaceContent("<!--action-->", $action);
-        $args = [];
-        $args["rsold"] = &$rsold;
-        $args["rsnew"] = &$rsnew;
-        $emailSent = false;
-        if ($this->emailSending($email, $args)) {
-            $emailSent = $email->send();
-        }
-
-        // Send email failed
-        if (!$emailSent) {
-            $this->setFailureMessage($email->SendErrDescription);
-        }
     }
 
     // Table level events
