@@ -476,6 +476,7 @@ class JdhTestRequestsEdit extends JdhTestRequests
         $this->request_description->setVisibility();
         $this->requested_by_user_id->setVisibility();
         $this->request_date->Visible = false;
+        $this->status_id->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -502,6 +503,7 @@ class JdhTestRequestsEdit extends JdhTestRequests
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
         $this->setupLookupOptions($this->request_service_id);
+        $this->setupLookupOptions($this->status_id);
 
         // Check modal
         if ($this->IsModal) {
@@ -743,6 +745,16 @@ class JdhTestRequestsEdit extends JdhTestRequests
                 $this->requested_by_user_id->setFormValue($val);
             }
         }
+
+        // Check field name 'status_id' first before field var 'x_status_id'
+        $val = $CurrentForm->hasValue("status_id") ? $CurrentForm->getValue("status_id") : $CurrentForm->getValue("x_status_id");
+        if (!$this->status_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->status_id->Visible = false; // Disable update for API request
+            } else {
+                $this->status_id->setFormValue($val);
+            }
+        }
     }
 
     // Restore form values
@@ -755,6 +767,7 @@ class JdhTestRequestsEdit extends JdhTestRequests
         $this->request_service_id->CurrentValue = $this->request_service_id->FormValue;
         $this->request_description->CurrentValue = $this->request_description->FormValue;
         $this->requested_by_user_id->CurrentValue = $this->requested_by_user_id->FormValue;
+        $this->status_id->CurrentValue = $this->status_id->FormValue;
     }
 
     /**
@@ -820,6 +833,7 @@ class JdhTestRequestsEdit extends JdhTestRequests
         $this->request_description->setDbValue($row['request_description']);
         $this->requested_by_user_id->setDbValue($row['requested_by_user_id']);
         $this->request_date->setDbValue($row['request_date']);
+        $this->status_id->setDbValue($row['status_id']);
     }
 
     // Return a row with default values
@@ -833,6 +847,7 @@ class JdhTestRequestsEdit extends JdhTestRequests
         $row['request_description'] = $this->request_description->DefaultValue;
         $row['requested_by_user_id'] = $this->requested_by_user_id->DefaultValue;
         $row['request_date'] = $this->request_date->DefaultValue;
+        $row['status_id'] = $this->status_id->DefaultValue;
         return $row;
     }
 
@@ -887,6 +902,9 @@ class JdhTestRequestsEdit extends JdhTestRequests
 
         // request_date
         $this->request_date->RowCssClass = "row";
+
+        // status_id
+        $this->status_id->RowCssClass = "row";
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -953,6 +971,13 @@ class JdhTestRequestsEdit extends JdhTestRequests
             $this->request_date->ViewValue = $this->request_date->CurrentValue;
             $this->request_date->ViewValue = FormatDateTime($this->request_date->ViewValue, $this->request_date->formatPattern());
 
+            // status_id
+            if (strval($this->status_id->CurrentValue) != "") {
+                $this->status_id->ViewValue = $this->status_id->optionCaption($this->status_id->CurrentValue);
+            } else {
+                $this->status_id->ViewValue = null;
+            }
+
             // request_id
             $this->request_id->HrefValue = "";
 
@@ -971,6 +996,9 @@ class JdhTestRequestsEdit extends JdhTestRequests
             // requested_by_user_id
             $this->requested_by_user_id->HrefValue = "";
             $this->requested_by_user_id->TooltipValue = "";
+
+            // status_id
+            $this->status_id->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
             // request_id
             $this->request_id->setupEditAttributes();
@@ -1070,6 +1098,11 @@ class JdhTestRequestsEdit extends JdhTestRequests
 
             // requested_by_user_id
 
+            // status_id
+            $this->status_id->setupEditAttributes();
+            $this->status_id->EditValue = $this->status_id->options(true);
+            $this->status_id->PlaceHolder = RemoveHtml($this->status_id->caption());
+
             // Edit refer script
 
             // request_id
@@ -1090,6 +1123,9 @@ class JdhTestRequestsEdit extends JdhTestRequests
             // requested_by_user_id
             $this->requested_by_user_id->HrefValue = "";
             $this->requested_by_user_id->TooltipValue = "";
+
+            // status_id
+            $this->status_id->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -1139,6 +1175,11 @@ class JdhTestRequestsEdit extends JdhTestRequests
         if ($this->requested_by_user_id->Required) {
             if (!$this->requested_by_user_id->IsDetailKey && EmptyValue($this->requested_by_user_id->FormValue)) {
                 $this->requested_by_user_id->addErrorMessage(str_replace("%s", $this->requested_by_user_id->caption(), $this->requested_by_user_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->status_id->Required) {
+            if (!$this->status_id->IsDetailKey && EmptyValue($this->status_id->FormValue)) {
+                $this->status_id->addErrorMessage(str_replace("%s", $this->status_id->caption(), $this->status_id->RequiredErrorMessage));
             }
         }
 
@@ -1191,6 +1232,9 @@ class JdhTestRequestsEdit extends JdhTestRequests
 
         // request_description
         $this->request_description->setDbValueDef($rsnew, $this->request_description->CurrentValue, null, $this->request_description->ReadOnly);
+
+        // status_id
+        $this->status_id->setDbValueDef($rsnew, $this->status_id->CurrentValue, 0, $this->status_id->ReadOnly);
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -1347,6 +1391,8 @@ class JdhTestRequestsEdit extends JdhTestRequests
                 case "x_patient_id":
                     break;
                 case "x_request_service_id":
+                    break;
+                case "x_status_id":
                     break;
                 default:
                     $lookupFilter = "";

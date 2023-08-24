@@ -693,15 +693,7 @@ class JdhPatientsDelete extends JdhPatients
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
             // patient_id
-            if (!EmptyValue($this->patient_id->CurrentValue)) {
-                $this->patient_id->HrefValue = $this->patient_id->CurrentValue; // Add prefix/suffix
-                $this->patient_id->LinkAttrs["target"] = ""; // Add target
-                if ($this->isExport()) {
-                    $this->patient_id->HrefValue = FullUrl($this->patient_id->HrefValue, "href");
-                }
-            } else {
-                $this->patient_id->HrefValue = "";
-            }
+            $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
 
             // patient_name

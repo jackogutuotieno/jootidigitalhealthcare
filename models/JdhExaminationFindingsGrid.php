@@ -1301,12 +1301,6 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
 
-        // "copy"
-        $item = &$this->ListOptions->add("copy");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canAdd();
-        $item->OnLeft = false;
-
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
@@ -1379,7 +1373,7 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
             // "view"
             $opt = $this->ListOptions["view"];
             $viewcaption = HtmlTitle($Language->phrase("ViewLink"));
-            if ($Security->canView()) {
+            if ($Security->canView() && $this->showOptionLink("view")) {
                 if ($this->ModalView && !IsMobile()) {
                     $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_examination_findings\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
                 } else {
@@ -1392,24 +1386,11 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
             // "edit"
             $opt = $this->ListOptions["edit"];
             $editcaption = HtmlTitle($Language->phrase("EditLink"));
-            if ($Security->canEdit()) {
+            if ($Security->canEdit() && $this->showOptionLink("edit")) {
                 if ($this->ModalEdit && !IsMobile()) {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_examination_findings\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
-
-            // "copy"
-            $opt = $this->ListOptions["copy"];
-            $copycaption = HtmlTitle($Language->phrase("CopyLink"));
-            if ($Security->canAdd()) {
-                if ($this->ModalAdd && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_examination_findings\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("CopyLink") . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1643,6 +1624,8 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
     // Load default values
     protected function loadDefaultValues()
     {
+        $this->submitted_by_user_id->DefaultValue = CurrentUserID();
+        $this->submitted_by_user_id->OldValue = $this->submitted_by_user_id->DefaultValue;
     }
 
     // Load form values
@@ -2315,6 +2298,11 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
         // systematic_exams
         $this->systematic_exams->setDbValueDef($rsnew, $this->systematic_exams->CurrentValue, "", false);
 
+        // submitted_by_user_id
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['submitted_by_user_id'] = CurrentUserID();
+        }
+
         // Update current values
         $this->setCurrentValues($rsnew);
         $conn = $this->getConnection();
@@ -2346,6 +2334,16 @@ class JdhExaminationFindingsGrid extends JdhExaminationFindings
             $this->rowInserted($rsold, $rsnew);
         }
         return $addRow;
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->submitted_by_user_id->CurrentValue);
+        }
+        return true;
     }
 
     // Set up master/detail based on QueryString

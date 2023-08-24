@@ -821,6 +821,15 @@ class JdhVitalsEdit extends JdhVitals
             $res = true;
             $this->loadRowValues($row); // Load row values
         }
+
+        // Check if valid User ID
+        if ($res) {
+            $res = $this->showOptionLink("edit");
+            if (!$res) {
+                $userIdMsg = DeniedMessage();
+                $this->setFailureMessage($userIdMsg);
+            }
+        }
         return $res;
     }
 
@@ -1389,6 +1398,16 @@ class JdhVitalsEdit extends JdhVitals
             WriteJson(["success" => true, "action" => Config("API_EDIT_ACTION"), $table => $row]);
         }
         return $editRow;
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->submitted_by_user_id->CurrentValue);
+        }
+        return true;
     }
 
     // Set up master/detail based on QueryString

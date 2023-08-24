@@ -25,6 +25,7 @@ loadjs.ready(["wrapper", "head"], function () {
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["visit_type_id", [fields.visit_type_id.visible && fields.visit_type_id.required ? ew.Validators.required(fields.visit_type_id.caption) : null], fields.visit_type_id.isInvalid],
             ["doctor_id", [fields.doctor_id.visible && fields.doctor_id.required ? ew.Validators.required(fields.doctor_id.caption) : null], fields.doctor_id.isInvalid],
+            ["insurance_id", [fields.insurance_id.visible && fields.insurance_id.required ? ew.Validators.required(fields.insurance_id.caption) : null], fields.insurance_id.isInvalid],
             ["visit_description", [fields.visit_description.visible && fields.visit_description.required ? ew.Validators.required(fields.visit_description.caption) : null], fields.visit_description.isInvalid]
         ])
 
@@ -44,6 +45,7 @@ loadjs.ready(["wrapper", "head"], function () {
             "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
             "visit_type_id": <?= $Page->visit_type_id->toClientList($Page) ?>,
             "doctor_id": <?= $Page->doctor_id->toClientList($Page) ?>,
+            "insurance_id": <?= $Page->insurance_id->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -196,6 +198,46 @@ loadjs.ready("fjdh_patient_visitsadd", function() {
     }
     options.minimumInputLength = ew.selectMinimumInputLength;
     options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_visits.fields.doctor_id.selectOptions);
+    ew.createSelect(options);
+});
+</script>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->insurance_id->Visible) { // insurance_id ?>
+    <div id="r_insurance_id"<?= $Page->insurance_id->rowAttributes() ?>>
+        <label id="elh_jdh_patient_visits_insurance_id" for="x_insurance_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->insurance_id->caption() ?><?= $Page->insurance_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->insurance_id->cellAttributes() ?>>
+<span id="el_jdh_patient_visits_insurance_id">
+    <select
+        id="x_insurance_id"
+        name="x_insurance_id"
+        class="form-select ew-select<?= $Page->insurance_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_patient_visitsadd_x_insurance_id"
+        data-table="jdh_patient_visits"
+        data-field="x_insurance_id"
+        data-value-separator="<?= $Page->insurance_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->insurance_id->getPlaceHolder()) ?>"
+        <?= $Page->insurance_id->editAttributes() ?>>
+        <?= $Page->insurance_id->selectOptionListHtml("x_insurance_id") ?>
+    </select>
+    <?= $Page->insurance_id->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->insurance_id->getErrorMessage() ?></div>
+<?= $Page->insurance_id->Lookup->getParamTag($Page, "p_x_insurance_id") ?>
+<script>
+loadjs.ready("fjdh_patient_visitsadd", function() {
+    var options = { name: "x_insurance_id", selectId: "fjdh_patient_visitsadd_x_insurance_id" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (fjdh_patient_visitsadd.lists.insurance_id?.lookupOptions.length) {
+        options.data = { id: "x_insurance_id", form: "fjdh_patient_visitsadd" };
+    } else {
+        options.ajax = { id: "x_insurance_id", form: "fjdh_patient_visitsadd", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_visits.fields.insurance_id.selectOptions);
     ew.createSelect(options);
 });
 </script>

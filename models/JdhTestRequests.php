@@ -56,6 +56,7 @@ class JdhTestRequests extends DbTable
     public $request_description;
     public $requested_by_user_id;
     public $request_date;
+    public $status_id;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -279,6 +280,35 @@ class JdhTestRequests extends DbTable
         $this->request_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->request_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['request_date'] = &$this->request_date;
+
+        // status_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->status_id = new DbField(
+            $this, // Table
+            'x_status_id', // Variable name
+            'status_id', // Name
+            '`status_id`', // Expression
+            '`status_id`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`status_id`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'SELECT' // Edit Tag
+        );
+        $this->status_id->InputTextType = "text";
+        $this->status_id->Nullable = false; // NOT NULL field
+        $this->status_id->Required = true; // Required field
+        $this->status_id->UsePleaseSelect = true; // Use PleaseSelect by default
+        $this->status_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
+        $this->status_id->Lookup = new Lookup('status_id', 'jdh_test_requests', false, '', ["","","",""], '', '', [], [], [], [], [], [], '', '', "");
+        $this->status_id->OptionCount = 3;
+        $this->status_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->status_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['status_id'] = &$this->status_id;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -858,6 +888,7 @@ class JdhTestRequests extends DbTable
         $this->request_description->DbValue = $row['request_description'];
         $this->requested_by_user_id->DbValue = $row['requested_by_user_id'];
         $this->request_date->DbValue = $row['request_date'];
+        $this->status_id->DbValue = $row['status_id'];
     }
 
     // Delete uploaded files
@@ -1222,6 +1253,7 @@ class JdhTestRequests extends DbTable
         $this->request_description->setDbValue($row['request_description']);
         $this->requested_by_user_id->setDbValue($row['requested_by_user_id']);
         $this->request_date->setDbValue($row['request_date']);
+        $this->status_id->setDbValue($row['status_id']);
     }
 
     // Render list content
@@ -1265,6 +1297,8 @@ class JdhTestRequests extends DbTable
         // requested_by_user_id
 
         // request_date
+
+        // status_id
 
         // request_id
         $this->request_id->ViewValue = $this->request_id->CurrentValue;
@@ -1329,6 +1363,13 @@ class JdhTestRequests extends DbTable
         $this->request_date->ViewValue = $this->request_date->CurrentValue;
         $this->request_date->ViewValue = FormatDateTime($this->request_date->ViewValue, $this->request_date->formatPattern());
 
+        // status_id
+        if (strval($this->status_id->CurrentValue) != "") {
+            $this->status_id->ViewValue = $this->status_id->optionCaption($this->status_id->CurrentValue);
+        } else {
+            $this->status_id->ViewValue = null;
+        }
+
         // request_id
         $this->request_id->HrefValue = "";
         $this->request_id->TooltipValue = "";
@@ -1356,6 +1397,10 @@ class JdhTestRequests extends DbTable
         // request_date
         $this->request_date->HrefValue = "";
         $this->request_date->TooltipValue = "";
+
+        // status_id
+        $this->status_id->HrefValue = "";
+        $this->status_id->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1429,6 +1474,11 @@ class JdhTestRequests extends DbTable
         $this->request_date->EditValue = FormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern());
         $this->request_date->PlaceHolder = RemoveHtml($this->request_date->caption());
 
+        // status_id
+        $this->status_id->setupEditAttributes();
+        $this->status_id->EditValue = $this->status_id->options(true);
+        $this->status_id->PlaceHolder = RemoveHtml($this->status_id->caption());
+
         // Call Row Rendered event
         $this->rowRendered();
     }
@@ -1463,6 +1513,7 @@ class JdhTestRequests extends DbTable
                     $doc->exportCaption($this->request_service_id);
                     $doc->exportCaption($this->request_description);
                     $doc->exportCaption($this->request_date);
+                    $doc->exportCaption($this->status_id);
                 } else {
                     $doc->exportCaption($this->request_id);
                     $doc->exportCaption($this->patient_id);
@@ -1471,6 +1522,7 @@ class JdhTestRequests extends DbTable
                     $doc->exportCaption($this->request_description);
                     $doc->exportCaption($this->requested_by_user_id);
                     $doc->exportCaption($this->request_date);
+                    $doc->exportCaption($this->status_id);
                 }
                 $doc->endExportRow();
             }
@@ -1506,6 +1558,7 @@ class JdhTestRequests extends DbTable
                         $doc->exportField($this->request_service_id);
                         $doc->exportField($this->request_description);
                         $doc->exportField($this->request_date);
+                        $doc->exportField($this->status_id);
                     } else {
                         $doc->exportField($this->request_id);
                         $doc->exportField($this->patient_id);
@@ -1514,6 +1567,7 @@ class JdhTestRequests extends DbTable
                         $doc->exportField($this->request_description);
                         $doc->exportField($this->requested_by_user_id);
                         $doc->exportField($this->request_date);
+                        $doc->exportField($this->status_id);
                     }
                     $doc->endExportRow($rowCnt);
                 }

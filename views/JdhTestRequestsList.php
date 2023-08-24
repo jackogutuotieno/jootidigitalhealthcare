@@ -30,7 +30,8 @@ loadjs.ready(["wrapper", "head"], function () {
             ["request_title", [fields.request_title.visible && fields.request_title.required ? ew.Validators.required(fields.request_title.caption) : null], fields.request_title.isInvalid],
             ["request_service_id", [fields.request_service_id.visible && fields.request_service_id.required ? ew.Validators.required(fields.request_service_id.caption) : null], fields.request_service_id.isInvalid],
             ["request_description", [fields.request_description.visible && fields.request_description.required ? ew.Validators.required(fields.request_description.caption) : null], fields.request_description.isInvalid],
-            ["request_date", [fields.request_date.visible && fields.request_date.required ? ew.Validators.required(fields.request_date.caption) : null, ew.Validators.datetime(fields.request_date.clientFormatPattern)], fields.request_date.isInvalid]
+            ["request_date", [fields.request_date.visible && fields.request_date.required ? ew.Validators.required(fields.request_date.caption) : null, ew.Validators.datetime(fields.request_date.clientFormatPattern)], fields.request_date.isInvalid],
+            ["status_id", [fields.status_id.visible && fields.status_id.required ? ew.Validators.required(fields.status_id.caption) : null], fields.status_id.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -48,6 +49,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setLists({
             "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
             "request_service_id": <?= $Page->request_service_id->toClientList($Page) ?>,
+            "status_id": <?= $Page->status_id->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -207,6 +209,9 @@ $Page->ListOptions->render("header", "left");
 <?php if ($Page->request_date->Visible) { // request_date ?>
         <th data-name="request_date" class="<?= $Page->request_date->headerCellClass() ?>"><div id="elh_jdh_test_requests_request_date" class="jdh_test_requests_request_date"><?= $Page->renderFieldHeader($Page->request_date) ?></div></th>
 <?php } ?>
+<?php if ($Page->status_id->Visible) { // status_id ?>
+        <th data-name="status_id" class="<?= $Page->status_id->headerCellClass() ?>"><div id="elh_jdh_test_requests_status_id" class="jdh_test_requests_status_id"><?= $Page->renderFieldHeader($Page->status_id) ?></div></th>
+<?php } ?>
 <?php
 // Render list options (header, right)
 $Page->ListOptions->render("header", "right");
@@ -232,13 +237,6 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 <span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_id" class="el_jdh_test_requests_request_id"></span>
 <input type="hidden" data-table="jdh_test_requests" data-field="x_request_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_request_id" id="o<?= $Page->RowIndex ?>_request_id" value="<?= HtmlEncode($Page->request_id->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_id" class="el_jdh_test_requests_request_id">
-<span<?= $Page->request_id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->request_id->getDisplayValue($Page->request_id->EditValue))) ?>"></span>
-<input type="hidden" data-table="jdh_test_requests" data-field="x_request_id" data-hidden="1" name="x<?= $Page->RowIndex ?>_request_id" id="x<?= $Page->RowIndex ?>_request_id" value="<?= HtmlEncode($Page->request_id->CurrentValue) ?>">
-</span>
-<?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_id" class="el_jdh_test_requests_request_id">
 <span<?= $Page->request_id->viewAttributes() ?>>
@@ -246,8 +244,6 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 </span>
 <?php } ?>
 </td>
-    <?php } else { ?>
-            <input type="hidden" data-table="jdh_test_requests" data-field="x_request_id" data-hidden="1" name="x<?= $Page->RowIndex ?>_request_id" id="x<?= $Page->RowIndex ?>_request_id" value="<?= HtmlEncode($Page->request_id->CurrentValue) ?>">
     <?php } ?>
     <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
@@ -292,46 +288,6 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 <?php } ?>
 <input type="hidden" data-table="jdh_test_requests" data-field="x_patient_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_patient_id" id="o<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<?php if ($Page->patient_id->getSessionValue() != "") { ?>
-<span<?= $Page->patient_id->viewAttributes() ?>>
-<span class="form-control-plaintext"><?= $Page->patient_id->getDisplayValue($Page->patient_id->ViewValue) ?></span></span>
-<input type="hidden" id="x<?= $Page->RowIndex ?>_patient_id" name="x<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>" data-hidden="1">
-<?php } else { ?>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_patient_id" class="el_jdh_test_requests_patient_id">
-    <select
-        id="x<?= $Page->RowIndex ?>_patient_id"
-        name="x<?= $Page->RowIndex ?>_patient_id"
-        class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
-        data-select2-id="<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_patient_id"
-        data-table="jdh_test_requests"
-        data-field="x_patient_id"
-        data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>"
-        <?= $Page->patient_id->editAttributes() ?>>
-        <?= $Page->patient_id->selectOptionListHtml("x{$Page->RowIndex}_patient_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
-<?= $Page->patient_id->Lookup->getParamTag($Page, "p_x" . $Page->RowIndex . "_patient_id") ?>
-<script>
-loadjs.ready("<?= $Page->FormName ?>", function() {
-    var options = { name: "x<?= $Page->RowIndex ?>_patient_id", selectId: "<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_patient_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (<?= $Page->FormName ?>.lists.patient_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Page->RowIndex ?>_patient_id", form: "<?= $Page->FormName ?>" };
-    } else {
-        options.ajax = { id: "x<?= $Page->RowIndex ?>_patient_id", form: "<?= $Page->FormName ?>", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumInputLength = ew.selectMinimumInputLength;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.patient_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
-</span>
-<?php } ?>
-<?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_test_requests_patient_id" class="el_jdh_test_requests_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
@@ -348,12 +304,6 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 <div class="invalid-feedback"><?= $Page->request_title->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_test_requests" data-field="x_request_title" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_request_title" id="o<?= $Page->RowIndex ?>_request_title" value="<?= HtmlEncode($Page->request_title->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_title" class="el_jdh_test_requests_request_title">
-<input type="<?= $Page->request_title->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_request_title" id="x<?= $Page->RowIndex ?>_request_title" data-table="jdh_test_requests" data-field="x_request_title" value="<?= $Page->request_title->EditValue ?>" size="30" maxlength="200" placeholder="<?= HtmlEncode($Page->request_title->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->request_title->formatPattern()) ?>"<?= $Page->request_title->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Page->request_title->getErrorMessage() ?></div>
-</span>
 <?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_title" class="el_jdh_test_requests_request_title">
@@ -400,40 +350,6 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 </span>
 <input type="hidden" data-table="jdh_test_requests" data-field="x_request_service_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_request_service_id" id="o<?= $Page->RowIndex ?>_request_service_id" value="<?= HtmlEncode($Page->request_service_id->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_service_id" class="el_jdh_test_requests_request_service_id">
-    <select
-        id="x<?= $Page->RowIndex ?>_request_service_id"
-        name="x<?= $Page->RowIndex ?>_request_service_id"
-        class="form-select ew-select<?= $Page->request_service_id->isInvalidClass() ?>"
-        data-select2-id="<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_request_service_id"
-        data-table="jdh_test_requests"
-        data-field="x_request_service_id"
-        data-value-separator="<?= $Page->request_service_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->request_service_id->getPlaceHolder()) ?>"
-        <?= $Page->request_service_id->editAttributes() ?>>
-        <?= $Page->request_service_id->selectOptionListHtml("x{$Page->RowIndex}_request_service_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Page->request_service_id->getErrorMessage() ?></div>
-<?= $Page->request_service_id->Lookup->getParamTag($Page, "p_x" . $Page->RowIndex . "_request_service_id") ?>
-<script>
-loadjs.ready("<?= $Page->FormName ?>", function() {
-    var options = { name: "x<?= $Page->RowIndex ?>_request_service_id", selectId: "<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_request_service_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (<?= $Page->FormName ?>.lists.request_service_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Page->RowIndex ?>_request_service_id", form: "<?= $Page->FormName ?>" };
-    } else {
-        options.ajax = { id: "x<?= $Page->RowIndex ?>_request_service_id", form: "<?= $Page->FormName ?>", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.request_service_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
-</span>
-<?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_service_id" class="el_jdh_test_requests_request_service_id">
 <span<?= $Page->request_service_id->viewAttributes() ?>>
@@ -450,12 +366,6 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 <div class="invalid-feedback"><?= $Page->request_description->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_test_requests" data-field="x_request_description" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_request_description" id="o<?= $Page->RowIndex ?>_request_description" value="<?= HtmlEncode($Page->request_description->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_description" class="el_jdh_test_requests_request_description">
-<textarea data-table="jdh_test_requests" data-field="x_request_description" name="x<?= $Page->RowIndex ?>_request_description" id="x<?= $Page->RowIndex ?>_request_description" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->request_description->getPlaceHolder()) ?>"<?= $Page->request_description->editAttributes() ?>><?= $Page->request_description->EditValue ?></textarea>
-<div class="invalid-feedback"><?= $Page->request_description->getErrorMessage() ?></div>
-</span>
 <?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_description" class="el_jdh_test_requests_request_description">
@@ -504,46 +414,54 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
 </span>
 <input type="hidden" data-table="jdh_test_requests" data-field="x_request_date" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_request_date" id="o<?= $Page->RowIndex ?>_request_date" value="<?= HtmlEncode($Page->request_date->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_date" class="el_jdh_test_requests_request_date">
-<input type="<?= $Page->request_date->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_request_date" id="x<?= $Page->RowIndex ?>_request_date" data-table="jdh_test_requests" data-field="x_request_date" value="<?= $Page->request_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->request_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->request_date->formatPattern()) ?>"<?= $Page->request_date->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Page->request_date->getErrorMessage() ?></div>
-<?php if (!$Page->request_date->ReadOnly && !$Page->request_date->Disabled && !isset($Page->request_date->EditAttrs["readonly"]) && !isset($Page->request_date->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
-    let format = "<?= DateFormat(11) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_request_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
-</span>
-<?php } ?>
 <?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_date" class="el_jdh_test_requests_request_date">
 <span<?= $Page->request_date->viewAttributes() ?>>
 <?= $Page->request_date->getViewValue() ?></span>
+</span>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Page->status_id->Visible) { // status_id ?>
+        <td data-name="status_id"<?= $Page->status_id->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_test_requests_status_id" class="el_jdh_test_requests_status_id">
+    <select
+        id="x<?= $Page->RowIndex ?>_status_id"
+        name="x<?= $Page->RowIndex ?>_status_id"
+        class="form-select ew-select<?= $Page->status_id->isInvalidClass() ?>"
+        data-select2-id="<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_status_id"
+        data-table="jdh_test_requests"
+        data-field="x_status_id"
+        data-value-separator="<?= $Page->status_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->status_id->getPlaceHolder()) ?>"
+        <?= $Page->status_id->editAttributes() ?>>
+        <?= $Page->status_id->selectOptionListHtml("x{$Page->RowIndex}_status_id") ?>
+    </select>
+    <div class="invalid-feedback"><?= $Page->status_id->getErrorMessage() ?></div>
+<script>
+loadjs.ready("<?= $Page->FormName ?>", function() {
+    var options = { name: "x<?= $Page->RowIndex ?>_status_id", selectId: "<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_status_id" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (<?= $Page->FormName ?>.lists.status_id?.lookupOptions.length) {
+        options.data = { id: "x<?= $Page->RowIndex ?>_status_id", form: "<?= $Page->FormName ?>" };
+    } else {
+        options.ajax = { id: "x<?= $Page->RowIndex ?>_status_id", form: "<?= $Page->FormName ?>", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.status_id.selectOptions);
+    ew.createSelect(options);
+});
+</script>
+</span>
+<input type="hidden" data-table="jdh_test_requests" data-field="x_status_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_status_id" id="o<?= $Page->RowIndex ?>_status_id" value="<?= HtmlEncode($Page->status_id->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_test_requests_status_id" class="el_jdh_test_requests_status_id">
+<span<?= $Page->status_id->viewAttributes() ?>>
+<?= $Page->status_id->getViewValue() ?></span>
 </span>
 <?php } ?>
 </td>
@@ -553,11 +471,6 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
 $Page->ListOptions->render("body", "right", $Page->RowCount);
 ?>
     </tr>
-<?php if ($Page->RowType == ROWTYPE_ADD || $Page->RowType == ROWTYPE_EDIT) { ?>
-<script data-rowindex="<?= $Page->RowIndex ?>">
-loadjs.ready(["<?= $Page->FormName ?>","load"], () => <?= $Page->FormName ?>.updateLists(<?= $Page->RowIndex ?><?= $Page->RowIndex === '$rowindex$' ? ", true" : "" ?>));
-</script>
-<?php } ?>
 <?php
     }
     if (!$Page->isGridAdd()) {
@@ -571,9 +484,6 @@ loadjs.ready(["<?= $Page->FormName ?>","load"], () => <?= $Page->FormName ?>.upd
 <?php if ($Page->isAdd() || $Page->isCopy()) { ?>
 <input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
 <input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
-<?php } ?>
-<?php if ($Page->isEdit()) { ?>
-<input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
 <?php } ?>
 </div><!-- /.ew-grid-middle-panel -->
 <?php if (!$Page->CurrentAction && !$Page->UseAjaxActions) { ?>

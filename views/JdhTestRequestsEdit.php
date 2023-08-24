@@ -38,7 +38,8 @@ loadjs.ready(["wrapper", "head"], function () {
             ["request_title", [fields.request_title.visible && fields.request_title.required ? ew.Validators.required(fields.request_title.caption) : null], fields.request_title.isInvalid],
             ["request_service_id", [fields.request_service_id.visible && fields.request_service_id.required ? ew.Validators.required(fields.request_service_id.caption) : null], fields.request_service_id.isInvalid],
             ["request_description", [fields.request_description.visible && fields.request_description.required ? ew.Validators.required(fields.request_description.caption) : null], fields.request_description.isInvalid],
-            ["requested_by_user_id", [fields.requested_by_user_id.visible && fields.requested_by_user_id.required ? ew.Validators.required(fields.requested_by_user_id.caption) : null], fields.requested_by_user_id.isInvalid]
+            ["requested_by_user_id", [fields.requested_by_user_id.visible && fields.requested_by_user_id.required ? ew.Validators.required(fields.requested_by_user_id.caption) : null], fields.requested_by_user_id.isInvalid],
+            ["status_id", [fields.status_id.visible && fields.status_id.required ? ew.Validators.required(fields.status_id.caption) : null], fields.status_id.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -56,6 +57,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setLists({
             "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
             "request_service_id": <?= $Page->request_service_id->toClientList($Page) ?>,
+            "status_id": <?= $Page->status_id->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -197,6 +199,45 @@ loadjs.ready("fjdh_test_requestsedit", function() {
 <textarea data-table="jdh_test_requests" data-field="x_request_description" name="x_request_description" id="x_request_description" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->request_description->getPlaceHolder()) ?>"<?= $Page->request_description->editAttributes() ?> aria-describedby="x_request_description_help"><?= $Page->request_description->EditValue ?></textarea>
 <?= $Page->request_description->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->request_description->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->status_id->Visible) { // status_id ?>
+    <div id="r_status_id"<?= $Page->status_id->rowAttributes() ?>>
+        <label id="elh_jdh_test_requests_status_id" for="x_status_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->status_id->caption() ?><?= $Page->status_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->status_id->cellAttributes() ?>>
+<span id="el_jdh_test_requests_status_id">
+    <select
+        id="x_status_id"
+        name="x_status_id"
+        class="form-select ew-select<?= $Page->status_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_test_requestsedit_x_status_id"
+        data-table="jdh_test_requests"
+        data-field="x_status_id"
+        data-value-separator="<?= $Page->status_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->status_id->getPlaceHolder()) ?>"
+        <?= $Page->status_id->editAttributes() ?>>
+        <?= $Page->status_id->selectOptionListHtml("x_status_id") ?>
+    </select>
+    <?= $Page->status_id->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->status_id->getErrorMessage() ?></div>
+<script>
+loadjs.ready("fjdh_test_requestsedit", function() {
+    var options = { name: "x_status_id", selectId: "fjdh_test_requestsedit_x_status_id" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (fjdh_test_requestsedit.lists.status_id?.lookupOptions.length) {
+        options.data = { id: "x_status_id", form: "fjdh_test_requestsedit" };
+    } else {
+        options.ajax = { id: "x_status_id", form: "fjdh_test_requestsedit", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.status_id.selectOptions);
+    ew.createSelect(options);
+});
+</script>
 </span>
 </div></div>
     </div>

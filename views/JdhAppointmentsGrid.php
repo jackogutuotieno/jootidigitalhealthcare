@@ -262,7 +262,7 @@ loadjs.ready("fjdh_appointmentsgrid", function() {
 <?php if (!$Grid->appointment_start_date->ReadOnly && !$Grid->appointment_start_date->Disabled && !isset($Grid->appointment_start_date->EditAttrs["readonly"]) && !isset($Grid->appointment_start_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
+    let format = "<?= DateFormat(111) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
@@ -299,7 +299,7 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
 <?php if (!$Grid->appointment_start_date->ReadOnly && !$Grid->appointment_start_date->Disabled && !isset($Grid->appointment_start_date->EditAttrs["readonly"]) && !isset($Grid->appointment_start_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
+    let format = "<?= DateFormat(111) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
@@ -349,7 +349,7 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
 <?php if (!$Grid->appointment_end_date->ReadOnly && !$Grid->appointment_end_date->Disabled && !isset($Grid->appointment_end_date->EditAttrs["readonly"]) && !isset($Grid->appointment_end_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
+    let format = "<?= DateFormat(111) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
@@ -386,7 +386,7 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
 <?php if (!$Grid->appointment_end_date->ReadOnly && !$Grid->appointment_end_date->Disabled && !isset($Grid->appointment_end_date->EditAttrs["readonly"]) && !isset($Grid->appointment_end_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
+    let format = "<?= DateFormat(111) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),

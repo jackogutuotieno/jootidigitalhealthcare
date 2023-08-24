@@ -520,6 +520,7 @@ class JdhTestRequestsView extends JdhTestRequests
         $this->request_description->setVisibility();
         $this->requested_by_user_id->setVisibility();
         $this->request_date->setVisibility();
+        $this->status_id->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -546,6 +547,7 @@ class JdhTestRequestsView extends JdhTestRequests
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
         $this->setupLookupOptions($this->request_service_id);
+        $this->setupLookupOptions($this->status_id);
 
         // Check modal
         if ($this->IsModal) {
@@ -799,6 +801,7 @@ class JdhTestRequestsView extends JdhTestRequests
         $this->request_description->setDbValue($row['request_description']);
         $this->requested_by_user_id->setDbValue($row['requested_by_user_id']);
         $this->request_date->setDbValue($row['request_date']);
+        $this->status_id->setDbValue($row['status_id']);
     }
 
     // Return a row with default values
@@ -812,6 +815,7 @@ class JdhTestRequestsView extends JdhTestRequests
         $row['request_description'] = $this->request_description->DefaultValue;
         $row['requested_by_user_id'] = $this->requested_by_user_id->DefaultValue;
         $row['request_date'] = $this->request_date->DefaultValue;
+        $row['status_id'] = $this->status_id->DefaultValue;
         return $row;
     }
 
@@ -846,6 +850,8 @@ class JdhTestRequestsView extends JdhTestRequests
         // requested_by_user_id
 
         // request_date
+
+        // status_id
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -912,6 +918,13 @@ class JdhTestRequestsView extends JdhTestRequests
             $this->request_date->ViewValue = $this->request_date->CurrentValue;
             $this->request_date->ViewValue = FormatDateTime($this->request_date->ViewValue, $this->request_date->formatPattern());
 
+            // status_id
+            if (strval($this->status_id->CurrentValue) != "") {
+                $this->status_id->ViewValue = $this->status_id->optionCaption($this->status_id->CurrentValue);
+            } else {
+                $this->status_id->ViewValue = null;
+            }
+
             // request_id
             $this->request_id->HrefValue = "";
             $this->request_id->TooltipValue = "";
@@ -935,6 +948,10 @@ class JdhTestRequestsView extends JdhTestRequests
             // request_date
             $this->request_date->HrefValue = "";
             $this->request_date->TooltipValue = "";
+
+            // status_id
+            $this->status_id->HrefValue = "";
+            $this->status_id->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -1226,6 +1243,8 @@ class JdhTestRequestsView extends JdhTestRequests
                 case "x_patient_id":
                     break;
                 case "x_request_service_id":
+                    break;
+                case "x_status_id":
                     break;
                 default:
                     $lookupFilter = "";

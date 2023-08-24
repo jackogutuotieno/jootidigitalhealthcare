@@ -134,7 +134,7 @@ loadjs.ready("fjdh_appointmentsadd", function() {
 <?php if (!$Page->appointment_start_date->ReadOnly && !$Page->appointment_start_date->Disabled && !isset($Page->appointment_start_date->EditAttrs["readonly"]) && !isset($Page->appointment_start_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_appointmentsadd", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
+    let format = "<?= DateFormat(111) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
@@ -176,7 +176,7 @@ loadjs.ready(["fjdh_appointmentsadd", "datetimepicker"], function () {
 <?php if (!$Page->appointment_end_date->ReadOnly && !$Page->appointment_end_date->Disabled && !isset($Page->appointment_end_date->EditAttrs["readonly"]) && !isset($Page->appointment_end_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_appointmentsadd", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
+    let format = "<?= DateFormat(111) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
@@ -223,18 +223,12 @@ loadjs.ready(["fjdh_appointmentsadd", "datetimepicker"], function () {
 <?php } ?>
 <?php if ($Page->appointment_description->Visible) { // appointment_description ?>
     <div id="r_appointment_description"<?= $Page->appointment_description->rowAttributes() ?>>
-        <label id="elh_jdh_appointments_appointment_description" class="<?= $Page->LeftColumnClass ?>"><?= $Page->appointment_description->caption() ?><?= $Page->appointment_description->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <label id="elh_jdh_appointments_appointment_description" for="x_appointment_description" class="<?= $Page->LeftColumnClass ?>"><?= $Page->appointment_description->caption() ?><?= $Page->appointment_description->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->appointment_description->cellAttributes() ?>>
 <span id="el_jdh_appointments_appointment_description">
-<?php $Page->appointment_description->EditAttrs->appendClass("editor"); ?>
 <textarea data-table="jdh_appointments" data-field="x_appointment_description" name="x_appointment_description" id="x_appointment_description" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->appointment_description->getPlaceHolder()) ?>"<?= $Page->appointment_description->editAttributes() ?> aria-describedby="x_appointment_description_help"><?= $Page->appointment_description->EditValue ?></textarea>
 <?= $Page->appointment_description->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->appointment_description->getErrorMessage() ?></div>
-<script>
-loadjs.ready(["fjdh_appointmentsadd", "editor"], function() {
-    ew.createEditor("fjdh_appointmentsadd", "x_appointment_description", 35, 4, <?= $Page->appointment_description->ReadOnly || false ? "true" : "false" ?>);
-});
-</script>
 </span>
 </div></div>
     </div>

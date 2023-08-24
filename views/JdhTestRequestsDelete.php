@@ -68,6 +68,9 @@ $Page->showMessage();
 <?php if ($Page->request_date->Visible) { // request_date ?>
         <th class="<?= $Page->request_date->headerCellClass() ?>"><span id="elh_jdh_test_requests_request_date" class="jdh_test_requests_request_date"><?= $Page->request_date->caption() ?></span></th>
 <?php } ?>
+<?php if ($Page->status_id->Visible) { // status_id ?>
+        <th class="<?= $Page->status_id->headerCellClass() ?>"><span id="elh_jdh_test_requests_status_id" class="jdh_test_requests_status_id"><?= $Page->status_id->caption() ?></span></th>
+<?php } ?>
     </tr>
     </thead>
     <tbody>
@@ -134,6 +137,14 @@ while (!$Page->Recordset->EOF) {
 <span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_date" class="el_jdh_test_requests_request_date">
 <span<?= $Page->request_date->viewAttributes() ?>>
 <?= $Page->request_date->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->status_id->Visible) { // status_id ?>
+        <td<?= $Page->status_id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_test_requests_status_id" class="el_jdh_test_requests_status_id">
+<span<?= $Page->status_id->viewAttributes() ?>>
+<?= $Page->status_id->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

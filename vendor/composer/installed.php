@@ -74,9 +74,9 @@
             'dev_requirement' => false,
         ),
         'doctrine/dbal' => array(
-            'pretty_version' => '3.6.5',
-            'version' => '3.6.5.0',
-            'reference' => '96d5a70fd91efdcec81fc46316efc5bf3da17ddf',
+            'pretty_version' => '3.6.6',
+            'version' => '3.6.6.0',
+            'reference' => '63646ffd71d1676d2f747f871be31b7e921c7864',
             'type' => 'library',
             'install_path' => __DIR__ . '/../doctrine/dbal',
             'aliases' => array(),

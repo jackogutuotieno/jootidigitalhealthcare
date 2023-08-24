@@ -22,34 +22,6 @@ loadjs.ready(["wrapper", "head"], function () {
         .setPageId("list")
         .setSubmitWithFetch(<?= $Page->UseAjaxActions ? "true" : "false" ?>)
         .setFormKeyCountName("<?= $Page->FormKeyCountName ?>")
-
-        // Add fields
-        .setFields([
-            ["appointment_id", [fields.appointment_id.visible && fields.appointment_id.required ? ew.Validators.required(fields.appointment_id.caption) : null], fields.appointment_id.isInvalid],
-            ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null, ew.Validators.integer], fields.patient_id.isInvalid],
-            ["appointment_title", [fields.appointment_title.visible && fields.appointment_title.required ? ew.Validators.required(fields.appointment_title.caption) : null], fields.appointment_title.isInvalid],
-            ["appointment_start_date", [fields.appointment_start_date.visible && fields.appointment_start_date.required ? ew.Validators.required(fields.appointment_start_date.caption) : null, ew.Validators.datetime(fields.appointment_start_date.clientFormatPattern)], fields.appointment_start_date.isInvalid],
-            ["appointment_end_date", [fields.appointment_end_date.visible && fields.appointment_end_date.required ? ew.Validators.required(fields.appointment_end_date.caption) : null, ew.Validators.datetime(fields.appointment_end_date.clientFormatPattern)], fields.appointment_end_date.isInvalid],
-            ["appointment_all_day", [fields.appointment_all_day.visible && fields.appointment_all_day.required ? ew.Validators.required(fields.appointment_all_day.caption) : null], fields.appointment_all_day.isInvalid],
-            ["submission_date", [fields.submission_date.visible && fields.submission_date.required ? ew.Validators.required(fields.submission_date.caption) : null, ew.Validators.datetime(fields.submission_date.clientFormatPattern)], fields.submission_date.isInvalid]
-        ])
-
-        // Form_CustomValidate
-        .setCustomValidate(
-            function (fobj) { // DO NOT CHANGE THIS LINE! (except for adding "async" keyword)!
-                    // Your custom validation code here, return false if invalid.
-                    return true;
-                }
-        )
-
-        // Use JavaScript validation or not
-        .setValidateRequired(ew.CLIENT_VALIDATE)
-
-        // Dynamic selection lists
-        .setLists({
-            "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
-            "appointment_all_day": <?= $Page->appointment_all_day->toClientList($Page) ?>,
-        })
         .build();
     window[form.id] = form;
     currentForm = form;
@@ -176,7 +148,7 @@ $Page->showMessage();
 <input type="hidden" name="fk_patient_id" value="<?= HtmlEncode($Page->patient_id->getSessionValue()) ?>">
 <?php } ?>
 <div id="gmp_jdh_appointments" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
-<?php if ($Page->TotalRecords > 0 || $Page->isAdd() || $Page->isCopy() || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
+<?php if ($Page->TotalRecords > 0 || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
 <table id="tbl_jdh_appointmentslist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
 <thead>
     <tr class="ew-table-header">
@@ -232,299 +204,46 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
     <?php if ($Page->appointment_id->Visible) { // appointment_id ?>
         <td data-name="appointment_id"<?= $Page->appointment_id->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_id" class="el_jdh_appointments_appointment_id"></span>
-<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_appointment_id" id="o<?= $Page->RowIndex ?>_appointment_id" value="<?= HtmlEncode($Page->appointment_id->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_id" class="el_jdh_appointments_appointment_id">
-<span<?= $Page->appointment_id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->appointment_id->getDisplayValue($Page->appointment_id->EditValue))) ?>"></span>
-<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_id" data-hidden="1" name="x<?= $Page->RowIndex ?>_appointment_id" id="x<?= $Page->RowIndex ?>_appointment_id" value="<?= HtmlEncode($Page->appointment_id->CurrentValue) ?>">
-</span>
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_id" class="el_jdh_appointments_appointment_id">
 <span<?= $Page->appointment_id->viewAttributes() ?>>
 <?= $Page->appointment_id->getViewValue() ?></span>
 </span>
-<?php } ?>
 </td>
-    <?php } else { ?>
-            <input type="hidden" data-table="jdh_appointments" data-field="x_appointment_id" data-hidden="1" name="x<?= $Page->RowIndex ?>_appointment_id" id="x<?= $Page->RowIndex ?>_appointment_id" value="<?= HtmlEncode($Page->appointment_id->CurrentValue) ?>">
     <?php } ?>
     <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<?php if ($Page->patient_id->getSessionValue() != "") { ?>
-<span<?= $Page->patient_id->viewAttributes() ?>>
-<span class="form-control-plaintext"><?= $Page->patient_id->getDisplayValue($Page->patient_id->ViewValue) ?></span></span>
-<input type="hidden" id="x<?= $Page->RowIndex ?>_patient_id" name="x<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>" data-hidden="1">
-<?php } else { ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">
-<?php
-if (IsRTL()) {
-    $Page->patient_id->EditAttrs["dir"] = "rtl";
-}
-?>
-<span id="as_x<?= $Page->RowIndex ?>_patient_id" class="ew-auto-suggest">
-    <input type="<?= $Page->patient_id->getInputTextType() ?>" class="form-control" name="sv_x<?= $Page->RowIndex ?>_patient_id" id="sv_x<?= $Page->RowIndex ?>_patient_id" value="<?= RemoveHtml($Page->patient_id->EditValue) ?>" autocomplete="off" size="30" placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>" data-placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_id->formatPattern()) ?>"<?= $Page->patient_id->editAttributes() ?>>
-</span>
-<selection-list hidden class="form-control" data-table="jdh_appointments" data-field="x_patient_id" data-input="sv_x<?= $Page->RowIndex ?>_patient_id" data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>" name="x<?= $Page->RowIndex ?>_patient_id" id="x<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>"></selection-list>
-<div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
-<script>
-loadjs.ready("<?= $Page->FormName ?>", function() {
-    <?= $Page->FormName ?>.createAutoSuggest(Object.assign({"id":"x<?= $Page->RowIndex ?>_patient_id","forceSelect":false}, { lookupAllDisplayFields: <?= $Page->patient_id->Lookup->LookupAllDisplayFields ? "true" : "false" ?> }, ew.vars.tables.jdh_appointments.fields.patient_id.autoSuggestOptions));
-});
-</script>
-<?= $Page->patient_id->Lookup->getParamTag($Page, "p_x" . $Page->RowIndex . "_patient_id") ?>
-</span>
-<?php } ?>
-<input type="hidden" data-table="jdh_appointments" data-field="x_patient_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_patient_id" id="o<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<?php if ($Page->patient_id->getSessionValue() != "") { ?>
-<span<?= $Page->patient_id->viewAttributes() ?>>
-<span class="form-control-plaintext"><?= $Page->patient_id->getDisplayValue($Page->patient_id->ViewValue) ?></span></span>
-<input type="hidden" id="x<?= $Page->RowIndex ?>_patient_id" name="x<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>" data-hidden="1">
-<?php } else { ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">
-<?php
-if (IsRTL()) {
-    $Page->patient_id->EditAttrs["dir"] = "rtl";
-}
-?>
-<span id="as_x<?= $Page->RowIndex ?>_patient_id" class="ew-auto-suggest">
-    <input type="<?= $Page->patient_id->getInputTextType() ?>" class="form-control" name="sv_x<?= $Page->RowIndex ?>_patient_id" id="sv_x<?= $Page->RowIndex ?>_patient_id" value="<?= RemoveHtml($Page->patient_id->EditValue) ?>" autocomplete="off" size="30" placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>" data-placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_id->formatPattern()) ?>"<?= $Page->patient_id->editAttributes() ?>>
-</span>
-<selection-list hidden class="form-control" data-table="jdh_appointments" data-field="x_patient_id" data-input="sv_x<?= $Page->RowIndex ?>_patient_id" data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>" name="x<?= $Page->RowIndex ?>_patient_id" id="x<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>"></selection-list>
-<div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
-<script>
-loadjs.ready("<?= $Page->FormName ?>", function() {
-    <?= $Page->FormName ?>.createAutoSuggest(Object.assign({"id":"x<?= $Page->RowIndex ?>_patient_id","forceSelect":false}, { lookupAllDisplayFields: <?= $Page->patient_id->Lookup->LookupAllDisplayFields ? "true" : "false" ?> }, ew.vars.tables.jdh_appointments.fields.patient_id.autoSuggestOptions));
-});
-</script>
-<?= $Page->patient_id->Lookup->getParamTag($Page, "p_x" . $Page->RowIndex . "_patient_id") ?>
-</span>
-<?php } ?>
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
-<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->appointment_title->Visible) { // appointment_title ?>
         <td data-name="appointment_title"<?= $Page->appointment_title->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_title" class="el_jdh_appointments_appointment_title">
-<input type="<?= $Page->appointment_title->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_appointment_title" id="x<?= $Page->RowIndex ?>_appointment_title" data-table="jdh_appointments" data-field="x_appointment_title" value="<?= $Page->appointment_title->EditValue ?>" size="30" maxlength="200" placeholder="<?= HtmlEncode($Page->appointment_title->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->appointment_title->formatPattern()) ?>"<?= $Page->appointment_title->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Page->appointment_title->getErrorMessage() ?></div>
-</span>
-<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_title" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_appointment_title" id="o<?= $Page->RowIndex ?>_appointment_title" value="<?= HtmlEncode($Page->appointment_title->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_title" class="el_jdh_appointments_appointment_title">
-<input type="<?= $Page->appointment_title->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_appointment_title" id="x<?= $Page->RowIndex ?>_appointment_title" data-table="jdh_appointments" data-field="x_appointment_title" value="<?= $Page->appointment_title->EditValue ?>" size="30" maxlength="200" placeholder="<?= HtmlEncode($Page->appointment_title->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->appointment_title->formatPattern()) ?>"<?= $Page->appointment_title->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Page->appointment_title->getErrorMessage() ?></div>
-</span>
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_title" class="el_jdh_appointments_appointment_title">
 <span<?= $Page->appointment_title->viewAttributes() ?>>
 <?= $Page->appointment_title->getViewValue() ?></span>
 </span>
-<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->appointment_start_date->Visible) { // appointment_start_date ?>
         <td data-name="appointment_start_date"<?= $Page->appointment_start_date->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_start_date" class="el_jdh_appointments_appointment_start_date">
-<input type="<?= $Page->appointment_start_date->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_appointment_start_date" id="x<?= $Page->RowIndex ?>_appointment_start_date" data-table="jdh_appointments" data-field="x_appointment_start_date" value="<?= $Page->appointment_start_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->appointment_start_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->appointment_start_date->formatPattern()) ?>"<?= $Page->appointment_start_date->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Page->appointment_start_date->getErrorMessage() ?></div>
-<?php if (!$Page->appointment_start_date->ReadOnly && !$Page->appointment_start_date->Disabled && !isset($Page->appointment_start_date->EditAttrs["readonly"]) && !isset($Page->appointment_start_date->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_appointment_start_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
-</span>
-<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_start_date" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_appointment_start_date" id="o<?= $Page->RowIndex ?>_appointment_start_date" value="<?= HtmlEncode($Page->appointment_start_date->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_start_date" class="el_jdh_appointments_appointment_start_date">
-<input type="<?= $Page->appointment_start_date->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_appointment_start_date" id="x<?= $Page->RowIndex ?>_appointment_start_date" data-table="jdh_appointments" data-field="x_appointment_start_date" value="<?= $Page->appointment_start_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->appointment_start_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->appointment_start_date->formatPattern()) ?>"<?= $Page->appointment_start_date->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Page->appointment_start_date->getErrorMessage() ?></div>
-<?php if (!$Page->appointment_start_date->ReadOnly && !$Page->appointment_start_date->Disabled && !isset($Page->appointment_start_date->EditAttrs["readonly"]) && !isset($Page->appointment_start_date->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_appointment_start_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
-</span>
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_start_date" class="el_jdh_appointments_appointment_start_date">
 <span<?= $Page->appointment_start_date->viewAttributes() ?>>
 <?= $Page->appointment_start_date->getViewValue() ?></span>
 </span>
-<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->appointment_end_date->Visible) { // appointment_end_date ?>
         <td data-name="appointment_end_date"<?= $Page->appointment_end_date->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_end_date" class="el_jdh_appointments_appointment_end_date">
-<input type="<?= $Page->appointment_end_date->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_appointment_end_date" id="x<?= $Page->RowIndex ?>_appointment_end_date" data-table="jdh_appointments" data-field="x_appointment_end_date" value="<?= $Page->appointment_end_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->appointment_end_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->appointment_end_date->formatPattern()) ?>"<?= $Page->appointment_end_date->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Page->appointment_end_date->getErrorMessage() ?></div>
-<?php if (!$Page->appointment_end_date->ReadOnly && !$Page->appointment_end_date->Disabled && !isset($Page->appointment_end_date->EditAttrs["readonly"]) && !isset($Page->appointment_end_date->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_appointment_end_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
-</span>
-<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_end_date" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_appointment_end_date" id="o<?= $Page->RowIndex ?>_appointment_end_date" value="<?= HtmlEncode($Page->appointment_end_date->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_end_date" class="el_jdh_appointments_appointment_end_date">
-<input type="<?= $Page->appointment_end_date->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_appointment_end_date" id="x<?= $Page->RowIndex ?>_appointment_end_date" data-table="jdh_appointments" data-field="x_appointment_end_date" value="<?= $Page->appointment_end_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->appointment_end_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->appointment_end_date->formatPattern()) ?>"<?= $Page->appointment_end_date->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Page->appointment_end_date->getErrorMessage() ?></div>
-<?php if (!$Page->appointment_end_date->ReadOnly && !$Page->appointment_end_date->Disabled && !isset($Page->appointment_end_date->EditAttrs["readonly"]) && !isset($Page->appointment_end_date->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_appointment_end_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
-</span>
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_end_date" class="el_jdh_appointments_appointment_end_date">
 <span<?= $Page->appointment_end_date->viewAttributes() ?>>
 <?= $Page->appointment_end_date->getViewValue() ?></span>
 </span>
-<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->appointment_all_day->Visible) { // appointment_all_day ?>
         <td data-name="appointment_all_day"<?= $Page->appointment_all_day->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
-<div class="form-check d-inline-block">
-    <input type="checkbox" class="form-check-input<?= $Page->appointment_all_day->isInvalidClass() ?>" data-table="jdh_appointments" data-field="x_appointment_all_day" data-boolean name="x<?= $Page->RowIndex ?>_appointment_all_day" id="x<?= $Page->RowIndex ?>_appointment_all_day" value="1"<?= ConvertToBool($Page->appointment_all_day->CurrentValue) ? " checked" : "" ?><?= $Page->appointment_all_day->editAttributes() ?>>
-    <div class="invalid-feedback"><?= $Page->appointment_all_day->getErrorMessage() ?></div>
-</div>
-</span>
-<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_all_day" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_appointment_all_day" id="o<?= $Page->RowIndex ?>_appointment_all_day" value="<?= HtmlEncode($Page->appointment_all_day->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
-<div class="form-check d-inline-block">
-    <input type="checkbox" class="form-check-input<?= $Page->appointment_all_day->isInvalidClass() ?>" data-table="jdh_appointments" data-field="x_appointment_all_day" data-boolean name="x<?= $Page->RowIndex ?>_appointment_all_day" id="x<?= $Page->RowIndex ?>_appointment_all_day" value="1"<?= ConvertToBool($Page->appointment_all_day->CurrentValue) ? " checked" : "" ?><?= $Page->appointment_all_day->editAttributes() ?>>
-    <div class="invalid-feedback"><?= $Page->appointment_all_day->getErrorMessage() ?></div>
-</div>
-</span>
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
 <span<?= $Page->appointment_all_day->viewAttributes() ?>>
 <div class="form-check d-inline-block">
@@ -532,90 +251,14 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
     <label class="form-check-label" for="x_appointment_all_day_<?= $Page->RowCount ?>"></label>
 </div></span>
 </span>
-<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <td data-name="submission_date"<?= $Page->submission_date->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_submission_date" class="el_jdh_appointments_submission_date">
-<input type="<?= $Page->submission_date->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_submission_date" id="x<?= $Page->RowIndex ?>_submission_date" data-table="jdh_appointments" data-field="x_submission_date" value="<?= $Page->submission_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->submission_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->submission_date->formatPattern()) ?>"<?= $Page->submission_date->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Page->submission_date->getErrorMessage() ?></div>
-<?php if (!$Page->submission_date->ReadOnly && !$Page->submission_date->Disabled && !isset($Page->submission_date->EditAttrs["readonly"]) && !isset($Page->submission_date->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
-    let format = "<?= DateFormat(11) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_submission_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
-</span>
-<input type="hidden" data-table="jdh_appointments" data-field="x_submission_date" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_submission_date" id="o<?= $Page->RowIndex ?>_submission_date" value="<?= HtmlEncode($Page->submission_date->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_submission_date" class="el_jdh_appointments_submission_date">
-<input type="<?= $Page->submission_date->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_submission_date" id="x<?= $Page->RowIndex ?>_submission_date" data-table="jdh_appointments" data-field="x_submission_date" value="<?= $Page->submission_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->submission_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->submission_date->formatPattern()) ?>"<?= $Page->submission_date->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Page->submission_date->getErrorMessage() ?></div>
-<?php if (!$Page->submission_date->ReadOnly && !$Page->submission_date->Disabled && !isset($Page->submission_date->EditAttrs["readonly"]) && !isset($Page->submission_date->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
-    let format = "<?= DateFormat(11) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_submission_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
-</span>
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_appointments_submission_date" class="el_jdh_appointments_submission_date">
 <span<?= $Page->submission_date->viewAttributes() ?>>
 <?= $Page->submission_date->getViewValue() ?></span>
 </span>
-<?php } ?>
 </td>
     <?php } ?>
 <?php
@@ -623,11 +266,6 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
 $Page->ListOptions->render("body", "right", $Page->RowCount);
 ?>
     </tr>
-<?php if ($Page->RowType == ROWTYPE_ADD || $Page->RowType == ROWTYPE_EDIT) { ?>
-<script data-rowindex="<?= $Page->RowIndex ?>">
-loadjs.ready(["<?= $Page->FormName ?>","load"], () => <?= $Page->FormName ?>.updateLists(<?= $Page->RowIndex ?><?= $Page->RowIndex === '$rowindex$' ? ", true" : "" ?>));
-</script>
-<?php } ?>
 <?php
     }
     if (!$Page->isGridAdd()) {
@@ -637,13 +275,6 @@ loadjs.ready(["<?= $Page->FormName ?>","load"], () => <?= $Page->FormName ?>.upd
 ?>
 </tbody>
 </table><!-- /.ew-table -->
-<?php } ?>
-<?php if ($Page->isAdd() || $Page->isCopy()) { ?>
-<input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
-<input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
-<?php } ?>
-<?php if ($Page->isEdit()) { ?>
-<input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
 <?php } ?>
 </div><!-- /.ew-grid-middle-panel -->
 <?php if (!$Page->CurrentAction && !$Page->UseAjaxActions) { ?>

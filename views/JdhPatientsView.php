@@ -59,12 +59,7 @@ loadjs.ready(["wrapper", "head"], function () {
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
 <span id="el_jdh_patients_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
-<?php if (!EmptyString($Page->patient_id->getViewValue()) && $Page->patient_id->linkAttributes() != "") { ?>
-<a<?= $Page->patient_id->linkAttributes() ?>><?= $Page->patient_id->getViewValue() ?></a>
-<?php } else { ?>
-<?= $Page->patient_id->getViewValue() ?>
-<?php } ?>
-</span>
+<?= $Page->patient_id->getViewValue() ?></span>
 </span>
 </td>
     </tr>
@@ -113,63 +108,63 @@ loadjs.ready(["wrapper", "head"], function () {
 <?php
     if (in_array("jdh_appointments", explode(",", $Page->getCurrentDetailTable())) && $jdh_appointments->DetailView) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_appointments") ?><?= $Page->DetailPages->activeClasses("jdh_appointments") ?>" data-bs-target="#tab_jdh_appointments" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_appointments" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_appointments")) ?>"><?= $Language->tablePhrase("jdh_appointments", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_appointments") ?><?= $Page->DetailPages->activeClasses("jdh_appointments") ?>" data-bs-target="#tab_jdh_appointments" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_appointments" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_appointments")) ?>"><?= $Language->tablePhrase("jdh_appointments", "TblCaption") ?>&nbsp;<?= str_replace("%c", Container("jdh_appointments")->Count, $Language->phrase("DetailCount")) ?></button></li>
 <?php
     }
 ?>
 <?php
     if (in_array("jdh_patient_cases", explode(",", $Page->getCurrentDetailTable())) && $jdh_patient_cases->DetailView) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_patient_cases") ?><?= $Page->DetailPages->activeClasses("jdh_patient_cases") ?>" data-bs-target="#tab_jdh_patient_cases" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_patient_cases" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_patient_cases")) ?>"><?= $Language->tablePhrase("jdh_patient_cases", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_patient_cases") ?><?= $Page->DetailPages->activeClasses("jdh_patient_cases") ?>" data-bs-target="#tab_jdh_patient_cases" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_patient_cases" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_patient_cases")) ?>"><?= $Language->tablePhrase("jdh_patient_cases", "TblCaption") ?>&nbsp;<?= str_replace("%c", Container("jdh_patient_cases")->Count, $Language->phrase("DetailCount")) ?></button></li>
 <?php
     }
 ?>
 <?php
     if (in_array("jdh_vitals", explode(",", $Page->getCurrentDetailTable())) && $jdh_vitals->DetailView) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" data-bs-target="#tab_jdh_vitals" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_vitals" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_vitals")) ?>"><?= $Language->tablePhrase("jdh_vitals", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" data-bs-target="#tab_jdh_vitals" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_vitals" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_vitals")) ?>"><?= $Language->tablePhrase("jdh_vitals", "TblCaption") ?>&nbsp;<?= str_replace("%c", Container("jdh_vitals")->Count, $Language->phrase("DetailCount")) ?></button></li>
 <?php
     }
 ?>
 <?php
     if (in_array("jdh_patient_visits", explode(",", $Page->getCurrentDetailTable())) && $jdh_patient_visits->DetailView) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_patient_visits") ?><?= $Page->DetailPages->activeClasses("jdh_patient_visits") ?>" data-bs-target="#tab_jdh_patient_visits" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_patient_visits" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_patient_visits")) ?>"><?= $Language->tablePhrase("jdh_patient_visits", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_patient_visits") ?><?= $Page->DetailPages->activeClasses("jdh_patient_visits") ?>" data-bs-target="#tab_jdh_patient_visits" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_patient_visits" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_patient_visits")) ?>"><?= $Language->tablePhrase("jdh_patient_visits", "TblCaption") ?>&nbsp;<?= str_replace("%c", Container("jdh_patient_visits")->Count, $Language->phrase("DetailCount")) ?></button></li>
 <?php
     }
 ?>
 <?php
     if (in_array("jdh_chief_complaints", explode(",", $Page->getCurrentDetailTable())) && $jdh_chief_complaints->DetailView) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_chief_complaints") ?><?= $Page->DetailPages->activeClasses("jdh_chief_complaints") ?>" data-bs-target="#tab_jdh_chief_complaints" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_chief_complaints" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_chief_complaints")) ?>"><?= $Language->tablePhrase("jdh_chief_complaints", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_chief_complaints") ?><?= $Page->DetailPages->activeClasses("jdh_chief_complaints") ?>" data-bs-target="#tab_jdh_chief_complaints" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_chief_complaints" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_chief_complaints")) ?>"><?= $Language->tablePhrase("jdh_chief_complaints", "TblCaption") ?>&nbsp;<?= str_replace("%c", Container("jdh_chief_complaints")->Count, $Language->phrase("DetailCount")) ?></button></li>
 <?php
     }
 ?>
 <?php
     if (in_array("jdh_examination_findings", explode(",", $Page->getCurrentDetailTable())) && $jdh_examination_findings->DetailView) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_examination_findings") ?><?= $Page->DetailPages->activeClasses("jdh_examination_findings") ?>" data-bs-target="#tab_jdh_examination_findings" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_examination_findings" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_examination_findings")) ?>"><?= $Language->tablePhrase("jdh_examination_findings", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_examination_findings") ?><?= $Page->DetailPages->activeClasses("jdh_examination_findings") ?>" data-bs-target="#tab_jdh_examination_findings" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_examination_findings" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_examination_findings")) ?>"><?= $Language->tablePhrase("jdh_examination_findings", "TblCaption") ?>&nbsp;<?= str_replace("%c", Container("jdh_examination_findings")->Count, $Language->phrase("DetailCount")) ?></button></li>
 <?php
     }
 ?>
 <?php
     if (in_array("jdh_prescriptions", explode(",", $Page->getCurrentDetailTable())) && $jdh_prescriptions->DetailView) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_prescriptions") ?><?= $Page->DetailPages->activeClasses("jdh_prescriptions") ?>" data-bs-target="#tab_jdh_prescriptions" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_prescriptions" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_prescriptions")) ?>"><?= $Language->tablePhrase("jdh_prescriptions", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_prescriptions") ?><?= $Page->DetailPages->activeClasses("jdh_prescriptions") ?>" data-bs-target="#tab_jdh_prescriptions" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_prescriptions" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_prescriptions")) ?>"><?= $Language->tablePhrase("jdh_prescriptions", "TblCaption") ?>&nbsp;<?= str_replace("%c", Container("jdh_prescriptions")->Count, $Language->phrase("DetailCount")) ?></button></li>
 <?php
     }
 ?>
 <?php
     if (in_array("jdh_test_requests", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_requests->DetailView) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_test_requests") ?><?= $Page->DetailPages->activeClasses("jdh_test_requests") ?>" data-bs-target="#tab_jdh_test_requests" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_test_requests" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_test_requests")) ?>"><?= $Language->tablePhrase("jdh_test_requests", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_test_requests") ?><?= $Page->DetailPages->activeClasses("jdh_test_requests") ?>" data-bs-target="#tab_jdh_test_requests" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_test_requests" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_test_requests")) ?>"><?= $Language->tablePhrase("jdh_test_requests", "TblCaption") ?>&nbsp;<?= str_replace("%c", Container("jdh_test_requests")->Count, $Language->phrase("DetailCount")) ?></button></li>
 <?php
     }
 ?>
 <?php
     if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailView) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_test_reports") ?><?= $Page->DetailPages->activeClasses("jdh_test_reports") ?>" data-bs-target="#tab_jdh_test_reports" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_test_reports" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_test_reports")) ?>"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_test_reports") ?><?= $Page->DetailPages->activeClasses("jdh_test_reports") ?>" data-bs-target="#tab_jdh_test_reports" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_test_reports" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_test_reports")) ?>"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?>&nbsp;<?= str_replace("%c", Container("jdh_test_reports")->Count, $Language->phrase("DetailCount")) ?></button></li>
 <?php
     }
 ?>

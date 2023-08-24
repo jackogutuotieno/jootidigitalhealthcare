@@ -178,10 +178,10 @@ class JdhAppointments extends DbTable
             'x_appointment_start_date', // Variable name
             'appointment_start_date', // Name
             '`appointment_start_date`', // Expression
-            CastDateFieldForLike("`appointment_start_date`", 1, "DB"), // Basic search expression
+            CastDateFieldForLike("`appointment_start_date`", 111, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            1, // Date/Time format
+            111, // Date/Time format
             false, // Is upload field
             '`appointment_start_date`', // Virtual expression
             false, // Is virtual
@@ -193,7 +193,7 @@ class JdhAppointments extends DbTable
         $this->appointment_start_date->InputTextType = "text";
         $this->appointment_start_date->Nullable = false; // NOT NULL field
         $this->appointment_start_date->Required = true; // Required field
-        $this->appointment_start_date->DefaultErrorMessage = str_replace("%s", DateFormat(1), $Language->phrase("IncorrectDate"));
+        $this->appointment_start_date->DefaultErrorMessage = str_replace("%s", DateFormat(111), $Language->phrase("IncorrectDate"));
         $this->appointment_start_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['appointment_start_date'] = &$this->appointment_start_date;
 
@@ -203,10 +203,10 @@ class JdhAppointments extends DbTable
             'x_appointment_end_date', // Variable name
             'appointment_end_date', // Name
             '`appointment_end_date`', // Expression
-            CastDateFieldForLike("`appointment_end_date`", 1, "DB"), // Basic search expression
+            CastDateFieldForLike("`appointment_end_date`", 111, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            1, // Date/Time format
+            111, // Date/Time format
             false, // Is upload field
             '`appointment_end_date`', // Virtual expression
             false, // Is virtual
@@ -218,7 +218,7 @@ class JdhAppointments extends DbTable
         $this->appointment_end_date->InputTextType = "text";
         $this->appointment_end_date->Nullable = false; // NOT NULL field
         $this->appointment_end_date->Required = true; // Required field
-        $this->appointment_end_date->DefaultErrorMessage = str_replace("%s", DateFormat(1), $Language->phrase("IncorrectDate"));
+        $this->appointment_end_date->DefaultErrorMessage = str_replace("%s", DateFormat(111), $Language->phrase("IncorrectDate"));
         $this->appointment_end_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['appointment_end_date'] = &$this->appointment_end_date;
 

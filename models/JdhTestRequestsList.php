@@ -665,6 +665,7 @@ class JdhTestRequestsList extends JdhTestRequests
         $this->request_description->setVisibility();
         $this->requested_by_user_id->Visible = false;
         $this->request_date->setVisibility();
+        $this->status_id->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -702,6 +703,7 @@ class JdhTestRequestsList extends JdhTestRequests
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
         $this->setupLookupOptions($this->request_service_id);
+        $this->setupLookupOptions($this->status_id);
 
         // Load default values for add
         $this->loadDefaultValues();
@@ -762,21 +764,6 @@ class JdhTestRequestsList extends JdhTestRequests
         // Clear inline mode
         if ($this->isCancel()) {
             $this->clearInlineMode();
-        }
-
-        // Switch to inline edit mode
-        if ($this->isEdit()) {
-            $this->inlineEditMode();
-        // Inline Update
-        } elseif (IsPost() && ($this->isUpdate() || $this->isOverwrite()) && Session(SESSION_INLINE_MODE) == "edit") {
-            $this->setKey(Post($this->OldKeyName));
-            // Return JSON error message if UseAjaxActions
-            if (!$this->inlineUpdate() && $this->UseAjaxActions) {
-                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
-                $this->clearFailureMessage();
-                $this->terminate();
-                return;
-            }
         }
 
         // Switch to inline add mode
@@ -1083,78 +1070,6 @@ class JdhTestRequestsList extends JdhTestRequests
         $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
     }
 
-    // Switch to Inline Edit mode
-    protected function inlineEditMode()
-    {
-        global $Security, $Language;
-        if (!$Security->canEdit()) {
-            return false; // Edit not allowed
-        }
-        $inlineEdit = true;
-        if (($keyValue = Get("request_id") ?? Route("request_id")) !== null) {
-            $this->request_id->setQueryStringValue($keyValue);
-        } elseif (IsApi() && ($keyValue = Route(2)) !== null) {
-            $this->request_id->setQueryStringValue($keyValue);
-        } else {
-            $inlineEdit = false;
-        }
-        if ($inlineEdit) {
-            if ($this->loadRow()) {
-                    // Check if valid User ID
-                    if (!$this->showOptionLink("edit")) {
-                        $userIdMsg = $Language->phrase("NoEditPermission");
-                        $this->setFailureMessage($userIdMsg);
-                        $this->clearInlineMode(); // Clear inline edit mode
-                        return false;
-                    }
-                $this->OldKey = $this->getKey(true); // Get from CurrentValue
-                $this->setKey($this->OldKey); // Set to OldValue
-                $_SESSION[SESSION_INLINE_MODE] = "edit"; // Enable inline edit
-            }
-        }
-        return true;
-    }
-
-    // Perform update to Inline Edit record
-    protected function inlineUpdate()
-    {
-        global $Language, $CurrentForm;
-        $CurrentForm->Index = 1;
-        $this->loadFormValues(); // Get form values
-
-        // Validate form
-        $inlineUpdate = true;
-        if (!$this->validateForm()) {
-            $inlineUpdate = false; // Form error, reset action
-        } else {
-            $inlineUpdate = false;
-            $this->SendEmail = true; // Send email on update success
-            $inlineUpdate = $this->editRow(); // Update record
-        }
-        if ($inlineUpdate) { // Update success
-            if ($this->getSuccessMessage() == "") {
-                $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Set up success message
-            }
-            $this->clearInlineMode(); // Clear inline edit mode
-        } else {
-            if ($this->getFailureMessage() == "") {
-                $this->setFailureMessage($Language->phrase("UpdateFailed")); // Set update failed message
-            }
-            $this->EventCancelled = true; // Cancel event
-            $this->CurrentAction = "edit"; // Stay in edit mode
-        }
-        return $inlineUpdate;
-    }
-
-    // Check Inline Edit key
-    public function checkInlineEditKey()
-    {
-        if (!SameString($this->request_id->OldValue, $this->request_id->CurrentValue)) {
-            return false;
-        }
-        return true;
-    }
-
     // Switch to Inline Add mode
     protected function inlineAddMode()
     {
@@ -1235,6 +1150,7 @@ class JdhTestRequestsList extends JdhTestRequests
         $this->request_service_id->clearErrorMessage();
         $this->request_description->clearErrorMessage();
         $this->request_date->clearErrorMessage();
+        $this->status_id->clearErrorMessage();
     }
 
     // Get list of filters
@@ -1252,6 +1168,7 @@ class JdhTestRequestsList extends JdhTestRequests
         }
         $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
         $filterList = Concat($filterList, $this->request_service_id->AdvancedSearch->toJson(), ","); // Field request_service_id
+        $filterList = Concat($filterList, $this->status_id->AdvancedSearch->toJson(), ","); // Field status_id
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
             $filterList = Concat($filterList, $wrk, ",");
@@ -1307,6 +1224,14 @@ class JdhTestRequestsList extends JdhTestRequests
         $this->request_service_id->AdvancedSearch->SearchValue2 = @$filter["y_request_service_id"];
         $this->request_service_id->AdvancedSearch->SearchOperator2 = @$filter["w_request_service_id"];
         $this->request_service_id->AdvancedSearch->save();
+
+        // Field status_id
+        $this->status_id->AdvancedSearch->SearchValue = @$filter["x_status_id"];
+        $this->status_id->AdvancedSearch->SearchOperator = @$filter["z_status_id"];
+        $this->status_id->AdvancedSearch->SearchCondition = @$filter["v_status_id"];
+        $this->status_id->AdvancedSearch->SearchValue2 = @$filter["y_status_id"];
+        $this->status_id->AdvancedSearch->SearchOperator2 = @$filter["w_status_id"];
+        $this->status_id->AdvancedSearch->save();
         $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
     }
@@ -1431,6 +1356,7 @@ class JdhTestRequestsList extends JdhTestRequests
             $this->updateSort($this->request_service_id); // request_service_id
             $this->updateSort($this->request_description); // request_description
             $this->updateSort($this->request_date); // request_date
+            $this->updateSort($this->status_id); // status_id
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1470,6 +1396,7 @@ class JdhTestRequestsList extends JdhTestRequests
                 $this->request_description->setSort("");
                 $this->requested_by_user_id->setSort("");
                 $this->request_date->setSort("");
+                $this->status_id->setSort("");
             }
 
             // Reset start position
@@ -1612,39 +1539,6 @@ class JdhTestRequestsList extends JdhTestRequests
             }
             return;
         }
-
-        // "edit"
-        $opt = $this->ListOptions["edit"];
-        if ($this->isInlineEditRow()) { // Inline-Edit
-            $this->ListOptions->CustomItem = "edit"; // Show edit column only
-            $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
-                $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
-                $updateCaption = $Language->phrase("UpdateLink");
-                $updateTitle = HtmlTitle($updateCaption);
-                $cancelCaption = $Language->phrase("CancelLink");
-                $cancelTitle = HtmlTitle($cancelCaption);
-                $oldKey = HtmlEncode($this->getKey(true));
-                $inlineUpdateUrl = HtmlEncode(GetUrl($this->urlAddHash($this->pageName(), "r" . $this->RowCount . "_" . $this->TableVar)));
-                if ($this->UseAjaxActions) {
-                    $inlineCancelUrl = $this->InlineEditUrl . "?action=cancel";
-                    $opt->Body = <<<INLINEEDITAJAX
-                    <div{$divClass}>
-                        <button type="button" class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" data-ew-action="inline" data-action="update" data-key="{$oldKey}" data-url="{$inlineUpdateUrl}">{$updateCaption}</button>
-                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel" data-key="{$oldKey}" data-url="{$inlineCancelUrl}">{$cancelCaption}</button>
-                    </div>
-                    INLINEEDITAJAX;
-                } else {
-                    $opt->Body = <<<INLINEEDIT
-                    <div{$divClass}>
-                        <button class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" form="fjdh_test_requestslist" formaction="{$inlineUpdateUrl}">{$updateCaption}</button>
-                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$updateTitle}" href="{$cancelurl}">{$cancelCaption}</a>
-                        <input type="hidden" name="action" id="action" value="update">
-                    </div>
-                    INLINEEDIT;
-                }
-            $opt->Body .= "<input type=\"hidden\" name=\"" . $this->OldKeyName . "\" id=\"" . $this->OldKeyName . "\" value=\"" . HtmlEncode($this->request_id->CurrentValue) . "\">";
-            return;
-        }
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1667,13 +1561,6 @@ class JdhTestRequestsList extends JdhTestRequests
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_test_requests\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
-                }
-                $inlineEditCaption = $Language->phrase("InlineEditLink");
-                $inlineEditTitle = HtmlTitle($inlineEditCaption);
-                if ($this->UseAjaxActions) {
-                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" data-ew-action=\"inline\" data-action=\"edit\" data-key=\"" . HtmlEncode($this->getKey(true)) . "\" data-url=\"" . HtmlEncode($this->InlineEditUrl) . "\">" . $inlineEditCaption . "</a>";
-                } else {
-                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" href=\"" . HtmlEncode($this->urlAddHash(GetUrl($this->InlineEditUrl), "r" . $this->RowCount . "_" . $this->TableVar)) . "\">" . $inlineEditCaption . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1781,6 +1668,7 @@ class JdhTestRequestsList extends JdhTestRequests
             $option->add("request_service_id", $this->createColumnOption("request_service_id"));
             $option->add("request_description", $this->createColumnOption("request_description"));
             $option->add("request_date", $this->createColumnOption("request_date"));
+            $option->add("status_id", $this->createColumnOption("status_id"));
         }
 
         // Set up options default
@@ -1991,9 +1879,6 @@ class JdhTestRequestsList extends JdhTestRequests
                 $this->StopRecord = $this->StartRecord; // Show this record only
             }
         }
-        if ($this->isEdit()) {
-            $this->RowIndex = 1;
-        }
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
             $this->RowIndex = '$rowindex$';
         }
@@ -2049,24 +1934,6 @@ class JdhTestRequestsList extends JdhTestRequests
         $this->RowType = ROWTYPE_VIEW; // Render view
         if (($this->isAdd() || $this->isCopy()) && $this->InlineRowCount == 0 || $this->isGridAdd()) { // Add
             $this->RowType = ROWTYPE_ADD; // Render add
-        }
-        if ($this->isEdit() || $this->isInlineUpdated() || $this->isInlineEditCancelled()) { // Inline edit/updated/cancelled
-            if ($this->checkInlineEditKey() && $this->InlineRowCount == 0) {
-                if ($this->isEdit()) { // Inline edit
-                    $this->RowAction = "edit";
-                    $this->RowType = ROWTYPE_EDIT; // Render edit
-                } else { // Inline updated
-                    $this->RowAction = "";
-                    $this->RowType = ROWTYPE_VIEW; // Render view
-                    $this->RowAttrs["data-oldkey"] = $this->getKey(); // Set up old key
-                }
-            } elseif ($this->UseInfiniteScroll) {
-                $this->RowAction = "hide";
-            }
-        }
-        if ($this->isEdit() && $this->RowType == ROWTYPE_EDIT && $this->EventCancelled) { // Update failed
-            $CurrentForm->Index = 1;
-            $this->restoreFormValues(); // Restore form values
         }
 
         // Inline Add/Copy row (row 0)
@@ -2181,6 +2048,16 @@ class JdhTestRequestsList extends JdhTestRequests
             }
             $this->request_date->CurrentValue = UnFormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern());
         }
+
+        // Check field name 'status_id' first before field var 'x_status_id'
+        $val = $CurrentForm->hasValue("status_id") ? $CurrentForm->getValue("status_id") : $CurrentForm->getValue("x_status_id");
+        if (!$this->status_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->status_id->Visible = false; // Disable update for API request
+            } else {
+                $this->status_id->setFormValue($val);
+            }
+        }
     }
 
     // Restore form values
@@ -2196,6 +2073,7 @@ class JdhTestRequestsList extends JdhTestRequests
         $this->request_description->CurrentValue = $this->request_description->FormValue;
         $this->request_date->CurrentValue = $this->request_date->FormValue;
         $this->request_date->CurrentValue = UnFormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern());
+        $this->status_id->CurrentValue = $this->status_id->FormValue;
     }
 
     // Load recordset
@@ -2258,9 +2136,6 @@ class JdhTestRequestsList extends JdhTestRequests
         if ($row) {
             $res = true;
             $this->loadRowValues($row); // Load row values
-            if (!$this->EventCancelled) {
-                $this->HashValue = $this->getRowHash($row); // Get hash value for record
-            }
         }
         return $res;
     }
@@ -2293,6 +2168,7 @@ class JdhTestRequestsList extends JdhTestRequests
         $this->request_description->setDbValue($row['request_description']);
         $this->requested_by_user_id->setDbValue($row['requested_by_user_id']);
         $this->request_date->setDbValue($row['request_date']);
+        $this->status_id->setDbValue($row['status_id']);
     }
 
     // Return a row with default values
@@ -2306,6 +2182,7 @@ class JdhTestRequestsList extends JdhTestRequests
         $row['request_description'] = $this->request_description->DefaultValue;
         $row['requested_by_user_id'] = $this->requested_by_user_id->DefaultValue;
         $row['request_date'] = $this->request_date->DefaultValue;
+        $row['status_id'] = $this->status_id->DefaultValue;
         return $row;
     }
 
@@ -2359,6 +2236,8 @@ class JdhTestRequestsList extends JdhTestRequests
         // requested_by_user_id
 
         // request_date
+
+        // status_id
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -2425,6 +2304,13 @@ class JdhTestRequestsList extends JdhTestRequests
             $this->request_date->ViewValue = $this->request_date->CurrentValue;
             $this->request_date->ViewValue = FormatDateTime($this->request_date->ViewValue, $this->request_date->formatPattern());
 
+            // status_id
+            if (strval($this->status_id->CurrentValue) != "") {
+                $this->status_id->ViewValue = $this->status_id->optionCaption($this->status_id->CurrentValue);
+            } else {
+                $this->status_id->ViewValue = null;
+            }
+
             // request_id
             $this->request_id->HrefValue = "";
             $this->request_id->TooltipValue = "";
@@ -2448,6 +2334,10 @@ class JdhTestRequestsList extends JdhTestRequests
             // request_date
             $this->request_date->HrefValue = "";
             $this->request_date->TooltipValue = "";
+
+            // status_id
+            $this->status_id->HrefValue = "";
+            $this->status_id->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
             // request_id
 
@@ -2548,6 +2438,11 @@ class JdhTestRequestsList extends JdhTestRequests
             $this->request_date->EditValue = HtmlEncode(FormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern()));
             $this->request_date->PlaceHolder = RemoveHtml($this->request_date->caption());
 
+            // status_id
+            $this->status_id->setupEditAttributes();
+            $this->status_id->EditValue = $this->status_id->options(true);
+            $this->status_id->PlaceHolder = RemoveHtml($this->status_id->caption());
+
             // Add refer script
 
             // request_id
@@ -2567,127 +2462,9 @@ class JdhTestRequestsList extends JdhTestRequests
 
             // request_date
             $this->request_date->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // request_id
-            $this->request_id->setupEditAttributes();
-            $this->request_id->EditValue = $this->request_id->CurrentValue;
 
-            // patient_id
-            $this->patient_id->setupEditAttributes();
-            if ($this->patient_id->getSessionValue() != "") {
-                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
-                $curVal = strval($this->patient_id->CurrentValue);
-                if ($curVal != "") {
-                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                    if ($this->patient_id->ViewValue === null) { // Lookup from database
-                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                        $conn = Conn();
-                        $config = $conn->getConfiguration();
-                        $config->setResultCacheImpl($this->Cache);
-                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                        $ari = count($rswrk);
-                        if ($ari > 0) { // Lookup values found
-                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                        } else {
-                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                        }
-                    }
-                } else {
-                    $this->patient_id->ViewValue = null;
-                }
-            } else {
-                $curVal = trim(strval($this->patient_id->CurrentValue));
-                if ($curVal != "") {
-                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                } else {
-                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
-                }
-                if ($this->patient_id->ViewValue !== null) { // Load from cache
-                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
-                } else { // Lookup from database
-                    if ($curVal == "") {
-                        $filterWrk = "0=1";
-                    } else {
-                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
-                    }
-                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    $arwrk = $rswrk;
-                    $this->patient_id->EditValue = $arwrk;
-                }
-                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
-            }
-
-            // request_title
-            $this->request_title->setupEditAttributes();
-            if (!$this->request_title->Raw) {
-                $this->request_title->CurrentValue = HtmlDecode($this->request_title->CurrentValue);
-            }
-            $this->request_title->EditValue = HtmlEncode($this->request_title->CurrentValue);
-            $this->request_title->PlaceHolder = RemoveHtml($this->request_title->caption());
-
-            // request_service_id
-            $this->request_service_id->setupEditAttributes();
-            $curVal = trim(strval($this->request_service_id->CurrentValue));
-            if ($curVal != "") {
-                $this->request_service_id->ViewValue = $this->request_service_id->lookupCacheOption($curVal);
-            } else {
-                $this->request_service_id->ViewValue = $this->request_service_id->Lookup !== null && is_array($this->request_service_id->lookupOptions()) ? $curVal : null;
-            }
-            if ($this->request_service_id->ViewValue !== null) { // Load from cache
-                $this->request_service_id->EditValue = array_values($this->request_service_id->lookupOptions());
-            } else { // Lookup from database
-                if ($curVal == "") {
-                    $filterWrk = "0=1";
-                } else {
-                    $filterWrk = SearchFilter("`service_id`", "=", $this->request_service_id->CurrentValue, DATATYPE_NUMBER, "");
-                }
-                $sqlWrk = $this->request_service_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                $arwrk = $rswrk;
-                $this->request_service_id->EditValue = $arwrk;
-            }
-            $this->request_service_id->PlaceHolder = RemoveHtml($this->request_service_id->caption());
-
-            // request_description
-            $this->request_description->setupEditAttributes();
-            $this->request_description->EditValue = HtmlEncode($this->request_description->CurrentValue);
-            $this->request_description->PlaceHolder = RemoveHtml($this->request_description->caption());
-
-            // request_date
-            $this->request_date->setupEditAttributes();
-            $this->request_date->EditValue = HtmlEncode(FormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern()));
-            $this->request_date->PlaceHolder = RemoveHtml($this->request_date->caption());
-
-            // Edit refer script
-
-            // request_id
-            $this->request_id->HrefValue = "";
-
-            // patient_id
-            $this->patient_id->HrefValue = "";
-
-            // request_title
-            $this->request_title->HrefValue = "";
-
-            // request_service_id
-            $this->request_service_id->HrefValue = "";
-
-            // request_description
-            $this->request_description->HrefValue = "";
-
-            // request_date
-            $this->request_date->HrefValue = "";
+            // status_id
+            $this->status_id->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -2742,6 +2519,11 @@ class JdhTestRequestsList extends JdhTestRequests
         if (!CheckDate($this->request_date->FormValue, $this->request_date->formatPattern())) {
             $this->request_date->addErrorMessage($this->request_date->getErrorMessage(false));
         }
+        if ($this->status_id->Required) {
+            if (!$this->status_id->IsDetailKey && EmptyValue($this->status_id->FormValue)) {
+                $this->status_id->addErrorMessage(str_replace("%s", $this->status_id->caption(), $this->status_id->RequiredErrorMessage));
+            }
+        }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -2753,88 +2535,6 @@ class JdhTestRequestsList extends JdhTestRequests
             $this->setFailureMessage($formCustomError);
         }
         return $validateForm;
-    }
-
-    // Update record based on key values
-    protected function editRow()
-    {
-        global $Security, $Language;
-        $oldKeyFilter = $this->getRecordFilter();
-        $filter = $this->applyUserIDFilters($oldKeyFilter);
-        $conn = $this->getConnection();
-
-        // Load old row
-        $this->CurrentFilter = $filter;
-        $sql = $this->getCurrentSql();
-        $rsold = $conn->fetchAssociative($sql);
-        if (!$rsold) {
-            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
-            return false; // Update Failed
-        } else {
-            // Save old values
-            $this->loadDbValues($rsold);
-        }
-
-        // Set new row
-        $rsnew = [];
-
-        // patient_id
-        if ($this->patient_id->getSessionValue() != "") {
-            $this->patient_id->ReadOnly = true;
-        }
-        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, $this->patient_id->ReadOnly);
-
-        // request_title
-        $this->request_title->setDbValueDef($rsnew, $this->request_title->CurrentValue, "", $this->request_title->ReadOnly);
-
-        // request_service_id
-        $this->request_service_id->setDbValueDef($rsnew, $this->request_service_id->CurrentValue, 0, $this->request_service_id->ReadOnly);
-
-        // request_description
-        $this->request_description->setDbValueDef($rsnew, $this->request_description->CurrentValue, null, $this->request_description->ReadOnly);
-
-        // request_date
-        $this->request_date->setDbValueDef($rsnew, UnFormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern()), CurrentDate(), $this->request_date->ReadOnly);
-
-        // Update current values
-        $this->setCurrentValues($rsnew);
-
-        // Call Row Updating event
-        $updateRow = $this->rowUpdating($rsold, $rsnew);
-        if ($updateRow) {
-            if (count($rsnew) > 0) {
-                $this->CurrentFilter = $filter; // Set up current filter
-                $editRow = $this->update($rsnew, "", $rsold);
-                if (!$editRow && !EmptyValue($this->DbErrorMessage)) { // Show database error
-                    $this->setFailureMessage($this->DbErrorMessage);
-                }
-            } else {
-                $editRow = true; // No field to update
-            }
-            if ($editRow) {
-            }
-        } else {
-            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
-                // Use the message, do nothing
-            } elseif ($this->CancelMessage != "") {
-                $this->setFailureMessage($this->CancelMessage);
-                $this->CancelMessage = "";
-            } else {
-                $this->setFailureMessage($Language->phrase("UpdateCancelled"));
-            }
-            $editRow = false;
-        }
-
-        // Call Row_Updated event
-        if ($editRow) {
-            $this->rowUpdated($rsold, $rsnew);
-        }
-        if ($editRow) {
-            if ($this->SendEmail) {
-                $this->sendEmailOnEdit($rsold, $rsnew);
-            }
-        }
-        return $editRow;
     }
 
     /**
@@ -3114,35 +2814,6 @@ class JdhTestRequestsList extends JdhTestRequests
         return $conn->fetchAssociative($sql);
     }
 
-    // Load row hash
-    protected function loadRowHash()
-    {
-        $filter = $this->getRecordFilter();
-
-        // Load SQL based on filter
-        $this->CurrentFilter = $filter;
-        $sql = $this->getCurrentSql();
-        $conn = $this->getConnection();
-        $row = $conn->fetchAssociative($sql);
-        $this->HashValue = $row ? $this->getRowHash($row) : ""; // Get hash value for record
-    }
-
-    // Get Row Hash
-    public function getRowHash(&$rs)
-    {
-        if (!$rs) {
-            return "";
-        }
-        $row = ($rs instanceof Recordset) ? $rs->fields : $rs;
-        $hash = "";
-        $hash .= GetFieldHash($row['patient_id']); // patient_id
-        $hash .= GetFieldHash($row['request_title']); // request_title
-        $hash .= GetFieldHash($row['request_service_id']); // request_service_id
-        $hash .= GetFieldHash($row['request_description']); // request_description
-        $hash .= GetFieldHash($row['request_date']); // request_date
-        return md5($hash);
-    }
-
     // Add record
     protected function addRow($rsold = null)
     {
@@ -3165,6 +2836,9 @@ class JdhTestRequestsList extends JdhTestRequests
 
         // request_date
         $this->request_date->setDbValueDef($rsnew, UnFormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern()), CurrentDate(), false);
+
+        // status_id
+        $this->status_id->setDbValueDef($rsnew, $this->status_id->CurrentValue, 0, false);
 
         // requested_by_user_id
         if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
@@ -3580,6 +3254,8 @@ class JdhTestRequestsList extends JdhTestRequests
                 case "x_patient_id":
                     break;
                 case "x_request_service_id":
+                    break;
+                case "x_status_id":
                     break;
                 default:
                     $lookupFilter = "";

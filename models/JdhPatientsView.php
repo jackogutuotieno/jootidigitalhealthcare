@@ -709,6 +709,14 @@ class JdhPatientsView extends JdhPatients
         // "detail_jdh_appointments"
         $item = &$option->add("detail_jdh_appointments");
         $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_appointments", "TblCaption");
+        $detailTbl = Container("jdh_appointments");
+        $detailFilter = $detailTbl->getDetailFilter($this);
+        $detailTbl->setCurrentMasterTable($this->TableVar);
+        $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
+        $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
+        if (!$this->ShowMultipleDetails) { // Skip record count if show multiple details
+            $body .= "&nbsp;" . str_replace("%c", Container("jdh_appointments")->Count, $Language->phrase("DetailCount"));
+        }
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhappointmentslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhAppointmentsGrid");
@@ -748,6 +756,14 @@ class JdhPatientsView extends JdhPatients
         // "detail_jdh_patient_cases"
         $item = &$option->add("detail_jdh_patient_cases");
         $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_patient_cases", "TblCaption");
+        $detailTbl = Container("jdh_patient_cases");
+        $detailFilter = $detailTbl->getDetailFilter($this);
+        $detailTbl->setCurrentMasterTable($this->TableVar);
+        $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
+        $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
+        if (!$this->ShowMultipleDetails) { // Skip record count if show multiple details
+            $body .= "&nbsp;" . str_replace("%c", Container("jdh_patient_cases")->Count, $Language->phrase("DetailCount"));
+        }
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhpatientcaseslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhPatientCasesGrid");
@@ -787,6 +803,14 @@ class JdhPatientsView extends JdhPatients
         // "detail_jdh_vitals"
         $item = &$option->add("detail_jdh_vitals");
         $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_vitals", "TblCaption");
+        $detailTbl = Container("jdh_vitals");
+        $detailFilter = $detailTbl->getDetailFilter($this);
+        $detailTbl->setCurrentMasterTable($this->TableVar);
+        $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
+        $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
+        if (!$this->ShowMultipleDetails) { // Skip record count if show multiple details
+            $body .= "&nbsp;" . str_replace("%c", Container("jdh_vitals")->Count, $Language->phrase("DetailCount"));
+        }
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhvitalslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhVitalsGrid");
@@ -826,6 +850,14 @@ class JdhPatientsView extends JdhPatients
         // "detail_jdh_patient_visits"
         $item = &$option->add("detail_jdh_patient_visits");
         $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_patient_visits", "TblCaption");
+        $detailTbl = Container("jdh_patient_visits");
+        $detailFilter = $detailTbl->getDetailFilter($this);
+        $detailTbl->setCurrentMasterTable($this->TableVar);
+        $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
+        $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
+        if (!$this->ShowMultipleDetails) { // Skip record count if show multiple details
+            $body .= "&nbsp;" . str_replace("%c", Container("jdh_patient_visits")->Count, $Language->phrase("DetailCount"));
+        }
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhpatientvisitslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhPatientVisitsGrid");
@@ -865,6 +897,14 @@ class JdhPatientsView extends JdhPatients
         // "detail_jdh_chief_complaints"
         $item = &$option->add("detail_jdh_chief_complaints");
         $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_chief_complaints", "TblCaption");
+        $detailTbl = Container("jdh_chief_complaints");
+        $detailFilter = $detailTbl->getDetailFilter($this);
+        $detailTbl->setCurrentMasterTable($this->TableVar);
+        $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
+        $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
+        if (!$this->ShowMultipleDetails) { // Skip record count if show multiple details
+            $body .= "&nbsp;" . str_replace("%c", Container("jdh_chief_complaints")->Count, $Language->phrase("DetailCount"));
+        }
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhchiefcomplaintslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhChiefComplaintsGrid");
@@ -904,6 +944,14 @@ class JdhPatientsView extends JdhPatients
         // "detail_jdh_examination_findings"
         $item = &$option->add("detail_jdh_examination_findings");
         $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_examination_findings", "TblCaption");
+        $detailTbl = Container("jdh_examination_findings");
+        $detailFilter = $detailTbl->getDetailFilter($this);
+        $detailTbl->setCurrentMasterTable($this->TableVar);
+        $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
+        $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
+        if (!$this->ShowMultipleDetails) { // Skip record count if show multiple details
+            $body .= "&nbsp;" . str_replace("%c", Container("jdh_examination_findings")->Count, $Language->phrase("DetailCount"));
+        }
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhexaminationfindingslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhExaminationFindingsGrid");
@@ -943,6 +991,14 @@ class JdhPatientsView extends JdhPatients
         // "detail_jdh_prescriptions"
         $item = &$option->add("detail_jdh_prescriptions");
         $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_prescriptions", "TblCaption");
+        $detailTbl = Container("jdh_prescriptions");
+        $detailFilter = $detailTbl->getDetailFilter($this);
+        $detailTbl->setCurrentMasterTable($this->TableVar);
+        $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
+        $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
+        if (!$this->ShowMultipleDetails) { // Skip record count if show multiple details
+            $body .= "&nbsp;" . str_replace("%c", Container("jdh_prescriptions")->Count, $Language->phrase("DetailCount"));
+        }
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhprescriptionslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhPrescriptionsGrid");
@@ -982,6 +1038,14 @@ class JdhPatientsView extends JdhPatients
         // "detail_jdh_test_requests"
         $item = &$option->add("detail_jdh_test_requests");
         $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_test_requests", "TblCaption");
+        $detailTbl = Container("jdh_test_requests");
+        $detailFilter = $detailTbl->getDetailFilter($this);
+        $detailTbl->setCurrentMasterTable($this->TableVar);
+        $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
+        $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
+        if (!$this->ShowMultipleDetails) { // Skip record count if show multiple details
+            $body .= "&nbsp;" . str_replace("%c", Container("jdh_test_requests")->Count, $Language->phrase("DetailCount"));
+        }
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhtestrequestslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhTestRequestsGrid");
@@ -1021,6 +1085,14 @@ class JdhPatientsView extends JdhPatients
         // "detail_jdh_test_reports"
         $item = &$option->add("detail_jdh_test_reports");
         $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_test_reports", "TblCaption");
+        $detailTbl = Container("jdh_test_reports");
+        $detailFilter = $detailTbl->getDetailFilter($this);
+        $detailTbl->setCurrentMasterTable($this->TableVar);
+        $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
+        $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
+        if (!$this->ShowMultipleDetails) { // Skip record count if show multiple details
+            $body .= "&nbsp;" . str_replace("%c", Container("jdh_test_reports")->Count, $Language->phrase("DetailCount"));
+        }
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhtestreportslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhTestReportsGrid");
@@ -1303,15 +1375,7 @@ class JdhPatientsView extends JdhPatients
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
             // patient_id
-            if (!EmptyValue($this->patient_id->CurrentValue)) {
-                $this->patient_id->HrefValue = $this->patient_id->CurrentValue; // Add prefix/suffix
-                $this->patient_id->LinkAttrs["target"] = ""; // Add target
-                if ($this->isExport()) {
-                    $this->patient_id->HrefValue = FullUrl($this->patient_id->HrefValue, "href");
-                }
-            } else {
-                $this->patient_id->HrefValue = "";
-            }
+            $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
 
             // patient_name

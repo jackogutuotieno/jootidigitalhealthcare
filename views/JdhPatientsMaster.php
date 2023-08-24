@@ -15,12 +15,7 @@ $jdh_patients = Container("jdh_patients");
             <td<?= $jdh_patients->patient_id->cellAttributes() ?>>
 <span id="el_jdh_patients_patient_id">
 <span<?= $jdh_patients->patient_id->viewAttributes() ?>>
-<?php if (!EmptyString($jdh_patients->patient_id->getViewValue()) && $jdh_patients->patient_id->linkAttributes() != "") { ?>
-<a<?= $jdh_patients->patient_id->linkAttributes() ?>><?= $jdh_patients->patient_id->getViewValue() ?></a>
-<?php } else { ?>
-<?= $jdh_patients->patient_id->getViewValue() ?>
-<?php } ?>
-</span>
+<?= $jdh_patients->patient_id->getViewValue() ?></span>
 </span>
 </td>
         </tr>

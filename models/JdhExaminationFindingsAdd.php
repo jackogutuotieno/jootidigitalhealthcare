@@ -724,6 +724,15 @@ class JdhExaminationFindingsAdd extends JdhExaminationFindings
             $res = true;
             $this->loadRowValues($row); // Load row values
         }
+
+        // Check if valid User ID
+        if ($res) {
+            $res = $this->showOptionLink("add");
+            if (!$res) {
+                $userIdMsg = DeniedMessage();
+                $this->setFailureMessage($userIdMsg);
+            }
+        }
         return $res;
     }
 
@@ -1017,6 +1026,11 @@ class JdhExaminationFindingsAdd extends JdhExaminationFindings
         // systematic_exams
         $this->systematic_exams->setDbValueDef($rsnew, $this->systematic_exams->CurrentValue, "", false);
 
+        // submitted_by_user_id
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['submitted_by_user_id'] = CurrentUserID();
+        }
+
         // Update current values
         $this->setCurrentValues($rsnew);
         $conn = $this->getConnection();
@@ -1058,6 +1072,16 @@ class JdhExaminationFindingsAdd extends JdhExaminationFindings
             WriteJson(["success" => true, "action" => Config("API_ADD_ACTION"), $table => $row]);
         }
         return $addRow;
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->submitted_by_user_id->CurrentValue);
+        }
+        return true;
     }
 
     // Set up master/detail based on QueryString

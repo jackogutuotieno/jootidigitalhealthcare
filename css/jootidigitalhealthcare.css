@@ -19895,7 +19895,12 @@ hr.divider-vertical-blurry {
 }
 
 .nav-pills .nav-link {
-  padding-left: 10px !important;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.tab-pane {
+  margin-top: 5px;
 }
 
 /*END_USER_STYLES*/

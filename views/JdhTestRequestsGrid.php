@@ -28,14 +28,15 @@ loadjs.ready(["wrapper", "head"], function () {
             ["request_title", [fields.request_title.visible && fields.request_title.required ? ew.Validators.required(fields.request_title.caption) : null], fields.request_title.isInvalid],
             ["request_service_id", [fields.request_service_id.visible && fields.request_service_id.required ? ew.Validators.required(fields.request_service_id.caption) : null], fields.request_service_id.isInvalid],
             ["request_description", [fields.request_description.visible && fields.request_description.required ? ew.Validators.required(fields.request_description.caption) : null], fields.request_description.isInvalid],
-            ["request_date", [fields.request_date.visible && fields.request_date.required ? ew.Validators.required(fields.request_date.caption) : null, ew.Validators.datetime(fields.request_date.clientFormatPattern)], fields.request_date.isInvalid]
+            ["request_date", [fields.request_date.visible && fields.request_date.required ? ew.Validators.required(fields.request_date.caption) : null, ew.Validators.datetime(fields.request_date.clientFormatPattern)], fields.request_date.isInvalid],
+            ["status_id", [fields.status_id.visible && fields.status_id.required ? ew.Validators.required(fields.status_id.caption) : null], fields.status_id.isInvalid]
         ])
 
         // Check empty row
         .setEmptyRow(
             function (rowIndex) {
                 let fobj = this.getForm(),
-                    fields = [["patient_id",false],["request_title",false],["request_service_id",false],["request_description",false],["request_date",false]];
+                    fields = [["patient_id",false],["request_title",false],["request_service_id",false],["request_description",false],["request_date",false],["status_id",false]];
                 if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
                     return false;
                 return true;
@@ -57,6 +58,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setLists({
             "patient_id": <?= $Grid->patient_id->toClientList($Grid) ?>,
             "request_service_id": <?= $Grid->request_service_id->toClientList($Grid) ?>,
+            "status_id": <?= $Grid->status_id->toClientList($Grid) ?>,
         })
         .build();
     window[form.id] = form;
@@ -100,6 +102,9 @@ $Grid->ListOptions->render("header", "left");
 <?php } ?>
 <?php if ($Grid->request_date->Visible) { // request_date ?>
         <th data-name="request_date" class="<?= $Grid->request_date->headerCellClass() ?>"><div id="elh_jdh_test_requests_request_date" class="jdh_test_requests_request_date"><?= $Grid->renderFieldHeader($Grid->request_date) ?></div></th>
+<?php } ?>
+<?php if ($Grid->status_id->Visible) { // status_id ?>
+        <th data-name="status_id" class="<?= $Grid->status_id->headerCellClass() ?>"><div id="elh_jdh_test_requests_status_id" class="jdh_test_requests_status_id"><?= $Grid->renderFieldHeader($Grid->status_id) ?></div></th>
 <?php } ?>
 <?php
 // Render list options (header, right)
@@ -470,6 +475,87 @@ loadjs.ready(["fjdh_test_requestsgrid", "datetimepicker"], function () {
 <?php if ($Grid->isConfirm()) { ?>
 <input type="hidden" data-table="jdh_test_requests" data-field="x_request_date" data-hidden="1" name="fjdh_test_requestsgrid$x<?= $Grid->RowIndex ?>_request_date" id="fjdh_test_requestsgrid$x<?= $Grid->RowIndex ?>_request_date" value="<?= HtmlEncode($Grid->request_date->FormValue) ?>">
 <input type="hidden" data-table="jdh_test_requests" data-field="x_request_date" data-hidden="1" data-old name="fjdh_test_requestsgrid$o<?= $Grid->RowIndex ?>_request_date" id="fjdh_test_requestsgrid$o<?= $Grid->RowIndex ?>_request_date" value="<?= HtmlEncode($Grid->request_date->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->status_id->Visible) { // status_id ?>
+        <td data-name="status_id"<?= $Grid->status_id->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_test_requests_status_id" class="el_jdh_test_requests_status_id">
+    <select
+        id="x<?= $Grid->RowIndex ?>_status_id"
+        name="x<?= $Grid->RowIndex ?>_status_id"
+        class="form-select ew-select<?= $Grid->status_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_status_id"
+        data-table="jdh_test_requests"
+        data-field="x_status_id"
+        data-value-separator="<?= $Grid->status_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Grid->status_id->getPlaceHolder()) ?>"
+        <?= $Grid->status_id->editAttributes() ?>>
+        <?= $Grid->status_id->selectOptionListHtml("x{$Grid->RowIndex}_status_id") ?>
+    </select>
+    <div class="invalid-feedback"><?= $Grid->status_id->getErrorMessage() ?></div>
+<script>
+loadjs.ready("fjdh_test_requestsgrid", function() {
+    var options = { name: "x<?= $Grid->RowIndex ?>_status_id", selectId: "fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_status_id" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (fjdh_test_requestsgrid.lists.status_id?.lookupOptions.length) {
+        options.data = { id: "x<?= $Grid->RowIndex ?>_status_id", form: "fjdh_test_requestsgrid" };
+    } else {
+        options.ajax = { id: "x<?= $Grid->RowIndex ?>_status_id", form: "fjdh_test_requestsgrid", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.status_id.selectOptions);
+    ew.createSelect(options);
+});
+</script>
+</span>
+<input type="hidden" data-table="jdh_test_requests" data-field="x_status_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_status_id" id="o<?= $Grid->RowIndex ?>_status_id" value="<?= HtmlEncode($Grid->status_id->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_test_requests_status_id" class="el_jdh_test_requests_status_id">
+    <select
+        id="x<?= $Grid->RowIndex ?>_status_id"
+        name="x<?= $Grid->RowIndex ?>_status_id"
+        class="form-select ew-select<?= $Grid->status_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_status_id"
+        data-table="jdh_test_requests"
+        data-field="x_status_id"
+        data-value-separator="<?= $Grid->status_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Grid->status_id->getPlaceHolder()) ?>"
+        <?= $Grid->status_id->editAttributes() ?>>
+        <?= $Grid->status_id->selectOptionListHtml("x{$Grid->RowIndex}_status_id") ?>
+    </select>
+    <div class="invalid-feedback"><?= $Grid->status_id->getErrorMessage() ?></div>
+<script>
+loadjs.ready("fjdh_test_requestsgrid", function() {
+    var options = { name: "x<?= $Grid->RowIndex ?>_status_id", selectId: "fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_status_id" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (fjdh_test_requestsgrid.lists.status_id?.lookupOptions.length) {
+        options.data = { id: "x<?= $Grid->RowIndex ?>_status_id", form: "fjdh_test_requestsgrid" };
+    } else {
+        options.ajax = { id: "x<?= $Grid->RowIndex ?>_status_id", form: "fjdh_test_requestsgrid", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.status_id.selectOptions);
+    ew.createSelect(options);
+});
+</script>
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_test_requests_status_id" class="el_jdh_test_requests_status_id">
+<span<?= $Grid->status_id->viewAttributes() ?>>
+<?= $Grid->status_id->getViewValue() ?></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_test_requests" data-field="x_status_id" data-hidden="1" name="fjdh_test_requestsgrid$x<?= $Grid->RowIndex ?>_status_id" id="fjdh_test_requestsgrid$x<?= $Grid->RowIndex ?>_status_id" value="<?= HtmlEncode($Grid->status_id->FormValue) ?>">
+<input type="hidden" data-table="jdh_test_requests" data-field="x_status_id" data-hidden="1" data-old name="fjdh_test_requestsgrid$o<?= $Grid->RowIndex ?>_status_id" id="fjdh_test_requestsgrid$o<?= $Grid->RowIndex ?>_status_id" value="<?= HtmlEncode($Grid->status_id->OldValue) ?>">
 <?php } ?>
 <?php } ?>
 </td>

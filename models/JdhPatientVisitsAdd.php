@@ -35,6 +35,14 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
     // CSS class/style
     public $CurrentPageName = "jdhpatientvisitsadd";
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -459,6 +467,7 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
         $this->patient_id->setVisibility();
         $this->visit_type_id->setVisibility();
         $this->doctor_id->setVisibility();
+        $this->insurance_id->setVisibility();
         $this->visit_description->setVisibility();
         $this->visit_date->Visible = false;
         $this->subbmitted_by_user_id->Visible = false;
@@ -489,6 +498,7 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
         $this->setupLookupOptions($this->patient_id);
         $this->setupLookupOptions($this->visit_type_id);
         $this->setupLookupOptions($this->doctor_id);
+        $this->setupLookupOptions($this->insurance_id);
 
         // Load default values for add
         $this->loadDefaultValues();
@@ -683,6 +693,16 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
             }
         }
 
+        // Check field name 'insurance_id' first before field var 'x_insurance_id'
+        $val = $CurrentForm->hasValue("insurance_id") ? $CurrentForm->getValue("insurance_id") : $CurrentForm->getValue("x_insurance_id");
+        if (!$this->insurance_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->insurance_id->Visible = false; // Disable update for API request
+            } else {
+                $this->insurance_id->setFormValue($val);
+            }
+        }
+
         // Check field name 'visit_description' first before field var 'x_visit_description'
         $val = $CurrentForm->hasValue("visit_description") ? $CurrentForm->getValue("visit_description") : $CurrentForm->getValue("x_visit_description");
         if (!$this->visit_description->IsDetailKey) {
@@ -704,6 +724,7 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
         $this->patient_id->CurrentValue = $this->patient_id->FormValue;
         $this->visit_type_id->CurrentValue = $this->visit_type_id->FormValue;
         $this->doctor_id->CurrentValue = $this->doctor_id->FormValue;
+        $this->insurance_id->CurrentValue = $this->insurance_id->FormValue;
         $this->visit_description->CurrentValue = $this->visit_description->FormValue;
     }
 
@@ -767,6 +788,7 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
         $this->patient_id->setDbValue($row['patient_id']);
         $this->visit_type_id->setDbValue($row['visit_type_id']);
         $this->doctor_id->setDbValue($row['doctor_id']);
+        $this->insurance_id->setDbValue($row['insurance_id']);
         $this->visit_description->setDbValue($row['visit_description']);
         $this->visit_date->setDbValue($row['visit_date']);
         $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
@@ -780,6 +802,7 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
         $row['patient_id'] = $this->patient_id->DefaultValue;
         $row['visit_type_id'] = $this->visit_type_id->DefaultValue;
         $row['doctor_id'] = $this->doctor_id->DefaultValue;
+        $row['insurance_id'] = $this->insurance_id->DefaultValue;
         $row['visit_description'] = $this->visit_description->DefaultValue;
         $row['visit_date'] = $this->visit_date->DefaultValue;
         $row['subbmitted_by_user_id'] = $this->subbmitted_by_user_id->DefaultValue;
@@ -828,6 +851,9 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
 
         // doctor_id
         $this->doctor_id->RowCssClass = "row";
+
+        // insurance_id
+        $this->insurance_id->RowCssClass = "row";
 
         // visit_description
         $this->visit_description->RowCssClass = "row";
@@ -914,6 +940,29 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
                 $this->doctor_id->ViewValue = null;
             }
 
+            // insurance_id
+            $curVal = strval($this->insurance_id->CurrentValue);
+            if ($curVal != "") {
+                $this->insurance_id->ViewValue = $this->insurance_id->lookupCacheOption($curVal);
+                if ($this->insurance_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`insurance_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->insurance_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->insurance_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->insurance_id->ViewValue = $this->insurance_id->displayValue($arwrk);
+                    } else {
+                        $this->insurance_id->ViewValue = FormatNumber($this->insurance_id->CurrentValue, $this->insurance_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->insurance_id->ViewValue = null;
+            }
+
             // visit_description
             $this->visit_description->ViewValue = $this->visit_description->CurrentValue;
 
@@ -933,6 +982,9 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
 
             // doctor_id
             $this->doctor_id->HrefValue = "";
+
+            // insurance_id
+            $this->insurance_id->HrefValue = "";
 
             // visit_description
             $this->visit_description->HrefValue = "";
@@ -1044,6 +1096,33 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
             }
             $this->doctor_id->PlaceHolder = RemoveHtml($this->doctor_id->caption());
 
+            // insurance_id
+            $this->insurance_id->setupEditAttributes();
+            $curVal = trim(strval($this->insurance_id->CurrentValue));
+            if ($curVal != "") {
+                $this->insurance_id->ViewValue = $this->insurance_id->lookupCacheOption($curVal);
+            } else {
+                $this->insurance_id->ViewValue = $this->insurance_id->Lookup !== null && is_array($this->insurance_id->lookupOptions()) ? $curVal : null;
+            }
+            if ($this->insurance_id->ViewValue !== null) { // Load from cache
+                $this->insurance_id->EditValue = array_values($this->insurance_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`insurance_id`", "=", $this->insurance_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $sqlWrk = $this->insurance_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                $this->insurance_id->EditValue = $arwrk;
+            }
+            $this->insurance_id->PlaceHolder = RemoveHtml($this->insurance_id->caption());
+
             // visit_description
             $this->visit_description->setupEditAttributes();
             $this->visit_description->EditValue = HtmlEncode($this->visit_description->CurrentValue);
@@ -1059,6 +1138,9 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
 
             // doctor_id
             $this->doctor_id->HrefValue = "";
+
+            // insurance_id
+            $this->insurance_id->HrefValue = "";
 
             // visit_description
             $this->visit_description->HrefValue = "";
@@ -1098,6 +1180,11 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
                 $this->doctor_id->addErrorMessage(str_replace("%s", $this->doctor_id->caption(), $this->doctor_id->RequiredErrorMessage));
             }
         }
+        if ($this->insurance_id->Required) {
+            if (!$this->insurance_id->IsDetailKey && EmptyValue($this->insurance_id->FormValue)) {
+                $this->insurance_id->addErrorMessage(str_replace("%s", $this->insurance_id->caption(), $this->insurance_id->RequiredErrorMessage));
+            }
+        }
         if ($this->visit_description->Required) {
             if (!$this->visit_description->IsDetailKey && EmptyValue($this->visit_description->FormValue)) {
                 $this->visit_description->addErrorMessage(str_replace("%s", $this->visit_description->caption(), $this->visit_description->RequiredErrorMessage));
@@ -1132,6 +1219,9 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
 
         // doctor_id
         $this->doctor_id->setDbValueDef($rsnew, $this->doctor_id->CurrentValue, 0, false);
+
+        // insurance_id
+        $this->insurance_id->setDbValueDef($rsnew, $this->insurance_id->CurrentValue, null, false);
 
         // visit_description
         $this->visit_description->setDbValueDef($rsnew, $this->visit_description->CurrentValue, null, false);
@@ -1170,6 +1260,9 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
         if ($addRow) {
             // Call Row Inserted event
             $this->rowInserted($rsold, $rsnew);
+            if ($this->SendEmail) {
+                $this->sendEmailOnAdd($rsnew);
+            }
         }
 
         // Write JSON response
@@ -1290,6 +1383,8 @@ class JdhPatientVisitsAdd extends JdhPatientVisits
                     break;
                 case "x_doctor_id":
                     $lookupFilter = $fld->getSelectFilter(); // PHP
+                    break;
+                case "x_insurance_id":
                     break;
                 default:
                     $lookupFilter = "";

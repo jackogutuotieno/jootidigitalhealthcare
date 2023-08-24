@@ -196,12 +196,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_patients_patient_id" class="el_jdh_patients_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
-<?php if (!EmptyString($Page->patient_id->getViewValue()) && $Page->patient_id->linkAttributes() != "") { ?>
-<a<?= $Page->patient_id->linkAttributes() ?>><?= $Page->patient_id->getViewValue() ?></a>
-<?php } else { ?>
-<?= $Page->patient_id->getViewValue() ?>
-<?php } ?>
-</span>
+<?= $Page->patient_id->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>

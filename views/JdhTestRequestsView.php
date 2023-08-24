@@ -119,6 +119,17 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->status_id->Visible) { // status_id ?>
+    <tr id="r_status_id"<?= $Page->status_id->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_test_requests_status_id"><?= $Page->status_id->caption() ?></span></td>
+        <td data-name="status_id"<?= $Page->status_id->cellAttributes() ?>>
+<span id="el_jdh_test_requests_status_id">
+<span<?= $Page->status_id->viewAttributes() ?>>
+<?= $Page->status_id->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 </table>
 </form>
 </main>

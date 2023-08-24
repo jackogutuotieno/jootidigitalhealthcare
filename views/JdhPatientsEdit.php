@@ -82,12 +82,7 @@ loadjs.ready(["wrapper", "head"], function () {
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_id->cellAttributes() ?>>
 <span id="el_jdh_patients_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
-<?php if (!EmptyString($Page->patient_id->EditValue) && $Page->patient_id->linkAttributes() != "") { ?>
-<a<?= $Page->patient_id->linkAttributes() ?>><input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->patient_id->getDisplayValue($Page->patient_id->EditValue))) ?>"></a>
-<?php } else { ?>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->patient_id->getDisplayValue($Page->patient_id->EditValue))) ?>">
-<?php } ?>
-</span>
+<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->patient_id->getDisplayValue($Page->patient_id->EditValue))) ?>"></span>
 <input type="hidden" data-table="jdh_patients" data-field="x_patient_id" data-hidden="1" name="x_patient_id" id="x_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>">
 </span>
 </div></div>
