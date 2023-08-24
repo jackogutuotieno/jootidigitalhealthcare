@@ -39,7 +39,7 @@ class PersonalData
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "jdhmedicinestockdelete";
+    public $CurrentPageName = "latestappointments";
 
     // Page headings
     public $Heading = "";

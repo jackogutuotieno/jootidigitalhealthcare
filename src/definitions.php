@@ -64,6 +64,8 @@ return [
     "jdh_status" => \DI\create(JdhStatus::class),
     "jdh_lab_billing" => \DI\create(JdhLabBilling::class),
     "jdh_medicine_stock" => \DI\create(JdhMedicineStock::class),
+    "Dashboard2" => \DI\create(Dashboard2::class),
+    "Latest_Appointments" => \DI\create(LatestAppointments::class),
 
     // User table
     "usertable" => \DI\get("jdh_users"),

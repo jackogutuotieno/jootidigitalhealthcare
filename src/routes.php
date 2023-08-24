@@ -467,6 +467,12 @@ return function (App $app) {
         }
     );
 
+    // Dashboard2
+    $app->map(["GET", "POST", "OPTIONS"], '/dashboard2', Dashboard2Controller::class . ':dashboard')->add(PermissionMiddleware::class)->setName('dashboard2-Dashboard2-dashboard'); // dashboard
+
+    // Latest_Appointments
+    $app->map(["GET", "POST", "OPTIONS"], '/latestappointments', LatestAppointmentsController::class . ':summary')->add(PermissionMiddleware::class)->setName('latestappointments-Latest_Appointments-summary'); // summary
+
     // personal_data
     $app->map(["GET","POST","OPTIONS"], '/personaldata', OthersController::class . ':personaldata')->add(PermissionMiddleware::class)->setName('personaldata');
 

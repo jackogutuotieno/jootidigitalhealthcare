@@ -275,7 +275,25 @@ $USER_LEVEL_PRIVS = [["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_medicine_stock","4","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_medicine_stock","5","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_medicine_stock","6","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_medicine_stock","7","2029"]];
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_medicine_stock","7","2029"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Dashboard","-2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Dashboard","0","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Dashboard","1","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Dashboard","2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Dashboard","3","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Dashboard","4","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Dashboard","5","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Dashboard","6","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Dashboard","7","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Latest Appointments","-2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Latest Appointments","0","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Latest Appointments","1","2029"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Latest Appointments","2","872"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Latest Appointments","3","872"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Latest Appointments","4","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Latest Appointments","5","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Latest Appointments","6","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}Latest Appointments","7","0"]];
 // User level table info
 $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhappointmentslist"],
     ["jdh_lab_test_categories","jdh_lab_test_categories","Lab Test Categories",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabtestcategorieslist"],
@@ -305,4 +323,6 @@ $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true
     ["jdh_examination_findings","jdh_examination_findings"," Findings",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhexaminationfindingslist"],
     ["jdh_status","jdh_status","jdh status",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhstatuslist"],
     ["jdh_lab_billing","jdh_lab_billing","Laboratory Billing",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabbillinglist"],
-    ["jdh_medicine_stock","jdh_medicine_stock","Medicine Stock",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhmedicinestocklist"]];
+    ["jdh_medicine_stock","jdh_medicine_stock","Medicine Stock",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhmedicinestocklist"],
+    ["Dashboard","Dashboard2","Dashboard",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","dashboard2"],
+    ["Latest Appointments","Latest_Appointments","Latest Appointments",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","latestappointments"]];

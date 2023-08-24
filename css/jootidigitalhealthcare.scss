@@ -2700,5 +2700,27 @@ div[id^=dsl_] .ew-loading {
 .tab-pane {
 	margin-top: 5px;
 }
+.counters .record-count {
+	position: relative;
+    left: 60px;
+    font-size: 3rem;
+    font-weight: 900;
+    margin-bottom: 5px;
+}
+.counters i {
+	font-size: 2.3rem;
+	rotate: -25deg;
+    opacity: .6;
+}
+.counters .card-text {
+	margin-bottom: 0;
+}
+.counters {
+	background: #0dcaf0;
+    color: white;
+}
+.counters .card-header {
+	border-bottom: 1px solid #fff;
+}
 
 /*END_USER_STYLES*/

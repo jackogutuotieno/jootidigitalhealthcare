@@ -264,7 +264,7 @@ class Dashboard2 extends ReportTable
     public $DashboardType = "custom";
 
     // Item CSS class names
-    public $ItemClassNames = ["",""];
+    public $ItemClassNames = [""];
 
     // Export options
     public $ExportOptions;
@@ -366,18 +366,11 @@ class Dashboard2 extends ReportTable
         }
         try {
             if ($id == 1) {
-                $Page = new UsersSummary();
+                $Page = new LatestAppointmentsSummary();
                 $Page->Export = $this->Export;
                 $Page->UseAjaxActions = true; // Use Ajax actions for pager/sort
                 $Page->run();
-                $content = $view->fetch("UsersSummary.php", $GLOBALS);
-            }
-            if ($id == 2) {
-                $Page = new UsersSummary();
-                $Page->Export = $this->Export;
-                $Page->UseAjaxActions = true; // Use Ajax actions for pager/sort
-                $Page->run();
-                $content = $view->fetch("UsersSummary.php", $GLOBALS);
+                $content = $view->fetch("LatestAppointmentsSummary.php", $GLOBALS);
             }
         } catch (\Exception $e) {
             $GLOBALS["Page"] = $this;

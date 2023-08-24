@@ -1159,6 +1159,12 @@
   <project>
     <phrase id="bodytitle" value="Jooti Digital | Healthcare - Supporting effective health information management" />
     <phrase id="footertext" value="&amp;copy;2023 Jooti Digital | Healthcare. All rights reserved." />
+    <menu id="272">
+      <phrase id="menutext" value="Latest Appointments" />
+    </menu>
+    <menu id="271">
+      <phrase id="menutext" value="Dashboard" />
+    </menu>
     <menu id="150">
       <phrase id="menutext" value="Status Types" />
     </menu>
@@ -2015,6 +2021,43 @@
       </field>
       <field id="date_updated">
         <phrase id="fldcaption" value="Last Updated" />
+      </field>
+    </table>
+    <table id="dashboard2">
+      <phrase id="tblcaption" value="Dashboard" />
+    </table>
+    <table id="latest_appointments">
+      <phrase id="tblcaption" value="Latest Appointments" />
+      <field id="appointment_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient Name" />
+      </field>
+      <field id="appointment_title">
+        <phrase id="fldcaption" value="Title" />
+      </field>
+      <field id="appointment_start_date">
+        <phrase id="fldcaption" value="Start Date" />
+      </field>
+      <field id="appointment_end_date">
+        <phrase id="fldcaption" value="End Date" />
+      </field>
+      <field id="appointment_all_day">
+        <phrase id="fldcaption" value="All Day?" />
+        <phrase id="fldtagvalue1" value="1" />
+        <phrase id="fldtagcaption1" value="Yes" />
+        <phrase id="fldtagvalue2" value="0" />
+        <phrase id="fldtagcaption2" value="No" />
+      </field>
+      <field id="appointment_description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+      <field id="submission_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="subbmitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
       </field>
     </table>
   </project>
