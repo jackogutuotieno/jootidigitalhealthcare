@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Aug 24, 2023 at 07:41 PM
+-- Generation Time: Aug 25, 2023 at 09:49 AM
 -- Server version: 8.0.31
 -- PHP Version: 8.1.13
 
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS `jdh_audittrail` (
   `OldValue` longtext,
   `NewValue` longtext,
   PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=485 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=495 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_audittrail`
@@ -560,7 +560,17 @@ INSERT INTO `jdh_audittrail` (`Id`, `DateTime`, `Script`, `User`, `Action`, `Tab
 (481, '2023-08-24 18:58:01', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', ''),
 (482, '2023-08-24 19:24:33', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
 (483, '2023-08-24 19:24:37', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', ''),
-(484, '2023-08-24 19:40:46', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', '');
+(484, '2023-08-24 19:40:46', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
+(485, '2023-08-24 19:43:24', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', ''),
+(486, '2023-08-24 19:44:57', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
+(487, '2023-08-25 08:15:16', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', ''),
+(488, '2023-08-25 08:59:15', '/jootidigitalhealthcare/jdhpatientsedit/1', '1', 'U', 'jdh_patients', 'patient_registration_fees', '1', '0', '100'),
+(489, '2023-08-25 08:59:27', '/jootidigitalhealthcare/jdhpatientsedit/2', '1', 'U', 'jdh_patients', 'patient_registration_fees', '2', '0', '100'),
+(490, '2023-08-25 08:59:39', '/jootidigitalhealthcare/jdhpatientsedit/3', '1', 'U', 'jdh_patients', 'patient_registration_fees', '3', '0', '100'),
+(491, '2023-08-25 09:13:49', '/jootidigitalhealthcare/jdhpatientsedit/1', '1', 'U', 'jdh_patients', 'service_id', '1', '100', '1'),
+(492, '2023-08-25 09:14:03', '/jootidigitalhealthcare/jdhpatientsedit/2', '1', 'U', 'jdh_patients', 'service_id', '2', '100', '1'),
+(493, '2023-08-25 09:14:12', '/jootidigitalhealthcare/jdhpatientsedit/3', '1', 'U', 'jdh_patients', 'service_id', '3', '100', '1'),
+(494, '2023-08-25 09:44:09', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', '');
 
 -- --------------------------------------------------------
 
@@ -995,6 +1005,8 @@ CREATE TABLE IF NOT EXISTS `jdh_patients` (
   `patient_phone` char(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `patient_kin_name` varchar(100) DEFAULT NULL,
   `patient_kin_phone` char(15) DEFAULT NULL,
+  `service_id` int NOT NULL,
+  `submitted_by_user_id` int NOT NULL,
   `patient_registration_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`patient_id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -1003,10 +1015,10 @@ CREATE TABLE IF NOT EXISTS `jdh_patients` (
 -- Dumping data for table `jdh_patients`
 --
 
-INSERT INTO `jdh_patients` (`patient_id`, `photo`, `patient_national_id`, `patient_name`, `patient_dob`, `patient_gender`, `patient_phone`, `patient_kin_name`, `patient_kin_phone`, `patient_registration_date`) VALUES
-(1, NULL, '001', 'Patient One', '1984-08-06', 'Male', '0722000000', 'Demo Kin', '54566788', '2023-08-03 22:57:29'),
-(2, NULL, '002', 'Patient Two', '1984-08-07', 'Female', '0721123456', 'Demo Kin', '3435545', '2023-08-03 22:58:55'),
-(3, NULL, '003', 'Patient Three', '1989-08-29', 'Male', '0722103853', 'Mufuta', '0712345678', '2023-08-05 18:02:25');
+INSERT INTO `jdh_patients` (`patient_id`, `photo`, `patient_national_id`, `patient_name`, `patient_dob`, `patient_gender`, `patient_phone`, `patient_kin_name`, `patient_kin_phone`, `service_id`, `submitted_by_user_id`, `patient_registration_date`) VALUES
+(1, NULL, '001', 'Patient One', '1984-08-06', 'Male', '0722000000', 'Demo Kin', '54566788', 1, 2, '2023-08-03 22:57:29'),
+(2, NULL, '002', 'Patient Two', '1984-08-07', 'Female', '0721123456', 'Demo Kin', '3435545', 1, 2, '2023-08-03 22:58:55'),
+(3, NULL, '003', 'Patient Three', '1989-08-29', 'Male', '0722103853', 'Mufuta', '0712345678', 1, 2, '2023-08-05 18:02:25');
 
 -- --------------------------------------------------------
 
@@ -1132,6 +1144,22 @@ CREATE TABLE IF NOT EXISTS `jdh_prescriptions_actions` (
 
 INSERT INTO `jdh_prescriptions_actions` (`id`, `patient_id`, `medicine_id`, `units_given`, `submittedby_user_id`, `submission_date`) VALUES
 (1, 1, 1, 10, 6, '2023-08-24 21:40:32');
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `jdh_registration_income`
+-- (See below for the actual view)
+--
+DROP VIEW IF EXISTS `jdh_registration_income`;
+CREATE TABLE IF NOT EXISTS `jdh_registration_income` (
+`patient_id` bigint
+,`patient_name` varchar(50)
+,`patient_dob` date
+,`patient_gender` varchar(10)
+,`service_cost` int
+,`patient_registration_date` datetime
+);
 
 -- --------------------------------------------------------
 
@@ -1465,6 +1493,16 @@ DROP TABLE IF EXISTS `jdh_pharmacy_income`;
 
 DROP VIEW IF EXISTS `jdh_pharmacy_income`;
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `jdh_pharmacy_income`  AS SELECT `jdh_patients`.`patient_id` AS `patient_id`, `jdh_patients`.`patient_name` AS `patient_name`, `jdh_medicines`.`name` AS `name`, `jdh_medicines`.`selling_price` AS `selling_price`, `jdh_medicine_stock`.`units_available` AS `units_available`, `jdh_prescriptions_actions`.`units_given` AS `units_given`, `jdh_prescriptions_actions`.`submission_date` AS `submission_date` FROM ((((`jdh_medicines` join `jdh_medicine_stock` on((`jdh_medicines`.`id` = `jdh_medicine_stock`.`medicine_id`))) join `jdh_prescriptions` on((`jdh_medicines`.`id` = `jdh_prescriptions`.`medicine_id`))) join `jdh_patients` on((`jdh_patients`.`patient_id` = `jdh_prescriptions`.`patient_id`))) join `jdh_prescriptions_actions` on((`jdh_patients`.`patient_id` = `jdh_prescriptions_actions`.`patient_id`)))  ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `jdh_registration_income`
+--
+DROP TABLE IF EXISTS `jdh_registration_income`;
+
+DROP VIEW IF EXISTS `jdh_registration_income`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `jdh_registration_income`  AS SELECT `jdh_patients`.`patient_id` AS `patient_id`, `jdh_patients`.`patient_name` AS `patient_name`, `jdh_patients`.`patient_dob` AS `patient_dob`, `jdh_patients`.`patient_gender` AS `patient_gender`, `jdh_services`.`service_cost` AS `service_cost`, `jdh_patients`.`patient_registration_date` AS `patient_registration_date` FROM (`jdh_patients` join `jdh_services` on((`jdh_patients`.`service_id` = `jdh_services`.`service_id`)))  ;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
