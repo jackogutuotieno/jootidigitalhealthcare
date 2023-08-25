@@ -34,7 +34,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["id", [fields.id.visible && fields.id.required ? ew.Validators.required(fields.id.caption) : null], fields.id.isInvalid],
-            ["doctor_id", [fields.doctor_id.visible && fields.doctor_id.required ? ew.Validators.required(fields.doctor_id.caption) : null], fields.doctor_id.isInvalid],
+            ["user_id", [fields.user_id.visible && fields.user_id.required ? ew.Validators.required(fields.user_id.caption) : null], fields.user_id.isInvalid],
             ["service_id", [fields.service_id.visible && fields.service_id.required ? ew.Validators.required(fields.service_id.caption) : null], fields.service_id.isInvalid],
             ["description", [fields.description.visible && fields.description.required ? ew.Validators.required(fields.description.caption) : null], fields.description.isInvalid],
             ["submission_date", [fields.submission_date.visible && fields.submission_date.required ? ew.Validators.required(fields.submission_date.caption) : null, ew.Validators.datetime(fields.submission_date.clientFormatPattern)], fields.submission_date.isInvalid]
@@ -53,7 +53,7 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Dynamic selection lists
         .setLists({
-            "doctor_id": <?= $Page->doctor_id->toClientList($Page) ?>,
+            "user_id": <?= $Page->user_id->toClientList($Page) ?>,
             "service_id": <?= $Page->service_id->toClientList($Page) ?>,
         })
         .build();
@@ -86,39 +86,39 @@ loadjs.ready(["wrapper", "head"], function () {
 </div></div>
     </div>
 <?php } ?>
-<?php if ($Page->doctor_id->Visible) { // doctor_id ?>
-    <div id="r_doctor_id"<?= $Page->doctor_id->rowAttributes() ?>>
-        <label id="elh_jdh_doctor_charges_doctor_id" for="x_doctor_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->doctor_id->caption() ?><?= $Page->doctor_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->doctor_id->cellAttributes() ?>>
-<span id="el_jdh_doctor_charges_doctor_id">
+<?php if ($Page->user_id->Visible) { // user_id ?>
+    <div id="r_user_id"<?= $Page->user_id->rowAttributes() ?>>
+        <label id="elh_jdh_doctor_charges_user_id" for="x_user_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->user_id->caption() ?><?= $Page->user_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->user_id->cellAttributes() ?>>
+<span id="el_jdh_doctor_charges_user_id">
     <select
-        id="x_doctor_id"
-        name="x_doctor_id"
-        class="form-select ew-select<?= $Page->doctor_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_doctor_chargesedit_x_doctor_id"
+        id="x_user_id"
+        name="x_user_id"
+        class="form-select ew-select<?= $Page->user_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_doctor_chargesedit_x_user_id"
         data-table="jdh_doctor_charges"
-        data-field="x_doctor_id"
-        data-value-separator="<?= $Page->doctor_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->doctor_id->getPlaceHolder()) ?>"
-        <?= $Page->doctor_id->editAttributes() ?>>
-        <?= $Page->doctor_id->selectOptionListHtml("x_doctor_id") ?>
+        data-field="x_user_id"
+        data-value-separator="<?= $Page->user_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->user_id->getPlaceHolder()) ?>"
+        <?= $Page->user_id->editAttributes() ?>>
+        <?= $Page->user_id->selectOptionListHtml("x_user_id") ?>
     </select>
-    <?= $Page->doctor_id->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->doctor_id->getErrorMessage() ?></div>
-<?= $Page->doctor_id->Lookup->getParamTag($Page, "p_x_doctor_id") ?>
+    <?= $Page->user_id->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->user_id->getErrorMessage() ?></div>
+<?= $Page->user_id->Lookup->getParamTag($Page, "p_x_user_id") ?>
 <script>
 loadjs.ready("fjdh_doctor_chargesedit", function() {
-    var options = { name: "x_doctor_id", selectId: "fjdh_doctor_chargesedit_x_doctor_id" },
+    var options = { name: "x_user_id", selectId: "fjdh_doctor_chargesedit_x_user_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_doctor_chargesedit.lists.doctor_id?.lookupOptions.length) {
-        options.data = { id: "x_doctor_id", form: "fjdh_doctor_chargesedit" };
+    if (fjdh_doctor_chargesedit.lists.user_id?.lookupOptions.length) {
+        options.data = { id: "x_user_id", form: "fjdh_doctor_chargesedit" };
     } else {
-        options.ajax = { id: "x_doctor_id", form: "fjdh_doctor_chargesedit", limit: ew.LOOKUP_PAGE_SIZE };
+        options.ajax = { id: "x_user_id", form: "fjdh_doctor_chargesedit", limit: ew.LOOKUP_PAGE_SIZE };
     }
     options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_doctor_charges.fields.doctor_id.selectOptions);
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_doctor_charges.fields.user_id.selectOptions);
     ew.createSelect(options);
 });
 </script>

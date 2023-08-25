@@ -1074,6 +1074,7 @@ class JdhPatientsAdd extends JdhPatients
 
             // service_id
             $this->service_id->HrefValue = "";
+            $this->service_id->TooltipValue = "";
 
             // submitted_by_user_id
             $this->submitted_by_user_id->HrefValue = "";

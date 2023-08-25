@@ -52,7 +52,7 @@ class JdhPatientVisits extends DbTable
     public $visit_id;
     public $patient_id;
     public $visit_type_id;
-    public $doctor_id;
+    public $user_id;
     public $insurance_id;
     public $visit_description;
     public $visit_date;
@@ -185,34 +185,34 @@ class JdhPatientVisits extends DbTable
         $this->visit_type_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['visit_type_id'] = &$this->visit_type_id;
 
-        // doctor_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->doctor_id = new DbField(
+        // user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->user_id = new DbField(
             $this, // Table
-            'x_doctor_id', // Variable name
-            'doctor_id', // Name
-            '`doctor_id`', // Expression
-            '`doctor_id`', // Basic search expression
+            'x_user_id', // Variable name
+            'user_id', // Name
+            '`user_id`', // Expression
+            '`user_id`', // Basic search expression
             3, // Type
             11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`doctor_id`', // Virtual expression
+            '`user_id`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'SELECT' // Edit Tag
         );
-        $this->doctor_id->addMethod("getSelectFilter", fn() => "`role_id` = 2");
-        $this->doctor_id->InputTextType = "text";
-        $this->doctor_id->Nullable = false; // NOT NULL field
-        $this->doctor_id->Required = true; // Required field
-        $this->doctor_id->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->doctor_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->doctor_id->Lookup = new Lookup('doctor_id', 'jdh_users', true, 'user_id', ["first_name","last_name","",""], '', '', [], [], [], [], [], [], '', '', "CONCAT(COALESCE(`first_name`, ''),'" . ValueSeparator(1, $this->doctor_id) . "',COALESCE(`last_name`,''))");
-        $this->doctor_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->doctor_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['doctor_id'] = &$this->doctor_id;
+        $this->user_id->addMethod("getSelectFilter", fn() => "`role_id`=2");
+        $this->user_id->InputTextType = "text";
+        $this->user_id->Nullable = false; // NOT NULL field
+        $this->user_id->Required = true; // Required field
+        $this->user_id->UsePleaseSelect = true; // Use PleaseSelect by default
+        $this->user_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
+        $this->user_id->Lookup = new Lookup('user_id', 'jdh_users', false, 'user_id', ["user_id","first_name","last_name",""], '', '', [], [], [], [], [], [], '', '', "CONCAT(COALESCE(`user_id`, ''),'" . ValueSeparator(1, $this->user_id) . "',COALESCE(`first_name`,''),'" . ValueSeparator(2, $this->user_id) . "',COALESCE(`last_name`,''))");
+        $this->user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->user_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['user_id'] = &$this->user_id;
 
         // insurance_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->insurance_id = new DbField(
@@ -884,7 +884,7 @@ class JdhPatientVisits extends DbTable
         $this->visit_id->DbValue = $row['visit_id'];
         $this->patient_id->DbValue = $row['patient_id'];
         $this->visit_type_id->DbValue = $row['visit_type_id'];
-        $this->doctor_id->DbValue = $row['doctor_id'];
+        $this->user_id->DbValue = $row['user_id'];
         $this->insurance_id->DbValue = $row['insurance_id'];
         $this->visit_description->DbValue = $row['visit_description'];
         $this->visit_date->DbValue = $row['visit_date'];
@@ -1249,7 +1249,7 @@ class JdhPatientVisits extends DbTable
         $this->visit_id->setDbValue($row['visit_id']);
         $this->patient_id->setDbValue($row['patient_id']);
         $this->visit_type_id->setDbValue($row['visit_type_id']);
-        $this->doctor_id->setDbValue($row['doctor_id']);
+        $this->user_id->setDbValue($row['user_id']);
         $this->insurance_id->setDbValue($row['insurance_id']);
         $this->visit_description->setDbValue($row['visit_description']);
         $this->visit_date->setDbValue($row['visit_date']);
@@ -1290,7 +1290,7 @@ class JdhPatientVisits extends DbTable
 
         // visit_type_id
 
-        // doctor_id
+        // user_id
 
         // insurance_id
 
@@ -1350,28 +1350,28 @@ class JdhPatientVisits extends DbTable
             $this->visit_type_id->ViewValue = null;
         }
 
-        // doctor_id
-        $curVal = strval($this->doctor_id->CurrentValue);
+        // user_id
+        $curVal = strval($this->user_id->CurrentValue);
         if ($curVal != "") {
-            $this->doctor_id->ViewValue = $this->doctor_id->lookupCacheOption($curVal);
-            if ($this->doctor_id->ViewValue === null) { // Lookup from database
+            $this->user_id->ViewValue = $this->user_id->lookupCacheOption($curVal);
+            if ($this->user_id->ViewValue === null) { // Lookup from database
                 $filterWrk = SearchFilter("`user_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $lookupFilter = $this->doctor_id->getSelectFilter($this); // PHP
-                $sqlWrk = $this->doctor_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
+                $lookupFilter = $this->user_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->user_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
                 $config->setResultCacheImpl($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->doctor_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->doctor_id->ViewValue = $this->doctor_id->displayValue($arwrk);
+                    $arwrk = $this->user_id->Lookup->renderViewRow($rswrk[0]);
+                    $this->user_id->ViewValue = $this->user_id->displayValue($arwrk);
                 } else {
-                    $this->doctor_id->ViewValue = FormatNumber($this->doctor_id->CurrentValue, $this->doctor_id->formatPattern());
+                    $this->user_id->ViewValue = FormatNumber($this->user_id->CurrentValue, $this->user_id->formatPattern());
                 }
             }
         } else {
-            $this->doctor_id->ViewValue = null;
+            $this->user_id->ViewValue = null;
         }
 
         // insurance_id
@@ -1420,9 +1420,9 @@ class JdhPatientVisits extends DbTable
         $this->visit_type_id->HrefValue = "";
         $this->visit_type_id->TooltipValue = "";
 
-        // doctor_id
-        $this->doctor_id->HrefValue = "";
-        $this->doctor_id->TooltipValue = "";
+        // user_id
+        $this->user_id->HrefValue = "";
+        $this->user_id->TooltipValue = "";
 
         // insurance_id
         $this->insurance_id->HrefValue = "";
@@ -1493,9 +1493,9 @@ class JdhPatientVisits extends DbTable
         $this->visit_type_id->setupEditAttributes();
         $this->visit_type_id->PlaceHolder = RemoveHtml($this->visit_type_id->caption());
 
-        // doctor_id
-        $this->doctor_id->setupEditAttributes();
-        $this->doctor_id->PlaceHolder = RemoveHtml($this->doctor_id->caption());
+        // user_id
+        $this->user_id->setupEditAttributes();
+        $this->user_id->PlaceHolder = RemoveHtml($this->user_id->caption());
 
         // insurance_id
         $this->insurance_id->setupEditAttributes();
@@ -1544,7 +1544,7 @@ class JdhPatientVisits extends DbTable
                     $doc->exportCaption($this->visit_id);
                     $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->visit_type_id);
-                    $doc->exportCaption($this->doctor_id);
+                    $doc->exportCaption($this->user_id);
                     $doc->exportCaption($this->insurance_id);
                     $doc->exportCaption($this->visit_description);
                     $doc->exportCaption($this->visit_date);
@@ -1552,7 +1552,7 @@ class JdhPatientVisits extends DbTable
                     $doc->exportCaption($this->visit_id);
                     $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->visit_type_id);
-                    $doc->exportCaption($this->doctor_id);
+                    $doc->exportCaption($this->user_id);
                     $doc->exportCaption($this->insurance_id);
                     $doc->exportCaption($this->visit_date);
                     $doc->exportCaption($this->subbmitted_by_user_id);
@@ -1588,7 +1588,7 @@ class JdhPatientVisits extends DbTable
                         $doc->exportField($this->visit_id);
                         $doc->exportField($this->patient_id);
                         $doc->exportField($this->visit_type_id);
-                        $doc->exportField($this->doctor_id);
+                        $doc->exportField($this->user_id);
                         $doc->exportField($this->insurance_id);
                         $doc->exportField($this->visit_description);
                         $doc->exportField($this->visit_date);
@@ -1596,7 +1596,7 @@ class JdhPatientVisits extends DbTable
                         $doc->exportField($this->visit_id);
                         $doc->exportField($this->patient_id);
                         $doc->exportField($this->visit_type_id);
-                        $doc->exportField($this->doctor_id);
+                        $doc->exportField($this->user_id);
                         $doc->exportField($this->insurance_id);
                         $doc->exportField($this->visit_date);
                         $doc->exportField($this->subbmitted_by_user_id);

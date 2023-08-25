@@ -26,7 +26,7 @@ loadjs.ready(["wrapper", "head"], function () {
             ["visit_id", [fields.visit_id.visible && fields.visit_id.required ? ew.Validators.required(fields.visit_id.caption) : null], fields.visit_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["visit_type_id", [fields.visit_type_id.visible && fields.visit_type_id.required ? ew.Validators.required(fields.visit_type_id.caption) : null], fields.visit_type_id.isInvalid],
-            ["doctor_id", [fields.doctor_id.visible && fields.doctor_id.required ? ew.Validators.required(fields.doctor_id.caption) : null], fields.doctor_id.isInvalid],
+            ["user_id", [fields.user_id.visible && fields.user_id.required ? ew.Validators.required(fields.user_id.caption) : null], fields.user_id.isInvalid],
             ["insurance_id", [fields.insurance_id.visible && fields.insurance_id.required ? ew.Validators.required(fields.insurance_id.caption) : null], fields.insurance_id.isInvalid],
             ["visit_date", [fields.visit_date.visible && fields.visit_date.required ? ew.Validators.required(fields.visit_date.caption) : null, ew.Validators.datetime(fields.visit_date.clientFormatPattern)], fields.visit_date.isInvalid]
         ])
@@ -35,7 +35,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setEmptyRow(
             function (rowIndex) {
                 let fobj = this.getForm(),
-                    fields = [["patient_id",false],["visit_type_id",false],["doctor_id",false],["insurance_id",false],["visit_date",false]];
+                    fields = [["patient_id",false],["visit_type_id",false],["user_id",false],["insurance_id",false],["visit_date",false]];
                 if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
                     return false;
                 return true;
@@ -57,7 +57,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setLists({
             "patient_id": <?= $Grid->patient_id->toClientList($Grid) ?>,
             "visit_type_id": <?= $Grid->visit_type_id->toClientList($Grid) ?>,
-            "doctor_id": <?= $Grid->doctor_id->toClientList($Grid) ?>,
+            "user_id": <?= $Grid->user_id->toClientList($Grid) ?>,
             "insurance_id": <?= $Grid->insurance_id->toClientList($Grid) ?>,
         })
         .build();
@@ -94,8 +94,8 @@ $Grid->ListOptions->render("header", "left");
 <?php if ($Grid->visit_type_id->Visible) { // visit_type_id ?>
         <th data-name="visit_type_id" class="<?= $Grid->visit_type_id->headerCellClass() ?>"><div id="elh_jdh_patient_visits_visit_type_id" class="jdh_patient_visits_visit_type_id"><?= $Grid->renderFieldHeader($Grid->visit_type_id) ?></div></th>
 <?php } ?>
-<?php if ($Grid->doctor_id->Visible) { // doctor_id ?>
-        <th data-name="doctor_id" class="<?= $Grid->doctor_id->headerCellClass() ?>"><div id="elh_jdh_patient_visits_doctor_id" class="jdh_patient_visits_doctor_id"><?= $Grid->renderFieldHeader($Grid->doctor_id) ?></div></th>
+<?php if ($Grid->user_id->Visible) { // user_id ?>
+        <th data-name="user_id" class="<?= $Grid->user_id->headerCellClass() ?>"><div id="elh_jdh_patient_visits_user_id" class="jdh_patient_visits_user_id"><?= $Grid->renderFieldHeader($Grid->user_id) ?></div></th>
 <?php } ?>
 <?php if ($Grid->insurance_id->Visible) { // insurance_id ?>
         <th data-name="insurance_id" class="<?= $Grid->insurance_id->headerCellClass() ?>"><div id="elh_jdh_patient_visits_insurance_id" class="jdh_patient_visits_insurance_id"><?= $Grid->renderFieldHeader($Grid->insurance_id) ?></div></th>
@@ -335,85 +335,85 @@ loadjs.ready("fjdh_patient_visitsgrid", function() {
 <?php } ?>
 </td>
     <?php } ?>
-    <?php if ($Grid->doctor_id->Visible) { // doctor_id ?>
-        <td data-name="doctor_id"<?= $Grid->doctor_id->cellAttributes() ?>>
+    <?php if ($Grid->user_id->Visible) { // user_id ?>
+        <td data-name="user_id"<?= $Grid->user_id->cellAttributes() ?>>
 <?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_patient_visits_doctor_id" class="el_jdh_patient_visits_doctor_id">
+<span id="el<?= $Grid->RowCount ?>_jdh_patient_visits_user_id" class="el_jdh_patient_visits_user_id">
     <select
-        id="x<?= $Grid->RowIndex ?>_doctor_id"
-        name="x<?= $Grid->RowIndex ?>_doctor_id"
-        class="form-select ew-select<?= $Grid->doctor_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_patient_visitsgrid_x<?= $Grid->RowIndex ?>_doctor_id"
+        id="x<?= $Grid->RowIndex ?>_user_id"
+        name="x<?= $Grid->RowIndex ?>_user_id"
+        class="form-select ew-select<?= $Grid->user_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_patient_visitsgrid_x<?= $Grid->RowIndex ?>_user_id"
         data-table="jdh_patient_visits"
-        data-field="x_doctor_id"
-        data-value-separator="<?= $Grid->doctor_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->doctor_id->getPlaceHolder()) ?>"
-        <?= $Grid->doctor_id->editAttributes() ?>>
-        <?= $Grid->doctor_id->selectOptionListHtml("x{$Grid->RowIndex}_doctor_id") ?>
+        data-field="x_user_id"
+        data-value-separator="<?= $Grid->user_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Grid->user_id->getPlaceHolder()) ?>"
+        <?= $Grid->user_id->editAttributes() ?>>
+        <?= $Grid->user_id->selectOptionListHtml("x{$Grid->RowIndex}_user_id") ?>
     </select>
-    <div class="invalid-feedback"><?= $Grid->doctor_id->getErrorMessage() ?></div>
-<?= $Grid->doctor_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_doctor_id") ?>
+    <div class="invalid-feedback"><?= $Grid->user_id->getErrorMessage() ?></div>
+<?= $Grid->user_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_user_id") ?>
 <script>
 loadjs.ready("fjdh_patient_visitsgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_doctor_id", selectId: "fjdh_patient_visitsgrid_x<?= $Grid->RowIndex ?>_doctor_id" },
+    var options = { name: "x<?= $Grid->RowIndex ?>_user_id", selectId: "fjdh_patient_visitsgrid_x<?= $Grid->RowIndex ?>_user_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_patient_visitsgrid.lists.doctor_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_doctor_id", form: "fjdh_patient_visitsgrid" };
+    if (fjdh_patient_visitsgrid.lists.user_id?.lookupOptions.length) {
+        options.data = { id: "x<?= $Grid->RowIndex ?>_user_id", form: "fjdh_patient_visitsgrid" };
     } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_doctor_id", form: "fjdh_patient_visitsgrid", limit: ew.LOOKUP_PAGE_SIZE };
+        options.ajax = { id: "x<?= $Grid->RowIndex ?>_user_id", form: "fjdh_patient_visitsgrid", limit: ew.LOOKUP_PAGE_SIZE };
     }
-    options.minimumInputLength = ew.selectMinimumInputLength;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_visits.fields.doctor_id.selectOptions);
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_visits.fields.user_id.selectOptions);
     ew.createSelect(options);
 });
 </script>
 </span>
-<input type="hidden" data-table="jdh_patient_visits" data-field="x_doctor_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_doctor_id" id="o<?= $Grid->RowIndex ?>_doctor_id" value="<?= HtmlEncode($Grid->doctor_id->OldValue) ?>">
+<input type="hidden" data-table="jdh_patient_visits" data-field="x_user_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_user_id" id="o<?= $Grid->RowIndex ?>_user_id" value="<?= HtmlEncode($Grid->user_id->OldValue) ?>">
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_patient_visits_doctor_id" class="el_jdh_patient_visits_doctor_id">
+<span id="el<?= $Grid->RowCount ?>_jdh_patient_visits_user_id" class="el_jdh_patient_visits_user_id">
     <select
-        id="x<?= $Grid->RowIndex ?>_doctor_id"
-        name="x<?= $Grid->RowIndex ?>_doctor_id"
-        class="form-select ew-select<?= $Grid->doctor_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_patient_visitsgrid_x<?= $Grid->RowIndex ?>_doctor_id"
+        id="x<?= $Grid->RowIndex ?>_user_id"
+        name="x<?= $Grid->RowIndex ?>_user_id"
+        class="form-select ew-select<?= $Grid->user_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_patient_visitsgrid_x<?= $Grid->RowIndex ?>_user_id"
         data-table="jdh_patient_visits"
-        data-field="x_doctor_id"
-        data-value-separator="<?= $Grid->doctor_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->doctor_id->getPlaceHolder()) ?>"
-        <?= $Grid->doctor_id->editAttributes() ?>>
-        <?= $Grid->doctor_id->selectOptionListHtml("x{$Grid->RowIndex}_doctor_id") ?>
+        data-field="x_user_id"
+        data-value-separator="<?= $Grid->user_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Grid->user_id->getPlaceHolder()) ?>"
+        <?= $Grid->user_id->editAttributes() ?>>
+        <?= $Grid->user_id->selectOptionListHtml("x{$Grid->RowIndex}_user_id") ?>
     </select>
-    <div class="invalid-feedback"><?= $Grid->doctor_id->getErrorMessage() ?></div>
-<?= $Grid->doctor_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_doctor_id") ?>
+    <div class="invalid-feedback"><?= $Grid->user_id->getErrorMessage() ?></div>
+<?= $Grid->user_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_user_id") ?>
 <script>
 loadjs.ready("fjdh_patient_visitsgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_doctor_id", selectId: "fjdh_patient_visitsgrid_x<?= $Grid->RowIndex ?>_doctor_id" },
+    var options = { name: "x<?= $Grid->RowIndex ?>_user_id", selectId: "fjdh_patient_visitsgrid_x<?= $Grid->RowIndex ?>_user_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_patient_visitsgrid.lists.doctor_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_doctor_id", form: "fjdh_patient_visitsgrid" };
+    if (fjdh_patient_visitsgrid.lists.user_id?.lookupOptions.length) {
+        options.data = { id: "x<?= $Grid->RowIndex ?>_user_id", form: "fjdh_patient_visitsgrid" };
     } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_doctor_id", form: "fjdh_patient_visitsgrid", limit: ew.LOOKUP_PAGE_SIZE };
+        options.ajax = { id: "x<?= $Grid->RowIndex ?>_user_id", form: "fjdh_patient_visitsgrid", limit: ew.LOOKUP_PAGE_SIZE };
     }
-    options.minimumInputLength = ew.selectMinimumInputLength;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_visits.fields.doctor_id.selectOptions);
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_visits.fields.user_id.selectOptions);
     ew.createSelect(options);
 });
 </script>
 </span>
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_patient_visits_doctor_id" class="el_jdh_patient_visits_doctor_id">
-<span<?= $Grid->doctor_id->viewAttributes() ?>>
-<?= $Grid->doctor_id->getViewValue() ?></span>
+<span id="el<?= $Grid->RowCount ?>_jdh_patient_visits_user_id" class="el_jdh_patient_visits_user_id">
+<span<?= $Grid->user_id->viewAttributes() ?>>
+<?= $Grid->user_id->getViewValue() ?></span>
 </span>
 <?php if ($Grid->isConfirm()) { ?>
-<input type="hidden" data-table="jdh_patient_visits" data-field="x_doctor_id" data-hidden="1" name="fjdh_patient_visitsgrid$x<?= $Grid->RowIndex ?>_doctor_id" id="fjdh_patient_visitsgrid$x<?= $Grid->RowIndex ?>_doctor_id" value="<?= HtmlEncode($Grid->doctor_id->FormValue) ?>">
-<input type="hidden" data-table="jdh_patient_visits" data-field="x_doctor_id" data-hidden="1" data-old name="fjdh_patient_visitsgrid$o<?= $Grid->RowIndex ?>_doctor_id" id="fjdh_patient_visitsgrid$o<?= $Grid->RowIndex ?>_doctor_id" value="<?= HtmlEncode($Grid->doctor_id->OldValue) ?>">
+<input type="hidden" data-table="jdh_patient_visits" data-field="x_user_id" data-hidden="1" name="fjdh_patient_visitsgrid$x<?= $Grid->RowIndex ?>_user_id" id="fjdh_patient_visitsgrid$x<?= $Grid->RowIndex ?>_user_id" value="<?= HtmlEncode($Grid->user_id->FormValue) ?>">
+<input type="hidden" data-table="jdh_patient_visits" data-field="x_user_id" data-hidden="1" data-old name="fjdh_patient_visitsgrid$o<?= $Grid->RowIndex ?>_user_id" id="fjdh_patient_visitsgrid$o<?= $Grid->RowIndex ?>_user_id" value="<?= HtmlEncode($Grid->user_id->OldValue) ?>">
 <?php } ?>
 <?php } ?>
 </td>

@@ -53,8 +53,8 @@ $Page->showMessage();
 <?php if ($Page->id->Visible) { // id ?>
         <th class="<?= $Page->id->headerCellClass() ?>"><span id="elh_jdh_doctor_charges_id" class="jdh_doctor_charges_id"><?= $Page->id->caption() ?></span></th>
 <?php } ?>
-<?php if ($Page->doctor_id->Visible) { // doctor_id ?>
-        <th class="<?= $Page->doctor_id->headerCellClass() ?>"><span id="elh_jdh_doctor_charges_doctor_id" class="jdh_doctor_charges_doctor_id"><?= $Page->doctor_id->caption() ?></span></th>
+<?php if ($Page->user_id->Visible) { // user_id ?>
+        <th class="<?= $Page->user_id->headerCellClass() ?>"><span id="elh_jdh_doctor_charges_user_id" class="jdh_doctor_charges_user_id"><?= $Page->user_id->caption() ?></span></th>
 <?php } ?>
 <?php if ($Page->service_id->Visible) { // service_id ?>
         <th class="<?= $Page->service_id->headerCellClass() ?>"><span id="elh_jdh_doctor_charges_service_id" class="jdh_doctor_charges_service_id"><?= $Page->service_id->caption() ?></span></th>
@@ -64,9 +64,6 @@ $Page->showMessage();
 <?php } ?>
 <?php if ($Page->date_updated->Visible) { // date_updated ?>
         <th class="<?= $Page->date_updated->headerCellClass() ?>"><span id="elh_jdh_doctor_charges_date_updated" class="jdh_doctor_charges_date_updated"><?= $Page->date_updated->caption() ?></span></th>
-<?php } ?>
-<?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
-        <th class="<?= $Page->submitted_by_user_id->headerCellClass() ?>"><span id="elh_jdh_doctor_charges_submitted_by_user_id" class="jdh_doctor_charges_submitted_by_user_id"><?= $Page->submitted_by_user_id->caption() ?></span></th>
 <?php } ?>
     </tr>
     </thead>
@@ -97,11 +94,11 @@ while (!$Page->Recordset->EOF) {
 </span>
 </td>
 <?php } ?>
-<?php if ($Page->doctor_id->Visible) { // doctor_id ?>
-        <td<?= $Page->doctor_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_doctor_charges_doctor_id" class="el_jdh_doctor_charges_doctor_id">
-<span<?= $Page->doctor_id->viewAttributes() ?>>
-<?= $Page->doctor_id->getViewValue() ?></span>
+<?php if ($Page->user_id->Visible) { // user_id ?>
+        <td<?= $Page->user_id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_doctor_charges_user_id" class="el_jdh_doctor_charges_user_id">
+<span<?= $Page->user_id->viewAttributes() ?>>
+<?= $Page->user_id->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>
@@ -126,14 +123,6 @@ while (!$Page->Recordset->EOF) {
 <span id="el<?= $Page->RowCount ?>_jdh_doctor_charges_date_updated" class="el_jdh_doctor_charges_date_updated">
 <span<?= $Page->date_updated->viewAttributes() ?>>
 <?= $Page->date_updated->getViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
-<?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
-        <td<?= $Page->submitted_by_user_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_doctor_charges_submitted_by_user_id" class="el_jdh_doctor_charges_submitted_by_user_id">
-<span<?= $Page->submitted_by_user_id->viewAttributes() ?>>
-<?= $Page->submitted_by_user_id->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

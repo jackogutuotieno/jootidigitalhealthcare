@@ -59,4 +59,5 @@ $sideMenu->addMenuItem(230, "mi_jdh_medicine_stock", $MenuLanguage->MenuPhrase("
 $sideMenu->addMenuItem(190, "mci_Reports", $MenuLanguage->MenuPhrase("190", "MenuText"), "", -1, "", IsLoggedIn(), false, true, "fa-file", "", false, true);
 $sideMenu->addMenuItem(274, "mi_jdh_pharmacy_income", $MenuLanguage->MenuPhrase("274", "MenuText"), $MenuRelativePath . "jdhpharmacyincomelist", 190, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_pharmacy_income'), false, false, "", "", false, true);
 $sideMenu->addMenuItem(275, "mi_jdh_registration_income", $MenuLanguage->MenuPhrase("275", "MenuText"), $MenuRelativePath . "jdhregistrationincomelist", 190, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_registration_income'), false, false, "", "", false, true);
+$sideMenu->addMenuItem(277, "mi_jdh_consultation_income", $MenuLanguage->MenuPhrase("277", "MenuText"), $MenuRelativePath . "jdhconsultationincomelist", 190, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_consultation_income'), false, false, "", "", false, true);
 echo $sideMenu->toScript();

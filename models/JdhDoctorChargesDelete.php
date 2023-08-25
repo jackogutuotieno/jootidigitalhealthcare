@@ -363,12 +363,12 @@ class JdhDoctorChargesDelete extends JdhDoctorCharges
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
         $this->id->setVisibility();
-        $this->doctor_id->setVisibility();
+        $this->user_id->setVisibility();
         $this->service_id->setVisibility();
         $this->description->Visible = false;
         $this->submission_date->setVisibility();
         $this->date_updated->setVisibility();
-        $this->submitted_by_user_id->setVisibility();
+        $this->submitted_by_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -393,7 +393,7 @@ class JdhDoctorChargesDelete extends JdhDoctorCharges
         }
 
         // Set up lookup cache
-        $this->setupLookupOptions($this->doctor_id);
+        $this->setupLookupOptions($this->user_id);
         $this->setupLookupOptions($this->service_id);
 
         // Set up Breadcrumb
@@ -594,7 +594,7 @@ class JdhDoctorChargesDelete extends JdhDoctorCharges
         // Call Row Selected event
         $this->rowSelected($row);
         $this->id->setDbValue($row['id']);
-        $this->doctor_id->setDbValue($row['doctor_id']);
+        $this->user_id->setDbValue($row['user_id']);
         $this->service_id->setDbValue($row['service_id']);
         $this->description->setDbValue($row['description']);
         $this->submission_date->setDbValue($row['submission_date']);
@@ -607,7 +607,7 @@ class JdhDoctorChargesDelete extends JdhDoctorCharges
     {
         $row = [];
         $row['id'] = $this->id->DefaultValue;
-        $row['doctor_id'] = $this->doctor_id->DefaultValue;
+        $row['user_id'] = $this->user_id->DefaultValue;
         $row['service_id'] = $this->service_id->DefaultValue;
         $row['description'] = $this->description->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
@@ -630,7 +630,7 @@ class JdhDoctorChargesDelete extends JdhDoctorCharges
 
         // id
 
-        // doctor_id
+        // user_id
 
         // service_id
 
@@ -647,28 +647,28 @@ class JdhDoctorChargesDelete extends JdhDoctorCharges
             // id
             $this->id->ViewValue = $this->id->CurrentValue;
 
-            // doctor_id
-            $curVal = strval($this->doctor_id->CurrentValue);
+            // user_id
+            $curVal = strval($this->user_id->CurrentValue);
             if ($curVal != "") {
-                $this->doctor_id->ViewValue = $this->doctor_id->lookupCacheOption($curVal);
-                if ($this->doctor_id->ViewValue === null) { // Lookup from database
+                $this->user_id->ViewValue = $this->user_id->lookupCacheOption($curVal);
+                if ($this->user_id->ViewValue === null) { // Lookup from database
                     $filterWrk = SearchFilter("`user_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $lookupFilter = $this->doctor_id->getSelectFilter($this); // PHP
-                    $sqlWrk = $this->doctor_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
+                    $lookupFilter = $this->user_id->getSelectFilter($this); // PHP
+                    $sqlWrk = $this->user_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
                     $config->setResultCacheImpl($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->doctor_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->doctor_id->ViewValue = $this->doctor_id->displayValue($arwrk);
+                        $arwrk = $this->user_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->user_id->ViewValue = $this->user_id->displayValue($arwrk);
                     } else {
-                        $this->doctor_id->ViewValue = FormatNumber($this->doctor_id->CurrentValue, $this->doctor_id->formatPattern());
+                        $this->user_id->ViewValue = FormatNumber($this->user_id->CurrentValue, $this->user_id->formatPattern());
                     }
                 }
             } else {
-                $this->doctor_id->ViewValue = null;
+                $this->user_id->ViewValue = null;
             }
 
             // service_id
@@ -711,9 +711,9 @@ class JdhDoctorChargesDelete extends JdhDoctorCharges
             $this->id->HrefValue = "";
             $this->id->TooltipValue = "";
 
-            // doctor_id
-            $this->doctor_id->HrefValue = "";
-            $this->doctor_id->TooltipValue = "";
+            // user_id
+            $this->user_id->HrefValue = "";
+            $this->user_id->TooltipValue = "";
 
             // service_id
             $this->service_id->HrefValue = "";
@@ -726,10 +726,6 @@ class JdhDoctorChargesDelete extends JdhDoctorCharges
             // date_updated
             $this->date_updated->HrefValue = "";
             $this->date_updated->TooltipValue = "";
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
-            $this->submitted_by_user_id->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -867,7 +863,7 @@ class JdhDoctorChargesDelete extends JdhDoctorCharges
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
-                case "x_doctor_id":
+                case "x_user_id":
                     $lookupFilter = $fld->getSelectFilter(); // PHP
                     break;
                 case "x_service_id":

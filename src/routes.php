@@ -525,6 +525,15 @@ return function (App $app) {
         }
     );
 
+    // jdh_consultation_income
+    $app->map(["GET","POST","OPTIONS"], '/jdhconsultationincomelist[/{user_id}]', JdhConsultationIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhconsultationincomelist-jdh_consultation_income-list'); // list
+    $app->group(
+        '/jdh_consultation_income',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{user_id}]', JdhConsultationIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_consultation_income/list-jdh_consultation_income-list-2'); // list
+        }
+    );
+
     // personal_data
     $app->map(["GET","POST","OPTIONS"], '/personaldata', OthersController::class . ':personaldata')->add(PermissionMiddleware::class)->setName('personaldata');
 

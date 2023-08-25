@@ -59,7 +59,6 @@ loadjs.ready(["wrapper", "head"], function () {
         // Dynamic selection lists
         .setLists({
             "patient_gender": <?= $Page->patient_gender->toClientList($Page) ?>,
-            "service_id": <?= $Page->service_id->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -230,37 +229,9 @@ loadjs.ready("fjdh_patientsedit", function() {
         <label id="elh_jdh_patients_service_id" for="x_service_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->service_id->caption() ?><?= $Page->service_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->service_id->cellAttributes() ?>>
 <span id="el_jdh_patients_service_id">
-    <select
-        id="x_service_id"
-        name="x_service_id"
-        class="form-select ew-select<?= $Page->service_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_patientsedit_x_service_id"
-        data-table="jdh_patients"
-        data-field="x_service_id"
-        data-value-separator="<?= $Page->service_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->service_id->getPlaceHolder()) ?>"
-        <?= $Page->service_id->editAttributes() ?>>
-        <?= $Page->service_id->selectOptionListHtml("x_service_id") ?>
-    </select>
-    <?= $Page->service_id->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->service_id->getErrorMessage() ?></div>
-<?= $Page->service_id->Lookup->getParamTag($Page, "p_x_service_id") ?>
-<script>
-loadjs.ready("fjdh_patientsedit", function() {
-    var options = { name: "x_service_id", selectId: "fjdh_patientsedit_x_service_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_patientsedit.lists.service_id?.lookupOptions.length) {
-        options.data = { id: "x_service_id", form: "fjdh_patientsedit" };
-    } else {
-        options.ajax = { id: "x_service_id", form: "fjdh_patientsedit", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patients.fields.service_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<span<?= $Page->service_id->viewAttributes() ?>>
+<span class="form-control-plaintext"><?= $Page->service_id->getDisplayValue($Page->service_id->EditValue) ?></span></span>
+<input type="hidden" data-table="jdh_patients" data-field="x_service_id" data-hidden="1" name="x_service_id" id="x_service_id" value="<?= HtmlEncode($Page->service_id->CurrentValue) ?>">
 </span>
 </div></div>
     </div>

@@ -462,7 +462,7 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
         $this->id->setVisibility();
-        $this->doctor_id->setVisibility();
+        $this->user_id->setVisibility();
         $this->service_id->setVisibility();
         $this->description->setVisibility();
         $this->submission_date->setVisibility();
@@ -492,7 +492,7 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
         }
 
         // Set up lookup cache
-        $this->setupLookupOptions($this->doctor_id);
+        $this->setupLookupOptions($this->user_id);
         $this->setupLookupOptions($this->service_id);
 
         // Check modal
@@ -683,13 +683,13 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
             $this->id->setFormValue($val);
         }
 
-        // Check field name 'doctor_id' first before field var 'x_doctor_id'
-        $val = $CurrentForm->hasValue("doctor_id") ? $CurrentForm->getValue("doctor_id") : $CurrentForm->getValue("x_doctor_id");
-        if (!$this->doctor_id->IsDetailKey) {
+        // Check field name 'user_id' first before field var 'x_user_id'
+        $val = $CurrentForm->hasValue("user_id") ? $CurrentForm->getValue("user_id") : $CurrentForm->getValue("x_user_id");
+        if (!$this->user_id->IsDetailKey) {
             if (IsApi() && $val === null) {
-                $this->doctor_id->Visible = false; // Disable update for API request
+                $this->user_id->Visible = false; // Disable update for API request
             } else {
-                $this->doctor_id->setFormValue($val);
+                $this->user_id->setFormValue($val);
             }
         }
 
@@ -730,7 +730,7 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
     {
         global $CurrentForm;
         $this->id->CurrentValue = $this->id->FormValue;
-        $this->doctor_id->CurrentValue = $this->doctor_id->FormValue;
+        $this->user_id->CurrentValue = $this->user_id->FormValue;
         $this->service_id->CurrentValue = $this->service_id->FormValue;
         $this->description->CurrentValue = $this->description->FormValue;
         $this->submission_date->CurrentValue = $this->submission_date->FormValue;
@@ -794,7 +794,7 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
         // Call Row Selected event
         $this->rowSelected($row);
         $this->id->setDbValue($row['id']);
-        $this->doctor_id->setDbValue($row['doctor_id']);
+        $this->user_id->setDbValue($row['user_id']);
         $this->service_id->setDbValue($row['service_id']);
         $this->description->setDbValue($row['description']);
         $this->submission_date->setDbValue($row['submission_date']);
@@ -807,7 +807,7 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
     {
         $row = [];
         $row['id'] = $this->id->DefaultValue;
-        $row['doctor_id'] = $this->doctor_id->DefaultValue;
+        $row['user_id'] = $this->user_id->DefaultValue;
         $row['service_id'] = $this->service_id->DefaultValue;
         $row['description'] = $this->description->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
@@ -850,8 +850,8 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
         // id
         $this->id->RowCssClass = "row";
 
-        // doctor_id
-        $this->doctor_id->RowCssClass = "row";
+        // user_id
+        $this->user_id->RowCssClass = "row";
 
         // service_id
         $this->service_id->RowCssClass = "row";
@@ -873,28 +873,28 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
             // id
             $this->id->ViewValue = $this->id->CurrentValue;
 
-            // doctor_id
-            $curVal = strval($this->doctor_id->CurrentValue);
+            // user_id
+            $curVal = strval($this->user_id->CurrentValue);
             if ($curVal != "") {
-                $this->doctor_id->ViewValue = $this->doctor_id->lookupCacheOption($curVal);
-                if ($this->doctor_id->ViewValue === null) { // Lookup from database
+                $this->user_id->ViewValue = $this->user_id->lookupCacheOption($curVal);
+                if ($this->user_id->ViewValue === null) { // Lookup from database
                     $filterWrk = SearchFilter("`user_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $lookupFilter = $this->doctor_id->getSelectFilter($this); // PHP
-                    $sqlWrk = $this->doctor_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
+                    $lookupFilter = $this->user_id->getSelectFilter($this); // PHP
+                    $sqlWrk = $this->user_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
                     $config->setResultCacheImpl($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->doctor_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->doctor_id->ViewValue = $this->doctor_id->displayValue($arwrk);
+                        $arwrk = $this->user_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->user_id->ViewValue = $this->user_id->displayValue($arwrk);
                     } else {
-                        $this->doctor_id->ViewValue = FormatNumber($this->doctor_id->CurrentValue, $this->doctor_id->formatPattern());
+                        $this->user_id->ViewValue = FormatNumber($this->user_id->CurrentValue, $this->user_id->formatPattern());
                     }
                 }
             } else {
-                $this->doctor_id->ViewValue = null;
+                $this->user_id->ViewValue = null;
             }
 
             // service_id
@@ -939,8 +939,8 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
             // id
             $this->id->HrefValue = "";
 
-            // doctor_id
-            $this->doctor_id->HrefValue = "";
+            // user_id
+            $this->user_id->HrefValue = "";
 
             // service_id
             $this->service_id->HrefValue = "";
@@ -955,33 +955,33 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
             $this->id->setupEditAttributes();
             $this->id->EditValue = $this->id->CurrentValue;
 
-            // doctor_id
-            $this->doctor_id->setupEditAttributes();
-            $curVal = trim(strval($this->doctor_id->CurrentValue));
+            // user_id
+            $this->user_id->setupEditAttributes();
+            $curVal = trim(strval($this->user_id->CurrentValue));
             if ($curVal != "") {
-                $this->doctor_id->ViewValue = $this->doctor_id->lookupCacheOption($curVal);
+                $this->user_id->ViewValue = $this->user_id->lookupCacheOption($curVal);
             } else {
-                $this->doctor_id->ViewValue = $this->doctor_id->Lookup !== null && is_array($this->doctor_id->lookupOptions()) ? $curVal : null;
+                $this->user_id->ViewValue = $this->user_id->Lookup !== null && is_array($this->user_id->lookupOptions()) ? $curVal : null;
             }
-            if ($this->doctor_id->ViewValue !== null) { // Load from cache
-                $this->doctor_id->EditValue = array_values($this->doctor_id->lookupOptions());
+            if ($this->user_id->ViewValue !== null) { // Load from cache
+                $this->user_id->EditValue = array_values($this->user_id->lookupOptions());
             } else { // Lookup from database
                 if ($curVal == "") {
                     $filterWrk = "0=1";
                 } else {
-                    $filterWrk = SearchFilter("`user_id`", "=", $this->doctor_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter("`user_id`", "=", $this->user_id->CurrentValue, DATATYPE_NUMBER, "");
                 }
-                $lookupFilter = $this->doctor_id->getSelectFilter($this); // PHP
-                $sqlWrk = $this->doctor_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
+                $lookupFilter = $this->user_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->user_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
                 $config->setResultCacheImpl($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 $arwrk = $rswrk;
-                $this->doctor_id->EditValue = $arwrk;
+                $this->user_id->EditValue = $arwrk;
             }
-            $this->doctor_id->PlaceHolder = RemoveHtml($this->doctor_id->caption());
+            $this->user_id->PlaceHolder = RemoveHtml($this->user_id->caption());
 
             // service_id
             $this->service_id->setupEditAttributes();
@@ -1029,8 +1029,8 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
             // id
             $this->id->HrefValue = "";
 
-            // doctor_id
-            $this->doctor_id->HrefValue = "";
+            // user_id
+            $this->user_id->HrefValue = "";
 
             // service_id
             $this->service_id->HrefValue = "";
@@ -1066,9 +1066,9 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
                 $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
             }
         }
-        if ($this->doctor_id->Required) {
-            if (!$this->doctor_id->IsDetailKey && EmptyValue($this->doctor_id->FormValue)) {
-                $this->doctor_id->addErrorMessage(str_replace("%s", $this->doctor_id->caption(), $this->doctor_id->RequiredErrorMessage));
+        if ($this->user_id->Required) {
+            if (!$this->user_id->IsDetailKey && EmptyValue($this->user_id->FormValue)) {
+                $this->user_id->addErrorMessage(str_replace("%s", $this->user_id->caption(), $this->user_id->RequiredErrorMessage));
             }
         }
         if ($this->service_id->Required) {
@@ -1125,8 +1125,8 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
         // Set new row
         $rsnew = [];
 
-        // doctor_id
-        $this->doctor_id->setDbValueDef($rsnew, $this->doctor_id->CurrentValue, 0, $this->doctor_id->ReadOnly);
+        // user_id
+        $this->user_id->setDbValueDef($rsnew, $this->user_id->CurrentValue, 0, $this->user_id->ReadOnly);
 
         // service_id
         $this->service_id->setDbValueDef($rsnew, $this->service_id->CurrentValue, 0, $this->service_id->ReadOnly);
@@ -1214,7 +1214,7 @@ class JdhDoctorChargesEdit extends JdhDoctorCharges
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
-                case "x_doctor_id":
+                case "x_user_id":
                     $lookupFilter = $fld->getSelectFilter(); // PHP
                     break;
                 case "x_service_id":

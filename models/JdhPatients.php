@@ -1658,7 +1658,28 @@ class JdhPatients extends DbTable
 
         // service_id
         $this->service_id->setupEditAttributes();
-        $this->service_id->PlaceHolder = RemoveHtml($this->service_id->caption());
+        $curVal = strval($this->service_id->CurrentValue);
+        if ($curVal != "") {
+            $this->service_id->EditValue = $this->service_id->lookupCacheOption($curVal);
+            if ($this->service_id->EditValue === null) { // Lookup from database
+                $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                $lookupFilter = $this->service_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->service_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                if ($ari > 0) { // Lookup values found
+                    $arwrk = $this->service_id->Lookup->renderViewRow($rswrk[0]);
+                    $this->service_id->EditValue = $this->service_id->displayValue($arwrk);
+                } else {
+                    $this->service_id->EditValue = FormatNumber($this->service_id->CurrentValue, $this->service_id->formatPattern());
+                }
+            }
+        } else {
+            $this->service_id->EditValue = null;
+        }
 
         // patient_registration_date
         $this->patient_registration_date->setupEditAttributes();

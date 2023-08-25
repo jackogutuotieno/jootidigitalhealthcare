@@ -1294,6 +1294,9 @@
     <menu id="272">
       <phrase id="menutext" value="Latest Appointments" />
     </menu>
+    <menu id="277">
+      <phrase id="menutext" value="Consultation Income" />
+    </menu>
     <table id="jdh_appointments">
       <phrase id="tblcaption" value="Appointments" />
       <field id="appointment_id">
@@ -1444,8 +1447,8 @@
       <field id="visit_type_id">
         <phrase id="fldcaption" value="Visit Type" />
       </field>
-      <field id="doctor_id">
-        <phrase id="fldcaption" value="Doctor" />
+      <field id="user_id">
+        <phrase id="fldcaption" value="Doctor Name" />
       </field>
       <field id="insurance_id">
         <phrase id="fldcaption" value="Insurance" />
@@ -2154,7 +2157,7 @@
       <field id="id">
         <phrase id="fldcaption" value="No" />
       </field>
-      <field id="doctor_id">
+      <field id="user_id">
         <phrase id="fldcaption" value="Doctor Name" />
       </field>
       <field id="service_id">
@@ -2171,6 +2174,27 @@
       </field>
       <field id="submitted_by_user_id">
         <phrase id="fldcaption" value="User ID" />
+      </field>
+    </table>
+    <table id="jdh_consultation_income">
+      <phrase id="tblcaption" value="Consultation Income" />
+      <field id="user_id">
+        <phrase id="fldcaption" value="User No." />
+      </field>
+      <field id="first_name">
+        <phrase id="fldcaption" value="First Name" />
+      </field>
+      <field id="last_name">
+        <phrase id="fldcaption" value="Last Name" />
+      </field>
+      <field id="department_id">
+        <phrase id="fldcaption" value="Department" />
+      </field>
+      <field id="service_name">
+        <phrase id="fldcaption" value="Service Name" />
+      </field>
+      <field id="service_cost">
+        <phrase id="fldcaption" value="Cost (KES)" />
       </field>
     </table>
   </project>

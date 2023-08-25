@@ -483,6 +483,7 @@ class JdhPatientsEdit extends JdhPatients
         $this->service_id->setVisibility();
         $this->patient_registration_date->Visible = false;
         $this->submitted_by_user_id->setVisibility();
+        $this->service_id->Required = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -1094,6 +1095,7 @@ class JdhPatientsEdit extends JdhPatients
 
             // service_id
             $this->service_id->HrefValue = "";
+            $this->service_id->TooltipValue = "";
 
             // submitted_by_user_id
             $this->submitted_by_user_id->HrefValue = "";
@@ -1165,34 +1167,28 @@ class JdhPatientsEdit extends JdhPatients
 
             // service_id
             $this->service_id->setupEditAttributes();
-            $curVal = trim(strval($this->service_id->CurrentValue));
+            $curVal = strval($this->service_id->CurrentValue);
             if ($curVal != "") {
-                $this->service_id->ViewValue = $this->service_id->lookupCacheOption($curVal);
+                $this->service_id->EditValue = $this->service_id->lookupCacheOption($curVal);
+                if ($this->service_id->EditValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $lookupFilter = $this->service_id->getSelectFilter($this); // PHP
+                    $sqlWrk = $this->service_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->service_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->service_id->EditValue = $this->service_id->displayValue($arwrk);
+                    } else {
+                        $this->service_id->EditValue = FormatNumber($this->service_id->CurrentValue, $this->service_id->formatPattern());
+                    }
+                }
             } else {
-                $this->service_id->ViewValue = $this->service_id->Lookup !== null && is_array($this->service_id->lookupOptions()) ? $curVal : null;
+                $this->service_id->EditValue = null;
             }
-            if ($this->service_id->ViewValue !== null) { // Load from cache
-                $this->service_id->EditValue = array_values($this->service_id->lookupOptions());
-            } else { // Lookup from database
-                if ($curVal == "") {
-                    $filterWrk = "0=1";
-                } else {
-                    $filterWrk = SearchFilter("`service_id`", "=", $this->service_id->CurrentValue, DATATYPE_NUMBER, "");
-                }
-                $lookupFilter = $this->service_id->getSelectFilter($this); // PHP
-                $sqlWrk = $this->service_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                $arwrk = $rswrk;
-                foreach ($arwrk as &$row) {
-                    $row = $this->service_id->Lookup->renderViewRow($row);
-                }
-                $this->service_id->EditValue = $arwrk;
-            }
-            $this->service_id->PlaceHolder = RemoveHtml($this->service_id->caption());
 
             // submitted_by_user_id
 
@@ -1236,6 +1232,7 @@ class JdhPatientsEdit extends JdhPatients
 
             // service_id
             $this->service_id->HrefValue = "";
+            $this->service_id->TooltipValue = "";
 
             // submitted_by_user_id
             $this->submitted_by_user_id->HrefValue = "";
@@ -1415,9 +1412,6 @@ class JdhPatientsEdit extends JdhPatients
 
         // patient_kin_phone
         $this->patient_kin_phone->setDbValueDef($rsnew, $this->patient_kin_phone->CurrentValue, null, $this->patient_kin_phone->ReadOnly);
-
-        // service_id
-        $this->service_id->setDbValueDef($rsnew, $this->service_id->CurrentValue, 0, $this->service_id->ReadOnly);
 
         // submitted_by_user_id
         $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->getAutoUpdateValue(); // PHP

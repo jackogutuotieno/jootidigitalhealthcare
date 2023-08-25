@@ -24,7 +24,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setFields([
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["visit_type_id", [fields.visit_type_id.visible && fields.visit_type_id.required ? ew.Validators.required(fields.visit_type_id.caption) : null], fields.visit_type_id.isInvalid],
-            ["doctor_id", [fields.doctor_id.visible && fields.doctor_id.required ? ew.Validators.required(fields.doctor_id.caption) : null], fields.doctor_id.isInvalid],
+            ["user_id", [fields.user_id.visible && fields.user_id.required ? ew.Validators.required(fields.user_id.caption) : null], fields.user_id.isInvalid],
             ["insurance_id", [fields.insurance_id.visible && fields.insurance_id.required ? ew.Validators.required(fields.insurance_id.caption) : null], fields.insurance_id.isInvalid],
             ["visit_description", [fields.visit_description.visible && fields.visit_description.required ? ew.Validators.required(fields.visit_description.caption) : null], fields.visit_description.isInvalid]
         ])
@@ -44,7 +44,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setLists({
             "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
             "visit_type_id": <?= $Page->visit_type_id->toClientList($Page) ?>,
-            "doctor_id": <?= $Page->doctor_id->toClientList($Page) ?>,
+            "user_id": <?= $Page->user_id->toClientList($Page) ?>,
             "insurance_id": <?= $Page->insurance_id->toClientList($Page) ?>,
         })
         .build();
@@ -165,39 +165,39 @@ loadjs.ready("fjdh_patient_visitsadd", function() {
 </div></div>
     </div>
 <?php } ?>
-<?php if ($Page->doctor_id->Visible) { // doctor_id ?>
-    <div id="r_doctor_id"<?= $Page->doctor_id->rowAttributes() ?>>
-        <label id="elh_jdh_patient_visits_doctor_id" for="x_doctor_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->doctor_id->caption() ?><?= $Page->doctor_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->doctor_id->cellAttributes() ?>>
-<span id="el_jdh_patient_visits_doctor_id">
+<?php if ($Page->user_id->Visible) { // user_id ?>
+    <div id="r_user_id"<?= $Page->user_id->rowAttributes() ?>>
+        <label id="elh_jdh_patient_visits_user_id" for="x_user_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->user_id->caption() ?><?= $Page->user_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->user_id->cellAttributes() ?>>
+<span id="el_jdh_patient_visits_user_id">
     <select
-        id="x_doctor_id"
-        name="x_doctor_id"
-        class="form-select ew-select<?= $Page->doctor_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_patient_visitsadd_x_doctor_id"
+        id="x_user_id"
+        name="x_user_id"
+        class="form-select ew-select<?= $Page->user_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_patient_visitsadd_x_user_id"
         data-table="jdh_patient_visits"
-        data-field="x_doctor_id"
-        data-value-separator="<?= $Page->doctor_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->doctor_id->getPlaceHolder()) ?>"
-        <?= $Page->doctor_id->editAttributes() ?>>
-        <?= $Page->doctor_id->selectOptionListHtml("x_doctor_id") ?>
+        data-field="x_user_id"
+        data-value-separator="<?= $Page->user_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->user_id->getPlaceHolder()) ?>"
+        <?= $Page->user_id->editAttributes() ?>>
+        <?= $Page->user_id->selectOptionListHtml("x_user_id") ?>
     </select>
-    <?= $Page->doctor_id->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->doctor_id->getErrorMessage() ?></div>
-<?= $Page->doctor_id->Lookup->getParamTag($Page, "p_x_doctor_id") ?>
+    <?= $Page->user_id->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->user_id->getErrorMessage() ?></div>
+<?= $Page->user_id->Lookup->getParamTag($Page, "p_x_user_id") ?>
 <script>
 loadjs.ready("fjdh_patient_visitsadd", function() {
-    var options = { name: "x_doctor_id", selectId: "fjdh_patient_visitsadd_x_doctor_id" },
+    var options = { name: "x_user_id", selectId: "fjdh_patient_visitsadd_x_user_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_patient_visitsadd.lists.doctor_id?.lookupOptions.length) {
-        options.data = { id: "x_doctor_id", form: "fjdh_patient_visitsadd" };
+    if (fjdh_patient_visitsadd.lists.user_id?.lookupOptions.length) {
+        options.data = { id: "x_user_id", form: "fjdh_patient_visitsadd" };
     } else {
-        options.ajax = { id: "x_doctor_id", form: "fjdh_patient_visitsadd", limit: ew.LOOKUP_PAGE_SIZE };
+        options.ajax = { id: "x_user_id", form: "fjdh_patient_visitsadd", limit: ew.LOOKUP_PAGE_SIZE };
     }
-    options.minimumInputLength = ew.selectMinimumInputLength;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_visits.fields.doctor_id.selectOptions);
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_visits.fields.user_id.selectOptions);
     ew.createSelect(options);
 });
 </script>

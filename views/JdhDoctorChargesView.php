@@ -64,13 +64,13 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->doctor_id->Visible) { // doctor_id ?>
-    <tr id="r_doctor_id"<?= $Page->doctor_id->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_doctor_charges_doctor_id"><?= $Page->doctor_id->caption() ?></span></td>
-        <td data-name="doctor_id"<?= $Page->doctor_id->cellAttributes() ?>>
-<span id="el_jdh_doctor_charges_doctor_id">
-<span<?= $Page->doctor_id->viewAttributes() ?>>
-<?= $Page->doctor_id->getViewValue() ?></span>
+<?php if ($Page->user_id->Visible) { // user_id ?>
+    <tr id="r_user_id"<?= $Page->user_id->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_doctor_charges_user_id"><?= $Page->user_id->caption() ?></span></td>
+        <td data-name="user_id"<?= $Page->user_id->cellAttributes() ?>>
+<span id="el_jdh_doctor_charges_user_id">
+<span<?= $Page->user_id->viewAttributes() ?>>
+<?= $Page->user_id->getViewValue() ?></span>
 </span>
 </td>
     </tr>

@@ -70,6 +70,7 @@ return [
     "jdh_pharmacy_income" => \DI\create(JdhPharmacyIncome::class),
     "jdh_registration_income" => \DI\create(JdhRegistrationIncome::class),
     "jdh_doctor_charges" => \DI\create(JdhDoctorCharges::class),
+    "jdh_consultation_income" => \DI\create(JdhConsultationIncome::class),
 
     // User table
     "usertable" => \DI\get("jdh_users"),

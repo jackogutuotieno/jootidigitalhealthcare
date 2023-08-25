@@ -561,7 +561,7 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
         $this->visit_id->setVisibility();
         $this->patient_id->setVisibility();
         $this->visit_type_id->setVisibility();
-        $this->doctor_id->setVisibility();
+        $this->user_id->setVisibility();
         $this->insurance_id->setVisibility();
         $this->visit_description->Visible = false;
         $this->visit_date->setVisibility();
@@ -598,7 +598,7 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
         $this->setupLookupOptions($this->visit_type_id);
-        $this->setupLookupOptions($this->doctor_id);
+        $this->setupLookupOptions($this->user_id);
         $this->setupLookupOptions($this->insurance_id);
 
         // Load default values for add
@@ -1138,7 +1138,7 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
         if ($CurrentForm->hasValue("x_visit_type_id") && $CurrentForm->hasValue("o_visit_type_id") && $this->visit_type_id->CurrentValue != $this->visit_type_id->DefaultValue) {
             return false;
         }
-        if ($CurrentForm->hasValue("x_doctor_id") && $CurrentForm->hasValue("o_doctor_id") && $this->doctor_id->CurrentValue != $this->doctor_id->DefaultValue) {
+        if ($CurrentForm->hasValue("x_user_id") && $CurrentForm->hasValue("o_user_id") && $this->user_id->CurrentValue != $this->user_id->DefaultValue) {
             return false;
         }
         if ($CurrentForm->hasValue("x_insurance_id") && $CurrentForm->hasValue("o_insurance_id") && $this->insurance_id->CurrentValue != $this->insurance_id->DefaultValue) {
@@ -1235,7 +1235,7 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
         $this->visit_id->clearErrorMessage();
         $this->patient_id->clearErrorMessage();
         $this->visit_type_id->clearErrorMessage();
-        $this->doctor_id->clearErrorMessage();
+        $this->user_id->clearErrorMessage();
         $this->insurance_id->clearErrorMessage();
         $this->visit_date->clearErrorMessage();
     }
@@ -1663,17 +1663,17 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
             $this->visit_type_id->setOldValue($CurrentForm->getValue("o_visit_type_id"));
         }
 
-        // Check field name 'doctor_id' first before field var 'x_doctor_id'
-        $val = $CurrentForm->hasValue("doctor_id") ? $CurrentForm->getValue("doctor_id") : $CurrentForm->getValue("x_doctor_id");
-        if (!$this->doctor_id->IsDetailKey) {
+        // Check field name 'user_id' first before field var 'x_user_id'
+        $val = $CurrentForm->hasValue("user_id") ? $CurrentForm->getValue("user_id") : $CurrentForm->getValue("x_user_id");
+        if (!$this->user_id->IsDetailKey) {
             if (IsApi() && $val === null) {
-                $this->doctor_id->Visible = false; // Disable update for API request
+                $this->user_id->Visible = false; // Disable update for API request
             } else {
-                $this->doctor_id->setFormValue($val);
+                $this->user_id->setFormValue($val);
             }
         }
-        if ($CurrentForm->hasValue("o_doctor_id")) {
-            $this->doctor_id->setOldValue($CurrentForm->getValue("o_doctor_id"));
+        if ($CurrentForm->hasValue("o_user_id")) {
+            $this->user_id->setOldValue($CurrentForm->getValue("o_user_id"));
         }
 
         // Check field name 'insurance_id' first before field var 'x_insurance_id'
@@ -1713,7 +1713,7 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
         }
         $this->patient_id->CurrentValue = $this->patient_id->FormValue;
         $this->visit_type_id->CurrentValue = $this->visit_type_id->FormValue;
-        $this->doctor_id->CurrentValue = $this->doctor_id->FormValue;
+        $this->user_id->CurrentValue = $this->user_id->FormValue;
         $this->insurance_id->CurrentValue = $this->insurance_id->FormValue;
         $this->visit_date->CurrentValue = $this->visit_date->FormValue;
         $this->visit_date->CurrentValue = UnFormatDateTime($this->visit_date->CurrentValue, $this->visit_date->formatPattern());
@@ -1807,7 +1807,7 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
         $this->visit_id->setDbValue($row['visit_id']);
         $this->patient_id->setDbValue($row['patient_id']);
         $this->visit_type_id->setDbValue($row['visit_type_id']);
-        $this->doctor_id->setDbValue($row['doctor_id']);
+        $this->user_id->setDbValue($row['user_id']);
         $this->insurance_id->setDbValue($row['insurance_id']);
         $this->visit_description->setDbValue($row['visit_description']);
         $this->visit_date->setDbValue($row['visit_date']);
@@ -1821,7 +1821,7 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
         $row['visit_id'] = $this->visit_id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
         $row['visit_type_id'] = $this->visit_type_id->DefaultValue;
-        $row['doctor_id'] = $this->doctor_id->DefaultValue;
+        $row['user_id'] = $this->user_id->DefaultValue;
         $row['insurance_id'] = $this->insurance_id->DefaultValue;
         $row['visit_description'] = $this->visit_description->DefaultValue;
         $row['visit_date'] = $this->visit_date->DefaultValue;
@@ -1870,7 +1870,7 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
 
         // visit_type_id
 
-        // doctor_id
+        // user_id
 
         // insurance_id
 
@@ -1932,28 +1932,28 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
                 $this->visit_type_id->ViewValue = null;
             }
 
-            // doctor_id
-            $curVal = strval($this->doctor_id->CurrentValue);
+            // user_id
+            $curVal = strval($this->user_id->CurrentValue);
             if ($curVal != "") {
-                $this->doctor_id->ViewValue = $this->doctor_id->lookupCacheOption($curVal);
-                if ($this->doctor_id->ViewValue === null) { // Lookup from database
+                $this->user_id->ViewValue = $this->user_id->lookupCacheOption($curVal);
+                if ($this->user_id->ViewValue === null) { // Lookup from database
                     $filterWrk = SearchFilter("`user_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $lookupFilter = $this->doctor_id->getSelectFilter($this); // PHP
-                    $sqlWrk = $this->doctor_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
+                    $lookupFilter = $this->user_id->getSelectFilter($this); // PHP
+                    $sqlWrk = $this->user_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
                     $config->setResultCacheImpl($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->doctor_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->doctor_id->ViewValue = $this->doctor_id->displayValue($arwrk);
+                        $arwrk = $this->user_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->user_id->ViewValue = $this->user_id->displayValue($arwrk);
                     } else {
-                        $this->doctor_id->ViewValue = FormatNumber($this->doctor_id->CurrentValue, $this->doctor_id->formatPattern());
+                        $this->user_id->ViewValue = FormatNumber($this->user_id->CurrentValue, $this->user_id->formatPattern());
                     }
                 }
             } else {
-                $this->doctor_id->ViewValue = null;
+                $this->user_id->ViewValue = null;
             }
 
             // insurance_id
@@ -1999,9 +1999,9 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
             $this->visit_type_id->HrefValue = "";
             $this->visit_type_id->TooltipValue = "";
 
-            // doctor_id
-            $this->doctor_id->HrefValue = "";
-            $this->doctor_id->TooltipValue = "";
+            // user_id
+            $this->user_id->HrefValue = "";
+            $this->user_id->TooltipValue = "";
 
             // insurance_id
             $this->insurance_id->HrefValue = "";
@@ -2093,33 +2093,33 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
             }
             $this->visit_type_id->PlaceHolder = RemoveHtml($this->visit_type_id->caption());
 
-            // doctor_id
-            $this->doctor_id->setupEditAttributes();
-            $curVal = trim(strval($this->doctor_id->CurrentValue));
+            // user_id
+            $this->user_id->setupEditAttributes();
+            $curVal = trim(strval($this->user_id->CurrentValue));
             if ($curVal != "") {
-                $this->doctor_id->ViewValue = $this->doctor_id->lookupCacheOption($curVal);
+                $this->user_id->ViewValue = $this->user_id->lookupCacheOption($curVal);
             } else {
-                $this->doctor_id->ViewValue = $this->doctor_id->Lookup !== null && is_array($this->doctor_id->lookupOptions()) ? $curVal : null;
+                $this->user_id->ViewValue = $this->user_id->Lookup !== null && is_array($this->user_id->lookupOptions()) ? $curVal : null;
             }
-            if ($this->doctor_id->ViewValue !== null) { // Load from cache
-                $this->doctor_id->EditValue = array_values($this->doctor_id->lookupOptions());
+            if ($this->user_id->ViewValue !== null) { // Load from cache
+                $this->user_id->EditValue = array_values($this->user_id->lookupOptions());
             } else { // Lookup from database
                 if ($curVal == "") {
                     $filterWrk = "0=1";
                 } else {
-                    $filterWrk = SearchFilter("`user_id`", "=", $this->doctor_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter("`user_id`", "=", $this->user_id->CurrentValue, DATATYPE_NUMBER, "");
                 }
-                $lookupFilter = $this->doctor_id->getSelectFilter($this); // PHP
-                $sqlWrk = $this->doctor_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
+                $lookupFilter = $this->user_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->user_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
                 $config->setResultCacheImpl($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 $arwrk = $rswrk;
-                $this->doctor_id->EditValue = $arwrk;
+                $this->user_id->EditValue = $arwrk;
             }
-            $this->doctor_id->PlaceHolder = RemoveHtml($this->doctor_id->caption());
+            $this->user_id->PlaceHolder = RemoveHtml($this->user_id->caption());
 
             // insurance_id
             $this->insurance_id->setupEditAttributes();
@@ -2164,8 +2164,8 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
             // visit_type_id
             $this->visit_type_id->HrefValue = "";
 
-            // doctor_id
-            $this->doctor_id->HrefValue = "";
+            // user_id
+            $this->user_id->HrefValue = "";
 
             // insurance_id
             $this->insurance_id->HrefValue = "";
@@ -2258,33 +2258,33 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
             }
             $this->visit_type_id->PlaceHolder = RemoveHtml($this->visit_type_id->caption());
 
-            // doctor_id
-            $this->doctor_id->setupEditAttributes();
-            $curVal = trim(strval($this->doctor_id->CurrentValue));
+            // user_id
+            $this->user_id->setupEditAttributes();
+            $curVal = trim(strval($this->user_id->CurrentValue));
             if ($curVal != "") {
-                $this->doctor_id->ViewValue = $this->doctor_id->lookupCacheOption($curVal);
+                $this->user_id->ViewValue = $this->user_id->lookupCacheOption($curVal);
             } else {
-                $this->doctor_id->ViewValue = $this->doctor_id->Lookup !== null && is_array($this->doctor_id->lookupOptions()) ? $curVal : null;
+                $this->user_id->ViewValue = $this->user_id->Lookup !== null && is_array($this->user_id->lookupOptions()) ? $curVal : null;
             }
-            if ($this->doctor_id->ViewValue !== null) { // Load from cache
-                $this->doctor_id->EditValue = array_values($this->doctor_id->lookupOptions());
+            if ($this->user_id->ViewValue !== null) { // Load from cache
+                $this->user_id->EditValue = array_values($this->user_id->lookupOptions());
             } else { // Lookup from database
                 if ($curVal == "") {
                     $filterWrk = "0=1";
                 } else {
-                    $filterWrk = SearchFilter("`user_id`", "=", $this->doctor_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter("`user_id`", "=", $this->user_id->CurrentValue, DATATYPE_NUMBER, "");
                 }
-                $lookupFilter = $this->doctor_id->getSelectFilter($this); // PHP
-                $sqlWrk = $this->doctor_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
+                $lookupFilter = $this->user_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->user_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
                 $config->setResultCacheImpl($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 $arwrk = $rswrk;
-                $this->doctor_id->EditValue = $arwrk;
+                $this->user_id->EditValue = $arwrk;
             }
-            $this->doctor_id->PlaceHolder = RemoveHtml($this->doctor_id->caption());
+            $this->user_id->PlaceHolder = RemoveHtml($this->user_id->caption());
 
             // insurance_id
             $this->insurance_id->setupEditAttributes();
@@ -2329,8 +2329,8 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
             // visit_type_id
             $this->visit_type_id->HrefValue = "";
 
-            // doctor_id
-            $this->doctor_id->HrefValue = "";
+            // user_id
+            $this->user_id->HrefValue = "";
 
             // insurance_id
             $this->insurance_id->HrefValue = "";
@@ -2373,9 +2373,9 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
                 $this->visit_type_id->addErrorMessage(str_replace("%s", $this->visit_type_id->caption(), $this->visit_type_id->RequiredErrorMessage));
             }
         }
-        if ($this->doctor_id->Required) {
-            if (!$this->doctor_id->IsDetailKey && EmptyValue($this->doctor_id->FormValue)) {
-                $this->doctor_id->addErrorMessage(str_replace("%s", $this->doctor_id->caption(), $this->doctor_id->RequiredErrorMessage));
+        if ($this->user_id->Required) {
+            if (!$this->user_id->IsDetailKey && EmptyValue($this->user_id->FormValue)) {
+                $this->user_id->addErrorMessage(str_replace("%s", $this->user_id->caption(), $this->user_id->RequiredErrorMessage));
             }
         }
         if ($this->insurance_id->Required) {
@@ -2507,8 +2507,8 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
         // visit_type_id
         $this->visit_type_id->setDbValueDef($rsnew, $this->visit_type_id->CurrentValue, 0, $this->visit_type_id->ReadOnly);
 
-        // doctor_id
-        $this->doctor_id->setDbValueDef($rsnew, $this->doctor_id->CurrentValue, 0, $this->doctor_id->ReadOnly);
+        // user_id
+        $this->user_id->setDbValueDef($rsnew, $this->user_id->CurrentValue, 0, $this->user_id->ReadOnly);
 
         // insurance_id
         $this->insurance_id->setDbValueDef($rsnew, $this->insurance_id->CurrentValue, null, $this->insurance_id->ReadOnly);
@@ -2571,8 +2571,8 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
         // visit_type_id
         $this->visit_type_id->setDbValueDef($rsnew, $this->visit_type_id->CurrentValue, 0, false);
 
-        // doctor_id
-        $this->doctor_id->setDbValueDef($rsnew, $this->doctor_id->CurrentValue, 0, false);
+        // user_id
+        $this->user_id->setDbValueDef($rsnew, $this->user_id->CurrentValue, 0, false);
 
         // insurance_id
         $this->insurance_id->setDbValueDef($rsnew, $this->insurance_id->CurrentValue, null, false);
@@ -2683,7 +2683,7 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
                     break;
                 case "x_visit_type_id":
                     break;
-                case "x_doctor_id":
+                case "x_user_id":
                     $lookupFilter = $fld->getSelectFilter(); // PHP
                     break;
                 case "x_insurance_id":
