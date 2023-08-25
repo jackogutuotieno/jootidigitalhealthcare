@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Aug 25, 2023 at 09:49 AM
+-- Generation Time: Aug 25, 2023 at 09:42 PM
 -- Server version: 8.0.31
 -- PHP Version: 8.1.13
 
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS `jdh_audittrail` (
   `OldValue` longtext,
   `NewValue` longtext,
   PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=495 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=543 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_audittrail`
@@ -570,7 +570,55 @@ INSERT INTO `jdh_audittrail` (`Id`, `DateTime`, `Script`, `User`, `Action`, `Tab
 (491, '2023-08-25 09:13:49', '/jootidigitalhealthcare/jdhpatientsedit/1', '1', 'U', 'jdh_patients', 'service_id', '1', '100', '1'),
 (492, '2023-08-25 09:14:03', '/jootidigitalhealthcare/jdhpatientsedit/2', '1', 'U', 'jdh_patients', 'service_id', '2', '100', '1'),
 (493, '2023-08-25 09:14:12', '/jootidigitalhealthcare/jdhpatientsedit/3', '1', 'U', 'jdh_patients', 'service_id', '3', '100', '1'),
-(494, '2023-08-25 09:44:09', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', '');
+(494, '2023-08-25 09:44:09', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
+(495, '2023-08-25 11:12:46', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', ''),
+(496, '2023-08-25 11:13:12', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
+(497, '2023-08-25 11:14:06', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', ''),
+(498, '2023-08-25 14:07:10', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
+(499, '2023-08-25 14:07:19', '/jootidigitalhealthcare/login', '3', 'login', '::1', '', '', '', ''),
+(500, '2023-08-25 14:13:30', '/jootidigitalhealthcare/logout', '3', 'logout', '::1', '', '', '', ''),
+(501, '2023-08-25 14:13:32', '/jootidigitalhealthcare/login', '3', 'login', '::1', '', '', '', ''),
+(502, '2023-08-25 14:14:27', '/jootidigitalhealthcare/logout', '3', 'logout', '::1', '', '', '', ''),
+(503, '2023-08-25 16:41:18', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', ''),
+(504, '2023-08-25 19:14:33', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
+(505, '2023-08-25 19:14:45', '/jootidigitalhealthcare/login', '4', 'login', '::1', '', '', '', ''),
+(506, '2023-08-25 19:20:52', '/jootidigitalhealthcare/logout', '4', 'logout', '::1', '', '', '', ''),
+(507, '2023-08-25 19:20:55', '/jootidigitalhealthcare/login', '4', 'login', '::1', '', '', '', ''),
+(508, '2023-08-25 19:22:29', '/jootidigitalhealthcare/logout', '4', 'logout', '::1', '', '', '', ''),
+(509, '2023-08-25 19:22:36', '/jootidigitalhealthcare/login', '4', 'login', '::1', '', '', '', ''),
+(510, '2023-08-25 19:32:27', '/jootidigitalhealthcare/logout', '4', 'logout', '::1', '', '', '', ''),
+(511, '2023-08-25 19:32:32', '/jootidigitalhealthcare/login', '4', 'login', '::1', '', '', '', ''),
+(512, '2023-08-25 19:34:20', '/jootidigitalhealthcare/logout', '4', 'logout', '::1', '', '', '', ''),
+(513, '2023-08-25 19:34:24', '/jootidigitalhealthcare/login', '4', 'login', '::1', '', '', '', ''),
+(514, '2023-08-25 19:38:58', '/jootidigitalhealthcare/logout', '4', 'logout', '::1', '', '', '', ''),
+(515, '2023-08-25 19:39:07', '/jootidigitalhealthcare/login', '2', 'login', '::1', '', '', '', ''),
+(516, '2023-08-25 19:41:22', '/jootidigitalhealthcare/logout', '2', 'logout', '::1', '', '', '', ''),
+(517, '2023-08-25 19:41:25', '/jootidigitalhealthcare/login', '2', 'login', '::1', '', '', '', ''),
+(518, '2023-08-25 19:46:58', '/jootidigitalhealthcare/logout', '2', 'logout', '::1', '', '', '', ''),
+(519, '2023-08-25 19:47:02', '/jootidigitalhealthcare/login', '2', 'login', '::1', '', '', '', ''),
+(520, '2023-08-25 19:56:57', '/jootidigitalhealthcare/logout', '2', 'logout', '::1', '', '', '', ''),
+(521, '2023-08-25 19:57:04', '/jootidigitalhealthcare/login', '4', 'login', '::1', '', '', '', ''),
+(522, '2023-08-25 20:05:41', '/jootidigitalhealthcare/logout', '4', 'logout', '::1', '', '', '', ''),
+(523, '2023-08-25 20:05:47', '/jootidigitalhealthcare/login', '2', 'login', '::1', '', '', '', ''),
+(524, '2023-08-25 20:07:28', '/jootidigitalhealthcare/logout', '2', 'logout', '::1', '', '', '', ''),
+(525, '2023-08-25 20:07:37', '/jootidigitalhealthcare/login', '5', 'login', '::1', '', '', '', ''),
+(526, '2023-08-25 20:13:23', '/jootidigitalhealthcare/logout', '5', 'logout', '::1', '', '', '', ''),
+(527, '2023-08-25 20:13:26', '/jootidigitalhealthcare/login', '5', 'login', '::1', '', '', '', ''),
+(528, '2023-08-25 20:16:33', '/jootidigitalhealthcare/logout', '5', 'logout', '::1', '', '', '', ''),
+(529, '2023-08-25 20:16:46', '/jootidigitalhealthcare/login', '6', 'login', '::1', '', '', '', ''),
+(530, '2023-08-25 20:23:58', '/jootidigitalhealthcare/logout', '6', 'logout', '::1', '', '', '', ''),
+(531, '2023-08-25 20:24:23', '/jootidigitalhealthcare/login', '6', 'login', '::1', '', '', '', ''),
+(532, '2023-08-25 20:24:34', '/jootidigitalhealthcare/logout', '6', 'logout', '::1', '', '', '', ''),
+(533, '2023-08-25 20:24:42', '/jootidigitalhealthcare/login', '7', 'login', '::1', '', '', '', ''),
+(534, '2023-08-25 20:28:12', '/jootidigitalhealthcare/logout', '7', 'logout', '::1', '', '', '', ''),
+(535, '2023-08-25 20:28:21', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', ''),
+(536, '2023-08-25 20:32:53', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
+(537, '2023-08-25 20:33:00', '/jootidigitalhealthcare/login', '2', 'login', '::1', '', '', '', ''),
+(538, '2023-08-25 20:41:17', '/jootidigitalhealthcare/logout', '2', 'logout', '::1', '', '', '', ''),
+(539, '2023-08-25 20:41:27', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', ''),
+(540, '2023-08-25 20:52:40', '/jootidigitalhealthcare/jdhmedicinesedit/1', '1', 'U', 'jdh_medicines', 'expiry', '1', '0000-00-00', '2025-05-21'),
+(541, '2023-08-25 21:11:31', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
+(542, '2023-08-25 21:11:33', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', '');
 
 -- --------------------------------------------------------
 
@@ -601,6 +649,23 @@ INSERT INTO `jdh_chief_complaints` (`id`, `patient_id`, `chief_compaints`, `adde
 -- --------------------------------------------------------
 
 --
+-- Stand-in structure for view `jdh_consultation_income`
+-- (See below for the actual view)
+--
+DROP VIEW IF EXISTS `jdh_consultation_income`;
+CREATE TABLE IF NOT EXISTS `jdh_consultation_income` (
+`user_id` int
+,`first_name` varchar(50)
+,`last_name` varchar(50)
+,`department_id` int
+,`service_name` varchar(100)
+,`service_cost` int
+,`patient_id` bigint
+);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `jdh_departments`
 --
 
@@ -626,6 +691,32 @@ INSERT INTO `jdh_departments` (`department_id`, `department_name`, `description`
 (7, 'Front Office', '<p>Front Office</p>'),
 (8, 'Stores', '<p>Stores Department</p>'),
 (9, 'Paedeatrics', '<p>Paedeatrics Department</p>');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `jdh_doctor_charges`
+--
+
+DROP TABLE IF EXISTS `jdh_doctor_charges`;
+CREATE TABLE IF NOT EXISTS `jdh_doctor_charges` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `service_id` int NOT NULL,
+  `description` text NOT NULL,
+  `submission_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `submitted_by_user_id` int NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `jdh_doctor_charges`
+--
+
+INSERT INTO `jdh_doctor_charges` (`id`, `user_id`, `service_id`, `description`, `submission_date`, `date_updated`, `submitted_by_user_id`) VALUES
+(1, 3, 2, 'Consultation fees for Doctor Demo', '2023-08-25 16:27:17', '2023-08-25 16:27:17', 0),
+(2, 9, 2, 'Consultation for Dr. Dennis Miriti', '2023-08-25 16:28:12', '2023-08-25 16:28:12', 0);
 
 -- --------------------------------------------------------
 
@@ -716,17 +807,17 @@ INSERT INTO `jdh_insurance` (`insurance_id`, `insurance_name`, `insurance_contac
 -- --------------------------------------------------------
 
 --
--- Stand-in structure for view `jdh_lab_billing`
+-- Stand-in structure for view `jdh_lab_income`
 -- (See below for the actual view)
 --
-DROP VIEW IF EXISTS `jdh_lab_billing`;
-CREATE TABLE IF NOT EXISTS `jdh_lab_billing` (
-`patient_id` bigint
-,`patient_name` varchar(50)
+DROP VIEW IF EXISTS `jdh_lab_income`;
+CREATE TABLE IF NOT EXISTS `jdh_lab_income` (
+`patient_name` varchar(50)
 ,`service_name` varchar(100)
 ,`service_cost` int
 ,`request_date` datetime
 ,`patient_dob` date
+,`patient_id` int
 );
 
 -- --------------------------------------------------------
@@ -809,7 +900,7 @@ CREATE TABLE IF NOT EXISTS `jdh_medicines` (
 --
 
 INSERT INTO `jdh_medicines` (`id`, `category_id`, `name`, `selling_price`, `buying_price`, `description`, `expiry`, `submitted_by_user_id`, `date_created`, `date_updated`) VALUES
-(1, 1, 'CEFTRIAXONE 1gm', 200, 100, 'None', '0000-00-00', 0, '2023-08-01 01:44:23', '2023-08-02 19:55:35'),
+(1, 1, 'CEFTRIAXONE 1gm', 200, 100, 'None', '2025-05-21', 0, '2023-08-01 01:44:23', '2023-08-25 20:52:40'),
 (2, 1, 'ADRENALINE INJECTION 1MG', 100, 100, NULL, '0000-00-00', 0, '2023-08-01 01:58:23', '2023-08-02 19:55:35'),
 (3, 1, 'ARTHEMETER INJECTION 80MG', 200, 100, NULL, '0000-00-00', 0, '2023-08-01 01:59:38', '2023-08-02 19:55:35'),
 (4, 1, 'GSUNATE 60MG', 150, 100, NULL, '0000-00-00', 0, '2023-08-01 02:00:45', '2023-08-02 19:55:35'),
@@ -1059,7 +1150,7 @@ CREATE TABLE IF NOT EXISTS `jdh_patient_visits` (
   `visit_id` int NOT NULL AUTO_INCREMENT,
   `patient_id` int NOT NULL,
   `visit_type_id` int NOT NULL,
-  `doctor_id` int NOT NULL,
+  `user_id` int NOT NULL,
   `insurance_id` int DEFAULT NULL,
   `visit_description` text,
   `visit_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1071,7 +1162,7 @@ CREATE TABLE IF NOT EXISTS `jdh_patient_visits` (
 -- Dumping data for table `jdh_patient_visits`
 --
 
-INSERT INTO `jdh_patient_visits` (`visit_id`, `patient_id`, `visit_type_id`, `doctor_id`, `insurance_id`, `visit_description`, `visit_date`, `subbmitted_by_user_id`) VALUES
+INSERT INTO `jdh_patient_visits` (`visit_id`, `patient_id`, `visit_type_id`, `user_id`, `insurance_id`, `visit_description`, `visit_date`, `subbmitted_by_user_id`) VALUES
 (3, 1, 1, 3, NULL, 'This is a test visit', '2023-08-06 15:33:22', 0),
 (4, 3, 2, 3, NULL, 'Another visit by patient three', '2023-08-23 19:59:56', 2),
 (5, 3, 2, 9, 1, 'Patient needs to be admitted.', '2023-08-24 18:57:45', 0);
@@ -1477,12 +1568,22 @@ INSERT INTO `jdh_vitals` (`vitals_id`, `patient_id`, `pressure`, `height`, `weig
 -- --------------------------------------------------------
 
 --
--- Structure for view `jdh_lab_billing`
+-- Structure for view `jdh_consultation_income`
 --
-DROP TABLE IF EXISTS `jdh_lab_billing`;
+DROP TABLE IF EXISTS `jdh_consultation_income`;
 
-DROP VIEW IF EXISTS `jdh_lab_billing`;
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `jdh_lab_billing`  AS SELECT `jdh_patients`.`patient_id` AS `patient_id`, `jdh_patients`.`patient_name` AS `patient_name`, `jdh_services`.`service_name` AS `service_name`, `jdh_services`.`service_cost` AS `service_cost`, `jdh_test_requests`.`request_date` AS `request_date`, `jdh_patients`.`patient_dob` AS `patient_dob` FROM ((`jdh_patients` join `jdh_test_requests` on((`jdh_patients`.`patient_id` = `jdh_test_requests`.`patient_id`))) join `jdh_services` on((`jdh_test_requests`.`request_service_id` = `jdh_services`.`service_id`)))  ;
+DROP VIEW IF EXISTS `jdh_consultation_income`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `jdh_consultation_income`  AS SELECT `jdh_users`.`user_id` AS `user_id`, `jdh_users`.`first_name` AS `first_name`, `jdh_users`.`last_name` AS `last_name`, `jdh_users`.`department_id` AS `department_id`, `jdh_services`.`service_name` AS `service_name`, `jdh_services`.`service_cost` AS `service_cost`, `jdh_patients`.`patient_id` AS `patient_id` FROM (((((`jdh_doctor_charges` join `jdh_users` on((`jdh_users`.`user_id` = `jdh_doctor_charges`.`user_id`))) join `jdh_services` on((`jdh_doctor_charges`.`service_id` = `jdh_services`.`service_id`))) join `jdh_departments` on((`jdh_users`.`department_id` = `jdh_departments`.`department_id`))) join `jdh_patient_visits` on((`jdh_users`.`user_id` = `jdh_patient_visits`.`user_id`))) join `jdh_patients` on((`jdh_patients`.`patient_id` = `jdh_patient_visits`.`patient_id`)))  ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `jdh_lab_income`
+--
+DROP TABLE IF EXISTS `jdh_lab_income`;
+
+DROP VIEW IF EXISTS `jdh_lab_income`;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `jdh_lab_income`  AS SELECT `jdh_patients`.`patient_name` AS `patient_name`, `jdh_services`.`service_name` AS `service_name`, `jdh_services`.`service_cost` AS `service_cost`, `jdh_test_requests`.`request_date` AS `request_date`, `jdh_patients`.`patient_dob` AS `patient_dob`, `jdh_test_requests`.`patient_id` AS `patient_id` FROM ((`jdh_patients` join `jdh_test_requests` on((`jdh_patients`.`patient_id` = `jdh_test_requests`.`patient_id`))) join `jdh_services` on((`jdh_test_requests`.`request_service_id` = `jdh_services`.`service_id`)))  ;
 
 -- --------------------------------------------------------
 
