@@ -441,15 +441,6 @@ return function (App $app) {
         }
     );
 
-    // jdh_lab_billing
-    $app->map(["GET","POST","OPTIONS"], '/jdhlabbillinglist[/{patient_id}]', JdhLabBillingController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhlabbillinglist-jdh_lab_billing-list'); // list
-    $app->group(
-        '/jdh_lab_billing',
-        function (RouteCollectorProxy $group) {
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{patient_id}]', JdhLabBillingController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_lab_billing/list-jdh_lab_billing-list-2'); // list
-        }
-    );
-
     // jdh_medicine_stock
     $app->map(["GET","POST","OPTIONS"], '/jdhmedicinestocklist[/{id}]', JdhMedicineStockController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhmedicinestocklist-jdh_medicine_stock-list'); // list
     $app->map(["GET","POST","OPTIONS"], '/jdhmedicinestockadd[/{id}]', JdhMedicineStockController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhmedicinestockadd-jdh_medicine_stock-add'); // add
@@ -531,6 +522,15 @@ return function (App $app) {
         '/jdh_consultation_income',
         function (RouteCollectorProxy $group) {
             $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{user_id}]', JdhConsultationIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_consultation_income/list-jdh_consultation_income-list-2'); // list
+        }
+    );
+
+    // jdh_lab_income
+    $app->map(["GET","POST","OPTIONS"], '/jdhlabincomelist[/{patient_id}]', JdhLabIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhlabincomelist-jdh_lab_income-list'); // list
+    $app->group(
+        '/jdh_lab_income',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{patient_id}]', JdhLabIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_lab_income/list-jdh_lab_income-list-2'); // list
         }
     );
 

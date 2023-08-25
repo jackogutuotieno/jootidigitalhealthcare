@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhConsultationIncomeList extends JdhConsultationIncome
+class JdhLabIncomeList extends JdhLabIncome
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhConsultationIncomeList";
+    public $PageObjName = "JdhLabIncomeList";
 
     // View file path
     public $View = null;
@@ -33,13 +33,13 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
     public $RenderingView = false;
 
     // Grid form hidden field names
-    public $FormName = "fjdh_consultation_incomelist";
+    public $FormName = "fjdh_lab_incomelist";
     public $FormActionName = "";
     public $FormBlankRowName = "";
     public $FormKeyCountName = "";
 
     // CSS class/style
-    public $CurrentPageName = "jdhconsultationincomelist";
+    public $CurrentPageName = "jdhlabincomelist";
 
     // Page URLs
     public $AddUrl;
@@ -145,8 +145,8 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         $this->FormActionName = Config("FORM_ROW_ACTION_NAME");
         $this->FormBlankRowName = Config("FORM_BLANK_ROW_NAME");
         $this->FormKeyCountName = Config("FORM_KEY_COUNT_NAME");
-        $this->TableVar = 'jdh_consultation_income';
-        $this->TableName = 'jdh_consultation_income';
+        $this->TableVar = 'jdh_lab_income';
+        $this->TableName = 'jdh_lab_income';
 
         // Table CSS class
         $this->TableClass = "table table-bordered table-hover table-sm ew-table";
@@ -166,26 +166,26 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_consultation_income)
-        if (!isset($GLOBALS["jdh_consultation_income"]) || get_class($GLOBALS["jdh_consultation_income"]) == PROJECT_NAMESPACE . "jdh_consultation_income") {
-            $GLOBALS["jdh_consultation_income"] = &$this;
+        // Table object (jdh_lab_income)
+        if (!isset($GLOBALS["jdh_lab_income"]) || get_class($GLOBALS["jdh_lab_income"]) == PROJECT_NAMESPACE . "jdh_lab_income") {
+            $GLOBALS["jdh_lab_income"] = &$this;
         }
 
         // Page URL
         $pageUrl = $this->pageUrl(false);
 
         // Initialize URLs
-        $this->AddUrl = "jdhconsultationincomeadd";
+        $this->AddUrl = "jdhlabincomeadd";
         $this->InlineAddUrl = $pageUrl . "action=add";
         $this->GridAddUrl = $pageUrl . "action=gridadd";
         $this->GridEditUrl = $pageUrl . "action=gridedit";
         $this->MultiEditUrl = $pageUrl . "action=multiedit";
-        $this->MultiDeleteUrl = "jdhconsultationincomedelete";
-        $this->MultiUpdateUrl = "jdhconsultationincomeupdate";
+        $this->MultiDeleteUrl = "jdhlabincomedelete";
+        $this->MultiUpdateUrl = "jdhlabincomeupdate";
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_consultation_income');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_lab_income');
         }
 
         // Start timer
@@ -340,7 +340,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
                 $pageName = GetPageName($url);
                 if ($pageName != $this->getListUrl()) { // Not List page => View page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhconsultationincomeview"; // If View page, no primary button
+                    $result["view"] = $pageName == "jdhlabincomeview"; // If View page, no primary button
                 } else { // List page
                     // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
@@ -433,7 +433,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['user_id'];
+            $key .= @$ar['patient_id'];
         }
         return $key;
     }
@@ -445,12 +445,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
      */
     protected function hideFieldsForAddEdit()
     {
-        if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->user_id->Visible = false;
-        }
-        if ($this->isAddOrEdit()) {
-            $this->patient_id->Visible = false;
-        }
     }
 
     // Lookup data
@@ -644,13 +638,12 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
         // Setup export options
         $this->setupExportOptions();
-        $this->user_id->Visible = false;
-        $this->first_name->setVisibility();
-        $this->last_name->setVisibility();
-        $this->department_id->Visible = false;
-        $this->service_name->Visible = false;
-        $this->service_cost->setVisibility();
         $this->patient_id->setVisibility();
+        $this->patient_name->setVisibility();
+        $this->service_name->setVisibility();
+        $this->service_cost->setVisibility();
+        $this->request_date->setVisibility();
+        $this->patient_dob->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -682,12 +675,9 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             $this->ListActions->add($name, $action);
         }
 
-        // Set up lookup cache
-        $this->setupLookupOptions($this->department_id);
-
         // Update form name to avoid conflict
         if ($this->IsModal) {
-            $this->FormName = "fjdh_consultation_incomegrid";
+            $this->FormName = "fjdh_lab_incomegrid";
         }
 
         // Set up page action
@@ -1018,15 +1008,13 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
         // Load server side filters
         if (Config("SEARCH_FILTER_OPTION") == "Server" && isset($UserProfile)) {
-            $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_consultation_incomesrch");
+            $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_lab_incomesrch");
         }
-        $filterList = Concat($filterList, $this->user_id->AdvancedSearch->toJson(), ","); // Field user_id
-        $filterList = Concat($filterList, $this->first_name->AdvancedSearch->toJson(), ","); // Field first_name
-        $filterList = Concat($filterList, $this->last_name->AdvancedSearch->toJson(), ","); // Field last_name
-        $filterList = Concat($filterList, $this->department_id->AdvancedSearch->toJson(), ","); // Field department_id
+        $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
+        $filterList = Concat($filterList, $this->patient_name->AdvancedSearch->toJson(), ","); // Field patient_name
         $filterList = Concat($filterList, $this->service_name->AdvancedSearch->toJson(), ","); // Field service_name
         $filterList = Concat($filterList, $this->service_cost->AdvancedSearch->toJson(), ","); // Field service_cost
-        $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
+        $filterList = Concat($filterList, $this->patient_dob->AdvancedSearch->toJson(), ","); // Field patient_dob
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
             $filterList = Concat($filterList, $wrk, ",");
@@ -1048,7 +1036,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         global $UserProfile;
         if (Post("ajax") == "savefilters") { // Save filter request (Ajax)
             $filters = Post("filters");
-            $UserProfile->setSearchFilters(CurrentUserName(), "fjdh_consultation_incomesrch", $filters);
+            $UserProfile->setSearchFilters(CurrentUserName(), "fjdh_lab_incomesrch", $filters);
             WriteJson([["success" => true]]); // Success
             return true;
         } elseif (Post("cmd") == "resetfilter") {
@@ -1067,37 +1055,21 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         $filter = json_decode(Post("filter"), true);
         $this->Command = "search";
 
-        // Field user_id
-        $this->user_id->AdvancedSearch->SearchValue = @$filter["x_user_id"];
-        $this->user_id->AdvancedSearch->SearchOperator = @$filter["z_user_id"];
-        $this->user_id->AdvancedSearch->SearchCondition = @$filter["v_user_id"];
-        $this->user_id->AdvancedSearch->SearchValue2 = @$filter["y_user_id"];
-        $this->user_id->AdvancedSearch->SearchOperator2 = @$filter["w_user_id"];
-        $this->user_id->AdvancedSearch->save();
+        // Field patient_id
+        $this->patient_id->AdvancedSearch->SearchValue = @$filter["x_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchOperator = @$filter["z_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchCondition = @$filter["v_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchValue2 = @$filter["y_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_id"];
+        $this->patient_id->AdvancedSearch->save();
 
-        // Field first_name
-        $this->first_name->AdvancedSearch->SearchValue = @$filter["x_first_name"];
-        $this->first_name->AdvancedSearch->SearchOperator = @$filter["z_first_name"];
-        $this->first_name->AdvancedSearch->SearchCondition = @$filter["v_first_name"];
-        $this->first_name->AdvancedSearch->SearchValue2 = @$filter["y_first_name"];
-        $this->first_name->AdvancedSearch->SearchOperator2 = @$filter["w_first_name"];
-        $this->first_name->AdvancedSearch->save();
-
-        // Field last_name
-        $this->last_name->AdvancedSearch->SearchValue = @$filter["x_last_name"];
-        $this->last_name->AdvancedSearch->SearchOperator = @$filter["z_last_name"];
-        $this->last_name->AdvancedSearch->SearchCondition = @$filter["v_last_name"];
-        $this->last_name->AdvancedSearch->SearchValue2 = @$filter["y_last_name"];
-        $this->last_name->AdvancedSearch->SearchOperator2 = @$filter["w_last_name"];
-        $this->last_name->AdvancedSearch->save();
-
-        // Field department_id
-        $this->department_id->AdvancedSearch->SearchValue = @$filter["x_department_id"];
-        $this->department_id->AdvancedSearch->SearchOperator = @$filter["z_department_id"];
-        $this->department_id->AdvancedSearch->SearchCondition = @$filter["v_department_id"];
-        $this->department_id->AdvancedSearch->SearchValue2 = @$filter["y_department_id"];
-        $this->department_id->AdvancedSearch->SearchOperator2 = @$filter["w_department_id"];
-        $this->department_id->AdvancedSearch->save();
+        // Field patient_name
+        $this->patient_name->AdvancedSearch->SearchValue = @$filter["x_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchOperator = @$filter["z_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchCondition = @$filter["v_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchValue2 = @$filter["y_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchOperator2 = @$filter["w_patient_name"];
+        $this->patient_name->AdvancedSearch->save();
 
         // Field service_name
         $this->service_name->AdvancedSearch->SearchValue = @$filter["x_service_name"];
@@ -1115,13 +1087,13 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         $this->service_cost->AdvancedSearch->SearchOperator2 = @$filter["w_service_cost"];
         $this->service_cost->AdvancedSearch->save();
 
-        // Field patient_id
-        $this->patient_id->AdvancedSearch->SearchValue = @$filter["x_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchOperator = @$filter["z_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchCondition = @$filter["v_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchValue2 = @$filter["y_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_id"];
-        $this->patient_id->AdvancedSearch->save();
+        // Field patient_dob
+        $this->patient_dob->AdvancedSearch->SearchValue = @$filter["x_patient_dob"];
+        $this->patient_dob->AdvancedSearch->SearchOperator = @$filter["z_patient_dob"];
+        $this->patient_dob->AdvancedSearch->SearchCondition = @$filter["v_patient_dob"];
+        $this->patient_dob->AdvancedSearch->SearchValue2 = @$filter["y_patient_dob"];
+        $this->patient_dob->AdvancedSearch->SearchOperator2 = @$filter["w_patient_dob"];
+        $this->patient_dob->AdvancedSearch->save();
         $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
     }
@@ -1161,7 +1133,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
         // Fields to search
         $searchFlds = [];
-        $searchFlds[] = &$this->first_name;
+        $searchFlds[] = &$this->patient_name;
         $searchFlds[] = &$this->service_name;
         $searchKeyword = $default ? $this->BasicSearch->KeywordDefault : $this->BasicSearch->Keyword;
         $searchType = $default ? $this->BasicSearch->TypeDefault : $this->BasicSearch->Type;
@@ -1241,10 +1213,11 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
-            $this->updateSort($this->first_name); // first_name
-            $this->updateSort($this->last_name); // last_name
-            $this->updateSort($this->service_cost); // service_cost
             $this->updateSort($this->patient_id); // patient_id
+            $this->updateSort($this->patient_name); // patient_name
+            $this->updateSort($this->service_name); // service_name
+            $this->updateSort($this->service_cost); // service_cost
+            $this->updateSort($this->request_date); // request_date
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1269,13 +1242,12 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             if ($this->Command == "resetsort") {
                 $orderBy = "";
                 $this->setSessionOrderBy($orderBy);
-                $this->user_id->setSort("");
-                $this->first_name->setSort("");
-                $this->last_name->setSort("");
-                $this->department_id->setSort("");
+                $this->patient_id->setSort("");
+                $this->patient_name->setSort("");
                 $this->service_name->setSort("");
                 $this->service_cost->setSort("");
-                $this->patient_id->setSort("");
+                $this->request_date->setSort("");
+                $this->patient_dob->setSort("");
             }
 
             // Reset start position
@@ -1311,14 +1283,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         if ($item->OnLeft) {
             $item->moveTo(0);
         }
-        $item->ShowInDropDown = false;
-        $item->ShowInButtonGroup = false;
-
-        // "sequence"
-        $item = &$this->ListOptions->add("sequence");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = true;
-        $item->OnLeft = true; // Always on left
         $item->ShowInDropDown = false;
         $item->ShowInButtonGroup = false;
 
@@ -1359,10 +1323,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
-
-        // "sequence"
-        $opt = $this->ListOptions["sequence"];
-        $opt->Body = FormatSequenceNumber($this->RecordCount);
         $pageUrl = $this->pageUrl(false);
         if ($this->CurrentMode == "view") { // Check view mode
         } // End View mode
@@ -1378,11 +1338,11 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
                 if ($listaction->Select == ACTION_SINGLE && $allowed) {
                     $caption = $listaction->Caption;
                     $icon = ($listaction->Icon != "") ? "<i class=\"" . HtmlEncode(str_replace(" ew-icon", "", $listaction->Icon)) . "\" data-caption=\"" . HtmlTitle($caption) . "\"></i> " : "";
-                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_consultation_incomelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
+                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_lab_incomelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
                     if ($link != "") {
                         $links[] = $link;
                         if ($body == "") { // Setup first button
-                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_consultation_incomelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
+                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_lab_incomelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
                         }
                     }
                 }
@@ -1403,7 +1363,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
         // "checkbox"
         $opt = $this->ListOptions["checkbox"];
-        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->user_id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
+        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->patient_id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
         $this->renderListOptionsExt();
 
         // Call ListOptions_Rendered event
@@ -1430,10 +1390,11 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("first_name", $this->createColumnOption("first_name"));
-            $option->add("last_name", $this->createColumnOption("last_name"));
-            $option->add("service_cost", $this->createColumnOption("service_cost"));
             $option->add("patient_id", $this->createColumnOption("patient_id"));
+            $option->add("patient_name", $this->createColumnOption("patient_name"));
+            $option->add("service_name", $this->createColumnOption("service_name"));
+            $option->add("service_cost", $this->createColumnOption("service_cost"));
+            $option->add("request_date", $this->createColumnOption("request_date"));
         }
 
         // Set up options default
@@ -1453,10 +1414,10 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
         // Filter button
         $item = &$this->FilterOptions->add("savecurrentfilter");
-        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_consultation_incomesrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
+        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_lab_incomesrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
         $item->Visible = true;
         $item = &$this->FilterOptions->add("deletefilter");
-        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_consultation_incomesrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
+        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_lab_incomesrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
         $item->Visible = true;
         $this->FilterOptions->UseDropDownButton = true;
         $this->FilterOptions->UseButtonGroup = !$this->FilterOptions->UseDropDownButton;
@@ -1495,7 +1456,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
                 $item = &$option->add("custom_" . $listaction->Action);
                 $caption = $listaction->Caption;
                 $icon = ($listaction->Icon != "") ? '<i class="' . HtmlEncode($listaction->Icon) . '" data-caption="' . HtmlEncode($caption) . '"></i>' . $caption : $caption;
-                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_consultation_incomelist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
+                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_lab_incomelist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
                 $item->Visible = $listaction->Allow;
             }
         }
@@ -1644,7 +1605,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
                 // Set row properties
                 $this->resetAttributes();
-                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_consultation_income", "data-rowtype" => ROWTYPE_ADD]);
+                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_lab_income", "data-rowtype" => ROWTYPE_ADD]);
                 $this->RowAttrs->appendClass("ew-template");
                 // Render row
                 $this->RowType = ROWTYPE_ADD;
@@ -1705,7 +1666,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         $this->RowAttrs->merge([
             "data-rowindex" => $this->RowCount,
             "data-key" => $this->getKey(true),
-            "id" => "r" . $this->RowCount . "_jdh_consultation_income",
+            "id" => "r" . $this->RowCount . "_jdh_lab_income",
             "data-rowtype" => $this->RowType,
             "class" => ($this->RowCount % 2 != 1) ? "ew-table-alt-row" : "",
         ]);
@@ -1815,26 +1776,24 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->user_id->setDbValue($row['user_id']);
-        $this->first_name->setDbValue($row['first_name']);
-        $this->last_name->setDbValue($row['last_name']);
-        $this->department_id->setDbValue($row['department_id']);
+        $this->patient_id->setDbValue($row['patient_id']);
+        $this->patient_name->setDbValue($row['patient_name']);
         $this->service_name->setDbValue($row['service_name']);
         $this->service_cost->setDbValue($row['service_cost']);
-        $this->patient_id->setDbValue($row['patient_id']);
+        $this->request_date->setDbValue($row['request_date']);
+        $this->patient_dob->setDbValue($row['patient_dob']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['user_id'] = $this->user_id->DefaultValue;
-        $row['first_name'] = $this->first_name->DefaultValue;
-        $row['last_name'] = $this->last_name->DefaultValue;
-        $row['department_id'] = $this->department_id->DefaultValue;
+        $row['patient_id'] = $this->patient_id->DefaultValue;
+        $row['patient_name'] = $this->patient_name->DefaultValue;
         $row['service_name'] = $this->service_name->DefaultValue;
         $row['service_cost'] = $this->service_cost->DefaultValue;
-        $row['patient_id'] = $this->patient_id->DefaultValue;
+        $row['request_date'] = $this->request_date->DefaultValue;
+        $row['patient_dob'] = $this->patient_dob->DefaultValue;
         return $row;
     }
 
@@ -1875,19 +1834,17 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
         // Common render codes for all row types
 
-        // user_id
+        // patient_id
 
-        // first_name
-
-        // last_name
-
-        // department_id
+        // patient_name
 
         // service_name
 
         // service_cost
 
-        // patient_id
+        // request_date
+
+        // patient_dob
 
         // Accumulate aggregate value
         if ($this->RowType != ROWTYPE_AGGREGATEINIT && $this->RowType != ROWTYPE_AGGREGATE && $this->RowType != ROWTYPE_PREVIEW_FIELD) {
@@ -1898,37 +1855,11 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // user_id
-            $this->user_id->ViewValue = $this->user_id->CurrentValue;
+            // patient_id
+            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
-            // first_name
-            $this->first_name->ViewValue = $this->first_name->CurrentValue;
-
-            // last_name
-            $this->last_name->ViewValue = $this->last_name->CurrentValue;
-
-            // department_id
-            $curVal = strval($this->department_id->CurrentValue);
-            if ($curVal != "") {
-                $this->department_id->ViewValue = $this->department_id->lookupCacheOption($curVal);
-                if ($this->department_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`department_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->department_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->department_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->department_id->ViewValue = $this->department_id->displayValue($arwrk);
-                    } else {
-                        $this->department_id->ViewValue = FormatNumber($this->department_id->CurrentValue, $this->department_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->department_id->ViewValue = null;
-            }
+            // patient_name
+            $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
 
             // service_name
             $this->service_name->ViewValue = $this->service_name->CurrentValue;
@@ -1937,24 +1868,33 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             $this->service_cost->ViewValue = $this->service_cost->CurrentValue;
             $this->service_cost->ViewValue = FormatNumber($this->service_cost->ViewValue, $this->service_cost->formatPattern());
 
+            // request_date
+            $this->request_date->ViewValue = $this->request_date->CurrentValue;
+            $this->request_date->ViewValue = FormatDateTime($this->request_date->ViewValue, $this->request_date->formatPattern());
+
+            // patient_dob
+            $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
+            $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
+
             // patient_id
-            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
+            $this->patient_id->HrefValue = "";
+            $this->patient_id->TooltipValue = "";
 
-            // first_name
-            $this->first_name->HrefValue = "";
-            $this->first_name->TooltipValue = "";
+            // patient_name
+            $this->patient_name->HrefValue = "";
+            $this->patient_name->TooltipValue = "";
 
-            // last_name
-            $this->last_name->HrefValue = "";
-            $this->last_name->TooltipValue = "";
+            // service_name
+            $this->service_name->HrefValue = "";
+            $this->service_name->TooltipValue = "";
 
             // service_cost
             $this->service_cost->HrefValue = "";
             $this->service_cost->TooltipValue = "";
 
-            // patient_id
-            $this->patient_id->HrefValue = "";
-            $this->patient_id->TooltipValue = "";
+            // request_date
+            $this->request_date->HrefValue = "";
+            $this->request_date->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_AGGREGATEINIT) { // Initialize aggregate row
                     $this->service_cost->Total = 0; // Initialize total
         } elseif ($this->RowType == ROWTYPE_AGGREGATE) { // Aggregate row
@@ -1982,19 +1922,19 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         }
         if (SameText($type, "excel")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_consultation_incomelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_lab_incomelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\">" . $Language->phrase("ExportToExcel") . "</a>";
             }
         } elseif (SameText($type, "word")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_consultation_incomelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_lab_incomelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\">" . $Language->phrase("ExportToWord") . "</a>";
             }
         } elseif (SameText($type, "pdf")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_consultation_incomelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_lab_incomelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\">" . $Language->phrase("ExportToPdf") . "</a>";
             }
@@ -2006,7 +1946,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-csv\" title=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\">" . $Language->phrase("ExportToCsv") . "</a>";
         } elseif (SameText($type, "email")) {
             $url = $custom ? ' data-url="' . $exportUrl . '"' : '';
-            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_consultation_incomelist" data-ew-action="email" data-custom="false" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
+            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_lab_incomelist" data-ew-action="email" data-custom="false" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
         } elseif (SameText($type, "print")) {
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-print\" title=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\">" . $Language->phrase("PrinterFriendly") . "</a>";
         }
@@ -2084,7 +2024,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         // Search button
         $item = &$this->SearchOptions->add("searchtoggle");
         $searchToggleClass = ($this->SearchWhere != "") ? " active" : " active";
-        $item->Body = "<a class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" role=\"button\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-ew-action=\"search-toggle\" data-form=\"fjdh_consultation_incomesrch\" aria-pressed=\"" . ($searchToggleClass == " active" ? "true" : "false") . "\">" . $Language->phrase("SearchLink") . "</a>";
+        $item->Body = "<a class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" role=\"button\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-ew-action=\"search-toggle\" data-form=\"fjdh_lab_incomesrch\" aria-pressed=\"" . ($searchToggleClass == " active" ? "true" : "false") . "\">" . $Language->phrase("SearchLink") . "</a>";
         $item->Visible = true;
 
         // Show all button
@@ -2218,8 +2158,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
-                case "x_department_id":
-                    break;
                 default:
                     $lookupFilter = "";
                     break;

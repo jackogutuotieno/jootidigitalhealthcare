@@ -62,7 +62,6 @@ return [
     "jdh_chief_complaints" => \DI\create(JdhChiefComplaints::class),
     "jdh_examination_findings" => \DI\create(JdhExaminationFindings::class),
     "jdh_status" => \DI\create(JdhStatus::class),
-    "jdh_lab_billing" => \DI\create(JdhLabBilling::class),
     "jdh_medicine_stock" => \DI\create(JdhMedicineStock::class),
     "Dashboard2" => \DI\create(Dashboard2::class),
     "Latest_Appointments" => \DI\create(LatestAppointments::class),
@@ -71,6 +70,7 @@ return [
     "jdh_registration_income" => \DI\create(JdhRegistrationIncome::class),
     "jdh_doctor_charges" => \DI\create(JdhDoctorCharges::class),
     "jdh_consultation_income" => \DI\create(JdhConsultationIncome::class),
+    "jdh_lab_income" => \DI\create(JdhLabIncome::class),
 
     // User table
     "usertable" => \DI\get("jdh_users"),

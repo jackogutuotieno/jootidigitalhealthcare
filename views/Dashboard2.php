@@ -192,34 +192,18 @@ $Page->showMessage();
         <div class="col-lg-6 col-md-12">
             <div class="card counters">
                 <div class="card-header">
-                    Lab Income(KES)
+                    Total Income(KES)
                 </div>
                 <div class="card-body d-flex align-items-center pt-0 pb-0">
                     <p class="card-text"><i class="fas fa-file"></i></p>
                     <p class="record-count">
                         <?php
                             $conn =& DbHelper();
-                            $sql = "SELECT SUM(service_cost) FROM jdh_lab_billing";
-                            $income_lab = ExecuteScalar($sql);
-                            echo $income_lab;
-                        ?>
-                    </p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6 col-md-12">
-            <div class="card counters">
-                <div class="card-header">
-                    Pharmacy Income(KES)
-                </div>
-                <div class="card-body d-flex align-items-center pt-0 pb-0">
-                    <p class="card-text"><i class="fas fa-file"></i></p>
-                    <p class="record-count">
-                        <?php
-                            $conn =& DbHelper();
-                            $sql = "SELECT SUM(selling_price * units_given) FROM jdh_pharmacy_income";
-                            $pharmacy_income = ExecuteScalar($sql);
-                            echo $pharmacy_income;
+                            $sql1 = "SELECT SUM(service_cost) FROM jdh_lab_income";
+                            $lab_income = ExecuteScalar($sql1);
+                            $sql2 = "SELECT SUM(selling_price * units_given) FROM jdh_pharmacy_income";
+                            $pharmacy_income = ExecuteScalar($sql2);
+                            echo $pharmacy_income + $lab_income;
                         ?>
                     </p>
                 </div>

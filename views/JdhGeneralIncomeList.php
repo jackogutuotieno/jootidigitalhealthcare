@@ -3,12 +3,12 @@
 namespace PHPMaker2023\jootidigitalhealthcare;
 
 // Page object
-$JdhConsultationIncomeList = &$Page;
+$JdhGeneralIncomeList = &$Page;
 ?>
 <?php if (!$Page->isExport()) { ?>
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
-ew.deepAssign(ew.vars, { tables: { jdh_consultation_income: currentTable } });
+ew.deepAssign(ew.vars, { tables: { jdh_general_income: currentTable } });
 var currentPageID = ew.PAGE_ID = "list";
 var currentForm;
 var <?= $Page->FormName ?>;
@@ -58,20 +58,20 @@ loadjs.ready("head", function () {
 <?php } ?>
 <?php if ($Security->canSearch()) { ?>
 <?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
-<form name="fjdh_consultation_incomesrch" id="fjdh_consultation_incomesrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="on">
-<div id="fjdh_consultation_incomesrch_search_panel" class="mb-2 mb-sm-0 <?= $Page->SearchPanelClass ?>"><!-- .ew-search-panel -->
+<form name="fjdh_general_incomesrch" id="fjdh_general_incomesrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="on">
+<div id="fjdh_general_incomesrch_search_panel" class="mb-2 mb-sm-0 <?= $Page->SearchPanelClass ?>"><!-- .ew-search-panel -->
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
-ew.deepAssign(ew.vars, { tables: { jdh_consultation_income: currentTable } });
+ew.deepAssign(ew.vars, { tables: { jdh_general_income: currentTable } });
 var currentForm;
-var fjdh_consultation_incomesrch, currentSearchForm, currentAdvancedSearchForm;
+var fjdh_general_incomesrch, currentSearchForm, currentAdvancedSearchForm;
 loadjs.ready(["wrapper", "head"], function () {
     let $ = jQuery,
         fields = currentTable.fields;
 
     // Form object for search
     let form = new ew.FormBuilder()
-        .setId("fjdh_consultation_incomesrch")
+        .setId("fjdh_general_incomesrch")
         .setPageId("list")
 <?php if ($Page->UseAjaxActions) { ?>
         .setSubmitWithFetch(true)
@@ -90,7 +90,7 @@ loadjs.ready(["wrapper", "head"], function () {
 });
 </script>
 <input type="hidden" name="cmd" value="search">
-<input type="hidden" name="t" value="jdh_consultation_income">
+<input type="hidden" name="t" value="jdh_general_income">
 <div class="ew-extended-search container-fluid ps-2">
 <div class="row mb-0">
     <div class="col-sm-auto px-0 pe-sm-2">
@@ -101,10 +101,10 @@ loadjs.ready(["wrapper", "head"], function () {
                 <span id="searchtype"><?= $Page->BasicSearch->getTypeNameShort() ?></span>
             </button>
             <div class="dropdown-menu dropdown-menu-end">
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "" ? " active" : "" ?>" form="fjdh_consultation_incomesrch" data-ew-action="search-type"><?= $Language->phrase("QuickSearchAuto") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "=" ? " active" : "" ?>" form="fjdh_consultation_incomesrch" data-ew-action="search-type" data-search-type="="><?= $Language->phrase("QuickSearchExact") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "AND" ? " active" : "" ?>" form="fjdh_consultation_incomesrch" data-ew-action="search-type" data-search-type="AND"><?= $Language->phrase("QuickSearchAll") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "OR" ? " active" : "" ?>" form="fjdh_consultation_incomesrch" data-ew-action="search-type" data-search-type="OR"><?= $Language->phrase("QuickSearchAny") ?></button>
+                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "" ? " active" : "" ?>" form="fjdh_general_incomesrch" data-ew-action="search-type"><?= $Language->phrase("QuickSearchAuto") ?></button>
+                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "=" ? " active" : "" ?>" form="fjdh_general_incomesrch" data-ew-action="search-type" data-search-type="="><?= $Language->phrase("QuickSearchExact") ?></button>
+                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "AND" ? " active" : "" ?>" form="fjdh_general_incomesrch" data-ew-action="search-type" data-search-type="AND"><?= $Language->phrase("QuickSearchAll") ?></button>
+                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "OR" ? " active" : "" ?>" form="fjdh_general_incomesrch" data-ew-action="search-type" data-search-type="OR"><?= $Language->phrase("QuickSearchAny") ?></button>
             </div>
         </div>
     </div>
@@ -130,13 +130,13 @@ $Page->showMessage();
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
 <?php } ?>
-<input type="hidden" name="t" value="jdh_consultation_income">
+<input type="hidden" name="t" value="jdh_general_income">
 <?php if ($Page->IsModal) { ?>
 <input type="hidden" name="modal" value="1">
 <?php } ?>
-<div id="gmp_jdh_consultation_income" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
+<div id="gmp_jdh_general_income" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
 <?php if ($Page->TotalRecords > 0 || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
-<table id="tbl_jdh_consultation_incomelist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
+<table id="tbl_jdh_general_incomelist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
 <thead>
     <tr class="ew-table-header">
 <?php
@@ -149,17 +149,20 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
-<?php if ($Page->first_name->Visible) { // first_name ?>
-        <th data-name="first_name" class="<?= $Page->first_name->headerCellClass() ?>"><div id="elh_jdh_consultation_income_first_name" class="jdh_consultation_income_first_name"><?= $Page->renderFieldHeader($Page->first_name) ?></div></th>
+<?php if ($Page->consultation->Visible) { // consultation ?>
+        <th data-name="consultation" class="<?= $Page->consultation->headerCellClass() ?>"><div id="elh_jdh_general_income_consultation" class="jdh_general_income_consultation"><?= $Page->renderFieldHeader($Page->consultation) ?></div></th>
 <?php } ?>
-<?php if ($Page->last_name->Visible) { // last_name ?>
-        <th data-name="last_name" class="<?= $Page->last_name->headerCellClass() ?>"><div id="elh_jdh_consultation_income_last_name" class="jdh_consultation_income_last_name"><?= $Page->renderFieldHeader($Page->last_name) ?></div></th>
+<?php if ($Page->id->Visible) { // id ?>
+        <th data-name="id" class="<?= $Page->id->headerCellClass() ?>"><div id="elh_jdh_general_income_id" class="jdh_general_income_id"><?= $Page->renderFieldHeader($Page->id) ?></div></th>
 <?php } ?>
-<?php if ($Page->service_cost->Visible) { // service_cost ?>
-        <th data-name="service_cost" class="<?= $Page->service_cost->headerCellClass() ?>"><div id="elh_jdh_consultation_income_service_cost" class="jdh_consultation_income_service_cost"><?= $Page->renderFieldHeader($Page->service_cost) ?></div></th>
+<?php if ($Page->name->Visible) { // name ?>
+        <th data-name="name" class="<?= $Page->name->headerCellClass() ?>"><div id="elh_jdh_general_income_name" class="jdh_general_income_name"><?= $Page->renderFieldHeader($Page->name) ?></div></th>
 <?php } ?>
-<?php if ($Page->patient_id->Visible) { // patient_id ?>
-        <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_consultation_income_patient_id" class="jdh_consultation_income_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
+<?php if ($Page->dob->Visible) { // dob ?>
+        <th data-name="dob" class="<?= $Page->dob->headerCellClass() ?>"><div id="elh_jdh_general_income_dob" class="jdh_general_income_dob"><?= $Page->renderFieldHeader($Page->dob) ?></div></th>
+<?php } ?>
+<?php if ($Page->gender->Visible) { // gender ?>
+        <th data-name="gender" class="<?= $Page->gender->headerCellClass() ?>"><div id="elh_jdh_general_income_gender" class="jdh_general_income_gender"><?= $Page->renderFieldHeader($Page->gender) ?></div></th>
 <?php } ?>
 <?php
 // Render list options (header, right)
@@ -180,35 +183,43 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
-    <?php if ($Page->first_name->Visible) { // first_name ?>
-        <td data-name="first_name"<?= $Page->first_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_consultation_income_first_name" class="el_jdh_consultation_income_first_name">
-<span<?= $Page->first_name->viewAttributes() ?>>
-<?= $Page->first_name->getViewValue() ?></span>
+    <?php if ($Page->consultation->Visible) { // consultation ?>
+        <td data-name="consultation"<?= $Page->consultation->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_general_income_consultation" class="el_jdh_general_income_consultation">
+<span<?= $Page->consultation->viewAttributes() ?>>
+<?= $Page->consultation->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->last_name->Visible) { // last_name ?>
-        <td data-name="last_name"<?= $Page->last_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_consultation_income_last_name" class="el_jdh_consultation_income_last_name">
-<span<?= $Page->last_name->viewAttributes() ?>>
-<?= $Page->last_name->getViewValue() ?></span>
+    <?php if ($Page->id->Visible) { // id ?>
+        <td data-name="id"<?= $Page->id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_general_income_id" class="el_jdh_general_income_id">
+<span<?= $Page->id->viewAttributes() ?>>
+<?= $Page->id->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->service_cost->Visible) { // service_cost ?>
-        <td data-name="service_cost"<?= $Page->service_cost->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_consultation_income_service_cost" class="el_jdh_consultation_income_service_cost">
-<span<?= $Page->service_cost->viewAttributes() ?>>
-<?= $Page->service_cost->getViewValue() ?></span>
+    <?php if ($Page->name->Visible) { // name ?>
+        <td data-name="name"<?= $Page->name->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_general_income_name" class="el_jdh_general_income_name">
+<span<?= $Page->name->viewAttributes() ?>>
+<?= $Page->name->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->patient_id->Visible) { // patient_id ?>
-        <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_consultation_income_patient_id" class="el_jdh_consultation_income_patient_id">
-<span<?= $Page->patient_id->viewAttributes() ?>>
-<?= $Page->patient_id->getViewValue() ?></span>
+    <?php if ($Page->dob->Visible) { // dob ?>
+        <td data-name="dob"<?= $Page->dob->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_general_income_dob" class="el_jdh_general_income_dob">
+<span<?= $Page->dob->viewAttributes() ?>>
+<?= $Page->dob->getViewValue() ?></span>
+</span>
+</td>
+    <?php } ?>
+    <?php if ($Page->gender->Visible) { // gender ?>
+        <td data-name="gender"<?= $Page->gender->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_general_income_gender" class="el_jdh_general_income_gender">
+<span<?= $Page->gender->viewAttributes() ?>>
+<?= $Page->gender->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
@@ -241,22 +252,26 @@ $Page->renderListOptions();
 // Render list options (footer, left)
 $Page->ListOptions->render("footer", "left");
 ?>
-    <?php if ($Page->first_name->Visible) { // first_name ?>
-        <td data-name="first_name" class="<?= $Page->first_name->footerCellClass() ?>"><span id="elf_jdh_consultation_income_first_name" class="jdh_consultation_income_first_name">
-        </span></td>
-    <?php } ?>
-    <?php if ($Page->last_name->Visible) { // last_name ?>
-        <td data-name="last_name" class="<?= $Page->last_name->footerCellClass() ?>"><span id="elf_jdh_consultation_income_last_name" class="jdh_consultation_income_last_name">
-        </span></td>
-    <?php } ?>
-    <?php if ($Page->service_cost->Visible) { // service_cost ?>
-        <td data-name="service_cost" class="<?= $Page->service_cost->footerCellClass() ?>"><span id="elf_jdh_consultation_income_service_cost" class="jdh_consultation_income_service_cost">
+    <?php if ($Page->consultation->Visible) { // consultation ?>
+        <td data-name="consultation" class="<?= $Page->consultation->footerCellClass() ?>"><span id="elf_jdh_general_income_consultation" class="jdh_general_income_consultation">
         <span class="ew-aggregate"><?= $Language->phrase("TOTAL") ?></span><span class="ew-aggregate-value">
-        <?= $Page->service_cost->ViewValue ?></span>
+        <?= $Page->consultation->ViewValue ?></span>
         </span></td>
     <?php } ?>
-    <?php if ($Page->patient_id->Visible) { // patient_id ?>
-        <td data-name="patient_id" class="<?= $Page->patient_id->footerCellClass() ?>"><span id="elf_jdh_consultation_income_patient_id" class="jdh_consultation_income_patient_id">
+    <?php if ($Page->id->Visible) { // id ?>
+        <td data-name="id" class="<?= $Page->id->footerCellClass() ?>"><span id="elf_jdh_general_income_id" class="jdh_general_income_id">
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->name->Visible) { // name ?>
+        <td data-name="name" class="<?= $Page->name->footerCellClass() ?>"><span id="elf_jdh_general_income_name" class="jdh_general_income_name">
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->dob->Visible) { // dob ?>
+        <td data-name="dob" class="<?= $Page->dob->footerCellClass() ?>"><span id="elf_jdh_general_income_dob" class="jdh_general_income_dob">
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->gender->Visible) { // gender ?>
+        <td data-name="gender" class="<?= $Page->gender->footerCellClass() ?>"><span id="elf_jdh_general_income_gender" class="jdh_general_income_gender">
         </span></td>
     <?php } ?>
 <?php
@@ -305,7 +320,7 @@ echo GetDebugMessage();
 <script>
 // Field event handlers
 loadjs.ready("head", function() {
-    ew.addEventHandlers("jdh_consultation_income");
+    ew.addEventHandlers("jdh_general_income");
 });
 </script>
 <script>

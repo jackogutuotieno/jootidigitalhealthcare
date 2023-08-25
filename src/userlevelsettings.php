@@ -258,15 +258,6 @@ $USER_LEVEL_PRIVS = [["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_status","5","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_status","6","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_status","7","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_billing","-2","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_billing","0","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_billing","1","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_billing","2","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_billing","3","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_billing","4","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_billing","5","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_billing","6","360"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_billing","7","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_medicine_stock","-2","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_medicine_stock","0","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_medicine_stock","1","0"],
@@ -338,7 +329,16 @@ $USER_LEVEL_PRIVS = [["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_consultation_income","4","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_consultation_income","5","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_consultation_income","6","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_consultation_income","7","0"]];
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_consultation_income","7","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_income","-2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_income","0","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_income","1","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_income","2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_income","3","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_income","4","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_income","5","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_income","6","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_income","7","0"]];
 // User level table info
 $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhappointmentslist"],
     ["jdh_lab_test_categories","jdh_lab_test_categories","Lab Test Categories",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabtestcategorieslist"],
@@ -367,7 +367,6 @@ $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true
     ["jdh_chief_complaints","jdh_chief_complaints","Chief Complaints",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhchiefcomplaintslist"],
     ["jdh_examination_findings","jdh_examination_findings"," Findings",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhexaminationfindingslist"],
     ["jdh_status","jdh_status","jdh status",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhstatuslist"],
-    ["jdh_lab_billing","jdh_lab_billing","Laboratory Billing",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabbillinglist"],
     ["jdh_medicine_stock","jdh_medicine_stock","Medicine Stock",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhmedicinestocklist"],
     ["Dashboard","Dashboard2","Dashboard",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","dashboard2"],
     ["Latest Appointments","Latest_Appointments","Latest Appointments",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","latestappointments"],
@@ -375,4 +374,5 @@ $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true
     ["jdh_pharmacy_income","jdh_pharmacy_income","Pharmacy Income",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhpharmacyincomelist"],
     ["jdh_registration_income","jdh_registration_income","Registration Income",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhregistrationincomelist"],
     ["jdh_doctor_charges","jdh_doctor_charges","Doctor Charges",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhdoctorchargeslist"],
-    ["jdh_consultation_income","jdh_consultation_income","Consultation Income",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhconsultationincomelist"]];
+    ["jdh_consultation_income","jdh_consultation_income","Consultation Income",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhconsultationincomelist"],
+    ["jdh_lab_income","jdh_lab_income","Laboratory Income",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabincomelist"]];
