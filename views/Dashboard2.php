@@ -51,7 +51,7 @@ $Page->showMessage();
                     Patients
                 </div>
                 <div class="card-body d-flex align-items-center pt-0 pb-0">
-                    <p class="card-text"><i class="fas fa-user-nurse"></i></p>
+                    <p class="card-text"><i class="fas fa-users"></i></p>
                     <p class="record-count">
                         <?php
                             $conn =& DbHelper();
@@ -69,7 +69,7 @@ $Page->showMessage();
                     Receptionists
                 </div>
                 <div class="card-body d-flex align-items-center pt-0 pb-0">
-                    <p class="card-text"><i class="fas fa-user-nurse"></i></p>
+                    <p class="card-text"><i class="fas fa-phone-office"></i></p>
                     <p class="record-count">
                         <?php
                             $conn =& DbHelper();
@@ -123,7 +123,7 @@ $Page->showMessage();
                     Lab Technicians
                 </div>
                 <div class="card-body d-flex align-items-center pt-0 pb-0">
-                    <p class="card-text"><i class="fas fa-user-nurse"></i></p>
+                    <p class="card-text"><i class="fas fa-flask-vial"></i></p>
                     <p class="record-count">
                         <?php
                             $conn =& DbHelper();
@@ -141,7 +141,7 @@ $Page->showMessage();
                     Pharmacists
                 </div>
                 <div class="card-body d-flex align-items-center pt-0 pb-0">
-                    <p class="card-text"><i class="fas fa-user-nurse"></i></p>
+                    <p class="card-text"><i class="fas fa-pills"></i></p>
                     <p class="record-count">
                         <?php
                             $conn =& DbHelper();
@@ -159,7 +159,7 @@ $Page->showMessage();
                     Accountants
                 </div>
                 <div class="card-body d-flex align-items-center pt-0 pb-0">
-                    <p class="card-text"><i class="fas fa-user-nurse"></i></p>
+                    <p class="card-text"><i class="fas fa-money-bill-transfer"></i></p>
                     <p class="record-count">
                         <?php
                             $conn =& DbHelper();
@@ -174,10 +174,28 @@ $Page->showMessage();
         <div class="col-lg-3 col-md-6 col-sm-12">
             <div class="card counters">
                 <div class="card-header">
+                    Inventory Managers
+                </div>
+                <div class="card-body d-flex align-items-center pt-0 pb-0">
+                    <p class="card-text"><i class="fas fa-money-bill-transfer"></i></p>
+                    <p class="record-count">
+                        <?php
+                            $conn =& DbHelper();
+                            $sql = "SELECT COUNT(*) FROM jdh_users WHERE role_id=7";
+                            $total_stores = ExecuteScalar($sql);
+                            echo $total_stores;
+                        ?>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 col-md-12">
+            <div class="card counters">
+                <div class="card-header">
                     Lab Income(KES)
                 </div>
                 <div class="card-body d-flex align-items-center pt-0 pb-0">
-                    <p class="card-text"><i class="fas fa-user-nurse"></i></p>
+                    <p class="card-text"><i class="fas fa-file"></i></p>
                     <p class="record-count">
                         <?php
                             $conn =& DbHelper();
@@ -189,13 +207,13 @@ $Page->showMessage();
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-12">
+        <div class="col-lg-6 col-md-12">
             <div class="card counters">
                 <div class="card-header">
                     Pharmacy Income(KES)
                 </div>
                 <div class="card-body d-flex align-items-center pt-0 pb-0">
-                    <p class="card-text"><i class="fas fa-user-nurse"></i></p>
+                    <p class="card-text"><i class="fas fa-file"></i></p>
                     <p class="record-count">
                         <?php
                             $conn =& DbHelper();

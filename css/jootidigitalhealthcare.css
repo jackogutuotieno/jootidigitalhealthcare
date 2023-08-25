@@ -19906,13 +19906,13 @@ hr.divider-vertical-blurry {
 .counters .record-count {
   position: relative;
   left: 60px;
-  font-size: 3rem;
+  font-size: 2rem;
   font-weight: 900;
   margin-bottom: 5px;
 }
 
 .counters i {
-  font-size: 2.3rem;
+  font-size: 1.6rem;
   rotate: -25deg;
   opacity: 0.6;
 }
