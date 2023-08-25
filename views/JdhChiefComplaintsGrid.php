@@ -23,8 +23,8 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Add fields
         .setFields([
-            ["id", [fields.id.visible && fields.id.required ? ew.Validators.required(fields.id.caption) : null], fields.id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
+            ["chief_compaints", [fields.chief_compaints.visible && fields.chief_compaints.required ? ew.Validators.required(fields.chief_compaints.caption) : null], fields.chief_compaints.isInvalid],
             ["date_created", [fields.date_created.visible && fields.date_created.required ? ew.Validators.required(fields.date_created.caption) : null, ew.Validators.datetime(fields.date_created.clientFormatPattern)], fields.date_created.isInvalid],
             ["date_updated", [fields.date_updated.visible && fields.date_updated.required ? ew.Validators.required(fields.date_updated.caption) : null, ew.Validators.datetime(fields.date_updated.clientFormatPattern)], fields.date_updated.isInvalid]
         ])
@@ -33,7 +33,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setEmptyRow(
             function (rowIndex) {
                 let fobj = this.getForm(),
-                    fields = [["patient_id",false],["date_created",false],["date_updated",false]];
+                    fields = [["patient_id",false],["chief_compaints",false],["date_created",false],["date_updated",false]];
                 if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
                     return false;
                 return true;
@@ -80,11 +80,11 @@ $Grid->renderListOptions();
 // Render list options (header, left)
 $Grid->ListOptions->render("header", "left");
 ?>
-<?php if ($Grid->id->Visible) { // id ?>
-        <th data-name="id" class="<?= $Grid->id->headerCellClass() ?>"><div id="elh_jdh_chief_complaints_id" class="jdh_chief_complaints_id"><?= $Grid->renderFieldHeader($Grid->id) ?></div></th>
-<?php } ?>
 <?php if ($Grid->patient_id->Visible) { // patient_id ?>
         <th data-name="patient_id" class="<?= $Grid->patient_id->headerCellClass() ?>"><div id="elh_jdh_chief_complaints_patient_id" class="jdh_chief_complaints_patient_id"><?= $Grid->renderFieldHeader($Grid->patient_id) ?></div></th>
+<?php } ?>
+<?php if ($Grid->chief_compaints->Visible) { // chief_compaints ?>
+        <th data-name="chief_compaints" class="<?= $Grid->chief_compaints->headerCellClass() ?>"><div id="elh_jdh_chief_complaints_chief_compaints" class="jdh_chief_complaints_chief_compaints"><?= $Grid->renderFieldHeader($Grid->chief_compaints) ?></div></th>
 <?php } ?>
 <?php if ($Grid->date_created->Visible) { // date_created ?>
         <th data-name="date_created" class="<?= $Grid->date_created->headerCellClass() ?>"><div id="elh_jdh_chief_complaints_date_created" class="jdh_chief_complaints_date_created"><?= $Grid->renderFieldHeader($Grid->date_created) ?></div></th>
@@ -119,33 +119,6 @@ while ($Grid->RecordCount < $Grid->StopRecord) {
 // Render list options (body, left)
 $Grid->ListOptions->render("body", "left", $Grid->RowCount);
 ?>
-    <?php if ($Grid->id->Visible) { // id ?>
-        <td data-name="id"<?= $Grid->id->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_chief_complaints_id" class="el_jdh_chief_complaints_id"></span>
-<input type="hidden" data-table="jdh_chief_complaints" data-field="x_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_id" id="o<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->OldValue) ?>">
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_chief_complaints_id" class="el_jdh_chief_complaints_id">
-<span<?= $Grid->id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Grid->id->getDisplayValue($Grid->id->EditValue))) ?>"></span>
-<input type="hidden" data-table="jdh_chief_complaints" data-field="x_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_id" id="x<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->CurrentValue) ?>">
-</span>
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_chief_complaints_id" class="el_jdh_chief_complaints_id">
-<span<?= $Grid->id->viewAttributes() ?>>
-<?= $Grid->id->getViewValue() ?></span>
-</span>
-<?php if ($Grid->isConfirm()) { ?>
-<input type="hidden" data-table="jdh_chief_complaints" data-field="x_id" data-hidden="1" name="fjdh_chief_complaintsgrid$x<?= $Grid->RowIndex ?>_id" id="fjdh_chief_complaintsgrid$x<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->FormValue) ?>">
-<input type="hidden" data-table="jdh_chief_complaints" data-field="x_id" data-hidden="1" data-old name="fjdh_chief_complaintsgrid$o<?= $Grid->RowIndex ?>_id" id="fjdh_chief_complaintsgrid$o<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->OldValue) ?>">
-<?php } ?>
-<?php } ?>
-</td>
-    <?php } else { ?>
-            <input type="hidden" data-table="jdh_chief_complaints" data-field="x_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_id" id="x<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->CurrentValue) ?>">
-    <?php } ?>
     <?php if ($Grid->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Grid->patient_id->cellAttributes() ?>>
 <?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
@@ -237,6 +210,33 @@ loadjs.ready("fjdh_chief_complaintsgrid", function() {
 <?php if ($Grid->isConfirm()) { ?>
 <input type="hidden" data-table="jdh_chief_complaints" data-field="x_patient_id" data-hidden="1" name="fjdh_chief_complaintsgrid$x<?= $Grid->RowIndex ?>_patient_id" id="fjdh_chief_complaintsgrid$x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->FormValue) ?>">
 <input type="hidden" data-table="jdh_chief_complaints" data-field="x_patient_id" data-hidden="1" data-old name="fjdh_chief_complaintsgrid$o<?= $Grid->RowIndex ?>_patient_id" id="fjdh_chief_complaintsgrid$o<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->chief_compaints->Visible) { // chief_compaints ?>
+        <td data-name="chief_compaints"<?= $Grid->chief_compaints->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_chief_complaints_chief_compaints" class="el_jdh_chief_complaints_chief_compaints">
+<textarea data-table="jdh_chief_complaints" data-field="x_chief_compaints" name="x<?= $Grid->RowIndex ?>_chief_compaints" id="x<?= $Grid->RowIndex ?>_chief_compaints" cols="35" rows="4" placeholder="<?= HtmlEncode($Grid->chief_compaints->getPlaceHolder()) ?>"<?= $Grid->chief_compaints->editAttributes() ?>><?= $Grid->chief_compaints->EditValue ?></textarea>
+<div class="invalid-feedback"><?= $Grid->chief_compaints->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_chief_complaints" data-field="x_chief_compaints" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_chief_compaints" id="o<?= $Grid->RowIndex ?>_chief_compaints" value="<?= HtmlEncode($Grid->chief_compaints->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_chief_complaints_chief_compaints" class="el_jdh_chief_complaints_chief_compaints">
+<textarea data-table="jdh_chief_complaints" data-field="x_chief_compaints" name="x<?= $Grid->RowIndex ?>_chief_compaints" id="x<?= $Grid->RowIndex ?>_chief_compaints" cols="35" rows="4" placeholder="<?= HtmlEncode($Grid->chief_compaints->getPlaceHolder()) ?>"<?= $Grid->chief_compaints->editAttributes() ?>><?= $Grid->chief_compaints->EditValue ?></textarea>
+<div class="invalid-feedback"><?= $Grid->chief_compaints->getErrorMessage() ?></div>
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_chief_complaints_chief_compaints" class="el_jdh_chief_complaints_chief_compaints">
+<span<?= $Grid->chief_compaints->viewAttributes() ?>>
+<?= $Grid->chief_compaints->getViewValue() ?></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_chief_complaints" data-field="x_chief_compaints" data-hidden="1" name="fjdh_chief_complaintsgrid$x<?= $Grid->RowIndex ?>_chief_compaints" id="fjdh_chief_complaintsgrid$x<?= $Grid->RowIndex ?>_chief_compaints" value="<?= HtmlEncode($Grid->chief_compaints->FormValue) ?>">
+<input type="hidden" data-table="jdh_chief_complaints" data-field="x_chief_compaints" data-hidden="1" data-old name="fjdh_chief_complaintsgrid$o<?= $Grid->RowIndex ?>_chief_compaints" id="fjdh_chief_complaintsgrid$o<?= $Grid->RowIndex ?>_chief_compaints" value="<?= HtmlEncode($Grid->chief_compaints->OldValue) ?>">
 <?php } ?>
 <?php } ?>
 </td>

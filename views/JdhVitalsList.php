@@ -25,7 +25,6 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Add fields
         .setFields([
-            ["vitals_id", [fields.vitals_id.visible && fields.vitals_id.required ? ew.Validators.required(fields.vitals_id.caption) : null], fields.vitals_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["pressure", [fields.pressure.visible && fields.pressure.required ? ew.Validators.required(fields.pressure.caption) : null], fields.pressure.isInvalid],
             ["height", [fields.height.visible && fields.height.required ? ew.Validators.required(fields.height.caption) : null, ew.Validators.float], fields.height.isInvalid],
@@ -193,9 +192,6 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
-<?php if ($Page->vitals_id->Visible) { // vitals_id ?>
-        <th data-name="vitals_id" class="<?= $Page->vitals_id->headerCellClass() ?>"><div id="elh_jdh_vitals_vitals_id" class="jdh_vitals_vitals_id"><?= $Page->renderFieldHeader($Page->vitals_id) ?></div></th>
-<?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_vitals_patient_id" class="jdh_vitals_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
 <?php } ?>
@@ -245,29 +241,6 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
-    <?php if ($Page->vitals_id->Visible) { // vitals_id ?>
-        <td data-name="vitals_id"<?= $Page->vitals_id->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_vitals_id" class="el_jdh_vitals_vitals_id"></span>
-<input type="hidden" data-table="jdh_vitals" data-field="x_vitals_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_vitals_id" id="o<?= $Page->RowIndex ?>_vitals_id" value="<?= HtmlEncode($Page->vitals_id->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_vitals_id" class="el_jdh_vitals_vitals_id">
-<span<?= $Page->vitals_id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->vitals_id->getDisplayValue($Page->vitals_id->EditValue))) ?>"></span>
-<input type="hidden" data-table="jdh_vitals" data-field="x_vitals_id" data-hidden="1" name="x<?= $Page->RowIndex ?>_vitals_id" id="x<?= $Page->RowIndex ?>_vitals_id" value="<?= HtmlEncode($Page->vitals_id->CurrentValue) ?>">
-</span>
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_vitals_id" class="el_jdh_vitals_vitals_id">
-<span<?= $Page->vitals_id->viewAttributes() ?>>
-<?= $Page->vitals_id->getViewValue() ?></span>
-</span>
-<?php } ?>
-</td>
-    <?php } else { ?>
-            <input type="hidden" data-table="jdh_vitals" data-field="x_vitals_id" data-hidden="1" name="x<?= $Page->RowIndex ?>_vitals_id" id="x<?= $Page->RowIndex ?>_vitals_id" value="<?= HtmlEncode($Page->vitals_id->CurrentValue) ?>">
-    <?php } ?>
     <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
 <?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>

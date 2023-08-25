@@ -558,7 +558,7 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
 
         // Set up list options
         $this->setupListOptions();
-        $this->visit_id->setVisibility();
+        $this->visit_id->Visible = false;
         $this->patient_id->setVisibility();
         $this->visit_type_id->setVisibility();
         $this->user_id->setVisibility();
@@ -1232,7 +1232,6 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
     // Reset form status
     public function resetFormError()
     {
-        $this->visit_id->clearErrorMessage();
         $this->patient_id->clearErrorMessage();
         $this->visit_type_id->clearErrorMessage();
         $this->user_id->clearErrorMessage();
@@ -1631,12 +1630,6 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
         $CurrentForm->FormName = $this->FormName;
         $validate = !Config("SERVER_VALIDATE");
 
-        // Check field name 'visit_id' first before field var 'x_visit_id'
-        $val = $CurrentForm->hasValue("visit_id") ? $CurrentForm->getValue("visit_id") : $CurrentForm->getValue("x_visit_id");
-        if (!$this->visit_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->visit_id->setFormValue($val);
-        }
-
         // Check field name 'patient_id' first before field var 'x_patient_id'
         $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
         if (!$this->patient_id->IsDetailKey) {
@@ -1701,6 +1694,12 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
         }
         if ($CurrentForm->hasValue("o_visit_date")) {
             $this->visit_date->setOldValue($CurrentForm->getValue("o_visit_date"));
+        }
+
+        // Check field name 'visit_id' first before field var 'x_visit_id'
+        $val = $CurrentForm->hasValue("visit_id") ? $CurrentForm->getValue("visit_id") : $CurrentForm->getValue("x_visit_id");
+        if (!$this->visit_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->visit_id->setFormValue($val);
         }
     }
 
@@ -1987,10 +1986,6 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
             $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
             $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
 
-            // visit_id
-            $this->visit_id->HrefValue = "";
-            $this->visit_id->TooltipValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
@@ -2011,8 +2006,6 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
             $this->visit_date->HrefValue = "";
             $this->visit_date->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
-            // visit_id
-
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -2155,9 +2148,6 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
 
             // Add refer script
 
-            // visit_id
-            $this->visit_id->HrefValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
 
@@ -2173,11 +2163,6 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
             // visit_date
             $this->visit_date->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // visit_id
-            $this->visit_id->setupEditAttributes();
-            $this->visit_id->EditValue = $this->visit_id->CurrentValue;
-            $this->visit_id->EditValue = FormatNumber($this->visit_id->EditValue, $this->visit_id->formatPattern());
-
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -2320,9 +2305,6 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
 
             // Edit refer script
 
-            // visit_id
-            $this->visit_id->HrefValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
 
@@ -2358,11 +2340,6 @@ class JdhPatientVisitsGrid extends JdhPatientVisits
             return true;
         }
         $validateForm = true;
-        if ($this->visit_id->Required) {
-            if (!$this->visit_id->IsDetailKey && EmptyValue($this->visit_id->FormValue)) {
-                $this->visit_id->addErrorMessage(str_replace("%s", $this->visit_id->caption(), $this->visit_id->RequiredErrorMessage));
-            }
-        }
         if ($this->patient_id->Required) {
             if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
                 $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));

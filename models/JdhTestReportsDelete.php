@@ -370,11 +370,11 @@ class JdhTestReportsDelete extends JdhTestReports
         // View
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->report_id->setVisibility();
+        $this->report_id->Visible = false;
         $this->request_id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->report_findings->Visible = false;
-        $this->report_attachment->Visible = false;
+        $this->report_findings->setVisibility();
+        $this->report_attachment->setVisibility();
         $this->report_submittedby_user_id->Visible = false;
         $this->report_date->setVisibility();
 
@@ -687,6 +687,17 @@ class JdhTestReportsDelete extends JdhTestReports
                 $this->patient_id->ViewValue = null;
             }
 
+            // report_findings
+            $this->report_findings->ViewValue = $this->report_findings->CurrentValue;
+
+            // report_attachment
+            if (!EmptyValue($this->report_attachment->Upload->DbValue)) {
+                $this->report_attachment->ViewValue = $this->report_id->CurrentValue;
+                $this->report_attachment->IsBlobImage = IsImageFile(ContentExtension($this->report_attachment->Upload->DbValue));
+            } else {
+                $this->report_attachment->ViewValue = "";
+            }
+
             // report_submittedby_user_id
             $this->report_submittedby_user_id->ViewValue = $this->report_submittedby_user_id->CurrentValue;
             $this->report_submittedby_user_id->ViewValue = FormatNumber($this->report_submittedby_user_id->ViewValue, $this->report_submittedby_user_id->formatPattern());
@@ -695,10 +706,6 @@ class JdhTestReportsDelete extends JdhTestReports
             $this->report_date->ViewValue = $this->report_date->CurrentValue;
             $this->report_date->ViewValue = FormatDateTime($this->report_date->ViewValue, $this->report_date->formatPattern());
 
-            // report_id
-            $this->report_id->HrefValue = "";
-            $this->report_id->TooltipValue = "";
-
             // request_id
             $this->request_id->HrefValue = "";
             $this->request_id->TooltipValue = "";
@@ -706,6 +713,26 @@ class JdhTestReportsDelete extends JdhTestReports
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
+
+            // report_findings
+            $this->report_findings->HrefValue = "";
+            $this->report_findings->TooltipValue = "";
+
+            // report_attachment
+            if (!empty($this->report_attachment->Upload->DbValue)) {
+                $this->report_attachment->HrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
+                $this->report_attachment->LinkAttrs["target"] = "";
+                if ($this->report_attachment->IsBlobImage && empty($this->report_attachment->LinkAttrs["target"])) {
+                    $this->report_attachment->LinkAttrs["target"] = "_blank";
+                }
+                if ($this->isExport()) {
+                    $this->report_attachment->HrefValue = FullUrl($this->report_attachment->HrefValue, "href");
+                }
+            } else {
+                $this->report_attachment->HrefValue = "";
+            }
+            $this->report_attachment->ExportHrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
+            $this->report_attachment->TooltipValue = "";
 
             // report_date
             $this->report_date->HrefValue = "";

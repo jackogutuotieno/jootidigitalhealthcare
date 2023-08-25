@@ -370,7 +370,7 @@ class JdhPrescriptionsDelete extends JdhPrescriptions
         // View
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->prescription_id->setVisibility();
+        $this->prescription_id->Visible = false;
         $this->patient_id->setVisibility();
         $this->prescription_title->setVisibility();
         $this->medicine_id->setVisibility();
@@ -749,10 +749,6 @@ class JdhPrescriptionsDelete extends JdhPrescriptions
             // submitted_by_user_id
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
-
-            // prescription_id
-            $this->prescription_id->HrefValue = "";
-            $this->prescription_id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";

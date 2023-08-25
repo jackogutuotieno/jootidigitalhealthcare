@@ -561,9 +561,9 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
 
         // Set up list options
         $this->setupListOptions();
-        $this->id->setVisibility();
+        $this->id->Visible = false;
         $this->patient_id->setVisibility();
-        $this->chief_compaints->Visible = false;
+        $this->chief_compaints->setVisibility();
         $this->addedby_user_id->Visible = false;
         $this->modifiedby_user_id->Visible = false;
         $this->date_created->setVisibility();
@@ -1134,6 +1134,9 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
         if ($CurrentForm->hasValue("x_patient_id") && $CurrentForm->hasValue("o_patient_id") && $this->patient_id->CurrentValue != $this->patient_id->DefaultValue) {
             return false;
         }
+        if ($CurrentForm->hasValue("x_chief_compaints") && $CurrentForm->hasValue("o_chief_compaints") && $this->chief_compaints->CurrentValue != $this->chief_compaints->DefaultValue) {
+            return false;
+        }
         if ($CurrentForm->hasValue("x_date_created") && $CurrentForm->hasValue("o_date_created") && $this->date_created->CurrentValue != $this->date_created->DefaultValue) {
             return false;
         }
@@ -1225,8 +1228,8 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
     // Reset form status
     public function resetFormError()
     {
-        $this->id->clearErrorMessage();
         $this->patient_id->clearErrorMessage();
+        $this->chief_compaints->clearErrorMessage();
         $this->date_created->clearErrorMessage();
         $this->date_updated->clearErrorMessage();
     }
@@ -1312,6 +1315,14 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
 
+        // "sequence"
+        $item = &$this->ListOptions->add("sequence");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = true;
+        $item->OnLeft = true; // Always on left
+        $item->ShowInDropDown = false;
+        $item->ShowInButtonGroup = false;
+
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
@@ -1380,6 +1391,10 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
                 }
             }
         }
+
+        // "sequence"
+        $opt = $this->ListOptions["sequence"];
+        $opt->Body = FormatSequenceNumber($this->RecordCount);
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1647,12 +1662,6 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
         $CurrentForm->FormName = $this->FormName;
         $validate = !Config("SERVER_VALIDATE");
 
-        // Check field name 'id' first before field var 'x_id'
-        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
-        if (!$this->id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->id->setFormValue($val);
-        }
-
         // Check field name 'patient_id' first before field var 'x_patient_id'
         $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
         if (!$this->patient_id->IsDetailKey) {
@@ -1664,6 +1673,19 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
         }
         if ($CurrentForm->hasValue("o_patient_id")) {
             $this->patient_id->setOldValue($CurrentForm->getValue("o_patient_id"));
+        }
+
+        // Check field name 'chief_compaints' first before field var 'x_chief_compaints'
+        $val = $CurrentForm->hasValue("chief_compaints") ? $CurrentForm->getValue("chief_compaints") : $CurrentForm->getValue("x_chief_compaints");
+        if (!$this->chief_compaints->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->chief_compaints->Visible = false; // Disable update for API request
+            } else {
+                $this->chief_compaints->setFormValue($val);
+            }
+        }
+        if ($CurrentForm->hasValue("o_chief_compaints")) {
+            $this->chief_compaints->setOldValue($CurrentForm->getValue("o_chief_compaints"));
         }
 
         // Check field name 'date_created' first before field var 'x_date_created'
@@ -1693,6 +1715,12 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
         if ($CurrentForm->hasValue("o_date_updated")) {
             $this->date_updated->setOldValue($CurrentForm->getValue("o_date_updated"));
         }
+
+        // Check field name 'id' first before field var 'x_id'
+        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
+        if (!$this->id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->id->setFormValue($val);
+        }
     }
 
     // Restore form values
@@ -1703,6 +1731,7 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
             $this->id->CurrentValue = $this->id->FormValue;
         }
         $this->patient_id->CurrentValue = $this->patient_id->FormValue;
+        $this->chief_compaints->CurrentValue = $this->chief_compaints->FormValue;
         $this->date_created->CurrentValue = $this->date_created->FormValue;
         $this->date_created->CurrentValue = UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern());
         $this->date_updated->CurrentValue = $this->date_updated->FormValue;
@@ -1894,6 +1923,9 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
                 $this->patient_id->ViewValue = null;
             }
 
+            // chief_compaints
+            $this->chief_compaints->ViewValue = $this->chief_compaints->CurrentValue;
+
             // addedby_user_id
             $this->addedby_user_id->ViewValue = $this->addedby_user_id->CurrentValue;
             $this->addedby_user_id->ViewValue = FormatNumber($this->addedby_user_id->ViewValue, $this->addedby_user_id->formatPattern());
@@ -1910,13 +1942,13 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
             $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
             $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
 
-            // id
-            $this->id->HrefValue = "";
-            $this->id->TooltipValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
+
+            // chief_compaints
+            $this->chief_compaints->HrefValue = "";
+            $this->chief_compaints->TooltipValue = "";
 
             // date_created
             $this->date_created->HrefValue = "";
@@ -1926,8 +1958,6 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
             $this->date_updated->HrefValue = "";
             $this->date_updated->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
-            // id
-
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -1980,6 +2010,11 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
                 }
                 $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
             }
+
+            // chief_compaints
+            $this->chief_compaints->setupEditAttributes();
+            $this->chief_compaints->EditValue = HtmlEncode($this->chief_compaints->CurrentValue);
+            $this->chief_compaints->PlaceHolder = RemoveHtml($this->chief_compaints->caption());
 
             // date_created
             $this->date_created->setupEditAttributes();
@@ -1993,11 +2028,11 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
 
             // Add refer script
 
-            // id
-            $this->id->HrefValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
+
+            // chief_compaints
+            $this->chief_compaints->HrefValue = "";
 
             // date_created
             $this->date_created->HrefValue = "";
@@ -2005,10 +2040,6 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
             // date_updated
             $this->date_updated->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // id
-            $this->id->setupEditAttributes();
-            $this->id->EditValue = $this->id->CurrentValue;
-
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -2062,6 +2093,11 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
                 $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
             }
 
+            // chief_compaints
+            $this->chief_compaints->setupEditAttributes();
+            $this->chief_compaints->EditValue = HtmlEncode($this->chief_compaints->CurrentValue);
+            $this->chief_compaints->PlaceHolder = RemoveHtml($this->chief_compaints->caption());
+
             // date_created
             $this->date_created->setupEditAttributes();
             $this->date_created->EditValue = HtmlEncode(FormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()));
@@ -2074,11 +2110,11 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
 
             // Edit refer script
 
-            // id
-            $this->id->HrefValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
+
+            // chief_compaints
+            $this->chief_compaints->HrefValue = "";
 
             // date_created
             $this->date_created->HrefValue = "";
@@ -2106,14 +2142,14 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
             return true;
         }
         $validateForm = true;
-        if ($this->id->Required) {
-            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
-                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
-            }
-        }
         if ($this->patient_id->Required) {
             if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
                 $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->chief_compaints->Required) {
+            if (!$this->chief_compaints->IsDetailKey && EmptyValue($this->chief_compaints->FormValue)) {
+                $this->chief_compaints->addErrorMessage(str_replace("%s", $this->chief_compaints->caption(), $this->chief_compaints->RequiredErrorMessage));
             }
         }
         if ($this->date_created->Required) {
@@ -2245,6 +2281,9 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
         }
         $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, $this->patient_id->ReadOnly);
 
+        // chief_compaints
+        $this->chief_compaints->setDbValueDef($rsnew, $this->chief_compaints->CurrentValue, "", $this->chief_compaints->ReadOnly);
+
         // date_created
         $this->date_created->setDbValueDef($rsnew, UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()), CurrentDate(), $this->date_created->ReadOnly);
 
@@ -2302,6 +2341,9 @@ class JdhChiefComplaintsGrid extends JdhChiefComplaints
 
         // patient_id
         $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, false);
+
+        // chief_compaints
+        $this->chief_compaints->setDbValueDef($rsnew, $this->chief_compaints->CurrentValue, "", false);
 
         // date_created
         $this->date_created->setDbValueDef($rsnew, UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()), CurrentDate(), false);

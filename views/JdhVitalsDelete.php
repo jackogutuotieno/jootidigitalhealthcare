@@ -50,9 +50,6 @@ $Page->showMessage();
 <table class="<?= $Page->TableClass ?>">
     <thead>
     <tr class="ew-table-header">
-<?php if ($Page->vitals_id->Visible) { // vitals_id ?>
-        <th class="<?= $Page->vitals_id->headerCellClass() ?>"><span id="elh_jdh_vitals_vitals_id" class="jdh_vitals_vitals_id"><?= $Page->vitals_id->caption() ?></span></th>
-<?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <th class="<?= $Page->patient_id->headerCellClass() ?>"><span id="elh_jdh_vitals_patient_id" class="jdh_vitals_patient_id"><?= $Page->patient_id->caption() ?></span></th>
 <?php } ?>
@@ -104,14 +101,6 @@ while (!$Page->Recordset->EOF) {
     $Page->renderRow();
 ?>
     <tr <?= $Page->rowAttributes() ?>>
-<?php if ($Page->vitals_id->Visible) { // vitals_id ?>
-        <td<?= $Page->vitals_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_vitals_id" class="el_jdh_vitals_vitals_id">
-<span<?= $Page->vitals_id->viewAttributes() ?>>
-<?= $Page->vitals_id->getViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td<?= $Page->patient_id->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_patient_id" class="el_jdh_vitals_patient_id">

@@ -50,9 +50,6 @@ $Page->showMessage();
 <table class="<?= $Page->TableClass ?>">
     <thead>
     <tr class="ew-table-header">
-<?php if ($Page->appointment_id->Visible) { // appointment_id ?>
-        <th class="<?= $Page->appointment_id->headerCellClass() ?>"><span id="elh_jdh_appointments_appointment_id" class="jdh_appointments_appointment_id"><?= $Page->appointment_id->caption() ?></span></th>
-<?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <th class="<?= $Page->patient_id->headerCellClass() ?>"><span id="elh_jdh_appointments_patient_id" class="jdh_appointments_patient_id"><?= $Page->patient_id->caption() ?></span></th>
 <?php } ?>
@@ -92,14 +89,6 @@ while (!$Page->Recordset->EOF) {
     $Page->renderRow();
 ?>
     <tr <?= $Page->rowAttributes() ?>>
-<?php if ($Page->appointment_id->Visible) { // appointment_id ?>
-        <td<?= $Page->appointment_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_id" class="el_jdh_appointments_appointment_id">
-<span<?= $Page->appointment_id->viewAttributes() ?>>
-<?= $Page->appointment_id->getViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td<?= $Page->patient_id->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">

@@ -23,7 +23,6 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Add fields
         .setFields([
-            ["vitals_id", [fields.vitals_id.visible && fields.vitals_id.required ? ew.Validators.required(fields.vitals_id.caption) : null], fields.vitals_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["pressure", [fields.pressure.visible && fields.pressure.required ? ew.Validators.required(fields.pressure.caption) : null], fields.pressure.isInvalid],
             ["height", [fields.height.visible && fields.height.required ? ew.Validators.required(fields.height.caption) : null, ew.Validators.float], fields.height.isInvalid],
@@ -87,9 +86,6 @@ $Grid->renderListOptions();
 // Render list options (header, left)
 $Grid->ListOptions->render("header", "left");
 ?>
-<?php if ($Grid->vitals_id->Visible) { // vitals_id ?>
-        <th data-name="vitals_id" class="<?= $Grid->vitals_id->headerCellClass() ?>"><div id="elh_jdh_vitals_vitals_id" class="jdh_vitals_vitals_id"><?= $Grid->renderFieldHeader($Grid->vitals_id) ?></div></th>
-<?php } ?>
 <?php if ($Grid->patient_id->Visible) { // patient_id ?>
         <th data-name="patient_id" class="<?= $Grid->patient_id->headerCellClass() ?>"><div id="elh_jdh_vitals_patient_id" class="jdh_vitals_patient_id"><?= $Grid->renderFieldHeader($Grid->patient_id) ?></div></th>
 <?php } ?>
@@ -147,33 +143,6 @@ while ($Grid->RecordCount < $Grid->StopRecord) {
 // Render list options (body, left)
 $Grid->ListOptions->render("body", "left", $Grid->RowCount);
 ?>
-    <?php if ($Grid->vitals_id->Visible) { // vitals_id ?>
-        <td data-name="vitals_id"<?= $Grid->vitals_id->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_vitals_vitals_id" class="el_jdh_vitals_vitals_id"></span>
-<input type="hidden" data-table="jdh_vitals" data-field="x_vitals_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_vitals_id" id="o<?= $Grid->RowIndex ?>_vitals_id" value="<?= HtmlEncode($Grid->vitals_id->OldValue) ?>">
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_vitals_vitals_id" class="el_jdh_vitals_vitals_id">
-<span<?= $Grid->vitals_id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Grid->vitals_id->getDisplayValue($Grid->vitals_id->EditValue))) ?>"></span>
-<input type="hidden" data-table="jdh_vitals" data-field="x_vitals_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_vitals_id" id="x<?= $Grid->RowIndex ?>_vitals_id" value="<?= HtmlEncode($Grid->vitals_id->CurrentValue) ?>">
-</span>
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_vitals_vitals_id" class="el_jdh_vitals_vitals_id">
-<span<?= $Grid->vitals_id->viewAttributes() ?>>
-<?= $Grid->vitals_id->getViewValue() ?></span>
-</span>
-<?php if ($Grid->isConfirm()) { ?>
-<input type="hidden" data-table="jdh_vitals" data-field="x_vitals_id" data-hidden="1" name="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_vitals_id" id="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_vitals_id" value="<?= HtmlEncode($Grid->vitals_id->FormValue) ?>">
-<input type="hidden" data-table="jdh_vitals" data-field="x_vitals_id" data-hidden="1" data-old name="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_vitals_id" id="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_vitals_id" value="<?= HtmlEncode($Grid->vitals_id->OldValue) ?>">
-<?php } ?>
-<?php } ?>
-</td>
-    <?php } else { ?>
-            <input type="hidden" data-table="jdh_vitals" data-field="x_vitals_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_vitals_id" id="x<?= $Grid->RowIndex ?>_vitals_id" value="<?= HtmlEncode($Grid->vitals_id->CurrentValue) ?>">
-    <?php } ?>
     <?php if ($Grid->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Grid->patient_id->cellAttributes() ?>>
 <?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>

@@ -23,9 +23,10 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Add fields
         .setFields([
-            ["report_id", [fields.report_id.visible && fields.report_id.required ? ew.Validators.required(fields.report_id.caption) : null], fields.report_id.isInvalid],
             ["request_id", [fields.request_id.visible && fields.request_id.required ? ew.Validators.required(fields.request_id.caption) : null, ew.Validators.integer], fields.request_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
+            ["report_findings", [fields.report_findings.visible && fields.report_findings.required ? ew.Validators.required(fields.report_findings.caption) : null], fields.report_findings.isInvalid],
+            ["report_attachment", [fields.report_attachment.visible && fields.report_attachment.required ? ew.Validators.fileRequired(fields.report_attachment.caption) : null], fields.report_attachment.isInvalid],
             ["report_date", [fields.report_date.visible && fields.report_date.required ? ew.Validators.required(fields.report_date.caption) : null, ew.Validators.datetime(fields.report_date.clientFormatPattern)], fields.report_date.isInvalid]
         ])
 
@@ -33,7 +34,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setEmptyRow(
             function (rowIndex) {
                 let fobj = this.getForm(),
-                    fields = [["request_id",false],["patient_id",false],["report_date",false]];
+                    fields = [["request_id",false],["patient_id",false],["report_findings",false],["report_attachment",false],["report_date",false]];
                 if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
                     return false;
                 return true;
@@ -80,14 +81,17 @@ $Grid->renderListOptions();
 // Render list options (header, left)
 $Grid->ListOptions->render("header", "left");
 ?>
-<?php if ($Grid->report_id->Visible) { // report_id ?>
-        <th data-name="report_id" class="<?= $Grid->report_id->headerCellClass() ?>"><div id="elh_jdh_test_reports_report_id" class="jdh_test_reports_report_id"><?= $Grid->renderFieldHeader($Grid->report_id) ?></div></th>
-<?php } ?>
 <?php if ($Grid->request_id->Visible) { // request_id ?>
         <th data-name="request_id" class="<?= $Grid->request_id->headerCellClass() ?>"><div id="elh_jdh_test_reports_request_id" class="jdh_test_reports_request_id"><?= $Grid->renderFieldHeader($Grid->request_id) ?></div></th>
 <?php } ?>
 <?php if ($Grid->patient_id->Visible) { // patient_id ?>
         <th data-name="patient_id" class="<?= $Grid->patient_id->headerCellClass() ?>"><div id="elh_jdh_test_reports_patient_id" class="jdh_test_reports_patient_id"><?= $Grid->renderFieldHeader($Grid->patient_id) ?></div></th>
+<?php } ?>
+<?php if ($Grid->report_findings->Visible) { // report_findings ?>
+        <th data-name="report_findings" class="<?= $Grid->report_findings->headerCellClass() ?>"><div id="elh_jdh_test_reports_report_findings" class="jdh_test_reports_report_findings"><?= $Grid->renderFieldHeader($Grid->report_findings) ?></div></th>
+<?php } ?>
+<?php if ($Grid->report_attachment->Visible) { // report_attachment ?>
+        <th data-name="report_attachment" class="<?= $Grid->report_attachment->headerCellClass() ?>"><div id="elh_jdh_test_reports_report_attachment" class="jdh_test_reports_report_attachment"><?= $Grid->renderFieldHeader($Grid->report_attachment) ?></div></th>
 <?php } ?>
 <?php if ($Grid->report_date->Visible) { // report_date ?>
         <th data-name="report_date" class="<?= $Grid->report_date->headerCellClass() ?>"><div id="elh_jdh_test_reports_report_date" class="jdh_test_reports_report_date"><?= $Grid->renderFieldHeader($Grid->report_date) ?></div></th>
@@ -119,33 +123,6 @@ while ($Grid->RecordCount < $Grid->StopRecord) {
 // Render list options (body, left)
 $Grid->ListOptions->render("body", "left", $Grid->RowCount);
 ?>
-    <?php if ($Grid->report_id->Visible) { // report_id ?>
-        <td data-name="report_id"<?= $Grid->report_id->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_test_reports_report_id" class="el_jdh_test_reports_report_id"></span>
-<input type="hidden" data-table="jdh_test_reports" data-field="x_report_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_report_id" id="o<?= $Grid->RowIndex ?>_report_id" value="<?= HtmlEncode($Grid->report_id->OldValue) ?>">
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_test_reports_report_id" class="el_jdh_test_reports_report_id">
-<span<?= $Grid->report_id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Grid->report_id->getDisplayValue($Grid->report_id->EditValue))) ?>"></span>
-<input type="hidden" data-table="jdh_test_reports" data-field="x_report_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_report_id" id="x<?= $Grid->RowIndex ?>_report_id" value="<?= HtmlEncode($Grid->report_id->CurrentValue) ?>">
-</span>
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_test_reports_report_id" class="el_jdh_test_reports_report_id">
-<span<?= $Grid->report_id->viewAttributes() ?>>
-<?= $Grid->report_id->getViewValue() ?></span>
-</span>
-<?php if ($Grid->isConfirm()) { ?>
-<input type="hidden" data-table="jdh_test_reports" data-field="x_report_id" data-hidden="1" name="fjdh_test_reportsgrid$x<?= $Grid->RowIndex ?>_report_id" id="fjdh_test_reportsgrid$x<?= $Grid->RowIndex ?>_report_id" value="<?= HtmlEncode($Grid->report_id->FormValue) ?>">
-<input type="hidden" data-table="jdh_test_reports" data-field="x_report_id" data-hidden="1" data-old name="fjdh_test_reportsgrid$o<?= $Grid->RowIndex ?>_report_id" id="fjdh_test_reportsgrid$o<?= $Grid->RowIndex ?>_report_id" value="<?= HtmlEncode($Grid->report_id->OldValue) ?>">
-<?php } ?>
-<?php } ?>
-</td>
-    <?php } else { ?>
-            <input type="hidden" data-table="jdh_test_reports" data-field="x_report_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_report_id" id="x<?= $Grid->RowIndex ?>_report_id" value="<?= HtmlEncode($Grid->report_id->CurrentValue) ?>">
-    <?php } ?>
     <?php if ($Grid->request_id->Visible) { // request_id ?>
         <td data-name="request_id"<?= $Grid->request_id->cellAttributes() ?>>
 <?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
@@ -264,6 +241,151 @@ loadjs.ready("fjdh_test_reportsgrid", function() {
 <?php if ($Grid->isConfirm()) { ?>
 <input type="hidden" data-table="jdh_test_reports" data-field="x_patient_id" data-hidden="1" name="fjdh_test_reportsgrid$x<?= $Grid->RowIndex ?>_patient_id" id="fjdh_test_reportsgrid$x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->FormValue) ?>">
 <input type="hidden" data-table="jdh_test_reports" data-field="x_patient_id" data-hidden="1" data-old name="fjdh_test_reportsgrid$o<?= $Grid->RowIndex ?>_patient_id" id="fjdh_test_reportsgrid$o<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->report_findings->Visible) { // report_findings ?>
+        <td data-name="report_findings"<?= $Grid->report_findings->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_test_reports_report_findings" class="el_jdh_test_reports_report_findings">
+<textarea data-table="jdh_test_reports" data-field="x_report_findings" name="x<?= $Grid->RowIndex ?>_report_findings" id="x<?= $Grid->RowIndex ?>_report_findings" cols="35" rows="4" placeholder="<?= HtmlEncode($Grid->report_findings->getPlaceHolder()) ?>"<?= $Grid->report_findings->editAttributes() ?>><?= $Grid->report_findings->EditValue ?></textarea>
+<div class="invalid-feedback"><?= $Grid->report_findings->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_test_reports" data-field="x_report_findings" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_report_findings" id="o<?= $Grid->RowIndex ?>_report_findings" value="<?= HtmlEncode($Grid->report_findings->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_test_reports_report_findings" class="el_jdh_test_reports_report_findings">
+<textarea data-table="jdh_test_reports" data-field="x_report_findings" name="x<?= $Grid->RowIndex ?>_report_findings" id="x<?= $Grid->RowIndex ?>_report_findings" cols="35" rows="4" placeholder="<?= HtmlEncode($Grid->report_findings->getPlaceHolder()) ?>"<?= $Grid->report_findings->editAttributes() ?>><?= $Grid->report_findings->EditValue ?></textarea>
+<div class="invalid-feedback"><?= $Grid->report_findings->getErrorMessage() ?></div>
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_test_reports_report_findings" class="el_jdh_test_reports_report_findings">
+<span<?= $Grid->report_findings->viewAttributes() ?>>
+<?= $Grid->report_findings->getViewValue() ?></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_test_reports" data-field="x_report_findings" data-hidden="1" name="fjdh_test_reportsgrid$x<?= $Grid->RowIndex ?>_report_findings" id="fjdh_test_reportsgrid$x<?= $Grid->RowIndex ?>_report_findings" value="<?= HtmlEncode($Grid->report_findings->FormValue) ?>">
+<input type="hidden" data-table="jdh_test_reports" data-field="x_report_findings" data-hidden="1" data-old name="fjdh_test_reportsgrid$o<?= $Grid->RowIndex ?>_report_findings" id="fjdh_test_reportsgrid$o<?= $Grid->RowIndex ?>_report_findings" value="<?= HtmlEncode($Grid->report_findings->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->report_attachment->Visible) { // report_attachment ?>
+        <td data-name="report_attachment"<?= $Grid->report_attachment->cellAttributes() ?>>
+<?php if ($Grid->RowAction == "insert") { // Add record ?>
+<?php if (!$Grid->isConfirm()) { ?>
+<span id="el<?= $rowIndex ?>_jdh_test_reports_report_attachment" class="el_jdh_test_reports_report_attachment">
+<div id="fd_x<?= $Grid->RowIndex ?>_report_attachment" class="fileinput-button ew-file-drop-zone">
+    <input
+        type="file"
+        id="x<?= $Grid->RowIndex ?>_report_attachment"
+        name="x<?= $Grid->RowIndex ?>_report_attachment"
+        class="form-control ew-file-input"
+        title="<?= $Grid->report_attachment->title() ?>"
+        lang="<?= CurrentLanguageID() ?>"
+        data-table="jdh_test_reports"
+        data-field="x_report_attachment"
+        data-size="0"
+        data-accept-file-types="<?= $Grid->report_attachment->acceptFileTypes() ?>"
+        data-max-file-size="<?= $Grid->report_attachment->UploadMaxFileSize ?>"
+        data-max-number-of-files="null"
+        data-disable-image-crop="<?= $Grid->report_attachment->ImageCropper ? 0 : 1 ?>"
+        <?= ($Grid->report_attachment->ReadOnly || $Grid->report_attachment->Disabled) ? " disabled" : "" ?>
+        <?= $Grid->report_attachment->editAttributes() ?>
+    >
+    <div class="text-muted ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+</div>
+<div class="invalid-feedback"><?= $Grid->report_attachment->getErrorMessage() ?></div>
+<input type="hidden" name="fn_x<?= $Grid->RowIndex ?>_report_attachment" id= "fn_x<?= $Grid->RowIndex ?>_report_attachment" value="<?= $Grid->report_attachment->Upload->FileName ?>">
+<input type="hidden" name="fa_x<?= $Grid->RowIndex ?>_report_attachment" id= "fa_x<?= $Grid->RowIndex ?>_report_attachment" value="0">
+<table id="ft_x<?= $Grid->RowIndex ?>_report_attachment" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>
+</span>
+<?php } else { ?>
+<span id="el<?= $rowIndex ?>_jdh_test_reports_report_attachment" class="el_jdh_test_reports_report_attachment">
+<div id="fd_x<?= $Grid->RowIndex ?>_report_attachment">
+    <input
+        type="file"
+        id="x<?= $Grid->RowIndex ?>_report_attachment"
+        name="x<?= $Grid->RowIndex ?>_report_attachment"
+        class="form-control ew-file-input d-none"
+        title="<?= $Grid->report_attachment->title() ?>"
+        lang="<?= CurrentLanguageID() ?>"
+        data-table="jdh_test_reports"
+        data-field="x_report_attachment"
+        data-size="0"
+        data-accept-file-types="<?= $Grid->report_attachment->acceptFileTypes() ?>"
+        data-max-file-size="<?= $Grid->report_attachment->UploadMaxFileSize ?>"
+        data-max-number-of-files="null"
+        data-disable-image-crop="<?= $Grid->report_attachment->ImageCropper ? 0 : 1 ?>"
+        <?= $Grid->report_attachment->editAttributes() ?>
+    >
+</div>
+<div class="invalid-feedback"><?= $Grid->report_attachment->getErrorMessage() ?></div>
+<input type="hidden" name="fn_x<?= $Grid->RowIndex ?>_report_attachment" id= "fn_x<?= $Grid->RowIndex ?>_report_attachment" value="<?= $Grid->report_attachment->Upload->FileName ?>">
+<input type="hidden" name="fa_x<?= $Grid->RowIndex ?>_report_attachment" id= "fa_x<?= $Grid->RowIndex ?>_report_attachment" value="0">
+<table id="ft_x<?= $Grid->RowIndex ?>_report_attachment" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>
+</span>
+<?php } ?>
+<input type="hidden" data-table="jdh_test_reports" data-field="x_report_attachment" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_report_attachment" id="o<?= $Grid->RowIndex ?>_report_attachment" value="<?= HtmlEncode($Grid->report_attachment->OldValue) ?>">
+<?php } elseif ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_test_reports_report_attachment" class="el_jdh_test_reports_report_attachment">
+<span<?= $Grid->report_attachment->viewAttributes() ?>>
+<?= GetFileViewTag($Grid->report_attachment, $Grid->report_attachment->getViewValue(), false) ?>
+</span>
+</span>
+<?php } else  { // Edit record ?>
+<?php if (!$Grid->isConfirm()) { ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_test_reports_report_attachment" class="el_jdh_test_reports_report_attachment">
+<div id="fd_x<?= $Grid->RowIndex ?>_report_attachment">
+    <input
+        type="file"
+        id="x<?= $Grid->RowIndex ?>_report_attachment"
+        name="x<?= $Grid->RowIndex ?>_report_attachment"
+        class="form-control ew-file-input d-none"
+        title="<?= $Grid->report_attachment->title() ?>"
+        lang="<?= CurrentLanguageID() ?>"
+        data-table="jdh_test_reports"
+        data-field="x_report_attachment"
+        data-size="0"
+        data-accept-file-types="<?= $Grid->report_attachment->acceptFileTypes() ?>"
+        data-max-file-size="<?= $Grid->report_attachment->UploadMaxFileSize ?>"
+        data-max-number-of-files="null"
+        data-disable-image-crop="<?= $Grid->report_attachment->ImageCropper ? 0 : 1 ?>"
+        <?= $Grid->report_attachment->editAttributes() ?>
+    >
+</div>
+<div class="invalid-feedback"><?= $Grid->report_attachment->getErrorMessage() ?></div>
+<input type="hidden" name="fn_x<?= $Grid->RowIndex ?>_report_attachment" id= "fn_x<?= $Grid->RowIndex ?>_report_attachment" value="<?= $Grid->report_attachment->Upload->FileName ?>">
+<input type="hidden" name="fa_x<?= $Grid->RowIndex ?>_report_attachment" id= "fa_x<?= $Grid->RowIndex ?>_report_attachment" value="<?= (Post("fa_x<?= $Grid->RowIndex ?>_report_attachment") == "0") ? "0" : "1" ?>">
+<table id="ft_x<?= $Grid->RowIndex ?>_report_attachment" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>
+</span>
+<?php } else { ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_test_reports_report_attachment" class="el_jdh_test_reports_report_attachment">
+<div id="fd_x<?= $Grid->RowIndex ?>_report_attachment">
+    <input
+        type="file"
+        id="x<?= $Grid->RowIndex ?>_report_attachment"
+        name="x<?= $Grid->RowIndex ?>_report_attachment"
+        class="form-control ew-file-input d-none"
+        title="<?= $Grid->report_attachment->title() ?>"
+        lang="<?= CurrentLanguageID() ?>"
+        data-table="jdh_test_reports"
+        data-field="x_report_attachment"
+        data-size="0"
+        data-accept-file-types="<?= $Grid->report_attachment->acceptFileTypes() ?>"
+        data-max-file-size="<?= $Grid->report_attachment->UploadMaxFileSize ?>"
+        data-max-number-of-files="null"
+        data-disable-image-crop="<?= $Grid->report_attachment->ImageCropper ? 0 : 1 ?>"
+        <?= $Grid->report_attachment->editAttributes() ?>
+    >
+</div>
+<div class="invalid-feedback"><?= $Grid->report_attachment->getErrorMessage() ?></div>
+<input type="hidden" name="fn_x<?= $Grid->RowIndex ?>_report_attachment" id= "fn_x<?= $Grid->RowIndex ?>_report_attachment" value="<?= $Grid->report_attachment->Upload->FileName ?>">
+<input type="hidden" name="fa_x<?= $Grid->RowIndex ?>_report_attachment" id= "fa_x<?= $Grid->RowIndex ?>_report_attachment" value="<?= (Post("fa_x<?= $Grid->RowIndex ?>_report_attachment") == "0") ? "0" : "1" ?>">
+<table id="ft_x<?= $Grid->RowIndex ?>_report_attachment" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>
+</span>
 <?php } ?>
 <?php } ?>
 </td>

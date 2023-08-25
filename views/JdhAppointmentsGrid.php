@@ -23,7 +23,6 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Add fields
         .setFields([
-            ["appointment_id", [fields.appointment_id.visible && fields.appointment_id.required ? ew.Validators.required(fields.appointment_id.caption) : null], fields.appointment_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null, ew.Validators.integer], fields.patient_id.isInvalid],
             ["appointment_title", [fields.appointment_title.visible && fields.appointment_title.required ? ew.Validators.required(fields.appointment_title.caption) : null], fields.appointment_title.isInvalid],
             ["appointment_start_date", [fields.appointment_start_date.visible && fields.appointment_start_date.required ? ew.Validators.required(fields.appointment_start_date.caption) : null, ew.Validators.datetime(fields.appointment_start_date.clientFormatPattern)], fields.appointment_start_date.isInvalid],
@@ -84,9 +83,6 @@ $Grid->renderListOptions();
 // Render list options (header, left)
 $Grid->ListOptions->render("header", "left");
 ?>
-<?php if ($Grid->appointment_id->Visible) { // appointment_id ?>
-        <th data-name="appointment_id" class="<?= $Grid->appointment_id->headerCellClass() ?>"><div id="elh_jdh_appointments_appointment_id" class="jdh_appointments_appointment_id"><?= $Grid->renderFieldHeader($Grid->appointment_id) ?></div></th>
-<?php } ?>
 <?php if ($Grid->patient_id->Visible) { // patient_id ?>
         <th data-name="patient_id" class="<?= $Grid->patient_id->headerCellClass() ?>"><div id="elh_jdh_appointments_patient_id" class="jdh_appointments_patient_id"><?= $Grid->renderFieldHeader($Grid->patient_id) ?></div></th>
 <?php } ?>
@@ -132,33 +128,6 @@ while ($Grid->RecordCount < $Grid->StopRecord) {
 // Render list options (body, left)
 $Grid->ListOptions->render("body", "left", $Grid->RowCount);
 ?>
-    <?php if ($Grid->appointment_id->Visible) { // appointment_id ?>
-        <td data-name="appointment_id"<?= $Grid->appointment_id->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_id" class="el_jdh_appointments_appointment_id"></span>
-<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_appointment_id" id="o<?= $Grid->RowIndex ?>_appointment_id" value="<?= HtmlEncode($Grid->appointment_id->OldValue) ?>">
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_id" class="el_jdh_appointments_appointment_id">
-<span<?= $Grid->appointment_id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Grid->appointment_id->getDisplayValue($Grid->appointment_id->EditValue))) ?>"></span>
-<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_appointment_id" id="x<?= $Grid->RowIndex ?>_appointment_id" value="<?= HtmlEncode($Grid->appointment_id->CurrentValue) ?>">
-</span>
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_id" class="el_jdh_appointments_appointment_id">
-<span<?= $Grid->appointment_id->viewAttributes() ?>>
-<?= $Grid->appointment_id->getViewValue() ?></span>
-</span>
-<?php if ($Grid->isConfirm()) { ?>
-<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_id" data-hidden="1" name="fjdh_appointmentsgrid$x<?= $Grid->RowIndex ?>_appointment_id" id="fjdh_appointmentsgrid$x<?= $Grid->RowIndex ?>_appointment_id" value="<?= HtmlEncode($Grid->appointment_id->FormValue) ?>">
-<input type="hidden" data-table="jdh_appointments" data-field="x_appointment_id" data-hidden="1" data-old name="fjdh_appointmentsgrid$o<?= $Grid->RowIndex ?>_appointment_id" id="fjdh_appointmentsgrid$o<?= $Grid->RowIndex ?>_appointment_id" value="<?= HtmlEncode($Grid->appointment_id->OldValue) ?>">
-<?php } ?>
-<?php } ?>
-</td>
-    <?php } else { ?>
-            <input type="hidden" data-table="jdh_appointments" data-field="x_appointment_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_appointment_id" id="x<?= $Grid->RowIndex ?>_appointment_id" value="<?= HtmlEncode($Grid->appointment_id->CurrentValue) ?>">
-    <?php } ?>
     <?php if ($Grid->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Grid->patient_id->cellAttributes() ?>>
 <?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>

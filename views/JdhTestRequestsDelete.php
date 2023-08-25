@@ -50,9 +50,6 @@ $Page->showMessage();
 <table class="<?= $Page->TableClass ?>">
     <thead>
     <tr class="ew-table-header">
-<?php if ($Page->request_id->Visible) { // request_id ?>
-        <th class="<?= $Page->request_id->headerCellClass() ?>"><span id="elh_jdh_test_requests_request_id" class="jdh_test_requests_request_id"><?= $Page->request_id->caption() ?></span></th>
-<?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <th class="<?= $Page->patient_id->headerCellClass() ?>"><span id="elh_jdh_test_requests_patient_id" class="jdh_test_requests_patient_id"><?= $Page->patient_id->caption() ?></span></th>
 <?php } ?>
@@ -92,14 +89,6 @@ while (!$Page->Recordset->EOF) {
     $Page->renderRow();
 ?>
     <tr <?= $Page->rowAttributes() ?>>
-<?php if ($Page->request_id->Visible) { // request_id ?>
-        <td<?= $Page->request_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_id" class="el_jdh_test_requests_request_id">
-<span<?= $Page->request_id->viewAttributes() ?>>
-<?= $Page->request_id->getViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td<?= $Page->patient_id->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_test_requests_patient_id" class="el_jdh_test_requests_patient_id">

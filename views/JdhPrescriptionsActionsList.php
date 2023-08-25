@@ -25,10 +25,10 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Add fields
         .setFields([
-            ["id", [fields.id.visible && fields.id.required ? ew.Validators.required(fields.id.caption) : null], fields.id.isInvalid],
             ["medicine_id", [fields.medicine_id.visible && fields.medicine_id.required ? ew.Validators.required(fields.medicine_id.caption) : null], fields.medicine_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
-            ["units_given", [fields.units_given.visible && fields.units_given.required ? ew.Validators.required(fields.units_given.caption) : null, ew.Validators.integer], fields.units_given.isInvalid]
+            ["units_given", [fields.units_given.visible && fields.units_given.required ? ew.Validators.required(fields.units_given.caption) : null, ew.Validators.integer], fields.units_given.isInvalid],
+            ["submission_date", [fields.submission_date.visible && fields.submission_date.required ? ew.Validators.required(fields.submission_date.caption) : null, ew.Validators.datetime(fields.submission_date.clientFormatPattern)], fields.submission_date.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -120,9 +120,6 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
-<?php if ($Page->id->Visible) { // id ?>
-        <th data-name="id" class="<?= $Page->id->headerCellClass() ?>"><div id="elh_jdh_prescriptions_actions_id" class="jdh_prescriptions_actions_id"><?= $Page->renderFieldHeader($Page->id) ?></div></th>
-<?php } ?>
 <?php if ($Page->medicine_id->Visible) { // medicine_id ?>
         <th data-name="medicine_id" class="<?= $Page->medicine_id->headerCellClass() ?>"><div id="elh_jdh_prescriptions_actions_medicine_id" class="jdh_prescriptions_actions_medicine_id"><?= $Page->renderFieldHeader($Page->medicine_id) ?></div></th>
 <?php } ?>
@@ -131,6 +128,9 @@ $Page->ListOptions->render("header", "left");
 <?php } ?>
 <?php if ($Page->units_given->Visible) { // units_given ?>
         <th data-name="units_given" class="<?= $Page->units_given->headerCellClass() ?>"><div id="elh_jdh_prescriptions_actions_units_given" class="jdh_prescriptions_actions_units_given"><?= $Page->renderFieldHeader($Page->units_given) ?></div></th>
+<?php } ?>
+<?php if ($Page->submission_date->Visible) { // submission_date ?>
+        <th data-name="submission_date" class="<?= $Page->submission_date->headerCellClass() ?>"><div id="elh_jdh_prescriptions_actions_submission_date" class="jdh_prescriptions_actions_submission_date"><?= $Page->renderFieldHeader($Page->submission_date) ?></div></th>
 <?php } ?>
 <?php
 // Render list options (header, right)
@@ -151,20 +151,6 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
-    <?php if ($Page->id->Visible) { // id ?>
-        <td data-name="id"<?= $Page->id->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_actions_id" class="el_jdh_prescriptions_actions_id"></span>
-<input type="hidden" data-table="jdh_prescriptions_actions" data-field="x_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_id" id="o<?= $Page->RowIndex ?>_id" value="<?= HtmlEncode($Page->id->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_actions_id" class="el_jdh_prescriptions_actions_id">
-<span<?= $Page->id->viewAttributes() ?>>
-<?= $Page->id->getViewValue() ?></span>
-</span>
-<?php } ?>
-</td>
-    <?php } ?>
     <?php if ($Page->medicine_id->Visible) { // medicine_id ?>
         <td data-name="medicine_id"<?= $Page->medicine_id->cellAttributes() ?>>
 <?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
@@ -274,6 +260,53 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 <span id="el<?= $Page->RowCount ?>_jdh_prescriptions_actions_units_given" class="el_jdh_prescriptions_actions_units_given">
 <span<?= $Page->units_given->viewAttributes() ?>>
 <?= $Page->units_given->getViewValue() ?></span>
+</span>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Page->submission_date->Visible) { // submission_date ?>
+        <td data-name="submission_date"<?= $Page->submission_date->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_actions_submission_date" class="el_jdh_prescriptions_actions_submission_date">
+<input type="<?= $Page->submission_date->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_submission_date" id="x<?= $Page->RowIndex ?>_submission_date" data-table="jdh_prescriptions_actions" data-field="x_submission_date" value="<?= $Page->submission_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->submission_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->submission_date->formatPattern()) ?>"<?= $Page->submission_date->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->submission_date->getErrorMessage() ?></div>
+<?php if (!$Page->submission_date->ReadOnly && !$Page->submission_date->Disabled && !isset($Page->submission_date->EditAttrs["readonly"]) && !isset($Page->submission_date->EditAttrs["disabled"])) { ?>
+<script>
+loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
+    let format = "<?= DateFormat(17) ?>",
+        options = {
+            localization: {
+                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                ...ew.language.phrase("datetimepicker")
+            },
+            display: {
+                icons: {
+                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
+                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
+                },
+                components: {
+                    hours: !!format.match(/h/i),
+                    minutes: !!format.match(/m/),
+                    seconds: !!format.match(/s/i),
+                    useTwentyfourHour: !!format.match(/H/)
+                },
+                theme: ew.isDark() ? "dark" : "auto"
+            },
+            meta: {
+                format
+            }
+        };
+    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_submission_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+});
+</script>
+<?php } ?>
+</span>
+<input type="hidden" data-table="jdh_prescriptions_actions" data-field="x_submission_date" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_submission_date" id="o<?= $Page->RowIndex ?>_submission_date" value="<?= HtmlEncode($Page->submission_date->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_actions_submission_date" class="el_jdh_prescriptions_actions_submission_date">
+<span<?= $Page->submission_date->viewAttributes() ?>>
+<?= $Page->submission_date->getViewValue() ?></span>
 </span>
 <?php } ?>
 </td>

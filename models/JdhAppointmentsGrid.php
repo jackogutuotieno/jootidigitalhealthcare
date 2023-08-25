@@ -550,7 +550,7 @@ class JdhAppointmentsGrid extends JdhAppointments
 
         // Set up list options
         $this->setupListOptions();
-        $this->appointment_id->setVisibility();
+        $this->appointment_id->Visible = false;
         $this->patient_id->setVisibility();
         $this->appointment_title->setVisibility();
         $this->appointment_start_date->setVisibility();
@@ -1161,7 +1161,6 @@ class JdhAppointmentsGrid extends JdhAppointments
     // Reset form status
     public function resetFormError()
     {
-        $this->appointment_id->clearErrorMessage();
         $this->patient_id->clearErrorMessage();
         $this->appointment_title->clearErrorMessage();
         $this->appointment_start_date->clearErrorMessage();
@@ -1251,6 +1250,14 @@ class JdhAppointmentsGrid extends JdhAppointments
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
 
+        // "sequence"
+        $item = &$this->ListOptions->add("sequence");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = true;
+        $item->OnLeft = true; // Always on left
+        $item->ShowInDropDown = false;
+        $item->ShowInButtonGroup = false;
+
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
@@ -1319,6 +1326,10 @@ class JdhAppointmentsGrid extends JdhAppointments
                 }
             }
         }
+
+        // "sequence"
+        $opt = $this->ListOptions["sequence"];
+        $opt->Body = FormatSequenceNumber($this->RecordCount);
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1586,12 +1597,6 @@ class JdhAppointmentsGrid extends JdhAppointments
         $CurrentForm->FormName = $this->FormName;
         $validate = !Config("SERVER_VALIDATE");
 
-        // Check field name 'appointment_id' first before field var 'x_appointment_id'
-        $val = $CurrentForm->hasValue("appointment_id") ? $CurrentForm->getValue("appointment_id") : $CurrentForm->getValue("x_appointment_id");
-        if (!$this->appointment_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->appointment_id->setFormValue($val);
-        }
-
         // Check field name 'patient_id' first before field var 'x_patient_id'
         $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
         if (!$this->patient_id->IsDetailKey) {
@@ -1671,6 +1676,12 @@ class JdhAppointmentsGrid extends JdhAppointments
         }
         if ($CurrentForm->hasValue("o_submission_date")) {
             $this->submission_date->setOldValue($CurrentForm->getValue("o_submission_date"));
+        }
+
+        // Check field name 'appointment_id' first before field var 'x_appointment_id'
+        $val = $CurrentForm->hasValue("appointment_id") ? $CurrentForm->getValue("appointment_id") : $CurrentForm->getValue("x_appointment_id");
+        if (!$this->appointment_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->appointment_id->setFormValue($val);
         }
     }
 
@@ -1912,10 +1923,6 @@ class JdhAppointmentsGrid extends JdhAppointments
             $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
             $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
 
-            // appointment_id
-            $this->appointment_id->HrefValue = "";
-            $this->appointment_id->TooltipValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
@@ -1940,8 +1947,6 @@ class JdhAppointmentsGrid extends JdhAppointments
             $this->submission_date->HrefValue = "";
             $this->submission_date->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
-            // appointment_id
-
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -2024,9 +2029,6 @@ class JdhAppointmentsGrid extends JdhAppointments
 
             // Add refer script
 
-            // appointment_id
-            $this->appointment_id->HrefValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
 
@@ -2045,10 +2047,6 @@ class JdhAppointmentsGrid extends JdhAppointments
             // submission_date
             $this->submission_date->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // appointment_id
-            $this->appointment_id->setupEditAttributes();
-            $this->appointment_id->EditValue = $this->appointment_id->CurrentValue;
-
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -2131,9 +2129,6 @@ class JdhAppointmentsGrid extends JdhAppointments
 
             // Edit refer script
 
-            // appointment_id
-            $this->appointment_id->HrefValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
 
@@ -2172,11 +2167,6 @@ class JdhAppointmentsGrid extends JdhAppointments
             return true;
         }
         $validateForm = true;
-        if ($this->appointment_id->Required) {
-            if (!$this->appointment_id->IsDetailKey && EmptyValue($this->appointment_id->FormValue)) {
-                $this->appointment_id->addErrorMessage(str_replace("%s", $this->appointment_id->caption(), $this->appointment_id->RequiredErrorMessage));
-            }
-        }
         if ($this->patient_id->Required) {
             if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
                 $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));

@@ -50,9 +50,6 @@ $Page->showMessage();
 <table class="<?= $Page->TableClass ?>">
     <thead>
     <tr class="ew-table-header">
-<?php if ($Page->prescription_id->Visible) { // prescription_id ?>
-        <th class="<?= $Page->prescription_id->headerCellClass() ?>"><span id="elh_jdh_prescriptions_prescription_id" class="jdh_prescriptions_prescription_id"><?= $Page->prescription_id->caption() ?></span></th>
-<?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <th class="<?= $Page->patient_id->headerCellClass() ?>"><span id="elh_jdh_prescriptions_patient_id" class="jdh_prescriptions_patient_id"><?= $Page->patient_id->caption() ?></span></th>
 <?php } ?>
@@ -98,14 +95,6 @@ while (!$Page->Recordset->EOF) {
     $Page->renderRow();
 ?>
     <tr <?= $Page->rowAttributes() ?>>
-<?php if ($Page->prescription_id->Visible) { // prescription_id ?>
-        <td<?= $Page->prescription_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_prescription_id" class="el_jdh_prescriptions_prescription_id">
-<span<?= $Page->prescription_id->viewAttributes() ?>>
-<?= $Page->prescription_id->getViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td<?= $Page->patient_id->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_prescriptions_patient_id" class="el_jdh_prescriptions_patient_id">

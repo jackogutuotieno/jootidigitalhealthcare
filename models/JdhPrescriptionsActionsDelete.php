@@ -362,12 +362,12 @@ class JdhPrescriptionsActionsDelete extends JdhPrescriptionsActions
         // View
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->id->setVisibility();
+        $this->id->Visible = false;
         $this->medicine_id->setVisibility();
         $this->patient_id->setVisibility();
         $this->units_given->setVisibility();
         $this->submittedby_user_id->Visible = false;
-        $this->submission_date->Visible = false;
+        $this->submission_date->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -703,10 +703,6 @@ class JdhPrescriptionsActionsDelete extends JdhPrescriptionsActions
             $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
             $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
 
-            // id
-            $this->id->HrefValue = "";
-            $this->id->TooltipValue = "";
-
             // medicine_id
             $this->medicine_id->HrefValue = "";
             $this->medicine_id->TooltipValue = "";
@@ -718,6 +714,10 @@ class JdhPrescriptionsActionsDelete extends JdhPrescriptionsActions
             // units_given
             $this->units_given->HrefValue = "";
             $this->units_given->TooltipValue = "";
+
+            // submission_date
+            $this->submission_date->HrefValue = "";
+            $this->submission_date->TooltipValue = "";
         }
 
         // Call Row Rendered event

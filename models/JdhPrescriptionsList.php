@@ -655,7 +655,7 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
         // Setup import options
         $this->setupImportOptions();
-        $this->prescription_id->setVisibility();
+        $this->prescription_id->Visible = false;
         $this->patient_id->setVisibility();
         $this->prescription_title->setVisibility();
         $this->medicine_id->setVisibility();
@@ -1330,7 +1330,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
-            $this->updateSort($this->prescription_id); // prescription_id
             $this->updateSort($this->patient_id); // patient_id
             $this->updateSort($this->prescription_title); // prescription_title
             $this->updateSort($this->medicine_id); // medicine_id
@@ -1431,6 +1430,14 @@ class JdhPrescriptionsList extends JdhPrescriptions
         $item->ShowInDropDown = false;
         $item->ShowInButtonGroup = false;
 
+        // "sequence"
+        $item = &$this->ListOptions->add("sequence");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = true;
+        $item->OnLeft = true; // Always on left
+        $item->ShowInDropDown = false;
+        $item->ShowInButtonGroup = false;
+
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
@@ -1468,6 +1475,10 @@ class JdhPrescriptionsList extends JdhPrescriptions
 
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
+
+        // "sequence"
+        $opt = $this->ListOptions["sequence"];
+        $opt->Body = FormatSequenceNumber($this->RecordCount);
         $pageUrl = $this->pageUrl(false);
         if ($this->CurrentMode == "view") {
             // "view"
@@ -1583,7 +1594,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("prescription_id", $this->createColumnOption("prescription_id"));
             $option->add("patient_id", $this->createColumnOption("patient_id"));
             $option->add("prescription_title", $this->createColumnOption("prescription_title"));
             $option->add("medicine_id", $this->createColumnOption("medicine_id"));
@@ -2139,10 +2149,6 @@ class JdhPrescriptionsList extends JdhPrescriptions
             // submitted_by_user_id
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
-
-            // prescription_id
-            $this->prescription_id->HrefValue = "";
-            $this->prescription_id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";

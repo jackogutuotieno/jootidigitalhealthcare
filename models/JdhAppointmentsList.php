@@ -647,7 +647,7 @@ class JdhAppointmentsList extends JdhAppointments
 
         // Setup import options
         $this->setupImportOptions();
-        $this->appointment_id->setVisibility();
+        $this->appointment_id->Visible = false;
         $this->patient_id->setVisibility();
         $this->appointment_title->setVisibility();
         $this->appointment_start_date->setVisibility();
@@ -1302,7 +1302,6 @@ class JdhAppointmentsList extends JdhAppointments
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
-            $this->updateSort($this->appointment_id); // appointment_id
             $this->updateSort($this->patient_id); // patient_id
             $this->updateSort($this->appointment_title); // appointment_title
             $this->updateSort($this->appointment_start_date); // appointment_start_date
@@ -1400,6 +1399,14 @@ class JdhAppointmentsList extends JdhAppointments
         $item->ShowInDropDown = false;
         $item->ShowInButtonGroup = false;
 
+        // "sequence"
+        $item = &$this->ListOptions->add("sequence");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = true;
+        $item->OnLeft = true; // Always on left
+        $item->ShowInDropDown = false;
+        $item->ShowInButtonGroup = false;
+
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
@@ -1437,6 +1444,10 @@ class JdhAppointmentsList extends JdhAppointments
 
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
+
+        // "sequence"
+        $opt = $this->ListOptions["sequence"];
+        $opt->Body = FormatSequenceNumber($this->RecordCount);
         $pageUrl = $this->pageUrl(false);
         if ($this->CurrentMode == "view") {
             // "view"
@@ -1552,7 +1563,6 @@ class JdhAppointmentsList extends JdhAppointments
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("appointment_id", $this->createColumnOption("appointment_id"));
             $option->add("patient_id", $this->createColumnOption("patient_id"));
             $option->add("appointment_title", $this->createColumnOption("appointment_title"));
             $option->add("appointment_start_date", $this->createColumnOption("appointment_start_date"));
@@ -2076,10 +2086,6 @@ class JdhAppointmentsList extends JdhAppointments
             // subbmitted_by_user_id
             $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
             $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
-
-            // appointment_id
-            $this->appointment_id->HrefValue = "";
-            $this->appointment_id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";

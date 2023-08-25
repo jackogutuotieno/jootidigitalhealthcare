@@ -550,12 +550,12 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
 
         // Set up list options
         $this->setupListOptions();
-        $this->id->setVisibility();
+        $this->id->Visible = false;
         $this->medicine_id->setVisibility();
         $this->patient_id->setVisibility();
         $this->units_given->setVisibility();
         $this->submittedby_user_id->Visible = false;
-        $this->submission_date->Visible = false;
+        $this->submission_date->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -1064,6 +1064,9 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
         if ($CurrentForm->hasValue("x_units_given") && $CurrentForm->hasValue("o_units_given") && $this->units_given->CurrentValue != $this->units_given->DefaultValue) {
             return false;
         }
+        if ($CurrentForm->hasValue("x_submission_date") && $CurrentForm->hasValue("o_submission_date") && $this->submission_date->CurrentValue != $this->submission_date->DefaultValue) {
+            return false;
+        }
         return true;
     }
 
@@ -1149,10 +1152,10 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
     // Reset form status
     public function resetFormError()
     {
-        $this->id->clearErrorMessage();
         $this->medicine_id->clearErrorMessage();
         $this->patient_id->clearErrorMessage();
         $this->units_given->clearErrorMessage();
+        $this->submission_date->clearErrorMessage();
     }
 
     // Set up sort parameters
@@ -1242,6 +1245,14 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
         $item->Visible = $Security->canAdd();
         $item->OnLeft = false;
 
+        // "sequence"
+        $item = &$this->ListOptions->add("sequence");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = true;
+        $item->OnLeft = true; // Always on left
+        $item->ShowInDropDown = false;
+        $item->ShowInButtonGroup = false;
+
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
@@ -1310,6 +1321,10 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
                 }
             }
         }
+
+        // "sequence"
+        $opt = $this->ListOptions["sequence"];
+        $opt->Body = FormatSequenceNumber($this->RecordCount);
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1590,12 +1605,6 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
         $CurrentForm->FormName = $this->FormName;
         $validate = !Config("SERVER_VALIDATE");
 
-        // Check field name 'id' first before field var 'x_id'
-        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
-        if (!$this->id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->id->setFormValue($val);
-        }
-
         // Check field name 'medicine_id' first before field var 'x_medicine_id'
         $val = $CurrentForm->hasValue("medicine_id") ? $CurrentForm->getValue("medicine_id") : $CurrentForm->getValue("x_medicine_id");
         if (!$this->medicine_id->IsDetailKey) {
@@ -1634,6 +1643,26 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
         if ($CurrentForm->hasValue("o_units_given")) {
             $this->units_given->setOldValue($CurrentForm->getValue("o_units_given"));
         }
+
+        // Check field name 'submission_date' first before field var 'x_submission_date'
+        $val = $CurrentForm->hasValue("submission_date") ? $CurrentForm->getValue("submission_date") : $CurrentForm->getValue("x_submission_date");
+        if (!$this->submission_date->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->submission_date->Visible = false; // Disable update for API request
+            } else {
+                $this->submission_date->setFormValue($val, true, $validate);
+            }
+            $this->submission_date->CurrentValue = UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern());
+        }
+        if ($CurrentForm->hasValue("o_submission_date")) {
+            $this->submission_date->setOldValue($CurrentForm->getValue("o_submission_date"));
+        }
+
+        // Check field name 'id' first before field var 'x_id'
+        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
+        if (!$this->id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->id->setFormValue($val);
+        }
     }
 
     // Restore form values
@@ -1646,6 +1675,8 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
         $this->medicine_id->CurrentValue = $this->medicine_id->FormValue;
         $this->patient_id->CurrentValue = $this->patient_id->FormValue;
         $this->units_given->CurrentValue = $this->units_given->FormValue;
+        $this->submission_date->CurrentValue = $this->submission_date->FormValue;
+        $this->submission_date->CurrentValue = UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern());
     }
 
     // Load recordset
@@ -1864,10 +1895,6 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
             $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
             $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
 
-            // id
-            $this->id->HrefValue = "";
-            $this->id->TooltipValue = "";
-
             // medicine_id
             $this->medicine_id->HrefValue = "";
             $this->medicine_id->TooltipValue = "";
@@ -1879,9 +1906,11 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
             // units_given
             $this->units_given->HrefValue = "";
             $this->units_given->TooltipValue = "";
-        } elseif ($this->RowType == ROWTYPE_ADD) {
-            // id
 
+            // submission_date
+            $this->submission_date->HrefValue = "";
+            $this->submission_date->TooltipValue = "";
+        } elseif ($this->RowType == ROWTYPE_ADD) {
             // medicine_id
             $this->medicine_id->setupEditAttributes();
             $curVal = trim(strval($this->medicine_id->CurrentValue));
@@ -1969,12 +1998,14 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
             if (strval($this->units_given->EditValue) != "" && is_numeric($this->units_given->EditValue)) {
                 $this->units_given->EditValue = FormatNumber($this->units_given->EditValue, null);
             }
+
+            // submission_date
+            $this->submission_date->setupEditAttributes();
+            $this->submission_date->EditValue = HtmlEncode(FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()));
+            $this->submission_date->PlaceHolder = RemoveHtml($this->submission_date->caption());
 
             // Add refer script
 
-            // id
-            $this->id->HrefValue = "";
-
             // medicine_id
             $this->medicine_id->HrefValue = "";
 
@@ -1983,11 +2014,10 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
 
             // units_given
             $this->units_given->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // id
-            $this->id->setupEditAttributes();
-            $this->id->EditValue = $this->id->CurrentValue;
 
+            // submission_date
+            $this->submission_date->HrefValue = "";
+        } elseif ($this->RowType == ROWTYPE_EDIT) {
             // medicine_id
             $this->medicine_id->setupEditAttributes();
             $curVal = trim(strval($this->medicine_id->CurrentValue));
@@ -2076,10 +2106,12 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
                 $this->units_given->EditValue = FormatNumber($this->units_given->EditValue, null);
             }
 
-            // Edit refer script
+            // submission_date
+            $this->submission_date->setupEditAttributes();
+            $this->submission_date->EditValue = HtmlEncode(FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()));
+            $this->submission_date->PlaceHolder = RemoveHtml($this->submission_date->caption());
 
-            // id
-            $this->id->HrefValue = "";
+            // Edit refer script
 
             // medicine_id
             $this->medicine_id->HrefValue = "";
@@ -2089,6 +2121,9 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
 
             // units_given
             $this->units_given->HrefValue = "";
+
+            // submission_date
+            $this->submission_date->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -2110,11 +2145,6 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
             return true;
         }
         $validateForm = true;
-        if ($this->id->Required) {
-            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
-                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
-            }
-        }
         if ($this->medicine_id->Required) {
             if (!$this->medicine_id->IsDetailKey && EmptyValue($this->medicine_id->FormValue)) {
                 $this->medicine_id->addErrorMessage(str_replace("%s", $this->medicine_id->caption(), $this->medicine_id->RequiredErrorMessage));
@@ -2132,6 +2162,14 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
         }
         if (!CheckInteger($this->units_given->FormValue)) {
             $this->units_given->addErrorMessage($this->units_given->getErrorMessage(false));
+        }
+        if ($this->submission_date->Required) {
+            if (!$this->submission_date->IsDetailKey && EmptyValue($this->submission_date->FormValue)) {
+                $this->submission_date->addErrorMessage(str_replace("%s", $this->submission_date->caption(), $this->submission_date->RequiredErrorMessage));
+            }
+        }
+        if (!CheckDate($this->submission_date->FormValue, $this->submission_date->formatPattern())) {
+            $this->submission_date->addErrorMessage($this->submission_date->getErrorMessage(false));
         }
 
         // Return validate result
@@ -2249,6 +2287,9 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
         // units_given
         $this->units_given->setDbValueDef($rsnew, $this->units_given->CurrentValue, 0, $this->units_given->ReadOnly);
 
+        // submission_date
+        $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), $this->submission_date->ReadOnly);
+
         // Update current values
         $this->setCurrentValues($rsnew);
 
@@ -2306,6 +2347,9 @@ class JdhPrescriptionsActionsGrid extends JdhPrescriptionsActions
 
         // units_given
         $this->units_given->setDbValueDef($rsnew, $this->units_given->CurrentValue, 0, false);
+
+        // submission_date
+        $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), false);
 
         // submittedby_user_id
         if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin

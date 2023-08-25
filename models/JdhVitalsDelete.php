@@ -362,7 +362,7 @@ class JdhVitalsDelete extends JdhVitals
         // View
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->vitals_id->setVisibility();
+        $this->vitals_id->Visible = false;
         $this->patient_id->setVisibility();
         $this->pressure->setVisibility();
         $this->height->setVisibility();
@@ -743,10 +743,6 @@ class JdhVitalsDelete extends JdhVitals
             // submitted_by_user_id
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
-
-            // vitals_id
-            $this->vitals_id->HrefValue = "";
-            $this->vitals_id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";

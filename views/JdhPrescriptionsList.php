@@ -162,9 +162,6 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
-<?php if ($Page->prescription_id->Visible) { // prescription_id ?>
-        <th data-name="prescription_id" class="<?= $Page->prescription_id->headerCellClass() ?>"><div id="elh_jdh_prescriptions_prescription_id" class="jdh_prescriptions_prescription_id"><?= $Page->renderFieldHeader($Page->prescription_id) ?></div></th>
-<?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_prescriptions_patient_id" class="jdh_prescriptions_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
 <?php } ?>
@@ -208,14 +205,6 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
-    <?php if ($Page->prescription_id->Visible) { // prescription_id ?>
-        <td data-name="prescription_id"<?= $Page->prescription_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_prescription_id" class="el_jdh_prescriptions_prescription_id">
-<span<?= $Page->prescription_id->viewAttributes() ?>>
-<?= $Page->prescription_id->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
     <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_prescriptions_patient_id" class="el_jdh_prescriptions_patient_id">

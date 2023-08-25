@@ -626,9 +626,6 @@ class JdhTestRequestsList extends JdhTestRequests
         // View
         $this->View = Get(Config("VIEW"));
 
-        // Create form object
-        $CurrentForm = new HttpForm();
-
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -658,7 +655,7 @@ class JdhTestRequestsList extends JdhTestRequests
 
         // Setup import options
         $this->setupImportOptions();
-        $this->request_id->setVisibility();
+        $this->request_id->Visible = false;
         $this->patient_id->setVisibility();
         $this->request_title->setVisibility();
         $this->request_service_id->setVisibility();
@@ -705,9 +702,6 @@ class JdhTestRequestsList extends JdhTestRequests
         $this->setupLookupOptions($this->request_service_id);
         $this->setupLookupOptions($this->status_id);
 
-        // Load default values for add
-        $this->loadDefaultValues();
-
         // Update form name to avoid conflict
         if ($this->IsModal) {
             $this->FormName = "fjdh_test_requestsgrid";
@@ -750,35 +744,6 @@ class JdhTestRequestsList extends JdhTestRequests
             $this->import(Param(Config("API_FILE_TOKEN_NAME")), ConvertToBool(Param("rollback")));
             $this->terminate();
             return;
-        }
-
-        // Check QueryString parameters
-        if (Get("action") !== null) {
-            $this->CurrentAction = Get("action");
-        } else {
-            if (Post("action") !== null) {
-                $this->CurrentAction = Post("action"); // Get action
-            }
-        }
-
-        // Clear inline mode
-        if ($this->isCancel()) {
-            $this->clearInlineMode();
-        }
-
-        // Switch to inline add mode
-        if ($this->isAdd() || $this->isCopy()) {
-            $this->inlineAddMode();
-        // Insert Inline
-        } elseif (IsPost() && $this->isInsert() && Session(SESSION_INLINE_MODE) == "add") {
-            $this->setKey(Post($this->OldKeyName));
-            // Return JSON error message if UseAjaxActions
-            if (!$this->inlineInsert() && $this->UseAjaxActions) {
-                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
-                $this->clearFailureMessage();
-                $this->terminate();
-                return;
-            }
         }
 
         // Hide list options
@@ -1069,54 +1034,6 @@ class JdhTestRequestsList extends JdhTestRequests
         }
     }
 
-    // Exit inline mode
-    protected function clearInlineMode()
-    {
-        $this->LastAction = $this->CurrentAction; // Save last action
-        $this->CurrentAction = ""; // Clear action
-        $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
-    }
-
-    // Switch to Inline Add mode
-    protected function inlineAddMode()
-    {
-        global $Security, $Language;
-        if (!$Security->canAdd()) {
-            return false; // Add not allowed
-        }
-        $this->CurrentAction = "add";
-        $_SESSION[SESSION_INLINE_MODE] = "add"; // Enable inline add
-        return true;
-    }
-
-    // Perform update to Inline Add/Copy record
-    protected function inlineInsert()
-    {
-        global $Language, $CurrentForm;
-        $rsold = $this->loadOldRecord(); // Load old record
-        $CurrentForm->Index = 0;
-        $this->loadFormValues(); // Get form values
-
-        // Validate form
-        if (!$this->validateForm()) {
-            $this->EventCancelled = true; // Set event cancelled
-            $this->CurrentAction = "add"; // Stay in add mode
-            return false;
-        }
-        $this->SendEmail = true; // Send email on add success
-        if ($this->addRow($rsold)) { // Add record
-            if ($this->getSuccessMessage() == "") {
-                $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up add success message
-            }
-            $this->clearInlineMode(); // Clear inline add mode
-            return true;
-        } else { // Add failed
-            $this->EventCancelled = true; // Set event cancelled
-            $this->CurrentAction = "add"; // Stay in add mode
-            return false;
-        }
-    }
-
     // Build filter for all keys
     protected function buildKeyFilter()
     {
@@ -1146,18 +1063,6 @@ class JdhTestRequestsList extends JdhTestRequests
             $thisKey = strval($CurrentForm->getValue($this->OldKeyName));
         }
         return $wrkFilter;
-    }
-
-    // Reset form status
-    public function resetFormError()
-    {
-        $this->request_id->clearErrorMessage();
-        $this->patient_id->clearErrorMessage();
-        $this->request_title->clearErrorMessage();
-        $this->request_service_id->clearErrorMessage();
-        $this->request_description->clearErrorMessage();
-        $this->request_date->clearErrorMessage();
-        $this->status_id->clearErrorMessage();
     }
 
     // Get list of filters
@@ -1357,7 +1262,6 @@ class JdhTestRequestsList extends JdhTestRequests
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
-            $this->updateSort($this->request_id); // request_id
             $this->updateSort($this->patient_id); // patient_id
             $this->updateSort($this->request_title); // request_title
             $this->updateSort($this->request_service_id); // request_service_id
@@ -1435,12 +1339,6 @@ class JdhTestRequestsList extends JdhTestRequests
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
 
-        // "copy"
-        $item = &$this->ListOptions->add("copy");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canAdd() && $this->isAdd();
-        $item->OnLeft = false;
-
         // List actions
         $item = &$this->ListOptions->add("listactions");
         $item->CssClass = "text-nowrap";
@@ -1457,6 +1355,14 @@ class JdhTestRequestsList extends JdhTestRequests
         if ($item->OnLeft) {
             $item->moveTo(0);
         }
+        $item->ShowInDropDown = false;
+        $item->ShowInButtonGroup = false;
+
+        // "sequence"
+        $item = &$this->ListOptions->add("sequence");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = true;
+        $item->OnLeft = true; // Always on left
         $item->ShowInDropDown = false;
         $item->ShowInButtonGroup = false;
 
@@ -1498,54 +1404,10 @@ class JdhTestRequestsList extends JdhTestRequests
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
 
-        // Set up row action and key
-        if ($CurrentForm && is_numeric($this->RowIndex) && $this->RowType != "view") {
-            $CurrentForm->Index = $this->RowIndex;
-            $actionName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormActionName);
-            $oldKeyName = str_replace("k_", "k" . $this->RowIndex . "_", $this->OldKeyName);
-            $blankRowName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormBlankRowName);
-            if ($this->RowAction != "") {
-                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $actionName . "\" id=\"" . $actionName . "\" value=\"" . $this->RowAction . "\">";
-            }
-            $oldKey = $this->getKey(false); // Get from OldValue
-            if ($oldKeyName != "" && $oldKey != "") {
-                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $oldKeyName . "\" id=\"" . $oldKeyName . "\" value=\"" . HtmlEncode($oldKey) . "\">";
-            }
-            if ($this->RowAction == "insert" && $this->isConfirm() && $this->emptyRow()) {
-                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $blankRowName . "\" id=\"" . $blankRowName . "\" value=\"1\">";
-            }
-        }
+        // "sequence"
+        $opt = $this->ListOptions["sequence"];
+        $opt->Body = FormatSequenceNumber($this->RecordCount);
         $pageUrl = $this->pageUrl(false);
-
-        // "copy"
-        $opt = $this->ListOptions["copy"];
-        if ($this->isInlineAddRow() || $this->isInlineCopyRow()) { // Inline Add/Copy
-            $this->ListOptions->CustomItem = "copy"; // Show copy column only
-            $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
-            $insertCaption = $Language->phrase("InsertLink");
-            $insertTitle = HtmlTitle($insertCaption);
-            $cancelCaption = $Language->phrase("CancelLink");
-            $cancelTitle = HtmlTitle($cancelCaption);
-            $inlineInsertUrl = GetUrl($this->pageName());
-            if ($this->UseAjaxActions) {
-                $opt->Body = <<<INLINEADDAJAX
-                    <div{$divClass}>
-                        <button type="button" class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" data-ew-action="inline" data-action="insert" data-key="" data-url="{$inlineInsertUrl}">{$insertCaption}</button>
-                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel">{$cancelCaption}</button>
-                    </div>
-                    INLINEADDAJAX;
-            } else {
-                $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
-                $opt->Body = <<<INLINEADD
-                    <div{$divClass}>
-                        <button class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" form="fjdh_test_requestslist" formaction="{$inlineInsertUrl}">{$insertCaption}</button>
-                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$insertTitle}" href="{$cancelurl}">{$cancelCaption}</a>
-                        <input type="hidden" name="action" id="action" value="insert">
-                    </div>
-                    INLINEADD;
-            }
-            return;
-        }
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1640,15 +1502,6 @@ class JdhTestRequestsList extends JdhTestRequests
             $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
         }
         $item->Visible = $this->AddUrl != "" && $Security->canAdd();
-
-        // Inline Add
-        $item = &$option->add("inlineadd");
-        if ($this->UseAjaxActions) {
-            $item->Body = "<button class=\"ew-add-edit ew-inline-add\" title=\"" . $Language->phrase("InlineAddLink", true) . "\" data-caption=\"" . $Language->phrase("InlineAddLink", true) . "\" data-ew-action=\"inline\" data-action=\"add\" data-position=\"top\" data-url=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</button>";
-        } else {
-            $item->Body = "<a class=\"ew-add-edit ew-inline-add\" title=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</a>";
-        }
-        $item->Visible = $this->InlineAddUrl != "" && $Security->canAdd();
         $option = $options["action"];
 
         // Add multi delete
@@ -1669,7 +1522,6 @@ class JdhTestRequestsList extends JdhTestRequests
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("request_id", $this->createColumnOption("request_id"));
             $option->add("patient_id", $this->createColumnOption("patient_id"));
             $option->add("request_title", $this->createColumnOption("request_title"));
             $option->add("request_service_id", $this->createColumnOption("request_service_id"));
@@ -1858,15 +1710,6 @@ class JdhTestRequestsList extends JdhTestRequests
                 $this->StopRecord = $this->TotalRecords;
             }
         }
-
-        // Restore number of post back records
-        if ($CurrentForm && ($this->isConfirm() || $this->EventCancelled)) {
-            $CurrentForm->Index = -1;
-            if ($CurrentForm->hasValue($this->FormKeyCountName) && ($this->isGridAdd() || $this->isGridEdit() || $this->isConfirm())) {
-                $this->KeyCount = $CurrentForm->getValue($this->FormKeyCountName);
-                $this->StopRecord = $this->StartRecord + $this->KeyCount - 1;
-            }
-        }
         $this->RecordCount = $this->StartRecord - 1;
         if ($this->Recordset && !$this->Recordset->EOF) {
             // Nothing to do
@@ -1880,12 +1723,6 @@ class JdhTestRequestsList extends JdhTestRequests
         $this->RowType = ROWTYPE_AGGREGATEINIT;
         $this->resetAttributes();
         $this->renderRow();
-        if ($this->isAdd() || $this->isCopy() || $this->isInlineInserted()) {
-            $this->RowIndex = 0;
-            if ($this->UseInfiniteScroll) {
-                $this->StopRecord = $this->StartRecord; // Show this record only
-            }
-        }
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
             $this->RowIndex = '$rowindex$';
         }
@@ -1977,11 +1814,6 @@ class JdhTestRequestsList extends JdhTestRequests
         $this->renderListOptions();
     }
 
-    // Load default values
-    protected function loadDefaultValues()
-    {
-    }
-
     // Load basic search values
     protected function loadBasicSearchValues()
     {
@@ -1990,97 +1822,6 @@ class JdhTestRequestsList extends JdhTestRequests
             $this->Command = "search";
         }
         $this->BasicSearch->setType(Get(Config("TABLE_BASIC_SEARCH_TYPE"), ""), false);
-    }
-
-    // Load form values
-    protected function loadFormValues()
-    {
-        // Load from form
-        global $CurrentForm;
-        $validate = !Config("SERVER_VALIDATE");
-
-        // Check field name 'request_id' first before field var 'x_request_id'
-        $val = $CurrentForm->hasValue("request_id") ? $CurrentForm->getValue("request_id") : $CurrentForm->getValue("x_request_id");
-        if (!$this->request_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->request_id->setFormValue($val);
-        }
-
-        // Check field name 'patient_id' first before field var 'x_patient_id'
-        $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
-        if (!$this->patient_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->patient_id->Visible = false; // Disable update for API request
-            } else {
-                $this->patient_id->setFormValue($val);
-            }
-        }
-
-        // Check field name 'request_title' first before field var 'x_request_title'
-        $val = $CurrentForm->hasValue("request_title") ? $CurrentForm->getValue("request_title") : $CurrentForm->getValue("x_request_title");
-        if (!$this->request_title->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->request_title->Visible = false; // Disable update for API request
-            } else {
-                $this->request_title->setFormValue($val);
-            }
-        }
-
-        // Check field name 'request_service_id' first before field var 'x_request_service_id'
-        $val = $CurrentForm->hasValue("request_service_id") ? $CurrentForm->getValue("request_service_id") : $CurrentForm->getValue("x_request_service_id");
-        if (!$this->request_service_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->request_service_id->Visible = false; // Disable update for API request
-            } else {
-                $this->request_service_id->setFormValue($val);
-            }
-        }
-
-        // Check field name 'request_description' first before field var 'x_request_description'
-        $val = $CurrentForm->hasValue("request_description") ? $CurrentForm->getValue("request_description") : $CurrentForm->getValue("x_request_description");
-        if (!$this->request_description->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->request_description->Visible = false; // Disable update for API request
-            } else {
-                $this->request_description->setFormValue($val);
-            }
-        }
-
-        // Check field name 'request_date' first before field var 'x_request_date'
-        $val = $CurrentForm->hasValue("request_date") ? $CurrentForm->getValue("request_date") : $CurrentForm->getValue("x_request_date");
-        if (!$this->request_date->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->request_date->Visible = false; // Disable update for API request
-            } else {
-                $this->request_date->setFormValue($val, true, $validate);
-            }
-            $this->request_date->CurrentValue = UnFormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern());
-        }
-
-        // Check field name 'status_id' first before field var 'x_status_id'
-        $val = $CurrentForm->hasValue("status_id") ? $CurrentForm->getValue("status_id") : $CurrentForm->getValue("x_status_id");
-        if (!$this->status_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->status_id->Visible = false; // Disable update for API request
-            } else {
-                $this->status_id->setFormValue($val);
-            }
-        }
-    }
-
-    // Restore form values
-    public function restoreFormValues()
-    {
-        global $CurrentForm;
-        if (!$this->isGridAdd() && !$this->isAdd()) {
-            $this->request_id->CurrentValue = $this->request_id->FormValue;
-        }
-        $this->patient_id->CurrentValue = $this->patient_id->FormValue;
-        $this->request_title->CurrentValue = $this->request_title->FormValue;
-        $this->request_service_id->CurrentValue = $this->request_service_id->FormValue;
-        $this->request_description->CurrentValue = $this->request_description->FormValue;
-        $this->request_date->CurrentValue = $this->request_date->FormValue;
-        $this->request_date->CurrentValue = UnFormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern());
-        $this->status_id->CurrentValue = $this->status_id->FormValue;
     }
 
     // Load recordset
@@ -2318,10 +2059,6 @@ class JdhTestRequestsList extends JdhTestRequests
                 $this->status_id->ViewValue = null;
             }
 
-            // request_id
-            $this->request_id->HrefValue = "";
-            $this->request_id->TooltipValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
@@ -2345,203 +2082,12 @@ class JdhTestRequestsList extends JdhTestRequests
             // status_id
             $this->status_id->HrefValue = "";
             $this->status_id->TooltipValue = "";
-        } elseif ($this->RowType == ROWTYPE_ADD) {
-            // request_id
-
-            // patient_id
-            $this->patient_id->setupEditAttributes();
-            if ($this->patient_id->getSessionValue() != "") {
-                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
-                $curVal = strval($this->patient_id->CurrentValue);
-                if ($curVal != "") {
-                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                    if ($this->patient_id->ViewValue === null) { // Lookup from database
-                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                        $conn = Conn();
-                        $config = $conn->getConfiguration();
-                        $config->setResultCacheImpl($this->Cache);
-                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                        $ari = count($rswrk);
-                        if ($ari > 0) { // Lookup values found
-                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                        } else {
-                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                        }
-                    }
-                } else {
-                    $this->patient_id->ViewValue = null;
-                }
-            } else {
-                $curVal = trim(strval($this->patient_id->CurrentValue));
-                if ($curVal != "") {
-                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                } else {
-                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
-                }
-                if ($this->patient_id->ViewValue !== null) { // Load from cache
-                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
-                } else { // Lookup from database
-                    if ($curVal == "") {
-                        $filterWrk = "0=1";
-                    } else {
-                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
-                    }
-                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    $arwrk = $rswrk;
-                    $this->patient_id->EditValue = $arwrk;
-                }
-                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
-            }
-
-            // request_title
-            $this->request_title->setupEditAttributes();
-            if (!$this->request_title->Raw) {
-                $this->request_title->CurrentValue = HtmlDecode($this->request_title->CurrentValue);
-            }
-            $this->request_title->EditValue = HtmlEncode($this->request_title->CurrentValue);
-            $this->request_title->PlaceHolder = RemoveHtml($this->request_title->caption());
-
-            // request_service_id
-            $this->request_service_id->setupEditAttributes();
-            $curVal = trim(strval($this->request_service_id->CurrentValue));
-            if ($curVal != "") {
-                $this->request_service_id->ViewValue = $this->request_service_id->lookupCacheOption($curVal);
-            } else {
-                $this->request_service_id->ViewValue = $this->request_service_id->Lookup !== null && is_array($this->request_service_id->lookupOptions()) ? $curVal : null;
-            }
-            if ($this->request_service_id->ViewValue !== null) { // Load from cache
-                $this->request_service_id->EditValue = array_values($this->request_service_id->lookupOptions());
-            } else { // Lookup from database
-                if ($curVal == "") {
-                    $filterWrk = "0=1";
-                } else {
-                    $filterWrk = SearchFilter("`service_id`", "=", $this->request_service_id->CurrentValue, DATATYPE_NUMBER, "");
-                }
-                $sqlWrk = $this->request_service_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                $arwrk = $rswrk;
-                $this->request_service_id->EditValue = $arwrk;
-            }
-            $this->request_service_id->PlaceHolder = RemoveHtml($this->request_service_id->caption());
-
-            // request_description
-            $this->request_description->setupEditAttributes();
-            $this->request_description->EditValue = HtmlEncode($this->request_description->CurrentValue);
-            $this->request_description->PlaceHolder = RemoveHtml($this->request_description->caption());
-
-            // request_date
-            $this->request_date->setupEditAttributes();
-            $this->request_date->EditValue = HtmlEncode(FormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern()));
-            $this->request_date->PlaceHolder = RemoveHtml($this->request_date->caption());
-
-            // status_id
-            $this->status_id->setupEditAttributes();
-            $this->status_id->EditValue = $this->status_id->options(true);
-            $this->status_id->PlaceHolder = RemoveHtml($this->status_id->caption());
-
-            // Add refer script
-
-            // request_id
-            $this->request_id->HrefValue = "";
-
-            // patient_id
-            $this->patient_id->HrefValue = "";
-
-            // request_title
-            $this->request_title->HrefValue = "";
-
-            // request_service_id
-            $this->request_service_id->HrefValue = "";
-
-            // request_description
-            $this->request_description->HrefValue = "";
-
-            // request_date
-            $this->request_date->HrefValue = "";
-
-            // status_id
-            $this->status_id->HrefValue = "";
-        }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
-            $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
-    }
-
-    // Validate form
-    protected function validateForm()
-    {
-        global $Language, $Security;
-
-        // Check if validation required
-        if (!Config("SERVER_VALIDATE")) {
-            return true;
-        }
-        $validateForm = true;
-        if ($this->request_id->Required) {
-            if (!$this->request_id->IsDetailKey && EmptyValue($this->request_id->FormValue)) {
-                $this->request_id->addErrorMessage(str_replace("%s", $this->request_id->caption(), $this->request_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->patient_id->Required) {
-            if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
-                $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->request_title->Required) {
-            if (!$this->request_title->IsDetailKey && EmptyValue($this->request_title->FormValue)) {
-                $this->request_title->addErrorMessage(str_replace("%s", $this->request_title->caption(), $this->request_title->RequiredErrorMessage));
-            }
-        }
-        if ($this->request_service_id->Required) {
-            if (!$this->request_service_id->IsDetailKey && EmptyValue($this->request_service_id->FormValue)) {
-                $this->request_service_id->addErrorMessage(str_replace("%s", $this->request_service_id->caption(), $this->request_service_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->request_description->Required) {
-            if (!$this->request_description->IsDetailKey && EmptyValue($this->request_description->FormValue)) {
-                $this->request_description->addErrorMessage(str_replace("%s", $this->request_description->caption(), $this->request_description->RequiredErrorMessage));
-            }
-        }
-        if ($this->request_date->Required) {
-            if (!$this->request_date->IsDetailKey && EmptyValue($this->request_date->FormValue)) {
-                $this->request_date->addErrorMessage(str_replace("%s", $this->request_date->caption(), $this->request_date->RequiredErrorMessage));
-            }
-        }
-        if (!CheckDate($this->request_date->FormValue, $this->request_date->formatPattern())) {
-            $this->request_date->addErrorMessage($this->request_date->getErrorMessage(false));
-        }
-        if ($this->status_id->Required) {
-            if (!$this->status_id->IsDetailKey && EmptyValue($this->status_id->FormValue)) {
-                $this->status_id->addErrorMessage(str_replace("%s", $this->status_id->caption(), $this->status_id->RequiredErrorMessage));
-            }
-        }
-
-        // Return validate result
-        $validateForm = $validateForm && !$this->hasInvalidFields();
-
-        // Call Form_CustomValidate event
-        $formCustomError = "";
-        $validateForm = $validateForm && $this->formCustomValidate($formCustomError);
-        if ($formCustomError != "") {
-            $this->setFailureMessage($formCustomError);
-        }
-        return $validateForm;
     }
 
     /**
@@ -2819,95 +2365,6 @@ class JdhTestRequestsList extends JdhTestRequests
         $sql = $this->getCurrentSql();
         $conn = $this->getConnection();
         return $conn->fetchAssociative($sql);
-    }
-
-    // Add record
-    protected function addRow($rsold = null)
-    {
-        global $Language, $Security;
-
-        // Set new row
-        $rsnew = [];
-
-        // patient_id
-        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, false);
-
-        // request_title
-        $this->request_title->setDbValueDef($rsnew, $this->request_title->CurrentValue, "", false);
-
-        // request_service_id
-        $this->request_service_id->setDbValueDef($rsnew, $this->request_service_id->CurrentValue, 0, false);
-
-        // request_description
-        $this->request_description->setDbValueDef($rsnew, $this->request_description->CurrentValue, null, false);
-
-        // request_date
-        $this->request_date->setDbValueDef($rsnew, UnFormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern()), CurrentDate(), false);
-
-        // status_id
-        $this->status_id->setDbValueDef($rsnew, $this->status_id->CurrentValue, 0, false);
-
-        // requested_by_user_id
-        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
-            $rsnew['requested_by_user_id'] = CurrentUserID();
-        }
-
-        // Update current values
-        $this->setCurrentValues($rsnew);
-
-        // Check if valid key values for master user
-        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
-            $detailKeys = [];
-            $detailKeys["patient_id"] = $this->patient_id->CurrentValue;
-            $masterTable = Container("jdh_patients");
-            $masterFilter = $this->getMasterFilter($masterTable, $detailKeys);
-            if (!EmptyValue($masterFilter)) {
-                $validMasterKey = true;
-                if ($rsmaster = $masterTable->loadRs($masterFilter)->fetchAssociative()) {
-                    $validMasterKey = $Security->isValidUserID($rsmaster['submitted_by_user_id']);
-                } elseif ($this->getCurrentMasterTable() == "jdh_patients") {
-                    $validMasterKey = false;
-                }
-                if (!$validMasterKey) {
-                    $masterUserIdMsg = str_replace("%c", CurrentUserID(), $Language->phrase("UnAuthorizedMasterUserID"));
-                    $masterUserIdMsg = str_replace("%f", $masterFilter, $masterUserIdMsg);
-                    $this->setFailureMessage($masterUserIdMsg);
-                    return false;
-                }
-            }
-        }
-        $conn = $this->getConnection();
-
-        // Load db values from old row
-        $this->loadDbValues($rsold);
-
-        // Call Row Inserting event
-        $insertRow = $this->rowInserting($rsold, $rsnew);
-        if ($insertRow) {
-            $addRow = $this->insert($rsnew);
-            if ($addRow) {
-            } elseif (!EmptyValue($this->DbErrorMessage)) { // Show database error
-                $this->setFailureMessage($this->DbErrorMessage);
-            }
-        } else {
-            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
-                // Use the message, do nothing
-            } elseif ($this->CancelMessage != "") {
-                $this->setFailureMessage($this->CancelMessage);
-                $this->CancelMessage = "";
-            } else {
-                $this->setFailureMessage($Language->phrase("InsertCancelled"));
-            }
-            $addRow = false;
-        }
-        if ($addRow) {
-            // Call Row Inserted event
-            $this->rowInserted($rsold, $rsnew);
-            if ($this->SendEmail) {
-                $this->sendEmailOnAdd($rsnew);
-            }
-        }
-        return $addRow;
     }
 
     // Get export HTML tag

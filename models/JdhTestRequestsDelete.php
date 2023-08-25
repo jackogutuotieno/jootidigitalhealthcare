@@ -370,7 +370,7 @@ class JdhTestRequestsDelete extends JdhTestRequests
         // View
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->request_id->setVisibility();
+        $this->request_id->Visible = false;
         $this->patient_id->setVisibility();
         $this->request_title->setVisibility();
         $this->request_service_id->setVisibility();
@@ -730,10 +730,6 @@ class JdhTestRequestsDelete extends JdhTestRequests
             } else {
                 $this->status_id->ViewValue = null;
             }
-
-            // request_id
-            $this->request_id->HrefValue = "";
-            $this->request_id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";

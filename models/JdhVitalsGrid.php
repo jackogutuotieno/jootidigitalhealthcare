@@ -550,7 +550,7 @@ class JdhVitalsGrid extends JdhVitals
 
         // Set up list options
         $this->setupListOptions();
-        $this->vitals_id->setVisibility();
+        $this->vitals_id->Visible = false;
         $this->patient_id->setVisibility();
         $this->pressure->setVisibility();
         $this->height->setVisibility();
@@ -1179,7 +1179,6 @@ class JdhVitalsGrid extends JdhVitals
     // Reset form status
     public function resetFormError()
     {
-        $this->vitals_id->clearErrorMessage();
         $this->patient_id->clearErrorMessage();
         $this->pressure->clearErrorMessage();
         $this->height->clearErrorMessage();
@@ -1279,6 +1278,14 @@ class JdhVitalsGrid extends JdhVitals
         $item->Visible = $Security->canAdd();
         $item->OnLeft = false;
 
+        // "sequence"
+        $item = &$this->ListOptions->add("sequence");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = true;
+        $item->OnLeft = true; // Always on left
+        $item->ShowInDropDown = false;
+        $item->ShowInButtonGroup = false;
+
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
@@ -1347,6 +1354,10 @@ class JdhVitalsGrid extends JdhVitals
                 }
             }
         }
+
+        // "sequence"
+        $opt = $this->ListOptions["sequence"];
+        $opt->Body = FormatSequenceNumber($this->RecordCount);
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1627,12 +1638,6 @@ class JdhVitalsGrid extends JdhVitals
         $CurrentForm->FormName = $this->FormName;
         $validate = !Config("SERVER_VALIDATE");
 
-        // Check field name 'vitals_id' first before field var 'x_vitals_id'
-        $val = $CurrentForm->hasValue("vitals_id") ? $CurrentForm->getValue("vitals_id") : $CurrentForm->getValue("x_vitals_id");
-        if (!$this->vitals_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->vitals_id->setFormValue($val);
-        }
-
         // Check field name 'patient_id' first before field var 'x_patient_id'
         $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
         if (!$this->patient_id->IsDetailKey) {
@@ -1762,6 +1767,12 @@ class JdhVitalsGrid extends JdhVitals
         }
         if ($CurrentForm->hasValue("o_submission_date")) {
             $this->submission_date->setOldValue($CurrentForm->getValue("o_submission_date"));
+        }
+
+        // Check field name 'vitals_id' first before field var 'x_vitals_id'
+        $val = $CurrentForm->hasValue("vitals_id") ? $CurrentForm->getValue("vitals_id") : $CurrentForm->getValue("x_vitals_id");
+        if (!$this->vitals_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->vitals_id->setFormValue($val);
         }
     }
 
@@ -2036,10 +2047,6 @@ class JdhVitalsGrid extends JdhVitals
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
-            // vitals_id
-            $this->vitals_id->HrefValue = "";
-            $this->vitals_id->TooltipValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
@@ -2080,8 +2087,6 @@ class JdhVitalsGrid extends JdhVitals
             $this->submission_date->HrefValue = "";
             $this->submission_date->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
-            // vitals_id
-
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -2206,9 +2211,6 @@ class JdhVitalsGrid extends JdhVitals
 
             // Add refer script
 
-            // vitals_id
-            $this->vitals_id->HrefValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
 
@@ -2239,10 +2241,6 @@ class JdhVitalsGrid extends JdhVitals
             // submission_date
             $this->submission_date->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // vitals_id
-            $this->vitals_id->setupEditAttributes();
-            $this->vitals_id->EditValue = $this->vitals_id->CurrentValue;
-
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -2364,9 +2362,6 @@ class JdhVitalsGrid extends JdhVitals
 
             // Edit refer script
 
-            // vitals_id
-            $this->vitals_id->HrefValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
 
@@ -2418,11 +2413,6 @@ class JdhVitalsGrid extends JdhVitals
             return true;
         }
         $validateForm = true;
-        if ($this->vitals_id->Required) {
-            if (!$this->vitals_id->IsDetailKey && EmptyValue($this->vitals_id->FormValue)) {
-                $this->vitals_id->addErrorMessage(str_replace("%s", $this->vitals_id->caption(), $this->vitals_id->RequiredErrorMessage));
-            }
-        }
         if ($this->patient_id->Required) {
             if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
                 $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));

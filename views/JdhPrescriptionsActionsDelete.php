@@ -50,9 +50,6 @@ $Page->showMessage();
 <table class="<?= $Page->TableClass ?>">
     <thead>
     <tr class="ew-table-header">
-<?php if ($Page->id->Visible) { // id ?>
-        <th class="<?= $Page->id->headerCellClass() ?>"><span id="elh_jdh_prescriptions_actions_id" class="jdh_prescriptions_actions_id"><?= $Page->id->caption() ?></span></th>
-<?php } ?>
 <?php if ($Page->medicine_id->Visible) { // medicine_id ?>
         <th class="<?= $Page->medicine_id->headerCellClass() ?>"><span id="elh_jdh_prescriptions_actions_medicine_id" class="jdh_prescriptions_actions_medicine_id"><?= $Page->medicine_id->caption() ?></span></th>
 <?php } ?>
@@ -61,6 +58,9 @@ $Page->showMessage();
 <?php } ?>
 <?php if ($Page->units_given->Visible) { // units_given ?>
         <th class="<?= $Page->units_given->headerCellClass() ?>"><span id="elh_jdh_prescriptions_actions_units_given" class="jdh_prescriptions_actions_units_given"><?= $Page->units_given->caption() ?></span></th>
+<?php } ?>
+<?php if ($Page->submission_date->Visible) { // submission_date ?>
+        <th class="<?= $Page->submission_date->headerCellClass() ?>"><span id="elh_jdh_prescriptions_actions_submission_date" class="jdh_prescriptions_actions_submission_date"><?= $Page->submission_date->caption() ?></span></th>
 <?php } ?>
     </tr>
     </thead>
@@ -83,14 +83,6 @@ while (!$Page->Recordset->EOF) {
     $Page->renderRow();
 ?>
     <tr <?= $Page->rowAttributes() ?>>
-<?php if ($Page->id->Visible) { // id ?>
-        <td<?= $Page->id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_actions_id" class="el_jdh_prescriptions_actions_id">
-<span<?= $Page->id->viewAttributes() ?>>
-<?= $Page->id->getViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
 <?php if ($Page->medicine_id->Visible) { // medicine_id ?>
         <td<?= $Page->medicine_id->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_prescriptions_actions_medicine_id" class="el_jdh_prescriptions_actions_medicine_id">
@@ -112,6 +104,14 @@ while (!$Page->Recordset->EOF) {
 <span id="el<?= $Page->RowCount ?>_jdh_prescriptions_actions_units_given" class="el_jdh_prescriptions_actions_units_given">
 <span<?= $Page->units_given->viewAttributes() ?>>
 <?= $Page->units_given->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->submission_date->Visible) { // submission_date ?>
+        <td<?= $Page->submission_date->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_actions_submission_date" class="el_jdh_prescriptions_actions_submission_date">
+<span<?= $Page->submission_date->viewAttributes() ?>>
+<?= $Page->submission_date->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

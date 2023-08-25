@@ -558,7 +558,7 @@ class JdhTestRequestsGrid extends JdhTestRequests
 
         // Set up list options
         $this->setupListOptions();
-        $this->request_id->setVisibility();
+        $this->request_id->Visible = false;
         $this->patient_id->setVisibility();
         $this->request_title->setVisibility();
         $this->request_service_id->setVisibility();
@@ -1234,7 +1234,6 @@ class JdhTestRequestsGrid extends JdhTestRequests
     // Reset form status
     public function resetFormError()
     {
-        $this->request_id->clearErrorMessage();
         $this->patient_id->clearErrorMessage();
         $this->request_title->clearErrorMessage();
         $this->request_service_id->clearErrorMessage();
@@ -1324,6 +1323,14 @@ class JdhTestRequestsGrid extends JdhTestRequests
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
 
+        // "sequence"
+        $item = &$this->ListOptions->add("sequence");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = true;
+        $item->OnLeft = true; // Always on left
+        $item->ShowInDropDown = false;
+        $item->ShowInButtonGroup = false;
+
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
@@ -1392,6 +1399,10 @@ class JdhTestRequestsGrid extends JdhTestRequests
                 }
             }
         }
+
+        // "sequence"
+        $opt = $this->ListOptions["sequence"];
+        $opt->Body = FormatSequenceNumber($this->RecordCount);
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1659,12 +1670,6 @@ class JdhTestRequestsGrid extends JdhTestRequests
         $CurrentForm->FormName = $this->FormName;
         $validate = !Config("SERVER_VALIDATE");
 
-        // Check field name 'request_id' first before field var 'x_request_id'
-        $val = $CurrentForm->hasValue("request_id") ? $CurrentForm->getValue("request_id") : $CurrentForm->getValue("x_request_id");
-        if (!$this->request_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->request_id->setFormValue($val);
-        }
-
         // Check field name 'patient_id' first before field var 'x_patient_id'
         $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
         if (!$this->patient_id->IsDetailKey) {
@@ -1742,6 +1747,12 @@ class JdhTestRequestsGrid extends JdhTestRequests
         }
         if ($CurrentForm->hasValue("o_status_id")) {
             $this->status_id->setOldValue($CurrentForm->getValue("o_status_id"));
+        }
+
+        // Check field name 'request_id' first before field var 'x_request_id'
+        $val = $CurrentForm->hasValue("request_id") ? $CurrentForm->getValue("request_id") : $CurrentForm->getValue("x_request_id");
+        if (!$this->request_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->request_id->setFormValue($val);
         }
     }
 
@@ -1994,10 +2005,6 @@ class JdhTestRequestsGrid extends JdhTestRequests
                 $this->status_id->ViewValue = null;
             }
 
-            // request_id
-            $this->request_id->HrefValue = "";
-            $this->request_id->TooltipValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
@@ -2022,8 +2029,6 @@ class JdhTestRequestsGrid extends JdhTestRequests
             $this->status_id->HrefValue = "";
             $this->status_id->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
-            // request_id
-
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -2129,9 +2134,6 @@ class JdhTestRequestsGrid extends JdhTestRequests
 
             // Add refer script
 
-            // request_id
-            $this->request_id->HrefValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
 
@@ -2150,10 +2152,6 @@ class JdhTestRequestsGrid extends JdhTestRequests
             // status_id
             $this->status_id->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // request_id
-            $this->request_id->setupEditAttributes();
-            $this->request_id->EditValue = $this->request_id->CurrentValue;
-
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -2259,9 +2257,6 @@ class JdhTestRequestsGrid extends JdhTestRequests
 
             // Edit refer script
 
-            // request_id
-            $this->request_id->HrefValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
 
@@ -2300,11 +2295,6 @@ class JdhTestRequestsGrid extends JdhTestRequests
             return true;
         }
         $validateForm = true;
-        if ($this->request_id->Required) {
-            if (!$this->request_id->IsDetailKey && EmptyValue($this->request_id->FormValue)) {
-                $this->request_id->addErrorMessage(str_replace("%s", $this->request_id->caption(), $this->request_id->RequiredErrorMessage));
-            }
-        }
         if ($this->patient_id->Required) {
             if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
                 $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));

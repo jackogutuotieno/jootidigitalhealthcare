@@ -162,9 +162,6 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
-<?php if ($Page->appointment_id->Visible) { // appointment_id ?>
-        <th data-name="appointment_id" class="<?= $Page->appointment_id->headerCellClass() ?>"><div id="elh_jdh_appointments_appointment_id" class="jdh_appointments_appointment_id"><?= $Page->renderFieldHeader($Page->appointment_id) ?></div></th>
-<?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_appointments_patient_id" class="jdh_appointments_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
 <?php } ?>
@@ -202,14 +199,6 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
-    <?php if ($Page->appointment_id->Visible) { // appointment_id ?>
-        <td data-name="appointment_id"<?= $Page->appointment_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_id" class="el_jdh_appointments_appointment_id">
-<span<?= $Page->appointment_id->viewAttributes() ?>>
-<?= $Page->appointment_id->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
     <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">

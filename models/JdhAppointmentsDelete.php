@@ -362,7 +362,7 @@ class JdhAppointmentsDelete extends JdhAppointments
         // View
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->appointment_id->setVisibility();
+        $this->appointment_id->Visible = false;
         $this->patient_id->setVisibility();
         $this->appointment_title->setVisibility();
         $this->appointment_start_date->setVisibility();
@@ -709,10 +709,6 @@ class JdhAppointmentsDelete extends JdhAppointments
             // subbmitted_by_user_id
             $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
             $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
-
-            // appointment_id
-            $this->appointment_id->HrefValue = "";
-            $this->appointment_id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
