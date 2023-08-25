@@ -142,7 +142,7 @@ $CONFIG = [
 
     // General
     "UNFORMAT_YEAR" => 50, // Unformat year
-    "RANDOM_KEY" => 'TYJ5e7sSRO0llLj3', // Random key for encryption
+    "RANDOM_KEY" => 'kOQ6dx747ODg6Edz', // Random key for encryption
     "ENCRYPTION_KEY" => '', // Encryption key for data protection
     "PROJECT_STYLESHEET_FILENAME" => "css/jootidigitalhealthcare.css", // Project stylesheet file name
     "USE_COMPRESSED_STYLESHEET" => true, // Compressed stylesheet

@@ -499,6 +499,15 @@ return function (App $app) {
         }
     );
 
+    // jdh_registration_income
+    $app->map(["GET","POST","OPTIONS"], '/jdhregistrationincomelist[/{patient_id}]', JdhRegistrationIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhregistrationincomelist-jdh_registration_income-list'); // list
+    $app->group(
+        '/jdh_registration_income',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{patient_id}]', JdhRegistrationIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_registration_income/list-jdh_registration_income-list-2'); // list
+        }
+    );
+
     // personal_data
     $app->map(["GET","POST","OPTIONS"], '/personaldata', OthersController::class . ':personaldata')->add(PermissionMiddleware::class)->setName('personaldata');
 

@@ -1362,11 +1362,19 @@ class JdhPharmacyIncome extends DbTable
     // Aggregate list row values
     public function aggregateListRowValues()
     {
+            if (is_numeric($this->line_total_cost->CurrentValue)) {
+                $this->line_total_cost->Total += $this->line_total_cost->CurrentValue; // Accumulate total
+            }
     }
 
     // Aggregate list row (for rendering)
     public function aggregateListRow()
     {
+            $this->line_total_cost->CurrentValue = $this->line_total_cost->Total;
+            $this->line_total_cost->ViewValue = $this->line_total_cost->CurrentValue;
+            $this->line_total_cost->ViewValue = FormatNumber($this->line_total_cost->ViewValue, $this->line_total_cost->formatPattern());
+            $this->line_total_cost->HrefValue = ""; // Clear href value
+
         // Call Row Rendered event
         $this->rowRendered();
     }
@@ -1423,6 +1431,7 @@ class JdhPharmacyIncome extends DbTable
                     }
                 }
                 $this->loadListRowValues($row);
+                $this->aggregateListRowValues(); // Aggregate row values
 
                 // Render row
                 $this->RowType = ROWTYPE_VIEW; // Render view
@@ -1460,6 +1469,26 @@ class JdhPharmacyIncome extends DbTable
                 $this->rowExport($doc, $row);
             }
             $recordset->moveNext();
+        }
+
+        // Export aggregates (horizontal format only)
+        if ($doc->Horizontal) {
+            $this->RowType = ROWTYPE_AGGREGATE;
+            $this->resetAttributes();
+            $this->aggregateListRow();
+            if (!$doc->ExportCustom) {
+                $doc->beginExportRow(-1);
+                $doc->exportAggregate($this->patient_id, '');
+                $doc->exportAggregate($this->patient_name, '');
+                $doc->exportAggregate($this->name, '');
+                $doc->exportAggregate($this->selling_price, '');
+                $doc->exportAggregate($this->units_available, '');
+                $doc->exportAggregate($this->units_given, '');
+                $doc->exportAggregate($this->units_remaining, '');
+                $doc->exportAggregate($this->submission_date, '');
+                $doc->exportAggregate($this->line_total_cost, 'TOTAL');
+                $doc->endExportRow();
+            }
         }
         if (!$doc->ExportCustom) {
             $doc->exportTableFooter();

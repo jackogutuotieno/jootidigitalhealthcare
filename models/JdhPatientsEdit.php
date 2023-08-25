@@ -480,7 +480,9 @@ class JdhPatientsEdit extends JdhPatients
         $this->patient_phone->setVisibility();
         $this->patient_kin_name->setVisibility();
         $this->patient_kin_phone->setVisibility();
+        $this->service_id->setVisibility();
         $this->patient_registration_date->Visible = false;
+        $this->submitted_by_user_id->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -509,6 +511,7 @@ class JdhPatientsEdit extends JdhPatients
 
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_gender);
+        $this->setupLookupOptions($this->service_id);
 
         // Check modal
         if ($this->IsModal) {
@@ -772,6 +775,26 @@ class JdhPatientsEdit extends JdhPatients
                 $this->patient_kin_phone->setFormValue($val);
             }
         }
+
+        // Check field name 'service_id' first before field var 'x_service_id'
+        $val = $CurrentForm->hasValue("service_id") ? $CurrentForm->getValue("service_id") : $CurrentForm->getValue("x_service_id");
+        if (!$this->service_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->service_id->Visible = false; // Disable update for API request
+            } else {
+                $this->service_id->setFormValue($val);
+            }
+        }
+
+        // Check field name 'submitted_by_user_id' first before field var 'x_submitted_by_user_id'
+        $val = $CurrentForm->hasValue("submitted_by_user_id") ? $CurrentForm->getValue("submitted_by_user_id") : $CurrentForm->getValue("x_submitted_by_user_id");
+        if (!$this->submitted_by_user_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->submitted_by_user_id->Visible = false; // Disable update for API request
+            } else {
+                $this->submitted_by_user_id->setFormValue($val);
+            }
+        }
         $this->getUploadFiles(); // Get upload files
     }
 
@@ -786,6 +809,8 @@ class JdhPatientsEdit extends JdhPatients
         $this->patient_phone->CurrentValue = $this->patient_phone->FormValue;
         $this->patient_kin_name->CurrentValue = $this->patient_kin_name->FormValue;
         $this->patient_kin_phone->CurrentValue = $this->patient_kin_phone->FormValue;
+        $this->service_id->CurrentValue = $this->service_id->FormValue;
+        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->FormValue;
     }
 
     /**
@@ -810,6 +835,15 @@ class JdhPatientsEdit extends JdhPatients
         if ($row) {
             $res = true;
             $this->loadRowValues($row); // Load row values
+        }
+
+        // Check if valid User ID
+        if ($res) {
+            $res = $this->showOptionLink("edit");
+            if (!$res) {
+                $userIdMsg = DeniedMessage();
+                $this->setFailureMessage($userIdMsg);
+            }
         }
         return $res;
     }
@@ -848,7 +882,9 @@ class JdhPatientsEdit extends JdhPatients
         $this->patient_phone->setDbValue($row['patient_phone']);
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
         $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
+        $this->service_id->setDbValue($row['service_id']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
     // Return a row with default values
@@ -865,7 +901,9 @@ class JdhPatientsEdit extends JdhPatients
         $row['patient_phone'] = $this->patient_phone->DefaultValue;
         $row['patient_kin_name'] = $this->patient_kin_name->DefaultValue;
         $row['patient_kin_phone'] = $this->patient_kin_phone->DefaultValue;
+        $row['service_id'] = $this->service_id->DefaultValue;
         $row['patient_registration_date'] = $this->patient_registration_date->DefaultValue;
+        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
     }
 
@@ -930,8 +968,14 @@ class JdhPatientsEdit extends JdhPatients
         // patient_kin_phone
         $this->patient_kin_phone->RowCssClass = "row";
 
+        // service_id
+        $this->service_id->RowCssClass = "row";
+
         // patient_registration_date
         $this->patient_registration_date->RowCssClass = "row";
+
+        // submitted_by_user_id
+        $this->submitted_by_user_id->RowCssClass = "row";
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -980,9 +1024,37 @@ class JdhPatientsEdit extends JdhPatients
             // patient_kin_phone
             $this->patient_kin_phone->ViewValue = $this->patient_kin_phone->CurrentValue;
 
+            // service_id
+            $curVal = strval($this->service_id->CurrentValue);
+            if ($curVal != "") {
+                $this->service_id->ViewValue = $this->service_id->lookupCacheOption($curVal);
+                if ($this->service_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $lookupFilter = $this->service_id->getSelectFilter($this); // PHP
+                    $sqlWrk = $this->service_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->service_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->service_id->ViewValue = $this->service_id->displayValue($arwrk);
+                    } else {
+                        $this->service_id->ViewValue = FormatNumber($this->service_id->CurrentValue, $this->service_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->service_id->ViewValue = null;
+            }
+
             // patient_registration_date
             $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
+
+            // submitted_by_user_id
+            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
             // patient_id
             $this->patient_id->HrefValue = "";
@@ -1019,6 +1091,12 @@ class JdhPatientsEdit extends JdhPatients
 
             // patient_kin_phone
             $this->patient_kin_phone->HrefValue = "";
+
+            // service_id
+            $this->service_id->HrefValue = "";
+
+            // submitted_by_user_id
+            $this->submitted_by_user_id->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
             // patient_id
             $this->patient_id->setupEditAttributes();
@@ -1085,6 +1163,39 @@ class JdhPatientsEdit extends JdhPatients
             $this->patient_kin_phone->EditValue = HtmlEncode($this->patient_kin_phone->CurrentValue);
             $this->patient_kin_phone->PlaceHolder = RemoveHtml($this->patient_kin_phone->caption());
 
+            // service_id
+            $this->service_id->setupEditAttributes();
+            $curVal = trim(strval($this->service_id->CurrentValue));
+            if ($curVal != "") {
+                $this->service_id->ViewValue = $this->service_id->lookupCacheOption($curVal);
+            } else {
+                $this->service_id->ViewValue = $this->service_id->Lookup !== null && is_array($this->service_id->lookupOptions()) ? $curVal : null;
+            }
+            if ($this->service_id->ViewValue !== null) { // Load from cache
+                $this->service_id->EditValue = array_values($this->service_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`service_id`", "=", $this->service_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $lookupFilter = $this->service_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->service_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                foreach ($arwrk as &$row) {
+                    $row = $this->service_id->Lookup->renderViewRow($row);
+                }
+                $this->service_id->EditValue = $arwrk;
+            }
+            $this->service_id->PlaceHolder = RemoveHtml($this->service_id->caption());
+
+            // submitted_by_user_id
+
             // Edit refer script
 
             // patient_id
@@ -1122,6 +1233,12 @@ class JdhPatientsEdit extends JdhPatients
 
             // patient_kin_phone
             $this->patient_kin_phone->HrefValue = "";
+
+            // service_id
+            $this->service_id->HrefValue = "";
+
+            // submitted_by_user_id
+            $this->submitted_by_user_id->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -1181,6 +1298,16 @@ class JdhPatientsEdit extends JdhPatients
         if ($this->patient_kin_phone->Required) {
             if (!$this->patient_kin_phone->IsDetailKey && EmptyValue($this->patient_kin_phone->FormValue)) {
                 $this->patient_kin_phone->addErrorMessage(str_replace("%s", $this->patient_kin_phone->caption(), $this->patient_kin_phone->RequiredErrorMessage));
+            }
+        }
+        if ($this->service_id->Required) {
+            if (!$this->service_id->IsDetailKey && EmptyValue($this->service_id->FormValue)) {
+                $this->service_id->addErrorMessage(str_replace("%s", $this->service_id->caption(), $this->service_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->submitted_by_user_id->Required) {
+            if (!$this->submitted_by_user_id->IsDetailKey && EmptyValue($this->submitted_by_user_id->FormValue)) {
+                $this->submitted_by_user_id->addErrorMessage(str_replace("%s", $this->submitted_by_user_id->caption(), $this->submitted_by_user_id->RequiredErrorMessage));
             }
         }
 
@@ -1288,6 +1415,13 @@ class JdhPatientsEdit extends JdhPatients
 
         // patient_kin_phone
         $this->patient_kin_phone->setDbValueDef($rsnew, $this->patient_kin_phone->CurrentValue, null, $this->patient_kin_phone->ReadOnly);
+
+        // service_id
+        $this->service_id->setDbValueDef($rsnew, $this->service_id->CurrentValue, 0, $this->service_id->ReadOnly);
+
+        // submitted_by_user_id
+        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->getAutoUpdateValue(); // PHP
+        $this->submitted_by_user_id->setDbValueDef($rsnew, $this->submitted_by_user_id->CurrentValue, 0);
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -1436,6 +1570,16 @@ class JdhPatientsEdit extends JdhPatients
             WriteJson(["success" => true, "action" => Config("API_EDIT_ACTION"), $table => $row]);
         }
         return $editRow;
+    }
+
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->submitted_by_user_id->CurrentValue);
+        }
+        return true;
     }
 
     // Set up detail parms based on QueryString
@@ -1646,6 +1790,9 @@ class JdhPatientsEdit extends JdhPatients
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_patient_gender":
+                    break;
+                case "x_service_id":
+                    $lookupFilter = $fld->getSelectFilter(); // PHP
                     break;
                 default:
                     $lookupFilter = "";

@@ -664,6 +664,13 @@ class JdhTestReportsGrid extends JdhTestReports
         // Restore master/detail filter from session
         $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Restore master filter from session
         $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Restore detail filter from session
+
+        // Add master User ID filter
+        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
+                if ($this->getCurrentMasterTable() == "jdh_patients") {
+                    $this->DbMasterFilter = $this->addMasterUserIDFilter($this->DbMasterFilter, "jdh_patients"); // Add master User ID filter
+                }
+        }
         AddFilter($filter, $this->DbDetailFilter);
         AddFilter($filter, $this->SearchWhere);
 
@@ -2319,6 +2326,28 @@ class JdhTestReportsGrid extends JdhTestReports
             $userIdMsg = str_replace("%u", strval($this->report_submittedby_user_id->CurrentValue), $userIdMsg);
             $this->setFailureMessage($userIdMsg);
             return false;
+        }
+
+        // Check if valid key values for master user
+        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
+            $detailKeys = [];
+            $detailKeys["patient_id"] = $this->patient_id->CurrentValue;
+            $masterTable = Container("jdh_patients");
+            $masterFilter = $this->getMasterFilter($masterTable, $detailKeys);
+            if (!EmptyValue($masterFilter)) {
+                $validMasterKey = true;
+                if ($rsmaster = $masterTable->loadRs($masterFilter)->fetchAssociative()) {
+                    $validMasterKey = $Security->isValidUserID($rsmaster['submitted_by_user_id']);
+                } elseif ($this->getCurrentMasterTable() == "jdh_patients") {
+                    $validMasterKey = false;
+                }
+                if (!$validMasterKey) {
+                    $masterUserIdMsg = str_replace("%c", CurrentUserID(), $Language->phrase("UnAuthorizedMasterUserID"));
+                    $masterUserIdMsg = str_replace("%f", $masterFilter, $masterUserIdMsg);
+                    $this->setFailureMessage($masterUserIdMsg);
+                    return false;
+                }
+            }
         }
         $conn = $this->getConnection();
 

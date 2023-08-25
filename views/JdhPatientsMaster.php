@@ -86,6 +86,17 @@ $jdh_patients = Container("jdh_patients");
 </td>
         </tr>
 <?php } ?>
+<?php if ($jdh_patients->service_id->Visible) { // service_id ?>
+        <tr id="r_service_id"<?= $jdh_patients->service_id->rowAttributes() ?>>
+            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->service_id->caption() ?></td>
+            <td<?= $jdh_patients->service_id->cellAttributes() ?>>
+<span id="el_jdh_patients_service_id">
+<span<?= $jdh_patients->service_id->viewAttributes() ?>>
+<?= $jdh_patients->service_id->getViewValue() ?></span>
+</span>
+</td>
+        </tr>
+<?php } ?>
 <?php if ($jdh_patients->patient_registration_date->Visible) { // patient_registration_date ?>
         <tr id="r_patient_registration_date"<?= $jdh_patients->patient_registration_date->rowAttributes() ?>>
             <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_registration_date->caption() ?></td>
@@ -93,6 +104,17 @@ $jdh_patients = Container("jdh_patients");
 <span id="el_jdh_patients_patient_registration_date">
 <span<?= $jdh_patients->patient_registration_date->viewAttributes() ?>>
 <?= $jdh_patients->patient_registration_date->getViewValue() ?></span>
+</span>
+</td>
+        </tr>
+<?php } ?>
+<?php if ($jdh_patients->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
+        <tr id="r_submitted_by_user_id"<?= $jdh_patients->submitted_by_user_id->rowAttributes() ?>>
+            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->submitted_by_user_id->caption() ?></td>
+            <td<?= $jdh_patients->submitted_by_user_id->cellAttributes() ?>>
+<span id="el_jdh_patients_submitted_by_user_id">
+<span<?= $jdh_patients->submitted_by_user_id->viewAttributes() ?>>
+<?= $jdh_patients->submitted_by_user_id->getViewValue() ?></span>
 </span>
 </td>
         </tr>

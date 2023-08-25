@@ -68,6 +68,7 @@ return [
     "Latest_Appointments" => \DI\create(LatestAppointments::class),
     "jdh_prescriptions_actions" => \DI\create(JdhPrescriptionsActions::class),
     "jdh_pharmacy_income" => \DI\create(JdhPharmacyIncome::class),
+    "jdh_registration_income" => \DI\create(JdhRegistrationIncome::class),
 
     // User table
     "usertable" => \DI\get("jdh_users"),

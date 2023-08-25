@@ -8,9 +8,9 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 
 /**
- * Table class for jdh_appointments
+ * Table class for jdh_registration_income
  */
-class JdhAppointments extends DbTable
+class JdhRegistrationIncome extends DbTable
 {
     protected $SqlFrom = "";
     protected $SqlSelect = null;
@@ -41,15 +41,12 @@ class JdhAppointments extends DbTable
     public $ModalMultiEdit = false;
 
     // Fields
-    public $appointment_id;
     public $patient_id;
-    public $appointment_title;
-    public $appointment_start_date;
-    public $appointment_end_date;
-    public $appointment_all_day;
-    public $appointment_description;
-    public $submission_date;
-    public $subbmitted_by_user_id;
+    public $patient_name;
+    public $patient_dob;
+    public $patient_gender;
+    public $service_cost;
+    public $patient_registration_date;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -62,14 +59,14 @@ class JdhAppointments extends DbTable
 
         // Language object
         $Language = Container("language");
-        $this->TableVar = "jdh_appointments";
-        $this->TableName = 'jdh_appointments';
-        $this->TableType = "TABLE";
+        $this->TableVar = "jdh_registration_income";
+        $this->TableName = 'jdh_registration_income';
+        $this->TableType = "VIEW";
         $this->ImportUseTransaction = $this->supportsTransaction() && Config("IMPORT_USE_TRANSACTION");
         $this->UseTransaction = $this->supportsTransaction() && Config("USE_TRANSACTION");
 
         // Update Table
-        $this->UpdateTable = "`jdh_appointments`";
+        $this->UpdateTable = "`jdh_registration_income`";
         $this->Dbid = 'DB';
         $this->ExportAll = true;
         $this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
@@ -86,40 +83,15 @@ class JdhAppointments extends DbTable
         $this->ExportWordPageOrientation = ""; // Page orientation (PHPWord only)
         $this->ExportWordPageSize = ""; // Page orientation (PHPWord only)
         $this->ExportWordColumnWidth = null; // Cell width (PHPWord only)
-        $this->DetailAdd = true; // Allow detail add
-        $this->DetailEdit = true; // Allow detail edit
-        $this->DetailView = true; // Allow detail view
+        $this->DetailAdd = false; // Allow detail add
+        $this->DetailEdit = false; // Allow detail edit
+        $this->DetailView = false; // Allow detail view
         $this->ShowMultipleDetails = false; // Show multiple details
         $this->GridAddRowCount = 5;
         $this->AllowAddDeleteRow = true; // Allow add/delete row
         $this->UseAjaxActions = $this->UseAjaxActions || Config("USE_AJAX_ACTIONS");
         $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
         $this->BasicSearch = new BasicSearch($this);
-
-        // appointment_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->appointment_id = new DbField(
-            $this, // Table
-            'x_appointment_id', // Variable name
-            'appointment_id', // Name
-            '`appointment_id`', // Expression
-            '`appointment_id`', // Basic search expression
-            20, // Type
-            20, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`appointment_id`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'NO' // Edit Tag
-        );
-        $this->appointment_id->InputTextType = "text";
-        $this->appointment_id->IsAutoIncrement = true; // Autoincrement field
-        $this->appointment_id->IsPrimaryKey = true; // Primary key field
-        $this->appointment_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->appointment_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
-        $this->Fields['appointment_id'] = &$this->appointment_id;
 
         // patient_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->patient_id = new DbField(
@@ -128,8 +100,8 @@ class JdhAppointments extends DbTable
             'patient_id', // Name
             '`patient_id`', // Expression
             '`patient_id`', // Basic search expression
-            3, // Type
-            11, // Size
+            20, // Type
+            20, // Size
             -1, // Date/Time format
             false, // Is upload field
             '`patient_id`', // Virtual expression
@@ -137,191 +109,141 @@ class JdhAppointments extends DbTable
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
+            'NO' // Edit Tag
         );
         $this->patient_id->InputTextType = "text";
-        $this->patient_id->IsForeignKey = true; // Foreign key field
-        $this->patient_id->Nullable = false; // NOT NULL field
-        $this->patient_id->Required = true; // Required field
-        $this->patient_id->Lookup = new Lookup('patient_id', 'jdh_patients', false, 'patient_id', ["patient_id","patient_name","",""], '', '', [], [], [], [], [], [], '', '', "CONCAT(COALESCE(`patient_id`, ''),'" . ValueSeparator(1, $this->patient_id) . "',COALESCE(`patient_name`,''))");
+        $this->patient_id->IsAutoIncrement = true; // Autoincrement field
+        $this->patient_id->IsPrimaryKey = true; // Primary key field
         $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->patient_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->patient_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->Fields['patient_id'] = &$this->patient_id;
 
-        // appointment_title $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->appointment_title = new DbField(
+        // patient_name $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_name = new DbField(
             $this, // Table
-            'x_appointment_title', // Variable name
-            'appointment_title', // Name
-            '`appointment_title`', // Expression
-            '`appointment_title`', // Basic search expression
+            'x_patient_name', // Variable name
+            'patient_name', // Name
+            '`patient_name`', // Expression
+            '`patient_name`', // Basic search expression
             200, // Type
-            200, // Size
+            50, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`appointment_title`', // Virtual expression
+            '`patient_name`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->appointment_title->InputTextType = "text";
-        $this->appointment_title->Nullable = false; // NOT NULL field
-        $this->appointment_title->Required = true; // Required field
-        $this->appointment_title->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
-        $this->Fields['appointment_title'] = &$this->appointment_title;
+        $this->patient_name->InputTextType = "text";
+        $this->patient_name->Nullable = false; // NOT NULL field
+        $this->patient_name->Required = true; // Required field
+        $this->patient_name->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['patient_name'] = &$this->patient_name;
 
-        // appointment_start_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->appointment_start_date = new DbField(
+        // patient_dob $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_dob = new DbField(
             $this, // Table
-            'x_appointment_start_date', // Variable name
-            'appointment_start_date', // Name
-            '`appointment_start_date`', // Expression
-            CastDateFieldForLike("`appointment_start_date`", 111, "DB"), // Basic search expression
-            135, // Type
-            19, // Size
-            111, // Date/Time format
+            'x_patient_dob', // Variable name
+            'patient_dob', // Name
+            '`patient_dob`', // Expression
+            CastDateFieldForLike("`patient_dob`", 7, "DB"), // Basic search expression
+            133, // Type
+            10, // Size
+            7, // Date/Time format
             false, // Is upload field
-            '`appointment_start_date`', // Virtual expression
+            '`patient_dob`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->appointment_start_date->InputTextType = "text";
-        $this->appointment_start_date->Nullable = false; // NOT NULL field
-        $this->appointment_start_date->Required = true; // Required field
-        $this->appointment_start_date->DefaultErrorMessage = str_replace("%s", DateFormat(111), $Language->phrase("IncorrectDate"));
-        $this->appointment_start_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['appointment_start_date'] = &$this->appointment_start_date;
+        $this->patient_dob->InputTextType = "text";
+        $this->patient_dob->Nullable = false; // NOT NULL field
+        $this->patient_dob->Required = true; // Required field
+        $this->patient_dob->DefaultErrorMessage = str_replace("%s", DateFormat(7), $Language->phrase("IncorrectDate"));
+        $this->patient_dob->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['patient_dob'] = &$this->patient_dob;
 
-        // appointment_end_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->appointment_end_date = new DbField(
+        // patient_gender $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_gender = new DbField(
             $this, // Table
-            'x_appointment_end_date', // Variable name
-            'appointment_end_date', // Name
-            '`appointment_end_date`', // Expression
-            CastDateFieldForLike("`appointment_end_date`", 111, "DB"), // Basic search expression
-            135, // Type
-            19, // Size
-            111, // Date/Time format
-            false, // Is upload field
-            '`appointment_end_date`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
-        );
-        $this->appointment_end_date->InputTextType = "text";
-        $this->appointment_end_date->Nullable = false; // NOT NULL field
-        $this->appointment_end_date->Required = true; // Required field
-        $this->appointment_end_date->DefaultErrorMessage = str_replace("%s", DateFormat(111), $Language->phrase("IncorrectDate"));
-        $this->appointment_end_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['appointment_end_date'] = &$this->appointment_end_date;
-
-        // appointment_all_day $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->appointment_all_day = new DbField(
-            $this, // Table
-            'x_appointment_all_day', // Variable name
-            'appointment_all_day', // Name
-            '`appointment_all_day`', // Expression
-            '`appointment_all_day`', // Basic search expression
-            16, // Type
-            1, // Size
+            'x_patient_gender', // Variable name
+            'patient_gender', // Name
+            '`patient_gender`', // Expression
+            '`patient_gender`', // Basic search expression
+            200, // Type
+            10, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`appointment_all_day`', // Virtual expression
+            '`patient_gender`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'CHECKBOX' // Edit Tag
+            'SELECT' // Edit Tag
         );
-        $this->appointment_all_day->InputTextType = "text";
-        $this->appointment_all_day->Nullable = false; // NOT NULL field
-        $this->appointment_all_day->DataType = DATATYPE_BOOLEAN;
-        $this->appointment_all_day->Lookup = new Lookup('appointment_all_day', 'jdh_appointments', false, '', ["","","",""], '', '', [], [], [], [], [], [], '', '', "");
-        $this->appointment_all_day->OptionCount = 2;
-        $this->appointment_all_day->DefaultErrorMessage = $Language->phrase("IncorrectField");
-        $this->appointment_all_day->SearchOperators = ["=", "<>"];
-        $this->Fields['appointment_all_day'] = &$this->appointment_all_day;
+        $this->patient_gender->InputTextType = "text";
+        $this->patient_gender->Nullable = false; // NOT NULL field
+        $this->patient_gender->Required = true; // Required field
+        $this->patient_gender->UsePleaseSelect = true; // Use PleaseSelect by default
+        $this->patient_gender->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
+        $this->patient_gender->Lookup = new Lookup('patient_gender', 'jdh_registration_income', false, '', ["","","",""], '', '', [], [], [], [], [], [], '', '', "");
+        $this->patient_gender->OptionCount = 2;
+        $this->patient_gender->SearchOperators = ["=", "<>"];
+        $this->Fields['patient_gender'] = &$this->patient_gender;
 
-        // appointment_description $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->appointment_description = new DbField(
+        // service_cost $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->service_cost = new DbField(
             $this, // Table
-            'x_appointment_description', // Variable name
-            'appointment_description', // Name
-            '`appointment_description`', // Expression
-            '`appointment_description`', // Basic search expression
-            201, // Type
-            65535, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`appointment_description`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXTAREA' // Edit Tag
-        );
-        $this->appointment_description->InputTextType = "text";
-        $this->appointment_description->Nullable = false; // NOT NULL field
-        $this->appointment_description->Required = true; // Required field
-        $this->appointment_description->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
-        $this->Fields['appointment_description'] = &$this->appointment_description;
-
-        // submission_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->submission_date = new DbField(
-            $this, // Table
-            'x_submission_date', // Variable name
-            'submission_date', // Name
-            '`submission_date`', // Expression
-            CastDateFieldForLike("`submission_date`", 11, "DB"), // Basic search expression
-            135, // Type
-            19, // Size
-            11, // Date/Time format
-            false, // Is upload field
-            '`submission_date`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
-        );
-        $this->submission_date->InputTextType = "text";
-        $this->submission_date->Nullable = false; // NOT NULL field
-        $this->submission_date->Required = true; // Required field
-        $this->submission_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
-        $this->submission_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['submission_date'] = &$this->submission_date;
-
-        // subbmitted_by_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->subbmitted_by_user_id = new DbField(
-            $this, // Table
-            'x_subbmitted_by_user_id', // Variable name
-            'subbmitted_by_user_id', // Name
-            '`subbmitted_by_user_id`', // Expression
-            '`subbmitted_by_user_id`', // Basic search expression
+            'x_service_cost', // Variable name
+            'service_cost', // Name
+            '`service_cost`', // Expression
+            '`service_cost`', // Basic search expression
             3, // Type
             11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`subbmitted_by_user_id`', // Virtual expression
+            '`service_cost`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->subbmitted_by_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
-        $this->subbmitted_by_user_id->InputTextType = "text";
-        $this->subbmitted_by_user_id->Nullable = false; // NOT NULL field
-        $this->subbmitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->subbmitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['subbmitted_by_user_id'] = &$this->subbmitted_by_user_id;
+        $this->service_cost->InputTextType = "text";
+        $this->service_cost->Nullable = false; // NOT NULL field
+        $this->service_cost->Required = true; // Required field
+        $this->service_cost->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->service_cost->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['service_cost'] = &$this->service_cost;
+
+        // patient_registration_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_registration_date = new DbField(
+            $this, // Table
+            'x_patient_registration_date', // Variable name
+            'patient_registration_date', // Name
+            '`patient_registration_date`', // Expression
+            CastDateFieldForLike("`patient_registration_date`", 11, "DB"), // Basic search expression
+            135, // Type
+            19, // Size
+            11, // Date/Time format
+            false, // Is upload field
+            '`patient_registration_date`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->patient_registration_date->InputTextType = "text";
+        $this->patient_registration_date->Nullable = false; // NOT NULL field
+        $this->patient_registration_date->Required = true; // Required field
+        $this->patient_registration_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
+        $this->patient_registration_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['patient_registration_date'] = &$this->patient_registration_date;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -381,88 +303,6 @@ class JdhAppointments extends DbTable
         }
     }
 
-    // Current master table name
-    public function getCurrentMasterTable()
-    {
-        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_MASTER_TABLE"));
-    }
-
-    public function setCurrentMasterTable($v)
-    {
-        $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_MASTER_TABLE")] = $v;
-    }
-
-    // Get master WHERE clause from session values
-    public function getMasterFilterFromSession()
-    {
-        // Master filter
-        $masterFilter = "";
-        if ($this->getCurrentMasterTable() == "jdh_patients") {
-            $masterTable = Container("jdh_patients");
-            if ($this->patient_id->getSessionValue() != "") {
-                $masterFilter .= "" . GetKeyFilter($masterTable->patient_id, $this->patient_id->getSessionValue(), $masterTable->patient_id->DataType, $masterTable->Dbid);
-            } else {
-                return "";
-            }
-        }
-        return $masterFilter;
-    }
-
-    // Get detail WHERE clause from session values
-    public function getDetailFilterFromSession()
-    {
-        // Detail filter
-        $detailFilter = "";
-        if ($this->getCurrentMasterTable() == "jdh_patients") {
-            $masterTable = Container("jdh_patients");
-            if ($this->patient_id->getSessionValue() != "") {
-                $detailFilter .= "" . GetKeyFilter($this->patient_id, $this->patient_id->getSessionValue(), $masterTable->patient_id->DataType, $this->Dbid);
-            } else {
-                return "";
-            }
-        }
-        return $detailFilter;
-    }
-
-    /**
-     * Get master filter
-     *
-     * @param object $masterTable Master Table
-     * @param array $keys Detail Keys
-     * @return mixed NULL is returned if all keys are empty, Empty string is returned if some keys are empty and is required
-     */
-    public function getMasterFilter($masterTable, $keys)
-    {
-        $validKeys = true;
-        switch ($masterTable->TableVar) {
-            case "jdh_patients":
-                $key = $keys["patient_id"] ?? "";
-                if (EmptyValue($key)) {
-                    if ($masterTable->patient_id->Required) { // Required field and empty value
-                        return ""; // Return empty filter
-                    }
-                    $validKeys = false;
-                } elseif (!$validKeys) { // Already has empty key
-                    return ""; // Return empty filter
-                }
-                if ($validKeys) {
-                    return GetKeyFilter($masterTable->patient_id, $keys["patient_id"], $this->patient_id->DataType, $this->Dbid);
-                }
-                break;
-        }
-        return null; // All null values and no required fields
-    }
-
-    // Get detail filter
-    public function getDetailFilter($masterTable)
-    {
-        switch ($masterTable->TableVar) {
-            case "jdh_patients":
-                return GetKeyFilter($this->patient_id, $masterTable->patient_id->DbValue, $masterTable->patient_id->DataType, $masterTable->Dbid);
-        }
-        return "";
-    }
-
     // Render X Axis for chart
     public function renderChartXAxis($chartVar, $chartRow)
     {
@@ -472,7 +312,7 @@ class JdhAppointments extends DbTable
     // Table level SQL
     public function getSqlFrom() // From
     {
-        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_appointments`";
+        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_registration_income`";
     }
 
     public function sqlFrom() // For backward compatibility
@@ -566,11 +406,6 @@ class JdhAppointments extends DbTable
     // Apply User ID filters
     public function applyUserIDFilters($filter, $id = "")
     {
-        global $Security;
-        // Add User ID filter
-        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
-            $filter = $this->addUserIDFilter($filter, $id);
-        }
         return $filter;
     }
 
@@ -775,8 +610,8 @@ class JdhAppointments extends DbTable
         }
         if ($success) {
             // Get insert id if necessary
-            $this->appointment_id->setDbValue($conn->lastInsertId());
-            $rs['appointment_id'] = $this->appointment_id->DbValue;
+            $this->patient_id->setDbValue($conn->lastInsertId());
+            $rs['patient_id'] = $this->patient_id->DbValue;
         }
         return $success;
     }
@@ -826,8 +661,8 @@ class JdhAppointments extends DbTable
 
         // Return auto increment field
         if ($success) {
-            if (!isset($rs['appointment_id']) && !EmptyValue($this->appointment_id->CurrentValue)) {
-                $rs['appointment_id'] = $this->appointment_id->CurrentValue;
+            if (!isset($rs['patient_id']) && !EmptyValue($this->patient_id->CurrentValue)) {
+                $rs['patient_id'] = $this->patient_id->CurrentValue;
             }
         }
         return $success;
@@ -849,8 +684,8 @@ class JdhAppointments extends DbTable
             $where = $this->arrayToFilter($where);
         }
         if ($rs) {
-            if (array_key_exists('appointment_id', $rs)) {
-                AddFilter($where, QuotedName('appointment_id', $this->Dbid) . '=' . QuotedValue($rs['appointment_id'], $this->appointment_id->DataType, $this->Dbid));
+            if (array_key_exists('patient_id', $rs)) {
+                AddFilter($where, QuotedName('patient_id', $this->Dbid) . '=' . QuotedValue($rs['patient_id'], $this->patient_id->DataType, $this->Dbid));
             }
         }
         $filter = ($curfilter) ? $this->CurrentFilter : "";
@@ -880,15 +715,12 @@ class JdhAppointments extends DbTable
         if (!is_array($row)) {
             return;
         }
-        $this->appointment_id->DbValue = $row['appointment_id'];
         $this->patient_id->DbValue = $row['patient_id'];
-        $this->appointment_title->DbValue = $row['appointment_title'];
-        $this->appointment_start_date->DbValue = $row['appointment_start_date'];
-        $this->appointment_end_date->DbValue = $row['appointment_end_date'];
-        $this->appointment_all_day->DbValue = $row['appointment_all_day'];
-        $this->appointment_description->DbValue = $row['appointment_description'];
-        $this->submission_date->DbValue = $row['submission_date'];
-        $this->subbmitted_by_user_id->DbValue = $row['subbmitted_by_user_id'];
+        $this->patient_name->DbValue = $row['patient_name'];
+        $this->patient_dob->DbValue = $row['patient_dob'];
+        $this->patient_gender->DbValue = $row['patient_gender'];
+        $this->service_cost->DbValue = $row['service_cost'];
+        $this->patient_registration_date->DbValue = $row['patient_registration_date'];
     }
 
     // Delete uploaded files
@@ -900,14 +732,14 @@ class JdhAppointments extends DbTable
     // Record filter WHERE clause
     protected function sqlKeyFilter()
     {
-        return "`appointment_id` = @appointment_id@";
+        return "`patient_id` = @patient_id@";
     }
 
     // Get Key
     public function getKey($current = false)
     {
         $keys = [];
-        $val = $current ? $this->appointment_id->CurrentValue : $this->appointment_id->OldValue;
+        $val = $current ? $this->patient_id->CurrentValue : $this->patient_id->OldValue;
         if (EmptyValue($val)) {
             return "";
         } else {
@@ -923,9 +755,9 @@ class JdhAppointments extends DbTable
         $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
         if (count($keys) == 1) {
             if ($current) {
-                $this->appointment_id->CurrentValue = $keys[0];
+                $this->patient_id->CurrentValue = $keys[0];
             } else {
-                $this->appointment_id->OldValue = $keys[0];
+                $this->patient_id->OldValue = $keys[0];
             }
         }
     }
@@ -935,9 +767,9 @@ class JdhAppointments extends DbTable
     {
         $keyFilter = $this->sqlKeyFilter();
         if (is_array($row)) {
-            $val = array_key_exists('appointment_id', $row) ? $row['appointment_id'] : null;
+            $val = array_key_exists('patient_id', $row) ? $row['patient_id'] : null;
         } else {
-            $val = !EmptyValue($this->appointment_id->OldValue) && !$current ? $this->appointment_id->OldValue : $this->appointment_id->CurrentValue;
+            $val = !EmptyValue($this->patient_id->OldValue) && !$current ? $this->patient_id->OldValue : $this->patient_id->CurrentValue;
         }
         if (!is_numeric($val)) {
             return "0=1"; // Invalid key
@@ -945,7 +777,7 @@ class JdhAppointments extends DbTable
         if ($val === null) {
             return "0=1"; // Invalid key
         } else {
-            $keyFilter = str_replace("@appointment_id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
+            $keyFilter = str_replace("@patient_id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
         }
         return $keyFilter;
     }
@@ -960,7 +792,7 @@ class JdhAppointments extends DbTable
         if ($referUrl != "" && $referPageName != CurrentPageName() && $referPageName != "login") { // Referer not same page or login page
             $_SESSION[$name] = $referUrl; // Save to Session
         }
-        return $_SESSION[$name] ?? GetUrl("jdhappointmentslist");
+        return $_SESSION[$name] ?? GetUrl("jdhregistrationincomelist");
     }
 
     // Set return page URL
@@ -973,11 +805,11 @@ class JdhAppointments extends DbTable
     public function getModalCaption($pageName)
     {
         global $Language;
-        if ($pageName == "jdhappointmentsview") {
+        if ($pageName == "jdhregistrationincomeview") {
             return $Language->phrase("View");
-        } elseif ($pageName == "jdhappointmentsedit") {
+        } elseif ($pageName == "jdhregistrationincomeedit") {
             return $Language->phrase("Edit");
-        } elseif ($pageName == "jdhappointmentsadd") {
+        } elseif ($pageName == "jdhregistrationincomeadd") {
             return $Language->phrase("Add");
         }
         return "";
@@ -988,15 +820,15 @@ class JdhAppointments extends DbTable
     {
         switch (strtolower($action)) {
             case Config("API_VIEW_ACTION"):
-                return "JdhAppointmentsView";
+                return "JdhRegistrationIncomeView";
             case Config("API_ADD_ACTION"):
-                return "JdhAppointmentsAdd";
+                return "JdhRegistrationIncomeAdd";
             case Config("API_EDIT_ACTION"):
-                return "JdhAppointmentsEdit";
+                return "JdhRegistrationIncomeEdit";
             case Config("API_DELETE_ACTION"):
-                return "JdhAppointmentsDelete";
+                return "JdhRegistrationIncomeDelete";
             case Config("API_LIST_ACTION"):
-                return "JdhAppointmentsList";
+                return "JdhRegistrationIncomeList";
             default:
                 return "";
         }
@@ -1017,16 +849,16 @@ class JdhAppointments extends DbTable
     // List URL
     public function getListUrl()
     {
-        return "jdhappointmentslist";
+        return "jdhregistrationincomelist";
     }
 
     // View URL
     public function getViewUrl($parm = "")
     {
         if ($parm != "") {
-            $url = $this->keyUrl("jdhappointmentsview", $parm);
+            $url = $this->keyUrl("jdhregistrationincomeview", $parm);
         } else {
-            $url = $this->keyUrl("jdhappointmentsview", Config("TABLE_SHOW_DETAIL") . "=");
+            $url = $this->keyUrl("jdhregistrationincomeview", Config("TABLE_SHOW_DETAIL") . "=");
         }
         return $this->addMasterUrl($url);
     }
@@ -1035,9 +867,9 @@ class JdhAppointments extends DbTable
     public function getAddUrl($parm = "")
     {
         if ($parm != "") {
-            $url = "jdhappointmentsadd?" . $parm;
+            $url = "jdhregistrationincomeadd?" . $parm;
         } else {
-            $url = "jdhappointmentsadd";
+            $url = "jdhregistrationincomeadd";
         }
         return $this->addMasterUrl($url);
     }
@@ -1045,28 +877,28 @@ class JdhAppointments extends DbTable
     // Edit URL
     public function getEditUrl($parm = "")
     {
-        $url = $this->keyUrl("jdhappointmentsedit", $parm);
+        $url = $this->keyUrl("jdhregistrationincomeedit", $parm);
         return $this->addMasterUrl($url);
     }
 
     // Inline edit URL
     public function getInlineEditUrl()
     {
-        $url = $this->keyUrl("jdhappointmentslist", "action=edit");
+        $url = $this->keyUrl("jdhregistrationincomelist", "action=edit");
         return $this->addMasterUrl($url);
     }
 
     // Copy URL
     public function getCopyUrl($parm = "")
     {
-        $url = $this->keyUrl("jdhappointmentsadd", $parm);
+        $url = $this->keyUrl("jdhregistrationincomeadd", $parm);
         return $this->addMasterUrl($url);
     }
 
     // Inline copy URL
     public function getInlineCopyUrl()
     {
-        $url = $this->keyUrl("jdhappointmentslist", "action=copy");
+        $url = $this->keyUrl("jdhregistrationincomelist", "action=copy");
         return $this->addMasterUrl($url);
     }
 
@@ -1076,24 +908,20 @@ class JdhAppointments extends DbTable
         if ($this->UseAjaxActions && ConvertToBool(Param("infinitescroll")) && CurrentPageID() == "list") {
             return $this->keyUrl(GetApiUrl(Config("API_DELETE_ACTION") . "/" . $this->TableVar));
         } else {
-            return $this->keyUrl("jdhappointmentsdelete");
+            return $this->keyUrl("jdhregistrationincomedelete");
         }
     }
 
     // Add master url
     public function addMasterUrl($url)
     {
-        if ($this->getCurrentMasterTable() == "jdh_patients" && !ContainsString($url, Config("TABLE_SHOW_MASTER") . "=")) {
-            $url .= (ContainsString($url, "?") ? "&" : "?") . Config("TABLE_SHOW_MASTER") . "=" . $this->getCurrentMasterTable();
-            $url .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->getSessionValue()); // Use Session Value
-        }
         return $url;
     }
 
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
-        $json .= "\"appointment_id\":" . JsonEncode($this->appointment_id->CurrentValue, "number");
+        $json .= "\"patient_id\":" . JsonEncode($this->patient_id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -1104,8 +932,8 @@ class JdhAppointments extends DbTable
     // Add key value to URL
     public function keyUrl($url, $parm = "")
     {
-        if ($this->appointment_id->CurrentValue !== null) {
-            $url .= "/" . $this->encodeKeyValue($this->appointment_id->CurrentValue);
+        if ($this->patient_id->CurrentValue !== null) {
+            $url .= "/" . $this->encodeKeyValue($this->patient_id->CurrentValue);
         } else {
             return "javascript:ew.alert(ew.language.phrase('InvalidRecord'));";
         }
@@ -1173,7 +1001,7 @@ class JdhAppointments extends DbTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
-            if (($keyValue = Param("appointment_id") ?? Route("appointment_id")) !== null) {
+            if (($keyValue = Param("patient_id") ?? Route("patient_id")) !== null) {
                 $arKeys[] = $keyValue;
             } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
                 $arKeys[] = $keyValue;
@@ -1219,9 +1047,9 @@ class JdhAppointments extends DbTable
                 $keyFilter .= " OR ";
             }
             if ($setCurrent) {
-                $this->appointment_id->CurrentValue = $key;
+                $this->patient_id->CurrentValue = $key;
             } else {
-                $this->appointment_id->OldValue = $key;
+                $this->patient_id->OldValue = $key;
             }
             $keyFilter .= "(" . $this->getRecordFilter() . ")";
         }
@@ -1246,22 +1074,19 @@ class JdhAppointments extends DbTable
         } else {
             return;
         }
-        $this->appointment_id->setDbValue($row['appointment_id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->appointment_title->setDbValue($row['appointment_title']);
-        $this->appointment_start_date->setDbValue($row['appointment_start_date']);
-        $this->appointment_end_date->setDbValue($row['appointment_end_date']);
-        $this->appointment_all_day->setDbValue($row['appointment_all_day']);
-        $this->appointment_description->setDbValue($row['appointment_description']);
-        $this->submission_date->setDbValue($row['submission_date']);
-        $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
+        $this->patient_name->setDbValue($row['patient_name']);
+        $this->patient_dob->setDbValue($row['patient_dob']);
+        $this->patient_gender->setDbValue($row['patient_gender']);
+        $this->service_cost->setDbValue($row['service_cost']);
+        $this->patient_registration_date->setDbValue($row['patient_registration_date']);
     }
 
     // Render list content
     public function renderListContent($filter)
     {
         global $Response;
-        $listPage = "JdhAppointmentsList";
+        $listPage = "JdhRegistrationIncomeList";
         $listClass = PROJECT_NAMESPACE . $listPage;
         $page = new $listClass();
         $page->loadRecordsetFromFilter($filter);
@@ -1285,115 +1110,66 @@ class JdhAppointments extends DbTable
 
         // Common render codes
 
-        // appointment_id
-
         // patient_id
 
-        // appointment_title
+        // patient_name
 
-        // appointment_start_date
+        // patient_dob
 
-        // appointment_end_date
+        // patient_gender
 
-        // appointment_all_day
+        // service_cost
 
-        // appointment_description
-
-        // submission_date
-
-        // subbmitted_by_user_id
-
-        // appointment_id
-        $this->appointment_id->ViewValue = $this->appointment_id->CurrentValue;
+        // patient_registration_date
 
         // patient_id
         $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
-        $curVal = strval($this->patient_id->CurrentValue);
-        if ($curVal != "") {
-            $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-            if ($this->patient_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                } else {
-                    $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                }
-            }
+
+        // patient_name
+        $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
+
+        // patient_dob
+        $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
+        $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
+
+        // patient_gender
+        if (strval($this->patient_gender->CurrentValue) != "") {
+            $this->patient_gender->ViewValue = $this->patient_gender->optionCaption($this->patient_gender->CurrentValue);
         } else {
-            $this->patient_id->ViewValue = null;
+            $this->patient_gender->ViewValue = null;
         }
 
-        // appointment_title
-        $this->appointment_title->ViewValue = $this->appointment_title->CurrentValue;
+        // service_cost
+        $this->service_cost->ViewValue = $this->service_cost->CurrentValue;
+        $this->service_cost->ViewValue = FormatNumber($this->service_cost->ViewValue, $this->service_cost->formatPattern());
 
-        // appointment_start_date
-        $this->appointment_start_date->ViewValue = $this->appointment_start_date->CurrentValue;
-        $this->appointment_start_date->ViewValue = FormatDateTime($this->appointment_start_date->ViewValue, $this->appointment_start_date->formatPattern());
-
-        // appointment_end_date
-        $this->appointment_end_date->ViewValue = $this->appointment_end_date->CurrentValue;
-        $this->appointment_end_date->ViewValue = FormatDateTime($this->appointment_end_date->ViewValue, $this->appointment_end_date->formatPattern());
-
-        // appointment_all_day
-        if (ConvertToBool($this->appointment_all_day->CurrentValue)) {
-            $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(1) != "" ? $this->appointment_all_day->tagCaption(1) : "Yes";
-        } else {
-            $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(2) != "" ? $this->appointment_all_day->tagCaption(2) : "No";
-        }
-
-        // appointment_description
-        $this->appointment_description->ViewValue = $this->appointment_description->CurrentValue;
-
-        // submission_date
-        $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
-        $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
-
-        // subbmitted_by_user_id
-        $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
-        $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
-
-        // appointment_id
-        $this->appointment_id->HrefValue = "";
-        $this->appointment_id->TooltipValue = "";
+        // patient_registration_date
+        $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
+        $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
         // patient_id
         $this->patient_id->HrefValue = "";
         $this->patient_id->TooltipValue = "";
 
-        // appointment_title
-        $this->appointment_title->HrefValue = "";
-        $this->appointment_title->TooltipValue = "";
+        // patient_name
+        $this->patient_name->HrefValue = "";
+        $this->patient_name->TooltipValue = "";
 
-        // appointment_start_date
-        $this->appointment_start_date->HrefValue = "";
-        $this->appointment_start_date->TooltipValue = "";
+        // patient_dob
+        $this->patient_dob->HrefValue = "";
+        $this->patient_dob->TooltipValue = "";
 
-        // appointment_end_date
-        $this->appointment_end_date->HrefValue = "";
-        $this->appointment_end_date->TooltipValue = "";
+        // patient_gender
+        $this->patient_gender->HrefValue = "";
+        $this->patient_gender->TooltipValue = "";
 
-        // appointment_all_day
-        $this->appointment_all_day->HrefValue = "";
-        $this->appointment_all_day->TooltipValue = "";
+        // service_cost
+        $this->service_cost->HrefValue = "";
+        $this->service_cost->TooltipValue = "";
 
-        // appointment_description
-        $this->appointment_description->HrefValue = "";
-        $this->appointment_description->TooltipValue = "";
-
-        // submission_date
-        $this->submission_date->HrefValue = "";
-        $this->submission_date->TooltipValue = "";
-
-        // subbmitted_by_user_id
-        $this->subbmitted_by_user_id->HrefValue = "";
-        $this->subbmitted_by_user_id->TooltipValue = "";
+        // patient_registration_date
+        $this->patient_registration_date->HrefValue = "";
+        $this->patient_registration_date->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1410,74 +1186,40 @@ class JdhAppointments extends DbTable
         // Call Row Rendering event
         $this->rowRendering();
 
-        // appointment_id
-        $this->appointment_id->setupEditAttributes();
-        $this->appointment_id->EditValue = $this->appointment_id->CurrentValue;
-
         // patient_id
         $this->patient_id->setupEditAttributes();
-        if ($this->patient_id->getSessionValue() != "") {
-            $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
-            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
-            $curVal = strval($this->patient_id->CurrentValue);
-            if ($curVal != "") {
-                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                    } else {
-                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->patient_id->ViewValue = null;
-            }
-        } else {
-            $this->patient_id->EditValue = $this->patient_id->CurrentValue;
-            $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+        $this->patient_id->EditValue = $this->patient_id->CurrentValue;
+
+        // patient_name
+        $this->patient_name->setupEditAttributes();
+        if (!$this->patient_name->Raw) {
+            $this->patient_name->CurrentValue = HtmlDecode($this->patient_name->CurrentValue);
+        }
+        $this->patient_name->EditValue = $this->patient_name->CurrentValue;
+        $this->patient_name->PlaceHolder = RemoveHtml($this->patient_name->caption());
+
+        // patient_dob
+        $this->patient_dob->setupEditAttributes();
+        $this->patient_dob->EditValue = FormatDateTime($this->patient_dob->CurrentValue, $this->patient_dob->formatPattern());
+        $this->patient_dob->PlaceHolder = RemoveHtml($this->patient_dob->caption());
+
+        // patient_gender
+        $this->patient_gender->setupEditAttributes();
+        $this->patient_gender->EditValue = $this->patient_gender->options(true);
+        $this->patient_gender->PlaceHolder = RemoveHtml($this->patient_gender->caption());
+
+        // service_cost
+        $this->service_cost->setupEditAttributes();
+        $this->service_cost->EditValue = $this->service_cost->CurrentValue;
+        $this->service_cost->PlaceHolder = RemoveHtml($this->service_cost->caption());
+        if (strval($this->service_cost->EditValue) != "" && is_numeric($this->service_cost->EditValue)) {
+            $this->service_cost->EditValue = FormatNumber($this->service_cost->EditValue, null);
         }
 
-        // appointment_title
-        $this->appointment_title->setupEditAttributes();
-        if (!$this->appointment_title->Raw) {
-            $this->appointment_title->CurrentValue = HtmlDecode($this->appointment_title->CurrentValue);
-        }
-        $this->appointment_title->EditValue = $this->appointment_title->CurrentValue;
-        $this->appointment_title->PlaceHolder = RemoveHtml($this->appointment_title->caption());
-
-        // appointment_start_date
-        $this->appointment_start_date->setupEditAttributes();
-        $this->appointment_start_date->EditValue = FormatDateTime($this->appointment_start_date->CurrentValue, $this->appointment_start_date->formatPattern());
-        $this->appointment_start_date->PlaceHolder = RemoveHtml($this->appointment_start_date->caption());
-
-        // appointment_end_date
-        $this->appointment_end_date->setupEditAttributes();
-        $this->appointment_end_date->EditValue = FormatDateTime($this->appointment_end_date->CurrentValue, $this->appointment_end_date->formatPattern());
-        $this->appointment_end_date->PlaceHolder = RemoveHtml($this->appointment_end_date->caption());
-
-        // appointment_all_day
-        $this->appointment_all_day->EditValue = $this->appointment_all_day->options(false);
-        $this->appointment_all_day->PlaceHolder = RemoveHtml($this->appointment_all_day->caption());
-
-        // appointment_description
-        $this->appointment_description->setupEditAttributes();
-        $this->appointment_description->EditValue = $this->appointment_description->CurrentValue;
-        $this->appointment_description->PlaceHolder = RemoveHtml($this->appointment_description->caption());
-
-        // submission_date
-        $this->submission_date->setupEditAttributes();
-        $this->submission_date->EditValue = FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern());
-        $this->submission_date->PlaceHolder = RemoveHtml($this->submission_date->caption());
-
-        // subbmitted_by_user_id
+        // patient_registration_date
+        $this->patient_registration_date->setupEditAttributes();
+        $this->patient_registration_date->EditValue = FormatDateTime($this->patient_registration_date->CurrentValue, $this->patient_registration_date->formatPattern());
+        $this->patient_registration_date->PlaceHolder = RemoveHtml($this->patient_registration_date->caption());
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1486,11 +1228,19 @@ class JdhAppointments extends DbTable
     // Aggregate list row values
     public function aggregateListRowValues()
     {
+            if (is_numeric($this->service_cost->CurrentValue)) {
+                $this->service_cost->Total += $this->service_cost->CurrentValue; // Accumulate total
+            }
     }
 
     // Aggregate list row (for rendering)
     public function aggregateListRow()
     {
+            $this->service_cost->CurrentValue = $this->service_cost->Total;
+            $this->service_cost->ViewValue = $this->service_cost->CurrentValue;
+            $this->service_cost->ViewValue = FormatNumber($this->service_cost->ViewValue, $this->service_cost->formatPattern());
+            $this->service_cost->HrefValue = ""; // Clear href value
+
         // Call Row Rendered event
         $this->rowRendered();
     }
@@ -1507,22 +1257,17 @@ class JdhAppointments extends DbTable
             if ($doc->Horizontal) { // Horizontal format, write header
                 $doc->beginExportRow();
                 if ($exportPageType == "view") {
-                    $doc->exportCaption($this->appointment_id);
                     $doc->exportCaption($this->patient_id);
-                    $doc->exportCaption($this->appointment_title);
-                    $doc->exportCaption($this->appointment_start_date);
-                    $doc->exportCaption($this->appointment_end_date);
-                    $doc->exportCaption($this->appointment_all_day);
-                    $doc->exportCaption($this->appointment_description);
+                    $doc->exportCaption($this->patient_name);
+                    $doc->exportCaption($this->patient_gender);
+                    $doc->exportCaption($this->service_cost);
                 } else {
-                    $doc->exportCaption($this->appointment_id);
                     $doc->exportCaption($this->patient_id);
-                    $doc->exportCaption($this->appointment_title);
-                    $doc->exportCaption($this->appointment_start_date);
-                    $doc->exportCaption($this->appointment_end_date);
-                    $doc->exportCaption($this->appointment_all_day);
-                    $doc->exportCaption($this->submission_date);
-                    $doc->exportCaption($this->subbmitted_by_user_id);
+                    $doc->exportCaption($this->patient_name);
+                    $doc->exportCaption($this->patient_dob);
+                    $doc->exportCaption($this->patient_gender);
+                    $doc->exportCaption($this->service_cost);
+                    $doc->exportCaption($this->patient_registration_date);
                 }
                 $doc->endExportRow();
             }
@@ -1544,6 +1289,7 @@ class JdhAppointments extends DbTable
                     }
                 }
                 $this->loadListRowValues($row);
+                $this->aggregateListRowValues(); // Aggregate row values
 
                 // Render row
                 $this->RowType = ROWTYPE_VIEW; // Render view
@@ -1552,22 +1298,17 @@ class JdhAppointments extends DbTable
                 if (!$doc->ExportCustom) {
                     $doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
                     if ($exportPageType == "view") {
-                        $doc->exportField($this->appointment_id);
                         $doc->exportField($this->patient_id);
-                        $doc->exportField($this->appointment_title);
-                        $doc->exportField($this->appointment_start_date);
-                        $doc->exportField($this->appointment_end_date);
-                        $doc->exportField($this->appointment_all_day);
-                        $doc->exportField($this->appointment_description);
+                        $doc->exportField($this->patient_name);
+                        $doc->exportField($this->patient_gender);
+                        $doc->exportField($this->service_cost);
                     } else {
-                        $doc->exportField($this->appointment_id);
                         $doc->exportField($this->patient_id);
-                        $doc->exportField($this->appointment_title);
-                        $doc->exportField($this->appointment_start_date);
-                        $doc->exportField($this->appointment_end_date);
-                        $doc->exportField($this->appointment_all_day);
-                        $doc->exportField($this->submission_date);
-                        $doc->exportField($this->subbmitted_by_user_id);
+                        $doc->exportField($this->patient_name);
+                        $doc->exportField($this->patient_dob);
+                        $doc->exportField($this->patient_gender);
+                        $doc->exportField($this->service_cost);
+                        $doc->exportField($this->patient_registration_date);
                     }
                     $doc->endExportRow($rowCnt);
                 }
@@ -1579,84 +1320,26 @@ class JdhAppointments extends DbTable
             }
             $recordset->moveNext();
         }
+
+        // Export aggregates (horizontal format only)
+        if ($doc->Horizontal) {
+            $this->RowType = ROWTYPE_AGGREGATE;
+            $this->resetAttributes();
+            $this->aggregateListRow();
+            if (!$doc->ExportCustom) {
+                $doc->beginExportRow(-1);
+                $doc->exportAggregate($this->patient_id, '');
+                $doc->exportAggregate($this->patient_name, '');
+                $doc->exportAggregate($this->patient_dob, '');
+                $doc->exportAggregate($this->patient_gender, '');
+                $doc->exportAggregate($this->service_cost, 'TOTAL');
+                $doc->exportAggregate($this->patient_registration_date, '');
+                $doc->endExportRow();
+            }
+        }
         if (!$doc->ExportCustom) {
             $doc->exportTableFooter();
         }
-    }
-
-    // Add User ID filter
-    public function addUserIDFilter($filter = "", $id = "")
-    {
-        global $Security;
-        $filterWrk = "";
-        if ($id == "")
-            $id = (CurrentPageID() == "list") ? $this->CurrentAction : CurrentPageID();
-        if (!$this->userIDAllow($id) && !$Security->isAdmin()) {
-            $filterWrk = $Security->userIdList();
-            if ($filterWrk != "") {
-                $filterWrk = '`subbmitted_by_user_id` IN (' . $filterWrk . ')';
-            }
-        }
-
-        // Call User ID Filtering event
-        $this->userIdFiltering($filterWrk);
-        AddFilter($filter, $filterWrk);
-        return $filter;
-    }
-
-    // User ID subquery
-    public function getUserIDSubquery(&$fld, &$masterfld)
-    {
-        global $UserTable;
-        $wrk = "";
-        $sql = "SELECT " . $masterfld->Expression . " FROM `jdh_appointments`";
-        $filter = $this->addUserIDFilter("");
-        if ($filter != "") {
-            $sql .= " WHERE " . $filter;
-        }
-
-        // List all values
-        $conn = Conn($UserTable->Dbid);
-        $config = $conn->getConfiguration();
-        $config->setResultCacheImpl($this->Cache);
-        if ($rs = $conn->executeCacheQuery($sql, [], [], $this->CacheProfile)->fetchAllNumeric()) {
-            foreach ($rs as $row) {
-                if ($wrk != "") {
-                    $wrk .= ",";
-                }
-                $wrk .= QuotedValue($row[0], $masterfld->DataType, Config("USER_TABLE_DBID"));
-            }
-        }
-        if ($wrk != "") {
-            $wrk = $fld->Expression . " IN (" . $wrk . ")";
-        } else { // No User ID value found
-            $wrk = "0=1";
-        }
-        return $wrk;
-    }
-
-    // Add master User ID filter
-    public function addMasterUserIDFilter($filter, $currentMasterTable)
-    {
-        $filterWrk = $filter;
-        if ($currentMasterTable == "jdh_patients") {
-            $filterWrk = Container("jdh_patients")->addUserIDFilter($filterWrk);
-        }
-        return $filterWrk;
-    }
-
-    // Add detail User ID filter
-    public function addDetailUserIDFilter($filter, $currentMasterTable)
-    {
-        $filterWrk = $filter;
-        if ($currentMasterTable == "jdh_patients") {
-            $mastertable = Container("jdh_patients");
-            if (!$mastertable->userIDAllow()) {
-                $subqueryWrk = $mastertable->getUserIDSubquery($this->patient_id, $mastertable->patient_id);
-                AddFilter($filterWrk, $subqueryWrk);
-            }
-        }
-        return $filterWrk;
     }
 
     // Get file data

@@ -839,6 +839,13 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
         // Restore master/detail filter from session
         $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Restore master filter from session
         $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Restore detail filter from session
+
+        // Add master User ID filter
+        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
+                if ($this->getCurrentMasterTable() == "jdh_patients") {
+                    $this->DbMasterFilter = $this->addMasterUserIDFilter($this->DbMasterFilter, "jdh_patients"); // Add master User ID filter
+                }
+        }
         AddFilter($filter, $this->DbDetailFilter);
         AddFilter($filter, $this->SearchWhere);
 

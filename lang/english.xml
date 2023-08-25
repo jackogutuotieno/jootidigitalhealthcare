@@ -1285,6 +1285,9 @@
     <menu id="274">
       <phrase id="menutext" value="Pharmacy Income" />
     </menu>
+    <menu id="275">
+      <phrase id="menutext" value="Registration Income" />
+    </menu>
     <menu id="272">
       <phrase id="menutext" value="Latest Appointments" />
     </menu>
@@ -1491,8 +1494,14 @@
       <field id="patient_kin_phone">
         <phrase id="fldcaption" value="NoK Phone" />
       </field>
+      <field id="service_id">
+        <phrase id="fldcaption" value="Reg. Fee" />
+      </field>
       <field id="patient_registration_date">
         <phrase id="fldcaption" value="Registration Date" />
+      </field>
+      <field id="submitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
       </field>
     </table>
     <table id="jdh_prescriptions">
@@ -2110,6 +2119,31 @@
       </field>
       <field id="line_total_cost">
         <phrase id="fldcaption" value="Line Total (KES)" />
+      </field>
+    </table>
+    <table id="jdh_registration_income">
+      <phrase id="tblcaption" value="Registration Income" />
+      <field id="patient_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="patient_dob">
+        <phrase id="fldcaption" value="Date of Birth" />
+      </field>
+      <field id="patient_gender">
+        <phrase id="fldcaption" value="Gender" />
+        <phrase id="fldtagvalue1" value="Male" />
+        <phrase id="fldtagcaption1" value="Male" />
+        <phrase id="fldtagvalue2" value="Female" />
+        <phrase id="fldtagcaption2" value="Female" />
+      </field>
+      <field id="service_cost">
+        <phrase id="fldcaption" value="Cost (KES)" />
+      </field>
+      <field id="patient_registration_date">
+        <phrase id="fldcaption" value="Registration Date" />
       </field>
     </table>
   </project>

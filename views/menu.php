@@ -58,5 +58,5 @@ $sideMenu->addMenuItem(270, "mci_Inventory", $MenuLanguage->MenuPhrase("270", "M
 $sideMenu->addMenuItem(230, "mi_jdh_medicine_stock", $MenuLanguage->MenuPhrase("230", "MenuText"), $MenuRelativePath . "jdhmedicinestocklist", 270, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_medicine_stock'), false, false, "fa-pills", "", false, true);
 $sideMenu->addMenuItem(190, "mci_Reports", $MenuLanguage->MenuPhrase("190", "MenuText"), "", -1, "", IsLoggedIn(), false, true, "fa-file", "", false, true);
 $sideMenu->addMenuItem(274, "mi_jdh_pharmacy_income", $MenuLanguage->MenuPhrase("274", "MenuText"), $MenuRelativePath . "jdhpharmacyincomelist", 190, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_pharmacy_income'), false, false, "", "", false, true);
-$sideMenu->addMenuItem(272, "mi_Latest_Appointments", $MenuLanguage->MenuPhrase("272", "MenuText"), $MenuRelativePath . "latestappointments", 190, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}Latest Appointments'), false, false, "", "", false, true);
+$sideMenu->addMenuItem(275, "mi_jdh_registration_income", $MenuLanguage->MenuPhrase("275", "MenuText"), $MenuRelativePath . "jdhregistrationincomelist", 190, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_registration_income'), false, false, "", "", false, true);
 echo $sideMenu->toScript();

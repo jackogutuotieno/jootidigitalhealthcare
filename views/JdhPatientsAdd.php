@@ -29,7 +29,9 @@ loadjs.ready(["wrapper", "head"], function () {
             ["patient_gender", [fields.patient_gender.visible && fields.patient_gender.required ? ew.Validators.required(fields.patient_gender.caption) : null], fields.patient_gender.isInvalid],
             ["patient_phone", [fields.patient_phone.visible && fields.patient_phone.required ? ew.Validators.required(fields.patient_phone.caption) : null], fields.patient_phone.isInvalid],
             ["patient_kin_name", [fields.patient_kin_name.visible && fields.patient_kin_name.required ? ew.Validators.required(fields.patient_kin_name.caption) : null], fields.patient_kin_name.isInvalid],
-            ["patient_kin_phone", [fields.patient_kin_phone.visible && fields.patient_kin_phone.required ? ew.Validators.required(fields.patient_kin_phone.caption) : null], fields.patient_kin_phone.isInvalid]
+            ["patient_kin_phone", [fields.patient_kin_phone.visible && fields.patient_kin_phone.required ? ew.Validators.required(fields.patient_kin_phone.caption) : null], fields.patient_kin_phone.isInvalid],
+            ["service_id", [fields.service_id.visible && fields.service_id.required ? ew.Validators.required(fields.service_id.caption) : null], fields.service_id.isInvalid],
+            ["submitted_by_user_id", [fields.submitted_by_user_id.visible && fields.submitted_by_user_id.required ? ew.Validators.required(fields.submitted_by_user_id.caption) : null], fields.submitted_by_user_id.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -46,6 +48,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Dynamic selection lists
         .setLists({
             "patient_gender": <?= $Page->patient_gender->toClientList($Page) ?>,
+            "service_id": <?= $Page->service_id->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -247,6 +250,46 @@ loadjs.ready("fjdh_patientsadd", function() {
 <input type="<?= $Page->patient_kin_phone->getInputTextType() ?>" name="x_patient_kin_phone" id="x_patient_kin_phone" data-table="jdh_patients" data-field="x_patient_kin_phone" value="<?= $Page->patient_kin_phone->EditValue ?>" size="30" maxlength="15" placeholder="<?= HtmlEncode($Page->patient_kin_phone->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_kin_phone->formatPattern()) ?>"<?= $Page->patient_kin_phone->editAttributes() ?> aria-describedby="x_patient_kin_phone_help">
 <?= $Page->patient_kin_phone->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->patient_kin_phone->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->service_id->Visible) { // service_id ?>
+    <div id="r_service_id"<?= $Page->service_id->rowAttributes() ?>>
+        <label id="elh_jdh_patients_service_id" for="x_service_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->service_id->caption() ?><?= $Page->service_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->service_id->cellAttributes() ?>>
+<span id="el_jdh_patients_service_id">
+    <select
+        id="x_service_id"
+        name="x_service_id"
+        class="form-select ew-select<?= $Page->service_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_patientsadd_x_service_id"
+        data-table="jdh_patients"
+        data-field="x_service_id"
+        data-value-separator="<?= $Page->service_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->service_id->getPlaceHolder()) ?>"
+        <?= $Page->service_id->editAttributes() ?>>
+        <?= $Page->service_id->selectOptionListHtml("x_service_id") ?>
+    </select>
+    <?= $Page->service_id->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->service_id->getErrorMessage() ?></div>
+<?= $Page->service_id->Lookup->getParamTag($Page, "p_x_service_id") ?>
+<script>
+loadjs.ready("fjdh_patientsadd", function() {
+    var options = { name: "x_service_id", selectId: "fjdh_patientsadd_x_service_id" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (fjdh_patientsadd.lists.service_id?.lookupOptions.length) {
+        options.data = { id: "x_service_id", form: "fjdh_patientsadd" };
+    } else {
+        options.ajax = { id: "x_service_id", form: "fjdh_patientsadd", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patients.fields.service_id.selectOptions);
+    ew.createSelect(options);
+});
+</script>
 </span>
 </div></div>
     </div>

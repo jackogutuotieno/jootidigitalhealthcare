@@ -380,7 +380,9 @@ class JdhPatientsDelete extends JdhPatients
         $this->patient_phone->setVisibility();
         $this->patient_kin_name->Visible = false;
         $this->patient_kin_phone->Visible = false;
+        $this->service_id->setVisibility();
         $this->patient_registration_date->setVisibility();
+        $this->submitted_by_user_id->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -406,6 +408,7 @@ class JdhPatientsDelete extends JdhPatients
 
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_gender);
+        $this->setupLookupOptions($this->service_id);
 
         // Set up Breadcrumb
         $this->setupBreadcrumb();
@@ -420,6 +423,25 @@ class JdhPatientsDelete extends JdhPatients
 
         // Set up filter (WHERE Clause)
         $this->CurrentFilter = $filter;
+
+        // Check if valid User ID
+        $conn = $this->getConnection();
+        $sql = $this->getSql($this->CurrentFilter);
+        $rows = $conn->fetchAllAssociative($sql);
+        $res = true;
+        foreach ($rows as $row) {
+            $this->loadRowValues($row);
+            if (!$this->showOptionLink("delete")) {
+                $userIdMsg = $Language->phrase("NoDeletePermission");
+                $this->setFailureMessage($userIdMsg);
+                $res = false;
+                break;
+            }
+        }
+        if (!$res) {
+            $this->terminate("jdhpatientslist"); // Return to list
+            return;
+        }
 
         // Get action
         if (IsApi()) {
@@ -598,7 +620,9 @@ class JdhPatientsDelete extends JdhPatients
         $this->patient_phone->setDbValue($row['patient_phone']);
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
         $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
+        $this->service_id->setDbValue($row['service_id']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
     // Return a row with default values
@@ -615,7 +639,9 @@ class JdhPatientsDelete extends JdhPatients
         $row['patient_phone'] = $this->patient_phone->DefaultValue;
         $row['patient_kin_name'] = $this->patient_kin_name->DefaultValue;
         $row['patient_kin_phone'] = $this->patient_kin_phone->DefaultValue;
+        $row['service_id'] = $this->service_id->DefaultValue;
         $row['patient_registration_date'] = $this->patient_registration_date->DefaultValue;
+        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
     }
 
@@ -651,7 +677,11 @@ class JdhPatientsDelete extends JdhPatients
 
         // patient_kin_phone
 
+        // service_id
+
         // patient_registration_date
+
+        // submitted_by_user_id
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -688,9 +718,37 @@ class JdhPatientsDelete extends JdhPatients
             // patient_kin_phone
             $this->patient_kin_phone->ViewValue = $this->patient_kin_phone->CurrentValue;
 
+            // service_id
+            $curVal = strval($this->service_id->CurrentValue);
+            if ($curVal != "") {
+                $this->service_id->ViewValue = $this->service_id->lookupCacheOption($curVal);
+                if ($this->service_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $lookupFilter = $this->service_id->getSelectFilter($this); // PHP
+                    $sqlWrk = $this->service_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->service_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->service_id->ViewValue = $this->service_id->displayValue($arwrk);
+                    } else {
+                        $this->service_id->ViewValue = FormatNumber($this->service_id->CurrentValue, $this->service_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->service_id->ViewValue = null;
+            }
+
             // patient_registration_date
             $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
+
+            // submitted_by_user_id
+            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
             // patient_id
             $this->patient_id->HrefValue = "";
@@ -720,9 +778,17 @@ class JdhPatientsDelete extends JdhPatients
             $this->patient_phone->HrefValue = "";
             $this->patient_phone->TooltipValue = "";
 
+            // service_id
+            $this->service_id->HrefValue = "";
+            $this->service_id->TooltipValue = "";
+
             // patient_registration_date
             $this->patient_registration_date->HrefValue = "";
             $this->patient_registration_date->TooltipValue = "";
+
+            // submitted_by_user_id
+            $this->submitted_by_user_id->HrefValue = "";
+            $this->submitted_by_user_id->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -855,6 +921,16 @@ class JdhPatientsDelete extends JdhPatients
         return $deleteRows;
     }
 
+    // Show link optionally based on User ID
+    protected function showOptionLink($id = "")
+    {
+        global $Security;
+        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
+            return $Security->isValidUserID($this->submitted_by_user_id->CurrentValue);
+        }
+        return true;
+    }
+
     // Set up Breadcrumb
     protected function setupBreadcrumb()
     {
@@ -880,6 +956,9 @@ class JdhPatientsDelete extends JdhPatients
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_patient_gender":
+                    break;
+                case "x_service_id":
+                    $lookupFilter = $fld->getSelectFilter(); // PHP
                     break;
                 default:
                     $lookupFilter = "";

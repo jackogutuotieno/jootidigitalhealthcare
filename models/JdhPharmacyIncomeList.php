@@ -645,9 +645,9 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
         $this->patient_name->setVisibility();
         $this->name->setVisibility();
         $this->selling_price->setVisibility();
-        $this->units_available->setVisibility();
+        $this->units_available->Visible = false;
         $this->units_given->setVisibility();
-        $this->units_remaining->setVisibility();
+        $this->units_remaining->Visible = false;
         $this->submission_date->Visible = false;
         $this->line_total_cost->setVisibility();
 
@@ -1259,9 +1259,7 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
             $this->updateSort($this->patient_name); // patient_name
             $this->updateSort($this->name); // name
             $this->updateSort($this->selling_price); // selling_price
-            $this->updateSort($this->units_available); // units_available
             $this->updateSort($this->units_given); // units_given
-            $this->updateSort($this->units_remaining); // units_remaining
             $this->updateSort($this->line_total_cost); // line_total_cost
             $this->setStartRecordNumber(1); // Reset start position
         }
@@ -1442,9 +1440,7 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
             $option->add("patient_name", $this->createColumnOption("patient_name"));
             $option->add("name", $this->createColumnOption("name"));
             $option->add("selling_price", $this->createColumnOption("selling_price"));
-            $option->add("units_available", $this->createColumnOption("units_available"));
             $option->add("units_given", $this->createColumnOption("units_given"));
-            $option->add("units_remaining", $this->createColumnOption("units_remaining"));
             $option->add("line_total_cost", $this->createColumnOption("line_total_cost"));
         }
 
@@ -1909,6 +1905,13 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
 
         // line_total_cost
 
+        // Accumulate aggregate value
+        if ($this->RowType != ROWTYPE_AGGREGATEINIT && $this->RowType != ROWTYPE_AGGREGATE && $this->RowType != ROWTYPE_PREVIEW_FIELD) {
+            if (is_numeric($this->line_total_cost->CurrentValue)) {
+                $this->line_total_cost->Total += $this->line_total_cost->CurrentValue; // Accumulate total
+            }
+        }
+
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
             // patient_id
@@ -1960,21 +1963,20 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
             $this->selling_price->HrefValue = "";
             $this->selling_price->TooltipValue = "";
 
-            // units_available
-            $this->units_available->HrefValue = "";
-            $this->units_available->TooltipValue = "";
-
             // units_given
             $this->units_given->HrefValue = "";
             $this->units_given->TooltipValue = "";
 
-            // units_remaining
-            $this->units_remaining->HrefValue = "";
-            $this->units_remaining->TooltipValue = "";
-
             // line_total_cost
             $this->line_total_cost->HrefValue = "";
             $this->line_total_cost->TooltipValue = "";
+        } elseif ($this->RowType == ROWTYPE_AGGREGATEINIT) { // Initialize aggregate row
+                    $this->line_total_cost->Total = 0; // Initialize total
+        } elseif ($this->RowType == ROWTYPE_AGGREGATE) { // Aggregate row
+            $this->line_total_cost->CurrentValue = $this->line_total_cost->Total;
+            $this->line_total_cost->ViewValue = $this->line_total_cost->CurrentValue;
+            $this->line_total_cost->ViewValue = FormatNumber($this->line_total_cost->ViewValue, $this->line_total_cost->formatPattern());
+            $this->line_total_cost->HrefValue = ""; // Clear href value
         }
 
         // Call Row Rendered event

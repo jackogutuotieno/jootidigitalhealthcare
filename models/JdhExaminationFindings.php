@@ -1515,6 +1515,30 @@ class JdhExaminationFindings extends DbTable
         return $wrk;
     }
 
+    // Add master User ID filter
+    public function addMasterUserIDFilter($filter, $currentMasterTable)
+    {
+        $filterWrk = $filter;
+        if ($currentMasterTable == "jdh_patients") {
+            $filterWrk = Container("jdh_patients")->addUserIDFilter($filterWrk);
+        }
+        return $filterWrk;
+    }
+
+    // Add detail User ID filter
+    public function addDetailUserIDFilter($filter, $currentMasterTable)
+    {
+        $filterWrk = $filter;
+        if ($currentMasterTable == "jdh_patients") {
+            $mastertable = Container("jdh_patients");
+            if (!$mastertable->userIDAllow()) {
+                $subqueryWrk = $mastertable->getUserIDSubquery($this->patient_id, $mastertable->patient_id);
+                AddFilter($filterWrk, $subqueryWrk);
+            }
+        }
+        return $filterWrk;
+    }
+
     // Get file data
     public function getFileData($fldparm, $key, $resize, $width = 0, $height = 0, $plugins = [])
     {

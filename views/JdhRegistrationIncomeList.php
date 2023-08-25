@@ -3,12 +3,12 @@
 namespace PHPMaker2023\jootidigitalhealthcare;
 
 // Page object
-$JdhPatientsList = &$Page;
+$JdhRegistrationIncomeList = &$Page;
 ?>
 <?php if (!$Page->isExport()) { ?>
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
-ew.deepAssign(ew.vars, { tables: { jdh_patients: currentTable } });
+ew.deepAssign(ew.vars, { tables: { jdh_registration_income: currentTable } });
 var currentPageID = ew.PAGE_ID = "list";
 var currentForm;
 var <?= $Page->FormName ?>;
@@ -58,20 +58,20 @@ loadjs.ready("head", function () {
 <?php } ?>
 <?php if ($Security->canSearch()) { ?>
 <?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
-<form name="fjdh_patientssrch" id="fjdh_patientssrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="on">
-<div id="fjdh_patientssrch_search_panel" class="mb-2 mb-sm-0 <?= $Page->SearchPanelClass ?>"><!-- .ew-search-panel -->
+<form name="fjdh_registration_incomesrch" id="fjdh_registration_incomesrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="on">
+<div id="fjdh_registration_incomesrch_search_panel" class="mb-2 mb-sm-0 <?= $Page->SearchPanelClass ?>"><!-- .ew-search-panel -->
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
-ew.deepAssign(ew.vars, { tables: { jdh_patients: currentTable } });
+ew.deepAssign(ew.vars, { tables: { jdh_registration_income: currentTable } });
 var currentForm;
-var fjdh_patientssrch, currentSearchForm, currentAdvancedSearchForm;
+var fjdh_registration_incomesrch, currentSearchForm, currentAdvancedSearchForm;
 loadjs.ready(["wrapper", "head"], function () {
     let $ = jQuery,
         fields = currentTable.fields;
 
     // Form object for search
     let form = new ew.FormBuilder()
-        .setId("fjdh_patientssrch")
+        .setId("fjdh_registration_incomesrch")
         .setPageId("list")
 <?php if ($Page->UseAjaxActions) { ?>
         .setSubmitWithFetch(true)
@@ -90,7 +90,7 @@ loadjs.ready(["wrapper", "head"], function () {
 });
 </script>
 <input type="hidden" name="cmd" value="search">
-<input type="hidden" name="t" value="jdh_patients">
+<input type="hidden" name="t" value="jdh_registration_income">
 <div class="ew-extended-search container-fluid ps-2">
 <div class="row mb-0">
     <div class="col-sm-auto px-0 pe-sm-2">
@@ -101,10 +101,10 @@ loadjs.ready(["wrapper", "head"], function () {
                 <span id="searchtype"><?= $Page->BasicSearch->getTypeNameShort() ?></span>
             </button>
             <div class="dropdown-menu dropdown-menu-end">
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "" ? " active" : "" ?>" form="fjdh_patientssrch" data-ew-action="search-type"><?= $Language->phrase("QuickSearchAuto") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "=" ? " active" : "" ?>" form="fjdh_patientssrch" data-ew-action="search-type" data-search-type="="><?= $Language->phrase("QuickSearchExact") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "AND" ? " active" : "" ?>" form="fjdh_patientssrch" data-ew-action="search-type" data-search-type="AND"><?= $Language->phrase("QuickSearchAll") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "OR" ? " active" : "" ?>" form="fjdh_patientssrch" data-ew-action="search-type" data-search-type="OR"><?= $Language->phrase("QuickSearchAny") ?></button>
+                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "" ? " active" : "" ?>" form="fjdh_registration_incomesrch" data-ew-action="search-type"><?= $Language->phrase("QuickSearchAuto") ?></button>
+                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "=" ? " active" : "" ?>" form="fjdh_registration_incomesrch" data-ew-action="search-type" data-search-type="="><?= $Language->phrase("QuickSearchExact") ?></button>
+                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "AND" ? " active" : "" ?>" form="fjdh_registration_incomesrch" data-ew-action="search-type" data-search-type="AND"><?= $Language->phrase("QuickSearchAll") ?></button>
+                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "OR" ? " active" : "" ?>" form="fjdh_registration_incomesrch" data-ew-action="search-type" data-search-type="OR"><?= $Language->phrase("QuickSearchAny") ?></button>
             </div>
         </div>
     </div>
@@ -130,13 +130,13 @@ $Page->showMessage();
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
 <?php } ?>
-<input type="hidden" name="t" value="jdh_patients">
+<input type="hidden" name="t" value="jdh_registration_income">
 <?php if ($Page->IsModal) { ?>
 <input type="hidden" name="modal" value="1">
 <?php } ?>
-<div id="gmp_jdh_patients" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
+<div id="gmp_jdh_registration_income" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
 <?php if ($Page->TotalRecords > 0 || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
-<table id="tbl_jdh_patientslist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
+<table id="tbl_jdh_registration_incomelist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
 <thead>
     <tr class="ew-table-header">
 <?php
@@ -150,34 +150,22 @@ $Page->renderListOptions();
 $Page->ListOptions->render("header", "left");
 ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
-        <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_patients_patient_id" class="jdh_patients_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
+        <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_registration_income_patient_id" class="jdh_registration_income_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
 <?php } ?>
 <?php if ($Page->patient_name->Visible) { // patient_name ?>
-        <th data-name="patient_name" class="<?= $Page->patient_name->headerCellClass() ?>"><div id="elh_jdh_patients_patient_name" class="jdh_patients_patient_name"><?= $Page->renderFieldHeader($Page->patient_name) ?></div></th>
-<?php } ?>
-<?php if ($Page->patient_national_id->Visible) { // patient_national_id ?>
-        <th data-name="patient_national_id" class="<?= $Page->patient_national_id->headerCellClass() ?>"><div id="elh_jdh_patients_patient_national_id" class="jdh_patients_patient_national_id"><?= $Page->renderFieldHeader($Page->patient_national_id) ?></div></th>
+        <th data-name="patient_name" class="<?= $Page->patient_name->headerCellClass() ?>"><div id="elh_jdh_registration_income_patient_name" class="jdh_registration_income_patient_name"><?= $Page->renderFieldHeader($Page->patient_name) ?></div></th>
 <?php } ?>
 <?php if ($Page->patient_dob->Visible) { // patient_dob ?>
-        <th data-name="patient_dob" class="<?= $Page->patient_dob->headerCellClass() ?>"><div id="elh_jdh_patients_patient_dob" class="jdh_patients_patient_dob"><?= $Page->renderFieldHeader($Page->patient_dob) ?></div></th>
-<?php } ?>
-<?php if ($Page->patient_age->Visible) { // patient_age ?>
-        <th data-name="patient_age" class="<?= $Page->patient_age->headerCellClass() ?>"><div id="elh_jdh_patients_patient_age" class="jdh_patients_patient_age"><?= $Page->renderFieldHeader($Page->patient_age) ?></div></th>
+        <th data-name="patient_dob" class="<?= $Page->patient_dob->headerCellClass() ?>"><div id="elh_jdh_registration_income_patient_dob" class="jdh_registration_income_patient_dob"><?= $Page->renderFieldHeader($Page->patient_dob) ?></div></th>
 <?php } ?>
 <?php if ($Page->patient_gender->Visible) { // patient_gender ?>
-        <th data-name="patient_gender" class="<?= $Page->patient_gender->headerCellClass() ?>"><div id="elh_jdh_patients_patient_gender" class="jdh_patients_patient_gender"><?= $Page->renderFieldHeader($Page->patient_gender) ?></div></th>
+        <th data-name="patient_gender" class="<?= $Page->patient_gender->headerCellClass() ?>"><div id="elh_jdh_registration_income_patient_gender" class="jdh_registration_income_patient_gender"><?= $Page->renderFieldHeader($Page->patient_gender) ?></div></th>
 <?php } ?>
-<?php if ($Page->patient_phone->Visible) { // patient_phone ?>
-        <th data-name="patient_phone" class="<?= $Page->patient_phone->headerCellClass() ?>"><div id="elh_jdh_patients_patient_phone" class="jdh_patients_patient_phone"><?= $Page->renderFieldHeader($Page->patient_phone) ?></div></th>
-<?php } ?>
-<?php if ($Page->service_id->Visible) { // service_id ?>
-        <th data-name="service_id" class="<?= $Page->service_id->headerCellClass() ?>"><div id="elh_jdh_patients_service_id" class="jdh_patients_service_id"><?= $Page->renderFieldHeader($Page->service_id) ?></div></th>
+<?php if ($Page->service_cost->Visible) { // service_cost ?>
+        <th data-name="service_cost" class="<?= $Page->service_cost->headerCellClass() ?>"><div id="elh_jdh_registration_income_service_cost" class="jdh_registration_income_service_cost"><?= $Page->renderFieldHeader($Page->service_cost) ?></div></th>
 <?php } ?>
 <?php if ($Page->patient_registration_date->Visible) { // patient_registration_date ?>
-        <th data-name="patient_registration_date" class="<?= $Page->patient_registration_date->headerCellClass() ?>"><div id="elh_jdh_patients_patient_registration_date" class="jdh_patients_patient_registration_date"><?= $Page->renderFieldHeader($Page->patient_registration_date) ?></div></th>
-<?php } ?>
-<?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
-        <th data-name="submitted_by_user_id" class="<?= $Page->submitted_by_user_id->headerCellClass() ?>"><div id="elh_jdh_patients_submitted_by_user_id" class="jdh_patients_submitted_by_user_id"><?= $Page->renderFieldHeader($Page->submitted_by_user_id) ?></div></th>
+        <th data-name="patient_registration_date" class="<?= $Page->patient_registration_date->headerCellClass() ?>"><div id="elh_jdh_registration_income_patient_registration_date" class="jdh_registration_income_patient_registration_date"><?= $Page->renderFieldHeader($Page->patient_registration_date) ?></div></th>
 <?php } ?>
 <?php
 // Render list options (header, right)
@@ -200,7 +188,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
     <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_id" class="el_jdh_patients_patient_id">
+<span id="el<?= $Page->RowCount ?>_jdh_registration_income_patient_id" class="el_jdh_registration_income_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
@@ -208,73 +196,41 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->patient_name->Visible) { // patient_name ?>
         <td data-name="patient_name"<?= $Page->patient_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_name" class="el_jdh_patients_patient_name">
+<span id="el<?= $Page->RowCount ?>_jdh_registration_income_patient_name" class="el_jdh_registration_income_patient_name">
 <span<?= $Page->patient_name->viewAttributes() ?>>
 <?= $Page->patient_name->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->patient_national_id->Visible) { // patient_national_id ?>
-        <td data-name="patient_national_id"<?= $Page->patient_national_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_national_id" class="el_jdh_patients_patient_national_id">
-<span<?= $Page->patient_national_id->viewAttributes() ?>>
-<?= $Page->patient_national_id->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
     <?php if ($Page->patient_dob->Visible) { // patient_dob ?>
         <td data-name="patient_dob"<?= $Page->patient_dob->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_dob" class="el_jdh_patients_patient_dob">
+<span id="el<?= $Page->RowCount ?>_jdh_registration_income_patient_dob" class="el_jdh_registration_income_patient_dob">
 <span<?= $Page->patient_dob->viewAttributes() ?>>
 <?= $Page->patient_dob->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->patient_age->Visible) { // patient_age ?>
-        <td data-name="patient_age"<?= $Page->patient_age->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_age" class="el_jdh_patients_patient_age">
-<span<?= $Page->patient_age->viewAttributes() ?>>
-<?= $Page->patient_age->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
     <?php if ($Page->patient_gender->Visible) { // patient_gender ?>
         <td data-name="patient_gender"<?= $Page->patient_gender->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_gender" class="el_jdh_patients_patient_gender">
+<span id="el<?= $Page->RowCount ?>_jdh_registration_income_patient_gender" class="el_jdh_registration_income_patient_gender">
 <span<?= $Page->patient_gender->viewAttributes() ?>>
 <?= $Page->patient_gender->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->patient_phone->Visible) { // patient_phone ?>
-        <td data-name="patient_phone"<?= $Page->patient_phone->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_phone" class="el_jdh_patients_patient_phone">
-<span<?= $Page->patient_phone->viewAttributes() ?>>
-<?= $Page->patient_phone->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->service_id->Visible) { // service_id ?>
-        <td data-name="service_id"<?= $Page->service_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_service_id" class="el_jdh_patients_service_id">
-<span<?= $Page->service_id->viewAttributes() ?>>
-<?= $Page->service_id->getViewValue() ?></span>
+    <?php if ($Page->service_cost->Visible) { // service_cost ?>
+        <td data-name="service_cost"<?= $Page->service_cost->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_registration_income_service_cost" class="el_jdh_registration_income_service_cost">
+<span<?= $Page->service_cost->viewAttributes() ?>>
+<?= $Page->service_cost->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
     <?php if ($Page->patient_registration_date->Visible) { // patient_registration_date ?>
         <td data-name="patient_registration_date"<?= $Page->patient_registration_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_registration_date" class="el_jdh_patients_patient_registration_date">
+<span id="el<?= $Page->RowCount ?>_jdh_registration_income_patient_registration_date" class="el_jdh_registration_income_patient_registration_date">
 <span<?= $Page->patient_registration_date->viewAttributes() ?>>
 <?= $Page->patient_registration_date->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
-        <td data-name="submitted_by_user_id"<?= $Page->submitted_by_user_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_submitted_by_user_id" class="el_jdh_patients_submitted_by_user_id">
-<span<?= $Page->submitted_by_user_id->viewAttributes() ?>>
-<?= $Page->submitted_by_user_id->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
@@ -291,6 +247,55 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
 }
 ?>
 </tbody>
+<?php
+// Render aggregate row
+$Page->RowType = ROWTYPE_AGGREGATE;
+$Page->resetAttributes();
+$Page->renderRow();
+?>
+<?php if ($Page->TotalRecords > 0 && !$Page->isGridAdd() && !$Page->isGridEdit() && !$Page->isMultiEdit()) { ?>
+<tfoot><!-- Table footer -->
+    <tr class="ew-table-footer">
+<?php
+// Render list options
+$Page->renderListOptions();
+
+// Render list options (footer, left)
+$Page->ListOptions->render("footer", "left");
+?>
+    <?php if ($Page->patient_id->Visible) { // patient_id ?>
+        <td data-name="patient_id" class="<?= $Page->patient_id->footerCellClass() ?>"><span id="elf_jdh_registration_income_patient_id" class="jdh_registration_income_patient_id">
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->patient_name->Visible) { // patient_name ?>
+        <td data-name="patient_name" class="<?= $Page->patient_name->footerCellClass() ?>"><span id="elf_jdh_registration_income_patient_name" class="jdh_registration_income_patient_name">
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->patient_dob->Visible) { // patient_dob ?>
+        <td data-name="patient_dob" class="<?= $Page->patient_dob->footerCellClass() ?>"><span id="elf_jdh_registration_income_patient_dob" class="jdh_registration_income_patient_dob">
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->patient_gender->Visible) { // patient_gender ?>
+        <td data-name="patient_gender" class="<?= $Page->patient_gender->footerCellClass() ?>"><span id="elf_jdh_registration_income_patient_gender" class="jdh_registration_income_patient_gender">
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->service_cost->Visible) { // service_cost ?>
+        <td data-name="service_cost" class="<?= $Page->service_cost->footerCellClass() ?>"><span id="elf_jdh_registration_income_service_cost" class="jdh_registration_income_service_cost">
+        <span class="ew-aggregate"><?= $Language->phrase("TOTAL") ?></span><span class="ew-aggregate-value">
+        <?= $Page->service_cost->ViewValue ?></span>
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->patient_registration_date->Visible) { // patient_registration_date ?>
+        <td data-name="patient_registration_date" class="<?= $Page->patient_registration_date->footerCellClass() ?>"><span id="elf_jdh_registration_income_patient_registration_date" class="jdh_registration_income_patient_registration_date">
+        </span></td>
+    <?php } ?>
+<?php
+// Render list options (footer, right)
+$Page->ListOptions->render("footer", "right");
+?>
+    </tr>
+</tfoot>
+<?php } ?>
 </table><!-- /.ew-table -->
 <?php } ?>
 </div><!-- /.ew-grid-middle-panel -->
@@ -330,7 +335,7 @@ echo GetDebugMessage();
 <script>
 // Field event handlers
 loadjs.ready("head", function() {
-    ew.addEventHandlers("jdh_patients");
+    ew.addEventHandlers("jdh_registration_income");
 });
 </script>
 <script>

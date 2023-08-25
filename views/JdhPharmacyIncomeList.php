@@ -161,14 +161,8 @@ $Page->ListOptions->render("header", "left");
 <?php if ($Page->selling_price->Visible) { // selling_price ?>
         <th data-name="selling_price" class="<?= $Page->selling_price->headerCellClass() ?>"><div id="elh_jdh_pharmacy_income_selling_price" class="jdh_pharmacy_income_selling_price"><?= $Page->renderFieldHeader($Page->selling_price) ?></div></th>
 <?php } ?>
-<?php if ($Page->units_available->Visible) { // units_available ?>
-        <th data-name="units_available" class="<?= $Page->units_available->headerCellClass() ?>"><div id="elh_jdh_pharmacy_income_units_available" class="jdh_pharmacy_income_units_available"><?= $Page->renderFieldHeader($Page->units_available) ?></div></th>
-<?php } ?>
 <?php if ($Page->units_given->Visible) { // units_given ?>
         <th data-name="units_given" class="<?= $Page->units_given->headerCellClass() ?>"><div id="elh_jdh_pharmacy_income_units_given" class="jdh_pharmacy_income_units_given"><?= $Page->renderFieldHeader($Page->units_given) ?></div></th>
-<?php } ?>
-<?php if ($Page->units_remaining->Visible) { // units_remaining ?>
-        <th data-name="units_remaining" class="<?= $Page->units_remaining->headerCellClass() ?>"><div id="elh_jdh_pharmacy_income_units_remaining" class="jdh_pharmacy_income_units_remaining"><?= $Page->renderFieldHeader($Page->units_remaining) ?></div></th>
 <?php } ?>
 <?php if ($Page->line_total_cost->Visible) { // line_total_cost ?>
         <th data-name="line_total_cost" class="<?= $Page->line_total_cost->headerCellClass() ?>"><div id="elh_jdh_pharmacy_income_line_total_cost" class="jdh_pharmacy_income_line_total_cost"><?= $Page->renderFieldHeader($Page->line_total_cost) ?></div></th>
@@ -224,27 +218,11 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->units_available->Visible) { // units_available ?>
-        <td data-name="units_available"<?= $Page->units_available->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_pharmacy_income_units_available" class="el_jdh_pharmacy_income_units_available">
-<span<?= $Page->units_available->viewAttributes() ?>>
-<?= $Page->units_available->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
     <?php if ($Page->units_given->Visible) { // units_given ?>
         <td data-name="units_given"<?= $Page->units_given->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_pharmacy_income_units_given" class="el_jdh_pharmacy_income_units_given">
 <span<?= $Page->units_given->viewAttributes() ?>>
 <?= $Page->units_given->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->units_remaining->Visible) { // units_remaining ?>
-        <td data-name="units_remaining"<?= $Page->units_remaining->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_pharmacy_income_units_remaining" class="el_jdh_pharmacy_income_units_remaining">
-<span<?= $Page->units_remaining->viewAttributes() ?>>
-<?= $Page->units_remaining->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
@@ -269,6 +247,55 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
 }
 ?>
 </tbody>
+<?php
+// Render aggregate row
+$Page->RowType = ROWTYPE_AGGREGATE;
+$Page->resetAttributes();
+$Page->renderRow();
+?>
+<?php if ($Page->TotalRecords > 0 && !$Page->isGridAdd() && !$Page->isGridEdit() && !$Page->isMultiEdit()) { ?>
+<tfoot><!-- Table footer -->
+    <tr class="ew-table-footer">
+<?php
+// Render list options
+$Page->renderListOptions();
+
+// Render list options (footer, left)
+$Page->ListOptions->render("footer", "left");
+?>
+    <?php if ($Page->patient_id->Visible) { // patient_id ?>
+        <td data-name="patient_id" class="<?= $Page->patient_id->footerCellClass() ?>"><span id="elf_jdh_pharmacy_income_patient_id" class="jdh_pharmacy_income_patient_id">
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->patient_name->Visible) { // patient_name ?>
+        <td data-name="patient_name" class="<?= $Page->patient_name->footerCellClass() ?>"><span id="elf_jdh_pharmacy_income_patient_name" class="jdh_pharmacy_income_patient_name">
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->name->Visible) { // name ?>
+        <td data-name="name" class="<?= $Page->name->footerCellClass() ?>"><span id="elf_jdh_pharmacy_income_name" class="jdh_pharmacy_income_name">
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->selling_price->Visible) { // selling_price ?>
+        <td data-name="selling_price" class="<?= $Page->selling_price->footerCellClass() ?>"><span id="elf_jdh_pharmacy_income_selling_price" class="jdh_pharmacy_income_selling_price">
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->units_given->Visible) { // units_given ?>
+        <td data-name="units_given" class="<?= $Page->units_given->footerCellClass() ?>"><span id="elf_jdh_pharmacy_income_units_given" class="jdh_pharmacy_income_units_given">
+        </span></td>
+    <?php } ?>
+    <?php if ($Page->line_total_cost->Visible) { // line_total_cost ?>
+        <td data-name="line_total_cost" class="<?= $Page->line_total_cost->footerCellClass() ?>"><span id="elf_jdh_pharmacy_income_line_total_cost" class="jdh_pharmacy_income_line_total_cost">
+        <span class="ew-aggregate"><?= $Language->phrase("TOTAL") ?></span><span class="ew-aggregate-value">
+        <?= $Page->line_total_cost->ViewValue ?></span>
+        </span></td>
+    <?php } ?>
+<?php
+// Render list options (footer, right)
+$Page->ListOptions->render("footer", "right");
+?>
+    </tr>
+</tfoot>
+<?php } ?>
 </table><!-- /.ew-table -->
 <?php } ?>
 </div><!-- /.ew-grid-middle-panel -->
