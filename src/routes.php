@@ -508,6 +508,23 @@ return function (App $app) {
         }
     );
 
+    // jdh_doctor_charges
+    $app->map(["GET","POST","OPTIONS"], '/jdhdoctorchargeslist[/{id}]', JdhDoctorChargesController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhdoctorchargeslist-jdh_doctor_charges-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/jdhdoctorchargesadd[/{id}]', JdhDoctorChargesController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhdoctorchargesadd-jdh_doctor_charges-add'); // add
+    $app->map(["GET","POST","OPTIONS"], '/jdhdoctorchargesview[/{id}]', JdhDoctorChargesController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhdoctorchargesview-jdh_doctor_charges-view'); // view
+    $app->map(["GET","POST","OPTIONS"], '/jdhdoctorchargesedit[/{id}]', JdhDoctorChargesController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhdoctorchargesedit-jdh_doctor_charges-edit'); // edit
+    $app->map(["GET","POST","OPTIONS"], '/jdhdoctorchargesdelete[/{id}]', JdhDoctorChargesController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhdoctorchargesdelete-jdh_doctor_charges-delete'); // delete
+    $app->group(
+        '/jdh_doctor_charges',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{id}]', JdhDoctorChargesController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_doctor_charges/list-jdh_doctor_charges-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{id}]', JdhDoctorChargesController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_doctor_charges/add-jdh_doctor_charges-add-2'); // add
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{id}]', JdhDoctorChargesController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_doctor_charges/view-jdh_doctor_charges-view-2'); // view
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{id}]', JdhDoctorChargesController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_doctor_charges/edit-jdh_doctor_charges-edit-2'); // edit
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{id}]', JdhDoctorChargesController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_doctor_charges/delete-jdh_doctor_charges-delete-2'); // delete
+        }
+    );
+
     // personal_data
     $app->map(["GET","POST","OPTIONS"], '/personaldata', OthersController::class . ':personaldata')->add(PermissionMiddleware::class)->setName('personaldata');
 
