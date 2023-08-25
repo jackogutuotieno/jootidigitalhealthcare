@@ -32,6 +32,12 @@ class JdhExaminationFindingsController extends ControllerBase
         return $this->runPage($request, $response, $args, "JdhExaminationFindingsEdit");
     }
 
+    // update
+    public function update(Request $request, Response $response, array $args): Response
+    {
+        return $this->runPage($request, $response, $args, "JdhExaminationFindingsUpdate");
+    }
+
     // delete
     public function delete(Request $request, Response $response, array $args): Response
     {

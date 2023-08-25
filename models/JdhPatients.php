@@ -98,7 +98,7 @@ class JdhPatients extends DbTable
         $this->ExportWordPageOrientation = ""; // Page orientation (PHPWord only)
         $this->ExportWordPageSize = ""; // Page orientation (PHPWord only)
         $this->ExportWordColumnWidth = null; // Cell width (PHPWord only)
-        $this->DetailAdd = true; // Allow detail add
+        $this->DetailAdd = false; // Allow detail add
         $this->DetailEdit = true; // Allow detail edit
         $this->DetailView = true; // Allow detail view
         $this->ShowMultipleDetails = true; // Show multiple details
@@ -298,6 +298,7 @@ class JdhPatients extends DbTable
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
+        $this->patient_phone->addMethod("getLinkPrefix", fn() => "tel:");
         $this->patient_phone->InputTextType = "text";
         $this->patient_phone->Nullable = false; // NOT NULL field
         $this->patient_phone->Required = true; // Required field
@@ -1546,7 +1547,15 @@ class JdhPatients extends DbTable
         $this->patient_gender->TooltipValue = "";
 
         // patient_phone
-        $this->patient_phone->HrefValue = "";
+        if (!EmptyValue($this->patient_phone->CurrentValue)) {
+            $this->patient_phone->HrefValue = $this->patient_phone->getLinkPrefix() . $this->patient_phone->CurrentValue; // Add prefix/suffix
+            $this->patient_phone->LinkAttrs["target"] = ""; // Add target
+            if ($this->isExport()) {
+                $this->patient_phone->HrefValue = FullUrl($this->patient_phone->HrefValue, "href");
+            }
+        } else {
+            $this->patient_phone->HrefValue = "";
+        }
         $this->patient_phone->TooltipValue = "";
 
         // patient_kin_name
@@ -1720,8 +1729,6 @@ class JdhPatients extends DbTable
                     $doc->exportCaption($this->patient_name);
                     $doc->exportCaption($this->patient_age);
                     $doc->exportCaption($this->patient_gender);
-                    $doc->exportCaption($this->service_id);
-                    $doc->exportCaption($this->submitted_by_user_id);
                 } else {
                     $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->patient_name);
@@ -1768,8 +1775,6 @@ class JdhPatients extends DbTable
                         $doc->exportField($this->patient_name);
                         $doc->exportField($this->patient_age);
                         $doc->exportField($this->patient_gender);
-                        $doc->exportField($this->service_id);
-                        $doc->exportField($this->submitted_by_user_id);
                     } else {
                         $doc->exportField($this->patient_id);
                         $doc->exportField($this->patient_name);

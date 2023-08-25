@@ -149,20 +149,11 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
-<?php if ($Page->user_id->Visible) { // user_id ?>
-        <th data-name="user_id" class="<?= $Page->user_id->headerCellClass() ?>"><div id="elh_jdh_consultation_income_user_id" class="jdh_consultation_income_user_id"><?= $Page->renderFieldHeader($Page->user_id) ?></div></th>
-<?php } ?>
 <?php if ($Page->first_name->Visible) { // first_name ?>
         <th data-name="first_name" class="<?= $Page->first_name->headerCellClass() ?>"><div id="elh_jdh_consultation_income_first_name" class="jdh_consultation_income_first_name"><?= $Page->renderFieldHeader($Page->first_name) ?></div></th>
 <?php } ?>
 <?php if ($Page->last_name->Visible) { // last_name ?>
         <th data-name="last_name" class="<?= $Page->last_name->headerCellClass() ?>"><div id="elh_jdh_consultation_income_last_name" class="jdh_consultation_income_last_name"><?= $Page->renderFieldHeader($Page->last_name) ?></div></th>
-<?php } ?>
-<?php if ($Page->department_id->Visible) { // department_id ?>
-        <th data-name="department_id" class="<?= $Page->department_id->headerCellClass() ?>"><div id="elh_jdh_consultation_income_department_id" class="jdh_consultation_income_department_id"><?= $Page->renderFieldHeader($Page->department_id) ?></div></th>
-<?php } ?>
-<?php if ($Page->service_name->Visible) { // service_name ?>
-        <th data-name="service_name" class="<?= $Page->service_name->headerCellClass() ?>"><div id="elh_jdh_consultation_income_service_name" class="jdh_consultation_income_service_name"><?= $Page->renderFieldHeader($Page->service_name) ?></div></th>
 <?php } ?>
 <?php if ($Page->service_cost->Visible) { // service_cost ?>
         <th data-name="service_cost" class="<?= $Page->service_cost->headerCellClass() ?>"><div id="elh_jdh_consultation_income_service_cost" class="jdh_consultation_income_service_cost"><?= $Page->renderFieldHeader($Page->service_cost) ?></div></th>
@@ -186,14 +177,6 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
-    <?php if ($Page->user_id->Visible) { // user_id ?>
-        <td data-name="user_id"<?= $Page->user_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_consultation_income_user_id" class="el_jdh_consultation_income_user_id">
-<span<?= $Page->user_id->viewAttributes() ?>>
-<?= $Page->user_id->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
     <?php if ($Page->first_name->Visible) { // first_name ?>
         <td data-name="first_name"<?= $Page->first_name->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_consultation_income_first_name" class="el_jdh_consultation_income_first_name">
@@ -207,22 +190,6 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 <span id="el<?= $Page->RowCount ?>_jdh_consultation_income_last_name" class="el_jdh_consultation_income_last_name">
 <span<?= $Page->last_name->viewAttributes() ?>>
 <?= $Page->last_name->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->department_id->Visible) { // department_id ?>
-        <td data-name="department_id"<?= $Page->department_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_consultation_income_department_id" class="el_jdh_consultation_income_department_id">
-<span<?= $Page->department_id->viewAttributes() ?>>
-<?= $Page->department_id->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->service_name->Visible) { // service_name ?>
-        <td data-name="service_name"<?= $Page->service_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_consultation_income_service_name" class="el_jdh_consultation_income_service_name">
-<span<?= $Page->service_name->viewAttributes() ?>>
-<?= $Page->service_name->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
@@ -263,24 +230,12 @@ $Page->renderListOptions();
 // Render list options (footer, left)
 $Page->ListOptions->render("footer", "left");
 ?>
-    <?php if ($Page->user_id->Visible) { // user_id ?>
-        <td data-name="user_id" class="<?= $Page->user_id->footerCellClass() ?>"><span id="elf_jdh_consultation_income_user_id" class="jdh_consultation_income_user_id">
-        </span></td>
-    <?php } ?>
     <?php if ($Page->first_name->Visible) { // first_name ?>
         <td data-name="first_name" class="<?= $Page->first_name->footerCellClass() ?>"><span id="elf_jdh_consultation_income_first_name" class="jdh_consultation_income_first_name">
         </span></td>
     <?php } ?>
     <?php if ($Page->last_name->Visible) { // last_name ?>
         <td data-name="last_name" class="<?= $Page->last_name->footerCellClass() ?>"><span id="elf_jdh_consultation_income_last_name" class="jdh_consultation_income_last_name">
-        </span></td>
-    <?php } ?>
-    <?php if ($Page->department_id->Visible) { // department_id ?>
-        <td data-name="department_id" class="<?= $Page->department_id->footerCellClass() ?>"><span id="elf_jdh_consultation_income_department_id" class="jdh_consultation_income_department_id">
-        </span></td>
-    <?php } ?>
-    <?php if ($Page->service_name->Visible) { // service_name ?>
-        <td data-name="service_name" class="<?= $Page->service_name->footerCellClass() ?>"><span id="elf_jdh_consultation_income_service_name" class="jdh_consultation_income_service_name">
         </span></td>
     <?php } ?>
     <?php if ($Page->service_cost->Visible) { // service_cost ?>

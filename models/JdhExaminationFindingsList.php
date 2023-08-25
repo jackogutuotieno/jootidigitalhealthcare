@@ -626,6 +626,9 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Create form object
+        $CurrentForm = new HttpForm();
+
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -698,6 +701,9 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
 
+        // Load default values for add
+        $this->loadDefaultValues();
+
         // Update form name to avoid conflict
         if ($this->IsModal) {
             $this->FormName = "fjdh_examination_findingsgrid";
@@ -740,6 +746,50 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
             $this->import(Param(Config("API_FILE_TOKEN_NAME")), ConvertToBool(Param("rollback")));
             $this->terminate();
             return;
+        }
+
+        // Check QueryString parameters
+        if (Get("action") !== null) {
+            $this->CurrentAction = Get("action");
+        } else {
+            if (Post("action") !== null) {
+                $this->CurrentAction = Post("action"); // Get action
+            }
+        }
+
+        // Clear inline mode
+        if ($this->isCancel()) {
+            $this->clearInlineMode();
+        }
+
+        // Switch to inline edit mode
+        if ($this->isEdit()) {
+            $this->inlineEditMode();
+        // Inline Update
+        } elseif (IsPost() && ($this->isUpdate() || $this->isOverwrite()) && Session(SESSION_INLINE_MODE) == "edit") {
+            $this->setKey(Post($this->OldKeyName));
+            // Return JSON error message if UseAjaxActions
+            if (!$this->inlineUpdate() && $this->UseAjaxActions) {
+                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                $this->clearFailureMessage();
+                $this->terminate();
+                return;
+            }
+        }
+
+        // Switch to inline add mode
+        if ($this->isAdd() || $this->isCopy()) {
+            $this->inlineAddMode();
+        // Insert Inline
+        } elseif (IsPost() && $this->isInsert() && Session(SESSION_INLINE_MODE) == "add") {
+            $this->setKey(Post($this->OldKeyName));
+            // Return JSON error message if UseAjaxActions
+            if (!$this->inlineInsert() && $this->UseAjaxActions) {
+                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                $this->clearFailureMessage();
+                $this->terminate();
+                return;
+            }
         }
 
         // Hide list options
@@ -1030,6 +1080,126 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
         }
     }
 
+    // Exit inline mode
+    protected function clearInlineMode()
+    {
+        $this->LastAction = $this->CurrentAction; // Save last action
+        $this->CurrentAction = ""; // Clear action
+        $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
+    }
+
+    // Switch to Inline Edit mode
+    protected function inlineEditMode()
+    {
+        global $Security, $Language;
+        if (!$Security->canEdit()) {
+            return false; // Edit not allowed
+        }
+        $inlineEdit = true;
+        if (($keyValue = Get("id") ?? Route("id")) !== null) {
+            $this->id->setQueryStringValue($keyValue);
+        } elseif (IsApi() && ($keyValue = Route(2)) !== null) {
+            $this->id->setQueryStringValue($keyValue);
+        } else {
+            $inlineEdit = false;
+        }
+        if ($inlineEdit) {
+            if ($this->loadRow()) {
+                    // Check if valid User ID
+                    if (!$this->showOptionLink("edit")) {
+                        $userIdMsg = $Language->phrase("NoEditPermission");
+                        $this->setFailureMessage($userIdMsg);
+                        $this->clearInlineMode(); // Clear inline edit mode
+                        return false;
+                    }
+                $this->OldKey = $this->getKey(true); // Get from CurrentValue
+                $this->setKey($this->OldKey); // Set to OldValue
+                $_SESSION[SESSION_INLINE_MODE] = "edit"; // Enable inline edit
+            }
+        }
+        return true;
+    }
+
+    // Perform update to Inline Edit record
+    protected function inlineUpdate()
+    {
+        global $Language, $CurrentForm;
+        $CurrentForm->Index = 1;
+        $this->loadFormValues(); // Get form values
+
+        // Validate form
+        $inlineUpdate = true;
+        if (!$this->validateForm()) {
+            $inlineUpdate = false; // Form error, reset action
+        } else {
+            $inlineUpdate = false;
+            $this->SendEmail = true; // Send email on update success
+            $inlineUpdate = $this->editRow(); // Update record
+        }
+        if ($inlineUpdate) { // Update success
+            if ($this->getSuccessMessage() == "") {
+                $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Set up success message
+            }
+            $this->clearInlineMode(); // Clear inline edit mode
+        } else {
+            if ($this->getFailureMessage() == "") {
+                $this->setFailureMessage($Language->phrase("UpdateFailed")); // Set update failed message
+            }
+            $this->EventCancelled = true; // Cancel event
+            $this->CurrentAction = "edit"; // Stay in edit mode
+        }
+        return $inlineUpdate;
+    }
+
+    // Check Inline Edit key
+    public function checkInlineEditKey()
+    {
+        if (!SameString($this->id->OldValue, $this->id->CurrentValue)) {
+            return false;
+        }
+        return true;
+    }
+
+    // Switch to Inline Add mode
+    protected function inlineAddMode()
+    {
+        global $Security, $Language;
+        if (!$Security->canAdd()) {
+            return false; // Add not allowed
+        }
+        $this->CurrentAction = "add";
+        $_SESSION[SESSION_INLINE_MODE] = "add"; // Enable inline add
+        return true;
+    }
+
+    // Perform update to Inline Add/Copy record
+    protected function inlineInsert()
+    {
+        global $Language, $CurrentForm;
+        $rsold = $this->loadOldRecord(); // Load old record
+        $CurrentForm->Index = 0;
+        $this->loadFormValues(); // Get form values
+
+        // Validate form
+        if (!$this->validateForm()) {
+            $this->EventCancelled = true; // Set event cancelled
+            $this->CurrentAction = "add"; // Stay in add mode
+            return false;
+        }
+        $this->SendEmail = true; // Send email on add success
+        if ($this->addRow($rsold)) { // Add record
+            if ($this->getSuccessMessage() == "") {
+                $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up add success message
+            }
+            $this->clearInlineMode(); // Clear inline add mode
+            return true;
+        } else { // Add failed
+            $this->EventCancelled = true; // Set event cancelled
+            $this->CurrentAction = "add"; // Stay in add mode
+            return false;
+        }
+    }
+
     // Build filter for all keys
     protected function buildKeyFilter()
     {
@@ -1059,6 +1229,15 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
             $thisKey = strval($CurrentForm->getValue($this->OldKeyName));
         }
         return $wrkFilter;
+    }
+
+    // Reset form status
+    public function resetFormError()
+    {
+        $this->id->clearErrorMessage();
+        $this->patient_id->clearErrorMessage();
+        $this->general_exams->clearErrorMessage();
+        $this->systematic_exams->clearErrorMessage();
     }
 
     // Get list of filters
@@ -1359,6 +1538,12 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
 
+        // "copy"
+        $item = &$this->ListOptions->add("copy");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->canAdd() && $this->isAdd();
+        $item->OnLeft = false;
+
         // List actions
         $item = &$this->ListOptions->add("listactions");
         $item->CssClass = "text-nowrap";
@@ -1369,7 +1554,7 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
 
         // "checkbox"
         $item = &$this->ListOptions->add("checkbox");
-        $item->Visible = $Security->canDelete();
+        $item->Visible = ($Security->canDelete() || $Security->canEdit());
         $item->OnLeft = false;
         $item->Header = "<div class=\"form-check\"><input type=\"checkbox\" name=\"key\" id=\"key\" class=\"form-check-input\" data-ew-action=\"select-all-keys\"></div>";
         if ($item->OnLeft) {
@@ -1415,7 +1600,88 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
 
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
+
+        // Set up row action and key
+        if ($CurrentForm && is_numeric($this->RowIndex) && $this->RowType != "view") {
+            $CurrentForm->Index = $this->RowIndex;
+            $actionName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormActionName);
+            $oldKeyName = str_replace("k_", "k" . $this->RowIndex . "_", $this->OldKeyName);
+            $blankRowName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormBlankRowName);
+            if ($this->RowAction != "") {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $actionName . "\" id=\"" . $actionName . "\" value=\"" . $this->RowAction . "\">";
+            }
+            $oldKey = $this->getKey(false); // Get from OldValue
+            if ($oldKeyName != "" && $oldKey != "") {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $oldKeyName . "\" id=\"" . $oldKeyName . "\" value=\"" . HtmlEncode($oldKey) . "\">";
+            }
+            if ($this->RowAction == "insert" && $this->isConfirm() && $this->emptyRow()) {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $blankRowName . "\" id=\"" . $blankRowName . "\" value=\"1\">";
+            }
+        }
         $pageUrl = $this->pageUrl(false);
+
+        // "copy"
+        $opt = $this->ListOptions["copy"];
+        if ($this->isInlineAddRow() || $this->isInlineCopyRow()) { // Inline Add/Copy
+            $this->ListOptions->CustomItem = "copy"; // Show copy column only
+            $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
+            $insertCaption = $Language->phrase("InsertLink");
+            $insertTitle = HtmlTitle($insertCaption);
+            $cancelCaption = $Language->phrase("CancelLink");
+            $cancelTitle = HtmlTitle($cancelCaption);
+            $inlineInsertUrl = GetUrl($this->pageName());
+            if ($this->UseAjaxActions) {
+                $opt->Body = <<<INLINEADDAJAX
+                    <div{$divClass}>
+                        <button type="button" class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" data-ew-action="inline" data-action="insert" data-key="" data-url="{$inlineInsertUrl}">{$insertCaption}</button>
+                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel">{$cancelCaption}</button>
+                    </div>
+                    INLINEADDAJAX;
+            } else {
+                $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
+                $opt->Body = <<<INLINEADD
+                    <div{$divClass}>
+                        <button class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" form="fjdh_examination_findingslist" formaction="{$inlineInsertUrl}">{$insertCaption}</button>
+                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$insertTitle}" href="{$cancelurl}">{$cancelCaption}</a>
+                        <input type="hidden" name="action" id="action" value="insert">
+                    </div>
+                    INLINEADD;
+            }
+            return;
+        }
+
+        // "edit"
+        $opt = $this->ListOptions["edit"];
+        if ($this->isInlineEditRow()) { // Inline-Edit
+            $this->ListOptions->CustomItem = "edit"; // Show edit column only
+            $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
+                $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
+                $updateCaption = $Language->phrase("UpdateLink");
+                $updateTitle = HtmlTitle($updateCaption);
+                $cancelCaption = $Language->phrase("CancelLink");
+                $cancelTitle = HtmlTitle($cancelCaption);
+                $oldKey = HtmlEncode($this->getKey(true));
+                $inlineUpdateUrl = HtmlEncode(GetUrl($this->urlAddHash($this->pageName(), "r" . $this->RowCount . "_" . $this->TableVar)));
+                if ($this->UseAjaxActions) {
+                    $inlineCancelUrl = $this->InlineEditUrl . "?action=cancel";
+                    $opt->Body = <<<INLINEEDITAJAX
+                    <div{$divClass}>
+                        <button type="button" class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" data-ew-action="inline" data-action="update" data-key="{$oldKey}" data-url="{$inlineUpdateUrl}">{$updateCaption}</button>
+                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel" data-key="{$oldKey}" data-url="{$inlineCancelUrl}">{$cancelCaption}</button>
+                    </div>
+                    INLINEEDITAJAX;
+                } else {
+                    $opt->Body = <<<INLINEEDIT
+                    <div{$divClass}>
+                        <button class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" form="fjdh_examination_findingslist" formaction="{$inlineUpdateUrl}">{$updateCaption}</button>
+                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$updateTitle}" href="{$cancelurl}">{$cancelCaption}</a>
+                        <input type="hidden" name="action" id="action" value="update">
+                    </div>
+                    INLINEEDIT;
+                }
+            $opt->Body .= "<input type=\"hidden\" name=\"" . $this->OldKeyName . "\" id=\"" . $this->OldKeyName . "\" value=\"" . HtmlEncode($this->id->CurrentValue) . "\">";
+            return;
+        }
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1438,6 +1704,13 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_examination_findings\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
+                }
+                $inlineEditCaption = $Language->phrase("InlineEditLink");
+                $inlineEditTitle = HtmlTitle($inlineEditCaption);
+                if ($this->UseAjaxActions) {
+                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" data-ew-action=\"inline\" data-action=\"edit\" data-key=\"" . HtmlEncode($this->getKey(true)) . "\" data-url=\"" . HtmlEncode($this->InlineEditUrl) . "\">" . $inlineEditCaption . "</a>";
+                } else {
+                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" href=\"" . HtmlEncode($this->urlAddHash(GetUrl($this->InlineEditUrl), "r" . $this->RowCount . "_" . $this->TableVar)) . "\">" . $inlineEditCaption . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1510,6 +1783,15 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
             $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
         }
         $item->Visible = $this->AddUrl != "" && $Security->canAdd();
+
+        // Inline Add
+        $item = &$option->add("inlineadd");
+        if ($this->UseAjaxActions) {
+            $item->Body = "<button class=\"ew-add-edit ew-inline-add\" title=\"" . $Language->phrase("InlineAddLink", true) . "\" data-caption=\"" . $Language->phrase("InlineAddLink", true) . "\" data-ew-action=\"inline\" data-action=\"add\" data-position=\"top\" data-url=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</button>";
+        } else {
+            $item->Body = "<a class=\"ew-add-edit ew-inline-add\" title=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</a>";
+        }
+        $item->Visible = $this->InlineAddUrl != "" && $Security->canAdd();
         $option = $options["action"];
 
         // Add multi delete
@@ -1523,6 +1805,17 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
             ($this->InlineDelete ? " data-msg=\"" . HtmlEncode($Language->phrase("DeleteConfirm")) . "\" data-data='{\"action\":\"delete\"}'" : " data-data='{\"action\":\"show\"}'") .
             ">" . $Language->phrase("DeleteSelectedLink") . "</button>";
         $item->Visible = $Security->canDelete();
+
+        // Add multi update
+        $item = &$option->add("multiupdate");
+        $item->Body = "<button type=\"button\" class=\"ew-action ew-multi-update\" title=\"" .
+            $Language->phrase("UpdateSelectedLink", true) . "\" data-table=\"jdh_examination_findings\" data-caption=\"" .
+            $Language->phrase("UpdateSelectedLink", true) . "\" form=\"fjdh_examination_findingslist\" data-ew-action=\"" .
+            ($this->ModalUpdate && !IsMobile() ? "modal" : "submit") . "\"" .
+            ($this->ModalUpdate && !IsMobile() ? " data-action=\"update\"" : "") .
+            ($this->UseAjaxActions ? " data-ajax=\"true\"" : "") .
+            " data-url=\"" . GetUrl($this->MultiUpdateUrl) . "\">" . $Language->phrase("UpdateSelectedLink") . "</button>";
+        $item->Visible = $Security->canEdit();
 
         // Show column list for column visibility
         if ($this->UseColumnVisibility) {
@@ -1716,6 +2009,15 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
                 $this->StopRecord = $this->TotalRecords;
             }
         }
+
+        // Restore number of post back records
+        if ($CurrentForm && ($this->isConfirm() || $this->EventCancelled)) {
+            $CurrentForm->Index = -1;
+            if ($CurrentForm->hasValue($this->FormKeyCountName) && ($this->isGridAdd() || $this->isGridEdit() || $this->isConfirm())) {
+                $this->KeyCount = $CurrentForm->getValue($this->FormKeyCountName);
+                $this->StopRecord = $this->StartRecord + $this->KeyCount - 1;
+            }
+        }
         $this->RecordCount = $this->StartRecord - 1;
         if ($this->Recordset && !$this->Recordset->EOF) {
             // Nothing to do
@@ -1729,6 +2031,15 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
         $this->RowType = ROWTYPE_AGGREGATEINIT;
         $this->resetAttributes();
         $this->renderRow();
+        if ($this->isAdd() || $this->isCopy() || $this->isInlineInserted()) {
+            $this->RowIndex = 0;
+            if ($this->UseInfiniteScroll) {
+                $this->StopRecord = $this->StartRecord; // Show this record only
+            }
+        }
+        if ($this->isEdit()) {
+            $this->RowIndex = 1;
+        }
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
             $this->RowIndex = '$rowindex$';
         }
@@ -1785,6 +2096,24 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
         if (($this->isAdd() || $this->isCopy()) && $this->InlineRowCount == 0 || $this->isGridAdd()) { // Add
             $this->RowType = ROWTYPE_ADD; // Render add
         }
+        if ($this->isEdit() || $this->isInlineUpdated() || $this->isInlineEditCancelled()) { // Inline edit/updated/cancelled
+            if ($this->checkInlineEditKey() && $this->InlineRowCount == 0) {
+                if ($this->isEdit()) { // Inline edit
+                    $this->RowAction = "edit";
+                    $this->RowType = ROWTYPE_EDIT; // Render edit
+                } else { // Inline updated
+                    $this->RowAction = "";
+                    $this->RowType = ROWTYPE_VIEW; // Render view
+                    $this->RowAttrs["data-oldkey"] = $this->getKey(); // Set up old key
+                }
+            } elseif ($this->UseInfiniteScroll) {
+                $this->RowAction = "hide";
+            }
+        }
+        if ($this->isEdit() && $this->RowType == ROWTYPE_EDIT && $this->EventCancelled) { // Update failed
+            $CurrentForm->Index = 1;
+            $this->restoreFormValues(); // Restore form values
+        }
 
         // Inline Add/Copy row (row 0)
         if ($this->RowType == ROWTYPE_ADD && ($this->isAdd() || $this->isCopy())) {
@@ -1820,6 +2149,11 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
         $this->renderListOptions();
     }
 
+    // Load default values
+    protected function loadDefaultValues()
+    {
+    }
+
     // Load basic search values
     protected function loadBasicSearchValues()
     {
@@ -1828,6 +2162,62 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
             $this->Command = "search";
         }
         $this->BasicSearch->setType(Get(Config("TABLE_BASIC_SEARCH_TYPE"), ""), false);
+    }
+
+    // Load form values
+    protected function loadFormValues()
+    {
+        // Load from form
+        global $CurrentForm;
+        $validate = !Config("SERVER_VALIDATE");
+
+        // Check field name 'id' first before field var 'x_id'
+        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
+        if (!$this->id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->id->setFormValue($val);
+        }
+
+        // Check field name 'patient_id' first before field var 'x_patient_id'
+        $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
+        if (!$this->patient_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->patient_id->Visible = false; // Disable update for API request
+            } else {
+                $this->patient_id->setFormValue($val, true, $validate);
+            }
+        }
+
+        // Check field name 'general_exams' first before field var 'x_general_exams'
+        $val = $CurrentForm->hasValue("general_exams") ? $CurrentForm->getValue("general_exams") : $CurrentForm->getValue("x_general_exams");
+        if (!$this->general_exams->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->general_exams->Visible = false; // Disable update for API request
+            } else {
+                $this->general_exams->setFormValue($val);
+            }
+        }
+
+        // Check field name 'systematic_exams' first before field var 'x_systematic_exams'
+        $val = $CurrentForm->hasValue("systematic_exams") ? $CurrentForm->getValue("systematic_exams") : $CurrentForm->getValue("x_systematic_exams");
+        if (!$this->systematic_exams->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->systematic_exams->Visible = false; // Disable update for API request
+            } else {
+                $this->systematic_exams->setFormValue($val);
+            }
+        }
+    }
+
+    // Restore form values
+    public function restoreFormValues()
+    {
+        global $CurrentForm;
+        if (!$this->isGridAdd() && !$this->isAdd()) {
+            $this->id->CurrentValue = $this->id->FormValue;
+        }
+        $this->patient_id->CurrentValue = $this->patient_id->FormValue;
+        $this->general_exams->CurrentValue = $this->general_exams->FormValue;
+        $this->systematic_exams->CurrentValue = $this->systematic_exams->FormValue;
     }
 
     // Load recordset
@@ -1890,6 +2280,9 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
         if ($row) {
             $res = true;
             $this->loadRowValues($row); // Load row values
+            if (!$this->EventCancelled) {
+                $this->HashValue = $this->getRowHash($row); // Get hash value for record
+            }
         }
         return $res;
     }
@@ -2043,12 +2436,307 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
             // systematic_exams
             $this->systematic_exams->HrefValue = "";
             $this->systematic_exams->TooltipValue = "";
+        } elseif ($this->RowType == ROWTYPE_ADD) {
+            // id
+
+            // patient_id
+            $this->patient_id->setupEditAttributes();
+            if ($this->patient_id->getSessionValue() != "") {
+                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
+                $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
+                $curVal = strval($this->patient_id->CurrentValue);
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                    if ($this->patient_id->ViewValue === null) { // Lookup from database
+                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $conn = Conn();
+                        $config = $conn->getConfiguration();
+                        $config->setResultCacheImpl($this->Cache);
+                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                        $ari = count($rswrk);
+                        if ($ari > 0) { // Lookup values found
+                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
+                        } else {
+                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                        }
+                    }
+                } else {
+                    $this->patient_id->ViewValue = null;
+                }
+            } else {
+                $this->patient_id->EditValue = HtmlEncode($this->patient_id->CurrentValue);
+                $curVal = strval($this->patient_id->CurrentValue);
+                if ($curVal != "") {
+                    $this->patient_id->EditValue = $this->patient_id->lookupCacheOption($curVal);
+                    if ($this->patient_id->EditValue === null) { // Lookup from database
+                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $conn = Conn();
+                        $config = $conn->getConfiguration();
+                        $config->setResultCacheImpl($this->Cache);
+                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                        $ari = count($rswrk);
+                        if ($ari > 0) { // Lookup values found
+                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                            $this->patient_id->EditValue = $this->patient_id->displayValue($arwrk);
+                        } else {
+                            $this->patient_id->EditValue = HtmlEncode(FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern()));
+                        }
+                    }
+                } else {
+                    $this->patient_id->EditValue = null;
+                }
+                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+            }
+
+            // general_exams
+            $this->general_exams->setupEditAttributes();
+            if (!$this->general_exams->Raw) {
+                $this->general_exams->CurrentValue = HtmlDecode($this->general_exams->CurrentValue);
+            }
+            $this->general_exams->EditValue = HtmlEncode($this->general_exams->CurrentValue);
+            $this->general_exams->PlaceHolder = RemoveHtml($this->general_exams->caption());
+
+            // systematic_exams
+            $this->systematic_exams->setupEditAttributes();
+            if (!$this->systematic_exams->Raw) {
+                $this->systematic_exams->CurrentValue = HtmlDecode($this->systematic_exams->CurrentValue);
+            }
+            $this->systematic_exams->EditValue = HtmlEncode($this->systematic_exams->CurrentValue);
+            $this->systematic_exams->PlaceHolder = RemoveHtml($this->systematic_exams->caption());
+
+            // Add refer script
+
+            // id
+            $this->id->HrefValue = "";
+
+            // patient_id
+            $this->patient_id->HrefValue = "";
+
+            // general_exams
+            $this->general_exams->HrefValue = "";
+
+            // systematic_exams
+            $this->systematic_exams->HrefValue = "";
+        } elseif ($this->RowType == ROWTYPE_EDIT) {
+            // id
+            $this->id->setupEditAttributes();
+            $this->id->EditValue = $this->id->CurrentValue;
+
+            // patient_id
+            $this->patient_id->setupEditAttributes();
+            if ($this->patient_id->getSessionValue() != "") {
+                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
+                $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
+                $curVal = strval($this->patient_id->CurrentValue);
+                if ($curVal != "") {
+                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                    if ($this->patient_id->ViewValue === null) { // Lookup from database
+                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $conn = Conn();
+                        $config = $conn->getConfiguration();
+                        $config->setResultCacheImpl($this->Cache);
+                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                        $ari = count($rswrk);
+                        if ($ari > 0) { // Lookup values found
+                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
+                        } else {
+                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                        }
+                    }
+                } else {
+                    $this->patient_id->ViewValue = null;
+                }
+            } else {
+                $this->patient_id->EditValue = HtmlEncode($this->patient_id->CurrentValue);
+                $curVal = strval($this->patient_id->CurrentValue);
+                if ($curVal != "") {
+                    $this->patient_id->EditValue = $this->patient_id->lookupCacheOption($curVal);
+                    if ($this->patient_id->EditValue === null) { // Lookup from database
+                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $conn = Conn();
+                        $config = $conn->getConfiguration();
+                        $config->setResultCacheImpl($this->Cache);
+                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                        $ari = count($rswrk);
+                        if ($ari > 0) { // Lookup values found
+                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                            $this->patient_id->EditValue = $this->patient_id->displayValue($arwrk);
+                        } else {
+                            $this->patient_id->EditValue = HtmlEncode(FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern()));
+                        }
+                    }
+                } else {
+                    $this->patient_id->EditValue = null;
+                }
+                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+            }
+
+            // general_exams
+            $this->general_exams->setupEditAttributes();
+            if (!$this->general_exams->Raw) {
+                $this->general_exams->CurrentValue = HtmlDecode($this->general_exams->CurrentValue);
+            }
+            $this->general_exams->EditValue = HtmlEncode($this->general_exams->CurrentValue);
+            $this->general_exams->PlaceHolder = RemoveHtml($this->general_exams->caption());
+
+            // systematic_exams
+            $this->systematic_exams->setupEditAttributes();
+            if (!$this->systematic_exams->Raw) {
+                $this->systematic_exams->CurrentValue = HtmlDecode($this->systematic_exams->CurrentValue);
+            }
+            $this->systematic_exams->EditValue = HtmlEncode($this->systematic_exams->CurrentValue);
+            $this->systematic_exams->PlaceHolder = RemoveHtml($this->systematic_exams->caption());
+
+            // Edit refer script
+
+            // id
+            $this->id->HrefValue = "";
+
+            // patient_id
+            $this->patient_id->HrefValue = "";
+
+            // general_exams
+            $this->general_exams->HrefValue = "";
+
+            // systematic_exams
+            $this->systematic_exams->HrefValue = "";
+        }
+        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+            $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
+    }
+
+    // Validate form
+    protected function validateForm()
+    {
+        global $Language, $Security;
+
+        // Check if validation required
+        if (!Config("SERVER_VALIDATE")) {
+            return true;
+        }
+        $validateForm = true;
+        if ($this->id->Required) {
+            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
+                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
+            }
+        }
+        if ($this->patient_id->Required) {
+            if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
+                $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
+            }
+        }
+        if (!CheckInteger($this->patient_id->FormValue)) {
+            $this->patient_id->addErrorMessage($this->patient_id->getErrorMessage(false));
+        }
+        if ($this->general_exams->Required) {
+            if (!$this->general_exams->IsDetailKey && EmptyValue($this->general_exams->FormValue)) {
+                $this->general_exams->addErrorMessage(str_replace("%s", $this->general_exams->caption(), $this->general_exams->RequiredErrorMessage));
+            }
+        }
+        if ($this->systematic_exams->Required) {
+            if (!$this->systematic_exams->IsDetailKey && EmptyValue($this->systematic_exams->FormValue)) {
+                $this->systematic_exams->addErrorMessage(str_replace("%s", $this->systematic_exams->caption(), $this->systematic_exams->RequiredErrorMessage));
+            }
+        }
+
+        // Return validate result
+        $validateForm = $validateForm && !$this->hasInvalidFields();
+
+        // Call Form_CustomValidate event
+        $formCustomError = "";
+        $validateForm = $validateForm && $this->formCustomValidate($formCustomError);
+        if ($formCustomError != "") {
+            $this->setFailureMessage($formCustomError);
+        }
+        return $validateForm;
+    }
+
+    // Update record based on key values
+    protected function editRow()
+    {
+        global $Security, $Language;
+        $oldKeyFilter = $this->getRecordFilter();
+        $filter = $this->applyUserIDFilters($oldKeyFilter);
+        $conn = $this->getConnection();
+
+        // Load old row
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $rsold = $conn->fetchAssociative($sql);
+        if (!$rsold) {
+            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
+            return false; // Update Failed
+        } else {
+            // Save old values
+            $this->loadDbValues($rsold);
+        }
+
+        // Set new row
+        $rsnew = [];
+
+        // patient_id
+        if ($this->patient_id->getSessionValue() != "") {
+            $this->patient_id->ReadOnly = true;
+        }
+        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, $this->patient_id->ReadOnly);
+
+        // general_exams
+        $this->general_exams->setDbValueDef($rsnew, $this->general_exams->CurrentValue, "", $this->general_exams->ReadOnly);
+
+        // systematic_exams
+        $this->systematic_exams->setDbValueDef($rsnew, $this->systematic_exams->CurrentValue, "", $this->systematic_exams->ReadOnly);
+
+        // Update current values
+        $this->setCurrentValues($rsnew);
+
+        // Call Row Updating event
+        $updateRow = $this->rowUpdating($rsold, $rsnew);
+        if ($updateRow) {
+            if (count($rsnew) > 0) {
+                $this->CurrentFilter = $filter; // Set up current filter
+                $editRow = $this->update($rsnew, "", $rsold);
+                if (!$editRow && !EmptyValue($this->DbErrorMessage)) { // Show database error
+                    $this->setFailureMessage($this->DbErrorMessage);
+                }
+            } else {
+                $editRow = true; // No field to update
+            }
+            if ($editRow) {
+            }
+        } else {
+            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
+                // Use the message, do nothing
+            } elseif ($this->CancelMessage != "") {
+                $this->setFailureMessage($this->CancelMessage);
+                $this->CancelMessage = "";
+            } else {
+                $this->setFailureMessage($Language->phrase("UpdateCancelled"));
+            }
+            $editRow = false;
+        }
+
+        // Call Row_Updated event
+        if ($editRow) {
+            $this->rowUpdated($rsold, $rsnew);
+        }
+        if ($editRow) {
+            if ($this->SendEmail) {
+                $this->sendEmailOnEdit($rsold, $rsnew);
+            }
+        }
+        return $editRow;
     }
 
     /**
@@ -2326,6 +3014,113 @@ class JdhExaminationFindingsList extends JdhExaminationFindings
         $sql = $this->getCurrentSql();
         $conn = $this->getConnection();
         return $conn->fetchAssociative($sql);
+    }
+
+    // Load row hash
+    protected function loadRowHash()
+    {
+        $filter = $this->getRecordFilter();
+
+        // Load SQL based on filter
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $conn = $this->getConnection();
+        $row = $conn->fetchAssociative($sql);
+        $this->HashValue = $row ? $this->getRowHash($row) : ""; // Get hash value for record
+    }
+
+    // Get Row Hash
+    public function getRowHash(&$rs)
+    {
+        if (!$rs) {
+            return "";
+        }
+        $row = ($rs instanceof Recordset) ? $rs->fields : $rs;
+        $hash = "";
+        $hash .= GetFieldHash($row['patient_id']); // patient_id
+        $hash .= GetFieldHash($row['general_exams']); // general_exams
+        $hash .= GetFieldHash($row['systematic_exams']); // systematic_exams
+        return md5($hash);
+    }
+
+    // Add record
+    protected function addRow($rsold = null)
+    {
+        global $Language, $Security;
+
+        // Set new row
+        $rsnew = [];
+
+        // patient_id
+        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, false);
+
+        // general_exams
+        $this->general_exams->setDbValueDef($rsnew, $this->general_exams->CurrentValue, "", false);
+
+        // systematic_exams
+        $this->systematic_exams->setDbValueDef($rsnew, $this->systematic_exams->CurrentValue, "", false);
+
+        // submitted_by_user_id
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['submitted_by_user_id'] = CurrentUserID();
+        }
+
+        // Update current values
+        $this->setCurrentValues($rsnew);
+
+        // Check if valid key values for master user
+        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
+            $detailKeys = [];
+            $detailKeys["patient_id"] = $this->patient_id->CurrentValue;
+            $masterTable = Container("jdh_patients");
+            $masterFilter = $this->getMasterFilter($masterTable, $detailKeys);
+            if (!EmptyValue($masterFilter)) {
+                $validMasterKey = true;
+                if ($rsmaster = $masterTable->loadRs($masterFilter)->fetchAssociative()) {
+                    $validMasterKey = $Security->isValidUserID($rsmaster['submitted_by_user_id']);
+                } elseif ($this->getCurrentMasterTable() == "jdh_patients") {
+                    $validMasterKey = false;
+                }
+                if (!$validMasterKey) {
+                    $masterUserIdMsg = str_replace("%c", CurrentUserID(), $Language->phrase("UnAuthorizedMasterUserID"));
+                    $masterUserIdMsg = str_replace("%f", $masterFilter, $masterUserIdMsg);
+                    $this->setFailureMessage($masterUserIdMsg);
+                    return false;
+                }
+            }
+        }
+        $conn = $this->getConnection();
+
+        // Load db values from old row
+        $this->loadDbValues($rsold);
+
+        // Call Row Inserting event
+        $insertRow = $this->rowInserting($rsold, $rsnew);
+        if ($insertRow) {
+            $addRow = $this->insert($rsnew);
+            if ($addRow) {
+            } elseif (!EmptyValue($this->DbErrorMessage)) { // Show database error
+                $this->setFailureMessage($this->DbErrorMessage);
+            }
+        } else {
+            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
+                // Use the message, do nothing
+            } elseif ($this->CancelMessage != "") {
+                $this->setFailureMessage($this->CancelMessage);
+                $this->CancelMessage = "";
+            } else {
+                $this->setFailureMessage($Language->phrase("InsertCancelled"));
+            }
+            $addRow = false;
+        }
+        if ($addRow) {
+            // Call Row Inserted event
+            $this->rowInserted($rsold, $rsnew);
+            if ($this->SendEmail) {
+                $this->sendEmailOnAdd($rsnew);
+            }
+        }
+        return $addRow;
     }
 
     // Get export HTML tag

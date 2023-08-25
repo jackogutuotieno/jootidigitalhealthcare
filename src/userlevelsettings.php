@@ -116,7 +116,7 @@ $USER_LEVEL_PRIVS = [["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_service_subcategory","7","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_services","-2","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_services","0","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_services","1","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_services","1","360"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_services","2","360"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_services","3","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_services","4","0"],

@@ -81,18 +81,12 @@ $jdh_patients = Container("jdh_patients");
             <td<?= $jdh_patients->patient_phone->cellAttributes() ?>>
 <span id="el_jdh_patients_patient_phone">
 <span<?= $jdh_patients->patient_phone->viewAttributes() ?>>
-<?= $jdh_patients->patient_phone->getViewValue() ?></span>
-</span>
-</td>
-        </tr>
+<?php if (!EmptyString($jdh_patients->patient_phone->getViewValue()) && $jdh_patients->patient_phone->linkAttributes() != "") { ?>
+<a<?= $jdh_patients->patient_phone->linkAttributes() ?>><?= $jdh_patients->patient_phone->getViewValue() ?></a>
+<?php } else { ?>
+<?= $jdh_patients->patient_phone->getViewValue() ?>
 <?php } ?>
-<?php if ($jdh_patients->service_id->Visible) { // service_id ?>
-        <tr id="r_service_id"<?= $jdh_patients->service_id->rowAttributes() ?>>
-            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->service_id->caption() ?></td>
-            <td<?= $jdh_patients->service_id->cellAttributes() ?>>
-<span id="el_jdh_patients_service_id">
-<span<?= $jdh_patients->service_id->viewAttributes() ?>>
-<?= $jdh_patients->service_id->getViewValue() ?></span>
+</span>
 </span>
 </td>
         </tr>
@@ -104,17 +98,6 @@ $jdh_patients = Container("jdh_patients");
 <span id="el_jdh_patients_patient_registration_date">
 <span<?= $jdh_patients->patient_registration_date->viewAttributes() ?>>
 <?= $jdh_patients->patient_registration_date->getViewValue() ?></span>
-</span>
-</td>
-        </tr>
-<?php } ?>
-<?php if ($jdh_patients->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
-        <tr id="r_submitted_by_user_id"<?= $jdh_patients->submitted_by_user_id->rowAttributes() ?>>
-            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->submitted_by_user_id->caption() ?></td>
-            <td<?= $jdh_patients->submitted_by_user_id->cellAttributes() ?>>
-<span id="el_jdh_patients_submitted_by_user_id">
-<span<?= $jdh_patients->submitted_by_user_id->viewAttributes() ?>>
-<?= $jdh_patients->submitted_by_user_id->getViewValue() ?></span>
 </span>
 </td>
         </tr>

@@ -1085,7 +1085,15 @@ class JdhPatientsEdit extends JdhPatients
             $this->patient_gender->HrefValue = "";
 
             // patient_phone
-            $this->patient_phone->HrefValue = "";
+            if (!EmptyValue($this->patient_phone->CurrentValue)) {
+                $this->patient_phone->HrefValue = $this->patient_phone->getLinkPrefix() . $this->patient_phone->CurrentValue; // Add prefix/suffix
+                $this->patient_phone->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->patient_phone->HrefValue = FullUrl($this->patient_phone->HrefValue, "href");
+                }
+            } else {
+                $this->patient_phone->HrefValue = "";
+            }
 
             // patient_kin_name
             $this->patient_kin_name->HrefValue = "";
@@ -1222,7 +1230,15 @@ class JdhPatientsEdit extends JdhPatients
             $this->patient_gender->HrefValue = "";
 
             // patient_phone
-            $this->patient_phone->HrefValue = "";
+            if (!EmptyValue($this->patient_phone->CurrentValue)) {
+                $this->patient_phone->HrefValue = $this->patient_phone->getLinkPrefix() . $this->patient_phone->CurrentValue; // Add prefix/suffix
+                $this->patient_phone->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->patient_phone->HrefValue = FullUrl($this->patient_phone->HrefValue, "href");
+                }
+            } else {
+                $this->patient_phone->HrefValue = "";
+            }
 
             // patient_kin_name
             $this->patient_kin_name->HrefValue = "";

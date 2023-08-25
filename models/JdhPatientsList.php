@@ -665,9 +665,9 @@ class JdhPatientsList extends JdhPatients
         $this->patient_phone->setVisibility();
         $this->patient_kin_name->Visible = false;
         $this->patient_kin_phone->Visible = false;
-        $this->service_id->setVisibility();
+        $this->service_id->Visible = false;
         $this->patient_registration_date->setVisibility();
-        $this->submitted_by_user_id->setVisibility();
+        $this->submitted_by_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -1328,9 +1328,7 @@ class JdhPatientsList extends JdhPatients
             $this->updateSort($this->patient_age); // patient_age
             $this->updateSort($this->patient_gender); // patient_gender
             $this->updateSort($this->patient_phone); // patient_phone
-            $this->updateSort($this->service_id); // service_id
             $this->updateSort($this->patient_registration_date); // patient_registration_date
-            $this->updateSort($this->submitted_by_user_id); // submitted_by_user_id
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -2293,9 +2291,7 @@ class JdhPatientsList extends JdhPatients
             $option->add("patient_age", $this->createColumnOption("patient_age"));
             $option->add("patient_gender", $this->createColumnOption("patient_gender"));
             $option->add("patient_phone", $this->createColumnOption("patient_phone"));
-            $option->add("service_id", $this->createColumnOption("service_id"));
             $option->add("patient_registration_date", $this->createColumnOption("patient_registration_date"));
-            $option->add("submitted_by_user_id", $this->createColumnOption("submitted_by_user_id"));
         }
 
         // Set up options default
@@ -2876,23 +2872,23 @@ class JdhPatientsList extends JdhPatients
             $this->patient_gender->TooltipValue = "";
 
             // patient_phone
-            $this->patient_phone->HrefValue = "";
+            if (!EmptyValue($this->patient_phone->CurrentValue)) {
+                $this->patient_phone->HrefValue = $this->patient_phone->getLinkPrefix() . $this->patient_phone->CurrentValue; // Add prefix/suffix
+                $this->patient_phone->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->patient_phone->HrefValue = FullUrl($this->patient_phone->HrefValue, "href");
+                }
+            } else {
+                $this->patient_phone->HrefValue = "";
+            }
             $this->patient_phone->TooltipValue = "";
             if (!$this->isExport()) {
                 $this->patient_phone->ViewValue = $this->highlightValue($this->patient_phone);
             }
 
-            // service_id
-            $this->service_id->HrefValue = "";
-            $this->service_id->TooltipValue = "";
-
             // patient_registration_date
             $this->patient_registration_date->HrefValue = "";
             $this->patient_registration_date->TooltipValue = "";
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
-            $this->submitted_by_user_id->TooltipValue = "";
         }
 
         // Call Row Rendered event

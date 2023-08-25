@@ -641,11 +641,11 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
         // Setup export options
         $this->setupExportOptions();
-        $this->user_id->setVisibility();
+        $this->user_id->Visible = false;
         $this->first_name->setVisibility();
         $this->last_name->setVisibility();
-        $this->department_id->setVisibility();
-        $this->service_name->setVisibility();
+        $this->department_id->Visible = false;
+        $this->service_name->Visible = false;
         $this->service_cost->setVisibility();
 
         // Set lookup cache
@@ -1228,11 +1228,8 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
-            $this->updateSort($this->user_id); // user_id
             $this->updateSort($this->first_name); // first_name
             $this->updateSort($this->last_name); // last_name
-            $this->updateSort($this->department_id); // department_id
-            $this->updateSort($this->service_name); // service_name
             $this->updateSort($this->service_cost); // service_cost
             $this->setStartRecordNumber(1); // Reset start position
         }
@@ -1302,6 +1299,14 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         $item->ShowInDropDown = false;
         $item->ShowInButtonGroup = false;
 
+        // "sequence"
+        $item = &$this->ListOptions->add("sequence");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = true;
+        $item->OnLeft = true; // Always on left
+        $item->ShowInDropDown = false;
+        $item->ShowInButtonGroup = false;
+
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
@@ -1339,6 +1344,10 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
+
+        // "sequence"
+        $opt = $this->ListOptions["sequence"];
+        $opt->Body = FormatSequenceNumber($this->RecordCount);
         $pageUrl = $this->pageUrl(false);
         if ($this->CurrentMode == "view") { // Check view mode
         } // End View mode
@@ -1406,11 +1415,8 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("user_id", $this->createColumnOption("user_id"));
             $option->add("first_name", $this->createColumnOption("first_name"));
             $option->add("last_name", $this->createColumnOption("last_name"));
-            $option->add("department_id", $this->createColumnOption("department_id"));
-            $option->add("service_name", $this->createColumnOption("service_name"));
             $option->add("service_cost", $this->createColumnOption("service_cost"));
         }
 
@@ -1911,10 +1917,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             $this->service_cost->ViewValue = $this->service_cost->CurrentValue;
             $this->service_cost->ViewValue = FormatNumber($this->service_cost->ViewValue, $this->service_cost->formatPattern());
 
-            // user_id
-            $this->user_id->HrefValue = "";
-            $this->user_id->TooltipValue = "";
-
             // first_name
             $this->first_name->HrefValue = "";
             $this->first_name->TooltipValue = "";
@@ -1922,14 +1924,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             // last_name
             $this->last_name->HrefValue = "";
             $this->last_name->TooltipValue = "";
-
-            // department_id
-            $this->department_id->HrefValue = "";
-            $this->department_id->TooltipValue = "";
-
-            // service_name
-            $this->service_name->HrefValue = "";
-            $this->service_name->TooltipValue = "";
 
             // service_cost
             $this->service_cost->HrefValue = "";

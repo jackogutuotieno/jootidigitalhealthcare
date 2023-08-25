@@ -1475,14 +1475,6 @@ class JdhPatientsView extends JdhPatients
             // patient_gender
             $this->patient_gender->HrefValue = "";
             $this->patient_gender->TooltipValue = "";
-
-            // service_id
-            $this->service_id->HrefValue = "";
-            $this->service_id->TooltipValue = "";
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
-            $this->submitted_by_user_id->TooltipValue = "";
         }
 
         // Call Row Rendered event

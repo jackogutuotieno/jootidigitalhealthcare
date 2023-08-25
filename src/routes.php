@@ -395,7 +395,6 @@ return function (App $app) {
     $app->map(["GET","POST","OPTIONS"], '/jdhchiefcomplaintsadd[/{id}]', JdhChiefComplaintsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhchiefcomplaintsadd-jdh_chief_complaints-add'); // add
     $app->map(["GET","POST","OPTIONS"], '/jdhchiefcomplaintsview[/{id}]', JdhChiefComplaintsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhchiefcomplaintsview-jdh_chief_complaints-view'); // view
     $app->map(["GET","POST","OPTIONS"], '/jdhchiefcomplaintsedit[/{id}]', JdhChiefComplaintsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhchiefcomplaintsedit-jdh_chief_complaints-edit'); // edit
-    $app->map(["GET","POST","OPTIONS"], '/jdhchiefcomplaintsdelete[/{id}]', JdhChiefComplaintsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhchiefcomplaintsdelete-jdh_chief_complaints-delete'); // delete
     $app->group(
         '/jdh_chief_complaints',
         function (RouteCollectorProxy $group) {
@@ -403,7 +402,6 @@ return function (App $app) {
             $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{id}]', JdhChiefComplaintsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_chief_complaints/add-jdh_chief_complaints-add-2'); // add
             $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{id}]', JdhChiefComplaintsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_chief_complaints/view-jdh_chief_complaints-view-2'); // view
             $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{id}]', JdhChiefComplaintsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_chief_complaints/edit-jdh_chief_complaints-edit-2'); // edit
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{id}]', JdhChiefComplaintsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_chief_complaints/delete-jdh_chief_complaints-delete-2'); // delete
         }
     );
 
@@ -412,6 +410,7 @@ return function (App $app) {
     $app->map(["GET","POST","OPTIONS"], '/jdhexaminationfindingsadd[/{id}]', JdhExaminationFindingsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhexaminationfindingsadd-jdh_examination_findings-add'); // add
     $app->map(["GET","POST","OPTIONS"], '/jdhexaminationfindingsview[/{id}]', JdhExaminationFindingsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhexaminationfindingsview-jdh_examination_findings-view'); // view
     $app->map(["GET","POST","OPTIONS"], '/jdhexaminationfindingsedit[/{id}]', JdhExaminationFindingsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhexaminationfindingsedit-jdh_examination_findings-edit'); // edit
+    $app->map(["GET","POST","OPTIONS"], '/jdhexaminationfindingsupdate', JdhExaminationFindingsController::class . ':update')->add(PermissionMiddleware::class)->setName('jdhexaminationfindingsupdate-jdh_examination_findings-update'); // update
     $app->map(["GET","POST","OPTIONS"], '/jdhexaminationfindingsdelete[/{id}]', JdhExaminationFindingsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhexaminationfindingsdelete-jdh_examination_findings-delete'); // delete
     $app->group(
         '/jdh_examination_findings',
@@ -420,6 +419,7 @@ return function (App $app) {
             $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{id}]', JdhExaminationFindingsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_examination_findings/add-jdh_examination_findings-add-2'); // add
             $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{id}]', JdhExaminationFindingsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_examination_findings/view-jdh_examination_findings-view-2'); // view
             $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{id}]', JdhExaminationFindingsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_examination_findings/edit-jdh_examination_findings-edit-2'); // edit
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('UPDATE_ACTION') . '', JdhExaminationFindingsController::class . ':update')->add(PermissionMiddleware::class)->setName('jdh_examination_findings/update-jdh_examination_findings-update-2'); // update
             $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{id}]', JdhExaminationFindingsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_examination_findings/delete-jdh_examination_findings-delete-2'); // delete
         }
     );
