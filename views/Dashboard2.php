@@ -203,7 +203,11 @@ $Page->showMessage();
                             $lab_income = ExecuteScalar($sql1);
                             $sql2 = "SELECT SUM(selling_price * units_given) FROM jdh_pharmacy_income";
                             $pharmacy_income = ExecuteScalar($sql2);
-                            echo $pharmacy_income + $lab_income;
+                            $sql3 = "SELECT SUM(service_cost) FROM jdh_registration_income";
+                            $registration_income = ExecuteScalar($sql3);
+                            $sql4 = "SELECT SUM(service_cost) FROM jdh_consultation_income";
+                            $consultation_income = ExecuteScalar($sql4);
+                            echo $pharmacy_income + $lab_income + $registration_income + $consultation_income;
                         ?>
                     </p>
                 </div>
