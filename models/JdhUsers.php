@@ -235,6 +235,7 @@ class JdhUsers extends DbTable
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
+        $this->email_address->addMethod("getLinkPrefix", fn() => "mailto:");
         $this->email_address->InputTextType = "text";
         $this->email_address->Nullable = false; // NOT NULL field
         $this->email_address->Required = true; // Required field
@@ -260,6 +261,7 @@ class JdhUsers extends DbTable
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
+        $this->phone->addMethod("getLinkPrefix", fn() => "tel:");
         $this->phone->InputTextType = "text";
         $this->phone->Nullable = false; // NOT NULL field
         $this->phone->Required = true; // Required field
@@ -352,10 +354,10 @@ class JdhUsers extends DbTable
             'x_registration_date', // Variable name
             'registration_date', // Name
             '`registration_date`', // Expression
-            CastDateFieldForLike("`registration_date`", 0, "DB"), // Basic search expression
+            CastDateFieldForLike("`registration_date`", 11, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            0, // Date/Time format
+            11, // Date/Time format
             false, // Is upload field
             '`registration_date`', // Virtual expression
             false, // Is virtual
@@ -367,7 +369,7 @@ class JdhUsers extends DbTable
         $this->registration_date->InputTextType = "text";
         $this->registration_date->Nullable = false; // NOT NULL field
         $this->registration_date->Required = true; // Required field
-        $this->registration_date->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->registration_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->registration_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['registration_date'] = &$this->registration_date;
 
@@ -1429,11 +1431,27 @@ class JdhUsers extends DbTable
         $this->national_id->TooltipValue = "";
 
         // email_address
-        $this->email_address->HrefValue = "";
+        if (!EmptyValue($this->email_address->CurrentValue)) {
+            $this->email_address->HrefValue = $this->email_address->getLinkPrefix() . $this->email_address->CurrentValue; // Add prefix/suffix
+            $this->email_address->LinkAttrs["target"] = ""; // Add target
+            if ($this->isExport()) {
+                $this->email_address->HrefValue = FullUrl($this->email_address->HrefValue, "href");
+            }
+        } else {
+            $this->email_address->HrefValue = "";
+        }
         $this->email_address->TooltipValue = "";
 
         // phone
-        $this->phone->HrefValue = "";
+        if (!EmptyValue($this->phone->CurrentValue)) {
+            $this->phone->HrefValue = $this->phone->getLinkPrefix() . $this->phone->CurrentValue; // Add prefix/suffix
+            $this->phone->LinkAttrs["target"] = ""; // Add target
+            if ($this->isExport()) {
+                $this->phone->HrefValue = FullUrl($this->phone->HrefValue, "href");
+            }
+        } else {
+            $this->phone->HrefValue = "";
+        }
         $this->phone->TooltipValue = "";
 
         // department_id
@@ -1588,15 +1606,11 @@ class JdhUsers extends DbTable
                 $doc->beginExportRow();
                 if ($exportPageType == "view") {
                     $doc->exportCaption($this->user_id);
-                    $doc->exportCaption($this->photo);
                     $doc->exportCaption($this->first_name);
                     $doc->exportCaption($this->last_name);
-                    $doc->exportCaption($this->national_id);
                     $doc->exportCaption($this->email_address);
                     $doc->exportCaption($this->phone);
                     $doc->exportCaption($this->department_id);
-                    $doc->exportCaption($this->_password);
-                    $doc->exportCaption($this->biography);
                     $doc->exportCaption($this->registration_date);
                     $doc->exportCaption($this->role_id);
                 } else {
@@ -1639,15 +1653,11 @@ class JdhUsers extends DbTable
                     $doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
                     if ($exportPageType == "view") {
                         $doc->exportField($this->user_id);
-                        $doc->exportField($this->photo);
                         $doc->exportField($this->first_name);
                         $doc->exportField($this->last_name);
-                        $doc->exportField($this->national_id);
                         $doc->exportField($this->email_address);
                         $doc->exportField($this->phone);
                         $doc->exportField($this->department_id);
-                        $doc->exportField($this->_password);
-                        $doc->exportField($this->biography);
                         $doc->exportField($this->registration_date);
                         $doc->exportField($this->role_id);
                     } else {

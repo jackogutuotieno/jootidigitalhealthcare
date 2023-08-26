@@ -866,18 +866,6 @@ class JdhUsersView extends JdhUsers
             // user_id
             $this->user_id->ViewValue = $this->user_id->CurrentValue;
 
-            // photo
-            if (!EmptyValue($this->photo->Upload->DbValue)) {
-                $this->photo->ImageWidth = 100;
-                $this->photo->ImageHeight = 100;
-                $this->photo->ImageAlt = $this->photo->alt();
-                $this->photo->ImageCssClass = "ew-image";
-                $this->photo->ViewValue = $this->user_id->CurrentValue;
-                $this->photo->IsBlobImage = IsImageFile(ContentExtension($this->photo->Upload->DbValue));
-            } else {
-                $this->photo->ViewValue = "";
-            }
-
             // first_name
             $this->first_name->ViewValue = $this->first_name->CurrentValue;
 
@@ -916,12 +904,6 @@ class JdhUsersView extends JdhUsers
                 $this->department_id->ViewValue = null;
             }
 
-            // password
-            $this->_password->ViewValue = $this->_password->CurrentValue;
-
-            // biography
-            $this->biography->ViewValue = $this->biography->CurrentValue;
-
             // registration_date
             $this->registration_date->ViewValue = $this->registration_date->CurrentValue;
             $this->registration_date->ViewValue = FormatDateTime($this->registration_date->ViewValue, $this->registration_date->formatPattern());
@@ -941,29 +923,6 @@ class JdhUsersView extends JdhUsers
             $this->user_id->HrefValue = "";
             $this->user_id->TooltipValue = "";
 
-            // photo
-            if (!empty($this->photo->Upload->DbValue)) {
-                $this->photo->HrefValue = GetFileUploadUrl($this->photo, $this->user_id->CurrentValue);
-                $this->photo->LinkAttrs["target"] = "";
-                if ($this->photo->IsBlobImage && empty($this->photo->LinkAttrs["target"])) {
-                    $this->photo->LinkAttrs["target"] = "_blank";
-                }
-                if ($this->isExport()) {
-                    $this->photo->HrefValue = FullUrl($this->photo->HrefValue, "href");
-                }
-            } else {
-                $this->photo->HrefValue = "";
-            }
-            $this->photo->ExportHrefValue = GetFileUploadUrl($this->photo, $this->user_id->CurrentValue);
-            $this->photo->TooltipValue = "";
-            if ($this->photo->UseColorbox) {
-                if (EmptyValue($this->photo->TooltipValue)) {
-                    $this->photo->LinkAttrs["title"] = $Language->phrase("ViewImageGallery");
-                }
-                $this->photo->LinkAttrs["data-rel"] = "jdh_users_x_photo";
-                $this->photo->LinkAttrs->appendClass("ew-lightbox");
-            }
-
             // first_name
             $this->first_name->HrefValue = "";
             $this->first_name->TooltipValue = "";
@@ -972,29 +931,33 @@ class JdhUsersView extends JdhUsers
             $this->last_name->HrefValue = "";
             $this->last_name->TooltipValue = "";
 
-            // national_id
-            $this->national_id->HrefValue = "";
-            $this->national_id->TooltipValue = "";
-
             // email_address
-            $this->email_address->HrefValue = "";
+            if (!EmptyValue($this->email_address->CurrentValue)) {
+                $this->email_address->HrefValue = $this->email_address->getLinkPrefix() . $this->email_address->CurrentValue; // Add prefix/suffix
+                $this->email_address->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->email_address->HrefValue = FullUrl($this->email_address->HrefValue, "href");
+                }
+            } else {
+                $this->email_address->HrefValue = "";
+            }
             $this->email_address->TooltipValue = "";
 
             // phone
-            $this->phone->HrefValue = "";
+            if (!EmptyValue($this->phone->CurrentValue)) {
+                $this->phone->HrefValue = $this->phone->getLinkPrefix() . $this->phone->CurrentValue; // Add prefix/suffix
+                $this->phone->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->phone->HrefValue = FullUrl($this->phone->HrefValue, "href");
+                }
+            } else {
+                $this->phone->HrefValue = "";
+            }
             $this->phone->TooltipValue = "";
 
             // department_id
             $this->department_id->HrefValue = "";
             $this->department_id->TooltipValue = "";
-
-            // password
-            $this->_password->HrefValue = "";
-            $this->_password->TooltipValue = "";
-
-            // biography
-            $this->biography->HrefValue = "";
-            $this->biography->TooltipValue = "";
 
             // registration_date
             $this->registration_date->HrefValue = "";

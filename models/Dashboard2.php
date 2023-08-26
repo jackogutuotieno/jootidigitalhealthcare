@@ -366,11 +366,11 @@ class Dashboard2 extends ReportTable
         }
         try {
             if ($id == 1) {
-                $Page = new LatestAppointmentsSummary();
+                $Page = new PatientQueuesSummary();
                 $Page->Export = $this->Export;
                 $Page->UseAjaxActions = true; // Use Ajax actions for pager/sort
                 $Page->run();
-                $content = $view->fetch("LatestAppointmentsSummary.php", $GLOBALS);
+                $content = $view->fetch("PatientQueuesSummary.php", $GLOBALS);
             }
         } catch (\Exception $e) {
             $GLOBALS["Page"] = $this;

@@ -64,18 +64,6 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->photo->Visible) { // photo ?>
-    <tr id="r_photo"<?= $Page->photo->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_users_photo"><?= $Page->photo->caption() ?></span></td>
-        <td data-name="photo"<?= $Page->photo->cellAttributes() ?>>
-<span id="el_jdh_users_photo">
-<span>
-<?= GetFileViewTag($Page->photo, $Page->photo->getViewValue(), false) ?>
-</span>
-</span>
-</td>
-    </tr>
-<?php } ?>
 <?php if ($Page->first_name->Visible) { // first_name ?>
     <tr id="r_first_name"<?= $Page->first_name->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_users_first_name"><?= $Page->first_name->caption() ?></span></td>
@@ -98,24 +86,18 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->national_id->Visible) { // national_id ?>
-    <tr id="r_national_id"<?= $Page->national_id->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_users_national_id"><?= $Page->national_id->caption() ?></span></td>
-        <td data-name="national_id"<?= $Page->national_id->cellAttributes() ?>>
-<span id="el_jdh_users_national_id">
-<span<?= $Page->national_id->viewAttributes() ?>>
-<?= $Page->national_id->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
 <?php if ($Page->email_address->Visible) { // email_address ?>
     <tr id="r_email_address"<?= $Page->email_address->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_users_email_address"><?= $Page->email_address->caption() ?></span></td>
         <td data-name="email_address"<?= $Page->email_address->cellAttributes() ?>>
 <span id="el_jdh_users_email_address">
 <span<?= $Page->email_address->viewAttributes() ?>>
-<?= $Page->email_address->getViewValue() ?></span>
+<?php if (!EmptyString($Page->email_address->getViewValue()) && $Page->email_address->linkAttributes() != "") { ?>
+<a<?= $Page->email_address->linkAttributes() ?>><?= $Page->email_address->getViewValue() ?></a>
+<?php } else { ?>
+<?= $Page->email_address->getViewValue() ?>
+<?php } ?>
+</span>
 </span>
 </td>
     </tr>
@@ -126,7 +108,12 @@ loadjs.ready(["wrapper", "head"], function () {
         <td data-name="phone"<?= $Page->phone->cellAttributes() ?>>
 <span id="el_jdh_users_phone">
 <span<?= $Page->phone->viewAttributes() ?>>
-<?= $Page->phone->getViewValue() ?></span>
+<?php if (!EmptyString($Page->phone->getViewValue()) && $Page->phone->linkAttributes() != "") { ?>
+<a<?= $Page->phone->linkAttributes() ?>><?= $Page->phone->getViewValue() ?></a>
+<?php } else { ?>
+<?= $Page->phone->getViewValue() ?>
+<?php } ?>
+</span>
 </span>
 </td>
     </tr>
@@ -138,28 +125,6 @@ loadjs.ready(["wrapper", "head"], function () {
 <span id="el_jdh_users_department_id">
 <span<?= $Page->department_id->viewAttributes() ?>>
 <?= $Page->department_id->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
-<?php if ($Page->_password->Visible) { // password ?>
-    <tr id="r__password"<?= $Page->_password->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_users__password"><?= $Page->_password->caption() ?></span></td>
-        <td data-name="_password"<?= $Page->_password->cellAttributes() ?>>
-<span id="el_jdh_users__password">
-<span<?= $Page->_password->viewAttributes() ?>>
-<?= $Page->_password->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
-<?php if ($Page->biography->Visible) { // biography ?>
-    <tr id="r_biography"<?= $Page->biography->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_users_biography"><?= $Page->biography->caption() ?></span></td>
-        <td data-name="biography"<?= $Page->biography->cellAttributes() ?>>
-<span id="el_jdh_users_biography">
-<span<?= $Page->biography->viewAttributes() ?>>
-<?= $Page->biography->getViewValue() ?></span>
 </span>
 </td>
     </tr>

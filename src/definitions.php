@@ -64,13 +64,14 @@ return [
     "jdh_status" => \DI\create(JdhStatus::class),
     "jdh_medicine_stock" => \DI\create(JdhMedicineStock::class),
     "Dashboard2" => \DI\create(Dashboard2::class),
-    "Latest_Appointments" => \DI\create(LatestAppointments::class),
     "jdh_prescriptions_actions" => \DI\create(JdhPrescriptionsActions::class),
     "jdh_pharmacy_income" => \DI\create(JdhPharmacyIncome::class),
     "jdh_registration_income" => \DI\create(JdhRegistrationIncome::class),
     "jdh_doctor_charges" => \DI\create(JdhDoctorCharges::class),
     "jdh_consultation_income" => \DI\create(JdhConsultationIncome::class),
     "jdh_lab_income" => \DI\create(JdhLabIncome::class),
+    "jdh_patient_queue" => \DI\create(JdhPatientQueue::class),
+    "Patient_Queues" => \DI\create(PatientQueues::class),
 
     // User table
     "usertable" => \DI\get("jdh_users"),

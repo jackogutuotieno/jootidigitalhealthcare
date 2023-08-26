@@ -218,6 +218,7 @@ $Page->showMessage();
 <div class="container">
     <div class="row">
         <div class="col">
+            <h3>Patient Queues</h3>
             <?= $Dashboard2->renderItem($this, 1) ?>
         </div>
     </div>

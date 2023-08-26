@@ -3,12 +3,12 @@
 namespace PHPMaker2023\jootidigitalhealthcare;
 
 // Page object
-$JdhUsersList = &$Page;
+$JdhPatientQueueList = &$Page;
 ?>
 <?php if (!$Page->isExport()) { ?>
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
-ew.deepAssign(ew.vars, { tables: { jdh_users: currentTable } });
+ew.deepAssign(ew.vars, { tables: { jdh_patient_queue: currentTable } });
 var currentPageID = ew.PAGE_ID = "list";
 var currentForm;
 var <?= $Page->FormName ?>;
@@ -58,20 +58,20 @@ loadjs.ready("head", function () {
 <?php } ?>
 <?php if ($Security->canSearch()) { ?>
 <?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
-<form name="fjdh_userssrch" id="fjdh_userssrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="on">
-<div id="fjdh_userssrch_search_panel" class="mb-2 mb-sm-0 <?= $Page->SearchPanelClass ?>"><!-- .ew-search-panel -->
+<form name="fjdh_patient_queuesrch" id="fjdh_patient_queuesrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="on">
+<div id="fjdh_patient_queuesrch_search_panel" class="mb-2 mb-sm-0 <?= $Page->SearchPanelClass ?>"><!-- .ew-search-panel -->
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
-ew.deepAssign(ew.vars, { tables: { jdh_users: currentTable } });
+ew.deepAssign(ew.vars, { tables: { jdh_patient_queue: currentTable } });
 var currentForm;
-var fjdh_userssrch, currentSearchForm, currentAdvancedSearchForm;
+var fjdh_patient_queuesrch, currentSearchForm, currentAdvancedSearchForm;
 loadjs.ready(["wrapper", "head"], function () {
     let $ = jQuery,
         fields = currentTable.fields;
 
     // Form object for search
     let form = new ew.FormBuilder()
-        .setId("fjdh_userssrch")
+        .setId("fjdh_patient_queuesrch")
         .setPageId("list")
 <?php if ($Page->UseAjaxActions) { ?>
         .setSubmitWithFetch(true)
@@ -90,7 +90,7 @@ loadjs.ready(["wrapper", "head"], function () {
 });
 </script>
 <input type="hidden" name="cmd" value="search">
-<input type="hidden" name="t" value="jdh_users">
+<input type="hidden" name="t" value="jdh_patient_queue">
 <div class="ew-extended-search container-fluid ps-2">
 <div class="row mb-0">
     <div class="col-sm-auto px-0 pe-sm-2">
@@ -101,10 +101,10 @@ loadjs.ready(["wrapper", "head"], function () {
                 <span id="searchtype"><?= $Page->BasicSearch->getTypeNameShort() ?></span>
             </button>
             <div class="dropdown-menu dropdown-menu-end">
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "" ? " active" : "" ?>" form="fjdh_userssrch" data-ew-action="search-type"><?= $Language->phrase("QuickSearchAuto") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "=" ? " active" : "" ?>" form="fjdh_userssrch" data-ew-action="search-type" data-search-type="="><?= $Language->phrase("QuickSearchExact") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "AND" ? " active" : "" ?>" form="fjdh_userssrch" data-ew-action="search-type" data-search-type="AND"><?= $Language->phrase("QuickSearchAll") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "OR" ? " active" : "" ?>" form="fjdh_userssrch" data-ew-action="search-type" data-search-type="OR"><?= $Language->phrase("QuickSearchAny") ?></button>
+                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "" ? " active" : "" ?>" form="fjdh_patient_queuesrch" data-ew-action="search-type"><?= $Language->phrase("QuickSearchAuto") ?></button>
+                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "=" ? " active" : "" ?>" form="fjdh_patient_queuesrch" data-ew-action="search-type" data-search-type="="><?= $Language->phrase("QuickSearchExact") ?></button>
+                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "AND" ? " active" : "" ?>" form="fjdh_patient_queuesrch" data-ew-action="search-type" data-search-type="AND"><?= $Language->phrase("QuickSearchAll") ?></button>
+                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "OR" ? " active" : "" ?>" form="fjdh_patient_queuesrch" data-ew-action="search-type" data-search-type="OR"><?= $Language->phrase("QuickSearchAny") ?></button>
             </div>
         </div>
     </div>
@@ -130,13 +130,13 @@ $Page->showMessage();
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
 <?php } ?>
-<input type="hidden" name="t" value="jdh_users">
+<input type="hidden" name="t" value="jdh_patient_queue">
 <?php if ($Page->IsModal) { ?>
 <input type="hidden" name="modal" value="1">
 <?php } ?>
-<div id="gmp_jdh_users" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
+<div id="gmp_jdh_patient_queue" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
 <?php if ($Page->TotalRecords > 0 || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
-<table id="tbl_jdh_userslist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
+<table id="tbl_jdh_patient_queuelist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
 <thead>
     <tr class="ew-table-header">
 <?php
@@ -149,26 +149,14 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
-<?php if ($Page->first_name->Visible) { // first_name ?>
-        <th data-name="first_name" class="<?= $Page->first_name->headerCellClass() ?>"><div id="elh_jdh_users_first_name" class="jdh_users_first_name"><?= $Page->renderFieldHeader($Page->first_name) ?></div></th>
+<?php if ($Page->patient_name->Visible) { // patient_name ?>
+        <th data-name="patient_name" class="<?= $Page->patient_name->headerCellClass() ?>"><div id="elh_jdh_patient_queue_patient_name" class="jdh_patient_queue_patient_name"><?= $Page->renderFieldHeader($Page->patient_name) ?></div></th>
 <?php } ?>
-<?php if ($Page->last_name->Visible) { // last_name ?>
-        <th data-name="last_name" class="<?= $Page->last_name->headerCellClass() ?>"><div id="elh_jdh_users_last_name" class="jdh_users_last_name"><?= $Page->renderFieldHeader($Page->last_name) ?></div></th>
+<?php if ($Page->visit_type->Visible) { // visit_type ?>
+        <th data-name="visit_type" class="<?= $Page->visit_type->headerCellClass() ?>"><div id="elh_jdh_patient_queue_visit_type" class="jdh_patient_queue_visit_type"><?= $Page->renderFieldHeader($Page->visit_type) ?></div></th>
 <?php } ?>
-<?php if ($Page->national_id->Visible) { // national_id ?>
-        <th data-name="national_id" class="<?= $Page->national_id->headerCellClass() ?>"><div id="elh_jdh_users_national_id" class="jdh_users_national_id"><?= $Page->renderFieldHeader($Page->national_id) ?></div></th>
-<?php } ?>
-<?php if ($Page->email_address->Visible) { // email_address ?>
-        <th data-name="email_address" class="<?= $Page->email_address->headerCellClass() ?>"><div id="elh_jdh_users_email_address" class="jdh_users_email_address"><?= $Page->renderFieldHeader($Page->email_address) ?></div></th>
-<?php } ?>
-<?php if ($Page->phone->Visible) { // phone ?>
-        <th data-name="phone" class="<?= $Page->phone->headerCellClass() ?>"><div id="elh_jdh_users_phone" class="jdh_users_phone"><?= $Page->renderFieldHeader($Page->phone) ?></div></th>
-<?php } ?>
-<?php if ($Page->department_id->Visible) { // department_id ?>
-        <th data-name="department_id" class="<?= $Page->department_id->headerCellClass() ?>"><div id="elh_jdh_users_department_id" class="jdh_users_department_id"><?= $Page->renderFieldHeader($Page->department_id) ?></div></th>
-<?php } ?>
-<?php if ($Page->role_id->Visible) { // role_id ?>
-        <th data-name="role_id" class="<?= $Page->role_id->headerCellClass() ?>"><div id="elh_jdh_users_role_id" class="jdh_users_role_id"><?= $Page->renderFieldHeader($Page->role_id) ?></div></th>
+<?php if ($Page->visit_date->Visible) { // visit_date ?>
+        <th data-name="visit_date" class="<?= $Page->visit_date->headerCellClass() ?>"><div id="elh_jdh_patient_queue_visit_date" class="jdh_patient_queue_visit_date"><?= $Page->renderFieldHeader($Page->visit_date) ?></div></th>
 <?php } ?>
 <?php
 // Render list options (header, right)
@@ -189,69 +177,27 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
-    <?php if ($Page->first_name->Visible) { // first_name ?>
-        <td data-name="first_name"<?= $Page->first_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_first_name" class="el_jdh_users_first_name">
-<span<?= $Page->first_name->viewAttributes() ?>>
-<?= $Page->first_name->getViewValue() ?></span>
+    <?php if ($Page->patient_name->Visible) { // patient_name ?>
+        <td data-name="patient_name"<?= $Page->patient_name->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_patient_queue_patient_name" class="el_jdh_patient_queue_patient_name">
+<span<?= $Page->patient_name->viewAttributes() ?>>
+<?= $Page->patient_name->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->last_name->Visible) { // last_name ?>
-        <td data-name="last_name"<?= $Page->last_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_last_name" class="el_jdh_users_last_name">
-<span<?= $Page->last_name->viewAttributes() ?>>
-<?= $Page->last_name->getViewValue() ?></span>
+    <?php if ($Page->visit_type->Visible) { // visit_type ?>
+        <td data-name="visit_type"<?= $Page->visit_type->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_patient_queue_visit_type" class="el_jdh_patient_queue_visit_type">
+<span<?= $Page->visit_type->viewAttributes() ?>>
+<?= $Page->visit_type->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->national_id->Visible) { // national_id ?>
-        <td data-name="national_id"<?= $Page->national_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_national_id" class="el_jdh_users_national_id">
-<span<?= $Page->national_id->viewAttributes() ?>>
-<?= $Page->national_id->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->email_address->Visible) { // email_address ?>
-        <td data-name="email_address"<?= $Page->email_address->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_email_address" class="el_jdh_users_email_address">
-<span<?= $Page->email_address->viewAttributes() ?>>
-<?php if (!EmptyString($Page->email_address->getViewValue()) && $Page->email_address->linkAttributes() != "") { ?>
-<a<?= $Page->email_address->linkAttributes() ?>><?= $Page->email_address->getViewValue() ?></a>
-<?php } else { ?>
-<?= $Page->email_address->getViewValue() ?>
-<?php } ?>
-</span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->phone->Visible) { // phone ?>
-        <td data-name="phone"<?= $Page->phone->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_phone" class="el_jdh_users_phone">
-<span<?= $Page->phone->viewAttributes() ?>>
-<?php if (!EmptyString($Page->phone->getViewValue()) && $Page->phone->linkAttributes() != "") { ?>
-<a<?= $Page->phone->linkAttributes() ?>><?= $Page->phone->getViewValue() ?></a>
-<?php } else { ?>
-<?= $Page->phone->getViewValue() ?>
-<?php } ?>
-</span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->department_id->Visible) { // department_id ?>
-        <td data-name="department_id"<?= $Page->department_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_department_id" class="el_jdh_users_department_id">
-<span<?= $Page->department_id->viewAttributes() ?>>
-<?= $Page->department_id->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->role_id->Visible) { // role_id ?>
-        <td data-name="role_id"<?= $Page->role_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_role_id" class="el_jdh_users_role_id">
-<span<?= $Page->role_id->viewAttributes() ?>>
-<?= $Page->role_id->getViewValue() ?></span>
+    <?php if ($Page->visit_date->Visible) { // visit_date ?>
+        <td data-name="visit_date"<?= $Page->visit_date->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_patient_queue_visit_date" class="el_jdh_patient_queue_visit_date">
+<span<?= $Page->visit_date->viewAttributes() ?>>
+<?= $Page->visit_date->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
@@ -307,7 +253,7 @@ echo GetDebugMessage();
 <script>
 // Field event handlers
 loadjs.ready("head", function() {
-    ew.addEventHandlers("jdh_users");
+    ew.addEventHandlers("jdh_patient_queue");
 });
 </script>
 <script>

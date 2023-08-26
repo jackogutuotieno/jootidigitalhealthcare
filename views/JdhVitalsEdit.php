@@ -42,7 +42,8 @@ loadjs.ready(["wrapper", "head"], function () {
             ["respiratory_rate", [fields.respiratory_rate.visible && fields.respiratory_rate.required ? ew.Validators.required(fields.respiratory_rate.caption) : null, ew.Validators.integer], fields.respiratory_rate.isInvalid],
             ["temperature", [fields.temperature.visible && fields.temperature.required ? ew.Validators.required(fields.temperature.caption) : null, ew.Validators.float], fields.temperature.isInvalid],
             ["random_blood_sugar", [fields.random_blood_sugar.visible && fields.random_blood_sugar.required ? ew.Validators.required(fields.random_blood_sugar.caption) : null], fields.random_blood_sugar.isInvalid],
-            ["submitted_by_user_id", [fields.submitted_by_user_id.visible && fields.submitted_by_user_id.required ? ew.Validators.required(fields.submitted_by_user_id.caption) : null], fields.submitted_by_user_id.isInvalid]
+            ["submitted_by_user_id", [fields.submitted_by_user_id.visible && fields.submitted_by_user_id.required ? ew.Validators.required(fields.submitted_by_user_id.caption) : null], fields.submitted_by_user_id.isInvalid],
+            ["patient_status", [fields.patient_status.visible && fields.patient_status.required ? ew.Validators.required(fields.patient_status.caption) : null], fields.patient_status.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -220,6 +221,18 @@ loadjs.ready("fjdh_vitalsedit", function() {
 <input type="<?= $Page->random_blood_sugar->getInputTextType() ?>" name="x_random_blood_sugar" id="x_random_blood_sugar" data-table="jdh_vitals" data-field="x_random_blood_sugar" value="<?= $Page->random_blood_sugar->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Page->random_blood_sugar->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->random_blood_sugar->formatPattern()) ?>"<?= $Page->random_blood_sugar->editAttributes() ?> aria-describedby="x_random_blood_sugar_help">
 <?= $Page->random_blood_sugar->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->random_blood_sugar->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->patient_status->Visible) { // patient_status ?>
+    <div id="r_patient_status"<?= $Page->patient_status->rowAttributes() ?>>
+        <label id="elh_jdh_vitals_patient_status" for="x_patient_status" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_status->caption() ?><?= $Page->patient_status->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_status->cellAttributes() ?>>
+<span id="el_jdh_vitals_patient_status">
+<input type="<?= $Page->patient_status->getInputTextType() ?>" name="x_patient_status" id="x_patient_status" data-table="jdh_vitals" data-field="x_patient_status" value="<?= $Page->patient_status->EditValue ?>" placeholder="<?= HtmlEncode($Page->patient_status->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_status->formatPattern()) ?>"<?= $Page->patient_status->editAttributes() ?> aria-describedby="x_patient_status_help">
+<?= $Page->patient_status->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->patient_status->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

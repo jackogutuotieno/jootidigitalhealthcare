@@ -50,9 +50,6 @@ $Page->showMessage();
 <table class="<?= $Page->TableClass ?>">
     <thead>
     <tr class="ew-table-header">
-<?php if ($Page->user_id->Visible) { // user_id ?>
-        <th class="<?= $Page->user_id->headerCellClass() ?>"><span id="elh_jdh_users_user_id" class="jdh_users_user_id"><?= $Page->user_id->caption() ?></span></th>
-<?php } ?>
 <?php if ($Page->first_name->Visible) { // first_name ?>
         <th class="<?= $Page->first_name->headerCellClass() ?>"><span id="elh_jdh_users_first_name" class="jdh_users_first_name"><?= $Page->first_name->caption() ?></span></th>
 <?php } ?>
@@ -95,14 +92,6 @@ while (!$Page->Recordset->EOF) {
     $Page->renderRow();
 ?>
     <tr <?= $Page->rowAttributes() ?>>
-<?php if ($Page->user_id->Visible) { // user_id ?>
-        <td<?= $Page->user_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_user_id" class="el_jdh_users_user_id">
-<span<?= $Page->user_id->viewAttributes() ?>>
-<?= $Page->user_id->getViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
 <?php if ($Page->first_name->Visible) { // first_name ?>
         <td<?= $Page->first_name->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_users_first_name" class="el_jdh_users_first_name">
@@ -131,7 +120,12 @@ while (!$Page->Recordset->EOF) {
         <td<?= $Page->email_address->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_users_email_address" class="el_jdh_users_email_address">
 <span<?= $Page->email_address->viewAttributes() ?>>
-<?= $Page->email_address->getViewValue() ?></span>
+<?php if (!EmptyString($Page->email_address->getViewValue()) && $Page->email_address->linkAttributes() != "") { ?>
+<a<?= $Page->email_address->linkAttributes() ?>><?= $Page->email_address->getViewValue() ?></a>
+<?php } else { ?>
+<?= $Page->email_address->getViewValue() ?>
+<?php } ?>
+</span>
 </span>
 </td>
 <?php } ?>
@@ -139,7 +133,12 @@ while (!$Page->Recordset->EOF) {
         <td<?= $Page->phone->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_users_phone" class="el_jdh_users_phone">
 <span<?= $Page->phone->viewAttributes() ?>>
-<?= $Page->phone->getViewValue() ?></span>
+<?php if (!EmptyString($Page->phone->getViewValue()) && $Page->phone->linkAttributes() != "") { ?>
+<a<?= $Page->phone->linkAttributes() ?>><?= $Page->phone->getViewValue() ?></a>
+<?php } else { ?>
+<?= $Page->phone->getViewValue() ?>
+<?php } ?>
+</span>
 </span>
 </td>
 <?php } ?>

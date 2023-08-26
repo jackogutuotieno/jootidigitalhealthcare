@@ -461,9 +461,6 @@ return function (App $app) {
     // Dashboard2
     $app->map(["GET", "POST", "OPTIONS"], '/dashboard2', Dashboard2Controller::class . ':dashboard')->add(PermissionMiddleware::class)->setName('dashboard2-Dashboard2-dashboard'); // dashboard
 
-    // Latest_Appointments
-    $app->map(["GET", "POST", "OPTIONS"], '/latestappointments', LatestAppointmentsController::class . ':summary')->add(PermissionMiddleware::class)->setName('latestappointments-Latest_Appointments-summary'); // summary
-
     // jdh_prescriptions_actions
     $app->map(["GET","POST","OPTIONS"], '/jdhprescriptionsactionslist[/{id}]', JdhPrescriptionsActionsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhprescriptionsactionslist-jdh_prescriptions_actions-list'); // list
     $app->map(["GET","POST","OPTIONS"], '/jdhprescriptionsactionsadd[/{id}]', JdhPrescriptionsActionsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhprescriptionsactionsadd-jdh_prescriptions_actions-add'); // add
@@ -533,6 +530,18 @@ return function (App $app) {
             $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{patient_id}]', JdhLabIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_lab_income/list-jdh_lab_income-list-2'); // list
         }
     );
+
+    // jdh_patient_queue
+    $app->map(["GET","POST","OPTIONS"], '/jdhpatientqueuelist[/{visit_id}]', JdhPatientQueueController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhpatientqueuelist-jdh_patient_queue-list'); // list
+    $app->group(
+        '/jdh_patient_queue',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{visit_id}]', JdhPatientQueueController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_patient_queue/list-jdh_patient_queue-list-2'); // list
+        }
+    );
+
+    // Patient_Queues
+    $app->map(["GET", "POST", "OPTIONS"], '/patientqueues', PatientQueuesController::class . ':summary')->add(PermissionMiddleware::class)->setName('patientqueues-Patient_Queues-summary'); // summary
 
     // personal_data
     $app->map(["GET","POST","OPTIONS"], '/personaldata', OthersController::class . ':personaldata')->add(PermissionMiddleware::class)->setName('personaldata');

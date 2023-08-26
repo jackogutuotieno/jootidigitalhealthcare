@@ -1159,6 +1159,12 @@
   <project>
     <phrase id="bodytitle" value="Jooti Digital | Healthcare - Supporting effective health information management" />
     <phrase id="footertext" value="&amp;copy;2023 Jooti Digital | Healthcare. All rights reserved." />
+    <menu id="279">
+      <phrase id="menutext" value="jdh patient queue" />
+    </menu>
+    <menu id="280">
+      <phrase id="menutext" value="Patient Queues" />
+    </menu>
     <menu id="271">
       <phrase id="menutext" value="Dashboard" />
     </menu>
@@ -1287,9 +1293,6 @@
     </menu>
     <menu id="275">
       <phrase id="menutext" value="Registration Income" />
-    </menu>
-    <menu id="272">
-      <phrase id="menutext" value="Latest Appointments" />
     </menu>
     <menu id="277">
       <phrase id="menutext" value="Consultation Income" />
@@ -1664,7 +1667,7 @@
     <table id="jdh_users">
       <phrase id="tblcaption" value="Users" />
       <field id="user_id">
-        <phrase id="fldcaption" value="User No." />
+        <phrase id="fldcaption" value="User ID" />
       </field>
       <field id="photo">
         <phrase id="fldcaption" value="Photo" />
@@ -1772,6 +1775,9 @@
       </field>
       <field id="submitted_by_user_id">
         <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="patient_status">
+        <phrase id="fldcaption" value="Status" />
       </field>
     </table>
     <table id="jdh_departments">
@@ -2021,40 +2027,6 @@
     <table id="dashboard2">
       <phrase id="tblcaption" value="Dashboard" />
     </table>
-    <table id="latest_appointments">
-      <phrase id="tblcaption" value="Latest Appointments" />
-      <field id="appointment_id">
-        <phrase id="fldcaption" value="No" />
-      </field>
-      <field id="patient_id">
-        <phrase id="fldcaption" value="Patient Name" />
-      </field>
-      <field id="appointment_title">
-        <phrase id="fldcaption" value="Title" />
-      </field>
-      <field id="appointment_start_date">
-        <phrase id="fldcaption" value="Start Date" />
-      </field>
-      <field id="appointment_end_date">
-        <phrase id="fldcaption" value="End Date" />
-      </field>
-      <field id="appointment_all_day">
-        <phrase id="fldcaption" value="All Day?" />
-        <phrase id="fldtagvalue1" value="1" />
-        <phrase id="fldtagcaption1" value="Yes" />
-        <phrase id="fldtagvalue2" value="0" />
-        <phrase id="fldtagcaption2" value="No" />
-      </field>
-      <field id="appointment_description">
-        <phrase id="fldcaption" value="Description" />
-      </field>
-      <field id="submission_date">
-        <phrase id="fldcaption" value="Submission Date" />
-      </field>
-      <field id="subbmitted_by_user_id">
-        <phrase id="fldcaption" value="User ID" />
-      </field>
-    </table>
     <table id="jdh_prescriptions_actions">
       <phrase id="tblcaption" value="Patients Prescriptions" />
       <field id="id">
@@ -2198,6 +2170,36 @@
       </field>
       <field id="patient_dob">
         <phrase id="fldcaption" value="Date of Birth" />
+      </field>
+    </table>
+    <table id="jdh_patient_queue">
+      <phrase id="tblcaption" value="jdh patient queue" />
+      <field id="visit_id">
+        <phrase id="fldcaption" value="Visit No" />
+      </field>
+      <field id="patient_name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="visit_type">
+        <phrase id="fldcaption" value="Visit Type" />
+      </field>
+      <field id="visit_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+    </table>
+    <table id="patient_queues">
+      <phrase id="tblcaption" value="Patient Queues" />
+      <field id="visit_id">
+        <phrase id="fldcaption" value="No." />
+      </field>
+      <field id="patient_name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="visit_type">
+        <phrase id="fldcaption" value="Visit Type" />
+      </field>
+      <field id="visit_date">
+        <phrase id="fldcaption" value="Submission Date" />
       </field>
     </table>
   </project>

@@ -18,6 +18,8 @@ echo $topMenu->toScript();
 
 // Sidebar menu
 $sideMenu = new Menu("menu", true, false);
+$sideMenu->addMenuItem(279, "mi_jdh_patient_queue", $MenuLanguage->MenuPhrase("279", "MenuText"), $MenuRelativePath . "jdhpatientqueuelist", -1, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_patient_queue'), false, false, "", "", false, true);
+$sideMenu->addMenuItem(280, "mi_Patient_Queues", $MenuLanguage->MenuPhrase("280", "MenuText"), $MenuRelativePath . "patientqueues", -1, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}Patient Queues'), false, false, "", "", false, true);
 $sideMenu->addMenuItem(271, "mi_Dashboard2", $MenuLanguage->MenuPhrase("271", "MenuText"), $MenuRelativePath . "dashboard2", -1, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}Dashboard'), false, false, "fa-home", "", false, true);
 $sideMenu->addMenuItem(38, "mci_Administrator", $MenuLanguage->MenuPhrase("38", "MenuText"), "", -1, "", IsLoggedIn(), false, true, "fa-cogs", "", false, true);
 $sideMenu->addMenuItem(18, "mi_jdh_users", $MenuLanguage->MenuPhrase("18", "MenuText"), $MenuRelativePath . "jdhuserslist", 38, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_users'), false, false, "fa-user", "", false, true);
