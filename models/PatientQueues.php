@@ -41,6 +41,7 @@ class PatientQueues extends ReportTable
     public $ModalGridAdd = false;
     public $ModalGridEdit = false;
     public $ModalMultiEdit = false;
+    public $PatientQueues;
 
     // Fields
     public $visit_id;
@@ -180,6 +181,38 @@ class PatientQueues extends ReportTable
         $this->visit_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->visit_date->SourceTableVar = 'jdh_patient_queue';
         $this->Fields['visit_date'] = &$this->visit_date;
+
+        // Patient Queues
+        $this->PatientQueues = new DbChart($this, 'PatientQueues', 'Patient Queues', 'visit_date', 'patient_name', 1001, '', 0, 'COUNT', 600, 500);
+        $this->PatientQueues->Position = 2;
+        $this->PatientQueues->PageBreakType = "after";
+        $this->PatientQueues->YAxisFormat = [""];
+        $this->PatientQueues->YFieldFormat = [""];
+        $this->PatientQueues->SortType = 0;
+        $this->PatientQueues->SortSequence = "";
+        $this->PatientQueues->SqlSelect = $this->getQueryBuilder()->select("`visit_date`", "''", "COUNT(`patient_name`)");
+        $this->PatientQueues->SqlGroupBy = "`visit_date`";
+        $this->PatientQueues->SqlOrderBy = "";
+        $this->PatientQueues->SeriesDateType = "";
+        $this->PatientQueues->XAxisDateFormat = 11;
+        $this->PatientQueues->ID = "Patient_Queues_PatientQueues"; // Chart ID
+        $this->PatientQueues->setParameters([
+            ["type", "1001"],
+            ["seriestype", "0"]
+        ]); // Chart type / Chart series type
+        $this->PatientQueues->setParameters([
+            ["caption", $this->PatientQueues->caption()],
+            ["xaxisname", $this->PatientQueues->xAxisName()]
+        ]); // Chart caption / X axis name
+        $this->PatientQueues->setParameter("yaxisname", $this->PatientQueues->yAxisName()); // Y axis name
+        $this->PatientQueues->setParameters([
+            ["shownames", "1"],
+            ["showvalues", "1"],
+            ["showhovercap", "1"]
+        ]); // Show names / Show values / Show hover
+        $this->PatientQueues->setParameter("alpha", "50"); // Chart alpha
+        $this->PatientQueues->setParameter("colorpalette", "#5899DA,#E8743B,#19A979,#ED4A7B,#945ECF,#13A4B4,#525DF4,#BF399E,#6C8893,#EE6868,#2F6497"); // Chart color palette
+        $this->Charts[$this->PatientQueues->ID] = &$this->PatientQueues;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();

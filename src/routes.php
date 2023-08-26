@@ -541,6 +541,7 @@ return function (App $app) {
     );
 
     // Patient_Queues
+    $app->map(["GET", "POST", "OPTIONS"], '/patientqueues/PatientQueues', PatientQueuesController::class . ':PatientQueues')->add(PermissionMiddleware::class)->setName('patientqueues-Patient_Queues-summary-PatientQueues'); // PatientQueues
     $app->map(["GET", "POST", "OPTIONS"], '/patientqueues', PatientQueuesController::class . ':summary')->add(PermissionMiddleware::class)->setName('patientqueues-Patient_Queues-summary'); // summary
 
     // personal_data

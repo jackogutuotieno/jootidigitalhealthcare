@@ -15,4 +15,10 @@ class PatientQueuesController extends ControllerBase
     {
         return $this->runPage($request, $response, $args, "PatientQueuesSummary");
     }
+
+    // PatientQueues
+    public function PatientQueues(Request $request, Response $response, array $args): Response
+    {
+        return $this->runChart($request, $response, $args, "PatientQueuesSummary", "PatientQueues");
+    }
 }

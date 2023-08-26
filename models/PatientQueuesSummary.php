@@ -378,7 +378,7 @@ class PatientQueuesSummary extends PatientQueues
     public $TotalCount;
     public $PageTotalCount;
     public $TopContentClass = "ew-top";
-    public $MiddleContentClass = "ew-middle";
+    public $MiddleContentClass = "ew-middle d-flex";
     public $BottomContentClass = "ew-bottom";
 
     /**

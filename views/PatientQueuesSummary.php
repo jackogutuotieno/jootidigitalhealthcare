@@ -36,6 +36,21 @@ if (!$Page->DrillDownInPanel) {
 <?php
 $Page->showMessage();
 ?>
+<?php if ((!$Page->isExport() || $Page->isExport("print")) && !$DashboardReport) { ?>
+<!-- Middle Container -->
+<div id="ew-middle" class="<?= $Page->MiddleContentClass ?>">
+<?php } ?>
+<?php
+if (!$DashboardReport) {
+    // Set up chart drilldown
+    $Page->PatientQueues->DrillDownInPanel = $Page->DrillDownInPanel;
+    echo $Page->PatientQueues->render("ew-chart-top");
+}
+?>
+<?php if ((!$Page->isExport() || $Page->isExport("print")) && !$DashboardReport) { ?>
+<!-- Content Container -->
+<div id="ew-content" class="<?= $Page->ContainerClass ?>">
+<?php } ?>
 <?php if ($Page->ShowReport) { ?>
 <!-- Summary report (begin) -->
 <main class="report-summary<?= ($Page->TotalGroups == 0) ? " ew-no-record" : "" ?>">
@@ -148,6 +163,14 @@ while ($Page->RecordCount < count($Page->DetailRecords) && $Page->RecordCount < 
 </main>
 <!-- /.report-summary -->
 <!-- Summary report (end) -->
+<?php } ?>
+<?php if ((!$Page->isExport() || $Page->isExport("print")) && !$DashboardReport) { ?>
+</div>
+<!-- /#ew-content -->
+<?php } ?>
+<?php if ((!$Page->isExport() || $Page->isExport("print")) && !$DashboardReport) { ?>
+</div>
+<!-- /#ew-middle -->
 <?php } ?>
 </div>
 <!-- /.ew-report -->
