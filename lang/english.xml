@@ -1205,7 +1205,7 @@
       <phrase id="menutext" value="Patients" />
     </menu>
     <menu id="10">
-      <phrase id="menutext" value="OPD Patients" />
+      <phrase id="menutext" value="OPD/IPD" />
     </menu>
     <menu id="1">
       <phrase id="menutext" value="Appointments List" />
@@ -1516,7 +1516,7 @@
         <phrase id="fldcaption" value="Reg. Fee" />
       </field>
       <field id="is_inpatient">
-        <phrase id="fldcaption" value="is inpatient" />
+        <phrase id="fldcaption" value="Is IPD?" />
         <phrase id="fldtagvalue1" value="0" />
         <phrase id="fldtagcaption1" value="No" />
         <phrase id="fldtagvalue2" value="1" />
