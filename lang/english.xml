@@ -1193,7 +1193,7 @@
       <phrase id="menutext" value="Patients" />
     </menu>
     <menu id="10">
-      <phrase id="menutext" value="Patients List" />
+      <phrase id="menutext" value="OPD Patients" />
     </menu>
     <menu id="1">
       <phrase id="menutext" value="Appointments List" />
@@ -2167,7 +2167,7 @@
       </field>
     </table>
     <table id="jdh_patient_queue">
-      <phrase id="tblcaption" value="jdh patient queue" />
+      <phrase id="tblcaption" value="Patient Queue" />
       <field id="visit_id">
         <phrase id="fldcaption" value="Visit No" />
       </field>

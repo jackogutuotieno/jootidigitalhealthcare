@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhServiceSubcategoryList extends JdhServiceSubcategory
+class JdhInpatientsList extends JdhInpatients
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhServiceSubcategoryList";
+    public $PageObjName = "JdhInpatientsList";
 
     // View file path
     public $View = null;
@@ -33,13 +33,13 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
     public $RenderingView = false;
 
     // Grid form hidden field names
-    public $FormName = "fjdh_service_subcategorylist";
+    public $FormName = "fjdh_inpatientslist";
     public $FormActionName = "";
     public $FormBlankRowName = "";
     public $FormKeyCountName = "";
 
     // CSS class/style
-    public $CurrentPageName = "jdhservicesubcategorylist";
+    public $CurrentPageName = "jdhinpatientslist";
 
     // Page URLs
     public $AddUrl;
@@ -145,8 +145,8 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         $this->FormActionName = Config("FORM_ROW_ACTION_NAME");
         $this->FormBlankRowName = Config("FORM_BLANK_ROW_NAME");
         $this->FormKeyCountName = Config("FORM_KEY_COUNT_NAME");
-        $this->TableVar = 'jdh_service_subcategory';
-        $this->TableName = 'jdh_service_subcategory';
+        $this->TableVar = 'jdh_inpatients';
+        $this->TableName = 'jdh_inpatients';
 
         // Table CSS class
         $this->TableClass = "table table-bordered table-hover table-sm ew-table";
@@ -166,26 +166,26 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_service_subcategory)
-        if (!isset($GLOBALS["jdh_service_subcategory"]) || get_class($GLOBALS["jdh_service_subcategory"]) == PROJECT_NAMESPACE . "jdh_service_subcategory") {
-            $GLOBALS["jdh_service_subcategory"] = &$this;
+        // Table object (jdh_inpatients)
+        if (!isset($GLOBALS["jdh_inpatients"]) || get_class($GLOBALS["jdh_inpatients"]) == PROJECT_NAMESPACE . "jdh_inpatients") {
+            $GLOBALS["jdh_inpatients"] = &$this;
         }
 
         // Page URL
         $pageUrl = $this->pageUrl(false);
 
         // Initialize URLs
-        $this->AddUrl = "jdhservicesubcategoryadd";
+        $this->AddUrl = "jdhinpatientsadd";
         $this->InlineAddUrl = $pageUrl . "action=add";
         $this->GridAddUrl = $pageUrl . "action=gridadd";
         $this->GridEditUrl = $pageUrl . "action=gridedit";
         $this->MultiEditUrl = $pageUrl . "action=multiedit";
-        $this->MultiDeleteUrl = "jdhservicesubcategorydelete";
-        $this->MultiUpdateUrl = "jdhservicesubcategoryupdate";
+        $this->MultiDeleteUrl = "jdhinpatientsdelete";
+        $this->MultiUpdateUrl = "jdhinpatientsupdate";
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_service_subcategory');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_inpatients');
         }
 
         // Start timer
@@ -340,7 +340,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
                 $pageName = GetPageName($url);
                 if ($pageName != $this->getListUrl()) { // Not List page => View page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhservicesubcategoryview"; // If View page, no primary button
+                    $result["view"] = $pageName == "jdhinpatientsview"; // If View page, no primary button
                 } else { // List page
                     // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
@@ -433,7 +433,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['subcategory_id'];
+            $key .= @$ar['patient_id'];
         }
         return $key;
     }
@@ -446,7 +446,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->subcategory_id->Visible = false;
+            $this->patient_id->Visible = false;
         }
     }
 
@@ -641,13 +641,16 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
 
         // Setup export options
         $this->setupExportOptions();
-
-        // Setup import options
-        $this->setupImportOptions();
-        $this->subcategory_id->setVisibility();
-        $this->category_id->setVisibility();
-        $this->subcategory_name->setVisibility();
-        $this->description->Visible = false;
+        $this->patient_id->setVisibility();
+        $this->patient_name->setVisibility();
+        $this->patient_dob->setVisibility();
+        $this->patient_age->setVisibility();
+        $this->patient_gender->setVisibility();
+        $this->patient_phone->setVisibility();
+        $this->patient_kin_name->Visible = false;
+        $this->patient_kin_phone->Visible = false;
+        $this->patient_registration_date->setVisibility();
+        $this->inpatient_outpatient_status->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -680,11 +683,12 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         }
 
         // Set up lookup cache
-        $this->setupLookupOptions($this->category_id);
+        $this->setupLookupOptions($this->patient_gender);
+        $this->setupLookupOptions($this->inpatient_outpatient_status);
 
         // Update form name to avoid conflict
         if ($this->IsModal) {
-            $this->FormName = "fjdh_service_subcategorygrid";
+            $this->FormName = "fjdh_inpatientsgrid";
         }
 
         // Set up page action
@@ -717,13 +721,6 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         // Set up Breadcrumb
         if (!$this->isExport()) {
             $this->setupBreadcrumb();
-        }
-
-        // Process import
-        if ($this->isImport()) {
-            $this->import(Param(Config("API_FILE_TOKEN_NAME")), ConvertToBool(Param("rollback")));
-            $this->terminate();
-            return;
         }
 
         // Hide list options
@@ -1022,12 +1019,12 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
 
         // Load server side filters
         if (Config("SEARCH_FILTER_OPTION") == "Server" && isset($UserProfile)) {
-            $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_service_subcategorysrch");
+            $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_inpatientssrch");
         }
-        $filterList = Concat($filterList, $this->subcategory_id->AdvancedSearch->toJson(), ","); // Field subcategory_id
-        $filterList = Concat($filterList, $this->category_id->AdvancedSearch->toJson(), ","); // Field category_id
-        $filterList = Concat($filterList, $this->subcategory_name->AdvancedSearch->toJson(), ","); // Field subcategory_name
-        $filterList = Concat($filterList, $this->description->AdvancedSearch->toJson(), ","); // Field description
+        $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
+        $filterList = Concat($filterList, $this->patient_name->AdvancedSearch->toJson(), ","); // Field patient_name
+        $filterList = Concat($filterList, $this->patient_age->AdvancedSearch->toJson(), ","); // Field patient_age
+        $filterList = Concat($filterList, $this->inpatient_outpatient_status->AdvancedSearch->toJson(), ","); // Field inpatient_outpatient_status
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
             $filterList = Concat($filterList, $wrk, ",");
@@ -1049,7 +1046,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         global $UserProfile;
         if (Post("ajax") == "savefilters") { // Save filter request (Ajax)
             $filters = Post("filters");
-            $UserProfile->setSearchFilters(CurrentUserName(), "fjdh_service_subcategorysrch", $filters);
+            $UserProfile->setSearchFilters(CurrentUserName(), "fjdh_inpatientssrch", $filters);
             WriteJson([["success" => true]]); // Success
             return true;
         } elseif (Post("cmd") == "resetfilter") {
@@ -1068,37 +1065,37 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         $filter = json_decode(Post("filter"), true);
         $this->Command = "search";
 
-        // Field subcategory_id
-        $this->subcategory_id->AdvancedSearch->SearchValue = @$filter["x_subcategory_id"];
-        $this->subcategory_id->AdvancedSearch->SearchOperator = @$filter["z_subcategory_id"];
-        $this->subcategory_id->AdvancedSearch->SearchCondition = @$filter["v_subcategory_id"];
-        $this->subcategory_id->AdvancedSearch->SearchValue2 = @$filter["y_subcategory_id"];
-        $this->subcategory_id->AdvancedSearch->SearchOperator2 = @$filter["w_subcategory_id"];
-        $this->subcategory_id->AdvancedSearch->save();
+        // Field patient_id
+        $this->patient_id->AdvancedSearch->SearchValue = @$filter["x_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchOperator = @$filter["z_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchCondition = @$filter["v_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchValue2 = @$filter["y_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_id"];
+        $this->patient_id->AdvancedSearch->save();
 
-        // Field category_id
-        $this->category_id->AdvancedSearch->SearchValue = @$filter["x_category_id"];
-        $this->category_id->AdvancedSearch->SearchOperator = @$filter["z_category_id"];
-        $this->category_id->AdvancedSearch->SearchCondition = @$filter["v_category_id"];
-        $this->category_id->AdvancedSearch->SearchValue2 = @$filter["y_category_id"];
-        $this->category_id->AdvancedSearch->SearchOperator2 = @$filter["w_category_id"];
-        $this->category_id->AdvancedSearch->save();
+        // Field patient_name
+        $this->patient_name->AdvancedSearch->SearchValue = @$filter["x_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchOperator = @$filter["z_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchCondition = @$filter["v_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchValue2 = @$filter["y_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchOperator2 = @$filter["w_patient_name"];
+        $this->patient_name->AdvancedSearch->save();
 
-        // Field subcategory_name
-        $this->subcategory_name->AdvancedSearch->SearchValue = @$filter["x_subcategory_name"];
-        $this->subcategory_name->AdvancedSearch->SearchOperator = @$filter["z_subcategory_name"];
-        $this->subcategory_name->AdvancedSearch->SearchCondition = @$filter["v_subcategory_name"];
-        $this->subcategory_name->AdvancedSearch->SearchValue2 = @$filter["y_subcategory_name"];
-        $this->subcategory_name->AdvancedSearch->SearchOperator2 = @$filter["w_subcategory_name"];
-        $this->subcategory_name->AdvancedSearch->save();
+        // Field patient_age
+        $this->patient_age->AdvancedSearch->SearchValue = @$filter["x_patient_age"];
+        $this->patient_age->AdvancedSearch->SearchOperator = @$filter["z_patient_age"];
+        $this->patient_age->AdvancedSearch->SearchCondition = @$filter["v_patient_age"];
+        $this->patient_age->AdvancedSearch->SearchValue2 = @$filter["y_patient_age"];
+        $this->patient_age->AdvancedSearch->SearchOperator2 = @$filter["w_patient_age"];
+        $this->patient_age->AdvancedSearch->save();
 
-        // Field description
-        $this->description->AdvancedSearch->SearchValue = @$filter["x_description"];
-        $this->description->AdvancedSearch->SearchOperator = @$filter["z_description"];
-        $this->description->AdvancedSearch->SearchCondition = @$filter["v_description"];
-        $this->description->AdvancedSearch->SearchValue2 = @$filter["y_description"];
-        $this->description->AdvancedSearch->SearchOperator2 = @$filter["w_description"];
-        $this->description->AdvancedSearch->save();
+        // Field inpatient_outpatient_status
+        $this->inpatient_outpatient_status->AdvancedSearch->SearchValue = @$filter["x_inpatient_outpatient_status"];
+        $this->inpatient_outpatient_status->AdvancedSearch->SearchOperator = @$filter["z_inpatient_outpatient_status"];
+        $this->inpatient_outpatient_status->AdvancedSearch->SearchCondition = @$filter["v_inpatient_outpatient_status"];
+        $this->inpatient_outpatient_status->AdvancedSearch->SearchValue2 = @$filter["y_inpatient_outpatient_status"];
+        $this->inpatient_outpatient_status->AdvancedSearch->SearchOperator2 = @$filter["w_inpatient_outpatient_status"];
+        $this->inpatient_outpatient_status->AdvancedSearch->save();
         $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
     }
@@ -1138,8 +1135,10 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
 
         // Fields to search
         $searchFlds = [];
-        $searchFlds[] = &$this->subcategory_name;
-        $searchFlds[] = &$this->description;
+        $searchFlds[] = &$this->patient_name;
+        $searchFlds[] = &$this->patient_gender;
+        $searchFlds[] = &$this->patient_phone;
+        $searchFlds[] = &$this->patient_kin_name;
         $searchKeyword = $default ? $this->BasicSearch->KeywordDefault : $this->BasicSearch->Keyword;
         $searchType = $default ? $this->BasicSearch->TypeDefault : $this->BasicSearch->Type;
 
@@ -1218,9 +1217,14 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
-            $this->updateSort($this->subcategory_id); // subcategory_id
-            $this->updateSort($this->category_id); // category_id
-            $this->updateSort($this->subcategory_name); // subcategory_name
+            $this->updateSort($this->patient_id); // patient_id
+            $this->updateSort($this->patient_name); // patient_name
+            $this->updateSort($this->patient_dob); // patient_dob
+            $this->updateSort($this->patient_age); // patient_age
+            $this->updateSort($this->patient_gender); // patient_gender
+            $this->updateSort($this->patient_phone); // patient_phone
+            $this->updateSort($this->patient_registration_date); // patient_registration_date
+            $this->updateSort($this->inpatient_outpatient_status); // inpatient_outpatient_status
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1245,10 +1249,16 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
             if ($this->Command == "resetsort") {
                 $orderBy = "";
                 $this->setSessionOrderBy($orderBy);
-                $this->subcategory_id->setSort("");
-                $this->category_id->setSort("");
-                $this->subcategory_name->setSort("");
-                $this->description->setSort("");
+                $this->patient_id->setSort("");
+                $this->patient_name->setSort("");
+                $this->patient_dob->setSort("");
+                $this->patient_age->setSort("");
+                $this->patient_gender->setSort("");
+                $this->patient_phone->setSort("");
+                $this->patient_kin_name->setSort("");
+                $this->patient_kin_phone->setSort("");
+                $this->patient_registration_date->setSort("");
+                $this->inpatient_outpatient_status->setSort("");
             }
 
             // Reset start position
@@ -1268,18 +1278,6 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         $item->OnLeft = false;
         $item->Visible = false;
 
-        // "view"
-        $item = &$this->ListOptions->add("view");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canView();
-        $item->OnLeft = false;
-
-        // "edit"
-        $item = &$this->ListOptions->add("edit");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canEdit();
-        $item->OnLeft = false;
-
         // List actions
         $item = &$this->ListOptions->add("listactions");
         $item->CssClass = "text-nowrap";
@@ -1290,7 +1288,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
 
         // "checkbox"
         $item = &$this->ListOptions->add("checkbox");
-        $item->Visible = $Security->canDelete();
+        $item->Visible = false;
         $item->OnLeft = false;
         $item->Header = "<div class=\"form-check\"><input type=\"checkbox\" name=\"key\" id=\"key\" class=\"form-check-input\" data-ew-action=\"select-all-keys\"></div>";
         if ($item->OnLeft) {
@@ -1337,32 +1335,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
         $pageUrl = $this->pageUrl(false);
-        if ($this->CurrentMode == "view") {
-            // "view"
-            $opt = $this->ListOptions["view"];
-            $viewcaption = HtmlTitle($Language->phrase("ViewLink"));
-            if ($Security->canView()) {
-                if ($this->ModalView && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_service_subcategory\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-caption=\"" . $viewcaption . "\" href=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\">" . $Language->phrase("ViewLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
-
-            // "edit"
-            $opt = $this->ListOptions["edit"];
-            $editcaption = HtmlTitle($Language->phrase("EditLink"));
-            if ($Security->canEdit()) {
-                if ($this->ModalEdit && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_service_subcategory\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
+        if ($this->CurrentMode == "view") { // Check view mode
         } // End View mode
 
         // Set up list action buttons
@@ -1376,11 +1349,11 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
                 if ($listaction->Select == ACTION_SINGLE && $allowed) {
                     $caption = $listaction->Caption;
                     $icon = ($listaction->Icon != "") ? "<i class=\"" . HtmlEncode(str_replace(" ew-icon", "", $listaction->Icon)) . "\" data-caption=\"" . HtmlTitle($caption) . "\"></i> " : "";
-                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_service_subcategorylist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
+                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_inpatientslist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
                     if ($link != "") {
                         $links[] = $link;
                         if ($body == "") { // Setup first button
-                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_service_subcategorylist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
+                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_inpatientslist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
                         }
                     }
                 }
@@ -1401,7 +1374,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
 
         // "checkbox"
         $opt = $this->ListOptions["checkbox"];
-        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->subcategory_id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
+        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->patient_id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
         $this->renderListOptionsExt();
 
         // Call ListOptions_Rendered event
@@ -1420,30 +1393,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
     {
         global $Language, $Security;
         $options = &$this->OtherOptions;
-        $option = $options["addedit"];
-
-        // Add
-        $item = &$option->add("add");
-        $addcaption = HtmlTitle($Language->phrase("AddLink"));
-        if ($this->ModalAdd && !IsMobile()) {
-            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-table=\"jdh_service_subcategory\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("AddLink") . "</a>";
-        } else {
-            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
-        }
-        $item->Visible = $this->AddUrl != "" && $Security->canAdd();
         $option = $options["action"];
-
-        // Add multi delete
-        $item = &$option->add("multidelete");
-        $item->Body = "<button type=\"button\" class=\"ew-action ew-multi-delete\" title=\"" .
-            HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" data-caption=\"" .
-            HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" form=\"fjdh_service_subcategorylist\"" .
-            " data-ew-action=\"" . ($this->UseAjaxActions ? "inline" : "submit") . "\"" .
-            ($this->UseAjaxActions ? " data-action=\"delete\"" : "") .
-            " data-url=\"" . GetUrl($this->MultiDeleteUrl) . "\"" .
-            ($this->InlineDelete ? " data-msg=\"" . HtmlEncode($Language->phrase("DeleteConfirm")) . "\" data-data='{\"action\":\"delete\"}'" : " data-data='{\"action\":\"show\"}'") .
-            ">" . $Language->phrase("DeleteSelectedLink") . "</button>";
-        $item->Visible = $Security->canDelete();
 
         // Show column list for column visibility
         if ($this->UseColumnVisibility) {
@@ -1451,9 +1401,14 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("subcategory_id", $this->createColumnOption("subcategory_id"));
-            $option->add("category_id", $this->createColumnOption("category_id"));
-            $option->add("subcategory_name", $this->createColumnOption("subcategory_name"));
+            $option->add("patient_id", $this->createColumnOption("patient_id"));
+            $option->add("patient_name", $this->createColumnOption("patient_name"));
+            $option->add("patient_dob", $this->createColumnOption("patient_dob"));
+            $option->add("patient_age", $this->createColumnOption("patient_age"));
+            $option->add("patient_gender", $this->createColumnOption("patient_gender"));
+            $option->add("patient_phone", $this->createColumnOption("patient_phone"));
+            $option->add("patient_registration_date", $this->createColumnOption("patient_registration_date"));
+            $option->add("inpatient_outpatient_status", $this->createColumnOption("inpatient_outpatient_status"));
         }
 
         // Set up options default
@@ -1473,10 +1428,10 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
 
         // Filter button
         $item = &$this->FilterOptions->add("savecurrentfilter");
-        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_service_subcategorysrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
+        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_inpatientssrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
         $item->Visible = true;
         $item = &$this->FilterOptions->add("deletefilter");
-        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_service_subcategorysrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
+        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_inpatientssrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
         $item->Visible = true;
         $this->FilterOptions->UseDropDownButton = true;
         $this->FilterOptions->UseButtonGroup = !$this->FilterOptions->UseDropDownButton;
@@ -1515,7 +1470,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
                 $item = &$option->add("custom_" . $listaction->Action);
                 $caption = $listaction->Caption;
                 $icon = ($listaction->Icon != "") ? '<i class="' . HtmlEncode($listaction->Icon) . '" data-caption="' . HtmlEncode($caption) . '"></i>' . $caption : $caption;
-                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_service_subcategorylist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
+                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_inpatientslist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
                 $item->Visible = $listaction->Allow;
             }
         }
@@ -1664,7 +1619,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
 
                 // Set row properties
                 $this->resetAttributes();
-                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_service_subcategory", "data-rowtype" => ROWTYPE_ADD]);
+                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_inpatients", "data-rowtype" => ROWTYPE_ADD]);
                 $this->RowAttrs->appendClass("ew-template");
                 // Render row
                 $this->RowType = ROWTYPE_ADD;
@@ -1725,7 +1680,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         $this->RowAttrs->merge([
             "data-rowindex" => $this->RowCount,
             "data-key" => $this->getKey(true),
-            "id" => "r" . $this->RowCount . "_jdh_service_subcategory",
+            "id" => "r" . $this->RowCount . "_jdh_inpatients",
             "data-rowtype" => $this->RowType,
             "class" => ($this->RowCount % 2 != 1) ? "ew-table-alt-row" : "",
         ]);
@@ -1835,20 +1790,32 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->subcategory_id->setDbValue($row['subcategory_id']);
-        $this->category_id->setDbValue($row['category_id']);
-        $this->subcategory_name->setDbValue($row['subcategory_name']);
-        $this->description->setDbValue($row['description']);
+        $this->patient_id->setDbValue($row['patient_id']);
+        $this->patient_name->setDbValue($row['patient_name']);
+        $this->patient_dob->setDbValue($row['patient_dob']);
+        $this->patient_age->setDbValue($row['patient_age']);
+        $this->patient_gender->setDbValue($row['patient_gender']);
+        $this->patient_phone->setDbValue($row['patient_phone']);
+        $this->patient_kin_name->setDbValue($row['patient_kin_name']);
+        $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
+        $this->patient_registration_date->setDbValue($row['patient_registration_date']);
+        $this->inpatient_outpatient_status->setDbValue($row['inpatient_outpatient_status']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['subcategory_id'] = $this->subcategory_id->DefaultValue;
-        $row['category_id'] = $this->category_id->DefaultValue;
-        $row['subcategory_name'] = $this->subcategory_name->DefaultValue;
-        $row['description'] = $this->description->DefaultValue;
+        $row['patient_id'] = $this->patient_id->DefaultValue;
+        $row['patient_name'] = $this->patient_name->DefaultValue;
+        $row['patient_dob'] = $this->patient_dob->DefaultValue;
+        $row['patient_age'] = $this->patient_age->DefaultValue;
+        $row['patient_gender'] = $this->patient_gender->DefaultValue;
+        $row['patient_phone'] = $this->patient_phone->DefaultValue;
+        $row['patient_kin_name'] = $this->patient_kin_name->DefaultValue;
+        $row['patient_kin_phone'] = $this->patient_kin_phone->DefaultValue;
+        $row['patient_registration_date'] = $this->patient_registration_date->DefaultValue;
+        $row['inpatient_outpatient_status'] = $this->inpatient_outpatient_status->DefaultValue;
         return $row;
     }
 
@@ -1889,339 +1856,114 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
 
         // Common render codes for all row types
 
-        // subcategory_id
+        // patient_id
 
-        // category_id
+        // patient_name
 
-        // subcategory_name
+        // patient_dob
 
-        // description
+        // patient_age
+
+        // patient_gender
+
+        // patient_phone
+
+        // patient_kin_name
+
+        // patient_kin_phone
+
+        // patient_registration_date
+
+        // inpatient_outpatient_status
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // subcategory_id
-            $this->subcategory_id->ViewValue = $this->subcategory_id->CurrentValue;
+            // patient_id
+            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
-            // category_id
-            $curVal = strval($this->category_id->CurrentValue);
-            if ($curVal != "") {
-                $this->category_id->ViewValue = $this->category_id->lookupCacheOption($curVal);
-                if ($this->category_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`category_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->category_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->category_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->category_id->ViewValue = $this->category_id->displayValue($arwrk);
-                    } else {
-                        $this->category_id->ViewValue = FormatNumber($this->category_id->CurrentValue, $this->category_id->formatPattern());
-                    }
-                }
+            // patient_name
+            $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
+
+            // patient_dob
+            $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
+            $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
+
+            // patient_age
+            $this->patient_age->ViewValue = $this->patient_age->CurrentValue;
+            $this->patient_age->ViewValue = FormatNumber($this->patient_age->ViewValue, $this->patient_age->formatPattern());
+
+            // patient_gender
+            if (strval($this->patient_gender->CurrentValue) != "") {
+                $this->patient_gender->ViewValue = $this->patient_gender->optionCaption($this->patient_gender->CurrentValue);
             } else {
-                $this->category_id->ViewValue = null;
+                $this->patient_gender->ViewValue = null;
             }
 
-            // subcategory_name
-            $this->subcategory_name->ViewValue = $this->subcategory_name->CurrentValue;
+            // patient_phone
+            $this->patient_phone->ViewValue = $this->patient_phone->CurrentValue;
 
-            // subcategory_id
-            $this->subcategory_id->HrefValue = "";
-            $this->subcategory_id->TooltipValue = "";
+            // patient_kin_name
+            $this->patient_kin_name->ViewValue = $this->patient_kin_name->CurrentValue;
 
-            // category_id
-            $this->category_id->HrefValue = "";
-            $this->category_id->TooltipValue = "";
+            // patient_kin_phone
+            $this->patient_kin_phone->ViewValue = $this->patient_kin_phone->CurrentValue;
 
-            // subcategory_name
-            $this->subcategory_name->HrefValue = "";
-            $this->subcategory_name->TooltipValue = "";
+            // patient_registration_date
+            $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
+            $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
+
+            // inpatient_outpatient_status
+            if (strval($this->inpatient_outpatient_status->CurrentValue) != "") {
+                $this->inpatient_outpatient_status->ViewValue = $this->inpatient_outpatient_status->optionCaption($this->inpatient_outpatient_status->CurrentValue);
+            } else {
+                $this->inpatient_outpatient_status->ViewValue = null;
+            }
+
+            // patient_id
+            $this->patient_id->HrefValue = "";
+            $this->patient_id->TooltipValue = "";
+
+            // patient_name
+            $this->patient_name->HrefValue = "";
+            $this->patient_name->TooltipValue = "";
+
+            // patient_dob
+            $this->patient_dob->HrefValue = "";
+            $this->patient_dob->TooltipValue = "";
+
+            // patient_age
+            $this->patient_age->HrefValue = "";
+            $this->patient_age->TooltipValue = "";
+
+            // patient_gender
+            $this->patient_gender->HrefValue = "";
+            $this->patient_gender->TooltipValue = "";
+
+            // patient_phone
+            if (!EmptyValue($this->patient_phone->CurrentValue)) {
+                $this->patient_phone->HrefValue = $this->patient_phone->getLinkPrefix() . $this->patient_phone->CurrentValue; // Add prefix/suffix
+                $this->patient_phone->LinkAttrs["target"] = ""; // Add target
+                if ($this->isExport()) {
+                    $this->patient_phone->HrefValue = FullUrl($this->patient_phone->HrefValue, "href");
+                }
+            } else {
+                $this->patient_phone->HrefValue = "";
+            }
+            $this->patient_phone->TooltipValue = "";
+
+            // patient_registration_date
+            $this->patient_registration_date->HrefValue = "";
+            $this->patient_registration_date->TooltipValue = "";
+
+            // inpatient_outpatient_status
+            $this->inpatient_outpatient_status->HrefValue = "";
+            $this->inpatient_outpatient_status->TooltipValue = "";
         }
 
         // Call Row Rendered event
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
-    }
-
-    /**
-     * Import file
-     *
-     * @param string $filetoken File token to locate the uploaded import file
-     * @param bool $rollback Try import and then rollback
-     * @return bool
-     */
-    public function import($filetoken, $rollback = false)
-    {
-        global $Security, $Language;
-        if (!$Security->canImport()) {
-            return false; // Import not allowed
-        }
-
-        // Check if valid token
-        if (EmptyValue($filetoken)) {
-            return false;
-        }
-
-        // Get uploaded files by token
-        $files = GetUploadedFileNames($filetoken);
-        $exts = explode(",", Config("IMPORT_FILE_ALLOWED_EXTENSIONS"));
-        $result = [Config("API_FILE_TOKEN_NAME") => $filetoken, "files" => []];
-
-        // Set header
-        if (ob_get_length()) {
-            ob_clean();
-        }
-        header("Cache-Control: no-store");
-        header("Content-Type: text/event-stream");
-
-        // Import records
-        try {
-            foreach ($files as $file) {
-                $res = ["file" => basename($file)];
-                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-
-                // Ignore log file
-                if ($ext == "txt") {
-                    continue;
-                }
-
-                // Check file extension
-                if (!in_array($ext, $exts)) {
-                    $res = array_merge($res, ["error" => str_replace("%e", $ext, $Language->phrase("ImportInvalidFileExtension"))]);
-                    SendEvent($res, "error");
-                    return false;
-                }
-
-                // Set up options
-                $options = [
-                    "file" => $file,
-                    "inputEncoding" => "", // For CSV only
-                    "delimiter" => ",", // For CSV only
-                    "enclosure" => "\"", // For CSV only
-                    "escape" => "\\", // For CSV only
-                    "activeSheet" => null, // For PhpSpreadsheet only
-                    "readOnly" => true, // For PhpSpreadsheet only
-                    "maxRows" => null, // For PhpSpreadsheet only
-                    "headerRowNumber" => 0,
-                    "headers" => []
-                ];
-                foreach ($_GET as $key => $value) {
-                    if (!in_array($key, [Config("API_ACTION_NAME"), Config("API_FILE_TOKEN_NAME")])) {
-                        $options[$key] = $value;
-                    }
-                }
-
-                // Workflow builder
-                $builder = fn($workflow) => $workflow;
-
-                // Call Page Importing server event
-                if (!$this->pageImporting($builder, $options)) {
-                    SendEvent($res, "error");
-                    return false;
-                }
-
-                // Set max execution time
-                if (Config("IMPORT_MAX_EXECUTION_TIME") > 0) {
-                    ini_set("max_execution_time", Config("IMPORT_MAX_EXECUTION_TIME"));
-                }
-
-                // Reader
-                try {
-                    if ($ext == "csv") {
-                        $csv = file_get_contents($file);
-                        if ($csv !== false) {
-                            if (StartsString("\xEF\xBB\xBF", $csv)) { // UTF-8 BOM
-                                $csv = substr($csv, 3);
-                            } elseif ($options["inputEncoding"] != "" && !SameText($options["inputEncoding"], "UTF-8")) {
-                                $csv = Convert($options["inputEncoding"], "UTF-8", $csv);
-                            }
-                            file_put_contents($file, $csv);
-                        }
-                        $reader = new \Port\Csv\CsvReader(new \SplFileObject($file), $options["delimiter"], $options["enclosure"], $options["escape"]);
-                    } else {
-                        $reader = new \Port\Spreadsheet\SpreadsheetReader(new \SplFileObject($file), $options["headerRowNumber"], $options["activeSheet"], $options["readOnly"], $options["maxRows"]);
-                    }
-                    if (is_array($options["headers"]) && count($options["headers"]) > 0) {
-                        $reader->setColumnHeaders($options["headers"]);
-                    } elseif (is_int($options["headerRowNumber"])) {
-                        $reader->setHeaderRowNumber($options["headerRowNumber"]);
-                    }
-                } catch (\Exception $e) {
-                    $res = array_merge($res, ["error" => $e->getMessage()]);
-                    SendEvent($res, "error");
-                    return false;
-                }
-
-                // Column headers
-                $headers = $reader->getColumnHeaders();
-                if (count($headers) == 0) { // Missing headers
-                    $res["error"] = $Language->phrase("ImportNoHeaderRow");
-                    SendEvent($res, "error");
-                    return false;
-                }
-
-                // Counts
-                $recordCnt = $reader->count();
-                $cnt = 0;
-                $successCnt = 0;
-                $failCnt = 0;
-                $res = array_merge($res, ["totalCount" => $recordCnt, "count" => $cnt, "successCount" => 0, "failCount" => 0]);
-
-                // Writer
-                $writer = new \Port\Writer\CallbackWriter(function ($row) use (&$res, &$cnt, &$successCnt, &$failCnt) {
-                    try {
-                        $success = $this->importRow($row, ++$cnt); // Import row
-                        if ($success) {
-                            $successCnt++;
-                        } else {
-                            $failCnt++;
-                        }
-                        $err = "";
-                    } catch (\Port\Exception $e) { // Catch exception so the workflow continues
-                        $failCnt++;
-                        $err = $e->getMessage();
-                        if ($failCnt > $this->ImportMaxFailures) {
-                            throw $e; // Throw \Port\Exception to terminate the workflow
-                        }
-                    } finally {
-                        $res = array_merge($res, [
-                            "row" => $row, // Current row
-                            "success" => $success, // For current row
-                            "error" => $err, // For current row
-                            "count" => $cnt,
-                            "successCount" => $successCnt,
-                            "failCount" => $failCnt
-                        ]);
-                        SendEvent($res);
-                    }
-                });
-
-                // Connection
-                $conn = $this->getConnection();
-
-                // Begin transaction
-                if ($this->ImportUseTransaction) {
-                    $conn->beginTransaction();
-                }
-
-                // Workflow
-                $workflow = new \Port\Steps\StepAggregator($reader);
-                $workflow->setLogger(Logger());
-                $workflow->setSkipItemOnFailure(false); // Stop on exception
-                $workflow = $builder($workflow);
-                try {
-                    $info = @$workflow->addWriter($writer)->process();
-                } finally {
-                    // Rollback transaction
-                    if ($this->ImportUseTransaction) {
-                        if ($rollback || $failCnt > $this->ImportMaxFailures) {
-                            $res["rollbacked"] = $conn->rollback();
-                        } else {
-                            $conn->commit();
-                        }
-                    }
-                    unset($res["row"], $res["error"]); // Remove current row info
-                    $res["success"] = $cnt > 0 && $failCnt <= $this->ImportMaxFailures; // Set success status of current file
-                    SendEvent($res); // Current file imported
-                    $result["files"][] = $res;
-
-                    // Call Page Imported server event
-                    $this->pageImported($info, $res);
-                }
-            }
-        } finally {
-            $result["failCount"] = array_reduce($result["files"], fn($carry, $item) => $carry + $item["failCount"], 0); // For client side
-            $result["success"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"], true); // All files successful
-            $result["rollbacked"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"] && ($item["rollbacked"] ?? false), true); // All file rollbacked successfully
-            if ($result["success"] && !$result["rollbacked"]) {
-                CleanUploadTempPaths($filetoken);
-            }
-            SendEvent($result, "complete"); // All files imported
-            return $result["success"];
-        }
-    }
-
-    /**
-     * Import a row
-     *
-     * @param array $row Row to be imported
-     * @param int $cnt Index of the row (1-based)
-     * @return bool
-     */
-    protected function importRow(&$row, $cnt)
-    {
-        global $Language;
-
-        // Call Row Import server event
-        if (!$this->rowImport($row, $cnt)) {
-            return false;
-        }
-
-        // Check field names and values
-        foreach ($row as $name => $value) {
-            $fld = $this->Fields[$name];
-            if (!$fld) {
-                throw new \Port\Exception\UnexpectedValueException(str_replace("%f", $name, $Language->phrase("ImportInvalidFieldName")));
-            }
-            if (!$this->checkValue($fld, $value)) {
-                throw new \Port\Exception\UnexpectedValueException(str_replace(["%f", "%v"], [$name, $value], $Language->phrase("ImportInvalidFieldValue")));
-            }
-        }
-
-        // Insert/Update to database
-        $res = false;
-        if (!$this->ImportInsertOnly && $oldrow = $this->load($row)) {
-            if (!method_exists($this, "rowUpdating") || $this->rowUpdating($oldrow, $row)) {
-                if ($res = $this->update($row, "", $oldrow)) {
-                    if (method_exists($this, "rowUpdated")) {
-                        $this->rowUpdated($oldrow, $row);
-                    }
-                }
-            }
-        } else {
-            if (!method_exists($this, "rowInserting") || $this->rowInserting(null, $row)) {
-                if ($res = $this->insert($row)) {
-                    if (method_exists($this, "rowInserted")) {
-                        $this->rowInserted(null, $row);
-                    }
-                }
-            }
-        }
-        return $res;
-    }
-
-    /**
-     * Check field value
-     *
-     * @param object $fld Field object
-     * @param object $value
-     * @return bool
-     */
-    protected function checkValue($fld, $value)
-    {
-        if ($fld->DataType == DATATYPE_NUMBER && !is_numeric($value)) {
-            return false;
-        } elseif ($fld->DataType == DATATYPE_DATE && !CheckDate($value, $fld->formatPattern())) {
-            return false;
-        }
-        return true;
-    }
-
-    // Load row
-    protected function load($row)
-    {
-        $filter = $this->getRecordFilter($row);
-        if (!$filter) {
-            return null;
-        }
-        $this->CurrentFilter = $filter;
-        $sql = $this->getCurrentSql();
-        $conn = $this->getConnection();
-        return $conn->fetchAssociative($sql);
     }
 
     // Get export HTML tag
@@ -2236,19 +1978,19 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         }
         if (SameText($type, "excel")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_service_subcategorylist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_inpatientslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\">" . $Language->phrase("ExportToExcel") . "</a>";
             }
         } elseif (SameText($type, "word")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_service_subcategorylist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_inpatientslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\">" . $Language->phrase("ExportToWord") . "</a>";
             }
         } elseif (SameText($type, "pdf")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_service_subcategorylist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_inpatientslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\">" . $Language->phrase("ExportToPdf") . "</a>";
             }
@@ -2260,7 +2002,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-csv\" title=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\">" . $Language->phrase("ExportToCsv") . "</a>";
         } elseif (SameText($type, "email")) {
             $url = $custom ? ' data-url="' . $exportUrl . '"' : '';
-            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_service_subcategorylist" data-ew-action="email" data-custom="false" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
+            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_inpatientslist" data-ew-action="email" data-custom="false" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
         } elseif (SameText($type, "print")) {
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-print\" title=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\">" . $Language->phrase("PrinterFriendly") . "</a>";
         }
@@ -2338,7 +2080,7 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         // Search button
         $item = &$this->SearchOptions->add("searchtoggle");
         $searchToggleClass = ($this->SearchWhere != "") ? " active" : " active";
-        $item->Body = "<a class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" role=\"button\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-ew-action=\"search-toggle\" data-form=\"fjdh_service_subcategorysrch\" aria-pressed=\"" . ($searchToggleClass == " active" ? "true" : "false") . "\">" . $Language->phrase("SearchLink") . "</a>";
+        $item->Body = "<a class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" role=\"button\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-ew-action=\"search-toggle\" data-form=\"fjdh_inpatientssrch\" aria-pressed=\"" . ($searchToggleClass == " active" ? "true" : "false") . "\">" . $Language->phrase("SearchLink") . "</a>";
         $item->Visible = true;
 
         // Show all button
@@ -2382,25 +2124,6 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
         if (!$this->hasSearchFields() && $this->SearchOptions["searchtoggle"]) {
             $this->SearchOptions["searchtoggle"]->Visible = false;
         }
-    }
-
-    // Set up import options
-    protected function setupImportOptions()
-    {
-        global $Security, $Language;
-
-        // Import
-        $item = &$this->ImportOptions->add("import");
-        $item->Body = "<a class=\"ew-import-link ew-import\" role=\"button\" title=\"" . $Language->phrase("Import", true) . "\" data-caption=\"" . $Language->phrase("Import", true) . "\" data-ew-action=\"import\" data-hdr=\"" . $Language->phrase("Import", true) . "\">" . $Language->phrase("Import") . "</a>";
-        $item->Visible = $Security->canImport();
-        $this->ImportOptions->UseButtonGroup = true;
-        $this->ImportOptions->UseDropDownButton = false;
-        $this->ImportOptions->DropDownButtonPhrase = $Language->phrase("Import");
-
-        // Add group option item
-        $item = &$this->ImportOptions->addGroupOption();
-        $item->Body = "";
-        $item->Visible = false;
     }
 
     /**
@@ -2491,7 +2214,9 @@ class JdhServiceSubcategoryList extends JdhServiceSubcategory
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
-                case "x_category_id":
+                case "x_patient_gender":
+                    break;
+                case "x_inpatient_outpatient_status":
                     break;
                 default:
                     $lookupFilter = "";

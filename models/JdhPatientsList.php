@@ -772,14 +772,23 @@ class JdhPatientsList extends JdhPatients
 
         // Get default search criteria
         AddFilter($this->DefaultSearchWhere, $this->basicSearchWhere(true));
+        AddFilter($this->DefaultSearchWhere, $this->advancedSearchWhere(true));
 
         // Get basic search values
         $this->loadBasicSearchValues();
+
+        // Get and validate search values for advanced search
+        if (EmptyValue($this->UserAction)) { // Skip if user action
+            $this->loadSearchValues();
+        }
 
         // Process filter list
         if ($this->processFilterList()) {
             $this->terminate();
             return;
+        }
+        if (!$this->validateSearch()) {
+            // Nothing to do
         }
 
         // Restore search parms from Session if not searching / reset / export
@@ -798,6 +807,14 @@ class JdhPatientsList extends JdhPatients
             $srchBasic = $this->basicSearchWhere();
         }
 
+        // Get advanced search criteria
+        if (!$this->hasInvalidFields()) {
+            $srchAdvanced = $this->advancedSearchWhere();
+        }
+
+        // Get query builder criteria
+        $query = $this->queryBuilderWhere();
+
         // Restore display records
         if ($this->Command != "json" && $this->getRecordsPerPage() != "") {
             $this->DisplayRecords = $this->getRecordsPerPage(); // Restore from Session
@@ -813,6 +830,16 @@ class JdhPatientsList extends JdhPatients
             if ($this->BasicSearch->Keyword != "") {
                 $srchBasic = $this->basicSearchWhere();
             }
+
+            // Load advanced search from default
+            if ($this->loadAdvancedSearchDefault()) {
+                $srchAdvanced = $this->advancedSearchWhere();
+            }
+        }
+
+        // Restore search settings from Session
+        if (!$this->hasInvalidFields()) {
+            $this->loadAdvancedSearch();
         }
 
         // Build search criteria
@@ -1054,16 +1081,6 @@ class JdhPatientsList extends JdhPatients
         }
         $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
         $filterList = Concat($filterList, $this->patient_name->AdvancedSearch->toJson(), ","); // Field patient_name
-        $filterList = Concat($filterList, $this->patient_national_id->AdvancedSearch->toJson(), ","); // Field patient_national_id
-        $filterList = Concat($filterList, $this->patient_dob->AdvancedSearch->toJson(), ","); // Field patient_dob
-        $filterList = Concat($filterList, $this->patient_age->AdvancedSearch->toJson(), ","); // Field patient_age
-        $filterList = Concat($filterList, $this->patient_gender->AdvancedSearch->toJson(), ","); // Field patient_gender
-        $filterList = Concat($filterList, $this->patient_phone->AdvancedSearch->toJson(), ","); // Field patient_phone
-        $filterList = Concat($filterList, $this->patient_kin_name->AdvancedSearch->toJson(), ","); // Field patient_kin_name
-        $filterList = Concat($filterList, $this->patient_kin_phone->AdvancedSearch->toJson(), ","); // Field patient_kin_phone
-        $filterList = Concat($filterList, $this->service_id->AdvancedSearch->toJson(), ","); // Field service_id
-        $filterList = Concat($filterList, $this->patient_registration_date->AdvancedSearch->toJson(), ","); // Field patient_registration_date
-        $filterList = Concat($filterList, $this->submitted_by_user_id->AdvancedSearch->toJson(), ","); // Field submitted_by_user_id
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
             $filterList = Concat($filterList, $wrk, ",");
@@ -1119,88 +1136,159 @@ class JdhPatientsList extends JdhPatients
         $this->patient_name->AdvancedSearch->SearchValue2 = @$filter["y_patient_name"];
         $this->patient_name->AdvancedSearch->SearchOperator2 = @$filter["w_patient_name"];
         $this->patient_name->AdvancedSearch->save();
-
-        // Field patient_national_id
-        $this->patient_national_id->AdvancedSearch->SearchValue = @$filter["x_patient_national_id"];
-        $this->patient_national_id->AdvancedSearch->SearchOperator = @$filter["z_patient_national_id"];
-        $this->patient_national_id->AdvancedSearch->SearchCondition = @$filter["v_patient_national_id"];
-        $this->patient_national_id->AdvancedSearch->SearchValue2 = @$filter["y_patient_national_id"];
-        $this->patient_national_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_national_id"];
-        $this->patient_national_id->AdvancedSearch->save();
-
-        // Field patient_dob
-        $this->patient_dob->AdvancedSearch->SearchValue = @$filter["x_patient_dob"];
-        $this->patient_dob->AdvancedSearch->SearchOperator = @$filter["z_patient_dob"];
-        $this->patient_dob->AdvancedSearch->SearchCondition = @$filter["v_patient_dob"];
-        $this->patient_dob->AdvancedSearch->SearchValue2 = @$filter["y_patient_dob"];
-        $this->patient_dob->AdvancedSearch->SearchOperator2 = @$filter["w_patient_dob"];
-        $this->patient_dob->AdvancedSearch->save();
-
-        // Field patient_age
-        $this->patient_age->AdvancedSearch->SearchValue = @$filter["x_patient_age"];
-        $this->patient_age->AdvancedSearch->SearchOperator = @$filter["z_patient_age"];
-        $this->patient_age->AdvancedSearch->SearchCondition = @$filter["v_patient_age"];
-        $this->patient_age->AdvancedSearch->SearchValue2 = @$filter["y_patient_age"];
-        $this->patient_age->AdvancedSearch->SearchOperator2 = @$filter["w_patient_age"];
-        $this->patient_age->AdvancedSearch->save();
-
-        // Field patient_gender
-        $this->patient_gender->AdvancedSearch->SearchValue = @$filter["x_patient_gender"];
-        $this->patient_gender->AdvancedSearch->SearchOperator = @$filter["z_patient_gender"];
-        $this->patient_gender->AdvancedSearch->SearchCondition = @$filter["v_patient_gender"];
-        $this->patient_gender->AdvancedSearch->SearchValue2 = @$filter["y_patient_gender"];
-        $this->patient_gender->AdvancedSearch->SearchOperator2 = @$filter["w_patient_gender"];
-        $this->patient_gender->AdvancedSearch->save();
-
-        // Field patient_phone
-        $this->patient_phone->AdvancedSearch->SearchValue = @$filter["x_patient_phone"];
-        $this->patient_phone->AdvancedSearch->SearchOperator = @$filter["z_patient_phone"];
-        $this->patient_phone->AdvancedSearch->SearchCondition = @$filter["v_patient_phone"];
-        $this->patient_phone->AdvancedSearch->SearchValue2 = @$filter["y_patient_phone"];
-        $this->patient_phone->AdvancedSearch->SearchOperator2 = @$filter["w_patient_phone"];
-        $this->patient_phone->AdvancedSearch->save();
-
-        // Field patient_kin_name
-        $this->patient_kin_name->AdvancedSearch->SearchValue = @$filter["x_patient_kin_name"];
-        $this->patient_kin_name->AdvancedSearch->SearchOperator = @$filter["z_patient_kin_name"];
-        $this->patient_kin_name->AdvancedSearch->SearchCondition = @$filter["v_patient_kin_name"];
-        $this->patient_kin_name->AdvancedSearch->SearchValue2 = @$filter["y_patient_kin_name"];
-        $this->patient_kin_name->AdvancedSearch->SearchOperator2 = @$filter["w_patient_kin_name"];
-        $this->patient_kin_name->AdvancedSearch->save();
-
-        // Field patient_kin_phone
-        $this->patient_kin_phone->AdvancedSearch->SearchValue = @$filter["x_patient_kin_phone"];
-        $this->patient_kin_phone->AdvancedSearch->SearchOperator = @$filter["z_patient_kin_phone"];
-        $this->patient_kin_phone->AdvancedSearch->SearchCondition = @$filter["v_patient_kin_phone"];
-        $this->patient_kin_phone->AdvancedSearch->SearchValue2 = @$filter["y_patient_kin_phone"];
-        $this->patient_kin_phone->AdvancedSearch->SearchOperator2 = @$filter["w_patient_kin_phone"];
-        $this->patient_kin_phone->AdvancedSearch->save();
-
-        // Field service_id
-        $this->service_id->AdvancedSearch->SearchValue = @$filter["x_service_id"];
-        $this->service_id->AdvancedSearch->SearchOperator = @$filter["z_service_id"];
-        $this->service_id->AdvancedSearch->SearchCondition = @$filter["v_service_id"];
-        $this->service_id->AdvancedSearch->SearchValue2 = @$filter["y_service_id"];
-        $this->service_id->AdvancedSearch->SearchOperator2 = @$filter["w_service_id"];
-        $this->service_id->AdvancedSearch->save();
-
-        // Field patient_registration_date
-        $this->patient_registration_date->AdvancedSearch->SearchValue = @$filter["x_patient_registration_date"];
-        $this->patient_registration_date->AdvancedSearch->SearchOperator = @$filter["z_patient_registration_date"];
-        $this->patient_registration_date->AdvancedSearch->SearchCondition = @$filter["v_patient_registration_date"];
-        $this->patient_registration_date->AdvancedSearch->SearchValue2 = @$filter["y_patient_registration_date"];
-        $this->patient_registration_date->AdvancedSearch->SearchOperator2 = @$filter["w_patient_registration_date"];
-        $this->patient_registration_date->AdvancedSearch->save();
-
-        // Field submitted_by_user_id
-        $this->submitted_by_user_id->AdvancedSearch->SearchValue = @$filter["x_submitted_by_user_id"];
-        $this->submitted_by_user_id->AdvancedSearch->SearchOperator = @$filter["z_submitted_by_user_id"];
-        $this->submitted_by_user_id->AdvancedSearch->SearchCondition = @$filter["v_submitted_by_user_id"];
-        $this->submitted_by_user_id->AdvancedSearch->SearchValue2 = @$filter["y_submitted_by_user_id"];
-        $this->submitted_by_user_id->AdvancedSearch->SearchOperator2 = @$filter["w_submitted_by_user_id"];
-        $this->submitted_by_user_id->AdvancedSearch->save();
         $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
+    }
+
+    // Advanced search WHERE clause based on QueryString
+    public function advancedSearchWhere($default = false)
+    {
+        global $Security;
+        $where = "";
+        if (!$Security->canSearch()) {
+            return "";
+        }
+        $this->buildSearchSql($where, $this->patient_id, $default, false); // patient_id
+        $this->buildSearchSql($where, $this->patient_name, $default, false); // patient_name
+
+        // Set up search command
+        if (!$default && $where != "" && in_array($this->Command, ["", "reset", "resetall"])) {
+            $this->Command = "search";
+        }
+        if (!$default && $this->Command == "search") {
+            $this->patient_id->AdvancedSearch->save(); // patient_id
+            $this->patient_name->AdvancedSearch->save(); // patient_name
+
+            // Clear rules for QueryBuilder
+            $this->setSessionRules("");
+        }
+        return $where;
+    }
+
+    // Parse query builder rule function
+    protected function parseRules($group, $fieldName = "") {
+        $group["condition"] ??= "AND";
+        if (!in_array($group["condition"], ["AND", "OR"])) {
+            throw new \Exception("Unable to build SQL query with condition '" . $group["condition"] . "'");
+        }
+        if (!is_array($group["rules"] ?? null)) {
+            return "";
+        }
+        $parts = [];
+        foreach ($group["rules"] as $rule) {
+            if (is_array($rule["rules"] ?? null) && count($rule["rules"]) > 0) {
+                $parts[] = "(" . " " . $this->parseRules($rule, $fieldName) . " " . ")" . " ";
+            } else {
+                $field = $rule["field"];
+                $fld = $this->fieldByParam($field);
+                if (!$fld) {
+                    throw new \Exception("Failed to find field '" . $field . "'");
+                }
+                if ($fieldName == "" || $fld->Name == $fieldName) { // Field name not specified or matched field name
+                    $fldOpr = array_search($rule["operator"], Config("CLIENT_SEARCH_OPERATORS"));
+                    $ope = Config("QUERY_BUILDER_OPERATORS")[$rule["operator"]] ?? null;
+                    if (!$ope || !$fldOpr) {
+                        throw new \Exception("Unknown SQL operation for operator '" . $rule["operator"] . "'");
+                    }
+                    if ($ope["nb_inputs"] > 0 && ($rule["value"] ?? false)) {
+                        $rule["value"] = !is_array($rule["value"]) ? [$rule["value"]] : $rule["value"];
+                        $fldVal = $rule["value"][0];
+                        if (is_array($fldVal)) {
+                            $fldVal = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal);
+                        }
+                        $useFilter = $fld->UseFilter; // Query builder does not use filter
+                        try {
+                            if ($fld->isMultiSelect()) {
+                                $parts[] = $fldVal != "" ? GetMultiSearchSql($fld, $fldOpr, ConvertSearchValue($fldVal, $fldOpr, $fld), $this->Dbid) : "";
+                            } else {
+                                $fldVal2 = ContainsString($fldOpr, "BETWEEN") ? $rule["value"][1] : ""; // BETWEEN
+                                if (is_array($fldVal2)) {
+                                    $fldVal2 = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal2);
+                                }
+                                $parts[] = GetSearchSql(
+                                    $fld,
+                                    ConvertSearchValue($fldVal, $fldOpr, $fld), // $fldVal
+                                    $fldOpr,
+                                    "", // $fldCond not used
+                                    ConvertSearchValue($fldVal2, $fldOpr, $fld), // $fldVal2
+                                    "", // $fldOpr2 not used
+                                    $this->Dbid
+                                );
+                            }
+                        } finally {
+                            $fld->UseFilter = $useFilter;
+                        }
+                    }
+                }
+            }
+        }
+        $where = implode(" " . $group["condition"] . " ", array_filter($parts));
+        if ($group["not"] ?? false) {
+            $where = "NOT (" . $where . ")";
+        }
+        return $where;
+    }
+
+    // Quey builder WHERE clause
+    public function queryBuilderWhere($fieldName = "")
+    {
+        global $Security;
+        if (!$Security->canSearch()) {
+            return "";
+        }
+
+        // Get rules by query builder
+        $rules = Post("rules") ?? $this->getSessionRules();
+
+        // Decode and parse rules
+        $where = $rules ? $this->parseRules(json_decode($rules, true), $fieldName) : "";
+
+        // Clear other search and save rules to session
+        if ($where && $fieldName == "") { // Skip if get query for specific field
+            $this->resetSearchParms();
+            $this->setSessionRules($rules);
+        }
+
+        // Return query
+        return $where;
+    }
+
+    // Build search SQL
+    protected function buildSearchSql(&$where, $fld, $default, $multiValue)
+    {
+        $fldParm = $fld->Param;
+        $fldVal = $default ? $fld->AdvancedSearch->SearchValueDefault : $fld->AdvancedSearch->SearchValue;
+        $fldOpr = $default ? $fld->AdvancedSearch->SearchOperatorDefault : $fld->AdvancedSearch->SearchOperator;
+        $fldCond = $default ? $fld->AdvancedSearch->SearchConditionDefault : $fld->AdvancedSearch->SearchCondition;
+        $fldVal2 = $default ? $fld->AdvancedSearch->SearchValue2Default : $fld->AdvancedSearch->SearchValue2;
+        $fldOpr2 = $default ? $fld->AdvancedSearch->SearchOperator2Default : $fld->AdvancedSearch->SearchOperator2;
+        $fldVal = ConvertSearchValue($fldVal, $fldOpr, $fld);
+        $fldVal2 = ConvertSearchValue($fldVal2, $fldOpr2, $fld);
+        $fldOpr = ConvertSearchOperator($fldOpr, $fld, $fldVal);
+        $fldOpr2 = ConvertSearchOperator($fldOpr2, $fld, $fldVal2);
+        $wrk = "";
+        if (is_array($fldVal)) {
+            $fldVal = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal);
+        }
+        if (is_array($fldVal2)) {
+            $fldVal2 = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal2);
+        }
+        if (Config("SEARCH_MULTI_VALUE_OPTION") == 1 && !$fld->UseFilter || !IsMultiSearchOperator($fldOpr)) {
+            $multiValue = false;
+        }
+        if ($multiValue) {
+            $wrk = $fldVal != "" ? GetMultiSearchSql($fld, $fldOpr, $fldVal, $this->Dbid) : ""; // Field value 1
+            $wrk2 = $fldVal2 != "" ? GetMultiSearchSql($fld, $fldOpr2, $fldVal2, $this->Dbid) : ""; // Field value 2
+            AddFilter($wrk, $wrk2, $fldCond);
+        } else {
+            $wrk = GetSearchSql($fld, $fldVal, $fldOpr, $fldCond, $fldVal2, $fldOpr2, $this->Dbid);
+        }
+        if ($this->SearchOption == "AUTO" && in_array($this->BasicSearch->getType(), ["AND", "OR"])) {
+            $cond = $this->BasicSearch->getType();
+        } else {
+            $cond = SameText($this->SearchOption, "OR") ? "OR" : "AND";
+        }
+        AddFilter($where, $wrk, $cond);
     }
 
     // Show list of filters
@@ -1212,6 +1300,24 @@ class JdhPatientsList extends JdhPatients
         $filterList = "";
         $captionClass = $this->isExport("email") ? "ew-filter-caption-email" : "ew-filter-caption";
         $captionSuffix = $this->isExport("email") ? ": " : "";
+
+        // Field patient_id
+        $filter = $this->queryBuilderWhere("patient_id");
+        if (!$filter) {
+            $this->buildSearchSql($filter, $this->patient_id, false, false);
+        }
+        if ($filter != "") {
+            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $this->patient_id->caption() . "</span>" . $captionSuffix . $filter . "</div>";
+        }
+
+        // Field patient_name
+        $filter = $this->queryBuilderWhere("patient_name");
+        if (!$filter) {
+            $this->buildSearchSql($filter, $this->patient_name, false, false);
+        }
+        if ($filter != "") {
+            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $this->patient_name->caption() . "</span>" . $captionSuffix . $filter . "</div>";
+        }
         if ($this->BasicSearch->Keyword != "") {
             $filterList .= "<div><span class=\"" . $captionClass . "\">" . $Language->phrase("BasicSearchKeyword") . "</span>" . $captionSuffix . $this->BasicSearch->Keyword . "</div>";
         }
@@ -1271,6 +1377,12 @@ class JdhPatientsList extends JdhPatients
         if ($this->BasicSearch->issetSession()) {
             return true;
         }
+        if ($this->patient_id->AdvancedSearch->issetSession()) {
+            return true;
+        }
+        if ($this->patient_name->AdvancedSearch->issetSession()) {
+            return true;
+        }
         return false;
     }
 
@@ -1283,6 +1395,12 @@ class JdhPatientsList extends JdhPatients
 
         // Clear basic search parameters
         $this->resetBasicSearchParms();
+
+        // Clear advanced search parameters
+        $this->resetAdvancedSearchParms();
+
+        // Clear queryBuilder
+        $this->setSessionRules("");
     }
 
     // Load advanced search default values
@@ -1297,6 +1415,13 @@ class JdhPatientsList extends JdhPatients
         $this->BasicSearch->unsetSession();
     }
 
+    // Clear all advanced search parameters
+    protected function resetAdvancedSearchParms()
+    {
+        $this->patient_id->AdvancedSearch->unsetSession();
+        $this->patient_name->AdvancedSearch->unsetSession();
+    }
+
     // Restore all search parameters
     protected function restoreSearchParms()
     {
@@ -1304,6 +1429,10 @@ class JdhPatientsList extends JdhPatients
 
         // Restore basic search values
         $this->BasicSearch->load();
+
+        // Restore advanced search values
+        $this->patient_id->AdvancedSearch->load();
+        $this->patient_name->AdvancedSearch->load();
     }
 
     // Set up sort parameters
@@ -2588,6 +2717,37 @@ class JdhPatientsList extends JdhPatients
         $this->BasicSearch->setType(Get(Config("TABLE_BASIC_SEARCH_TYPE"), ""), false);
     }
 
+    // Load search values for validation
+    protected function loadSearchValues()
+    {
+        // Load search values
+        $hasValue = false;
+
+        // Load query builder rules
+        $rules = Post("rules");
+        if ($rules && $this->Command == "") {
+            $this->QueryRules = $rules;
+            $this->Command = "search";
+        }
+
+        // patient_id
+        if ($this->patient_id->AdvancedSearch->get()) {
+            $hasValue = true;
+            if (($this->patient_id->AdvancedSearch->SearchValue != "" || $this->patient_id->AdvancedSearch->SearchValue2 != "") && $this->Command == "") {
+                $this->Command = "search";
+            }
+        }
+
+        // patient_name
+        if ($this->patient_name->AdvancedSearch->get()) {
+            $hasValue = true;
+            if (($this->patient_name->AdvancedSearch->SearchValue != "" || $this->patient_name->AdvancedSearch->SearchValue2 != "") && $this->Command == "") {
+                $this->Command = "search";
+            }
+        }
+        return $hasValue;
+    }
+
     // Load recordset
     public function loadRecordset($offset = -1, $rowcnt = -1)
     {
@@ -2844,6 +3004,9 @@ class JdhPatientsList extends JdhPatients
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
+            if (!$this->isExport()) {
+                $this->patient_id->ViewValue = $this->highlightValue($this->patient_id);
+            }
 
             // patient_name
             $this->patient_name->HrefValue = "";
@@ -2895,6 +3058,26 @@ class JdhPatientsList extends JdhPatients
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
+    }
+
+    // Validate search
+    protected function validateSearch()
+    {
+        // Check if validation required
+        if (!Config("SERVER_VALIDATE")) {
+            return true;
+        }
+
+        // Return validate result
+        $validateSearch = !$this->hasInvalidFields();
+
+        // Call Form_CustomValidate event
+        $formCustomError = "";
+        $validateSearch = $validateSearch && $this->formCustomValidate($formCustomError);
+        if ($formCustomError != "") {
+            $this->setFailureMessage($formCustomError);
+        }
+        return $validateSearch;
     }
 
     /**
@@ -3174,6 +3357,13 @@ class JdhPatientsList extends JdhPatients
         return $conn->fetchAssociative($sql);
     }
 
+    // Load advanced search
+    public function loadAdvancedSearch()
+    {
+        $this->patient_id->AdvancedSearch->load();
+        $this->patient_name->AdvancedSearch->load();
+    }
+
     // Get export HTML tag
     protected function getExportTag($type, $custom = false)
     {
@@ -3299,6 +3489,15 @@ class JdhPatientsList extends JdhPatients
             $item->Body = "<a class=\"btn btn-default ew-show-all\" role=\"button\" title=\"" . $Language->phrase("ShowAll") . "\" data-caption=\"" . $Language->phrase("ShowAll") . "\" data-ew-action=\"refresh\" data-url=\"" . $pageUrl . "cmd=reset\">" . $Language->phrase("ShowAllBtn") . "</a>";
         }
         $item->Visible = ($this->SearchWhere != $this->DefaultSearchWhere && $this->SearchWhere != "0=101");
+
+        // Advanced search button
+        $item = &$this->SearchOptions->add("advancedsearch");
+        if ($this->ModalSearch && !IsMobile()) {
+            $item->Body = "<a class=\"btn btn-default ew-advanced-search\" title=\"" . $Language->phrase("AdvancedSearch", true) . "\" data-table=\"jdh_patients\" data-caption=\"" . $Language->phrase("AdvancedSearch", true) . "\" data-ew-action=\"modal\" data-url=\"jdhpatientssearch\" data-btn=\"SearchBtn\">" . $Language->phrase("AdvancedSearch", false) . "</a>";
+        } else {
+            $item->Body = "<a class=\"btn btn-default ew-advanced-search\" title=\"" . $Language->phrase("AdvancedSearch", true) . "\" data-caption=\"" . $Language->phrase("AdvancedSearch", true) . "\" href=\"jdhpatientssearch\">" . $Language->phrase("AdvancedSearch", false) . "</a>";
+        }
+        $item->Visible = true;
 
         // Search highlight button
         $item = &$this->SearchOptions->add("searchhighlight");

@@ -8,9 +8,9 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 
 /**
- * Table class for jdh_patients
+ * Table class for jdh_inpatients
  */
-class JdhPatients extends DbTable
+class JdhInpatients extends DbTable
 {
     protected $SqlFrom = "";
     protected $SqlSelect = null;
@@ -28,14 +28,6 @@ class JdhPatients extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
-    // Audit trail
-    public $AuditTrailOnAdd = true;
-    public $AuditTrailOnEdit = true;
-    public $AuditTrailOnDelete = true;
-    public $AuditTrailOnView = false;
-    public $AuditTrailOnViewData = false;
-    public $AuditTrailOnSearch = false;
-
     // Export
     public $UseAjaxActions = false;
     public $ModalSearch = false;
@@ -50,18 +42,15 @@ class JdhPatients extends DbTable
 
     // Fields
     public $patient_id;
-    public $photo;
     public $patient_name;
-    public $patient_national_id;
     public $patient_dob;
     public $patient_age;
     public $patient_gender;
     public $patient_phone;
     public $patient_kin_name;
     public $patient_kin_phone;
-    public $service_id;
     public $patient_registration_date;
-    public $submitted_by_user_id;
+    public $inpatient_outpatient_status;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -74,14 +63,14 @@ class JdhPatients extends DbTable
 
         // Language object
         $Language = Container("language");
-        $this->TableVar = "jdh_patients";
-        $this->TableName = 'jdh_patients';
-        $this->TableType = "TABLE";
+        $this->TableVar = "jdh_inpatients";
+        $this->TableName = 'jdh_inpatients';
+        $this->TableType = "VIEW";
         $this->ImportUseTransaction = $this->supportsTransaction() && Config("IMPORT_USE_TRANSACTION");
         $this->UseTransaction = $this->supportsTransaction() && Config("USE_TRANSACTION");
 
         // Update Table
-        $this->UpdateTable = "`jdh_patients`";
+        $this->UpdateTable = "`jdh_inpatients`";
         $this->Dbid = 'DB';
         $this->ExportAll = true;
         $this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
@@ -101,13 +90,12 @@ class JdhPatients extends DbTable
         $this->DetailAdd = false; // Allow detail add
         $this->DetailEdit = false; // Allow detail edit
         $this->DetailView = false; // Allow detail view
-        $this->ShowMultipleDetails = true; // Show multiple details
+        $this->ShowMultipleDetails = false; // Show multiple details
         $this->GridAddRowCount = 5;
         $this->AllowAddDeleteRow = true; // Allow add/delete row
         $this->UseAjaxActions = $this->UseAjaxActions || Config("USE_AJAX_ACTIONS");
         $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
         $this->BasicSearch = new BasicSearch($this);
-        $this->BasicSearch->TypeDefault = "OR";
 
         // patient_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->patient_id = new DbField(
@@ -130,33 +118,9 @@ class JdhPatients extends DbTable
         $this->patient_id->InputTextType = "text";
         $this->patient_id->IsAutoIncrement = true; // Autoincrement field
         $this->patient_id->IsPrimaryKey = true; // Primary key field
-        $this->patient_id->IsForeignKey = true; // Foreign key field
         $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->patient_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->Fields['patient_id'] = &$this->patient_id;
-
-        // photo $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->photo = new DbField(
-            $this, // Table
-            'x_photo', // Variable name
-            'photo', // Name
-            '`photo`', // Expression
-            '`photo`', // Basic search expression
-            205, // Type
-            0, // Size
-            -1, // Date/Time format
-            true, // Is upload field
-            '`photo`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'IMAGE', // View Tag
-            'FILE' // Edit Tag
-        );
-        $this->photo->InputTextType = "text";
-        $this->photo->Sortable = false; // Allow sort
-        $this->photo->SearchOperators = ["=", "<>", "IS NULL", "IS NOT NULL"];
-        $this->Fields['photo'] = &$this->photo;
 
         // patient_name $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->patient_name = new DbField(
@@ -181,28 +145,6 @@ class JdhPatients extends DbTable
         $this->patient_name->Required = true; // Required field
         $this->patient_name->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
         $this->Fields['patient_name'] = &$this->patient_name;
-
-        // patient_national_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->patient_national_id = new DbField(
-            $this, // Table
-            'x_patient_national_id', // Variable name
-            'patient_national_id', // Name
-            '`patient_national_id`', // Expression
-            '`patient_national_id`', // Basic search expression
-            200, // Type
-            13, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`patient_national_id`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
-        );
-        $this->patient_national_id->InputTextType = "text";
-        $this->patient_national_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
-        $this->Fields['patient_national_id'] = &$this->patient_national_id;
 
         // patient_dob $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->patient_dob = new DbField(
@@ -276,7 +218,7 @@ class JdhPatients extends DbTable
         $this->patient_gender->Required = true; // Required field
         $this->patient_gender->UsePleaseSelect = true; // Use PleaseSelect by default
         $this->patient_gender->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->patient_gender->Lookup = new Lookup('patient_gender', 'jdh_patients', false, '', ["","","",""], '', '', [], [], [], [], [], [], '', '', "");
+        $this->patient_gender->Lookup = new Lookup('patient_gender', 'jdh_inpatients', false, '', ["","","",""], '', '', [], [], [], [], [], [], '', '', "");
         $this->patient_gender->OptionCount = 2;
         $this->patient_gender->SearchOperators = ["=", "<>"];
         $this->Fields['patient_gender'] = &$this->patient_gender;
@@ -350,35 +292,6 @@ class JdhPatients extends DbTable
         $this->patient_kin_phone->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
         $this->Fields['patient_kin_phone'] = &$this->patient_kin_phone;
 
-        // service_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->service_id = new DbField(
-            $this, // Table
-            'x_service_id', // Variable name
-            'service_id', // Name
-            '`service_id`', // Expression
-            '`service_id`', // Basic search expression
-            3, // Type
-            11, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`service_id`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'SELECT' // Edit Tag
-        );
-        $this->service_id->addMethod("getSelectFilter", fn() => "`service_id`=1");
-        $this->service_id->InputTextType = "text";
-        $this->service_id->Nullable = false; // NOT NULL field
-        $this->service_id->Required = true; // Required field
-        $this->service_id->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->service_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->service_id->Lookup = new Lookup('service_id', 'jdh_services', false, 'service_id', ["service_cost","","",""], '', '', [], [], [], [], [], [], '', '', "`service_cost`");
-        $this->service_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->service_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['service_id'] = &$this->service_id;
-
         // patient_registration_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->patient_registration_date = new DbField(
             $this, // Table
@@ -404,30 +317,34 @@ class JdhPatients extends DbTable
         $this->patient_registration_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_registration_date'] = &$this->patient_registration_date;
 
-        // submitted_by_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->submitted_by_user_id = new DbField(
+        // inpatient_outpatient_status $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->inpatient_outpatient_status = new DbField(
             $this, // Table
-            'x_submitted_by_user_id', // Variable name
-            'submitted_by_user_id', // Name
-            '`submitted_by_user_id`', // Expression
-            '`submitted_by_user_id`', // Basic search expression
+            'x_inpatient_outpatient_status', // Variable name
+            'inpatient_outpatient_status', // Name
+            '`inpatient_outpatient_status`', // Expression
+            '`inpatient_outpatient_status`', // Basic search expression
             3, // Type
             11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`submitted_by_user_id`', // Virtual expression
+            '`inpatient_outpatient_status`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
+            'SELECT' // Edit Tag
         );
-        $this->submitted_by_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
-        $this->submitted_by_user_id->InputTextType = "text";
-        $this->submitted_by_user_id->Nullable = false; // NOT NULL field
-        $this->submitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->submitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['submitted_by_user_id'] = &$this->submitted_by_user_id;
+        $this->inpatient_outpatient_status->InputTextType = "text";
+        $this->inpatient_outpatient_status->Nullable = false; // NOT NULL field
+        $this->inpatient_outpatient_status->Required = true; // Required field
+        $this->inpatient_outpatient_status->UsePleaseSelect = true; // Use PleaseSelect by default
+        $this->inpatient_outpatient_status->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
+        $this->inpatient_outpatient_status->Lookup = new Lookup('inpatient_outpatient_status', 'jdh_inpatients', false, '', ["","","",""], '', '', [], [], [], [], [], [], '', '', "");
+        $this->inpatient_outpatient_status->OptionCount = 2;
+        $this->inpatient_outpatient_status->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->inpatient_outpatient_status->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['inpatient_outpatient_status'] = &$this->inpatient_outpatient_status;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -487,68 +404,6 @@ class JdhPatients extends DbTable
         }
     }
 
-    // Current detail table name
-    public function getCurrentDetailTable()
-    {
-        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_DETAIL_TABLE"));
-    }
-
-    public function setCurrentDetailTable($v)
-    {
-        $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_DETAIL_TABLE")] = $v;
-    }
-
-    // Get detail url
-    public function getDetailUrl()
-    {
-        // Detail url
-        $detailUrl = "";
-        if ($this->getCurrentDetailTable() == "jdh_appointments") {
-            $detailUrl = Container("jdh_appointments")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
-        }
-        if ($this->getCurrentDetailTable() == "jdh_patient_cases") {
-            $detailUrl = Container("jdh_patient_cases")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
-        }
-        if ($this->getCurrentDetailTable() == "jdh_vitals") {
-            $detailUrl = Container("jdh_vitals")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
-        }
-        if ($this->getCurrentDetailTable() == "jdh_chief_complaints") {
-            $detailUrl = Container("jdh_chief_complaints")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
-        }
-        if ($this->getCurrentDetailTable() == "jdh_examination_findings") {
-            $detailUrl = Container("jdh_examination_findings")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
-        }
-        if ($this->getCurrentDetailTable() == "jdh_prescriptions") {
-            $detailUrl = Container("jdh_prescriptions")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
-        }
-        if ($this->getCurrentDetailTable() == "jdh_test_requests") {
-            $detailUrl = Container("jdh_test_requests")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
-        }
-        if ($this->getCurrentDetailTable() == "jdh_test_reports") {
-            $detailUrl = Container("jdh_test_reports")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
-        }
-        if ($this->getCurrentDetailTable() == "jdh_prescriptions_actions") {
-            $detailUrl = Container("jdh_prescriptions_actions")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
-        }
-        if ($this->getCurrentDetailTable() == "jdh_patient_visits") {
-            $detailUrl = Container("jdh_patient_visits")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
-        }
-        if ($detailUrl == "") {
-            $detailUrl = "jdhpatientslist";
-        }
-        return $detailUrl;
-    }
-
     // Render X Axis for chart
     public function renderChartXAxis($chartVar, $chartRow)
     {
@@ -558,7 +413,7 @@ class JdhPatients extends DbTable
     // Table level SQL
     public function getSqlFrom() // From
     {
-        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_patients`";
+        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_inpatients`";
     }
 
     public function sqlFrom() // For backward compatibility
@@ -589,7 +444,7 @@ class JdhPatients extends DbTable
     public function getSqlWhere() // Where
     {
         $where = ($this->SqlWhere != "") ? $this->SqlWhere : "";
-        $this->DefaultFilter = "";
+        $this->DefaultFilter = "`inpatient_outpatient_status`=2";
         AddFilter($where, $this->DefaultFilter);
         return $where;
     }
@@ -652,11 +507,6 @@ class JdhPatients extends DbTable
     // Apply User ID filters
     public function applyUserIDFilters($filter, $id = "")
     {
-        global $Security;
-        // Add User ID filter
-        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
-            $filter = $this->addUserIDFilter($filter, $id);
-        }
         return $filter;
     }
 
@@ -863,9 +713,6 @@ class JdhPatients extends DbTable
             // Get insert id if necessary
             $this->patient_id->setDbValue($conn->lastInsertId());
             $rs['patient_id'] = $this->patient_id->DbValue;
-            if ($this->AuditTrailOnAdd) {
-                $this->writeAuditTrailOnAdd($rs);
-            }
         }
         return $success;
     }
@@ -919,14 +766,6 @@ class JdhPatients extends DbTable
                 $rs['patient_id'] = $this->patient_id->CurrentValue;
             }
         }
-        if ($success && $this->AuditTrailOnEdit && $rsold) {
-            $rsaudit = $rs;
-            $fldname = 'patient_id';
-            if (!array_key_exists($fldname, $rsaudit)) {
-                $rsaudit[$fldname] = $rsold[$fldname];
-            }
-            $this->writeAuditTrailOnEdit($rsold, $rsaudit);
-        }
         return $success;
     }
 
@@ -968,9 +807,6 @@ class JdhPatients extends DbTable
                 $this->DbErrorMessage = $e->getMessage();
             }
         }
-        if ($success && $this->AuditTrailOnDelete) {
-            $this->writeAuditTrailOnDelete($rs);
-        }
         return $success;
     }
 
@@ -981,18 +817,15 @@ class JdhPatients extends DbTable
             return;
         }
         $this->patient_id->DbValue = $row['patient_id'];
-        $this->photo->Upload->DbValue = $row['photo'];
         $this->patient_name->DbValue = $row['patient_name'];
-        $this->patient_national_id->DbValue = $row['patient_national_id'];
         $this->patient_dob->DbValue = $row['patient_dob'];
         $this->patient_age->DbValue = $row['patient_age'];
         $this->patient_gender->DbValue = $row['patient_gender'];
         $this->patient_phone->DbValue = $row['patient_phone'];
         $this->patient_kin_name->DbValue = $row['patient_kin_name'];
         $this->patient_kin_phone->DbValue = $row['patient_kin_phone'];
-        $this->service_id->DbValue = $row['service_id'];
         $this->patient_registration_date->DbValue = $row['patient_registration_date'];
-        $this->submitted_by_user_id->DbValue = $row['submitted_by_user_id'];
+        $this->inpatient_outpatient_status->DbValue = $row['inpatient_outpatient_status'];
     }
 
     // Delete uploaded files
@@ -1064,7 +897,7 @@ class JdhPatients extends DbTable
         if ($referUrl != "" && $referPageName != CurrentPageName() && $referPageName != "login") { // Referer not same page or login page
             $_SESSION[$name] = $referUrl; // Save to Session
         }
-        return $_SESSION[$name] ?? GetUrl("jdhpatientslist");
+        return $_SESSION[$name] ?? GetUrl("jdhinpatientslist");
     }
 
     // Set return page URL
@@ -1077,11 +910,11 @@ class JdhPatients extends DbTable
     public function getModalCaption($pageName)
     {
         global $Language;
-        if ($pageName == "jdhpatientsview") {
+        if ($pageName == "jdhinpatientsview") {
             return $Language->phrase("View");
-        } elseif ($pageName == "jdhpatientsedit") {
+        } elseif ($pageName == "jdhinpatientsedit") {
             return $Language->phrase("Edit");
-        } elseif ($pageName == "jdhpatientsadd") {
+        } elseif ($pageName == "jdhinpatientsadd") {
             return $Language->phrase("Add");
         }
         return "";
@@ -1092,15 +925,15 @@ class JdhPatients extends DbTable
     {
         switch (strtolower($action)) {
             case Config("API_VIEW_ACTION"):
-                return "JdhPatientsView";
+                return "JdhInpatientsView";
             case Config("API_ADD_ACTION"):
-                return "JdhPatientsAdd";
+                return "JdhInpatientsAdd";
             case Config("API_EDIT_ACTION"):
-                return "JdhPatientsEdit";
+                return "JdhInpatientsEdit";
             case Config("API_DELETE_ACTION"):
-                return "JdhPatientsDelete";
+                return "JdhInpatientsDelete";
             case Config("API_LIST_ACTION"):
-                return "JdhPatientsList";
+                return "JdhInpatientsList";
             default:
                 return "";
         }
@@ -1121,16 +954,16 @@ class JdhPatients extends DbTable
     // List URL
     public function getListUrl()
     {
-        return "jdhpatientslist";
+        return "jdhinpatientslist";
     }
 
     // View URL
     public function getViewUrl($parm = "")
     {
         if ($parm != "") {
-            $url = $this->keyUrl("jdhpatientsview", $parm);
+            $url = $this->keyUrl("jdhinpatientsview", $parm);
         } else {
-            $url = $this->keyUrl("jdhpatientsview", Config("TABLE_SHOW_DETAIL") . "=");
+            $url = $this->keyUrl("jdhinpatientsview", Config("TABLE_SHOW_DETAIL") . "=");
         }
         return $this->addMasterUrl($url);
     }
@@ -1139,9 +972,9 @@ class JdhPatients extends DbTable
     public function getAddUrl($parm = "")
     {
         if ($parm != "") {
-            $url = "jdhpatientsadd?" . $parm;
+            $url = "jdhinpatientsadd?" . $parm;
         } else {
-            $url = "jdhpatientsadd";
+            $url = "jdhinpatientsadd";
         }
         return $this->addMasterUrl($url);
     }
@@ -1149,36 +982,28 @@ class JdhPatients extends DbTable
     // Edit URL
     public function getEditUrl($parm = "")
     {
-        if ($parm != "") {
-            $url = $this->keyUrl("jdhpatientsedit", $parm);
-        } else {
-            $url = $this->keyUrl("jdhpatientsedit", Config("TABLE_SHOW_DETAIL") . "=");
-        }
+        $url = $this->keyUrl("jdhinpatientsedit", $parm);
         return $this->addMasterUrl($url);
     }
 
     // Inline edit URL
     public function getInlineEditUrl()
     {
-        $url = $this->keyUrl("jdhpatientslist", "action=edit");
+        $url = $this->keyUrl("jdhinpatientslist", "action=edit");
         return $this->addMasterUrl($url);
     }
 
     // Copy URL
     public function getCopyUrl($parm = "")
     {
-        if ($parm != "") {
-            $url = $this->keyUrl("jdhpatientsadd", $parm);
-        } else {
-            $url = $this->keyUrl("jdhpatientsadd", Config("TABLE_SHOW_DETAIL") . "=");
-        }
+        $url = $this->keyUrl("jdhinpatientsadd", $parm);
         return $this->addMasterUrl($url);
     }
 
     // Inline copy URL
     public function getInlineCopyUrl()
     {
-        $url = $this->keyUrl("jdhpatientslist", "action=copy");
+        $url = $this->keyUrl("jdhinpatientslist", "action=copy");
         return $this->addMasterUrl($url);
     }
 
@@ -1188,7 +1013,7 @@ class JdhPatients extends DbTable
         if ($this->UseAjaxActions && ConvertToBool(Param("infinitescroll")) && CurrentPageID() == "list") {
             return $this->keyUrl(GetApiUrl(Config("API_DELETE_ACTION") . "/" . $this->TableVar));
         } else {
-            return $this->keyUrl("jdhpatientsdelete");
+            return $this->keyUrl("jdhinpatientsdelete");
         }
     }
 
@@ -1355,25 +1180,22 @@ class JdhPatients extends DbTable
             return;
         }
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->photo->Upload->DbValue = $row['photo'];
         $this->patient_name->setDbValue($row['patient_name']);
-        $this->patient_national_id->setDbValue($row['patient_national_id']);
         $this->patient_dob->setDbValue($row['patient_dob']);
         $this->patient_age->setDbValue($row['patient_age']);
         $this->patient_gender->setDbValue($row['patient_gender']);
         $this->patient_phone->setDbValue($row['patient_phone']);
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
         $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
-        $this->service_id->setDbValue($row['service_id']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
-        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->inpatient_outpatient_status->setDbValue($row['inpatient_outpatient_status']);
     }
 
     // Render list content
     public function renderListContent($filter)
     {
         global $Response;
-        $listPage = "JdhPatientsList";
+        $listPage = "JdhInpatientsList";
         $listClass = PROJECT_NAMESPACE . $listPage;
         $page = new $listClass();
         $page->loadRecordsetFromFilter($filter);
@@ -1399,11 +1221,7 @@ class JdhPatients extends DbTable
 
         // patient_id
 
-        // photo
-
         // patient_name
-
-        // patient_national_id
 
         // patient_dob
 
@@ -1417,32 +1235,15 @@ class JdhPatients extends DbTable
 
         // patient_kin_phone
 
-        // service_id
-
         // patient_registration_date
 
-        // submitted_by_user_id
+        // inpatient_outpatient_status
 
         // patient_id
         $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
-        // photo
-        if (!EmptyValue($this->photo->Upload->DbValue)) {
-            $this->photo->ImageWidth = 150;
-            $this->photo->ImageHeight = 150;
-            $this->photo->ImageAlt = $this->photo->alt();
-            $this->photo->ImageCssClass = "ew-image";
-            $this->photo->ViewValue = $this->patient_id->CurrentValue;
-            $this->photo->IsBlobImage = IsImageFile(ContentExtension($this->photo->Upload->DbValue));
-        } else {
-            $this->photo->ViewValue = "";
-        }
-
         // patient_name
         $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
-
-        // patient_national_id
-        $this->patient_national_id->ViewValue = $this->patient_national_id->CurrentValue;
 
         // patient_dob
         $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
@@ -1468,72 +1269,24 @@ class JdhPatients extends DbTable
         // patient_kin_phone
         $this->patient_kin_phone->ViewValue = $this->patient_kin_phone->CurrentValue;
 
-        // service_id
-        $curVal = strval($this->service_id->CurrentValue);
-        if ($curVal != "") {
-            $this->service_id->ViewValue = $this->service_id->lookupCacheOption($curVal);
-            if ($this->service_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $lookupFilter = $this->service_id->getSelectFilter($this); // PHP
-                $sqlWrk = $this->service_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->service_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->service_id->ViewValue = $this->service_id->displayValue($arwrk);
-                } else {
-                    $this->service_id->ViewValue = FormatNumber($this->service_id->CurrentValue, $this->service_id->formatPattern());
-                }
-            }
-        } else {
-            $this->service_id->ViewValue = null;
-        }
-
         // patient_registration_date
         $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
         $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
-        // submitted_by_user_id
-        $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
-        $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
+        // inpatient_outpatient_status
+        if (strval($this->inpatient_outpatient_status->CurrentValue) != "") {
+            $this->inpatient_outpatient_status->ViewValue = $this->inpatient_outpatient_status->optionCaption($this->inpatient_outpatient_status->CurrentValue);
+        } else {
+            $this->inpatient_outpatient_status->ViewValue = null;
+        }
 
         // patient_id
         $this->patient_id->HrefValue = "";
         $this->patient_id->TooltipValue = "";
 
-        // photo
-        if (!empty($this->photo->Upload->DbValue)) {
-            $this->photo->HrefValue = GetFileUploadUrl($this->photo, $this->patient_id->CurrentValue);
-            $this->photo->LinkAttrs["target"] = "";
-            if ($this->photo->IsBlobImage && empty($this->photo->LinkAttrs["target"])) {
-                $this->photo->LinkAttrs["target"] = "_blank";
-            }
-            if ($this->isExport()) {
-                $this->photo->HrefValue = FullUrl($this->photo->HrefValue, "href");
-            }
-        } else {
-            $this->photo->HrefValue = "";
-        }
-        $this->photo->ExportHrefValue = GetFileUploadUrl($this->photo, $this->patient_id->CurrentValue);
-        $this->photo->TooltipValue = "";
-        if ($this->photo->UseColorbox) {
-            if (EmptyValue($this->photo->TooltipValue)) {
-                $this->photo->LinkAttrs["title"] = $Language->phrase("ViewImageGallery");
-            }
-            $this->photo->LinkAttrs["data-rel"] = "jdh_patients_x_photo";
-            $this->photo->LinkAttrs->appendClass("ew-lightbox");
-        }
-
         // patient_name
         $this->patient_name->HrefValue = "";
         $this->patient_name->TooltipValue = "";
-
-        // patient_national_id
-        $this->patient_national_id->HrefValue = "";
-        $this->patient_national_id->TooltipValue = "";
 
         // patient_dob
         $this->patient_dob->HrefValue = "";
@@ -1567,17 +1320,13 @@ class JdhPatients extends DbTable
         $this->patient_kin_phone->HrefValue = "";
         $this->patient_kin_phone->TooltipValue = "";
 
-        // service_id
-        $this->service_id->HrefValue = "";
-        $this->service_id->TooltipValue = "";
-
         // patient_registration_date
         $this->patient_registration_date->HrefValue = "";
         $this->patient_registration_date->TooltipValue = "";
 
-        // submitted_by_user_id
-        $this->submitted_by_user_id->HrefValue = "";
-        $this->submitted_by_user_id->TooltipValue = "";
+        // inpatient_outpatient_status
+        $this->inpatient_outpatient_status->HrefValue = "";
+        $this->inpatient_outpatient_status->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1598,19 +1347,6 @@ class JdhPatients extends DbTable
         $this->patient_id->setupEditAttributes();
         $this->patient_id->EditValue = $this->patient_id->CurrentValue;
 
-        // photo
-        $this->photo->setupEditAttributes();
-        if (!EmptyValue($this->photo->Upload->DbValue)) {
-            $this->photo->ImageWidth = 150;
-            $this->photo->ImageHeight = 150;
-            $this->photo->ImageAlt = $this->photo->alt();
-            $this->photo->ImageCssClass = "ew-image";
-            $this->photo->EditValue = $this->patient_id->CurrentValue;
-            $this->photo->IsBlobImage = IsImageFile(ContentExtension($this->photo->Upload->DbValue));
-        } else {
-            $this->photo->EditValue = "";
-        }
-
         // patient_name
         $this->patient_name->setupEditAttributes();
         if (!$this->patient_name->Raw) {
@@ -1618,14 +1354,6 @@ class JdhPatients extends DbTable
         }
         $this->patient_name->EditValue = $this->patient_name->CurrentValue;
         $this->patient_name->PlaceHolder = RemoveHtml($this->patient_name->caption());
-
-        // patient_national_id
-        $this->patient_national_id->setupEditAttributes();
-        if (!$this->patient_national_id->Raw) {
-            $this->patient_national_id->CurrentValue = HtmlDecode($this->patient_national_id->CurrentValue);
-        }
-        $this->patient_national_id->EditValue = $this->patient_national_id->CurrentValue;
-        $this->patient_national_id->PlaceHolder = RemoveHtml($this->patient_national_id->caption());
 
         // patient_dob
         $this->patient_dob->setupEditAttributes();
@@ -1666,37 +1394,15 @@ class JdhPatients extends DbTable
         $this->patient_kin_phone->EditValue = $this->patient_kin_phone->CurrentValue;
         $this->patient_kin_phone->PlaceHolder = RemoveHtml($this->patient_kin_phone->caption());
 
-        // service_id
-        $this->service_id->setupEditAttributes();
-        $curVal = strval($this->service_id->CurrentValue);
-        if ($curVal != "") {
-            $this->service_id->EditValue = $this->service_id->lookupCacheOption($curVal);
-            if ($this->service_id->EditValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $lookupFilter = $this->service_id->getSelectFilter($this); // PHP
-                $sqlWrk = $this->service_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->service_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->service_id->EditValue = $this->service_id->displayValue($arwrk);
-                } else {
-                    $this->service_id->EditValue = FormatNumber($this->service_id->CurrentValue, $this->service_id->formatPattern());
-                }
-            }
-        } else {
-            $this->service_id->EditValue = null;
-        }
-
         // patient_registration_date
         $this->patient_registration_date->setupEditAttributes();
         $this->patient_registration_date->EditValue = FormatDateTime($this->patient_registration_date->CurrentValue, $this->patient_registration_date->formatPattern());
         $this->patient_registration_date->PlaceHolder = RemoveHtml($this->patient_registration_date->caption());
 
-        // submitted_by_user_id
+        // inpatient_outpatient_status
+        $this->inpatient_outpatient_status->setupEditAttributes();
+        $this->inpatient_outpatient_status->EditValue = $this->inpatient_outpatient_status->options(true);
+        $this->inpatient_outpatient_status->PlaceHolder = RemoveHtml($this->inpatient_outpatient_status->caption());
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1730,19 +1436,18 @@ class JdhPatients extends DbTable
                     $doc->exportCaption($this->patient_name);
                     $doc->exportCaption($this->patient_age);
                     $doc->exportCaption($this->patient_gender);
+                    $doc->exportCaption($this->inpatient_outpatient_status);
                 } else {
                     $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->patient_name);
-                    $doc->exportCaption($this->patient_national_id);
                     $doc->exportCaption($this->patient_dob);
                     $doc->exportCaption($this->patient_age);
                     $doc->exportCaption($this->patient_gender);
                     $doc->exportCaption($this->patient_phone);
                     $doc->exportCaption($this->patient_kin_name);
                     $doc->exportCaption($this->patient_kin_phone);
-                    $doc->exportCaption($this->service_id);
                     $doc->exportCaption($this->patient_registration_date);
-                    $doc->exportCaption($this->submitted_by_user_id);
+                    $doc->exportCaption($this->inpatient_outpatient_status);
                 }
                 $doc->endExportRow();
             }
@@ -1776,19 +1481,18 @@ class JdhPatients extends DbTable
                         $doc->exportField($this->patient_name);
                         $doc->exportField($this->patient_age);
                         $doc->exportField($this->patient_gender);
+                        $doc->exportField($this->inpatient_outpatient_status);
                     } else {
                         $doc->exportField($this->patient_id);
                         $doc->exportField($this->patient_name);
-                        $doc->exportField($this->patient_national_id);
                         $doc->exportField($this->patient_dob);
                         $doc->exportField($this->patient_age);
                         $doc->exportField($this->patient_gender);
                         $doc->exportField($this->patient_phone);
                         $doc->exportField($this->patient_kin_name);
                         $doc->exportField($this->patient_kin_phone);
-                        $doc->exportField($this->service_id);
                         $doc->exportField($this->patient_registration_date);
-                        $doc->exportField($this->submitted_by_user_id);
+                        $doc->exportField($this->inpatient_outpatient_status);
                     }
                     $doc->endExportRow($rowCnt);
                 }
@@ -1805,363 +1509,13 @@ class JdhPatients extends DbTable
         }
     }
 
-    // Add User ID filter
-    public function addUserIDFilter($filter = "", $id = "")
-    {
-        global $Security;
-        $filterWrk = "";
-        if ($id == "")
-            $id = (CurrentPageID() == "list") ? $this->CurrentAction : CurrentPageID();
-        if (!$this->userIDAllow($id) && !$Security->isAdmin()) {
-            $filterWrk = $Security->userIdList();
-            if ($filterWrk != "") {
-                $filterWrk = '`submitted_by_user_id` IN (' . $filterWrk . ')';
-            }
-        }
-
-        // Call User ID Filtering event
-        $this->userIdFiltering($filterWrk);
-        AddFilter($filter, $filterWrk);
-        return $filter;
-    }
-
-    // User ID subquery
-    public function getUserIDSubquery(&$fld, &$masterfld)
-    {
-        global $UserTable;
-        $wrk = "";
-        $sql = "SELECT " . $masterfld->Expression . " FROM `jdh_patients`";
-        $filter = $this->addUserIDFilter("");
-        if ($filter != "") {
-            $sql .= " WHERE " . $filter;
-        }
-
-        // List all values
-        $conn = Conn($UserTable->Dbid);
-        $config = $conn->getConfiguration();
-        $config->setResultCacheImpl($this->Cache);
-        if ($rs = $conn->executeCacheQuery($sql, [], [], $this->CacheProfile)->fetchAllNumeric()) {
-            foreach ($rs as $row) {
-                if ($wrk != "") {
-                    $wrk .= ",";
-                }
-                $wrk .= QuotedValue($row[0], $masterfld->DataType, Config("USER_TABLE_DBID"));
-            }
-        }
-        if ($wrk != "") {
-            $wrk = $fld->Expression . " IN (" . $wrk . ")";
-        } else { // No User ID value found
-            $wrk = "0=1";
-        }
-        return $wrk;
-    }
-
     // Get file data
     public function getFileData($fldparm, $key, $resize, $width = 0, $height = 0, $plugins = [])
     {
         global $DownloadFileName;
-        $width = ($width > 0) ? $width : Config("THUMBNAIL_DEFAULT_WIDTH");
-        $height = ($height > 0) ? $height : Config("THUMBNAIL_DEFAULT_HEIGHT");
 
-        // Set up field name / file name field / file type field
-        $fldName = "";
-        $fileNameFld = "";
-        $fileTypeFld = "";
-        if ($fldparm == 'photo') {
-            $fldName = "photo";
-        } else {
-            return false; // Incorrect field
-        }
-
-        // Set up key values
-        $ar = explode(Config("COMPOSITE_KEY_SEPARATOR"), $key);
-        if (count($ar) == 1) {
-            $this->patient_id->CurrentValue = $ar[0];
-        } else {
-            return false; // Incorrect key
-        }
-
-        // Set up filter (WHERE Clause)
-        $filter = $this->getRecordFilter();
-        $this->CurrentFilter = $filter;
-        $sql = $this->getCurrentSql();
-        $conn = $this->getConnection();
-        $dbtype = GetConnectionType($this->Dbid);
-        if ($row = $conn->fetchAssociative($sql)) {
-            $val = $row[$fldName];
-            if (!EmptyValue($val)) {
-                $fld = $this->Fields[$fldName];
-
-                // Binary data
-                if ($fld->DataType == DATATYPE_BLOB) {
-                    if ($dbtype != "MYSQL") {
-                        if (is_resource($val) && get_resource_type($val) == "stream") { // Byte array
-                            $val = stream_get_contents($val);
-                        }
-                    }
-                    if ($resize) {
-                        ResizeBinary($val, $width, $height, $plugins);
-                    }
-
-                    // Write file type
-                    if ($fileTypeFld != "" && !EmptyValue($row[$fileTypeFld])) {
-                        AddHeader("Content-type", $row[$fileTypeFld]);
-                    } else {
-                        AddHeader("Content-type", ContentType($val));
-                    }
-
-                    // Write file name
-                    $downloadPdf = !Config("EMBED_PDF") && Config("DOWNLOAD_PDF_FILE");
-                    if ($fileNameFld != "" && !EmptyValue($row[$fileNameFld])) {
-                        $fileName = $row[$fileNameFld];
-                                        $ext = strtolower($pathinfo["extension"] ?? "");
-                        $isPdf = SameText($ext, "pdf");
-                        if ($downloadPdf || !$isPdf) { // Skip header if not download PDF
-                            AddHeader("Content-Disposition", "attachment; filename=\"" . $fileName . "\"");
-                        }
-                    } else {
-                        $ext = ContentExtension($val);
-                        $isPdf = SameText($ext, ".pdf");
-                        if ($isPdf && $downloadPdf) { // Add header if download PDF
-                            AddHeader("Content-Disposition", "attachment" . ($DownloadFileName ? "; filename=\"" . $DownloadFileName . "\"" : ""));
-                        }
-                    }
-
-                    // Write file data
-                    if (
-                        StartsString("PK", $val) &&
-                        ContainsString($val, "[Content_Types].xml") &&
-                        ContainsString($val, "_rels") &&
-                        ContainsString($val, "docProps")
-                    ) { // Fix Office 2007 documents
-                        if (!EndsString("\0\0\0", $val)) { // Not ends with 3 or 4 \0
-                            $val .= "\0\0\0\0";
-                        }
-                    }
-
-                    // Clear any debug message
-                    if (ob_get_length()) {
-                        ob_end_clean();
-                    }
-
-                    // Write binary data
-                    Write($val);
-
-                // Upload to folder
-                } else {
-                    if ($fld->UploadMultiple) {
-                        $files = explode(Config("MULTIPLE_UPLOAD_SEPARATOR"), $val);
-                    } else {
-                        $files = [$val];
-                    }
-                    $data = [];
-                    $ar = [];
-                    if ($fld->hasMethod("getUploadPath")) { // Check field level upload path
-                        $fld->UploadPath = $fld->getUploadPath();
-                    }
-                    foreach ($files as $file) {
-                        if (!EmptyValue($file)) {
-                            if (Config("ENCRYPT_FILE_PATH")) {
-                                $ar[$file] = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
-                                    "/" . $this->TableVar . "/" . Encrypt($fld->physicalUploadPath() . $file)));
-                            } else {
-                                $ar[$file] = FullUrl($fld->hrefPath() . $file);
-                            }
-                        }
-                    }
-                    $data[$fld->Param] = $ar;
-                    WriteJson($data);
-                }
-            }
-            return true;
-        }
+        // No binary fields
         return false;
-    }
-
-    // Write audit trail start/end for grid update
-    public function writeAuditTrailDummy($typ)
-    {
-        WriteAuditLog(CurrentUser(), $typ, 'jdh_patients', "", "", "", "");
-    }
-
-    // Write audit trail (add page)
-    public function writeAuditTrailOnAdd(&$rs)
-    {
-        global $Language;
-        if (!$this->AuditTrailOnAdd) {
-            return;
-        }
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rs['patient_id'];
-
-        // Write audit trail
-        $usr = CurrentUser();
-        foreach (array_keys($rs) as $fldname) {
-            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
-                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
-                    $newvalue = $Language->phrase("PasswordMask");
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo Field
-                    $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML Field
-                    $newvalue = "[XML]";
-                } else {
-                    $newvalue = $rs[$fldname];
-                }
-                WriteAuditLog($usr, "A", 'jdh_patients', $fldname, $key, "", $newvalue);
-            }
-        }
-    }
-
-    // Write audit trail (edit page)
-    public function writeAuditTrailOnEdit(&$rsold, &$rsnew)
-    {
-        global $Language;
-        if (!$this->AuditTrailOnEdit) {
-            return;
-        }
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rsold['patient_id'];
-
-        // Write audit trail
-        $usr = CurrentUser();
-        foreach (array_keys($rsnew) as $fldname) {
-            if (array_key_exists($fldname, $this->Fields) && array_key_exists($fldname, $rsold) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
-                if ($this->Fields[$fldname]->DataType == DATATYPE_DATE) { // DateTime field
-                    $modified = (FormatDateTime($rsold[$fldname], 0) != FormatDateTime($rsnew[$fldname], 0));
-                } else {
-                    $modified = !CompareValue($rsold[$fldname], $rsnew[$fldname]);
-                }
-                if ($modified) {
-                    if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
-                        $oldvalue = $Language->phrase("PasswordMask");
-                        $newvalue = $Language->phrase("PasswordMask");
-                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
-                        $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsold[$fldname] : "[MEMO]";
-                        $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsnew[$fldname] : "[MEMO]";
-                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
-                        $oldvalue = "[XML]";
-                        $newvalue = "[XML]";
-                    } else {
-                        $oldvalue = $rsold[$fldname];
-                        $newvalue = $rsnew[$fldname];
-                    }
-                    WriteAuditLog($usr, "U", 'jdh_patients', $fldname, $key, $oldvalue, $newvalue);
-                }
-            }
-        }
-    }
-
-    // Write audit trail (delete page)
-    public function writeAuditTrailOnDelete(&$rs)
-    {
-        global $Language;
-        if (!$this->AuditTrailOnDelete) {
-            return;
-        }
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rs['patient_id'];
-
-        // Write audit trail
-        $usr = CurrentUser();
-        foreach (array_keys($rs) as $fldname) {
-            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
-                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
-                    $oldvalue = $Language->phrase("PasswordMask");
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
-                    $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
-                    $oldvalue = "[XML]";
-                } else {
-                    $oldvalue = $rs[$fldname];
-                }
-                WriteAuditLog($usr, "D", 'jdh_patients', $fldname, $key, $oldvalue, "");
-            }
-        }
-    }
-
-    // Send email after add success
-    public function sendEmailOnAdd(&$rs)
-    {
-        global $Language;
-        $table = 'jdh_patients';
-        $subject = $table . " " . $Language->phrase("RecordInserted");
-        $action = $Language->phrase("ActionInserted");
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rs['patient_id'];
-        $email = new Email();
-        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-        $email->replaceSubject($subject); // Replace Subject
-        $email->replaceContent("<!--table-->", $table);
-        $email->replaceContent("<!--key-->", $key);
-        $email->replaceContent("<!--action-->", $action);
-        $args = ["rsnew" => $rs];
-        $emailSent = false;
-        if ($this->emailSending($email, $args)) {
-            $emailSent = $email->send();
-        }
-
-        // Send email failed
-        if (!$emailSent) {
-            $this->setFailureMessage($email->SendErrDescription);
-        }
-    }
-
-    // Send email after update success
-    public function sendEmailOnEdit(&$rsold, &$rsnew)
-    {
-        global $Language;
-        $table = 'jdh_patients';
-        $subject = $table . " ". $Language->phrase("RecordUpdated");
-        $action = $Language->phrase("ActionUpdated");
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rsold['patient_id'];
-        $email = new Email();
-        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-        $email->replaceSubject($subject); // Replace Subject
-        $email->replaceContent("<!--table-->", $table);
-        $email->replaceContent("<!--key-->", $key);
-        $email->replaceContent("<!--action-->", $action);
-        $args = [];
-        $args["rsold"] = &$rsold;
-        $args["rsnew"] = &$rsnew;
-        $emailSent = false;
-        if ($this->emailSending($email, $args)) {
-            $emailSent = $email->send();
-        }
-
-        // Send email failed
-        if (!$emailSent) {
-            $this->setFailureMessage($email->SendErrDescription);
-        }
     }
 
     // Table level events

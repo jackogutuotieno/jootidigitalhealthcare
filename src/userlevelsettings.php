@@ -332,7 +332,7 @@ $USER_LEVEL_PRIVS = [["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_income","7","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_patient_queue","-2","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_patient_queue","0","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_patient_queue","1","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_patient_queue","1","360"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_patient_queue","2","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_patient_queue","3","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_patient_queue","4","0"],
@@ -384,5 +384,5 @@ $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true
     ["jdh_doctor_charges","jdh_doctor_charges","Doctor Charges",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhdoctorchargeslist"],
     ["jdh_consultation_income","jdh_consultation_income","Consultation Income",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhconsultationincomelist"],
     ["jdh_lab_income","jdh_lab_income","Laboratory Income",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabincomelist"],
-    ["jdh_patient_queue","jdh_patient_queue","jdh patient queue",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhpatientqueuelist"],
+    ["jdh_patient_queue","jdh_patient_queue","Patient Queue",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhpatientqueuelist"],
     ["Patient Queues","Patient_Queues","Patient Queues",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","patientqueues"]];

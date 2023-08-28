@@ -464,7 +464,7 @@ loadjs.ready("fjdh_vitalsgrid", function() {
 <?php if (!$Grid->submission_date->ReadOnly && !$Grid->submission_date->Disabled && !isset($Grid->submission_date->EditAttrs["readonly"]) && !isset($Grid->submission_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_vitalsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
+    let format = "<?= DateFormat(11) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
@@ -501,7 +501,7 @@ loadjs.ready(["fjdh_vitalsgrid", "datetimepicker"], function () {
 <?php if (!$Grid->submission_date->ReadOnly && !$Grid->submission_date->Disabled && !isset($Grid->submission_date->EditAttrs["readonly"]) && !isset($Grid->submission_date->EditAttrs["disabled"])) { ?>
 <script>
 loadjs.ready(["fjdh_vitalsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(1) ?>",
+    let format = "<?= DateFormat(11) ?>",
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),

@@ -125,6 +125,7 @@ return function (App $app) {
     $app->map(["GET","POST","OPTIONS"], '/jdhpatientsview[/{patient_id}]', JdhPatientsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhpatientsview-jdh_patients-view'); // view
     $app->map(["GET","POST","OPTIONS"], '/jdhpatientsedit[/{patient_id}]', JdhPatientsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhpatientsedit-jdh_patients-edit'); // edit
     $app->map(["GET","POST","OPTIONS"], '/jdhpatientsdelete[/{patient_id}]', JdhPatientsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhpatientsdelete-jdh_patients-delete'); // delete
+    $app->map(["GET","POST","OPTIONS"], '/jdhpatientssearch', JdhPatientsController::class . ':search')->add(PermissionMiddleware::class)->setName('jdhpatientssearch-jdh_patients-search'); // search
     $app->group(
         '/jdh_patients',
         function (RouteCollectorProxy $group) {
@@ -133,6 +134,7 @@ return function (App $app) {
             $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{patient_id}]', JdhPatientsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_patients/view-jdh_patients-view-2'); // view
             $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{patient_id}]', JdhPatientsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_patients/edit-jdh_patients-edit-2'); // edit
             $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{patient_id}]', JdhPatientsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_patients/delete-jdh_patients-delete-2'); // delete
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('SEARCH_ACTION') . '', JdhPatientsController::class . ':search')->add(PermissionMiddleware::class)->setName('jdh_patients/search-jdh_patients-search-2'); // search
         }
     );
 

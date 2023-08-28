@@ -37,4 +37,10 @@ class JdhPatientsController extends ControllerBase
     {
         return $this->runPage($request, $response, $args, "JdhPatientsDelete");
     }
+
+    // search
+    public function search(Request $request, Response $response, array $args): Response
+    {
+        return $this->runPage($request, $response, $args, "JdhPatientsSearch");
+    }
 }
