@@ -381,6 +381,7 @@ class JdhPatientsDelete extends JdhPatients
         $this->patient_kin_name->Visible = false;
         $this->patient_kin_phone->Visible = false;
         $this->service_id->Visible = false;
+        $this->is_inpatient->setVisibility();
         $this->patient_registration_date->setVisibility();
         $this->submitted_by_user_id->Visible = false;
 
@@ -409,6 +410,7 @@ class JdhPatientsDelete extends JdhPatients
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_gender);
         $this->setupLookupOptions($this->service_id);
+        $this->setupLookupOptions($this->is_inpatient);
 
         // Set up Breadcrumb
         $this->setupBreadcrumb();
@@ -621,6 +623,7 @@ class JdhPatientsDelete extends JdhPatients
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
         $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
         $this->service_id->setDbValue($row['service_id']);
+        $this->is_inpatient->setDbValue($row['is_inpatient']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
@@ -640,6 +643,7 @@ class JdhPatientsDelete extends JdhPatients
         $row['patient_kin_name'] = $this->patient_kin_name->DefaultValue;
         $row['patient_kin_phone'] = $this->patient_kin_phone->DefaultValue;
         $row['service_id'] = $this->service_id->DefaultValue;
+        $row['is_inpatient'] = $this->is_inpatient->DefaultValue;
         $row['patient_registration_date'] = $this->patient_registration_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
@@ -678,6 +682,8 @@ class JdhPatientsDelete extends JdhPatients
         // patient_kin_phone
 
         // service_id
+
+        // is_inpatient
 
         // patient_registration_date
 
@@ -742,6 +748,13 @@ class JdhPatientsDelete extends JdhPatients
                 $this->service_id->ViewValue = null;
             }
 
+            // is_inpatient
+            if (strval($this->is_inpatient->CurrentValue) != "") {
+                $this->is_inpatient->ViewValue = $this->is_inpatient->optionCaption($this->is_inpatient->CurrentValue);
+            } else {
+                $this->is_inpatient->ViewValue = null;
+            }
+
             // patient_registration_date
             $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
@@ -785,6 +798,10 @@ class JdhPatientsDelete extends JdhPatients
                 $this->patient_phone->HrefValue = "";
             }
             $this->patient_phone->TooltipValue = "";
+
+            // is_inpatient
+            $this->is_inpatient->HrefValue = "";
+            $this->is_inpatient->TooltipValue = "";
 
             // patient_registration_date
             $this->patient_registration_date->HrefValue = "";
@@ -959,6 +976,8 @@ class JdhPatientsDelete extends JdhPatients
                     break;
                 case "x_service_id":
                     $lookupFilter = $fld->getSelectFilter(); // PHP
+                    break;
+                case "x_is_inpatient":
                     break;
                 default:
                     $lookupFilter = "";

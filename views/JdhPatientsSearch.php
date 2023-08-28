@@ -26,7 +26,8 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .addFields([
             ["patient_id", [ew.Validators.integer], fields.patient_id.isInvalid],
-            ["patient_name", [], fields.patient_name.isInvalid]
+            ["patient_name", [], fields.patient_name.isInvalid],
+            ["is_inpatient", [], fields.is_inpatient.isInvalid]
         ])
         // Validate form
         .setValidate(
@@ -61,6 +62,7 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Dynamic selection lists
         .setLists({
+            "is_inpatient": <?= $Page->is_inpatient->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -126,6 +128,53 @@ $Page->showMessage();
                 <span id="el_jdh_patients_patient_name" class="ew-search-field ew-search-field-single">
 <input type="<?= $Page->patient_name->getInputTextType() ?>" name="x_patient_name" id="x_patient_name" data-table="jdh_patients" data-field="x_patient_name" value="<?= $Page->patient_name->EditValue ?>" size="30" maxlength="50" placeholder="<?= HtmlEncode($Page->patient_name->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_name->formatPattern()) ?>"<?= $Page->patient_name->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Page->patient_name->getErrorMessage(false) ?></div>
+</span>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php } ?>
+<?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
+    <div id="r_is_inpatient" class="row"<?= $Page->is_inpatient->rowAttributes() ?>>
+        <label for="x_is_inpatient" class="<?= $Page->LeftColumnClass ?>"><span id="elh_jdh_patients_is_inpatient"><?= $Page->is_inpatient->caption() ?></span>
+        <span class="ew-search-operator">
+<?= $Language->phrase("=") ?>
+<input type="hidden" name="z_is_inpatient" id="z_is_inpatient" value="=">
+</span>
+        </label>
+        <div class="<?= $Page->RightColumnClass ?>">
+            <div<?= $Page->is_inpatient->cellAttributes() ?>>
+                <div class="d-flex align-items-start">
+                <span id="el_jdh_patients_is_inpatient" class="ew-search-field ew-search-field-single">
+    <select
+        id="x_is_inpatient"
+        name="x_is_inpatient"
+        class="form-select ew-select<?= $Page->is_inpatient->isInvalidClass() ?>"
+        data-select2-id="fjdh_patientssearch_x_is_inpatient"
+        data-table="jdh_patients"
+        data-field="x_is_inpatient"
+        data-value-separator="<?= $Page->is_inpatient->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->is_inpatient->getPlaceHolder()) ?>"
+        <?= $Page->is_inpatient->editAttributes() ?>>
+        <?= $Page->is_inpatient->selectOptionListHtml("x_is_inpatient") ?>
+    </select>
+    <div class="invalid-feedback"><?= $Page->is_inpatient->getErrorMessage(false) ?></div>
+<script>
+loadjs.ready("fjdh_patientssearch", function() {
+    var options = { name: "x_is_inpatient", selectId: "fjdh_patientssearch_x_is_inpatient" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (fjdh_patientssearch.lists.is_inpatient?.lookupOptions.length) {
+        options.data = { id: "x_is_inpatient", form: "fjdh_patientssearch" };
+    } else {
+        options.ajax = { id: "x_is_inpatient", form: "fjdh_patientssearch", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patients.fields.is_inpatient.selectOptions);
+    ew.createSelect(options);
+});
+</script>
 </span>
                 </div>
             </div>

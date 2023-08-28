@@ -1189,6 +1189,18 @@
     <menu id="276">
       <phrase id="menutext" value="Doctor Charges" />
     </menu>
+    <menu id="282">
+      <phrase id="menutext" value="Wards" />
+    </menu>
+    <menu id="281">
+      <phrase id="menutext" value="Rooms" />
+    </menu>
+    <menu id="284">
+      <phrase id="menutext" value="Beds Assignment" />
+    </menu>
+    <menu id="283">
+      <phrase id="menutext" value="Beds" />
+    </menu>
     <menu id="102">
       <phrase id="menutext" value="Patients" />
     </menu>
@@ -1502,6 +1514,13 @@
       </field>
       <field id="service_id">
         <phrase id="fldcaption" value="Reg. Fee" />
+      </field>
+      <field id="is_inpatient">
+        <phrase id="fldcaption" value="is inpatient" />
+        <phrase id="fldtagvalue1" value="0" />
+        <phrase id="fldtagcaption1" value="No" />
+        <phrase id="fldtagvalue2" value="1" />
+        <phrase id="fldtagcaption2" value="Yes" />
       </field>
       <field id="patient_registration_date">
         <phrase id="fldcaption" value="Registration Date" />
@@ -2199,6 +2218,76 @@
       </field>
       <field id="visit_date">
         <phrase id="fldcaption" value="Submission Date" />
+      </field>
+    </table>
+    <table id="jdh_rooms">
+      <phrase id="tblcaption" value="Rooms" />
+      <field id="room_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="ward_id">
+        <phrase id="fldcaption" value="Ward Name" />
+      </field>
+      <field id="room_number">
+        <phrase id="fldcaption" value="Room No." />
+      </field>
+      <field id="description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+    </table>
+    <table id="jdh_wards">
+      <phrase id="tblcaption" value="Wards" />
+      <field id="ward_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="ward_name">
+        <phrase id="fldcaption" value="Ward Name" />
+      </field>
+      <field id="description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+    </table>
+    <table id="beds">
+      <phrase id="tblcaption" value="Beds" />
+      <field id="bed_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="ward_id">
+        <phrase id="fldcaption" value="Ward Name" />
+      </field>
+      <field id="room_id">
+        <phrase id="fldcaption" value="Room No." />
+      </field>
+      <field id="bed_number">
+        <phrase id="fldcaption" value="Bed No." />
+      </field>
+      <field id="description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+      <field id="status_id">
+        <phrase id="fldcaption" value="Status" />
+        <phrase id="fldtagvalue1" value="0" />
+        <phrase id="fldtagcaption1" value="Available" />
+        <phrase id="fldtagvalue2" value="1" />
+        <phrase id="fldtagcaption2" value="Not Available" />
+      </field>
+    </table>
+    <table id="jdh_beds_assignment">
+      <phrase id="tblcaption" value="Beds Assignment" />
+      <field id="id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient Name" />
+      </field>
+      <field id="bed_id">
+        <phrase id="fldcaption" value="Bed ID" />
+      </field>
+      <field id="date_submitted">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="submittedby_user_id">
+        <phrase id="fldcaption" value="User ID" />
       </field>
     </table>
   </project>

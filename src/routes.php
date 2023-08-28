@@ -546,6 +546,74 @@ return function (App $app) {
     $app->map(["GET", "POST", "OPTIONS"], '/patientqueues/PatientQueues', PatientQueuesController::class . ':PatientQueues')->add(PermissionMiddleware::class)->setName('patientqueues-Patient_Queues-summary-PatientQueues'); // PatientQueues
     $app->map(["GET", "POST", "OPTIONS"], '/patientqueues', PatientQueuesController::class . ':summary')->add(PermissionMiddleware::class)->setName('patientqueues-Patient_Queues-summary'); // summary
 
+    // jdh_rooms
+    $app->map(["GET","POST","OPTIONS"], '/jdhroomslist[/{room_id}]', JdhRoomsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhroomslist-jdh_rooms-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/jdhroomsadd[/{room_id}]', JdhRoomsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhroomsadd-jdh_rooms-add'); // add
+    $app->map(["GET","POST","OPTIONS"], '/jdhroomsview[/{room_id}]', JdhRoomsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhroomsview-jdh_rooms-view'); // view
+    $app->map(["GET","POST","OPTIONS"], '/jdhroomsedit[/{room_id}]', JdhRoomsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhroomsedit-jdh_rooms-edit'); // edit
+    $app->map(["GET","POST","OPTIONS"], '/jdhroomsdelete[/{room_id}]', JdhRoomsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhroomsdelete-jdh_rooms-delete'); // delete
+    $app->group(
+        '/jdh_rooms',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{room_id}]', JdhRoomsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_rooms/list-jdh_rooms-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{room_id}]', JdhRoomsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_rooms/add-jdh_rooms-add-2'); // add
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{room_id}]', JdhRoomsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_rooms/view-jdh_rooms-view-2'); // view
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{room_id}]', JdhRoomsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_rooms/edit-jdh_rooms-edit-2'); // edit
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{room_id}]', JdhRoomsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_rooms/delete-jdh_rooms-delete-2'); // delete
+        }
+    );
+
+    // jdh_wards
+    $app->map(["GET","POST","OPTIONS"], '/jdhwardslist[/{ward_id}]', JdhWardsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhwardslist-jdh_wards-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/jdhwardsadd[/{ward_id}]', JdhWardsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhwardsadd-jdh_wards-add'); // add
+    $app->map(["GET","POST","OPTIONS"], '/jdhwardsview[/{ward_id}]', JdhWardsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhwardsview-jdh_wards-view'); // view
+    $app->map(["GET","POST","OPTIONS"], '/jdhwardsedit[/{ward_id}]', JdhWardsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhwardsedit-jdh_wards-edit'); // edit
+    $app->map(["GET","POST","OPTIONS"], '/jdhwardsdelete[/{ward_id}]', JdhWardsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhwardsdelete-jdh_wards-delete'); // delete
+    $app->group(
+        '/jdh_wards',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{ward_id}]', JdhWardsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_wards/list-jdh_wards-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{ward_id}]', JdhWardsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_wards/add-jdh_wards-add-2'); // add
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{ward_id}]', JdhWardsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_wards/view-jdh_wards-view-2'); // view
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{ward_id}]', JdhWardsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_wards/edit-jdh_wards-edit-2'); // edit
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{ward_id}]', JdhWardsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_wards/delete-jdh_wards-delete-2'); // delete
+        }
+    );
+
+    // beds
+    $app->map(["GET","POST","OPTIONS"], '/bedslist[/{bed_id}]', BedsController::class . ':list')->add(PermissionMiddleware::class)->setName('bedslist-beds-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/bedsadd[/{bed_id}]', BedsController::class . ':add')->add(PermissionMiddleware::class)->setName('bedsadd-beds-add'); // add
+    $app->map(["GET","POST","OPTIONS"], '/bedsview[/{bed_id}]', BedsController::class . ':view')->add(PermissionMiddleware::class)->setName('bedsview-beds-view'); // view
+    $app->map(["GET","POST","OPTIONS"], '/bedsedit[/{bed_id}]', BedsController::class . ':edit')->add(PermissionMiddleware::class)->setName('bedsedit-beds-edit'); // edit
+    $app->map(["GET","POST","OPTIONS"], '/bedsdelete[/{bed_id}]', BedsController::class . ':delete')->add(PermissionMiddleware::class)->setName('bedsdelete-beds-delete'); // delete
+    $app->group(
+        '/beds',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{bed_id}]', BedsController::class . ':list')->add(PermissionMiddleware::class)->setName('beds/list-beds-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{bed_id}]', BedsController::class . ':add')->add(PermissionMiddleware::class)->setName('beds/add-beds-add-2'); // add
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{bed_id}]', BedsController::class . ':view')->add(PermissionMiddleware::class)->setName('beds/view-beds-view-2'); // view
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{bed_id}]', BedsController::class . ':edit')->add(PermissionMiddleware::class)->setName('beds/edit-beds-edit-2'); // edit
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{bed_id}]', BedsController::class . ':delete')->add(PermissionMiddleware::class)->setName('beds/delete-beds-delete-2'); // delete
+        }
+    );
+
+    // jdh_beds_assignment
+    $app->map(["GET","POST","OPTIONS"], '/jdhbedsassignmentlist[/{id}]', JdhBedsAssignmentController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhbedsassignmentlist-jdh_beds_assignment-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/jdhbedsassignmentadd[/{id}]', JdhBedsAssignmentController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhbedsassignmentadd-jdh_beds_assignment-add'); // add
+    $app->map(["GET","POST","OPTIONS"], '/jdhbedsassignmentview[/{id}]', JdhBedsAssignmentController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhbedsassignmentview-jdh_beds_assignment-view'); // view
+    $app->map(["GET","POST","OPTIONS"], '/jdhbedsassignmentedit[/{id}]', JdhBedsAssignmentController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhbedsassignmentedit-jdh_beds_assignment-edit'); // edit
+    $app->map(["GET","POST","OPTIONS"], '/jdhbedsassignmentdelete[/{id}]', JdhBedsAssignmentController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhbedsassignmentdelete-jdh_beds_assignment-delete'); // delete
+    $app->group(
+        '/jdh_beds_assignment',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{id}]', JdhBedsAssignmentController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_beds_assignment/list-jdh_beds_assignment-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{id}]', JdhBedsAssignmentController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_beds_assignment/add-jdh_beds_assignment-add-2'); // add
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{id}]', JdhBedsAssignmentController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_beds_assignment/view-jdh_beds_assignment-view-2'); // view
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{id}]', JdhBedsAssignmentController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_beds_assignment/edit-jdh_beds_assignment-edit-2'); // edit
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{id}]', JdhBedsAssignmentController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_beds_assignment/delete-jdh_beds_assignment-delete-2'); // delete
+        }
+    );
+
     // personal_data
     $app->map(["GET","POST","OPTIONS"], '/personaldata', OthersController::class . ':personaldata')->add(PermissionMiddleware::class)->setName('personaldata');
 

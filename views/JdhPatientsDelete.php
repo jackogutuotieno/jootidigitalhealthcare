@@ -71,6 +71,9 @@ $Page->showMessage();
 <?php if ($Page->patient_phone->Visible) { // patient_phone ?>
         <th class="<?= $Page->patient_phone->headerCellClass() ?>"><span id="elh_jdh_patients_patient_phone" class="jdh_patients_patient_phone"><?= $Page->patient_phone->caption() ?></span></th>
 <?php } ?>
+<?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
+        <th class="<?= $Page->is_inpatient->headerCellClass() ?>"><span id="elh_jdh_patients_is_inpatient" class="jdh_patients_is_inpatient"><?= $Page->is_inpatient->caption() ?></span></th>
+<?php } ?>
 <?php if ($Page->patient_registration_date->Visible) { // patient_registration_date ?>
         <th class="<?= $Page->patient_registration_date->headerCellClass() ?>"><span id="elh_jdh_patients_patient_registration_date" class="jdh_patients_patient_registration_date"><?= $Page->patient_registration_date->caption() ?></span></th>
 <?php } ?>
@@ -153,6 +156,14 @@ while (!$Page->Recordset->EOF) {
 <?= $Page->patient_phone->getViewValue() ?>
 <?php } ?>
 </span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
+        <td<?= $Page->is_inpatient->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_patients_is_inpatient" class="el_jdh_patients_is_inpatient">
+<span<?= $Page->is_inpatient->viewAttributes() ?>>
+<?= $Page->is_inpatient->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

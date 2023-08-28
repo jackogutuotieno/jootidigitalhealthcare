@@ -60,6 +60,7 @@ class JdhPatients extends DbTable
     public $patient_kin_name;
     public $patient_kin_phone;
     public $service_id;
+    public $is_inpatient;
     public $patient_registration_date;
     public $submitted_by_user_id;
 
@@ -378,6 +379,35 @@ class JdhPatients extends DbTable
         $this->service_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->service_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['service_id'] = &$this->service_id;
+
+        // is_inpatient $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->is_inpatient = new DbField(
+            $this, // Table
+            'x_is_inpatient', // Variable name
+            'is_inpatient', // Name
+            '`is_inpatient`', // Expression
+            '`is_inpatient`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`is_inpatient`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'SELECT' // Edit Tag
+        );
+        $this->is_inpatient->InputTextType = "text";
+        $this->is_inpatient->Nullable = false; // NOT NULL field
+        $this->is_inpatient->Required = true; // Required field
+        $this->is_inpatient->UsePleaseSelect = true; // Use PleaseSelect by default
+        $this->is_inpatient->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
+        $this->is_inpatient->Lookup = new Lookup('is_inpatient', 'jdh_patients', false, '', ["","","",""], '', '', [], [], [], [], [], [], '', '', "");
+        $this->is_inpatient->OptionCount = 2;
+        $this->is_inpatient->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->is_inpatient->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['is_inpatient'] = &$this->is_inpatient;
 
         // patient_registration_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->patient_registration_date = new DbField(
@@ -991,6 +1021,7 @@ class JdhPatients extends DbTable
         $this->patient_kin_name->DbValue = $row['patient_kin_name'];
         $this->patient_kin_phone->DbValue = $row['patient_kin_phone'];
         $this->service_id->DbValue = $row['service_id'];
+        $this->is_inpatient->DbValue = $row['is_inpatient'];
         $this->patient_registration_date->DbValue = $row['patient_registration_date'];
         $this->submitted_by_user_id->DbValue = $row['submitted_by_user_id'];
     }
@@ -1365,6 +1396,7 @@ class JdhPatients extends DbTable
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
         $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
         $this->service_id->setDbValue($row['service_id']);
+        $this->is_inpatient->setDbValue($row['is_inpatient']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
@@ -1418,6 +1450,8 @@ class JdhPatients extends DbTable
         // patient_kin_phone
 
         // service_id
+
+        // is_inpatient
 
         // patient_registration_date
 
@@ -1490,6 +1524,13 @@ class JdhPatients extends DbTable
             }
         } else {
             $this->service_id->ViewValue = null;
+        }
+
+        // is_inpatient
+        if (strval($this->is_inpatient->CurrentValue) != "") {
+            $this->is_inpatient->ViewValue = $this->is_inpatient->optionCaption($this->is_inpatient->CurrentValue);
+        } else {
+            $this->is_inpatient->ViewValue = null;
         }
 
         // patient_registration_date
@@ -1570,6 +1611,10 @@ class JdhPatients extends DbTable
         // service_id
         $this->service_id->HrefValue = "";
         $this->service_id->TooltipValue = "";
+
+        // is_inpatient
+        $this->is_inpatient->HrefValue = "";
+        $this->is_inpatient->TooltipValue = "";
 
         // patient_registration_date
         $this->patient_registration_date->HrefValue = "";
@@ -1691,6 +1736,11 @@ class JdhPatients extends DbTable
             $this->service_id->EditValue = null;
         }
 
+        // is_inpatient
+        $this->is_inpatient->setupEditAttributes();
+        $this->is_inpatient->EditValue = $this->is_inpatient->options(true);
+        $this->is_inpatient->PlaceHolder = RemoveHtml($this->is_inpatient->caption());
+
         // patient_registration_date
         $this->patient_registration_date->setupEditAttributes();
         $this->patient_registration_date->EditValue = FormatDateTime($this->patient_registration_date->CurrentValue, $this->patient_registration_date->formatPattern());
@@ -1730,6 +1780,7 @@ class JdhPatients extends DbTable
                     $doc->exportCaption($this->patient_name);
                     $doc->exportCaption($this->patient_age);
                     $doc->exportCaption($this->patient_gender);
+                    $doc->exportCaption($this->is_inpatient);
                 } else {
                     $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->patient_name);
@@ -1741,6 +1792,7 @@ class JdhPatients extends DbTable
                     $doc->exportCaption($this->patient_kin_name);
                     $doc->exportCaption($this->patient_kin_phone);
                     $doc->exportCaption($this->service_id);
+                    $doc->exportCaption($this->is_inpatient);
                     $doc->exportCaption($this->patient_registration_date);
                     $doc->exportCaption($this->submitted_by_user_id);
                 }
@@ -1776,6 +1828,7 @@ class JdhPatients extends DbTable
                         $doc->exportField($this->patient_name);
                         $doc->exportField($this->patient_age);
                         $doc->exportField($this->patient_gender);
+                        $doc->exportField($this->is_inpatient);
                     } else {
                         $doc->exportField($this->patient_id);
                         $doc->exportField($this->patient_name);
@@ -1787,6 +1840,7 @@ class JdhPatients extends DbTable
                         $doc->exportField($this->patient_kin_name);
                         $doc->exportField($this->patient_kin_phone);
                         $doc->exportField($this->service_id);
+                        $doc->exportField($this->is_inpatient);
                         $doc->exportField($this->patient_registration_date);
                         $doc->exportField($this->submitted_by_user_id);
                     }

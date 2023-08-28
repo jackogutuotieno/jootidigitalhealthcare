@@ -666,6 +666,7 @@ class JdhPatientsList extends JdhPatients
         $this->patient_kin_name->Visible = false;
         $this->patient_kin_phone->Visible = false;
         $this->service_id->Visible = false;
+        $this->is_inpatient->setVisibility();
         $this->patient_registration_date->setVisibility();
         $this->submitted_by_user_id->Visible = false;
 
@@ -702,6 +703,7 @@ class JdhPatientsList extends JdhPatients
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_gender);
         $this->setupLookupOptions($this->service_id);
+        $this->setupLookupOptions($this->is_inpatient);
 
         // Update form name to avoid conflict
         if ($this->IsModal) {
@@ -1081,6 +1083,7 @@ class JdhPatientsList extends JdhPatients
         }
         $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
         $filterList = Concat($filterList, $this->patient_name->AdvancedSearch->toJson(), ","); // Field patient_name
+        $filterList = Concat($filterList, $this->is_inpatient->AdvancedSearch->toJson(), ","); // Field is_inpatient
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
             $filterList = Concat($filterList, $wrk, ",");
@@ -1136,6 +1139,14 @@ class JdhPatientsList extends JdhPatients
         $this->patient_name->AdvancedSearch->SearchValue2 = @$filter["y_patient_name"];
         $this->patient_name->AdvancedSearch->SearchOperator2 = @$filter["w_patient_name"];
         $this->patient_name->AdvancedSearch->save();
+
+        // Field is_inpatient
+        $this->is_inpatient->AdvancedSearch->SearchValue = @$filter["x_is_inpatient"];
+        $this->is_inpatient->AdvancedSearch->SearchOperator = @$filter["z_is_inpatient"];
+        $this->is_inpatient->AdvancedSearch->SearchCondition = @$filter["v_is_inpatient"];
+        $this->is_inpatient->AdvancedSearch->SearchValue2 = @$filter["y_is_inpatient"];
+        $this->is_inpatient->AdvancedSearch->SearchOperator2 = @$filter["w_is_inpatient"];
+        $this->is_inpatient->AdvancedSearch->save();
         $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
     }
@@ -1150,6 +1161,7 @@ class JdhPatientsList extends JdhPatients
         }
         $this->buildSearchSql($where, $this->patient_id, $default, false); // patient_id
         $this->buildSearchSql($where, $this->patient_name, $default, false); // patient_name
+        $this->buildSearchSql($where, $this->is_inpatient, $default, false); // is_inpatient
 
         // Set up search command
         if (!$default && $where != "" && in_array($this->Command, ["", "reset", "resetall"])) {
@@ -1158,6 +1170,7 @@ class JdhPatientsList extends JdhPatients
         if (!$default && $this->Command == "search") {
             $this->patient_id->AdvancedSearch->save(); // patient_id
             $this->patient_name->AdvancedSearch->save(); // patient_name
+            $this->is_inpatient->AdvancedSearch->save(); // is_inpatient
 
             // Clear rules for QueryBuilder
             $this->setSessionRules("");
@@ -1318,6 +1331,15 @@ class JdhPatientsList extends JdhPatients
         if ($filter != "") {
             $filterList .= "<div><span class=\"" . $captionClass . "\">" . $this->patient_name->caption() . "</span>" . $captionSuffix . $filter . "</div>";
         }
+
+        // Field is_inpatient
+        $filter = $this->queryBuilderWhere("is_inpatient");
+        if (!$filter) {
+            $this->buildSearchSql($filter, $this->is_inpatient, false, false);
+        }
+        if ($filter != "") {
+            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $this->is_inpatient->caption() . "</span>" . $captionSuffix . $filter . "</div>";
+        }
         if ($this->BasicSearch->Keyword != "") {
             $filterList .= "<div><span class=\"" . $captionClass . "\">" . $Language->phrase("BasicSearchKeyword") . "</span>" . $captionSuffix . $this->BasicSearch->Keyword . "</div>";
         }
@@ -1383,6 +1405,9 @@ class JdhPatientsList extends JdhPatients
         if ($this->patient_name->AdvancedSearch->issetSession()) {
             return true;
         }
+        if ($this->is_inpatient->AdvancedSearch->issetSession()) {
+            return true;
+        }
         return false;
     }
 
@@ -1420,6 +1445,7 @@ class JdhPatientsList extends JdhPatients
     {
         $this->patient_id->AdvancedSearch->unsetSession();
         $this->patient_name->AdvancedSearch->unsetSession();
+        $this->is_inpatient->AdvancedSearch->unsetSession();
     }
 
     // Restore all search parameters
@@ -1433,6 +1459,7 @@ class JdhPatientsList extends JdhPatients
         // Restore advanced search values
         $this->patient_id->AdvancedSearch->load();
         $this->patient_name->AdvancedSearch->load();
+        $this->is_inpatient->AdvancedSearch->load();
     }
 
     // Set up sort parameters
@@ -1457,6 +1484,7 @@ class JdhPatientsList extends JdhPatients
             $this->updateSort($this->patient_age); // patient_age
             $this->updateSort($this->patient_gender); // patient_gender
             $this->updateSort($this->patient_phone); // patient_phone
+            $this->updateSort($this->is_inpatient); // is_inpatient
             $this->updateSort($this->patient_registration_date); // patient_registration_date
             $this->setStartRecordNumber(1); // Reset start position
         }
@@ -1492,6 +1520,7 @@ class JdhPatientsList extends JdhPatients
                 $this->patient_kin_name->setSort("");
                 $this->patient_kin_phone->setSort("");
                 $this->service_id->setSort("");
+                $this->is_inpatient->setSort("");
                 $this->patient_registration_date->setSort("");
                 $this->submitted_by_user_id->setSort("");
             }
@@ -2420,6 +2449,7 @@ class JdhPatientsList extends JdhPatients
             $option->add("patient_age", $this->createColumnOption("patient_age"));
             $option->add("patient_gender", $this->createColumnOption("patient_gender"));
             $option->add("patient_phone", $this->createColumnOption("patient_phone"));
+            $option->add("is_inpatient", $this->createColumnOption("is_inpatient"));
             $option->add("patient_registration_date", $this->createColumnOption("patient_registration_date"));
         }
 
@@ -2745,6 +2775,14 @@ class JdhPatientsList extends JdhPatients
                 $this->Command = "search";
             }
         }
+
+        // is_inpatient
+        if ($this->is_inpatient->AdvancedSearch->get()) {
+            $hasValue = true;
+            if (($this->is_inpatient->AdvancedSearch->SearchValue != "" || $this->is_inpatient->AdvancedSearch->SearchValue2 != "") && $this->Command == "") {
+                $this->Command = "search";
+            }
+        }
         return $hasValue;
     }
 
@@ -2847,6 +2885,7 @@ class JdhPatientsList extends JdhPatients
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
         $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
         $this->service_id->setDbValue($row['service_id']);
+        $this->is_inpatient->setDbValue($row['is_inpatient']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
@@ -2866,6 +2905,7 @@ class JdhPatientsList extends JdhPatients
         $row['patient_kin_name'] = $this->patient_kin_name->DefaultValue;
         $row['patient_kin_phone'] = $this->patient_kin_phone->DefaultValue;
         $row['service_id'] = $this->service_id->DefaultValue;
+        $row['is_inpatient'] = $this->is_inpatient->DefaultValue;
         $row['patient_registration_date'] = $this->patient_registration_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
@@ -2930,6 +2970,8 @@ class JdhPatientsList extends JdhPatients
 
         // service_id
 
+        // is_inpatient
+
         // patient_registration_date
 
         // submitted_by_user_id
@@ -2993,6 +3035,13 @@ class JdhPatientsList extends JdhPatients
                 $this->service_id->ViewValue = null;
             }
 
+            // is_inpatient
+            if (strval($this->is_inpatient->CurrentValue) != "") {
+                $this->is_inpatient->ViewValue = $this->is_inpatient->optionCaption($this->is_inpatient->CurrentValue);
+            } else {
+                $this->is_inpatient->ViewValue = null;
+            }
+
             // patient_registration_date
             $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
@@ -3048,6 +3097,10 @@ class JdhPatientsList extends JdhPatients
             if (!$this->isExport()) {
                 $this->patient_phone->ViewValue = $this->highlightValue($this->patient_phone);
             }
+
+            // is_inpatient
+            $this->is_inpatient->HrefValue = "";
+            $this->is_inpatient->TooltipValue = "";
 
             // patient_registration_date
             $this->patient_registration_date->HrefValue = "";
@@ -3362,6 +3415,7 @@ class JdhPatientsList extends JdhPatients
     {
         $this->patient_id->AdvancedSearch->load();
         $this->patient_name->AdvancedSearch->load();
+        $this->is_inpatient->AdvancedSearch->load();
     }
 
     // Get export HTML tag
@@ -3659,6 +3713,8 @@ class JdhPatientsList extends JdhPatients
                     break;
                 case "x_service_id":
                     $lookupFilter = $fld->getSelectFilter(); // PHP
+                    break;
+                case "x_is_inpatient":
                     break;
                 default:
                     $lookupFilter = "";

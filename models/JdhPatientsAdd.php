@@ -475,6 +475,7 @@ class JdhPatientsAdd extends JdhPatients
         $this->patient_kin_name->setVisibility();
         $this->patient_kin_phone->setVisibility();
         $this->service_id->setVisibility();
+        $this->is_inpatient->setVisibility();
         $this->patient_registration_date->Visible = false;
         $this->submitted_by_user_id->setVisibility();
 
@@ -506,6 +507,7 @@ class JdhPatientsAdd extends JdhPatients
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_gender);
         $this->setupLookupOptions($this->service_id);
+        $this->setupLookupOptions($this->is_inpatient);
 
         // Load default values for add
         $this->loadDefaultValues();
@@ -762,6 +764,16 @@ class JdhPatientsAdd extends JdhPatients
             }
         }
 
+        // Check field name 'is_inpatient' first before field var 'x_is_inpatient'
+        $val = $CurrentForm->hasValue("is_inpatient") ? $CurrentForm->getValue("is_inpatient") : $CurrentForm->getValue("x_is_inpatient");
+        if (!$this->is_inpatient->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->is_inpatient->Visible = false; // Disable update for API request
+            } else {
+                $this->is_inpatient->setFormValue($val);
+            }
+        }
+
         // Check field name 'submitted_by_user_id' first before field var 'x_submitted_by_user_id'
         $val = $CurrentForm->hasValue("submitted_by_user_id") ? $CurrentForm->getValue("submitted_by_user_id") : $CurrentForm->getValue("x_submitted_by_user_id");
         if (!$this->submitted_by_user_id->IsDetailKey) {
@@ -790,6 +802,7 @@ class JdhPatientsAdd extends JdhPatients
         $this->patient_kin_name->CurrentValue = $this->patient_kin_name->FormValue;
         $this->patient_kin_phone->CurrentValue = $this->patient_kin_phone->FormValue;
         $this->service_id->CurrentValue = $this->service_id->FormValue;
+        $this->is_inpatient->CurrentValue = $this->is_inpatient->FormValue;
         $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->FormValue;
     }
 
@@ -863,6 +876,7 @@ class JdhPatientsAdd extends JdhPatients
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
         $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
         $this->service_id->setDbValue($row['service_id']);
+        $this->is_inpatient->setDbValue($row['is_inpatient']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
@@ -882,6 +896,7 @@ class JdhPatientsAdd extends JdhPatients
         $row['patient_kin_name'] = $this->patient_kin_name->DefaultValue;
         $row['patient_kin_phone'] = $this->patient_kin_phone->DefaultValue;
         $row['service_id'] = $this->service_id->DefaultValue;
+        $row['is_inpatient'] = $this->is_inpatient->DefaultValue;
         $row['patient_registration_date'] = $this->patient_registration_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
@@ -950,6 +965,9 @@ class JdhPatientsAdd extends JdhPatients
 
         // service_id
         $this->service_id->RowCssClass = "row";
+
+        // is_inpatient
+        $this->is_inpatient->RowCssClass = "row";
 
         // patient_registration_date
         $this->patient_registration_date->RowCssClass = "row";
@@ -1028,6 +1046,13 @@ class JdhPatientsAdd extends JdhPatients
                 $this->service_id->ViewValue = null;
             }
 
+            // is_inpatient
+            if (strval($this->is_inpatient->CurrentValue) != "") {
+                $this->is_inpatient->ViewValue = $this->is_inpatient->optionCaption($this->is_inpatient->CurrentValue);
+            } else {
+                $this->is_inpatient->ViewValue = null;
+            }
+
             // patient_registration_date
             $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
@@ -1083,6 +1108,9 @@ class JdhPatientsAdd extends JdhPatients
             // service_id
             $this->service_id->HrefValue = "";
             $this->service_id->TooltipValue = "";
+
+            // is_inpatient
+            $this->is_inpatient->HrefValue = "";
 
             // submitted_by_user_id
             $this->submitted_by_user_id->HrefValue = "";
@@ -1184,6 +1212,11 @@ class JdhPatientsAdd extends JdhPatients
             }
             $this->service_id->PlaceHolder = RemoveHtml($this->service_id->caption());
 
+            // is_inpatient
+            $this->is_inpatient->setupEditAttributes();
+            $this->is_inpatient->EditValue = $this->is_inpatient->options(true);
+            $this->is_inpatient->PlaceHolder = RemoveHtml($this->is_inpatient->caption());
+
             // submitted_by_user_id
 
             // Add refer script
@@ -1234,6 +1267,9 @@ class JdhPatientsAdd extends JdhPatients
 
             // service_id
             $this->service_id->HrefValue = "";
+
+            // is_inpatient
+            $this->is_inpatient->HrefValue = "";
 
             // submitted_by_user_id
             $this->submitted_by_user_id->HrefValue = "";
@@ -1304,6 +1340,11 @@ class JdhPatientsAdd extends JdhPatients
         if ($this->service_id->Required) {
             if (!$this->service_id->IsDetailKey && EmptyValue($this->service_id->FormValue)) {
                 $this->service_id->addErrorMessage(str_replace("%s", $this->service_id->caption(), $this->service_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->is_inpatient->Required) {
+            if (!$this->is_inpatient->IsDetailKey && EmptyValue($this->is_inpatient->FormValue)) {
+                $this->is_inpatient->addErrorMessage(str_replace("%s", $this->is_inpatient->caption(), $this->is_inpatient->RequiredErrorMessage));
             }
         }
         if ($this->submitted_by_user_id->Required) {
@@ -1407,6 +1448,9 @@ class JdhPatientsAdd extends JdhPatients
 
         // service_id
         $this->service_id->setDbValueDef($rsnew, $this->service_id->CurrentValue, 0, false);
+
+        // is_inpatient
+        $this->is_inpatient->setDbValueDef($rsnew, $this->is_inpatient->CurrentValue, 0, false);
 
         // submitted_by_user_id
         $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->getAutoUpdateValue(); // PHP
@@ -1839,6 +1883,8 @@ class JdhPatientsAdd extends JdhPatients
                     break;
                 case "x_service_id":
                     $lookupFilter = $fld->getSelectFilter(); // PHP
+                    break;
+                case "x_is_inpatient":
                     break;
                 default:
                     $lookupFilter = "";

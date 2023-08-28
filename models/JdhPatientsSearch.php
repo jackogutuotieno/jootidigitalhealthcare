@@ -469,6 +469,7 @@ class JdhPatientsSearch extends JdhPatients
         $this->patient_kin_name->Visible = false;
         $this->patient_kin_phone->Visible = false;
         $this->service_id->Visible = false;
+        $this->is_inpatient->setVisibility();
         $this->patient_registration_date->Visible = false;
         $this->submitted_by_user_id->Visible = false;
 
@@ -497,6 +498,7 @@ class JdhPatientsSearch extends JdhPatients
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_gender);
         $this->setupLookupOptions($this->service_id);
+        $this->setupLookupOptions($this->is_inpatient);
 
         // Set up Breadcrumb
         $this->setupBreadcrumb();
@@ -563,6 +565,7 @@ class JdhPatientsSearch extends JdhPatients
         $srchUrl = "";
         $this->buildSearchUrl($srchUrl, $this->patient_id); // patient_id
         $this->buildSearchUrl($srchUrl, $this->patient_name); // patient_name
+        $this->buildSearchUrl($srchUrl, $this->is_inpatient); // is_inpatient
         if ($srchUrl != "") {
             $srchUrl .= "&";
         }
@@ -642,6 +645,11 @@ class JdhPatientsSearch extends JdhPatients
         if ($this->patient_name->AdvancedSearch->get()) {
             $hasValue = true;
         }
+
+        // is_inpatient
+        if ($this->is_inpatient->AdvancedSearch->get()) {
+            $hasValue = true;
+        }
         return $hasValue;
     }
 
@@ -689,6 +697,9 @@ class JdhPatientsSearch extends JdhPatients
 
         // service_id
         $this->service_id->RowCssClass = "row";
+
+        // is_inpatient
+        $this->is_inpatient->RowCssClass = "row";
 
         // patient_registration_date
         $this->patient_registration_date->RowCssClass = "row";
@@ -755,6 +766,13 @@ class JdhPatientsSearch extends JdhPatients
                 $this->service_id->ViewValue = null;
             }
 
+            // is_inpatient
+            if (strval($this->is_inpatient->CurrentValue) != "") {
+                $this->is_inpatient->ViewValue = $this->is_inpatient->optionCaption($this->is_inpatient->CurrentValue);
+            } else {
+                $this->is_inpatient->ViewValue = null;
+            }
+
             // patient_registration_date
             $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
@@ -770,6 +788,10 @@ class JdhPatientsSearch extends JdhPatients
             // patient_name
             $this->patient_name->HrefValue = "";
             $this->patient_name->TooltipValue = "";
+
+            // is_inpatient
+            $this->is_inpatient->HrefValue = "";
+            $this->is_inpatient->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_SEARCH) {
             // patient_id
             $this->patient_id->setupEditAttributes();
@@ -783,6 +805,11 @@ class JdhPatientsSearch extends JdhPatients
             }
             $this->patient_name->EditValue = HtmlEncode($this->patient_name->AdvancedSearch->SearchValue);
             $this->patient_name->PlaceHolder = RemoveHtml($this->patient_name->caption());
+
+            // is_inpatient
+            $this->is_inpatient->setupEditAttributes();
+            $this->is_inpatient->EditValue = $this->is_inpatient->options(true);
+            $this->is_inpatient->PlaceHolder = RemoveHtml($this->is_inpatient->caption());
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -822,6 +849,7 @@ class JdhPatientsSearch extends JdhPatients
     {
         $this->patient_id->AdvancedSearch->load();
         $this->patient_name->AdvancedSearch->load();
+        $this->is_inpatient->AdvancedSearch->load();
     }
 
     // Set up Breadcrumb
@@ -852,6 +880,8 @@ class JdhPatientsSearch extends JdhPatients
                     break;
                 case "x_service_id":
                     $lookupFilter = $fld->getSelectFilter(); // PHP
+                    break;
+                case "x_is_inpatient":
                     break;
                 default:
                     $lookupFilter = "";

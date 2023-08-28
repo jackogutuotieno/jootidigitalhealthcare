@@ -38,6 +38,7 @@ loadjs.ready(["wrapper", "head"], function () {
             ["patient_phone", [fields.patient_phone.visible && fields.patient_phone.required ? ew.Validators.required(fields.patient_phone.caption) : null], fields.patient_phone.isInvalid],
             ["patient_kin_name", [fields.patient_kin_name.visible && fields.patient_kin_name.required ? ew.Validators.required(fields.patient_kin_name.caption) : null], fields.patient_kin_name.isInvalid],
             ["patient_kin_phone", [fields.patient_kin_phone.visible && fields.patient_kin_phone.required ? ew.Validators.required(fields.patient_kin_phone.caption) : null], fields.patient_kin_phone.isInvalid],
+            ["is_inpatient", [fields.is_inpatient.visible && fields.is_inpatient.required ? ew.Validators.required(fields.is_inpatient.caption) : null], fields.is_inpatient.isInvalid],
             ["submitted_by_user_id", [fields.submitted_by_user_id.visible && fields.submitted_by_user_id.required ? ew.Validators.required(fields.submitted_by_user_id.caption) : null], fields.submitted_by_user_id.isInvalid]
         ])
 
@@ -54,6 +55,7 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Dynamic selection lists
         .setLists({
+            "is_inpatient": <?= $Page->is_inpatient->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -152,6 +154,45 @@ loadjs.ready(["wrapper", "head"], function () {
 <input type="<?= $Page->patient_kin_phone->getInputTextType() ?>" name="x_patient_kin_phone" id="x_patient_kin_phone" data-table="jdh_patients" data-field="x_patient_kin_phone" value="<?= $Page->patient_kin_phone->EditValue ?>" size="30" maxlength="15" placeholder="<?= HtmlEncode($Page->patient_kin_phone->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_kin_phone->formatPattern()) ?>"<?= $Page->patient_kin_phone->editAttributes() ?> aria-describedby="x_patient_kin_phone_help">
 <?= $Page->patient_kin_phone->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->patient_kin_phone->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
+    <div id="r_is_inpatient"<?= $Page->is_inpatient->rowAttributes() ?>>
+        <label id="elh_jdh_patients_is_inpatient" for="x_is_inpatient" class="<?= $Page->LeftColumnClass ?>"><?= $Page->is_inpatient->caption() ?><?= $Page->is_inpatient->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->is_inpatient->cellAttributes() ?>>
+<span id="el_jdh_patients_is_inpatient">
+    <select
+        id="x_is_inpatient"
+        name="x_is_inpatient"
+        class="form-select ew-select<?= $Page->is_inpatient->isInvalidClass() ?>"
+        data-select2-id="fjdh_patientsedit_x_is_inpatient"
+        data-table="jdh_patients"
+        data-field="x_is_inpatient"
+        data-value-separator="<?= $Page->is_inpatient->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->is_inpatient->getPlaceHolder()) ?>"
+        <?= $Page->is_inpatient->editAttributes() ?>>
+        <?= $Page->is_inpatient->selectOptionListHtml("x_is_inpatient") ?>
+    </select>
+    <?= $Page->is_inpatient->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->is_inpatient->getErrorMessage() ?></div>
+<script>
+loadjs.ready("fjdh_patientsedit", function() {
+    var options = { name: "x_is_inpatient", selectId: "fjdh_patientsedit_x_is_inpatient" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (fjdh_patientsedit.lists.is_inpatient?.lookupOptions.length) {
+        options.data = { id: "x_is_inpatient", form: "fjdh_patientsedit" };
+    } else {
+        options.ajax = { id: "x_is_inpatient", form: "fjdh_patientsedit", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patients.fields.is_inpatient.selectOptions);
+    ew.createSelect(options);
+});
+</script>
 </span>
 </div></div>
     </div>

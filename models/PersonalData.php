@@ -39,7 +39,7 @@ class PersonalData
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "patientqueues";
+    public $CurrentPageName = "jdhbedsassignmentdelete";
 
     // Page headings
     public $Heading = "";

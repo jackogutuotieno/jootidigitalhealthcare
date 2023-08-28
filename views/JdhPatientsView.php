@@ -97,6 +97,17 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
+    <tr id="r_is_inpatient"<?= $Page->is_inpatient->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_is_inpatient"><?= $Page->is_inpatient->caption() ?></span></td>
+        <td data-name="is_inpatient"<?= $Page->is_inpatient->cellAttributes() ?>>
+<span id="el_jdh_patients_is_inpatient">
+<span<?= $Page->is_inpatient->viewAttributes() ?>>
+<?= $Page->is_inpatient->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 </table>
 <?php if ($Page->getCurrentDetailTable() != "") { ?>
 <?php
