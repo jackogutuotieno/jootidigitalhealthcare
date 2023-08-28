@@ -54,7 +54,6 @@ class JdhVitals extends DbTable
     public $spo2;
     public $submission_date;
     public $submitted_by_user_id;
-    public $patient_status;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -425,29 +424,6 @@ class JdhVitals extends DbTable
         $this->submitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['submitted_by_user_id'] = &$this->submitted_by_user_id;
 
-        // patient_status $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->patient_status = new DbField(
-            $this, // Table
-            'x_patient_status', // Variable name
-            'patient_status', // Name
-            '\'\'', // Expression
-            '\'\'', // Basic search expression
-            201, // Type
-            65530, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '\'\'', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
-        );
-        $this->patient_status->InputTextType = "text";
-        $this->patient_status->IsCustom = true; // Custom field
-        $this->patient_status->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
-        $this->Fields['patient_status'] = &$this->patient_status;
-
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
         $this->CacheProfile = new \Doctrine\DBAL\Cache\QueryCacheProfile(0, $this->TableVar);
@@ -612,7 +588,7 @@ class JdhVitals extends DbTable
 
     public function getSqlSelect() // Select
     {
-        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*, weight/(height*height) AS `body_mass_index`, '' AS `patient_status`");
+        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*, weight/(height*height) AS `body_mass_index`");
     }
 
     public function sqlSelect() // For backward compatibility
@@ -1018,7 +994,6 @@ class JdhVitals extends DbTable
         $this->spo2->DbValue = $row['spo2'];
         $this->submission_date->DbValue = $row['submission_date'];
         $this->submitted_by_user_id->DbValue = $row['submitted_by_user_id'];
-        $this->patient_status->DbValue = $row['patient_status'];
     }
 
     // Delete uploaded files
@@ -1389,7 +1364,6 @@ class JdhVitals extends DbTable
         $this->spo2->setDbValue($row['spo2']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
-        $this->patient_status->setDbValue($row['patient_status']);
     }
 
     // Render list content
@@ -1445,8 +1419,6 @@ class JdhVitals extends DbTable
         // submission_date
 
         // submitted_by_user_id
-
-        // patient_status
 
         // vitals_id
         $this->vitals_id->ViewValue = $this->vitals_id->CurrentValue;
@@ -1516,9 +1488,6 @@ class JdhVitals extends DbTable
         $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
         $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
-        // patient_status
-        $this->patient_status->ViewValue = $this->patient_status->CurrentValue;
-
         // vitals_id
         $this->vitals_id->HrefValue = "";
         $this->vitals_id->TooltipValue = "";
@@ -1570,10 +1539,6 @@ class JdhVitals extends DbTable
         // submitted_by_user_id
         $this->submitted_by_user_id->HrefValue = "";
         $this->submitted_by_user_id->TooltipValue = "";
-
-        // patient_status
-        $this->patient_status->HrefValue = "";
-        $this->patient_status->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1699,14 +1664,6 @@ class JdhVitals extends DbTable
 
         // submitted_by_user_id
 
-        // patient_status
-        $this->patient_status->setupEditAttributes();
-        if (!$this->patient_status->Raw) {
-            $this->patient_status->CurrentValue = HtmlDecode($this->patient_status->CurrentValue);
-        }
-        $this->patient_status->EditValue = $this->patient_status->CurrentValue;
-        $this->patient_status->PlaceHolder = RemoveHtml($this->patient_status->caption());
-
         // Call Row Rendered event
         $this->rowRendered();
     }
@@ -1747,7 +1704,6 @@ class JdhVitals extends DbTable
                     $doc->exportCaption($this->random_blood_sugar);
                     $doc->exportCaption($this->submission_date);
                     $doc->exportCaption($this->submitted_by_user_id);
-                    $doc->exportCaption($this->patient_status);
                 } else {
                     $doc->exportCaption($this->vitals_id);
                     $doc->exportCaption($this->patient_id);
@@ -1803,7 +1759,6 @@ class JdhVitals extends DbTable
                         $doc->exportField($this->random_blood_sugar);
                         $doc->exportField($this->submission_date);
                         $doc->exportField($this->submitted_by_user_id);
-                        $doc->exportField($this->patient_status);
                     } else {
                         $doc->exportField($this->vitals_id);
                         $doc->exportField($this->patient_id);
@@ -2066,9 +2021,6 @@ class JdhVitals extends DbTable
     {
         // To view properties of field class, use:
         //var_dump($this-><FieldName>);
-        //if($this->body_mass_index > 26) {
-           // echo $this.patient_status = "Overweight";
-        //}
     }
 
     // User ID Filtering event

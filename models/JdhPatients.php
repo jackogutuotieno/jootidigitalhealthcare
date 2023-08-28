@@ -99,7 +99,7 @@ class JdhPatients extends DbTable
         $this->ExportWordPageSize = ""; // Page orientation (PHPWord only)
         $this->ExportWordColumnWidth = null; // Cell width (PHPWord only)
         $this->DetailAdd = true; // Allow detail add
-        $this->DetailEdit = true; // Allow detail edit
+        $this->DetailEdit = false; // Allow detail edit
         $this->DetailView = true; // Allow detail view
         $this->ShowMultipleDetails = true; // Show multiple details
         $this->GridAddRowCount = 5;

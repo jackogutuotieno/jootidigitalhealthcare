@@ -35,13 +35,9 @@ loadjs.ready(["wrapper", "head"], function () {
         .setFields([
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["photo", [fields.photo.visible && fields.photo.required ? ew.Validators.fileRequired(fields.photo.caption) : null], fields.photo.isInvalid],
-            ["patient_name", [fields.patient_name.visible && fields.patient_name.required ? ew.Validators.required(fields.patient_name.caption) : null], fields.patient_name.isInvalid],
-            ["patient_national_id", [fields.patient_national_id.visible && fields.patient_national_id.required ? ew.Validators.required(fields.patient_national_id.caption) : null], fields.patient_national_id.isInvalid],
-            ["patient_gender", [fields.patient_gender.visible && fields.patient_gender.required ? ew.Validators.required(fields.patient_gender.caption) : null], fields.patient_gender.isInvalid],
             ["patient_phone", [fields.patient_phone.visible && fields.patient_phone.required ? ew.Validators.required(fields.patient_phone.caption) : null], fields.patient_phone.isInvalid],
             ["patient_kin_name", [fields.patient_kin_name.visible && fields.patient_kin_name.required ? ew.Validators.required(fields.patient_kin_name.caption) : null], fields.patient_kin_name.isInvalid],
             ["patient_kin_phone", [fields.patient_kin_phone.visible && fields.patient_kin_phone.required ? ew.Validators.required(fields.patient_kin_phone.caption) : null], fields.patient_kin_phone.isInvalid],
-            ["service_id", [fields.service_id.visible && fields.service_id.required ? ew.Validators.required(fields.service_id.caption) : null], fields.service_id.isInvalid],
             ["submitted_by_user_id", [fields.submitted_by_user_id.visible && fields.submitted_by_user_id.required ? ew.Validators.required(fields.submitted_by_user_id.caption) : null], fields.submitted_by_user_id.isInvalid]
         ])
 
@@ -58,7 +54,6 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Dynamic selection lists
         .setLists({
-            "patient_gender": <?= $Page->patient_gender->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -125,69 +120,6 @@ loadjs.ready(["wrapper", "head"], function () {
 </div></div>
     </div>
 <?php } ?>
-<?php if ($Page->patient_name->Visible) { // patient_name ?>
-    <div id="r_patient_name"<?= $Page->patient_name->rowAttributes() ?>>
-        <label id="elh_jdh_patients_patient_name" for="x_patient_name" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_name->caption() ?><?= $Page->patient_name->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_name->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_name">
-<input type="<?= $Page->patient_name->getInputTextType() ?>" name="x_patient_name" id="x_patient_name" data-table="jdh_patients" data-field="x_patient_name" value="<?= $Page->patient_name->EditValue ?>" size="30" maxlength="50" placeholder="<?= HtmlEncode($Page->patient_name->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_name->formatPattern()) ?>"<?= $Page->patient_name->editAttributes() ?> aria-describedby="x_patient_name_help">
-<?= $Page->patient_name->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->patient_name->getErrorMessage() ?></div>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->patient_national_id->Visible) { // patient_national_id ?>
-    <div id="r_patient_national_id"<?= $Page->patient_national_id->rowAttributes() ?>>
-        <label id="elh_jdh_patients_patient_national_id" for="x_patient_national_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_national_id->caption() ?><?= $Page->patient_national_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_national_id->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_national_id">
-<input type="<?= $Page->patient_national_id->getInputTextType() ?>" name="x_patient_national_id" id="x_patient_national_id" data-table="jdh_patients" data-field="x_patient_national_id" value="<?= $Page->patient_national_id->EditValue ?>" size="30" maxlength="13" placeholder="<?= HtmlEncode($Page->patient_national_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_national_id->formatPattern()) ?>"<?= $Page->patient_national_id->editAttributes() ?> aria-describedby="x_patient_national_id_help">
-<?= $Page->patient_national_id->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->patient_national_id->getErrorMessage() ?></div>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->patient_gender->Visible) { // patient_gender ?>
-    <div id="r_patient_gender"<?= $Page->patient_gender->rowAttributes() ?>>
-        <label id="elh_jdh_patients_patient_gender" for="x_patient_gender" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_gender->caption() ?><?= $Page->patient_gender->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_gender->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_gender">
-    <select
-        id="x_patient_gender"
-        name="x_patient_gender"
-        class="form-select ew-select<?= $Page->patient_gender->isInvalidClass() ?>"
-        data-select2-id="fjdh_patientsedit_x_patient_gender"
-        data-table="jdh_patients"
-        data-field="x_patient_gender"
-        data-value-separator="<?= $Page->patient_gender->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->patient_gender->getPlaceHolder()) ?>"
-        <?= $Page->patient_gender->editAttributes() ?>>
-        <?= $Page->patient_gender->selectOptionListHtml("x_patient_gender") ?>
-    </select>
-    <?= $Page->patient_gender->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->patient_gender->getErrorMessage() ?></div>
-<script>
-loadjs.ready("fjdh_patientsedit", function() {
-    var options = { name: "x_patient_gender", selectId: "fjdh_patientsedit_x_patient_gender" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_patientsedit.lists.patient_gender?.lookupOptions.length) {
-        options.data = { id: "x_patient_gender", form: "fjdh_patientsedit" };
-    } else {
-        options.ajax = { id: "x_patient_gender", form: "fjdh_patientsedit", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patients.fields.patient_gender.selectOptions);
-    ew.createSelect(options);
-});
-</script>
-</span>
-</div></div>
-    </div>
-<?php } ?>
 <?php if ($Page->patient_phone->Visible) { // patient_phone ?>
     <div id="r_patient_phone"<?= $Page->patient_phone->rowAttributes() ?>>
         <label id="elh_jdh_patients_patient_phone" for="x_patient_phone" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_phone->caption() ?><?= $Page->patient_phone->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
@@ -220,18 +152,6 @@ loadjs.ready("fjdh_patientsedit", function() {
 <input type="<?= $Page->patient_kin_phone->getInputTextType() ?>" name="x_patient_kin_phone" id="x_patient_kin_phone" data-table="jdh_patients" data-field="x_patient_kin_phone" value="<?= $Page->patient_kin_phone->EditValue ?>" size="30" maxlength="15" placeholder="<?= HtmlEncode($Page->patient_kin_phone->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_kin_phone->formatPattern()) ?>"<?= $Page->patient_kin_phone->editAttributes() ?> aria-describedby="x_patient_kin_phone_help">
 <?= $Page->patient_kin_phone->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->patient_kin_phone->getErrorMessage() ?></div>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->service_id->Visible) { // service_id ?>
-    <div id="r_service_id"<?= $Page->service_id->rowAttributes() ?>>
-        <label id="elh_jdh_patients_service_id" for="x_service_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->service_id->caption() ?><?= $Page->service_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->service_id->cellAttributes() ?>>
-<span id="el_jdh_patients_service_id">
-<span<?= $Page->service_id->viewAttributes() ?>>
-<span class="form-control-plaintext"><?= $Page->service_id->getDisplayValue($Page->service_id->EditValue) ?></span></span>
-<input type="hidden" data-table="jdh_patients" data-field="x_service_id" data-hidden="1" name="x_service_id" id="x_service_id" value="<?= HtmlEncode($Page->service_id->CurrentValue) ?>">
 </span>
 </div></div>
     </div>

@@ -563,7 +563,6 @@ class JdhVitalsGrid extends JdhVitals
         $this->spo2->Visible = false;
         $this->submission_date->setVisibility();
         $this->submitted_by_user_id->Visible = false;
-        $this->patient_status->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -1895,7 +1894,6 @@ class JdhVitalsGrid extends JdhVitals
         $this->spo2->setDbValue($row['spo2']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
-        $this->patient_status->setDbValue($row['patient_status']);
     }
 
     // Return a row with default values
@@ -1915,7 +1913,6 @@ class JdhVitalsGrid extends JdhVitals
         $row['spo2'] = $this->spo2->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
-        $row['patient_status'] = $this->patient_status->DefaultValue;
         return $row;
     }
 
@@ -1979,8 +1976,6 @@ class JdhVitalsGrid extends JdhVitals
         // submission_date
 
         // submitted_by_user_id
-
-        // patient_status
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
