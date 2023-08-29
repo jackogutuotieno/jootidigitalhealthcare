@@ -375,6 +375,7 @@ class JdhVitalsDelete extends JdhVitals
         $this->spo2->Visible = false;
         $this->submission_date->setVisibility();
         $this->submitted_by_user_id->Visible = false;
+        $this->patient_status->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -614,6 +615,7 @@ class JdhVitalsDelete extends JdhVitals
         $this->spo2->setDbValue($row['spo2']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->patient_status->setDbValue($row['patient_status']);
     }
 
     // Return a row with default values
@@ -633,6 +635,7 @@ class JdhVitalsDelete extends JdhVitals
         $row['spo2'] = $this->spo2->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['patient_status'] = $this->patient_status->DefaultValue;
         return $row;
     }
 
@@ -673,6 +676,8 @@ class JdhVitalsDelete extends JdhVitals
         // submission_date
 
         // submitted_by_user_id
+
+        // patient_status
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -744,6 +749,9 @@ class JdhVitalsDelete extends JdhVitals
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
+            // patient_status
+            $this->patient_status->ViewValue = $this->patient_status->CurrentValue;
+
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
@@ -783,6 +791,10 @@ class JdhVitalsDelete extends JdhVitals
             // submission_date
             $this->submission_date->HrefValue = "";
             $this->submission_date->TooltipValue = "";
+
+            // patient_status
+            $this->patient_status->HrefValue = "";
+            $this->patient_status->TooltipValue = "";
         }
 
         // Call Row Rendered event

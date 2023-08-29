@@ -10,14 +10,14 @@ return [
     ],
     "SMTP" => [
         "PHPMAILER_MAILER" => "smtp", // PHPMailer mailer
-        "SERVER" => "localhost", // SMTP server
-        "SERVER_PORT" => 25, // SMTP server port
-        "SECURE_OPTION" => "",
-        "SERVER_USERNAME" => "", // SMTP server user name
-        "SERVER_PASSWORD" => "", // SMTP server password
+        "SERVER" => "mail.theclinicianshub.co.ke", // SMTP server
+        "SERVER_PORT" => 993, // SMTP server port
+        "SECURE_OPTION" => "ssl",
+        "SERVER_USERNAME" => "info@theclinicianshub.co.ke", // SMTP server user name
+        "SERVER_PASSWORD" => "theclinicianshub_1044", // SMTP server password
     ],
     "JWT" => [
-        "SECRET_KEY" => "sWeutpKYv9fmzJmS", // API Secret Key
+        "SECRET_KEY" => "bBq2K2lZf5W2bVN6", // API Secret Key
         "ALGORITHM" => "HS512", // API Algorithm
         "AUTH_HEADER" => "X-Authorization", // API Auth Header (Note: The "Authorization" header is removed by IIS, use "X-Authorization" instead.)
         "NOT_BEFORE_TIME" => 0, // API access time before login

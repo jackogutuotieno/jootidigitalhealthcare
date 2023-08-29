@@ -80,6 +80,9 @@ $Page->showMessage();
 <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <th class="<?= $Page->submission_date->headerCellClass() ?>"><span id="elh_jdh_vitals_submission_date" class="jdh_vitals_submission_date"><?= $Page->submission_date->caption() ?></span></th>
 <?php } ?>
+<?php if ($Page->patient_status->Visible) { // patient_status ?>
+        <th class="<?= $Page->patient_status->headerCellClass() ?>"><span id="elh_jdh_vitals_patient_status" class="jdh_vitals_patient_status"><?= $Page->patient_status->caption() ?></span></th>
+<?php } ?>
     </tr>
     </thead>
     <tbody>
@@ -178,6 +181,14 @@ while (!$Page->Recordset->EOF) {
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_submission_date" class="el_jdh_vitals_submission_date">
 <span<?= $Page->submission_date->viewAttributes() ?>>
 <?= $Page->submission_date->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->patient_status->Visible) { // patient_status ?>
+        <td<?= $Page->patient_status->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_patient_status" class="el_jdh_vitals_patient_status">
+<span<?= $Page->patient_status->viewAttributes() ?>>
+<?= $Page->patient_status->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

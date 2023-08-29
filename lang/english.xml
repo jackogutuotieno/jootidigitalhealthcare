@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/8/28">
+<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/8/29">
   <!--
     IMPORTANT NOTES:
     1. Language ID must be RFC 4646 language tags (which use hyphen, not underscore), e.g. en-US, fr-CA, fr-FR,
@@ -1157,7 +1157,7 @@
     </fullcalendar>
   </global>
   <project>
-    <phrase id="bodytitle" value="Jooti Digital | Healthcare - Supporting effective health information management" />
+    <phrase id="bodytitle" value="Jooti Digital | Healthcare - Supporting Effective Health Information Management" />
     <phrase id="footertext" value="&amp;copy;2023 Jooti Digital | Healthcare. All rights reserved." />
     <menu id="271">
       <phrase id="menutext" value="Dashboard" />
@@ -1791,6 +1791,9 @@
       </field>
       <field id="submitted_by_user_id">
         <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="patient_status">
+        <phrase id="fldcaption" value="Status" />
       </field>
     </table>
     <table id="jdh_departments">

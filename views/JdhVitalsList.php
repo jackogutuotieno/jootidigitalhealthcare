@@ -192,6 +192,9 @@ $Page->ListOptions->render("header", "left");
 <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <th data-name="submission_date" class="<?= $Page->submission_date->headerCellClass() ?>"><div id="elh_jdh_vitals_submission_date" class="jdh_vitals_submission_date"><?= $Page->renderFieldHeader($Page->submission_date) ?></div></th>
 <?php } ?>
+<?php if ($Page->patient_status->Visible) { // patient_status ?>
+        <th data-name="patient_status" class="<?= $Page->patient_status->headerCellClass() ?>"><div id="elh_jdh_vitals_patient_status" class="jdh_vitals_patient_status"><?= $Page->renderFieldHeader($Page->patient_status) ?></div></th>
+<?php } ?>
 <?php
 // Render list options (header, right)
 $Page->ListOptions->render("header", "right");
@@ -288,6 +291,14 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_submission_date" class="el_jdh_vitals_submission_date">
 <span<?= $Page->submission_date->viewAttributes() ?>>
 <?= $Page->submission_date->getViewValue() ?></span>
+</span>
+</td>
+    <?php } ?>
+    <?php if ($Page->patient_status->Visible) { // patient_status ?>
+        <td data-name="patient_status"<?= $Page->patient_status->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_patient_status" class="el_jdh_vitals_patient_status">
+<span<?= $Page->patient_status->viewAttributes() ?>>
+<?= $Page->patient_status->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>

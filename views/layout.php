@@ -335,6 +335,8 @@ ew.createChart = function (args) {
     {{/if}}
 {{/if}}
 </script>
+<link rel="shortcut icon" type="image/x-icon" href="<?= BasePath() ?>/ch_app_logo.ico">
+<link rel="icon" type="image/x-icon" href="<?= BasePath() ?>/ch_app_logo.ico">
 <meta name="generator" content="PHPMaker 2023.0.1">
 </head>
 <body class="<?= Config("BODY_CLASS") ?>">

@@ -32,14 +32,15 @@ loadjs.ready(["wrapper", "head"], function () {
             ["respiratory_rate", [fields.respiratory_rate.visible && fields.respiratory_rate.required ? ew.Validators.required(fields.respiratory_rate.caption) : null, ew.Validators.integer], fields.respiratory_rate.isInvalid],
             ["temperature", [fields.temperature.visible && fields.temperature.required ? ew.Validators.required(fields.temperature.caption) : null, ew.Validators.float], fields.temperature.isInvalid],
             ["random_blood_sugar", [fields.random_blood_sugar.visible && fields.random_blood_sugar.required ? ew.Validators.required(fields.random_blood_sugar.caption) : null], fields.random_blood_sugar.isInvalid],
-            ["submission_date", [fields.submission_date.visible && fields.submission_date.required ? ew.Validators.required(fields.submission_date.caption) : null, ew.Validators.datetime(fields.submission_date.clientFormatPattern)], fields.submission_date.isInvalid]
+            ["submission_date", [fields.submission_date.visible && fields.submission_date.required ? ew.Validators.required(fields.submission_date.caption) : null, ew.Validators.datetime(fields.submission_date.clientFormatPattern)], fields.submission_date.isInvalid],
+            ["patient_status", [fields.patient_status.visible && fields.patient_status.required ? ew.Validators.required(fields.patient_status.caption) : null], fields.patient_status.isInvalid]
         ])
 
         // Check empty row
         .setEmptyRow(
             function (rowIndex) {
                 let fobj = this.getForm(),
-                    fields = [["patient_id",false],["pressure",false],["height",false],["weight",false],["body_mass_index",false],["pulse_rate",false],["respiratory_rate",false],["temperature",false],["random_blood_sugar",false],["submission_date",false]];
+                    fields = [["patient_id",false],["pressure",false],["height",false],["weight",false],["body_mass_index",false],["pulse_rate",false],["respiratory_rate",false],["temperature",false],["random_blood_sugar",false],["submission_date",false],["patient_status",false]];
                 if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
                     return false;
                 return true;
@@ -115,6 +116,9 @@ $Grid->ListOptions->render("header", "left");
 <?php } ?>
 <?php if ($Grid->submission_date->Visible) { // submission_date ?>
         <th data-name="submission_date" class="<?= $Grid->submission_date->headerCellClass() ?>"><div id="elh_jdh_vitals_submission_date" class="jdh_vitals_submission_date"><?= $Grid->renderFieldHeader($Grid->submission_date) ?></div></th>
+<?php } ?>
+<?php if ($Grid->patient_status->Visible) { // patient_status ?>
+        <th data-name="patient_status" class="<?= $Grid->patient_status->headerCellClass() ?>"><div id="elh_jdh_vitals_patient_status" class="jdh_vitals_patient_status"><?= $Grid->renderFieldHeader($Grid->patient_status) ?></div></th>
 <?php } ?>
 <?php
 // Render list options (header, right)
@@ -538,6 +542,33 @@ loadjs.ready(["fjdh_vitalsgrid", "datetimepicker"], function () {
 <?php if ($Grid->isConfirm()) { ?>
 <input type="hidden" data-table="jdh_vitals" data-field="x_submission_date" data-hidden="1" name="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_submission_date" id="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_submission_date" value="<?= HtmlEncode($Grid->submission_date->FormValue) ?>">
 <input type="hidden" data-table="jdh_vitals" data-field="x_submission_date" data-hidden="1" data-old name="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_submission_date" id="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_submission_date" value="<?= HtmlEncode($Grid->submission_date->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->patient_status->Visible) { // patient_status ?>
+        <td data-name="patient_status"<?= $Grid->patient_status->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_patient_status" class="el_jdh_vitals_patient_status">
+<textarea data-table="jdh_vitals" data-field="x_patient_status" name="x<?= $Grid->RowIndex ?>_patient_status" id="x<?= $Grid->RowIndex ?>_patient_status" cols="35" rows="4" placeholder="<?= HtmlEncode($Grid->patient_status->getPlaceHolder()) ?>"<?= $Grid->patient_status->editAttributes() ?>><?= $Grid->patient_status->EditValue ?></textarea>
+<div class="invalid-feedback"><?= $Grid->patient_status->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_patient_status" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_patient_status" id="o<?= $Grid->RowIndex ?>_patient_status" value="<?= HtmlEncode($Grid->patient_status->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_patient_status" class="el_jdh_vitals_patient_status">
+<textarea data-table="jdh_vitals" data-field="x_patient_status" name="x<?= $Grid->RowIndex ?>_patient_status" id="x<?= $Grid->RowIndex ?>_patient_status" cols="35" rows="4" placeholder="<?= HtmlEncode($Grid->patient_status->getPlaceHolder()) ?>"<?= $Grid->patient_status->editAttributes() ?>><?= $Grid->patient_status->EditValue ?></textarea>
+<div class="invalid-feedback"><?= $Grid->patient_status->getErrorMessage() ?></div>
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_patient_status" class="el_jdh_vitals_patient_status">
+<span<?= $Grid->patient_status->viewAttributes() ?>>
+<?= $Grid->patient_status->getViewValue() ?></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_vitals" data-field="x_patient_status" data-hidden="1" name="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_patient_status" id="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_patient_status" value="<?= HtmlEncode($Grid->patient_status->FormValue) ?>">
+<input type="hidden" data-table="jdh_vitals" data-field="x_patient_status" data-hidden="1" data-old name="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_patient_status" id="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_patient_status" value="<?= HtmlEncode($Grid->patient_status->OldValue) ?>">
 <?php } ?>
 <?php } ?>
 </td>

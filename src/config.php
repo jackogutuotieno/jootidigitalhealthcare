@@ -142,7 +142,7 @@ $CONFIG = [
 
     // General
     "UNFORMAT_YEAR" => 50, // Unformat year
-    "RANDOM_KEY" => 'hM1UPqrY8rAT6ZxJ', // Random key for encryption
+    "RANDOM_KEY" => 'o1BqsMIbgNz7CsF2', // Random key for encryption
     "ENCRYPTION_KEY" => '', // Encryption key for data protection
     "PROJECT_STYLESHEET_FILENAME" => "css/jootidigitalhealthcare.css", // Project stylesheet file name
     "USE_COMPRESSED_STYLESHEET" => true, // Compressed stylesheet
@@ -460,8 +460,8 @@ $CONFIG = [
     "USER_PROFILE_OTP_VERIFY_DATE_TIME" => "OTPVerifyDateTime",
 
     // Email
-    "SENDER_EMAIL" => "", // Sender email address
-    "RECIPIENT_EMAIL" => "", // Recipient email address
+    "SENDER_EMAIL" => "info@theclinicianshub.co.ke", // Sender email address
+    "RECIPIENT_EMAIL" => "info@theclinicianshub.co.ke", // Recipient email address
     "MAX_EMAIL_RECIPIENT" => 3,
     "MAX_EMAIL_SENT_COUNT" => 3,
     "EXPORT_EMAIL_COUNTER" => SESSION_STATUS . "_EmailCounter",

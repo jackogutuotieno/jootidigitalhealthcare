@@ -563,6 +563,7 @@ class JdhVitalsGrid extends JdhVitals
         $this->spo2->Visible = false;
         $this->submission_date->setVisibility();
         $this->submitted_by_user_id->Visible = false;
+        $this->patient_status->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -1094,6 +1095,9 @@ class JdhVitalsGrid extends JdhVitals
         if ($CurrentForm->hasValue("x_submission_date") && $CurrentForm->hasValue("o_submission_date") && $this->submission_date->CurrentValue != $this->submission_date->DefaultValue) {
             return false;
         }
+        if ($CurrentForm->hasValue("x_patient_status") && $CurrentForm->hasValue("o_patient_status") && $this->patient_status->CurrentValue != $this->patient_status->DefaultValue) {
+            return false;
+        }
         return true;
     }
 
@@ -1189,6 +1193,7 @@ class JdhVitalsGrid extends JdhVitals
         $this->temperature->clearErrorMessage();
         $this->random_blood_sugar->clearErrorMessage();
         $this->submission_date->clearErrorMessage();
+        $this->patient_status->clearErrorMessage();
     }
 
     // Set up sort parameters
@@ -1750,6 +1755,19 @@ class JdhVitalsGrid extends JdhVitals
             $this->submission_date->setOldValue($CurrentForm->getValue("o_submission_date"));
         }
 
+        // Check field name 'patient_status' first before field var 'x_patient_status'
+        $val = $CurrentForm->hasValue("patient_status") ? $CurrentForm->getValue("patient_status") : $CurrentForm->getValue("x_patient_status");
+        if (!$this->patient_status->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->patient_status->Visible = false; // Disable update for API request
+            } else {
+                $this->patient_status->setFormValue($val);
+            }
+        }
+        if ($CurrentForm->hasValue("o_patient_status")) {
+            $this->patient_status->setOldValue($CurrentForm->getValue("o_patient_status"));
+        }
+
         // Check field name 'vitals_id' first before field var 'x_vitals_id'
         $val = $CurrentForm->hasValue("vitals_id") ? $CurrentForm->getValue("vitals_id") : $CurrentForm->getValue("x_vitals_id");
         if (!$this->vitals_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
@@ -1775,6 +1793,7 @@ class JdhVitalsGrid extends JdhVitals
         $this->random_blood_sugar->CurrentValue = $this->random_blood_sugar->FormValue;
         $this->submission_date->CurrentValue = $this->submission_date->FormValue;
         $this->submission_date->CurrentValue = UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern());
+        $this->patient_status->CurrentValue = $this->patient_status->FormValue;
     }
 
     // Load recordset
@@ -1875,6 +1894,7 @@ class JdhVitalsGrid extends JdhVitals
         $this->spo2->setDbValue($row['spo2']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->patient_status->setDbValue($row['patient_status']);
     }
 
     // Return a row with default values
@@ -1894,6 +1914,7 @@ class JdhVitalsGrid extends JdhVitals
         $row['spo2'] = $this->spo2->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['patient_status'] = $this->patient_status->DefaultValue;
         return $row;
     }
 
@@ -1957,6 +1978,8 @@ class JdhVitalsGrid extends JdhVitals
         // submission_date
 
         // submitted_by_user_id
+
+        // patient_status
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -2028,6 +2051,9 @@ class JdhVitalsGrid extends JdhVitals
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
+            // patient_status
+            $this->patient_status->ViewValue = $this->patient_status->CurrentValue;
+
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
@@ -2067,6 +2093,10 @@ class JdhVitalsGrid extends JdhVitals
             // submission_date
             $this->submission_date->HrefValue = "";
             $this->submission_date->TooltipValue = "";
+
+            // patient_status
+            $this->patient_status->HrefValue = "";
+            $this->patient_status->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
             // patient_id
             $this->patient_id->setupEditAttributes();
@@ -2190,6 +2220,11 @@ class JdhVitalsGrid extends JdhVitals
             $this->submission_date->EditValue = HtmlEncode(FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()));
             $this->submission_date->PlaceHolder = RemoveHtml($this->submission_date->caption());
 
+            // patient_status
+            $this->patient_status->setupEditAttributes();
+            $this->patient_status->EditValue = HtmlEncode($this->patient_status->CurrentValue);
+            $this->patient_status->PlaceHolder = RemoveHtml($this->patient_status->caption());
+
             // Add refer script
 
             // patient_id
@@ -2221,6 +2256,9 @@ class JdhVitalsGrid extends JdhVitals
 
             // submission_date
             $this->submission_date->HrefValue = "";
+
+            // patient_status
+            $this->patient_status->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
             // patient_id
             $this->patient_id->setupEditAttributes();
@@ -2341,6 +2379,11 @@ class JdhVitalsGrid extends JdhVitals
             $this->submission_date->EditValue = HtmlEncode(FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()));
             $this->submission_date->PlaceHolder = RemoveHtml($this->submission_date->caption());
 
+            // patient_status
+            $this->patient_status->setupEditAttributes();
+            $this->patient_status->EditValue = HtmlEncode($this->patient_status->CurrentValue);
+            $this->patient_status->PlaceHolder = RemoveHtml($this->patient_status->caption());
+
             // Edit refer script
 
             // patient_id
@@ -2373,6 +2416,9 @@ class JdhVitalsGrid extends JdhVitals
 
             // submission_date
             $this->submission_date->HrefValue = "";
+
+            // patient_status
+            $this->patient_status->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -2461,6 +2507,11 @@ class JdhVitalsGrid extends JdhVitals
         }
         if (!CheckDate($this->submission_date->FormValue, $this->submission_date->formatPattern())) {
             $this->submission_date->addErrorMessage($this->submission_date->getErrorMessage(false));
+        }
+        if ($this->patient_status->Required) {
+            if (!$this->patient_status->IsDetailKey && EmptyValue($this->patient_status->FormValue)) {
+                $this->patient_status->addErrorMessage(str_replace("%s", $this->patient_status->caption(), $this->patient_status->RequiredErrorMessage));
+            }
         }
 
         // Return validate result
@@ -2596,6 +2647,9 @@ class JdhVitalsGrid extends JdhVitals
         // submission_date
         $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), $this->submission_date->ReadOnly);
 
+        // patient_status
+        $this->patient_status->setDbValueDef($rsnew, $this->patient_status->CurrentValue, "", $this->patient_status->ReadOnly);
+
         // Update current values
         $this->setCurrentValues($rsnew);
 
@@ -2674,6 +2728,9 @@ class JdhVitalsGrid extends JdhVitals
 
         // submission_date
         $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), false);
+
+        // patient_status
+        $this->patient_status->setDbValueDef($rsnew, $this->patient_status->CurrentValue, "", false);
 
         // submitted_by_user_id
         if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin

@@ -660,6 +660,7 @@ class JdhVitalsList extends JdhVitals
         $this->spo2->Visible = false;
         $this->submission_date->setVisibility();
         $this->submitted_by_user_id->Visible = false;
+        $this->patient_status->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -1079,6 +1080,7 @@ class JdhVitalsList extends JdhVitals
         $filterList = Concat($filterList, $this->spo2->AdvancedSearch->toJson(), ","); // Field spo2
         $filterList = Concat($filterList, $this->submission_date->AdvancedSearch->toJson(), ","); // Field submission_date
         $filterList = Concat($filterList, $this->submitted_by_user_id->AdvancedSearch->toJson(), ","); // Field submitted_by_user_id
+        $filterList = Concat($filterList, $this->patient_status->AdvancedSearch->toJson(), ","); // Field patient_status
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
             $filterList = Concat($filterList, $wrk, ",");
@@ -1222,6 +1224,14 @@ class JdhVitalsList extends JdhVitals
         $this->submitted_by_user_id->AdvancedSearch->SearchValue2 = @$filter["y_submitted_by_user_id"];
         $this->submitted_by_user_id->AdvancedSearch->SearchOperator2 = @$filter["w_submitted_by_user_id"];
         $this->submitted_by_user_id->AdvancedSearch->save();
+
+        // Field patient_status
+        $this->patient_status->AdvancedSearch->SearchValue = @$filter["x_patient_status"];
+        $this->patient_status->AdvancedSearch->SearchOperator = @$filter["z_patient_status"];
+        $this->patient_status->AdvancedSearch->SearchCondition = @$filter["v_patient_status"];
+        $this->patient_status->AdvancedSearch->SearchValue2 = @$filter["y_patient_status"];
+        $this->patient_status->AdvancedSearch->SearchOperator2 = @$filter["w_patient_status"];
+        $this->patient_status->AdvancedSearch->save();
         $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
     }
@@ -1263,6 +1273,7 @@ class JdhVitalsList extends JdhVitals
         $searchFlds = [];
         $searchFlds[] = &$this->pressure;
         $searchFlds[] = &$this->random_blood_sugar;
+        $searchFlds[] = &$this->patient_status;
         $searchKeyword = $default ? $this->BasicSearch->KeywordDefault : $this->BasicSearch->Keyword;
         $searchType = $default ? $this->BasicSearch->TypeDefault : $this->BasicSearch->Type;
 
@@ -1351,6 +1362,7 @@ class JdhVitalsList extends JdhVitals
             $this->updateSort($this->temperature); // temperature
             $this->updateSort($this->random_blood_sugar); // random_blood_sugar
             $this->updateSort($this->submission_date); // submission_date
+            $this->updateSort($this->patient_status); // patient_status
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1396,6 +1408,7 @@ class JdhVitalsList extends JdhVitals
                 $this->spo2->setSort("");
                 $this->submission_date->setSort("");
                 $this->submitted_by_user_id->setSort("");
+                $this->patient_status->setSort("");
             }
 
             // Reset start position
@@ -1620,6 +1633,7 @@ class JdhVitalsList extends JdhVitals
             $option->add("temperature", $this->createColumnOption("temperature"));
             $option->add("random_blood_sugar", $this->createColumnOption("random_blood_sugar"));
             $option->add("submission_date", $this->createColumnOption("submission_date"));
+            $option->add("patient_status", $this->createColumnOption("patient_status"));
         }
 
         // Set up options default
@@ -2014,6 +2028,7 @@ class JdhVitalsList extends JdhVitals
         $this->spo2->setDbValue($row['spo2']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->patient_status->setDbValue($row['patient_status']);
     }
 
     // Return a row with default values
@@ -2033,6 +2048,7 @@ class JdhVitalsList extends JdhVitals
         $row['spo2'] = $this->spo2->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['patient_status'] = $this->patient_status->DefaultValue;
         return $row;
     }
 
@@ -2098,6 +2114,8 @@ class JdhVitalsList extends JdhVitals
         // submission_date
 
         // submitted_by_user_id
+
+        // patient_status
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -2169,6 +2187,9 @@ class JdhVitalsList extends JdhVitals
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
+            // patient_status
+            $this->patient_status->ViewValue = $this->patient_status->CurrentValue;
+
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
@@ -2208,6 +2229,10 @@ class JdhVitalsList extends JdhVitals
             // submission_date
             $this->submission_date->HrefValue = "";
             $this->submission_date->TooltipValue = "";
+
+            // patient_status
+            $this->patient_status->HrefValue = "";
+            $this->patient_status->TooltipValue = "";
         }
 
         // Call Row Rendered event
