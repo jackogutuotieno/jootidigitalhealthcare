@@ -91,17 +91,6 @@ $jdh_patients = Container("jdh_patients");
 </td>
         </tr>
 <?php } ?>
-<?php if ($jdh_patients->is_inpatient->Visible) { // is_inpatient ?>
-        <tr id="r_is_inpatient"<?= $jdh_patients->is_inpatient->rowAttributes() ?>>
-            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->is_inpatient->caption() ?></td>
-            <td<?= $jdh_patients->is_inpatient->cellAttributes() ?>>
-<span id="el_jdh_patients_is_inpatient">
-<span<?= $jdh_patients->is_inpatient->viewAttributes() ?>>
-<?= $jdh_patients->is_inpatient->getViewValue() ?></span>
-</span>
-</td>
-        </tr>
-<?php } ?>
 <?php if ($jdh_patients->patient_registration_date->Visible) { // patient_registration_date ?>
         <tr id="r_patient_registration_date"<?= $jdh_patients->patient_registration_date->rowAttributes() ?>>
             <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_registration_date->caption() ?></td>
@@ -109,6 +98,17 @@ $jdh_patients = Container("jdh_patients");
 <span id="el_jdh_patients_patient_registration_date">
 <span<?= $jdh_patients->patient_registration_date->viewAttributes() ?>>
 <?= $jdh_patients->patient_registration_date->getViewValue() ?></span>
+</span>
+</td>
+        </tr>
+<?php } ?>
+<?php if ($jdh_patients->is_inpatient->Visible) { // is_inpatient ?>
+        <tr id="r_is_inpatient"<?= $jdh_patients->is_inpatient->rowAttributes() ?>>
+            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->is_inpatient->caption() ?></td>
+            <td<?= $jdh_patients->is_inpatient->cellAttributes() ?>>
+<span id="el_jdh_patients_is_inpatient">
+<span<?= $jdh_patients->is_inpatient->viewAttributes() ?>>
+<?= $jdh_patients->is_inpatient->getViewValue() ?></span>
 </span>
 </td>
         </tr>

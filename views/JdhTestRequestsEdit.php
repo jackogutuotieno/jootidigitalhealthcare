@@ -55,8 +55,6 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Dynamic selection lists
         .setLists({
-            "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
-            "request_service_id": <?= $Page->request_service_id->toClientList($Page) ?>,
             "status_id": <?= $Page->status_id->toClientList($Page) ?>,
         })
         .build();
@@ -76,10 +74,6 @@ loadjs.ready(["wrapper", "head"], function () {
 <input type="hidden" name="json" value="1">
 <?php } ?>
 <input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
-<?php if ($Page->getCurrentMasterTable() == "jdh_patients") { ?>
-<input type="hidden" name="<?= Config("TABLE_SHOW_MASTER") ?>" value="jdh_patients">
-<input type="hidden" name="fk_patient_id" value="<?= HtmlEncode($Page->patient_id->getSessionValue()) ?>">
-<?php } ?>
 <div class="ew-edit-div"><!-- page* -->
 <?php if ($Page->request_id->Visible) { // request_id ?>
     <div id="r_request_id"<?= $Page->request_id->rowAttributes() ?>>
@@ -97,45 +91,11 @@ loadjs.ready(["wrapper", "head"], function () {
     <div id="r_patient_id"<?= $Page->patient_id->rowAttributes() ?>>
         <label id="elh_jdh_test_requests_patient_id" for="x_patient_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_id->caption() ?><?= $Page->patient_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_id->cellAttributes() ?>>
-<?php if ($Page->patient_id->getSessionValue() != "") { ?>
-<span<?= $Page->patient_id->viewAttributes() ?>>
-<span class="form-control-plaintext"><?= $Page->patient_id->getDisplayValue($Page->patient_id->ViewValue) ?></span></span>
-<input type="hidden" id="x_patient_id" name="x_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>" data-hidden="1">
-<?php } else { ?>
 <span id="el_jdh_test_requests_patient_id">
-    <select
-        id="x_patient_id"
-        name="x_patient_id"
-        class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_test_requestsedit_x_patient_id"
-        data-table="jdh_test_requests"
-        data-field="x_patient_id"
-        data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>"
-        <?= $Page->patient_id->editAttributes() ?>>
-        <?= $Page->patient_id->selectOptionListHtml("x_patient_id") ?>
-    </select>
-    <?= $Page->patient_id->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
-<?= $Page->patient_id->Lookup->getParamTag($Page, "p_x_patient_id") ?>
-<script>
-loadjs.ready("fjdh_test_requestsedit", function() {
-    var options = { name: "x_patient_id", selectId: "fjdh_test_requestsedit_x_patient_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_test_requestsedit.lists.patient_id?.lookupOptions.length) {
-        options.data = { id: "x_patient_id", form: "fjdh_test_requestsedit" };
-    } else {
-        options.ajax = { id: "x_patient_id", form: "fjdh_test_requestsedit", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumInputLength = ew.selectMinimumInputLength;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.patient_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<span<?= $Page->patient_id->viewAttributes() ?>>
+<span class="form-control-plaintext"><?= $Page->patient_id->getDisplayValue($Page->patient_id->EditValue) ?></span></span>
+<input type="hidden" data-table="jdh_test_requests" data-field="x_patient_id" data-hidden="1" name="x_patient_id" id="x_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>">
 </span>
-<?php } ?>
 </div></div>
     </div>
 <?php } ?>
@@ -144,9 +104,9 @@ loadjs.ready("fjdh_test_requestsedit", function() {
         <label id="elh_jdh_test_requests_request_title" for="x_request_title" class="<?= $Page->LeftColumnClass ?>"><?= $Page->request_title->caption() ?><?= $Page->request_title->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->request_title->cellAttributes() ?>>
 <span id="el_jdh_test_requests_request_title">
-<input type="<?= $Page->request_title->getInputTextType() ?>" name="x_request_title" id="x_request_title" data-table="jdh_test_requests" data-field="x_request_title" value="<?= $Page->request_title->EditValue ?>" size="30" maxlength="200" placeholder="<?= HtmlEncode($Page->request_title->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->request_title->formatPattern()) ?>"<?= $Page->request_title->editAttributes() ?> aria-describedby="x_request_title_help">
-<?= $Page->request_title->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->request_title->getErrorMessage() ?></div>
+<span<?= $Page->request_title->viewAttributes() ?>>
+<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->request_title->getDisplayValue($Page->request_title->EditValue))) ?>"></span>
+<input type="hidden" data-table="jdh_test_requests" data-field="x_request_title" data-hidden="1" name="x_request_title" id="x_request_title" value="<?= HtmlEncode($Page->request_title->CurrentValue) ?>">
 </span>
 </div></div>
     </div>
@@ -156,37 +116,9 @@ loadjs.ready("fjdh_test_requestsedit", function() {
         <label id="elh_jdh_test_requests_request_service_id" for="x_request_service_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->request_service_id->caption() ?><?= $Page->request_service_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->request_service_id->cellAttributes() ?>>
 <span id="el_jdh_test_requests_request_service_id">
-    <select
-        id="x_request_service_id"
-        name="x_request_service_id"
-        class="form-select ew-select<?= $Page->request_service_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_test_requestsedit_x_request_service_id"
-        data-table="jdh_test_requests"
-        data-field="x_request_service_id"
-        data-value-separator="<?= $Page->request_service_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->request_service_id->getPlaceHolder()) ?>"
-        <?= $Page->request_service_id->editAttributes() ?>>
-        <?= $Page->request_service_id->selectOptionListHtml("x_request_service_id") ?>
-    </select>
-    <?= $Page->request_service_id->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->request_service_id->getErrorMessage() ?></div>
-<?= $Page->request_service_id->Lookup->getParamTag($Page, "p_x_request_service_id") ?>
-<script>
-loadjs.ready("fjdh_test_requestsedit", function() {
-    var options = { name: "x_request_service_id", selectId: "fjdh_test_requestsedit_x_request_service_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_test_requestsedit.lists.request_service_id?.lookupOptions.length) {
-        options.data = { id: "x_request_service_id", form: "fjdh_test_requestsedit" };
-    } else {
-        options.ajax = { id: "x_request_service_id", form: "fjdh_test_requestsedit", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.request_service_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<span<?= $Page->request_service_id->viewAttributes() ?>>
+<span class="form-control-plaintext"><?= $Page->request_service_id->getDisplayValue($Page->request_service_id->EditValue) ?></span></span>
+<input type="hidden" data-table="jdh_test_requests" data-field="x_request_service_id" data-hidden="1" name="x_request_service_id" id="x_request_service_id" value="<?= HtmlEncode($Page->request_service_id->CurrentValue) ?>">
 </span>
 </div></div>
     </div>
@@ -196,9 +128,9 @@ loadjs.ready("fjdh_test_requestsedit", function() {
         <label id="elh_jdh_test_requests_request_description" for="x_request_description" class="<?= $Page->LeftColumnClass ?>"><?= $Page->request_description->caption() ?><?= $Page->request_description->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->request_description->cellAttributes() ?>>
 <span id="el_jdh_test_requests_request_description">
-<textarea data-table="jdh_test_requests" data-field="x_request_description" name="x_request_description" id="x_request_description" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->request_description->getPlaceHolder()) ?>"<?= $Page->request_description->editAttributes() ?> aria-describedby="x_request_description_help"><?= $Page->request_description->EditValue ?></textarea>
-<?= $Page->request_description->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->request_description->getErrorMessage() ?></div>
+<span<?= $Page->request_description->viewAttributes() ?>>
+<?= $Page->request_description->EditValue ?></span>
+<input type="hidden" data-table="jdh_test_requests" data-field="x_request_description" data-hidden="1" name="x_request_description" id="x_request_description" value="<?= HtmlEncode($Page->request_description->CurrentValue) ?>">
 </span>
 </div></div>
     </div>

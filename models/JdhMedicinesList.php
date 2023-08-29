@@ -760,14 +760,14 @@ class JdhMedicinesList extends JdhMedicines
             $this->clearInlineMode();
         }
 
-        // Switch to inline edit mode
-        if ($this->isEdit()) {
-            $this->inlineEditMode();
-        // Inline Update
-        } elseif (IsPost() && ($this->isUpdate() || $this->isOverwrite()) && Session(SESSION_INLINE_MODE) == "edit") {
+        // Switch to inline add mode
+        if ($this->isAdd() || $this->isCopy()) {
+            $this->inlineAddMode();
+        // Insert Inline
+        } elseif (IsPost() && $this->isInsert() && Session(SESSION_INLINE_MODE) == "add") {
             $this->setKey(Post($this->OldKeyName));
             // Return JSON error message if UseAjaxActions
-            if (!$this->inlineUpdate() && $this->UseAjaxActions) {
+            if (!$this->inlineInsert() && $this->UseAjaxActions) {
                 WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
                 $this->clearFailureMessage();
                 $this->terminate();
@@ -1046,76 +1046,44 @@ class JdhMedicinesList extends JdhMedicines
         $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
     }
 
-    // Switch to Inline Edit mode
-    protected function inlineEditMode()
+    // Switch to Inline Add mode
+    protected function inlineAddMode()
     {
         global $Security, $Language;
-        if (!$Security->canEdit()) {
-            return false; // Edit not allowed
+        if (!$Security->canAdd()) {
+            return false; // Add not allowed
         }
-        $inlineEdit = true;
-        if (($keyValue = Get("id") ?? Route("id")) !== null) {
-            $this->id->setQueryStringValue($keyValue);
-        } elseif (IsApi() && ($keyValue = Route(2)) !== null) {
-            $this->id->setQueryStringValue($keyValue);
-        } else {
-            $inlineEdit = false;
-        }
-        if ($inlineEdit) {
-            if ($this->loadRow()) {
-                    // Check if valid User ID
-                    if (!$this->showOptionLink("edit")) {
-                        $userIdMsg = $Language->phrase("NoEditPermission");
-                        $this->setFailureMessage($userIdMsg);
-                        $this->clearInlineMode(); // Clear inline edit mode
-                        return false;
-                    }
-                $this->OldKey = $this->getKey(true); // Get from CurrentValue
-                $this->setKey($this->OldKey); // Set to OldValue
-                $_SESSION[SESSION_INLINE_MODE] = "edit"; // Enable inline edit
-            }
-        }
+        $this->CurrentAction = "add";
+        $_SESSION[SESSION_INLINE_MODE] = "add"; // Enable inline add
         return true;
     }
 
-    // Perform update to Inline Edit record
-    protected function inlineUpdate()
+    // Perform update to Inline Add/Copy record
+    protected function inlineInsert()
     {
         global $Language, $CurrentForm;
-        $CurrentForm->Index = 1;
+        $rsold = $this->loadOldRecord(); // Load old record
+        $CurrentForm->Index = 0;
         $this->loadFormValues(); // Get form values
 
         // Validate form
-        $inlineUpdate = true;
         if (!$this->validateForm()) {
-            $inlineUpdate = false; // Form error, reset action
-        } else {
-            $inlineUpdate = false;
-            $this->SendEmail = true; // Send email on update success
-            $inlineUpdate = $this->editRow(); // Update record
-        }
-        if ($inlineUpdate) { // Update success
-            if ($this->getSuccessMessage() == "") {
-                $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Set up success message
-            }
-            $this->clearInlineMode(); // Clear inline edit mode
-        } else {
-            if ($this->getFailureMessage() == "") {
-                $this->setFailureMessage($Language->phrase("UpdateFailed")); // Set update failed message
-            }
-            $this->EventCancelled = true; // Cancel event
-            $this->CurrentAction = "edit"; // Stay in edit mode
-        }
-        return $inlineUpdate;
-    }
-
-    // Check Inline Edit key
-    public function checkInlineEditKey()
-    {
-        if (!SameString($this->id->OldValue, $this->id->CurrentValue)) {
+            $this->EventCancelled = true; // Set event cancelled
+            $this->CurrentAction = "add"; // Stay in add mode
             return false;
         }
-        return true;
+        $this->SendEmail = true; // Send email on add success
+        if ($this->addRow($rsold)) { // Add record
+            if ($this->getSuccessMessage() == "") {
+                $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up add success message
+            }
+            $this->clearInlineMode(); // Clear inline add mode
+            return true;
+        } else { // Add failed
+            $this->EventCancelled = true; // Set event cancelled
+            $this->CurrentAction = "add"; // Stay in add mode
+            return false;
+        }
     }
 
     // Build filter for all keys
@@ -1147,6 +1115,19 @@ class JdhMedicinesList extends JdhMedicines
             $thisKey = strval($CurrentForm->getValue($this->OldKeyName));
         }
         return $wrkFilter;
+    }
+
+    // Reset form status
+    public function resetFormError()
+    {
+        $this->id->clearErrorMessage();
+        $this->category_id->clearErrorMessage();
+        $this->name->clearErrorMessage();
+        $this->selling_price->clearErrorMessage();
+        $this->buying_price->clearErrorMessage();
+        $this->expiry->clearErrorMessage();
+        $this->date_created->clearErrorMessage();
+        $this->date_updated->clearErrorMessage();
     }
 
     // Get list of filters
@@ -1483,6 +1464,12 @@ class JdhMedicinesList extends JdhMedicines
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
 
+        // "copy"
+        $item = &$this->ListOptions->add("copy");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->canAdd() && $this->isAdd();
+        $item->OnLeft = false;
+
         // List actions
         $item = &$this->ListOptions->add("listactions");
         $item->CssClass = "text-nowrap";
@@ -1559,36 +1546,33 @@ class JdhMedicinesList extends JdhMedicines
         }
         $pageUrl = $this->pageUrl(false);
 
-        // "edit"
-        $opt = $this->ListOptions["edit"];
-        if ($this->isInlineEditRow()) { // Inline-Edit
-            $this->ListOptions->CustomItem = "edit"; // Show edit column only
-            $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
-                $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
-                $updateCaption = $Language->phrase("UpdateLink");
-                $updateTitle = HtmlTitle($updateCaption);
-                $cancelCaption = $Language->phrase("CancelLink");
-                $cancelTitle = HtmlTitle($cancelCaption);
-                $oldKey = HtmlEncode($this->getKey(true));
-                $inlineUpdateUrl = HtmlEncode(GetUrl($this->urlAddHash($this->pageName(), "r" . $this->RowCount . "_" . $this->TableVar)));
-                if ($this->UseAjaxActions) {
-                    $inlineCancelUrl = $this->InlineEditUrl . "?action=cancel";
-                    $opt->Body = <<<INLINEEDITAJAX
+        // "copy"
+        $opt = $this->ListOptions["copy"];
+        if ($this->isInlineAddRow() || $this->isInlineCopyRow()) { // Inline Add/Copy
+            $this->ListOptions->CustomItem = "copy"; // Show copy column only
+            $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
+            $insertCaption = $Language->phrase("InsertLink");
+            $insertTitle = HtmlTitle($insertCaption);
+            $cancelCaption = $Language->phrase("CancelLink");
+            $cancelTitle = HtmlTitle($cancelCaption);
+            $inlineInsertUrl = GetUrl($this->pageName());
+            if ($this->UseAjaxActions) {
+                $opt->Body = <<<INLINEADDAJAX
                     <div{$divClass}>
-                        <button type="button" class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" data-ew-action="inline" data-action="update" data-key="{$oldKey}" data-url="{$inlineUpdateUrl}">{$updateCaption}</button>
-                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel" data-key="{$oldKey}" data-url="{$inlineCancelUrl}">{$cancelCaption}</button>
+                        <button type="button" class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" data-ew-action="inline" data-action="insert" data-key="" data-url="{$inlineInsertUrl}">{$insertCaption}</button>
+                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel">{$cancelCaption}</button>
                     </div>
-                    INLINEEDITAJAX;
-                } else {
-                    $opt->Body = <<<INLINEEDIT
+                    INLINEADDAJAX;
+            } else {
+                $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
+                $opt->Body = <<<INLINEADD
                     <div{$divClass}>
-                        <button class="ew-grid-link ew-inline-update" title="{$updateTitle}" data-caption="{$updateTitle}" form="fjdh_medicineslist" formaction="{$inlineUpdateUrl}">{$updateCaption}</button>
-                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$updateTitle}" href="{$cancelurl}">{$cancelCaption}</a>
-                        <input type="hidden" name="action" id="action" value="update">
+                        <button class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" form="fjdh_medicineslist" formaction="{$inlineInsertUrl}">{$insertCaption}</button>
+                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$insertTitle}" href="{$cancelurl}">{$cancelCaption}</a>
+                        <input type="hidden" name="action" id="action" value="insert">
                     </div>
-                    INLINEEDIT;
-                }
-            $opt->Body .= "<input type=\"hidden\" name=\"" . $this->OldKeyName . "\" id=\"" . $this->OldKeyName . "\" value=\"" . HtmlEncode($this->id->CurrentValue) . "\">";
+                    INLINEADD;
+            }
             return;
         }
         if ($this->CurrentMode == "view") {
@@ -1613,13 +1597,6 @@ class JdhMedicinesList extends JdhMedicines
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_medicines\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
-                }
-                $inlineEditCaption = $Language->phrase("InlineEditLink");
-                $inlineEditTitle = HtmlTitle($inlineEditCaption);
-                if ($this->UseAjaxActions) {
-                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" data-ew-action=\"inline\" data-action=\"edit\" data-key=\"" . HtmlEncode($this->getKey(true)) . "\" data-url=\"" . HtmlEncode($this->InlineEditUrl) . "\">" . $inlineEditCaption . "</a>";
-                } else {
-                    $opt->Body .= "<a class=\"ew-row-link ew-inline-edit\" title=\"" . $inlineEditTitle . "\" data-caption=\"" . $inlineEditTitle . "\" href=\"" . HtmlEncode($this->urlAddHash(GetUrl($this->InlineEditUrl), "r" . $this->RowCount . "_" . $this->TableVar)) . "\">" . $inlineEditCaption . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1692,6 +1669,15 @@ class JdhMedicinesList extends JdhMedicines
             $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
         }
         $item->Visible = $this->AddUrl != "" && $Security->canAdd();
+
+        // Inline Add
+        $item = &$option->add("inlineadd");
+        if ($this->UseAjaxActions) {
+            $item->Body = "<button class=\"ew-add-edit ew-inline-add\" title=\"" . $Language->phrase("InlineAddLink", true) . "\" data-caption=\"" . $Language->phrase("InlineAddLink", true) . "\" data-ew-action=\"inline\" data-action=\"add\" data-position=\"top\" data-url=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</button>";
+        } else {
+            $item->Body = "<a class=\"ew-add-edit ew-inline-add\" title=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</a>";
+        }
+        $item->Visible = $this->InlineAddUrl != "" && $Security->canAdd();
         $option = $options["action"];
 
         // Add multi delete
@@ -1924,8 +1910,11 @@ class JdhMedicinesList extends JdhMedicines
         $this->RowType = ROWTYPE_AGGREGATEINIT;
         $this->resetAttributes();
         $this->renderRow();
-        if ($this->isEdit()) {
-            $this->RowIndex = 1;
+        if ($this->isAdd() || $this->isCopy() || $this->isInlineInserted()) {
+            $this->RowIndex = 0;
+            if ($this->UseInfiniteScroll) {
+                $this->StopRecord = $this->StartRecord; // Show this record only
+            }
         }
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
             $this->RowIndex = '$rowindex$';
@@ -1982,24 +1971,6 @@ class JdhMedicinesList extends JdhMedicines
         $this->RowType = ROWTYPE_VIEW; // Render view
         if (($this->isAdd() || $this->isCopy()) && $this->InlineRowCount == 0 || $this->isGridAdd()) { // Add
             $this->RowType = ROWTYPE_ADD; // Render add
-        }
-        if ($this->isEdit() || $this->isInlineUpdated() || $this->isInlineEditCancelled()) { // Inline edit/updated/cancelled
-            if ($this->checkInlineEditKey() && $this->InlineRowCount == 0) {
-                if ($this->isEdit()) { // Inline edit
-                    $this->RowAction = "edit";
-                    $this->RowType = ROWTYPE_EDIT; // Render edit
-                } else { // Inline updated
-                    $this->RowAction = "";
-                    $this->RowType = ROWTYPE_VIEW; // Render view
-                    $this->RowAttrs["data-oldkey"] = $this->getKey(); // Set up old key
-                }
-            } elseif ($this->UseInfiniteScroll) {
-                $this->RowAction = "hide";
-            }
-        }
-        if ($this->isEdit() && $this->RowType == ROWTYPE_EDIT && $this->EventCancelled) { // Update failed
-            $CurrentForm->Index = 1;
-            $this->restoreFormValues(); // Restore form values
         }
 
         // Inline Add/Copy row (row 0)
@@ -2217,9 +2188,6 @@ class JdhMedicinesList extends JdhMedicines
         if ($row) {
             $res = true;
             $this->loadRowValues($row); // Load row values
-            if (!$this->EventCancelled) {
-                $this->HashValue = $this->getRowHash($row); // Get hash value for record
-            }
         }
         return $res;
     }
@@ -2423,80 +2391,6 @@ class JdhMedicinesList extends JdhMedicines
 
             // category_id
             $this->category_id->setupEditAttributes();
-            $this->category_id->PlaceHolder = RemoveHtml($this->category_id->caption());
-
-            // name
-            $this->name->setupEditAttributes();
-            if (!$this->name->Raw) {
-                $this->name->CurrentValue = HtmlDecode($this->name->CurrentValue);
-            }
-            $this->name->EditValue = HtmlEncode($this->name->CurrentValue);
-            $this->name->PlaceHolder = RemoveHtml($this->name->caption());
-
-            // selling_price
-            $this->selling_price->setupEditAttributes();
-            $this->selling_price->EditValue = HtmlEncode($this->selling_price->CurrentValue);
-            $this->selling_price->PlaceHolder = RemoveHtml($this->selling_price->caption());
-            if (strval($this->selling_price->EditValue) != "" && is_numeric($this->selling_price->EditValue)) {
-                $this->selling_price->EditValue = FormatNumber($this->selling_price->EditValue, null);
-            }
-
-            // buying_price
-            $this->buying_price->setupEditAttributes();
-            $this->buying_price->EditValue = HtmlEncode($this->buying_price->CurrentValue);
-            $this->buying_price->PlaceHolder = RemoveHtml($this->buying_price->caption());
-            if (strval($this->buying_price->EditValue) != "" && is_numeric($this->buying_price->EditValue)) {
-                $this->buying_price->EditValue = FormatNumber($this->buying_price->EditValue, null);
-            }
-
-            // expiry
-            $this->expiry->setupEditAttributes();
-            $this->expiry->EditValue = HtmlEncode(FormatDateTime($this->expiry->CurrentValue, $this->expiry->formatPattern()));
-            $this->expiry->PlaceHolder = RemoveHtml($this->expiry->caption());
-
-            // date_created
-            $this->date_created->setupEditAttributes();
-            $this->date_created->EditValue = HtmlEncode(FormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()));
-            $this->date_created->PlaceHolder = RemoveHtml($this->date_created->caption());
-
-            // date_updated
-            $this->date_updated->setupEditAttributes();
-            $this->date_updated->EditValue = HtmlEncode(FormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern()));
-            $this->date_updated->PlaceHolder = RemoveHtml($this->date_updated->caption());
-
-            // Add refer script
-
-            // id
-            $this->id->HrefValue = "";
-
-            // category_id
-            $this->category_id->HrefValue = "";
-
-            // name
-            $this->name->HrefValue = "";
-
-            // selling_price
-            $this->selling_price->HrefValue = "";
-
-            // buying_price
-            $this->buying_price->HrefValue = "";
-
-            // expiry
-            $this->expiry->HrefValue = "";
-
-            // date_created
-            $this->date_created->HrefValue = "";
-
-            // date_updated
-            $this->date_updated->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // id
-            $this->id->setupEditAttributes();
-            $this->id->EditValue = $this->id->CurrentValue;
-            $this->id->EditValue = FormatNumber($this->id->EditValue, $this->id->formatPattern());
-
-            // category_id
-            $this->category_id->setupEditAttributes();
             $curVal = trim(strval($this->category_id->CurrentValue));
             if ($curVal != "") {
                 $this->category_id->ViewValue = $this->category_id->lookupCacheOption($curVal);
@@ -2561,7 +2455,7 @@ class JdhMedicinesList extends JdhMedicines
             $this->date_updated->EditValue = HtmlEncode(FormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern()));
             $this->date_updated->PlaceHolder = RemoveHtml($this->date_updated->caption());
 
-            // Edit refer script
+            // Add refer script
 
             // id
             $this->id->HrefValue = "";
@@ -2673,91 +2567,6 @@ class JdhMedicinesList extends JdhMedicines
             $this->setFailureMessage($formCustomError);
         }
         return $validateForm;
-    }
-
-    // Update record based on key values
-    protected function editRow()
-    {
-        global $Security, $Language;
-        $oldKeyFilter = $this->getRecordFilter();
-        $filter = $this->applyUserIDFilters($oldKeyFilter);
-        $conn = $this->getConnection();
-
-        // Load old row
-        $this->CurrentFilter = $filter;
-        $sql = $this->getCurrentSql();
-        $rsold = $conn->fetchAssociative($sql);
-        if (!$rsold) {
-            $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
-            return false; // Update Failed
-        } else {
-            // Save old values
-            $this->loadDbValues($rsold);
-        }
-
-        // Set new row
-        $rsnew = [];
-
-        // category_id
-        $this->category_id->setDbValueDef($rsnew, $this->category_id->CurrentValue, 0, $this->category_id->ReadOnly);
-
-        // name
-        $this->name->setDbValueDef($rsnew, $this->name->CurrentValue, "", $this->name->ReadOnly);
-
-        // selling_price
-        $this->selling_price->setDbValueDef($rsnew, $this->selling_price->CurrentValue, 0, $this->selling_price->ReadOnly);
-
-        // buying_price
-        $this->buying_price->setDbValueDef($rsnew, $this->buying_price->CurrentValue, 0, $this->buying_price->ReadOnly);
-
-        // expiry
-        $this->expiry->setDbValueDef($rsnew, UnFormatDateTime($this->expiry->CurrentValue, $this->expiry->formatPattern()), CurrentDate(), $this->expiry->ReadOnly);
-
-        // date_created
-        $this->date_created->setDbValueDef($rsnew, UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()), null, $this->date_created->ReadOnly);
-
-        // date_updated
-        $this->date_updated->setDbValueDef($rsnew, UnFormatDateTime($this->date_updated->CurrentValue, $this->date_updated->formatPattern()), null, $this->date_updated->ReadOnly);
-
-        // Update current values
-        $this->setCurrentValues($rsnew);
-
-        // Call Row Updating event
-        $updateRow = $this->rowUpdating($rsold, $rsnew);
-        if ($updateRow) {
-            if (count($rsnew) > 0) {
-                $this->CurrentFilter = $filter; // Set up current filter
-                $editRow = $this->update($rsnew, "", $rsold);
-                if (!$editRow && !EmptyValue($this->DbErrorMessage)) { // Show database error
-                    $this->setFailureMessage($this->DbErrorMessage);
-                }
-            } else {
-                $editRow = true; // No field to update
-            }
-            if ($editRow) {
-            }
-        } else {
-            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
-                // Use the message, do nothing
-            } elseif ($this->CancelMessage != "") {
-                $this->setFailureMessage($this->CancelMessage);
-                $this->CancelMessage = "";
-            } else {
-                $this->setFailureMessage($Language->phrase("UpdateCancelled"));
-            }
-            $editRow = false;
-        }
-
-        // Call Row_Updated event
-        if ($editRow) {
-            $this->rowUpdated($rsold, $rsnew);
-        }
-        if ($editRow) {
-            if ($this->SendEmail) {
-                $this->sendEmailOnEdit($rsold, $rsnew);
-            }
-        }
-        return $editRow;
     }
 
     /**
@@ -3037,37 +2846,6 @@ class JdhMedicinesList extends JdhMedicines
         return $conn->fetchAssociative($sql);
     }
 
-    // Load row hash
-    protected function loadRowHash()
-    {
-        $filter = $this->getRecordFilter();
-
-        // Load SQL based on filter
-        $this->CurrentFilter = $filter;
-        $sql = $this->getCurrentSql();
-        $conn = $this->getConnection();
-        $row = $conn->fetchAssociative($sql);
-        $this->HashValue = $row ? $this->getRowHash($row) : ""; // Get hash value for record
-    }
-
-    // Get Row Hash
-    public function getRowHash(&$rs)
-    {
-        if (!$rs) {
-            return "";
-        }
-        $row = ($rs instanceof Recordset) ? $rs->fields : $rs;
-        $hash = "";
-        $hash .= GetFieldHash($row['category_id']); // category_id
-        $hash .= GetFieldHash($row['name']); // name
-        $hash .= GetFieldHash($row['selling_price']); // selling_price
-        $hash .= GetFieldHash($row['buying_price']); // buying_price
-        $hash .= GetFieldHash($row['expiry']); // expiry
-        $hash .= GetFieldHash($row['date_created']); // date_created
-        $hash .= GetFieldHash($row['date_updated']); // date_updated
-        return md5($hash);
-    }
-
     // Add record
     protected function addRow($rsold = null)
     {
@@ -3143,6 +2921,9 @@ class JdhMedicinesList extends JdhMedicines
         if ($addRow) {
             // Call Row Inserted event
             $this->rowInserted($rsold, $rsnew);
+            if ($this->SendEmail) {
+                $this->sendEmailOnAdd($rsnew);
+            }
         }
         return $addRow;
     }

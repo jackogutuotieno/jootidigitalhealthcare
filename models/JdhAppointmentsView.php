@@ -53,6 +53,14 @@ class JdhAppointmentsView extends JdhAppointments
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -783,6 +791,9 @@ class JdhAppointmentsView extends JdhAppointments
 
         // Call Row Selected event
         $this->rowSelected($row);
+        if ($this->AuditTrailOnView) {
+            $this->writeAuditTrailOnView($row);
+        }
         $this->appointment_id->setDbValue($row['appointment_id']);
         $this->patient_id->setDbValue($row['patient_id']);
         $this->appointment_title->setDbValue($row['appointment_title']);
@@ -852,7 +863,6 @@ class JdhAppointmentsView extends JdhAppointments
             $this->appointment_id->ViewValue = $this->appointment_id->CurrentValue;
 
             // patient_id
-            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
             $curVal = strval($this->patient_id->CurrentValue);
             if ($curVal != "") {
                 $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);

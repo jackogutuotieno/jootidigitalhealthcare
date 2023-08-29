@@ -940,9 +940,6 @@ class JdhVitalsView extends JdhVitals
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
             $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
-            // patient_status
-            $this->patient_status->ViewValue = $this->patient_status->CurrentValue;
-
             // vitals_id
             $this->vitals_id->HrefValue = "";
             $this->vitals_id->TooltipValue = "";
@@ -990,10 +987,6 @@ class JdhVitalsView extends JdhVitals
             // submitted_by_user_id
             $this->submitted_by_user_id->HrefValue = "";
             $this->submitted_by_user_id->TooltipValue = "";
-
-            // patient_status
-            $this->patient_status->HrefValue = "";
-            $this->patient_status->TooltipValue = "";
         }
 
         // Call Row Rendered event

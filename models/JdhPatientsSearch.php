@@ -469,8 +469,8 @@ class JdhPatientsSearch extends JdhPatients
         $this->patient_kin_name->Visible = false;
         $this->patient_kin_phone->Visible = false;
         $this->service_id->Visible = false;
-        $this->is_inpatient->setVisibility();
         $this->patient_registration_date->Visible = false;
+        $this->is_inpatient->setVisibility();
         $this->submitted_by_user_id->Visible = false;
 
         // Set lookup cache
@@ -698,11 +698,11 @@ class JdhPatientsSearch extends JdhPatients
         // service_id
         $this->service_id->RowCssClass = "row";
 
-        // is_inpatient
-        $this->is_inpatient->RowCssClass = "row";
-
         // patient_registration_date
         $this->patient_registration_date->RowCssClass = "row";
+
+        // is_inpatient
+        $this->is_inpatient->RowCssClass = "row";
 
         // submitted_by_user_id
         $this->submitted_by_user_id->RowCssClass = "row";
@@ -766,16 +766,16 @@ class JdhPatientsSearch extends JdhPatients
                 $this->service_id->ViewValue = null;
             }
 
+            // patient_registration_date
+            $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
+            $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
+
             // is_inpatient
             if (strval($this->is_inpatient->CurrentValue) != "") {
                 $this->is_inpatient->ViewValue = $this->is_inpatient->optionCaption($this->is_inpatient->CurrentValue);
             } else {
                 $this->is_inpatient->ViewValue = null;
             }
-
-            // patient_registration_date
-            $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
-            $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
             // submitted_by_user_id
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;

@@ -170,11 +170,11 @@ $Page->ListOptions->render("header", "left");
 <?php if ($Page->patient_phone->Visible) { // patient_phone ?>
         <th data-name="patient_phone" class="<?= $Page->patient_phone->headerCellClass() ?>"><div id="elh_jdh_patients_patient_phone" class="jdh_patients_patient_phone"><?= $Page->renderFieldHeader($Page->patient_phone) ?></div></th>
 <?php } ?>
-<?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
-        <th data-name="is_inpatient" class="<?= $Page->is_inpatient->headerCellClass() ?>"><div id="elh_jdh_patients_is_inpatient" class="jdh_patients_is_inpatient"><?= $Page->renderFieldHeader($Page->is_inpatient) ?></div></th>
-<?php } ?>
 <?php if ($Page->patient_registration_date->Visible) { // patient_registration_date ?>
         <th data-name="patient_registration_date" class="<?= $Page->patient_registration_date->headerCellClass() ?>"><div id="elh_jdh_patients_patient_registration_date" class="jdh_patients_patient_registration_date"><?= $Page->renderFieldHeader($Page->patient_registration_date) ?></div></th>
+<?php } ?>
+<?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
+        <th data-name="is_inpatient" class="<?= $Page->is_inpatient->headerCellClass() ?>"><div id="elh_jdh_patients_is_inpatient" class="jdh_patients_is_inpatient"><?= $Page->renderFieldHeader($Page->is_inpatient) ?></div></th>
 <?php } ?>
 <?php
 // Render list options (header, right)
@@ -256,19 +256,19 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
-        <td data-name="is_inpatient"<?= $Page->is_inpatient->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_is_inpatient" class="el_jdh_patients_is_inpatient">
-<span<?= $Page->is_inpatient->viewAttributes() ?>>
-<?= $Page->is_inpatient->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
     <?php if ($Page->patient_registration_date->Visible) { // patient_registration_date ?>
         <td data-name="patient_registration_date"<?= $Page->patient_registration_date->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_patients_patient_registration_date" class="el_jdh_patients_patient_registration_date">
 <span<?= $Page->patient_registration_date->viewAttributes() ?>>
 <?= $Page->patient_registration_date->getViewValue() ?></span>
+</span>
+</td>
+    <?php } ?>
+    <?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
+        <td data-name="is_inpatient"<?= $Page->is_inpatient->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_patients_is_inpatient" class="el_jdh_patients_is_inpatient">
+<span<?= $Page->is_inpatient->viewAttributes() ?>>
+<?= $Page->is_inpatient->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/8/29">
+<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/8/30">
   <!--
     IMPORTANT NOTES:
     1. Language ID must be RFC 4646 language tags (which use hyphen, not underscore), e.g. en-US, fr-CA, fr-FR,
@@ -1189,18 +1189,6 @@
     <menu id="276">
       <phrase id="menutext" value="Doctor Charges" />
     </menu>
-    <menu id="282">
-      <phrase id="menutext" value="Wards" />
-    </menu>
-    <menu id="281">
-      <phrase id="menutext" value="Rooms" />
-    </menu>
-    <menu id="284">
-      <phrase id="menutext" value="Beds Assignment" />
-    </menu>
-    <menu id="283">
-      <phrase id="menutext" value="Beds" />
-    </menu>
     <menu id="102">
       <phrase id="menutext" value="Patients" />
     </menu>
@@ -1236,6 +1224,18 @@
     </menu>
     <menu id="11">
       <phrase id="menutext" value="Prescriptions" />
+    </menu>
+    <menu id="282">
+      <phrase id="menutext" value="Wards" />
+    </menu>
+    <menu id="281">
+      <phrase id="menutext" value="Rooms" />
+    </menu>
+    <menu id="283">
+      <phrase id="menutext" value="Beds" />
+    </menu>
+    <menu id="284">
+      <phrase id="menutext" value="Beds Assignment" />
     </menu>
     <menu id="149">
       <phrase id="menutext" value="Investigations" />
@@ -1417,6 +1417,7 @@
     </table>
     <table id="jdh_patient_cases">
       <phrase id="tblcaption" value="Cases" />
+      <phrase id="tblpagecaption1" value="Page 1" />
       <field id="case_id">
         <phrase id="fldcaption" value="Case No." />
       </field>
@@ -1451,7 +1452,7 @@
     <table id="jdh_patient_visits">
       <phrase id="tblcaption" value="Visits" />
       <field id="visit_id">
-        <phrase id="fldcaption" value="Visit No" />
+        <phrase id="fldcaption" value="No" />
       </field>
       <field id="patient_id">
         <phrase id="fldcaption" value="Patient Name" />
@@ -1515,15 +1516,15 @@
       <field id="service_id">
         <phrase id="fldcaption" value="Reg. Fee" />
       </field>
+      <field id="patient_registration_date">
+        <phrase id="fldcaption" value="Registration Date" />
+      </field>
       <field id="is_inpatient">
         <phrase id="fldcaption" value="Is IPD?" />
         <phrase id="fldtagvalue1" value="0" />
         <phrase id="fldtagcaption1" value="No" />
         <phrase id="fldtagvalue2" value="1" />
         <phrase id="fldtagcaption2" value="Yes" />
-      </field>
-      <field id="patient_registration_date">
-        <phrase id="fldcaption" value="Registration Date" />
       </field>
       <field id="submitted_by_user_id">
         <phrase id="fldcaption" value="User ID" />

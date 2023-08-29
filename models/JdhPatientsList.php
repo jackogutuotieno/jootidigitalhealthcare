@@ -666,8 +666,8 @@ class JdhPatientsList extends JdhPatients
         $this->patient_kin_name->Visible = false;
         $this->patient_kin_phone->Visible = false;
         $this->service_id->Visible = false;
-        $this->is_inpatient->setVisibility();
         $this->patient_registration_date->setVisibility();
+        $this->is_inpatient->setVisibility();
         $this->submitted_by_user_id->Visible = false;
 
         // Set lookup cache
@@ -1484,8 +1484,8 @@ class JdhPatientsList extends JdhPatients
             $this->updateSort($this->patient_age); // patient_age
             $this->updateSort($this->patient_gender); // patient_gender
             $this->updateSort($this->patient_phone); // patient_phone
-            $this->updateSort($this->is_inpatient); // is_inpatient
             $this->updateSort($this->patient_registration_date); // patient_registration_date
+            $this->updateSort($this->is_inpatient); // is_inpatient
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1520,8 +1520,8 @@ class JdhPatientsList extends JdhPatients
                 $this->patient_kin_name->setSort("");
                 $this->patient_kin_phone->setSort("");
                 $this->service_id->setSort("");
-                $this->is_inpatient->setSort("");
                 $this->patient_registration_date->setSort("");
+                $this->is_inpatient->setSort("");
                 $this->submitted_by_user_id->setSort("");
             }
 
@@ -1554,24 +1554,17 @@ class JdhPatientsList extends JdhPatients
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
 
-        // "detail_jdh_appointments"
-        $item = &$this->ListOptions->add("detail_jdh_appointments");
+        // "detail_jdh_patient_visits"
+        $item = &$this->ListOptions->add("detail_jdh_patient_visits");
         $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_appointments');
+        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_patient_visits');
         $item->OnLeft = false;
         $item->ShowInButtonGroup = false;
 
-        // "detail_jdh_patient_cases"
-        $item = &$this->ListOptions->add("detail_jdh_patient_cases");
+        // "detail_jdh_beds_assignment"
+        $item = &$this->ListOptions->add("detail_jdh_beds_assignment");
         $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_patient_cases');
-        $item->OnLeft = false;
-        $item->ShowInButtonGroup = false;
-
-        // "detail_jdh_vitals"
-        $item = &$this->ListOptions->add("detail_jdh_vitals");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_vitals');
+        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_beds_assignment');
         $item->OnLeft = false;
         $item->ShowInButtonGroup = false;
 
@@ -1589,24 +1582,17 @@ class JdhPatientsList extends JdhPatients
         $item->OnLeft = false;
         $item->ShowInButtonGroup = false;
 
+        // "detail_jdh_patient_cases"
+        $item = &$this->ListOptions->add("detail_jdh_patient_cases");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_patient_cases');
+        $item->OnLeft = false;
+        $item->ShowInButtonGroup = false;
+
         // "detail_jdh_prescriptions"
         $item = &$this->ListOptions->add("detail_jdh_prescriptions");
         $item->CssClass = "text-nowrap";
         $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_prescriptions');
-        $item->OnLeft = false;
-        $item->ShowInButtonGroup = false;
-
-        // "detail_jdh_test_requests"
-        $item = &$this->ListOptions->add("detail_jdh_test_requests");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_test_requests');
-        $item->OnLeft = false;
-        $item->ShowInButtonGroup = false;
-
-        // "detail_jdh_test_reports"
-        $item = &$this->ListOptions->add("detail_jdh_test_reports");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_test_reports');
         $item->OnLeft = false;
         $item->ShowInButtonGroup = false;
 
@@ -1617,10 +1603,17 @@ class JdhPatientsList extends JdhPatients
         $item->OnLeft = false;
         $item->ShowInButtonGroup = false;
 
-        // "detail_jdh_patient_visits"
-        $item = &$this->ListOptions->add("detail_jdh_patient_visits");
+        // "detail_jdh_vitals"
+        $item = &$this->ListOptions->add("detail_jdh_vitals");
         $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_patient_visits');
+        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_vitals');
+        $item->OnLeft = false;
+        $item->ShowInButtonGroup = false;
+
+        // "detail_jdh_appointments"
+        $item = &$this->ListOptions->add("detail_jdh_appointments");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_appointments');
         $item->OnLeft = false;
         $item->ShowInButtonGroup = false;
 
@@ -1636,16 +1629,15 @@ class JdhPatientsList extends JdhPatients
 
         // Set up detail pages
         $pages = new SubPages();
-        $pages->add("jdh_appointments");
-        $pages->add("jdh_patient_cases");
-        $pages->add("jdh_vitals");
+        $pages->add("jdh_patient_visits");
+        $pages->add("jdh_beds_assignment");
         $pages->add("jdh_chief_complaints");
         $pages->add("jdh_examination_findings");
+        $pages->add("jdh_patient_cases");
         $pages->add("jdh_prescriptions");
-        $pages->add("jdh_test_requests");
-        $pages->add("jdh_test_reports");
         $pages->add("jdh_prescriptions_actions");
-        $pages->add("jdh_patient_visits");
+        $pages->add("jdh_vitals");
+        $pages->add("jdh_appointments");
         $this->DetailPages = $pages;
 
         // List actions
@@ -1770,38 +1762,38 @@ class JdhPatientsList extends JdhPatients
         $detailCopyTblVar = "";
         $detailEditTblVar = "";
 
-        // "detail_jdh_appointments"
-        $opt = $this->ListOptions["detail_jdh_appointments"];
-        if ($Security->allowList(CurrentProjectID() . 'jdh_appointments') && $this->showOptionLink()) {
-            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_appointments", "TblCaption");
+        // "detail_jdh_patient_visits"
+        $opt = $this->ListOptions["detail_jdh_patient_visits"];
+        if ($Security->allowList(CurrentProjectID() . 'jdh_patient_visits') && $this->showOptionLink()) {
+            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_patient_visits", "TblCaption");
             if (!$this->ShowMultipleDetails) { // Skip loading record count if show multiple details
-                $detailTbl = Container("jdh_appointments");
+                $detailTbl = Container("jdh_patient_visits");
                 $detailFilter = $detailTbl->getDetailFilter($this);
                 $detailTbl->setCurrentMasterTable($this->TableVar);
                 $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
                 $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
-                $body .= "&nbsp;" . str_replace("%c", Container("jdh_appointments")->Count, $Language->phrase("DetailCount"));
+                $body .= "&nbsp;" . str_replace("%c", Container("jdh_patient_visits")->Count, $Language->phrase("DetailCount"));
             }
-            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhappointmentslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
+            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhpatientvisitslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
             $links = "";
-            $detailPage = Container("JdhAppointmentsGrid");
+            $detailPage = Container("JdhPatientVisitsGrid");
             if ($detailPage->DetailView && $Security->canView() && $this->showOptionLink("view") && $Security->allowView(CurrentProjectID() . 'jdh_patients')) {
                 $caption = $Language->phrase("MasterDetailViewLink", null);
-                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_appointments");
+                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_visits");
                 $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
                 if ($detailViewTblVar != "") {
                     $detailViewTblVar .= ",";
                 }
-                $detailViewTblVar .= "jdh_appointments";
+                $detailViewTblVar .= "jdh_patient_visits";
             }
             if ($detailPage->DetailEdit && $Security->canEdit() && $this->showOptionLink("edit") && $Security->allowEdit(CurrentProjectID() . 'jdh_patients')) {
                 $caption = $Language->phrase("MasterDetailEditLink", null);
-                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_appointments");
+                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_visits");
                 $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
                 if ($detailEditTblVar != "") {
                     $detailEditTblVar .= ",";
                 }
-                $detailEditTblVar .= "jdh_appointments";
+                $detailEditTblVar .= "jdh_patient_visits";
             }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -1816,84 +1808,38 @@ class JdhPatientsList extends JdhPatients
             }
         }
 
-        // "detail_jdh_patient_cases"
-        $opt = $this->ListOptions["detail_jdh_patient_cases"];
-        if ($Security->allowList(CurrentProjectID() . 'jdh_patient_cases') && $this->showOptionLink()) {
-            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_patient_cases", "TblCaption");
+        // "detail_jdh_beds_assignment"
+        $opt = $this->ListOptions["detail_jdh_beds_assignment"];
+        if ($Security->allowList(CurrentProjectID() . 'jdh_beds_assignment') && $this->showOptionLink()) {
+            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_beds_assignment", "TblCaption");
             if (!$this->ShowMultipleDetails) { // Skip loading record count if show multiple details
-                $detailTbl = Container("jdh_patient_cases");
+                $detailTbl = Container("jdh_beds_assignment");
                 $detailFilter = $detailTbl->getDetailFilter($this);
                 $detailTbl->setCurrentMasterTable($this->TableVar);
                 $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
                 $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
-                $body .= "&nbsp;" . str_replace("%c", Container("jdh_patient_cases")->Count, $Language->phrase("DetailCount"));
+                $body .= "&nbsp;" . str_replace("%c", Container("jdh_beds_assignment")->Count, $Language->phrase("DetailCount"));
             }
-            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhpatientcaseslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
+            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhbedsassignmentlist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
             $links = "";
-            $detailPage = Container("JdhPatientCasesGrid");
+            $detailPage = Container("JdhBedsAssignmentGrid");
             if ($detailPage->DetailView && $Security->canView() && $this->showOptionLink("view") && $Security->allowView(CurrentProjectID() . 'jdh_patients')) {
                 $caption = $Language->phrase("MasterDetailViewLink", null);
-                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_cases");
+                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_beds_assignment");
                 $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
                 if ($detailViewTblVar != "") {
                     $detailViewTblVar .= ",";
                 }
-                $detailViewTblVar .= "jdh_patient_cases";
+                $detailViewTblVar .= "jdh_beds_assignment";
             }
             if ($detailPage->DetailEdit && $Security->canEdit() && $this->showOptionLink("edit") && $Security->allowEdit(CurrentProjectID() . 'jdh_patients')) {
                 $caption = $Language->phrase("MasterDetailEditLink", null);
-                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_cases");
+                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_beds_assignment");
                 $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
                 if ($detailEditTblVar != "") {
                     $detailEditTblVar .= ",";
                 }
-                $detailEditTblVar .= "jdh_patient_cases";
-            }
-            if ($links != "") {
-                $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
-                $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
-            } else {
-                $body = preg_replace('/\b\s+dropdown-toggle\b/', "", $body);
-            }
-            $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">" . $body . "</div>";
-            $opt->Body = $body;
-            if ($this->ShowMultipleDetails) {
-                $opt->Visible = false;
-            }
-        }
-
-        // "detail_jdh_vitals"
-        $opt = $this->ListOptions["detail_jdh_vitals"];
-        if ($Security->allowList(CurrentProjectID() . 'jdh_vitals') && $this->showOptionLink()) {
-            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_vitals", "TblCaption");
-            if (!$this->ShowMultipleDetails) { // Skip loading record count if show multiple details
-                $detailTbl = Container("jdh_vitals");
-                $detailFilter = $detailTbl->getDetailFilter($this);
-                $detailTbl->setCurrentMasterTable($this->TableVar);
-                $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
-                $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
-                $body .= "&nbsp;" . str_replace("%c", Container("jdh_vitals")->Count, $Language->phrase("DetailCount"));
-            }
-            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhvitalslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
-            $links = "";
-            $detailPage = Container("JdhVitalsGrid");
-            if ($detailPage->DetailView && $Security->canView() && $this->showOptionLink("view") && $Security->allowView(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailViewLink", null);
-                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailViewTblVar != "") {
-                    $detailViewTblVar .= ",";
-                }
-                $detailViewTblVar .= "jdh_vitals";
-            }
-            if ($detailPage->DetailEdit && $Security->canEdit() && $this->showOptionLink("edit") && $Security->allowEdit(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailEditLink", null);
-                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailEditTblVar != "") {
-                    $detailEditTblVar .= ",";
-                }
-                $detailEditTblVar .= "jdh_vitals";
+                $detailEditTblVar .= "jdh_beds_assignment";
             }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -2000,6 +1946,52 @@ class JdhPatientsList extends JdhPatients
             }
         }
 
+        // "detail_jdh_patient_cases"
+        $opt = $this->ListOptions["detail_jdh_patient_cases"];
+        if ($Security->allowList(CurrentProjectID() . 'jdh_patient_cases') && $this->showOptionLink()) {
+            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_patient_cases", "TblCaption");
+            if (!$this->ShowMultipleDetails) { // Skip loading record count if show multiple details
+                $detailTbl = Container("jdh_patient_cases");
+                $detailFilter = $detailTbl->getDetailFilter($this);
+                $detailTbl->setCurrentMasterTable($this->TableVar);
+                $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
+                $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
+                $body .= "&nbsp;" . str_replace("%c", Container("jdh_patient_cases")->Count, $Language->phrase("DetailCount"));
+            }
+            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhpatientcaseslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
+            $links = "";
+            $detailPage = Container("JdhPatientCasesGrid");
+            if ($detailPage->DetailView && $Security->canView() && $this->showOptionLink("view") && $Security->allowView(CurrentProjectID() . 'jdh_patients')) {
+                $caption = $Language->phrase("MasterDetailViewLink", null);
+                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_cases");
+                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
+                if ($detailViewTblVar != "") {
+                    $detailViewTblVar .= ",";
+                }
+                $detailViewTblVar .= "jdh_patient_cases";
+            }
+            if ($detailPage->DetailEdit && $Security->canEdit() && $this->showOptionLink("edit") && $Security->allowEdit(CurrentProjectID() . 'jdh_patients')) {
+                $caption = $Language->phrase("MasterDetailEditLink", null);
+                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_cases");
+                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
+                if ($detailEditTblVar != "") {
+                    $detailEditTblVar .= ",";
+                }
+                $detailEditTblVar .= "jdh_patient_cases";
+            }
+            if ($links != "") {
+                $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
+                $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
+            } else {
+                $body = preg_replace('/\b\s+dropdown-toggle\b/', "", $body);
+            }
+            $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">" . $body . "</div>";
+            $opt->Body = $body;
+            if ($this->ShowMultipleDetails) {
+                $opt->Visible = false;
+            }
+        }
+
         // "detail_jdh_prescriptions"
         $opt = $this->ListOptions["detail_jdh_prescriptions"];
         if ($Security->allowList(CurrentProjectID() . 'jdh_prescriptions') && $this->showOptionLink()) {
@@ -2032,98 +2024,6 @@ class JdhPatientsList extends JdhPatients
                     $detailEditTblVar .= ",";
                 }
                 $detailEditTblVar .= "jdh_prescriptions";
-            }
-            if ($links != "") {
-                $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
-                $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
-            } else {
-                $body = preg_replace('/\b\s+dropdown-toggle\b/', "", $body);
-            }
-            $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">" . $body . "</div>";
-            $opt->Body = $body;
-            if ($this->ShowMultipleDetails) {
-                $opt->Visible = false;
-            }
-        }
-
-        // "detail_jdh_test_requests"
-        $opt = $this->ListOptions["detail_jdh_test_requests"];
-        if ($Security->allowList(CurrentProjectID() . 'jdh_test_requests') && $this->showOptionLink()) {
-            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_test_requests", "TblCaption");
-            if (!$this->ShowMultipleDetails) { // Skip loading record count if show multiple details
-                $detailTbl = Container("jdh_test_requests");
-                $detailFilter = $detailTbl->getDetailFilter($this);
-                $detailTbl->setCurrentMasterTable($this->TableVar);
-                $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
-                $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
-                $body .= "&nbsp;" . str_replace("%c", Container("jdh_test_requests")->Count, $Language->phrase("DetailCount"));
-            }
-            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhtestrequestslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
-            $links = "";
-            $detailPage = Container("JdhTestRequestsGrid");
-            if ($detailPage->DetailView && $Security->canView() && $this->showOptionLink("view") && $Security->allowView(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailViewLink", null);
-                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_requests");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailViewTblVar != "") {
-                    $detailViewTblVar .= ",";
-                }
-                $detailViewTblVar .= "jdh_test_requests";
-            }
-            if ($detailPage->DetailEdit && $Security->canEdit() && $this->showOptionLink("edit") && $Security->allowEdit(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailEditLink", null);
-                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_requests");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailEditTblVar != "") {
-                    $detailEditTblVar .= ",";
-                }
-                $detailEditTblVar .= "jdh_test_requests";
-            }
-            if ($links != "") {
-                $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
-                $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
-            } else {
-                $body = preg_replace('/\b\s+dropdown-toggle\b/', "", $body);
-            }
-            $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">" . $body . "</div>";
-            $opt->Body = $body;
-            if ($this->ShowMultipleDetails) {
-                $opt->Visible = false;
-            }
-        }
-
-        // "detail_jdh_test_reports"
-        $opt = $this->ListOptions["detail_jdh_test_reports"];
-        if ($Security->allowList(CurrentProjectID() . 'jdh_test_reports') && $this->showOptionLink()) {
-            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_test_reports", "TblCaption");
-            if (!$this->ShowMultipleDetails) { // Skip loading record count if show multiple details
-                $detailTbl = Container("jdh_test_reports");
-                $detailFilter = $detailTbl->getDetailFilter($this);
-                $detailTbl->setCurrentMasterTable($this->TableVar);
-                $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
-                $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
-                $body .= "&nbsp;" . str_replace("%c", Container("jdh_test_reports")->Count, $Language->phrase("DetailCount"));
-            }
-            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhtestreportslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
-            $links = "";
-            $detailPage = Container("JdhTestReportsGrid");
-            if ($detailPage->DetailView && $Security->canView() && $this->showOptionLink("view") && $Security->allowView(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailViewLink", null);
-                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailViewTblVar != "") {
-                    $detailViewTblVar .= ",";
-                }
-                $detailViewTblVar .= "jdh_test_reports";
-            }
-            if ($detailPage->DetailEdit && $Security->canEdit() && $this->showOptionLink("edit") && $Security->allowEdit(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailEditLink", null);
-                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailEditTblVar != "") {
-                    $detailEditTblVar .= ",";
-                }
-                $detailEditTblVar .= "jdh_test_reports";
             }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -2184,38 +2084,84 @@ class JdhPatientsList extends JdhPatients
             }
         }
 
-        // "detail_jdh_patient_visits"
-        $opt = $this->ListOptions["detail_jdh_patient_visits"];
-        if ($Security->allowList(CurrentProjectID() . 'jdh_patient_visits') && $this->showOptionLink()) {
-            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_patient_visits", "TblCaption");
+        // "detail_jdh_vitals"
+        $opt = $this->ListOptions["detail_jdh_vitals"];
+        if ($Security->allowList(CurrentProjectID() . 'jdh_vitals') && $this->showOptionLink()) {
+            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_vitals", "TblCaption");
             if (!$this->ShowMultipleDetails) { // Skip loading record count if show multiple details
-                $detailTbl = Container("jdh_patient_visits");
+                $detailTbl = Container("jdh_vitals");
                 $detailFilter = $detailTbl->getDetailFilter($this);
                 $detailTbl->setCurrentMasterTable($this->TableVar);
                 $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
                 $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
-                $body .= "&nbsp;" . str_replace("%c", Container("jdh_patient_visits")->Count, $Language->phrase("DetailCount"));
+                $body .= "&nbsp;" . str_replace("%c", Container("jdh_vitals")->Count, $Language->phrase("DetailCount"));
             }
-            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhpatientvisitslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
+            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhvitalslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
             $links = "";
-            $detailPage = Container("JdhPatientVisitsGrid");
+            $detailPage = Container("JdhVitalsGrid");
             if ($detailPage->DetailView && $Security->canView() && $this->showOptionLink("view") && $Security->allowView(CurrentProjectID() . 'jdh_patients')) {
                 $caption = $Language->phrase("MasterDetailViewLink", null);
-                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_visits");
+                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
                 $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
                 if ($detailViewTblVar != "") {
                     $detailViewTblVar .= ",";
                 }
-                $detailViewTblVar .= "jdh_patient_visits";
+                $detailViewTblVar .= "jdh_vitals";
             }
             if ($detailPage->DetailEdit && $Security->canEdit() && $this->showOptionLink("edit") && $Security->allowEdit(CurrentProjectID() . 'jdh_patients')) {
                 $caption = $Language->phrase("MasterDetailEditLink", null);
-                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_visits");
+                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
                 $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
                 if ($detailEditTblVar != "") {
                     $detailEditTblVar .= ",";
                 }
-                $detailEditTblVar .= "jdh_patient_visits";
+                $detailEditTblVar .= "jdh_vitals";
+            }
+            if ($links != "") {
+                $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
+                $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
+            } else {
+                $body = preg_replace('/\b\s+dropdown-toggle\b/', "", $body);
+            }
+            $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">" . $body . "</div>";
+            $opt->Body = $body;
+            if ($this->ShowMultipleDetails) {
+                $opt->Visible = false;
+            }
+        }
+
+        // "detail_jdh_appointments"
+        $opt = $this->ListOptions["detail_jdh_appointments"];
+        if ($Security->allowList(CurrentProjectID() . 'jdh_appointments') && $this->showOptionLink()) {
+            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_appointments", "TblCaption");
+            if (!$this->ShowMultipleDetails) { // Skip loading record count if show multiple details
+                $detailTbl = Container("jdh_appointments");
+                $detailFilter = $detailTbl->getDetailFilter($this);
+                $detailTbl->setCurrentMasterTable($this->TableVar);
+                $detailFilter = $detailTbl->applyUserIDFilters($detailFilter);
+                $detailTbl->Count = $detailTbl->loadRecordCount($detailFilter);
+                $body .= "&nbsp;" . str_replace("%c", Container("jdh_appointments")->Count, $Language->phrase("DetailCount"));
+            }
+            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhappointmentslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
+            $links = "";
+            $detailPage = Container("JdhAppointmentsGrid");
+            if ($detailPage->DetailView && $Security->canView() && $this->showOptionLink("view") && $Security->allowView(CurrentProjectID() . 'jdh_patients')) {
+                $caption = $Language->phrase("MasterDetailViewLink", null);
+                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_appointments");
+                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
+                if ($detailViewTblVar != "") {
+                    $detailViewTblVar .= ",";
+                }
+                $detailViewTblVar .= "jdh_appointments";
+            }
+            if ($detailPage->DetailEdit && $Security->canEdit() && $this->showOptionLink("edit") && $Security->allowEdit(CurrentProjectID() . 'jdh_patients')) {
+                $caption = $Language->phrase("MasterDetailEditLink", null);
+                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_appointments");
+                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
+                if ($detailEditTblVar != "") {
+                    $detailEditTblVar .= ",";
+                }
+                $detailEditTblVar .= "jdh_appointments";
             }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -2285,9 +2231,9 @@ class JdhPatientsList extends JdhPatients
         $item->Visible = $this->AddUrl != "" && $Security->canAdd();
         $option = $options["detail"];
         $detailTableLink = "";
-                $item = &$option->add("detailadd_jdh_appointments");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_appointments");
-                $detailPage = Container("JdhAppointmentsGrid");
+                $item = &$option->add("detailadd_jdh_patient_visits");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_visits");
+                $detailPage = Container("JdhPatientVisitsGrid");
                 $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
                 $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
                 $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
@@ -2295,11 +2241,11 @@ class JdhPatientsList extends JdhPatients
                     if ($detailTableLink != "") {
                         $detailTableLink .= ",";
                     }
-                    $detailTableLink .= "jdh_appointments";
+                    $detailTableLink .= "jdh_patient_visits";
                 }
-                $item = &$option->add("detailadd_jdh_patient_cases");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_cases");
-                $detailPage = Container("JdhPatientCasesGrid");
+                $item = &$option->add("detailadd_jdh_beds_assignment");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_beds_assignment");
+                $detailPage = Container("JdhBedsAssignmentGrid");
                 $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
                 $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
                 $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
@@ -2307,19 +2253,7 @@ class JdhPatientsList extends JdhPatients
                     if ($detailTableLink != "") {
                         $detailTableLink .= ",";
                     }
-                    $detailTableLink .= "jdh_patient_cases";
-                }
-                $item = &$option->add("detailadd_jdh_vitals");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
-                $detailPage = Container("JdhVitalsGrid");
-                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
-                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
-                if ($item->Visible) {
-                    if ($detailTableLink != "") {
-                        $detailTableLink .= ",";
-                    }
-                    $detailTableLink .= "jdh_vitals";
+                    $detailTableLink .= "jdh_beds_assignment";
                 }
                 $item = &$option->add("detailadd_jdh_chief_complaints");
                 $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_chief_complaints");
@@ -2345,6 +2279,18 @@ class JdhPatientsList extends JdhPatients
                     }
                     $detailTableLink .= "jdh_examination_findings";
                 }
+                $item = &$option->add("detailadd_jdh_patient_cases");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_cases");
+                $detailPage = Container("JdhPatientCasesGrid");
+                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
+                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
+                if ($item->Visible) {
+                    if ($detailTableLink != "") {
+                        $detailTableLink .= ",";
+                    }
+                    $detailTableLink .= "jdh_patient_cases";
+                }
                 $item = &$option->add("detailadd_jdh_prescriptions");
                 $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_prescriptions");
                 $detailPage = Container("JdhPrescriptionsGrid");
@@ -2356,30 +2302,6 @@ class JdhPatientsList extends JdhPatients
                         $detailTableLink .= ",";
                     }
                     $detailTableLink .= "jdh_prescriptions";
-                }
-                $item = &$option->add("detailadd_jdh_test_requests");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_requests");
-                $detailPage = Container("JdhTestRequestsGrid");
-                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
-                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
-                if ($item->Visible) {
-                    if ($detailTableLink != "") {
-                        $detailTableLink .= ",";
-                    }
-                    $detailTableLink .= "jdh_test_requests";
-                }
-                $item = &$option->add("detailadd_jdh_test_reports");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports");
-                $detailPage = Container("JdhTestReportsGrid");
-                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
-                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
-                if ($item->Visible) {
-                    if ($detailTableLink != "") {
-                        $detailTableLink .= ",";
-                    }
-                    $detailTableLink .= "jdh_test_reports";
                 }
                 $item = &$option->add("detailadd_jdh_prescriptions_actions");
                 $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_prescriptions_actions");
@@ -2393,9 +2315,9 @@ class JdhPatientsList extends JdhPatients
                     }
                     $detailTableLink .= "jdh_prescriptions_actions";
                 }
-                $item = &$option->add("detailadd_jdh_patient_visits");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_visits");
-                $detailPage = Container("JdhPatientVisitsGrid");
+                $item = &$option->add("detailadd_jdh_vitals");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
+                $detailPage = Container("JdhVitalsGrid");
                 $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
                 $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
                 $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
@@ -2403,7 +2325,19 @@ class JdhPatientsList extends JdhPatients
                     if ($detailTableLink != "") {
                         $detailTableLink .= ",";
                     }
-                    $detailTableLink .= "jdh_patient_visits";
+                    $detailTableLink .= "jdh_vitals";
+                }
+                $item = &$option->add("detailadd_jdh_appointments");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_appointments");
+                $detailPage = Container("JdhAppointmentsGrid");
+                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
+                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
+                if ($item->Visible) {
+                    if ($detailTableLink != "") {
+                        $detailTableLink .= ",";
+                    }
+                    $detailTableLink .= "jdh_appointments";
                 }
 
         // Add multiple details
@@ -2449,8 +2383,8 @@ class JdhPatientsList extends JdhPatients
             $option->add("patient_age", $this->createColumnOption("patient_age"));
             $option->add("patient_gender", $this->createColumnOption("patient_gender"));
             $option->add("patient_phone", $this->createColumnOption("patient_phone"));
-            $option->add("is_inpatient", $this->createColumnOption("is_inpatient"));
             $option->add("patient_registration_date", $this->createColumnOption("patient_registration_date"));
+            $option->add("is_inpatient", $this->createColumnOption("is_inpatient"));
         }
 
         // Set up options default
@@ -2885,8 +2819,8 @@ class JdhPatientsList extends JdhPatients
         $this->patient_kin_name->setDbValue($row['patient_kin_name']);
         $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
         $this->service_id->setDbValue($row['service_id']);
-        $this->is_inpatient->setDbValue($row['is_inpatient']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
+        $this->is_inpatient->setDbValue($row['is_inpatient']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
 
@@ -2905,8 +2839,8 @@ class JdhPatientsList extends JdhPatients
         $row['patient_kin_name'] = $this->patient_kin_name->DefaultValue;
         $row['patient_kin_phone'] = $this->patient_kin_phone->DefaultValue;
         $row['service_id'] = $this->service_id->DefaultValue;
-        $row['is_inpatient'] = $this->is_inpatient->DefaultValue;
         $row['patient_registration_date'] = $this->patient_registration_date->DefaultValue;
+        $row['is_inpatient'] = $this->is_inpatient->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
     }
@@ -2970,9 +2904,9 @@ class JdhPatientsList extends JdhPatients
 
         // service_id
 
-        // is_inpatient
-
         // patient_registration_date
+
+        // is_inpatient
 
         // submitted_by_user_id
 
@@ -3035,16 +2969,16 @@ class JdhPatientsList extends JdhPatients
                 $this->service_id->ViewValue = null;
             }
 
+            // patient_registration_date
+            $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
+            $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
+
             // is_inpatient
             if (strval($this->is_inpatient->CurrentValue) != "") {
                 $this->is_inpatient->ViewValue = $this->is_inpatient->optionCaption($this->is_inpatient->CurrentValue);
             } else {
                 $this->is_inpatient->ViewValue = null;
             }
-
-            // patient_registration_date
-            $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
-            $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
             // submitted_by_user_id
             $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
@@ -3098,13 +3032,13 @@ class JdhPatientsList extends JdhPatients
                 $this->patient_phone->ViewValue = $this->highlightValue($this->patient_phone);
             }
 
-            // is_inpatient
-            $this->is_inpatient->HrefValue = "";
-            $this->is_inpatient->TooltipValue = "";
-
             // patient_registration_date
             $this->patient_registration_date->HrefValue = "";
             $this->patient_registration_date->TooltipValue = "";
+
+            // is_inpatient
+            $this->is_inpatient->HrefValue = "";
+            $this->is_inpatient->TooltipValue = "";
         }
 
         // Call Row Rendered event

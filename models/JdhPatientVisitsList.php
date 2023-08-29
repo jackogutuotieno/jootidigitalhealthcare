@@ -782,6 +782,35 @@ class JdhPatientVisitsList extends JdhPatientVisits
             }
         }
 
+        // Switch to grid add mode
+        if ($this->isGridAdd()) {
+            $this->gridAddMode();
+            // Grid Insert
+        } elseif (IsPost() && $this->isGridInsert() && Session(SESSION_INLINE_MODE) == "gridadd") {
+            if ($this->validateGridForm()) {
+                $gridInsert = $this->gridInsert();
+            } else {
+                $gridInsert = false;
+            }
+            if ($gridInsert) {
+                // Handle modal grid add, redirect to list page directly
+                if ($this->IsModal && !$this->UseAjaxActions) {
+                    $this->terminate("jdhpatientvisitslist");
+                    return;
+                }
+            } else {
+                $this->EventCancelled = true;
+                // Return JSON error message if UseAjaxActions
+                if ($this->UseAjaxActions) {
+                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                    $this->clearFailureMessage();
+                    $this->terminate();
+                    return;
+                }
+                $this->gridAddMode(); // Stay in Grid add mode
+            }
+        }
+
         // Hide list options
         if ($this->isExport()) {
             $this->ListOptions->hideAllOptions(["sequence"]);
@@ -803,6 +832,16 @@ class JdhPatientVisitsList extends JdhPatientVisits
         // Hide other options
         if ($this->isExport()) {
             $this->OtherOptions->hideAllOptions();
+        }
+
+        // Show grid delete link for grid add / grid edit
+        if ($this->AllowAddDeleteRow) {
+            if ($this->isGridAdd() || $this->isGridEdit()) {
+                $item = $this->ListOptions["griddelete"];
+                if ($item) {
+                    $item->Visible = false;
+                }
+            }
         }
 
         // Set up sorting order
@@ -1017,6 +1056,14 @@ class JdhPatientVisitsList extends JdhPatientVisits
         $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
     }
 
+    // Switch to Grid Add mode
+    protected function gridAddMode()
+    {
+        $this->CurrentAction = "gridadd";
+        $_SESSION[SESSION_INLINE_MODE] = "gridadd";
+        $this->hideFieldsForAddEdit();
+    }
+
     // Switch to Inline Add mode
     protected function inlineAddMode()
     {
@@ -1086,6 +1133,236 @@ class JdhPatientVisitsList extends JdhPatientVisits
             $thisKey = strval($CurrentForm->getValue($this->OldKeyName));
         }
         return $wrkFilter;
+    }
+
+    // Perform Grid Add
+    public function gridInsert()
+    {
+        global $Language, $CurrentForm;
+        $rowindex = 1;
+        $gridInsert = false;
+        $conn = $this->getConnection();
+
+        // Call Grid Inserting event
+        if (!$this->gridInserting()) {
+            if ($this->getFailureMessage() == "") {
+                $this->setFailureMessage($Language->phrase("GridAddCancelled")); // Set grid add cancelled message
+            }
+            $this->EventCancelled = true;
+            return false;
+        }
+
+        // Begin transaction
+        if ($this->UseTransaction) {
+            $conn->beginTransaction();
+        }
+
+        // Init key filter
+        $wrkfilter = "";
+        $addcnt = 0;
+        if ($this->AuditTrailOnAdd) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchInsertBegin")); // Batch insert begin
+        }
+        $key = "";
+
+        // Get row count
+        $CurrentForm->Index = -1;
+        $rowcnt = strval($CurrentForm->getValue($this->FormKeyCountName));
+        if ($rowcnt == "" || !is_numeric($rowcnt)) {
+            $rowcnt = 0;
+        }
+
+        // Insert all rows
+        for ($rowindex = 1; $rowindex <= $rowcnt; $rowindex++) {
+            // Load current row values
+            $CurrentForm->Index = $rowindex;
+            $rowaction = strval($CurrentForm->getValue($this->FormActionName));
+            if ($rowaction != "" && $rowaction != "insert") {
+                continue; // Skip
+            }
+            $rsold = null;
+            if ($rowaction == "insert") {
+                $this->OldKey = strval($CurrentForm->getValue($this->OldKeyName));
+                $rsold = $this->loadOldRecord(); // Load old record
+            }
+            $this->loadFormValues(); // Get form values
+            if (!$this->emptyRow()) {
+                $addcnt++;
+                $this->SendEmail = false; // Do not send email on insert success
+                $gridInsert = $this->addRow($rsold); // Insert row (already validated by validateGridForm())
+                if ($gridInsert) {
+                    if ($key != "") {
+                        $key .= Config("COMPOSITE_KEY_SEPARATOR");
+                    }
+                    $key .= $this->visit_id->CurrentValue;
+
+                    // Add filter for this record
+                    AddFilter($wrkfilter, $this->getRecordFilter(), "OR");
+                } else {
+                    $this->EventCancelled = true;
+                    break;
+                }
+            }
+        }
+        if ($addcnt == 0) { // No record inserted
+            $this->setFailureMessage($Language->phrase("NoAddRecord"));
+            $gridInsert = false;
+        }
+        if ($gridInsert) {
+            if ($this->UseTransaction) { // Commit transaction
+                $conn->commit();
+            }
+
+            // Get new records
+            $this->CurrentFilter = $wrkfilter;
+            $this->FilterForModalActions = $wrkfilter;
+            $sql = $this->getCurrentSql();
+            $rsnew = $conn->fetchAllAssociative($sql);
+
+            // Call Grid_Inserted event
+            $this->gridInserted($rsnew);
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchInsertSuccess")); // Batch insert success
+            }
+            if ($this->getSuccessMessage() == "") {
+                $this->setSuccessMessage($Language->phrase("InsertSuccess")); // Set up insert success message
+            }
+            $this->clearInlineMode(); // Clear grid add mode
+
+            // Send notify email
+            $table = 'jdh_patient_visits';
+            $subject = $table . " " . $Language->phrase("RecordInserted");
+            $action = $Language->phrase("ActionInsertedGridAdd");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", $key);
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rsnew"] = &$rsnew;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
+        } else {
+            if ($this->UseTransaction) { // Rollback transaction
+                $conn->rollback();
+            }
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchInsertRollback")); // Batch insert rollback
+            }
+            if ($this->getFailureMessage() == "") {
+                $this->setFailureMessage($Language->phrase("InsertFailed")); // Set insert failed message
+            }
+        }
+        return $gridInsert;
+    }
+
+    // Check if empty row
+    public function emptyRow()
+    {
+        global $CurrentForm;
+        if ($CurrentForm->hasValue("x_patient_id") && $CurrentForm->hasValue("o_patient_id") && $this->patient_id->CurrentValue != $this->patient_id->DefaultValue) {
+            return false;
+        }
+        if ($CurrentForm->hasValue("x_visit_type_id") && $CurrentForm->hasValue("o_visit_type_id") && $this->visit_type_id->CurrentValue != $this->visit_type_id->DefaultValue) {
+            return false;
+        }
+        if ($CurrentForm->hasValue("x_user_id") && $CurrentForm->hasValue("o_user_id") && $this->user_id->CurrentValue != $this->user_id->DefaultValue) {
+            return false;
+        }
+        if ($CurrentForm->hasValue("x_insurance_id") && $CurrentForm->hasValue("o_insurance_id") && $this->insurance_id->CurrentValue != $this->insurance_id->DefaultValue) {
+            return false;
+        }
+        if ($CurrentForm->hasValue("x_visit_date") && $CurrentForm->hasValue("o_visit_date") && $this->visit_date->CurrentValue != $this->visit_date->DefaultValue) {
+            return false;
+        }
+        return true;
+    }
+
+    // Validate grid form
+    public function validateGridForm()
+    {
+        global $CurrentForm;
+        // Get row count
+        $CurrentForm->Index = -1;
+        $rowcnt = strval($CurrentForm->getValue($this->FormKeyCountName));
+        if ($rowcnt == "" || !is_numeric($rowcnt)) {
+            $rowcnt = 0;
+        }
+
+        // Load default values for emptyRow checking
+        $this->loadDefaultValues();
+
+        // Validate all records
+        for ($rowindex = 1; $rowindex <= $rowcnt; $rowindex++) {
+            // Load current row values
+            $CurrentForm->Index = $rowindex;
+            $rowaction = strval($CurrentForm->getValue($this->FormActionName));
+            if ($rowaction != "delete" && $rowaction != "insertdelete" && $rowaction != "hide") {
+                $this->loadFormValues(); // Get form values
+                if ($rowaction == "insert" && $this->emptyRow()) {
+                    // Ignore
+                } elseif (!$this->validateForm()) {
+                    $this->EventCancelled = true;
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    // Get all form values of the grid
+    public function getGridFormValues()
+    {
+        global $CurrentForm;
+        // Get row count
+        $CurrentForm->Index = -1;
+        $rowcnt = strval($CurrentForm->getValue($this->FormKeyCountName));
+        if ($rowcnt == "" || !is_numeric($rowcnt)) {
+            $rowcnt = 0;
+        }
+        $rows = [];
+
+        // Loop through all records
+        for ($rowindex = 1; $rowindex <= $rowcnt; $rowindex++) {
+            // Load current row values
+            $CurrentForm->Index = $rowindex;
+            $rowaction = strval($CurrentForm->getValue($this->FormActionName));
+            if ($rowaction != "delete" && $rowaction != "insertdelete") {
+                $this->loadFormValues(); // Get form values
+                if ($rowaction == "insert" && $this->emptyRow()) {
+                    // Ignore
+                } else {
+                    $rows[] = $this->getFieldValues("FormValue"); // Return row as array
+                }
+            }
+        }
+        return $rows; // Return as array of array
+    }
+
+    // Restore form values for current row
+    public function restoreCurrentRowFormValues($idx)
+    {
+        global $CurrentForm;
+
+        // Get row based on current index
+        $CurrentForm->Index = $idx;
+        $rowaction = strval($CurrentForm->getValue($this->FormActionName));
+        $this->loadFormValues(); // Load form values
+        // Set up invalid status correctly
+        $this->resetFormError();
+        if ($rowaction == "insert" && $this->emptyRow()) {
+            // Ignore
+        } else {
+            $this->validateForm();
+        }
     }
 
     // Reset form status
@@ -1165,6 +1442,14 @@ class JdhPatientVisitsList extends JdhPatientVisits
     protected function setupListOptions()
     {
         global $Security, $Language;
+
+        // "griddelete"
+        if ($this->AllowAddDeleteRow) {
+            $item = &$this->ListOptions->add("griddelete");
+            $item->CssClass = "text-nowrap";
+            $item->OnLeft = false;
+            $item->Visible = false; // Default hidden
+        }
 
         // Add group option item ("button")
         $item = &$this->ListOptions->addGroupOption();
@@ -1258,6 +1543,20 @@ class JdhPatientVisitsList extends JdhPatientVisits
             }
             if ($this->RowAction == "insert" && $this->isConfirm() && $this->emptyRow()) {
                 $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $blankRowName . "\" id=\"" . $blankRowName . "\" value=\"1\">";
+            }
+        }
+
+        // "delete"
+        if ($this->AllowAddDeleteRow) {
+            if ($this->isGridAdd() || $this->isGridEdit()) {
+                $options = &$this->ListOptions;
+                $options->UseButtonGroup = true; // Use button group for grid delete button
+                $opt = $options["griddelete"];
+                if (is_numeric($this->RowIndex) && ($this->RowAction == "" || $this->RowAction == "edit")) { // Do not allow delete existing record
+                    $opt->Body = "&nbsp;";
+                } else {
+                    $opt->Body = "<a class=\"ew-grid-link ew-grid-delete\" title=\"" . HtmlTitle($Language->phrase("DeleteLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("DeleteLink")) . "\" data-ew-action=\"delete-grid-row\" data-rowindex=\"" . $this->RowIndex . "\">" . $Language->phrase("DeleteLink") . "</a>";
+                }
             }
         }
 
@@ -1373,6 +1672,13 @@ class JdhPatientVisitsList extends JdhPatientVisits
             $item->Body = "<a class=\"ew-add-edit ew-inline-add\" title=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</a>";
         }
         $item->Visible = $this->InlineAddUrl != "" && $Security->canAdd();
+        $item = &$option->add("gridadd");
+        if ($this->ModalGridAdd && !IsMobile()) {
+            $item->Body = "<button class=\"ew-add-edit ew-grid-add\" title=\"" . $Language->phrase("AddLink", true) . "\" data-caption=\"" . $Language->phrase("AddLink", true) . "\" data-ew-action=\"modal\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-action=\"add\" data-position=\"top\" data-btn=\"AddBtn\" data-url=\"" . HtmlEncode(GetUrl($this->GridAddUrl)) . "\">" . $Language->phrase("GridAddLink") . "</button>";
+        } else {
+            $item->Body = "<a class=\"ew-add-edit ew-grid-add\" title=\"" . HtmlTitle($Language->phrase("GridAddLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("GridAddLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->GridAddUrl)) . "\">" . $Language->phrase("GridAddLink") . "</a>";
+        }
+        $item->Visible = $this->GridAddUrl != "" && $Security->canAdd();
         $option = $options["action"];
 
         // Show column list for column visibility
@@ -1440,27 +1746,58 @@ class JdhPatientVisitsList extends JdhPatientVisits
     {
         global $Language, $Security;
         $options = &$this->OtherOptions;
-        $option = $options["action"];
-        // Set up list action buttons
-        foreach ($this->ListActions->Items as $listaction) {
-            if ($listaction->Select == ACTION_MULTIPLE) {
-                $item = &$option->add("custom_" . $listaction->Action);
-                $caption = $listaction->Caption;
-                $icon = ($listaction->Icon != "") ? '<i class="' . HtmlEncode($listaction->Icon) . '" data-caption="' . HtmlEncode($caption) . '"></i>' . $caption : $caption;
-                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_patient_visitslist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
-                $item->Visible = $listaction->Allow;
-            }
-        }
-
-        // Hide multi edit, grid edit and other options
-        if ($this->TotalRecords <= 0) {
-            $option = $options["addedit"];
-            $item = $option["gridedit"];
-            if ($item) {
-                $item->Visible = false;
-            }
+        if (!$this->isGridAdd() && !$this->isGridEdit() && !$this->isMultiEdit()) { // Not grid add/grid edit/multi edit mode
             $option = $options["action"];
-            $option->hideAllOptions();
+            // Set up list action buttons
+            foreach ($this->ListActions->Items as $listaction) {
+                if ($listaction->Select == ACTION_MULTIPLE) {
+                    $item = &$option->add("custom_" . $listaction->Action);
+                    $caption = $listaction->Caption;
+                    $icon = ($listaction->Icon != "") ? '<i class="' . HtmlEncode($listaction->Icon) . '" data-caption="' . HtmlEncode($caption) . '"></i>' . $caption : $caption;
+                    $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_patient_visitslist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
+                    $item->Visible = $listaction->Allow;
+                }
+            }
+
+            // Hide multi edit, grid edit and other options
+            if ($this->TotalRecords <= 0) {
+                $option = $options["addedit"];
+                $item = $option["gridedit"];
+                if ($item) {
+                    $item->Visible = false;
+                }
+                $option = $options["action"];
+                $option->hideAllOptions();
+            }
+        } else { // Grid add/grid edit/multi edit mode
+            // Hide all options first
+            foreach ($options as $option) {
+                $option->hideAllOptions();
+            }
+            $pageUrl = $this->pageUrl(false);
+
+            // Grid-Add
+            if ($this->isGridAdd()) {
+                    if ($this->AllowAddDeleteRow) {
+                        // Add add blank row
+                        $option = $options["addedit"];
+                        $option->UseDropDownButton = false;
+                        $item = &$option->add("addblankrow");
+                        $item->Body = "<a type=\"button\" class=\"ew-add-edit ew-add-blank-row\" title=\"" . HtmlTitle($Language->phrase("AddBlankRow")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("AddBlankRow")) . "\" data-ew-action=\"add-grid-row\">" . $Language->phrase("AddBlankRow") . "</a>";
+                        $item->Visible = $Security->canAdd();
+                    }
+                if (!($this->ModalGridAdd && !IsMobile())) {
+                    $option = $options["action"];
+                    $option->UseDropDownButton = false;
+                    // Add grid insert
+                    $item = &$option->add("gridinsert");
+                    $item->Body = "<button class=\"ew-action ew-grid-insert\" title=\"" . HtmlTitle($Language->phrase("GridInsertLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("GridInsertLink")) . "\" form=\"fjdh_patient_visitslist\" formaction=\"" . GetUrl($this->pageName()) . "\">" . $Language->phrase("GridInsertLink") . "</button>";
+                    // Add grid cancel
+                    $item = &$option->add("gridcancel");
+                    $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
+                    $item->Body = "<a type=\"button\" class=\"ew-action ew-grid-cancel\" title=\"" . HtmlTitle($Language->phrase("GridCancelLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("GridCancelLink")) . "\" href=\"" . $cancelurl . "\">" . $Language->phrase("GridCancelLink") . "</a>";
+                }
+            }
         }
     }
 
@@ -1625,6 +1962,17 @@ class JdhPatientVisitsList extends JdhPatientVisits
                 return;
             }
         }
+        if ($this->isGridAdd() || $this->isGridEdit() || $this->isConfirm() || $this->isMultiEdit()) {
+            $this->RowIndex++;
+            $CurrentForm->Index = $this->RowIndex;
+            if ($CurrentForm->hasValue($this->FormActionName) && ($this->isConfirm() || $this->EventCancelled)) {
+                $this->RowAction = strval($CurrentForm->getValue($this->FormActionName));
+            } elseif ($this->isGridAdd()) {
+                $this->RowAction = "insert";
+            } else {
+                $this->RowAction = "";
+            }
+        }
 
         // Set up key count
         $this->KeyCount = $this->RowIndex;
@@ -1651,6 +1999,9 @@ class JdhPatientVisitsList extends JdhPatientVisits
         $this->RowType = ROWTYPE_VIEW; // Render view
         if (($this->isAdd() || $this->isCopy()) && $this->InlineRowCount == 0 || $this->isGridAdd()) { // Add
             $this->RowType = ROWTYPE_ADD; // Render add
+        }
+        if ($this->isGridAdd() && $this->EventCancelled && !$CurrentForm->hasValue($this->FormBlankRowName)) { // Insert failed
+            $this->restoreCurrentRowFormValues($this->RowIndex); // Restore form values
         }
 
         // Inline Add/Copy row (row 0)
@@ -1690,6 +2041,8 @@ class JdhPatientVisitsList extends JdhPatientVisits
     // Load default values
     protected function loadDefaultValues()
     {
+        $this->subbmitted_by_user_id->DefaultValue = CurrentUserID();
+        $this->subbmitted_by_user_id->OldValue = $this->subbmitted_by_user_id->DefaultValue;
     }
 
     // Load form values
@@ -1708,6 +2061,9 @@ class JdhPatientVisitsList extends JdhPatientVisits
                 $this->patient_id->setFormValue($val);
             }
         }
+        if ($CurrentForm->hasValue("o_patient_id")) {
+            $this->patient_id->setOldValue($CurrentForm->getValue("o_patient_id"));
+        }
 
         // Check field name 'visit_type_id' first before field var 'x_visit_type_id'
         $val = $CurrentForm->hasValue("visit_type_id") ? $CurrentForm->getValue("visit_type_id") : $CurrentForm->getValue("x_visit_type_id");
@@ -1717,6 +2073,9 @@ class JdhPatientVisitsList extends JdhPatientVisits
             } else {
                 $this->visit_type_id->setFormValue($val);
             }
+        }
+        if ($CurrentForm->hasValue("o_visit_type_id")) {
+            $this->visit_type_id->setOldValue($CurrentForm->getValue("o_visit_type_id"));
         }
 
         // Check field name 'user_id' first before field var 'x_user_id'
@@ -1728,6 +2087,9 @@ class JdhPatientVisitsList extends JdhPatientVisits
                 $this->user_id->setFormValue($val);
             }
         }
+        if ($CurrentForm->hasValue("o_user_id")) {
+            $this->user_id->setOldValue($CurrentForm->getValue("o_user_id"));
+        }
 
         // Check field name 'insurance_id' first before field var 'x_insurance_id'
         $val = $CurrentForm->hasValue("insurance_id") ? $CurrentForm->getValue("insurance_id") : $CurrentForm->getValue("x_insurance_id");
@@ -1737,6 +2099,9 @@ class JdhPatientVisitsList extends JdhPatientVisits
             } else {
                 $this->insurance_id->setFormValue($val);
             }
+        }
+        if ($CurrentForm->hasValue("o_insurance_id")) {
+            $this->insurance_id->setOldValue($CurrentForm->getValue("o_insurance_id"));
         }
 
         // Check field name 'visit_date' first before field var 'x_visit_date'
@@ -1748,6 +2113,9 @@ class JdhPatientVisitsList extends JdhPatientVisits
                 $this->visit_date->setFormValue($val, true, $validate);
             }
             $this->visit_date->CurrentValue = UnFormatDateTime($this->visit_date->CurrentValue, $this->visit_date->formatPattern());
+        }
+        if ($CurrentForm->hasValue("o_visit_date")) {
+            $this->visit_date->setOldValue($CurrentForm->getValue("o_visit_date"));
         }
 
         // Check field name 'visit_id' first before field var 'x_visit_id'
@@ -2066,6 +2434,7 @@ class JdhPatientVisitsList extends JdhPatientVisits
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
                 $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
+                $this->patient_id->OldValue = $this->patient_id->CurrentValue;
                 $curVal = strval($this->patient_id->CurrentValue);
                 if ($curVal != "") {
                     $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
@@ -2277,6 +2646,77 @@ class JdhPatientVisitsList extends JdhPatientVisits
             $this->setFailureMessage($formCustomError);
         }
         return $validateForm;
+    }
+
+    // Delete records based on current filter
+    protected function deleteRows()
+    {
+        global $Language, $Security;
+        if (!$Security->canDelete()) {
+            $this->setFailureMessage($Language->phrase("NoDeletePermission")); // No delete permission
+            return false;
+        }
+        $sql = $this->getCurrentSql();
+        $conn = $this->getConnection();
+        $rows = $conn->fetchAllAssociative($sql);
+        if (count($rows) == 0) {
+            $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
+            return false;
+        }
+        if ($this->AuditTrailOnDelete) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
+        }
+
+        // Clone old rows
+        $rsold = $rows;
+        $successKeys = [];
+        $failKeys = [];
+        foreach ($rsold as $row) {
+            $thisKey = "";
+            if ($thisKey != "") {
+                $thisKey .= Config("COMPOSITE_KEY_SEPARATOR");
+            }
+            $thisKey .= $row['visit_id'];
+
+            // Call row deleting event
+            $deleteRow = $this->rowDeleting($row);
+            if ($deleteRow) { // Delete
+                $deleteRow = $this->delete($row);
+                if (!$deleteRow && !EmptyValue($this->DbErrorMessage)) { // Show database error
+                    $this->setFailureMessage($this->DbErrorMessage);
+                }
+            }
+            if ($deleteRow === false) {
+                if ($this->UseTransaction) {
+                    $successKeys = []; // Reset success keys
+                    break;
+                }
+                $failKeys[] = $thisKey;
+            } else {
+                if (Config("DELETE_UPLOADED_FILES")) { // Delete old files
+                    $this->deleteUploadedFiles($row);
+                }
+
+                // Call Row Deleted event
+                $this->rowDeleted($row);
+                $successKeys[] = $thisKey;
+            }
+        }
+
+        // Any records deleted
+        $deleteRows = count($successKeys) > 0;
+        if (!$deleteRows) {
+            // Set up error message
+            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
+                // Use the message, do nothing
+            } elseif ($this->CancelMessage != "") {
+                $this->setFailureMessage($this->CancelMessage);
+                $this->CancelMessage = "";
+            } else {
+                $this->setFailureMessage($Language->phrase("DeleteCancelled"));
+            }
+        }
+        return $deleteRows;
     }
 
     /**

@@ -470,7 +470,7 @@ class JdhTestRequestsAdd extends JdhTestRequests
         $this->request_description->setVisibility();
         $this->requested_by_user_id->setVisibility();
         $this->request_date->Visible = false;
-        $this->status_id->setVisibility();
+        $this->status_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -533,10 +533,6 @@ class JdhTestRequestsAdd extends JdhTestRequests
 
         // Load old record or default values
         $rsold = $this->loadOldRecord();
-
-        // Set up master/detail parameters
-        // NOTE: Must be after loadOldRecord to prevent master key values being overwritten
-        $this->setupMasterParms();
 
         // Load form values
         if ($postBack) {
@@ -712,16 +708,6 @@ class JdhTestRequestsAdd extends JdhTestRequests
             }
         }
 
-        // Check field name 'status_id' first before field var 'x_status_id'
-        $val = $CurrentForm->hasValue("status_id") ? $CurrentForm->getValue("status_id") : $CurrentForm->getValue("x_status_id");
-        if (!$this->status_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->status_id->Visible = false; // Disable update for API request
-            } else {
-                $this->status_id->setFormValue($val);
-            }
-        }
-
         // Check field name 'request_id' first before field var 'x_request_id'
         $val = $CurrentForm->hasValue("request_id") ? $CurrentForm->getValue("request_id") : $CurrentForm->getValue("x_request_id");
     }
@@ -735,7 +721,6 @@ class JdhTestRequestsAdd extends JdhTestRequests
         $this->request_service_id->CurrentValue = $this->request_service_id->FormValue;
         $this->request_description->CurrentValue = $this->request_description->FormValue;
         $this->requested_by_user_id->CurrentValue = $this->requested_by_user_id->FormValue;
-        $this->status_id->CurrentValue = $this->status_id->FormValue;
     }
 
     /**
@@ -911,7 +896,8 @@ class JdhTestRequestsAdd extends JdhTestRequests
                 $this->request_service_id->ViewValue = $this->request_service_id->lookupCacheOption($curVal);
                 if ($this->request_service_id->ViewValue === null) { // Lookup from database
                     $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->request_service_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                    $lookupFilter = $this->request_service_id->getSelectFilter($this); // PHP
+                    $sqlWrk = $this->request_service_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
                     $config->setResultCacheImpl($this->Cache);
@@ -948,74 +934,50 @@ class JdhTestRequestsAdd extends JdhTestRequests
 
             // patient_id
             $this->patient_id->HrefValue = "";
+            $this->patient_id->TooltipValue = "";
 
             // request_title
             $this->request_title->HrefValue = "";
+            $this->request_title->TooltipValue = "";
 
             // request_service_id
             $this->request_service_id->HrefValue = "";
+            $this->request_service_id->TooltipValue = "";
 
             // request_description
             $this->request_description->HrefValue = "";
+            $this->request_description->TooltipValue = "";
 
             // requested_by_user_id
             $this->requested_by_user_id->HrefValue = "";
             $this->requested_by_user_id->TooltipValue = "";
-
-            // status_id
-            $this->status_id->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
             // patient_id
             $this->patient_id->setupEditAttributes();
-            if ($this->patient_id->getSessionValue() != "") {
-                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
-                $curVal = strval($this->patient_id->CurrentValue);
-                if ($curVal != "") {
-                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                    if ($this->patient_id->ViewValue === null) { // Lookup from database
-                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                        $conn = Conn();
-                        $config = $conn->getConfiguration();
-                        $config->setResultCacheImpl($this->Cache);
-                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                        $ari = count($rswrk);
-                        if ($ari > 0) { // Lookup values found
-                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                        } else {
-                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                        }
-                    }
-                } else {
-                    $this->patient_id->ViewValue = null;
-                }
+            $curVal = trim(strval($this->patient_id->CurrentValue));
+            if ($curVal != "") {
+                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
             } else {
-                $curVal = trim(strval($this->patient_id->CurrentValue));
-                if ($curVal != "") {
-                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                } else {
-                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
-                }
-                if ($this->patient_id->ViewValue !== null) { // Load from cache
-                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
-                } else { // Lookup from database
-                    if ($curVal == "") {
-                        $filterWrk = "0=1";
-                    } else {
-                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
-                    }
-                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    $arwrk = $rswrk;
-                    $this->patient_id->EditValue = $arwrk;
-                }
-                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+                $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
             }
+            if ($this->patient_id->ViewValue !== null) { // Load from cache
+                $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                $this->patient_id->EditValue = $arwrk;
+            }
+            $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
 
             // request_title
             $this->request_title->setupEditAttributes();
@@ -1041,7 +1003,8 @@ class JdhTestRequestsAdd extends JdhTestRequests
                 } else {
                     $filterWrk = SearchFilter("`service_id`", "=", $this->request_service_id->CurrentValue, DATATYPE_NUMBER, "");
                 }
-                $sqlWrk = $this->request_service_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                $lookupFilter = $this->request_service_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->request_service_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
                 $config->setResultCacheImpl($this->Cache);
@@ -1059,11 +1022,6 @@ class JdhTestRequestsAdd extends JdhTestRequests
 
             // requested_by_user_id
 
-            // status_id
-            $this->status_id->setupEditAttributes();
-            $this->status_id->EditValue = $this->status_id->options(true);
-            $this->status_id->PlaceHolder = RemoveHtml($this->status_id->caption());
-
             // Add refer script
 
             // patient_id
@@ -1080,9 +1038,6 @@ class JdhTestRequestsAdd extends JdhTestRequests
 
             // requested_by_user_id
             $this->requested_by_user_id->HrefValue = "";
-
-            // status_id
-            $this->status_id->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -1129,11 +1084,6 @@ class JdhTestRequestsAdd extends JdhTestRequests
                 $this->requested_by_user_id->addErrorMessage(str_replace("%s", $this->requested_by_user_id->caption(), $this->requested_by_user_id->RequiredErrorMessage));
             }
         }
-        if ($this->status_id->Required) {
-            if (!$this->status_id->IsDetailKey && EmptyValue($this->status_id->FormValue)) {
-                $this->status_id->addErrorMessage(str_replace("%s", $this->status_id->caption(), $this->status_id->RequiredErrorMessage));
-            }
-        }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -1171,33 +1121,8 @@ class JdhTestRequestsAdd extends JdhTestRequests
         $this->requested_by_user_id->CurrentValue = $this->requested_by_user_id->getAutoUpdateValue(); // PHP
         $this->requested_by_user_id->setDbValueDef($rsnew, $this->requested_by_user_id->CurrentValue, 0);
 
-        // status_id
-        $this->status_id->setDbValueDef($rsnew, $this->status_id->CurrentValue, 0, false);
-
         // Update current values
         $this->setCurrentValues($rsnew);
-
-        // Check if valid key values for master user
-        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
-            $detailKeys = [];
-            $detailKeys["patient_id"] = $this->patient_id->CurrentValue;
-            $masterTable = Container("jdh_patients");
-            $masterFilter = $this->getMasterFilter($masterTable, $detailKeys);
-            if (!EmptyValue($masterFilter)) {
-                $validMasterKey = true;
-                if ($rsmaster = $masterTable->loadRs($masterFilter)->fetchAssociative()) {
-                    $validMasterKey = $Security->isValidUserID($rsmaster['submitted_by_user_id']);
-                } elseif ($this->getCurrentMasterTable() == "jdh_patients") {
-                    $validMasterKey = false;
-                }
-                if (!$validMasterKey) {
-                    $masterUserIdMsg = str_replace("%c", CurrentUserID(), $Language->phrase("UnAuthorizedMasterUserID"));
-                    $masterUserIdMsg = str_replace("%f", $masterFilter, $masterUserIdMsg);
-                    $this->setFailureMessage($masterUserIdMsg);
-                    return false;
-                }
-            }
-        }
         $conn = $this->getConnection();
 
         // Load db values from old row
@@ -1249,75 +1174,6 @@ class JdhTestRequestsAdd extends JdhTestRequests
         return true;
     }
 
-    // Set up master/detail based on QueryString
-    protected function setupMasterParms()
-    {
-        $validMaster = false;
-        // Get the keys for master table
-        if (($master = Get(Config("TABLE_SHOW_MASTER"), Get(Config("TABLE_MASTER")))) !== null) {
-            $masterTblVar = $master;
-            if ($masterTblVar == "") {
-                $validMaster = true;
-                $this->DbMasterFilter = "";
-                $this->DbDetailFilter = "";
-            }
-            if ($masterTblVar == "jdh_patients") {
-                $validMaster = true;
-                $masterTbl = Container("jdh_patients");
-                if (($parm = Get("fk_patient_id", Get("patient_id"))) !== null) {
-                    $masterTbl->patient_id->setQueryStringValue($parm);
-                    $this->patient_id->QueryStringValue = $masterTbl->patient_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
-                    $this->patient_id->setSessionValue($this->patient_id->QueryStringValue);
-                    if (!is_numeric($masterTbl->patient_id->QueryStringValue)) {
-                        $validMaster = false;
-                    }
-                } else {
-                    $validMaster = false;
-                }
-            }
-        } elseif (($master = Post(Config("TABLE_SHOW_MASTER"), Post(Config("TABLE_MASTER")))) !== null) {
-            $masterTblVar = $master;
-            if ($masterTblVar == "") {
-                    $validMaster = true;
-                    $this->DbMasterFilter = "";
-                    $this->DbDetailFilter = "";
-            }
-            if ($masterTblVar == "jdh_patients") {
-                $validMaster = true;
-                $masterTbl = Container("jdh_patients");
-                if (($parm = Post("fk_patient_id", Post("patient_id"))) !== null) {
-                    $masterTbl->patient_id->setFormValue($parm);
-                    $this->patient_id->setFormValue($masterTbl->patient_id->FormValue);
-                    $this->patient_id->setSessionValue($this->patient_id->FormValue);
-                    if (!is_numeric($masterTbl->patient_id->FormValue)) {
-                        $validMaster = false;
-                    }
-                } else {
-                    $validMaster = false;
-                }
-            }
-        }
-        if ($validMaster) {
-            // Save current master table
-            $this->setCurrentMasterTable($masterTblVar);
-
-            // Reset start record counter (new master key)
-            if (!$this->isAddOrEdit()) {
-                $this->StartRecord = 1;
-                $this->setStartRecordNumber($this->StartRecord);
-            }
-
-            // Clear previous master key from Session
-            if ($masterTblVar != "jdh_patients") {
-                if ($this->patient_id->CurrentValue == "") {
-                    $this->patient_id->setSessionValue("");
-                }
-            }
-        }
-        $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Get master filter from session
-        $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Get detail filter from session
-    }
-
     // Set up Breadcrumb
     protected function setupBreadcrumb()
     {
@@ -1345,6 +1201,7 @@ class JdhTestRequestsAdd extends JdhTestRequests
                 case "x_patient_id":
                     break;
                 case "x_request_service_id":
+                    $lookupFilter = $fld->getSelectFilter(); // PHP
                     break;
                 case "x_status_id":
                     break;

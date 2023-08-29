@@ -91,8 +91,8 @@ class JdhVitals extends DbTable
         $this->ExportWordPageOrientation = ""; // Page orientation (PHPWord only)
         $this->ExportWordPageSize = ""; // Page orientation (PHPWord only)
         $this->ExportWordColumnWidth = null; // Cell width (PHPWord only)
-        $this->DetailAdd = false; // Allow detail add
-        $this->DetailEdit = false; // Allow detail edit
+        $this->DetailAdd = true; // Allow detail add
+        $this->DetailEdit = true; // Allow detail edit
         $this->DetailView = true; // Allow detail view
         $this->ShowMultipleDetails = false; // Show multiple details
         $this->GridAddRowCount = 5;
@@ -1744,7 +1744,6 @@ class JdhVitals extends DbTable
                     $doc->exportCaption($this->random_blood_sugar);
                     $doc->exportCaption($this->submission_date);
                     $doc->exportCaption($this->submitted_by_user_id);
-                    $doc->exportCaption($this->patient_status);
                 } else {
                     $doc->exportCaption($this->vitals_id);
                     $doc->exportCaption($this->patient_id);
@@ -1800,7 +1799,6 @@ class JdhVitals extends DbTable
                         $doc->exportField($this->random_blood_sugar);
                         $doc->exportField($this->submission_date);
                         $doc->exportField($this->submitted_by_user_id);
-                        $doc->exportField($this->patient_status);
                     } else {
                         $doc->exportField($this->vitals_id);
                         $doc->exportField($this->patient_id);
@@ -2061,11 +2059,15 @@ class JdhVitals extends DbTable
     // Row Rendered event
     public function rowRendered()
     {
-        if ($this->body_mass_index->CurrentValue > "26") {
-            $this->patient_status->CellAttrs["style"] = "background-color: #ffcccc; padding-top: 20px; font-weight: 600";
-            $overweight = "Overweight";
-            $this->patient_status->ViewValue = $overweight;
-        } 
+        if (($this->temperature->CurrentValue >= 36.5) && ($this->temperature->CurrentValue <= 37.5)) {
+            $this->patient_status->CellAttrs["style"] = "background-color: green; padding-top: 20px; color: white";
+            $status = "Normal";
+            $this->patient_status->ViewValue = $status;
+        } else if (($this->temperature->CurrentValue < 36.5)) {
+            $this->patient_status->CellAttrs["style"] = "background-color: orange; padding-top: 20px; color: white";
+            $status = "Needs Attention";
+            $this->patient_status->ViewValue = $status;
+        }
         // To view properties of field class, use:
         //var_dump($this-><FieldName>);
     }

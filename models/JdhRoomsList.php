@@ -615,6 +615,9 @@ class JdhRoomsList extends JdhRooms
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Create form object
+        $CurrentForm = new HttpForm();
+
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -679,6 +682,9 @@ class JdhRoomsList extends JdhRooms
         // Set up lookup cache
         $this->setupLookupOptions($this->ward_id);
 
+        // Load default values for add
+        $this->loadDefaultValues();
+
         // Update form name to avoid conflict
         if ($this->IsModal) {
             $this->FormName = "fjdh_roomsgrid";
@@ -714,6 +720,35 @@ class JdhRoomsList extends JdhRooms
         // Set up Breadcrumb
         if (!$this->isExport()) {
             $this->setupBreadcrumb();
+        }
+
+        // Check QueryString parameters
+        if (Get("action") !== null) {
+            $this->CurrentAction = Get("action");
+        } else {
+            if (Post("action") !== null) {
+                $this->CurrentAction = Post("action"); // Get action
+            }
+        }
+
+        // Clear inline mode
+        if ($this->isCancel()) {
+            $this->clearInlineMode();
+        }
+
+        // Switch to inline add mode
+        if ($this->isAdd() || $this->isCopy()) {
+            $this->inlineAddMode();
+        // Insert Inline
+        } elseif (IsPost() && $this->isInsert() && Session(SESSION_INLINE_MODE) == "add") {
+            $this->setKey(Post($this->OldKeyName));
+            // Return JSON error message if UseAjaxActions
+            if (!$this->inlineInsert() && $this->UseAjaxActions) {
+                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                $this->clearFailureMessage();
+                $this->terminate();
+                return;
+            }
         }
 
         // Hide list options
@@ -970,6 +1005,54 @@ class JdhRoomsList extends JdhRooms
         }
     }
 
+    // Exit inline mode
+    protected function clearInlineMode()
+    {
+        $this->LastAction = $this->CurrentAction; // Save last action
+        $this->CurrentAction = ""; // Clear action
+        $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
+    }
+
+    // Switch to Inline Add mode
+    protected function inlineAddMode()
+    {
+        global $Security, $Language;
+        if (!$Security->canAdd()) {
+            return false; // Add not allowed
+        }
+        $this->CurrentAction = "add";
+        $_SESSION[SESSION_INLINE_MODE] = "add"; // Enable inline add
+        return true;
+    }
+
+    // Perform update to Inline Add/Copy record
+    protected function inlineInsert()
+    {
+        global $Language, $CurrentForm;
+        $rsold = $this->loadOldRecord(); // Load old record
+        $CurrentForm->Index = 0;
+        $this->loadFormValues(); // Get form values
+
+        // Validate form
+        if (!$this->validateForm()) {
+            $this->EventCancelled = true; // Set event cancelled
+            $this->CurrentAction = "add"; // Stay in add mode
+            return false;
+        }
+        $this->SendEmail = true; // Send email on add success
+        if ($this->addRow($rsold)) { // Add record
+            if ($this->getSuccessMessage() == "") {
+                $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up add success message
+            }
+            $this->clearInlineMode(); // Clear inline add mode
+            return true;
+        } else { // Add failed
+            $this->EventCancelled = true; // Set event cancelled
+            $this->CurrentAction = "add"; // Stay in add mode
+            return false;
+        }
+    }
+
     // Build filter for all keys
     protected function buildKeyFilter()
     {
@@ -999,6 +1082,15 @@ class JdhRoomsList extends JdhRooms
             $thisKey = strval($CurrentForm->getValue($this->OldKeyName));
         }
         return $wrkFilter;
+    }
+
+    // Reset form status
+    public function resetFormError()
+    {
+        $this->room_id->clearErrorMessage();
+        $this->ward_id->clearErrorMessage();
+        $this->room_number->clearErrorMessage();
+        $this->description->clearErrorMessage();
     }
 
     // Get list of filters
@@ -1270,6 +1362,12 @@ class JdhRoomsList extends JdhRooms
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
 
+        // "copy"
+        $item = &$this->ListOptions->add("copy");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->canAdd() && $this->isAdd();
+        $item->OnLeft = false;
+
         // List actions
         $item = &$this->ListOptions->add("listactions");
         $item->CssClass = "text-nowrap";
@@ -1286,6 +1384,14 @@ class JdhRoomsList extends JdhRooms
         if ($item->OnLeft) {
             $item->moveTo(0);
         }
+        $item->ShowInDropDown = false;
+        $item->ShowInButtonGroup = false;
+
+        // "sequence"
+        $item = &$this->ListOptions->add("sequence");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = true;
+        $item->OnLeft = true; // Always on left
         $item->ShowInDropDown = false;
         $item->ShowInButtonGroup = false;
 
@@ -1326,7 +1432,59 @@ class JdhRoomsList extends JdhRooms
 
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
+
+        // Set up row action and key
+        if ($CurrentForm && is_numeric($this->RowIndex) && $this->RowType != "view") {
+            $CurrentForm->Index = $this->RowIndex;
+            $actionName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormActionName);
+            $oldKeyName = str_replace("k_", "k" . $this->RowIndex . "_", $this->OldKeyName);
+            $blankRowName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormBlankRowName);
+            if ($this->RowAction != "") {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $actionName . "\" id=\"" . $actionName . "\" value=\"" . $this->RowAction . "\">";
+            }
+            $oldKey = $this->getKey(false); // Get from OldValue
+            if ($oldKeyName != "" && $oldKey != "") {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $oldKeyName . "\" id=\"" . $oldKeyName . "\" value=\"" . HtmlEncode($oldKey) . "\">";
+            }
+            if ($this->RowAction == "insert" && $this->isConfirm() && $this->emptyRow()) {
+                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $blankRowName . "\" id=\"" . $blankRowName . "\" value=\"1\">";
+            }
+        }
+
+        // "sequence"
+        $opt = $this->ListOptions["sequence"];
+        $opt->Body = FormatSequenceNumber($this->RecordCount);
         $pageUrl = $this->pageUrl(false);
+
+        // "copy"
+        $opt = $this->ListOptions["copy"];
+        if ($this->isInlineAddRow() || $this->isInlineCopyRow()) { // Inline Add/Copy
+            $this->ListOptions->CustomItem = "copy"; // Show copy column only
+            $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
+            $insertCaption = $Language->phrase("InsertLink");
+            $insertTitle = HtmlTitle($insertCaption);
+            $cancelCaption = $Language->phrase("CancelLink");
+            $cancelTitle = HtmlTitle($cancelCaption);
+            $inlineInsertUrl = GetUrl($this->pageName());
+            if ($this->UseAjaxActions) {
+                $opt->Body = <<<INLINEADDAJAX
+                    <div{$divClass}>
+                        <button type="button" class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" data-ew-action="inline" data-action="insert" data-key="" data-url="{$inlineInsertUrl}">{$insertCaption}</button>
+                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel">{$cancelCaption}</button>
+                    </div>
+                    INLINEADDAJAX;
+            } else {
+                $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
+                $opt->Body = <<<INLINEADD
+                    <div{$divClass}>
+                        <button class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" form="fjdh_roomslist" formaction="{$inlineInsertUrl}">{$insertCaption}</button>
+                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$insertTitle}" href="{$cancelurl}">{$cancelCaption}</a>
+                        <input type="hidden" name="action" id="action" value="insert">
+                    </div>
+                    INLINEADD;
+            }
+            return;
+        }
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1421,6 +1579,15 @@ class JdhRoomsList extends JdhRooms
             $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
         }
         $item->Visible = $this->AddUrl != "" && $Security->canAdd();
+
+        // Inline Add
+        $item = &$option->add("inlineadd");
+        if ($this->UseAjaxActions) {
+            $item->Body = "<button class=\"ew-add-edit ew-inline-add\" title=\"" . $Language->phrase("InlineAddLink", true) . "\" data-caption=\"" . $Language->phrase("InlineAddLink", true) . "\" data-ew-action=\"inline\" data-action=\"add\" data-position=\"top\" data-url=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</button>";
+        } else {
+            $item->Body = "<a class=\"ew-add-edit ew-inline-add\" title=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</a>";
+        }
+        $item->Visible = $this->InlineAddUrl != "" && $Security->canAdd();
         $option = $options["action"];
 
         // Add multi delete
@@ -1627,6 +1794,15 @@ class JdhRoomsList extends JdhRooms
                 $this->StopRecord = $this->TotalRecords;
             }
         }
+
+        // Restore number of post back records
+        if ($CurrentForm && ($this->isConfirm() || $this->EventCancelled)) {
+            $CurrentForm->Index = -1;
+            if ($CurrentForm->hasValue($this->FormKeyCountName) && ($this->isGridAdd() || $this->isGridEdit() || $this->isConfirm())) {
+                $this->KeyCount = $CurrentForm->getValue($this->FormKeyCountName);
+                $this->StopRecord = $this->StartRecord + $this->KeyCount - 1;
+            }
+        }
         $this->RecordCount = $this->StartRecord - 1;
         if ($this->Recordset && !$this->Recordset->EOF) {
             // Nothing to do
@@ -1640,6 +1816,12 @@ class JdhRoomsList extends JdhRooms
         $this->RowType = ROWTYPE_AGGREGATEINIT;
         $this->resetAttributes();
         $this->renderRow();
+        if ($this->isAdd() || $this->isCopy() || $this->isInlineInserted()) {
+            $this->RowIndex = 0;
+            if ($this->UseInfiniteScroll) {
+                $this->StopRecord = $this->StartRecord; // Show this record only
+            }
+        }
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
             $this->RowIndex = '$rowindex$';
         }
@@ -1731,6 +1913,11 @@ class JdhRoomsList extends JdhRooms
         $this->renderListOptions();
     }
 
+    // Load default values
+    protected function loadDefaultValues()
+    {
+    }
+
     // Load basic search values
     protected function loadBasicSearchValues()
     {
@@ -1739,6 +1926,62 @@ class JdhRoomsList extends JdhRooms
             $this->Command = "search";
         }
         $this->BasicSearch->setType(Get(Config("TABLE_BASIC_SEARCH_TYPE"), ""), false);
+    }
+
+    // Load form values
+    protected function loadFormValues()
+    {
+        // Load from form
+        global $CurrentForm;
+        $validate = !Config("SERVER_VALIDATE");
+
+        // Check field name 'room_id' first before field var 'x_room_id'
+        $val = $CurrentForm->hasValue("room_id") ? $CurrentForm->getValue("room_id") : $CurrentForm->getValue("x_room_id");
+        if (!$this->room_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->room_id->setFormValue($val);
+        }
+
+        // Check field name 'ward_id' first before field var 'x_ward_id'
+        $val = $CurrentForm->hasValue("ward_id") ? $CurrentForm->getValue("ward_id") : $CurrentForm->getValue("x_ward_id");
+        if (!$this->ward_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->ward_id->Visible = false; // Disable update for API request
+            } else {
+                $this->ward_id->setFormValue($val);
+            }
+        }
+
+        // Check field name 'room_number' first before field var 'x_room_number'
+        $val = $CurrentForm->hasValue("room_number") ? $CurrentForm->getValue("room_number") : $CurrentForm->getValue("x_room_number");
+        if (!$this->room_number->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->room_number->Visible = false; // Disable update for API request
+            } else {
+                $this->room_number->setFormValue($val, true, $validate);
+            }
+        }
+
+        // Check field name 'description' first before field var 'x_description'
+        $val = $CurrentForm->hasValue("description") ? $CurrentForm->getValue("description") : $CurrentForm->getValue("x_description");
+        if (!$this->description->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->description->Visible = false; // Disable update for API request
+            } else {
+                $this->description->setFormValue($val);
+            }
+        }
+    }
+
+    // Restore form values
+    public function restoreFormValues()
+    {
+        global $CurrentForm;
+        if (!$this->isGridAdd() && !$this->isAdd()) {
+            $this->room_id->CurrentValue = $this->room_id->FormValue;
+        }
+        $this->ward_id->CurrentValue = $this->ward_id->FormValue;
+        $this->room_number->CurrentValue = $this->room_number->FormValue;
+        $this->description->CurrentValue = $this->description->FormValue;
     }
 
     // Load recordset
@@ -1938,12 +2181,167 @@ class JdhRoomsList extends JdhRooms
             // description
             $this->description->HrefValue = "";
             $this->description->TooltipValue = "";
+        } elseif ($this->RowType == ROWTYPE_ADD) {
+            // room_id
+
+            // ward_id
+            $this->ward_id->setupEditAttributes();
+            $curVal = trim(strval($this->ward_id->CurrentValue));
+            if ($curVal != "") {
+                $this->ward_id->ViewValue = $this->ward_id->lookupCacheOption($curVal);
+            } else {
+                $this->ward_id->ViewValue = $this->ward_id->Lookup !== null && is_array($this->ward_id->lookupOptions()) ? $curVal : null;
+            }
+            if ($this->ward_id->ViewValue !== null) { // Load from cache
+                $this->ward_id->EditValue = array_values($this->ward_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`ward_id`", "=", $this->ward_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $sqlWrk = $this->ward_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                $this->ward_id->EditValue = $arwrk;
+            }
+            $this->ward_id->PlaceHolder = RemoveHtml($this->ward_id->caption());
+
+            // room_number
+            $this->room_number->setupEditAttributes();
+            $this->room_number->EditValue = HtmlEncode($this->room_number->CurrentValue);
+            $this->room_number->PlaceHolder = RemoveHtml($this->room_number->caption());
+            if (strval($this->room_number->EditValue) != "" && is_numeric($this->room_number->EditValue)) {
+                $this->room_number->EditValue = FormatNumber($this->room_number->EditValue, null);
+            }
+
+            // description
+            $this->description->setupEditAttributes();
+            $this->description->EditValue = HtmlEncode($this->description->CurrentValue);
+            $this->description->PlaceHolder = RemoveHtml($this->description->caption());
+
+            // Add refer script
+
+            // room_id
+            $this->room_id->HrefValue = "";
+
+            // ward_id
+            $this->ward_id->HrefValue = "";
+
+            // room_number
+            $this->room_number->HrefValue = "";
+
+            // description
+            $this->description->HrefValue = "";
+        }
+        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+            $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
+    }
+
+    // Validate form
+    protected function validateForm()
+    {
+        global $Language, $Security;
+
+        // Check if validation required
+        if (!Config("SERVER_VALIDATE")) {
+            return true;
+        }
+        $validateForm = true;
+        if ($this->room_id->Required) {
+            if (!$this->room_id->IsDetailKey && EmptyValue($this->room_id->FormValue)) {
+                $this->room_id->addErrorMessage(str_replace("%s", $this->room_id->caption(), $this->room_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->ward_id->Required) {
+            if (!$this->ward_id->IsDetailKey && EmptyValue($this->ward_id->FormValue)) {
+                $this->ward_id->addErrorMessage(str_replace("%s", $this->ward_id->caption(), $this->ward_id->RequiredErrorMessage));
+            }
+        }
+        if ($this->room_number->Required) {
+            if (!$this->room_number->IsDetailKey && EmptyValue($this->room_number->FormValue)) {
+                $this->room_number->addErrorMessage(str_replace("%s", $this->room_number->caption(), $this->room_number->RequiredErrorMessage));
+            }
+        }
+        if (!CheckInteger($this->room_number->FormValue)) {
+            $this->room_number->addErrorMessage($this->room_number->getErrorMessage(false));
+        }
+        if ($this->description->Required) {
+            if (!$this->description->IsDetailKey && EmptyValue($this->description->FormValue)) {
+                $this->description->addErrorMessage(str_replace("%s", $this->description->caption(), $this->description->RequiredErrorMessage));
+            }
+        }
+
+        // Return validate result
+        $validateForm = $validateForm && !$this->hasInvalidFields();
+
+        // Call Form_CustomValidate event
+        $formCustomError = "";
+        $validateForm = $validateForm && $this->formCustomValidate($formCustomError);
+        if ($formCustomError != "") {
+            $this->setFailureMessage($formCustomError);
+        }
+        return $validateForm;
+    }
+
+    // Add record
+    protected function addRow($rsold = null)
+    {
+        global $Language, $Security;
+
+        // Set new row
+        $rsnew = [];
+
+        // ward_id
+        $this->ward_id->setDbValueDef($rsnew, $this->ward_id->CurrentValue, 0, false);
+
+        // room_number
+        $this->room_number->setDbValueDef($rsnew, $this->room_number->CurrentValue, 0, false);
+
+        // description
+        $this->description->setDbValueDef($rsnew, $this->description->CurrentValue, null, false);
+
+        // Update current values
+        $this->setCurrentValues($rsnew);
+        $conn = $this->getConnection();
+
+        // Load db values from old row
+        $this->loadDbValues($rsold);
+
+        // Call Row Inserting event
+        $insertRow = $this->rowInserting($rsold, $rsnew);
+        if ($insertRow) {
+            $addRow = $this->insert($rsnew);
+            if ($addRow) {
+            } elseif (!EmptyValue($this->DbErrorMessage)) { // Show database error
+                $this->setFailureMessage($this->DbErrorMessage);
+            }
+        } else {
+            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
+                // Use the message, do nothing
+            } elseif ($this->CancelMessage != "") {
+                $this->setFailureMessage($this->CancelMessage);
+                $this->CancelMessage = "";
+            } else {
+                $this->setFailureMessage($Language->phrase("InsertCancelled"));
+            }
+            $addRow = false;
+        }
+        if ($addRow) {
+            // Call Row Inserted event
+            $this->rowInserted($rsold, $rsnew);
+        }
+        return $addRow;
     }
 
     // Get export HTML tag

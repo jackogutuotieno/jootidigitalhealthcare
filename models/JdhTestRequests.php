@@ -147,7 +147,6 @@ class JdhTestRequests extends DbTable
             'SELECT' // Edit Tag
         );
         $this->patient_id->InputTextType = "text";
-        $this->patient_id->IsForeignKey = true; // Foreign key field
         $this->patient_id->Nullable = false; // NOT NULL field
         $this->patient_id->Required = true; // Required field
         $this->patient_id->UsePleaseSelect = true; // Use PleaseSelect by default
@@ -199,6 +198,7 @@ class JdhTestRequests extends DbTable
             'FORMATTED TEXT', // View Tag
             'SELECT' // Edit Tag
         );
+        $this->request_service_id->addMethod("getSelectFilter", fn() => "`category_id`=3");
         $this->request_service_id->InputTextType = "text";
         $this->request_service_id->Nullable = false; // NOT NULL field
         $this->request_service_id->Required = true; // Required field
@@ -366,88 +366,6 @@ class JdhTestRequests extends DbTable
             }
             $field->setSort($fldSort);
         }
-    }
-
-    // Current master table name
-    public function getCurrentMasterTable()
-    {
-        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_MASTER_TABLE"));
-    }
-
-    public function setCurrentMasterTable($v)
-    {
-        $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_MASTER_TABLE")] = $v;
-    }
-
-    // Get master WHERE clause from session values
-    public function getMasterFilterFromSession()
-    {
-        // Master filter
-        $masterFilter = "";
-        if ($this->getCurrentMasterTable() == "jdh_patients") {
-            $masterTable = Container("jdh_patients");
-            if ($this->patient_id->getSessionValue() != "") {
-                $masterFilter .= "" . GetKeyFilter($masterTable->patient_id, $this->patient_id->getSessionValue(), $masterTable->patient_id->DataType, $masterTable->Dbid);
-            } else {
-                return "";
-            }
-        }
-        return $masterFilter;
-    }
-
-    // Get detail WHERE clause from session values
-    public function getDetailFilterFromSession()
-    {
-        // Detail filter
-        $detailFilter = "";
-        if ($this->getCurrentMasterTable() == "jdh_patients") {
-            $masterTable = Container("jdh_patients");
-            if ($this->patient_id->getSessionValue() != "") {
-                $detailFilter .= "" . GetKeyFilter($this->patient_id, $this->patient_id->getSessionValue(), $masterTable->patient_id->DataType, $this->Dbid);
-            } else {
-                return "";
-            }
-        }
-        return $detailFilter;
-    }
-
-    /**
-     * Get master filter
-     *
-     * @param object $masterTable Master Table
-     * @param array $keys Detail Keys
-     * @return mixed NULL is returned if all keys are empty, Empty string is returned if some keys are empty and is required
-     */
-    public function getMasterFilter($masterTable, $keys)
-    {
-        $validKeys = true;
-        switch ($masterTable->TableVar) {
-            case "jdh_patients":
-                $key = $keys["patient_id"] ?? "";
-                if (EmptyValue($key)) {
-                    if ($masterTable->patient_id->Required) { // Required field and empty value
-                        return ""; // Return empty filter
-                    }
-                    $validKeys = false;
-                } elseif (!$validKeys) { // Already has empty key
-                    return ""; // Return empty filter
-                }
-                if ($validKeys) {
-                    return GetKeyFilter($masterTable->patient_id, $keys["patient_id"], $this->patient_id->DataType, $this->Dbid);
-                }
-                break;
-        }
-        return null; // All null values and no required fields
-    }
-
-    // Get detail filter
-    public function getDetailFilter($masterTable)
-    {
-        switch ($masterTable->TableVar) {
-            case "jdh_patients":
-                return GetKeyFilter($this->patient_id, $masterTable->patient_id->DbValue, $masterTable->patient_id->DataType, $masterTable->Dbid);
-        }
-        return "";
     }
 
     // Render X Axis for chart
@@ -1083,10 +1001,6 @@ class JdhTestRequests extends DbTable
     // Add master url
     public function addMasterUrl($url)
     {
-        if ($this->getCurrentMasterTable() == "jdh_patients" && !ContainsString($url, Config("TABLE_SHOW_MASTER") . "=")) {
-            $url .= (ContainsString($url, "?") ? "&" : "?") . Config("TABLE_SHOW_MASTER") . "=" . $this->getCurrentMasterTable();
-            $url .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->getSessionValue()); // Use Session Value
-        }
         return $url;
     }
 
@@ -1335,7 +1249,8 @@ class JdhTestRequests extends DbTable
             $this->request_service_id->ViewValue = $this->request_service_id->lookupCacheOption($curVal);
             if ($this->request_service_id->ViewValue === null) { // Lookup from database
                 $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $sqlWrk = $this->request_service_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                $lookupFilter = $this->request_service_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->request_service_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
                 $config->setResultCacheImpl($this->Cache);
@@ -1423,56 +1338,67 @@ class JdhTestRequests extends DbTable
 
         // patient_id
         $this->patient_id->setupEditAttributes();
-        if ($this->patient_id->getSessionValue() != "") {
-            $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
-            $curVal = strval($this->patient_id->CurrentValue);
-            if ($curVal != "") {
-                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                    } else {
-                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                    }
+        $curVal = strval($this->patient_id->CurrentValue);
+        if ($curVal != "") {
+            $this->patient_id->EditValue = $this->patient_id->lookupCacheOption($curVal);
+            if ($this->patient_id->EditValue === null) { // Lookup from database
+                $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                if ($ari > 0) { // Lookup values found
+                    $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                    $this->patient_id->EditValue = $this->patient_id->displayValue($arwrk);
+                } else {
+                    $this->patient_id->EditValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
                 }
-            } else {
-                $this->patient_id->ViewValue = null;
             }
         } else {
-            $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+            $this->patient_id->EditValue = null;
         }
 
         // request_title
         $this->request_title->setupEditAttributes();
-        if (!$this->request_title->Raw) {
-            $this->request_title->CurrentValue = HtmlDecode($this->request_title->CurrentValue);
-        }
         $this->request_title->EditValue = $this->request_title->CurrentValue;
-        $this->request_title->PlaceHolder = RemoveHtml($this->request_title->caption());
 
         // request_service_id
         $this->request_service_id->setupEditAttributes();
-        $this->request_service_id->PlaceHolder = RemoveHtml($this->request_service_id->caption());
+        $curVal = strval($this->request_service_id->CurrentValue);
+        if ($curVal != "") {
+            $this->request_service_id->EditValue = $this->request_service_id->lookupCacheOption($curVal);
+            if ($this->request_service_id->EditValue === null) { // Lookup from database
+                $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                $lookupFilter = $this->request_service_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->request_service_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                if ($ari > 0) { // Lookup values found
+                    $arwrk = $this->request_service_id->Lookup->renderViewRow($rswrk[0]);
+                    $this->request_service_id->EditValue = $this->request_service_id->displayValue($arwrk);
+                } else {
+                    $this->request_service_id->EditValue = FormatNumber($this->request_service_id->CurrentValue, $this->request_service_id->formatPattern());
+                }
+            }
+        } else {
+            $this->request_service_id->EditValue = null;
+        }
 
         // request_description
         $this->request_description->setupEditAttributes();
         $this->request_description->EditValue = $this->request_description->CurrentValue;
-        $this->request_description->PlaceHolder = RemoveHtml($this->request_description->caption());
 
         // requested_by_user_id
 
         // request_date
         $this->request_date->setupEditAttributes();
-        $this->request_date->EditValue = FormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern());
-        $this->request_date->PlaceHolder = RemoveHtml($this->request_date->caption());
+        $this->request_date->EditValue = $this->request_date->CurrentValue;
+        $this->request_date->EditValue = FormatDateTime($this->request_date->EditValue, $this->request_date->formatPattern());
 
         // status_id
         $this->status_id->setupEditAttributes();
@@ -1633,30 +1559,6 @@ class JdhTestRequests extends DbTable
             $wrk = "0=1";
         }
         return $wrk;
-    }
-
-    // Add master User ID filter
-    public function addMasterUserIDFilter($filter, $currentMasterTable)
-    {
-        $filterWrk = $filter;
-        if ($currentMasterTable == "jdh_patients") {
-            $filterWrk = Container("jdh_patients")->addUserIDFilter($filterWrk);
-        }
-        return $filterWrk;
-    }
-
-    // Add detail User ID filter
-    public function addDetailUserIDFilter($filter, $currentMasterTable)
-    {
-        $filterWrk = $filter;
-        if ($currentMasterTable == "jdh_patients") {
-            $mastertable = Container("jdh_patients");
-            if (!$mastertable->userIDAllow()) {
-                $subqueryWrk = $mastertable->getUserIDSubquery($this->patient_id, $mastertable->patient_id);
-                AddFilter($filterWrk, $subqueryWrk);
-            }
-        }
-        return $filterWrk;
     }
 
     // Get file data
@@ -2000,6 +1902,11 @@ class JdhTestRequests extends DbTable
     // Row Rendered event
     public function rowRendered()
     {
+        if ($this->status_id->ViewValue == "Done") {
+            $this->status_id->CellAttrs["style"] = "background-color: green; color: white";
+        } else if ($this->status_id->ViewValue == "Pending") {
+            $this->status_id->CellAttrs["style"] = "background-color: orange; color: white";
+        }
         // To view properties of field class, use:
         //var_dump($this-><FieldName>);
     }

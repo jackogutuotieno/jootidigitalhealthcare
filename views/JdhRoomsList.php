@@ -22,6 +22,30 @@ loadjs.ready(["wrapper", "head"], function () {
         .setPageId("list")
         .setSubmitWithFetch(<?= $Page->UseAjaxActions ? "true" : "false" ?>)
         .setFormKeyCountName("<?= $Page->FormKeyCountName ?>")
+
+        // Add fields
+        .setFields([
+            ["room_id", [fields.room_id.visible && fields.room_id.required ? ew.Validators.required(fields.room_id.caption) : null], fields.room_id.isInvalid],
+            ["ward_id", [fields.ward_id.visible && fields.ward_id.required ? ew.Validators.required(fields.ward_id.caption) : null], fields.ward_id.isInvalid],
+            ["room_number", [fields.room_number.visible && fields.room_number.required ? ew.Validators.required(fields.room_number.caption) : null, ew.Validators.integer], fields.room_number.isInvalid],
+            ["description", [fields.description.visible && fields.description.required ? ew.Validators.required(fields.description.caption) : null], fields.description.isInvalid]
+        ])
+
+        // Form_CustomValidate
+        .setCustomValidate(
+            function (fobj) { // DO NOT CHANGE THIS LINE! (except for adding "async" keyword)!
+                    // Your custom validation code here, return false if invalid.
+                    return true;
+                }
+        )
+
+        // Use JavaScript validation or not
+        .setValidateRequired(ew.CLIENT_VALIDATE)
+
+        // Dynamic selection lists
+        .setLists({
+            "ward_id": <?= $Page->ward_id->toClientList($Page) ?>,
+        })
         .build();
     window[form.id] = form;
     currentForm = form;
@@ -135,7 +159,7 @@ $Page->showMessage();
 <input type="hidden" name="modal" value="1">
 <?php } ?>
 <div id="gmp_jdh_rooms" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
-<?php if ($Page->TotalRecords > 0 || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
+<?php if ($Page->TotalRecords > 0 || $Page->isAdd() || $Page->isCopy() || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
 <table id="tbl_jdh_roomslist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
 <thead>
     <tr class="ew-table-header">
@@ -182,34 +206,95 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
     <?php if ($Page->room_id->Visible) { // room_id ?>
         <td data-name="room_id"<?= $Page->room_id->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_rooms_room_id" class="el_jdh_rooms_room_id"></span>
+<input type="hidden" data-table="jdh_rooms" data-field="x_room_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_room_id" id="o<?= $Page->RowIndex ?>_room_id" value="<?= HtmlEncode($Page->room_id->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_rooms_room_id" class="el_jdh_rooms_room_id">
 <span<?= $Page->room_id->viewAttributes() ?>>
 <?= $Page->room_id->getViewValue() ?></span>
 </span>
+<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->ward_id->Visible) { // ward_id ?>
         <td data-name="ward_id"<?= $Page->ward_id->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_rooms_ward_id" class="el_jdh_rooms_ward_id">
+    <select
+        id="x<?= $Page->RowIndex ?>_ward_id"
+        name="x<?= $Page->RowIndex ?>_ward_id"
+        class="form-select ew-select<?= $Page->ward_id->isInvalidClass() ?>"
+        data-select2-id="<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_ward_id"
+        data-table="jdh_rooms"
+        data-field="x_ward_id"
+        data-value-separator="<?= $Page->ward_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->ward_id->getPlaceHolder()) ?>"
+        <?= $Page->ward_id->editAttributes() ?>>
+        <?= $Page->ward_id->selectOptionListHtml("x{$Page->RowIndex}_ward_id") ?>
+    </select>
+    <div class="invalid-feedback"><?= $Page->ward_id->getErrorMessage() ?></div>
+<?= $Page->ward_id->Lookup->getParamTag($Page, "p_x" . $Page->RowIndex . "_ward_id") ?>
+<script>
+loadjs.ready("<?= $Page->FormName ?>", function() {
+    var options = { name: "x<?= $Page->RowIndex ?>_ward_id", selectId: "<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_ward_id" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (<?= $Page->FormName ?>.lists.ward_id?.lookupOptions.length) {
+        options.data = { id: "x<?= $Page->RowIndex ?>_ward_id", form: "<?= $Page->FormName ?>" };
+    } else {
+        options.ajax = { id: "x<?= $Page->RowIndex ?>_ward_id", form: "<?= $Page->FormName ?>", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_rooms.fields.ward_id.selectOptions);
+    ew.createSelect(options);
+});
+</script>
+</span>
+<input type="hidden" data-table="jdh_rooms" data-field="x_ward_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_ward_id" id="o<?= $Page->RowIndex ?>_ward_id" value="<?= HtmlEncode($Page->ward_id->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_rooms_ward_id" class="el_jdh_rooms_ward_id">
 <span<?= $Page->ward_id->viewAttributes() ?>>
 <?= $Page->ward_id->getViewValue() ?></span>
 </span>
+<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->room_number->Visible) { // room_number ?>
         <td data-name="room_number"<?= $Page->room_number->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_rooms_room_number" class="el_jdh_rooms_room_number">
+<input type="<?= $Page->room_number->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_room_number" id="x<?= $Page->RowIndex ?>_room_number" data-table="jdh_rooms" data-field="x_room_number" value="<?= $Page->room_number->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->room_number->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->room_number->formatPattern()) ?>"<?= $Page->room_number->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->room_number->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_rooms" data-field="x_room_number" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_room_number" id="o<?= $Page->RowIndex ?>_room_number" value="<?= HtmlEncode($Page->room_number->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_rooms_room_number" class="el_jdh_rooms_room_number">
 <span<?= $Page->room_number->viewAttributes() ?>>
 <?= $Page->room_number->getViewValue() ?></span>
 </span>
+<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->description->Visible) { // description ?>
         <td data-name="description"<?= $Page->description->cellAttributes() ?>>
+<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Page->RowCount ?>_jdh_rooms_description" class="el_jdh_rooms_description">
+<textarea data-table="jdh_rooms" data-field="x_description" name="x<?= $Page->RowIndex ?>_description" id="x<?= $Page->RowIndex ?>_description" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->description->getPlaceHolder()) ?>"<?= $Page->description->editAttributes() ?>><?= $Page->description->EditValue ?></textarea>
+<div class="invalid-feedback"><?= $Page->description->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_rooms" data-field="x_description" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_description" id="o<?= $Page->RowIndex ?>_description" value="<?= HtmlEncode($Page->description->OldValue) ?>">
+<?php } ?>
+<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_rooms_description" class="el_jdh_rooms_description">
 <span<?= $Page->description->viewAttributes() ?>>
 <?= $Page->description->getViewValue() ?></span>
 </span>
+<?php } ?>
 </td>
     <?php } ?>
 <?php
@@ -226,6 +311,10 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
 ?>
 </tbody>
 </table><!-- /.ew-table -->
+<?php } ?>
+<?php if ($Page->isAdd() || $Page->isCopy()) { ?>
+<input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
+<input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
 <?php } ?>
 </div><!-- /.ew-grid-middle-panel -->
 <?php if (!$Page->CurrentAction && !$Page->UseAjaxActions) { ?>

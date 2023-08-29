@@ -185,17 +185,6 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->patient_status->Visible) { // patient_status ?>
-    <tr id="r_patient_status"<?= $Page->patient_status->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_vitals_patient_status"><?= $Page->patient_status->caption() ?></span></td>
-        <td data-name="patient_status"<?= $Page->patient_status->cellAttributes() ?>>
-<span id="el_jdh_vitals_patient_status">
-<span<?= $Page->patient_status->viewAttributes() ?>>
-<?= $Page->patient_status->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
 </table>
 </form>
 </main>

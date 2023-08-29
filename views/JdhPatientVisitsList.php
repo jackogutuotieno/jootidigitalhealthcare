@@ -32,6 +32,17 @@ loadjs.ready(["wrapper", "head"], function () {
             ["visit_date", [fields.visit_date.visible && fields.visit_date.required ? ew.Validators.required(fields.visit_date.caption) : null, ew.Validators.datetime(fields.visit_date.clientFormatPattern)], fields.visit_date.isInvalid]
         ])
 
+        // Check empty row
+        .setEmptyRow(
+            function (rowIndex) {
+                let fobj = this.getForm(),
+                    fields = [["patient_id",false],["visit_type_id",false],["user_id",false],["insurance_id",false],["visit_date",false]];
+                if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
+                    return false;
+                return true;
+            }
+        )
+
         // Form_CustomValidate
         .setCustomValidate(
             function (fobj) { // DO NOT CHANGE THIS LINE! (except for adding "async" keyword)!
@@ -151,6 +162,14 @@ while ($Page->RecordCount < $Page->StopRecord) {
     $Page->RecordCount++;
     if ($Page->RecordCount >= $Page->StartRecord) {
         $Page->setupRow();
+
+        // Skip 1) delete row / empty row for confirm page, 2) hidden row
+        if (
+            $Page->RowAction != "delete" &&
+            $Page->RowAction != "insertdelete" &&
+            !($Page->RowAction == "insert" && $Page->isConfirm() && $Page->emptyRow()) &&
+            $Page->RowAction != "hide"
+        ) {
 ?>
     <tr <?= $Page->rowAttributes() ?>>
 <?php
@@ -395,10 +414,30 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
 $Page->ListOptions->render("body", "right", $Page->RowCount);
 ?>
     </tr>
+<?php if ($Page->RowType == ROWTYPE_ADD || $Page->RowType == ROWTYPE_EDIT) { ?>
+<script data-rowindex="<?= $Page->RowIndex ?>">
+loadjs.ready(["<?= $Page->FormName ?>","load"], () => <?= $Page->FormName ?>.updateLists(<?= $Page->RowIndex ?><?= $Page->RowIndex === '$rowindex$' ? ", true" : "" ?>));
+</script>
+<?php } ?>
 <?php
     }
-    if (!$Page->isGridAdd()) {
+    } // End delete row checking
+    if (
+        $Page->Recordset &&
+        !$Page->Recordset->EOF &&
+        $Page->RowIndex !== '$rowindex$' &&
+        (!$Page->isGridAdd() || $Page->CurrentMode == "copy") &&
+        (!(($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0))
+    ) {
         $Page->Recordset->moveNext();
+    }
+    // Reset for template row
+    if ($Page->RowIndex === '$rowindex$') {
+        $Page->RowIndex = 0;
+    }
+    // Reset inline add/copy row
+    if (($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0) {
+        $Page->RowIndex = 1;
     }
 }
 ?>
@@ -408,6 +447,11 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
 <?php if ($Page->isAdd() || $Page->isCopy()) { ?>
 <input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
 <input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
+<?php } ?>
+<?php if ($Page->isGridAdd()) { ?>
+<input type="hidden" name="action" id="action" value="gridinsert">
+<input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
+<?= $Page->MultiSelectKey ?>
 <?php } ?>
 </div><!-- /.ew-grid-middle-panel -->
 <?php if (!$Page->CurrentAction && !$Page->UseAjaxActions) { ?>

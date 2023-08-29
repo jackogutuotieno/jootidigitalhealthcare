@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhPatientCasesGrid extends JdhPatientCases
+class JdhBedsAssignmentGrid extends JdhBedsAssignment
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhPatientCasesGrid extends JdhPatientCases
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhPatientCasesGrid";
+    public $PageObjName = "JdhBedsAssignmentGrid";
 
     // View file path
     public $View = null;
@@ -33,13 +33,13 @@ class JdhPatientCasesGrid extends JdhPatientCases
     public $RenderingView = false;
 
     // Grid form hidden field names
-    public $FormName = "fjdh_patient_casesgrid";
+    public $FormName = "fjdh_beds_assignmentgrid";
     public $FormActionName = "";
     public $FormBlankRowName = "";
     public $FormKeyCountName = "";
 
     // CSS class/style
-    public $CurrentPageName = "jdhpatientcasesgrid";
+    public $CurrentPageName = "jdhbedsassignmentgrid";
 
     // Page URLs
     public $AddUrl;
@@ -48,14 +48,6 @@ class JdhPatientCasesGrid extends JdhPatientCases
     public $ViewUrl;
     public $CopyUrl;
     public $ListUrl;
-
-    // Audit Trail
-    public $AuditTrailOnAdd = true;
-    public $AuditTrailOnEdit = true;
-    public $AuditTrailOnDelete = true;
-    public $AuditTrailOnView = false;
-    public $AuditTrailOnViewData = false;
-    public $AuditTrailOnSearch = false;
 
     // Page headings
     public $Heading = "";
@@ -143,8 +135,8 @@ class JdhPatientCasesGrid extends JdhPatientCases
         $this->FormActionName = Config("FORM_ROW_ACTION_NAME");
         $this->FormBlankRowName = Config("FORM_BLANK_ROW_NAME");
         $this->FormKeyCountName = Config("FORM_KEY_COUNT_NAME");
-        $this->TableVar = 'jdh_patient_cases';
-        $this->TableName = 'jdh_patient_cases';
+        $this->TableVar = 'jdh_beds_assignment';
+        $this->TableName = 'jdh_beds_assignment';
 
         // Table CSS class
         $this->TableClass = "table table-bordered table-hover table-sm ew-table";
@@ -168,15 +160,15 @@ class JdhPatientCasesGrid extends JdhPatientCases
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_patient_cases)
-        if (!isset($GLOBALS["jdh_patient_cases"]) || get_class($GLOBALS["jdh_patient_cases"]) == PROJECT_NAMESPACE . "jdh_patient_cases") {
-            $GLOBALS["jdh_patient_cases"] = &$this;
+        // Table object (jdh_beds_assignment)
+        if (!isset($GLOBALS["jdh_beds_assignment"]) || get_class($GLOBALS["jdh_beds_assignment"]) == PROJECT_NAMESPACE . "jdh_beds_assignment") {
+            $GLOBALS["jdh_beds_assignment"] = &$this;
         }
-        $this->AddUrl = "jdhpatientcasesadd";
+        $this->AddUrl = "jdhbedsassignmentadd";
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_patient_cases');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_beds_assignment');
         }
 
         // Start timer
@@ -370,7 +362,7 @@ class JdhPatientCasesGrid extends JdhPatientCases
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['case_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -383,10 +375,10 @@ class JdhPatientCasesGrid extends JdhPatientCases
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->case_id->Visible = false;
+            $this->id->Visible = false;
         }
         if ($this->isAddOrEdit()) {
-            $this->submitted_by_user_id->Visible = false;
+            $this->submittedby_user_id->Visible = false;
         }
     }
 
@@ -558,16 +550,11 @@ class JdhPatientCasesGrid extends JdhPatientCases
 
         // Set up list options
         $this->setupListOptions();
-        $this->case_id->setVisibility();
+        $this->id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->history->Visible = false;
-        $this->random_blood_sugar->Visible = false;
-        $this->medical_history->Visible = false;
-        $this->family->Visible = false;
-        $this->socio_economic_history->Visible = false;
-        $this->notes->Visible = false;
-        $this->submission_date->setVisibility();
-        $this->submitted_by_user_id->Visible = false;
+        $this->bed_id->setVisibility();
+        $this->date_submitted->setVisibility();
+        $this->submittedby_user_id->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -599,13 +586,14 @@ class JdhPatientCasesGrid extends JdhPatientCases
 
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
+        $this->setupLookupOptions($this->bed_id);
 
         // Load default values for add
         $this->loadDefaultValues();
 
         // Update form name to avoid conflict
         if ($this->IsModal) {
-            $this->FormName = "fjdh_patient_casesgrid";
+            $this->FormName = "fjdh_beds_assignmentgrid";
         }
 
         // Set up page action
@@ -871,9 +859,6 @@ class JdhPatientCasesGrid extends JdhPatientCases
             return false;
         }
         $this->loadDefaultValues();
-        if ($this->AuditTrailOnEdit) {
-            $this->writeAuditTrailDummy($Language->phrase("BatchUpdateBegin")); // Batch update begin
-        }
         $wrkfilter = "";
         $key = "";
 
@@ -941,39 +926,8 @@ class JdhPatientCasesGrid extends JdhPatientCases
 
             // Call Grid_Updated event
             $this->gridUpdated($rsold, $rsnew);
-            if ($this->AuditTrailOnEdit) {
-                $this->writeAuditTrailDummy($Language->phrase("BatchUpdateSuccess")); // Batch update success
-            }
             $this->clearInlineMode(); // Clear inline edit mode
-
-            // Send notify email
-            $table = 'jdh_patient_cases';
-            $subject = $table . " " . $Language->phrase("RecordUpdated");
-            $action = $Language->phrase("ActionUpdatedGridEdit");
-            $email = new Email();
-            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-            $email->replaceSubject($subject); // Replace Subject
-            $email->replaceContent("<!--table-->", $table);
-            $email->replaceContent("<!--key-->", $key);
-            $email->replaceContent("<!--action-->", $action);
-            $args = [];
-            $args["rsold"] = &$rsold;
-            $args["rsnew"] = &$rsnew;
-            $emailSent = false;
-            if ($this->emailSending($email, $args)) {
-                $emailSent = $email->send();
-            }
-
-            // Set up error message
-            if (!$emailSent) {
-                $this->setFailureMessage($email->SendErrDescription);
-            }
         } else {
-            if ($this->AuditTrailOnEdit) {
-                $this->writeAuditTrailDummy($Language->phrase("BatchUpdateRollback")); // Batch update rollback
-            }
             if ($this->getFailureMessage() == "") {
                 $this->setFailureMessage($Language->phrase("UpdateFailed")); // Set update failed message
             }
@@ -1033,9 +987,6 @@ class JdhPatientCasesGrid extends JdhPatientCases
         // Init key filter
         $wrkfilter = "";
         $addcnt = 0;
-        if ($this->AuditTrailOnAdd) {
-            $this->writeAuditTrailDummy($Language->phrase("BatchInsertBegin")); // Batch insert begin
-        }
         $key = "";
 
         // Get row count
@@ -1067,7 +1018,7 @@ class JdhPatientCasesGrid extends JdhPatientCases
                     if ($key != "") {
                         $key .= Config("COMPOSITE_KEY_SEPARATOR");
                     }
-                    $key .= $this->case_id->CurrentValue;
+                    $key .= $this->id->CurrentValue;
 
                     // Add filter for this record
                     AddFilter($wrkfilter, $this->getRecordFilter(), "OR");
@@ -1090,36 +1041,8 @@ class JdhPatientCasesGrid extends JdhPatientCases
 
             // Call Grid_Inserted event
             $this->gridInserted($rsnew);
-            if ($this->AuditTrailOnAdd) {
-                $this->writeAuditTrailDummy($Language->phrase("BatchInsertSuccess")); // Batch insert success
-            }
             $this->clearInlineMode(); // Clear grid add mode
-
-            // Send notify email
-            $table = 'jdh_patient_cases';
-            $subject = $table . " " . $Language->phrase("RecordInserted");
-            $action = $Language->phrase("ActionInsertedGridAdd");
-            $email = new Email();
-            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-            $email->replaceSubject($subject); // Replace Subject
-            $email->replaceContent("<!--table-->", $table);
-            $email->replaceContent("<!--key-->", $key);
-            $email->replaceContent("<!--action-->", $action);
-            $args = [];
-            $args["rsnew"] = &$rsnew;
-            $emailSent = false;
-            if ($this->emailSending($email, $args)) {
-                $emailSent = $email->send();
-            }
-            if (!$emailSent) {
-                $this->setFailureMessage($email->SendErrDescription);
-            }
         } else {
-            if ($this->AuditTrailOnAdd) {
-                $this->writeAuditTrailDummy($Language->phrase("BatchInsertRollback")); // Batch insert rollback
-            }
             if ($this->getFailureMessage() == "") {
                 $this->setFailureMessage($Language->phrase("InsertFailed")); // Set insert failed message
             }
@@ -1134,7 +1057,10 @@ class JdhPatientCasesGrid extends JdhPatientCases
         if ($CurrentForm->hasValue("x_patient_id") && $CurrentForm->hasValue("o_patient_id") && $this->patient_id->CurrentValue != $this->patient_id->DefaultValue) {
             return false;
         }
-        if ($CurrentForm->hasValue("x_submission_date") && $CurrentForm->hasValue("o_submission_date") && $this->submission_date->CurrentValue != $this->submission_date->DefaultValue) {
+        if ($CurrentForm->hasValue("x_bed_id") && $CurrentForm->hasValue("o_bed_id") && $this->bed_id->CurrentValue != $this->bed_id->DefaultValue) {
+            return false;
+        }
+        if ($CurrentForm->hasValue("x_date_submitted") && $CurrentForm->hasValue("o_date_submitted") && $this->date_submitted->CurrentValue != $this->date_submitted->DefaultValue) {
             return false;
         }
         return true;
@@ -1222,9 +1148,11 @@ class JdhPatientCasesGrid extends JdhPatientCases
     // Reset form status
     public function resetFormError()
     {
-        $this->case_id->clearErrorMessage();
+        $this->id->clearErrorMessage();
         $this->patient_id->clearErrorMessage();
-        $this->submission_date->clearErrorMessage();
+        $this->bed_id->clearErrorMessage();
+        $this->date_submitted->clearErrorMessage();
+        $this->submittedby_user_id->clearErrorMessage();
     }
 
     // Set up sort parameters
@@ -1308,6 +1236,20 @@ class JdhPatientCasesGrid extends JdhPatientCases
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
 
+        // "copy"
+        $item = &$this->ListOptions->add("copy");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->canAdd();
+        $item->OnLeft = false;
+
+        // "sequence"
+        $item = &$this->ListOptions->add("sequence");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = true;
+        $item->OnLeft = true; // Always on left
+        $item->ShowInDropDown = false;
+        $item->ShowInButtonGroup = false;
+
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
@@ -1376,13 +1318,17 @@ class JdhPatientCasesGrid extends JdhPatientCases
                 }
             }
         }
+
+        // "sequence"
+        $opt = $this->ListOptions["sequence"];
+        $opt->Body = FormatSequenceNumber($this->RecordCount);
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
             $viewcaption = HtmlTitle($Language->phrase("ViewLink"));
             if ($Security->canView() && $this->showOptionLink("view")) {
                 if ($this->ModalView && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_patient_cases\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
+                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_beds_assignment\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-caption=\"" . $viewcaption . "\" href=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\">" . $Language->phrase("ViewLink") . "</a>";
                 }
@@ -1395,9 +1341,22 @@ class JdhPatientCasesGrid extends JdhPatientCases
             $editcaption = HtmlTitle($Language->phrase("EditLink"));
             if ($Security->canEdit() && $this->showOptionLink("edit")) {
                 if ($this->ModalEdit && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_patient_cases\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
+                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_beds_assignment\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
+                }
+            } else {
+                $opt->Body = "";
+            }
+
+            // "copy"
+            $opt = $this->ListOptions["copy"];
+            $copycaption = HtmlTitle($Language->phrase("CopyLink"));
+            if ($Security->canAdd() && $this->showOptionLink("add")) {
+                if ($this->ModalAdd && !IsMobile()) {
+                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_beds_assignment\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
+                } else {
+                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("CopyLink") . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1431,7 +1390,7 @@ class JdhPatientCasesGrid extends JdhPatientCases
             $addcaption = HtmlTitle($Language->phrase("AddLink"));
             $this->AddUrl = $this->getAddUrl();
             if ($this->ModalAdd && !IsMobile()) {
-                $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-table=\"jdh_patient_cases\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("AddLink") . "</a>";
+                $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-table=\"jdh_beds_assignment\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("AddLink") . "</a>";
             } else {
                 $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
             }
@@ -1519,7 +1478,7 @@ class JdhPatientCasesGrid extends JdhPatientCases
 
                 // Set row properties
                 $this->resetAttributes();
-                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_patient_cases", "data-rowtype" => ROWTYPE_ADD]);
+                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_beds_assignment", "data-rowtype" => ROWTYPE_ADD]);
                 $this->RowAttrs->appendClass("ew-template");
                 // Render row
                 $this->RowType = ROWTYPE_ADD;
@@ -1607,7 +1566,7 @@ class JdhPatientCasesGrid extends JdhPatientCases
         $this->RowAttrs->merge([
             "data-rowindex" => $this->RowCount,
             "data-key" => $this->getKey(true),
-            "id" => "r" . $this->RowCount . "_jdh_patient_cases",
+            "id" => "r" . $this->RowCount . "_jdh_beds_assignment",
             "data-rowtype" => $this->RowType,
             "class" => ($this->RowCount % 2 != 1) ? "ew-table-alt-row" : "",
         ]);
@@ -1631,8 +1590,8 @@ class JdhPatientCasesGrid extends JdhPatientCases
     // Load default values
     protected function loadDefaultValues()
     {
-        $this->submitted_by_user_id->DefaultValue = CurrentUserID();
-        $this->submitted_by_user_id->OldValue = $this->submitted_by_user_id->DefaultValue;
+        $this->submittedby_user_id->DefaultValue = CurrentUserID();
+        $this->submittedby_user_id->OldValue = $this->submittedby_user_id->DefaultValue;
     }
 
     // Load form values
@@ -1643,10 +1602,10 @@ class JdhPatientCasesGrid extends JdhPatientCases
         $CurrentForm->FormName = $this->FormName;
         $validate = !Config("SERVER_VALIDATE");
 
-        // Check field name 'case_id' first before field var 'x_case_id'
-        $val = $CurrentForm->hasValue("case_id") ? $CurrentForm->getValue("case_id") : $CurrentForm->getValue("x_case_id");
-        if (!$this->case_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->case_id->setFormValue($val);
+        // Check field name 'id' first before field var 'x_id'
+        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
+        if (!$this->id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->id->setFormValue($val);
         }
 
         // Check field name 'patient_id' first before field var 'x_patient_id'
@@ -1662,18 +1621,44 @@ class JdhPatientCasesGrid extends JdhPatientCases
             $this->patient_id->setOldValue($CurrentForm->getValue("o_patient_id"));
         }
 
-        // Check field name 'submission_date' first before field var 'x_submission_date'
-        $val = $CurrentForm->hasValue("submission_date") ? $CurrentForm->getValue("submission_date") : $CurrentForm->getValue("x_submission_date");
-        if (!$this->submission_date->IsDetailKey) {
+        // Check field name 'bed_id' first before field var 'x_bed_id'
+        $val = $CurrentForm->hasValue("bed_id") ? $CurrentForm->getValue("bed_id") : $CurrentForm->getValue("x_bed_id");
+        if (!$this->bed_id->IsDetailKey) {
             if (IsApi() && $val === null) {
-                $this->submission_date->Visible = false; // Disable update for API request
+                $this->bed_id->Visible = false; // Disable update for API request
             } else {
-                $this->submission_date->setFormValue($val, true, $validate);
+                $this->bed_id->setFormValue($val);
             }
-            $this->submission_date->CurrentValue = UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern());
         }
-        if ($CurrentForm->hasValue("o_submission_date")) {
-            $this->submission_date->setOldValue($CurrentForm->getValue("o_submission_date"));
+        if ($CurrentForm->hasValue("o_bed_id")) {
+            $this->bed_id->setOldValue($CurrentForm->getValue("o_bed_id"));
+        }
+
+        // Check field name 'date_submitted' first before field var 'x_date_submitted'
+        $val = $CurrentForm->hasValue("date_submitted") ? $CurrentForm->getValue("date_submitted") : $CurrentForm->getValue("x_date_submitted");
+        if (!$this->date_submitted->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->date_submitted->Visible = false; // Disable update for API request
+            } else {
+                $this->date_submitted->setFormValue($val, true, $validate);
+            }
+            $this->date_submitted->CurrentValue = UnFormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern());
+        }
+        if ($CurrentForm->hasValue("o_date_submitted")) {
+            $this->date_submitted->setOldValue($CurrentForm->getValue("o_date_submitted"));
+        }
+
+        // Check field name 'submittedby_user_id' first before field var 'x_submittedby_user_id'
+        $val = $CurrentForm->hasValue("submittedby_user_id") ? $CurrentForm->getValue("submittedby_user_id") : $CurrentForm->getValue("x_submittedby_user_id");
+        if (!$this->submittedby_user_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->submittedby_user_id->Visible = false; // Disable update for API request
+            } else {
+                $this->submittedby_user_id->setFormValue($val);
+            }
+        }
+        if ($CurrentForm->hasValue("o_submittedby_user_id")) {
+            $this->submittedby_user_id->setOldValue($CurrentForm->getValue("o_submittedby_user_id"));
         }
     }
 
@@ -1682,11 +1667,13 @@ class JdhPatientCasesGrid extends JdhPatientCases
     {
         global $CurrentForm;
         if (!$this->isGridAdd() && !$this->isAdd()) {
-            $this->case_id->CurrentValue = $this->case_id->FormValue;
+            $this->id->CurrentValue = $this->id->FormValue;
         }
         $this->patient_id->CurrentValue = $this->patient_id->FormValue;
-        $this->submission_date->CurrentValue = $this->submission_date->FormValue;
-        $this->submission_date->CurrentValue = UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern());
+        $this->bed_id->CurrentValue = $this->bed_id->FormValue;
+        $this->date_submitted->CurrentValue = $this->date_submitted->FormValue;
+        $this->date_submitted->CurrentValue = UnFormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern());
+        $this->submittedby_user_id->CurrentValue = $this->submittedby_user_id->FormValue;
     }
 
     // Load recordset
@@ -1774,32 +1761,22 @@ class JdhPatientCasesGrid extends JdhPatientCases
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->case_id->setDbValue($row['case_id']);
+        $this->id->setDbValue($row['id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->history->setDbValue($row['history']);
-        $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
-        $this->medical_history->setDbValue($row['medical_history']);
-        $this->family->setDbValue($row['family']);
-        $this->socio_economic_history->setDbValue($row['socio_economic_history']);
-        $this->notes->setDbValue($row['notes']);
-        $this->submission_date->setDbValue($row['submission_date']);
-        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->bed_id->setDbValue($row['bed_id']);
+        $this->date_submitted->setDbValue($row['date_submitted']);
+        $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['case_id'] = $this->case_id->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['history'] = $this->history->DefaultValue;
-        $row['random_blood_sugar'] = $this->random_blood_sugar->DefaultValue;
-        $row['medical_history'] = $this->medical_history->DefaultValue;
-        $row['family'] = $this->family->DefaultValue;
-        $row['socio_economic_history'] = $this->socio_economic_history->DefaultValue;
-        $row['notes'] = $this->notes->DefaultValue;
-        $row['submission_date'] = $this->submission_date->DefaultValue;
-        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['bed_id'] = $this->bed_id->DefaultValue;
+        $row['date_submitted'] = $this->date_submitted->DefaultValue;
+        $row['submittedby_user_id'] = $this->submittedby_user_id->DefaultValue;
         return $row;
     }
 
@@ -1838,30 +1815,20 @@ class JdhPatientCasesGrid extends JdhPatientCases
 
         // Common render codes for all row types
 
-        // case_id
+        // id
 
         // patient_id
 
-        // history
+        // bed_id
 
-        // random_blood_sugar
+        // date_submitted
 
-        // medical_history
-
-        // family
-
-        // socio_economic_history
-
-        // notes
-
-        // submission_date
-
-        // submitted_by_user_id
+        // submittedby_user_id
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // case_id
-            $this->case_id->ViewValue = $this->case_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
 
             // patient_id
             $curVal = strval($this->patient_id->CurrentValue);
@@ -1869,7 +1836,8 @@ class JdhPatientCasesGrid extends JdhPatientCases
                 $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
                 if ($this->patient_id->ViewValue === null) { // Lookup from database
                     $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                    $lookupFilter = $this->patient_id->getSelectFilter($this); // PHP
+                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
                     $config->setResultCacheImpl($this->Cache);
@@ -1886,27 +1854,59 @@ class JdhPatientCasesGrid extends JdhPatientCases
                 $this->patient_id->ViewValue = null;
             }
 
-            // submission_date
-            $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
-            $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
+            // bed_id
+            $curVal = strval($this->bed_id->CurrentValue);
+            if ($curVal != "") {
+                $this->bed_id->ViewValue = $this->bed_id->lookupCacheOption($curVal);
+                if ($this->bed_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`bed_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $lookupFilter = $this->bed_id->getSelectFilter($this); // PHP
+                    $sqlWrk = $this->bed_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->bed_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->bed_id->ViewValue = $this->bed_id->displayValue($arwrk);
+                    } else {
+                        $this->bed_id->ViewValue = FormatNumber($this->bed_id->CurrentValue, $this->bed_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->bed_id->ViewValue = null;
+            }
 
-            // submitted_by_user_id
-            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
-            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
+            // date_submitted
+            $this->date_submitted->ViewValue = $this->date_submitted->CurrentValue;
+            $this->date_submitted->ViewValue = FormatDateTime($this->date_submitted->ViewValue, $this->date_submitted->formatPattern());
 
-            // case_id
-            $this->case_id->HrefValue = "";
-            $this->case_id->TooltipValue = "";
+            // submittedby_user_id
+            $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
+            $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
+
+            // id
+            $this->id->HrefValue = "";
+            $this->id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
 
-            // submission_date
-            $this->submission_date->HrefValue = "";
-            $this->submission_date->TooltipValue = "";
+            // bed_id
+            $this->bed_id->HrefValue = "";
+            $this->bed_id->TooltipValue = "";
+
+            // date_submitted
+            $this->date_submitted->HrefValue = "";
+            $this->date_submitted->TooltipValue = "";
+
+            // submittedby_user_id
+            $this->submittedby_user_id->HrefValue = "";
+            $this->submittedby_user_id->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
-            // case_id
+            // id
 
             // patient_id
             $this->patient_id->setupEditAttributes();
@@ -1918,7 +1918,8 @@ class JdhPatientCasesGrid extends JdhPatientCases
                     $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
                     if ($this->patient_id->ViewValue === null) { // Lookup from database
                         $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $lookupFilter = $this->patient_id->getSelectFilter($this); // PHP
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                         $conn = Conn();
                         $config = $conn->getConfiguration();
                         $config->setResultCacheImpl($this->Cache);
@@ -1949,7 +1950,8 @@ class JdhPatientCasesGrid extends JdhPatientCases
                     } else {
                         $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
                     }
-                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                    $lookupFilter = $this->patient_id->getSelectFilter($this); // PHP
+                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
                     $config->setResultCacheImpl($this->Cache);
@@ -1961,25 +1963,64 @@ class JdhPatientCasesGrid extends JdhPatientCases
                 $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
             }
 
-            // submission_date
-            $this->submission_date->setupEditAttributes();
-            $this->submission_date->EditValue = HtmlEncode(FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()));
-            $this->submission_date->PlaceHolder = RemoveHtml($this->submission_date->caption());
+            // bed_id
+            $this->bed_id->setupEditAttributes();
+            $curVal = trim(strval($this->bed_id->CurrentValue));
+            if ($curVal != "") {
+                $this->bed_id->ViewValue = $this->bed_id->lookupCacheOption($curVal);
+            } else {
+                $this->bed_id->ViewValue = $this->bed_id->Lookup !== null && is_array($this->bed_id->lookupOptions()) ? $curVal : null;
+            }
+            if ($this->bed_id->ViewValue !== null) { // Load from cache
+                $this->bed_id->EditValue = array_values($this->bed_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`bed_id`", "=", $this->bed_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $lookupFilter = $this->bed_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->bed_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                foreach ($arwrk as &$row) {
+                    $row = $this->bed_id->Lookup->renderViewRow($row);
+                }
+                $this->bed_id->EditValue = $arwrk;
+            }
+            $this->bed_id->PlaceHolder = RemoveHtml($this->bed_id->caption());
+
+            // date_submitted
+            $this->date_submitted->setupEditAttributes();
+            $this->date_submitted->EditValue = HtmlEncode(FormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern()));
+            $this->date_submitted->PlaceHolder = RemoveHtml($this->date_submitted->caption());
+
+            // submittedby_user_id
 
             // Add refer script
 
-            // case_id
-            $this->case_id->HrefValue = "";
+            // id
+            $this->id->HrefValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
 
-            // submission_date
-            $this->submission_date->HrefValue = "";
+            // bed_id
+            $this->bed_id->HrefValue = "";
+
+            // date_submitted
+            $this->date_submitted->HrefValue = "";
+
+            // submittedby_user_id
+            $this->submittedby_user_id->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // case_id
-            $this->case_id->setupEditAttributes();
-            $this->case_id->EditValue = $this->case_id->CurrentValue;
+            // id
+            $this->id->setupEditAttributes();
+            $this->id->EditValue = $this->id->CurrentValue;
 
             // patient_id
             $this->patient_id->setupEditAttributes();
@@ -1991,7 +2032,8 @@ class JdhPatientCasesGrid extends JdhPatientCases
                     $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
                     if ($this->patient_id->ViewValue === null) { // Lookup from database
                         $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                        $lookupFilter = $this->patient_id->getSelectFilter($this); // PHP
+                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                         $conn = Conn();
                         $config = $conn->getConfiguration();
                         $config->setResultCacheImpl($this->Cache);
@@ -2022,7 +2064,8 @@ class JdhPatientCasesGrid extends JdhPatientCases
                     } else {
                         $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
                     }
-                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                    $lookupFilter = $this->patient_id->getSelectFilter($this); // PHP
+                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
                     $config->setResultCacheImpl($this->Cache);
@@ -2034,21 +2077,61 @@ class JdhPatientCasesGrid extends JdhPatientCases
                 $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
             }
 
-            // submission_date
-            $this->submission_date->setupEditAttributes();
-            $this->submission_date->EditValue = HtmlEncode(FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()));
-            $this->submission_date->PlaceHolder = RemoveHtml($this->submission_date->caption());
+            // bed_id
+            $this->bed_id->setupEditAttributes();
+            $curVal = trim(strval($this->bed_id->CurrentValue));
+            if ($curVal != "") {
+                $this->bed_id->ViewValue = $this->bed_id->lookupCacheOption($curVal);
+            } else {
+                $this->bed_id->ViewValue = $this->bed_id->Lookup !== null && is_array($this->bed_id->lookupOptions()) ? $curVal : null;
+            }
+            if ($this->bed_id->ViewValue !== null) { // Load from cache
+                $this->bed_id->EditValue = array_values($this->bed_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`bed_id`", "=", $this->bed_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $lookupFilter = $this->bed_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->bed_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                foreach ($arwrk as &$row) {
+                    $row = $this->bed_id->Lookup->renderViewRow($row);
+                }
+                $this->bed_id->EditValue = $arwrk;
+            }
+            $this->bed_id->PlaceHolder = RemoveHtml($this->bed_id->caption());
+
+            // date_submitted
+            $this->date_submitted->setupEditAttributes();
+            $this->date_submitted->EditValue = HtmlEncode(FormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern()));
+            $this->date_submitted->PlaceHolder = RemoveHtml($this->date_submitted->caption());
+
+            // submittedby_user_id
 
             // Edit refer script
 
-            // case_id
-            $this->case_id->HrefValue = "";
+            // id
+            $this->id->HrefValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
 
-            // submission_date
-            $this->submission_date->HrefValue = "";
+            // bed_id
+            $this->bed_id->HrefValue = "";
+
+            // date_submitted
+            $this->date_submitted->HrefValue = "";
+
+            // submittedby_user_id
+            $this->submittedby_user_id->HrefValue = "";
+            $this->submittedby_user_id->TooltipValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -2070,9 +2153,9 @@ class JdhPatientCasesGrid extends JdhPatientCases
             return true;
         }
         $validateForm = true;
-        if ($this->case_id->Required) {
-            if (!$this->case_id->IsDetailKey && EmptyValue($this->case_id->FormValue)) {
-                $this->case_id->addErrorMessage(str_replace("%s", $this->case_id->caption(), $this->case_id->RequiredErrorMessage));
+        if ($this->id->Required) {
+            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
+                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
             }
         }
         if ($this->patient_id->Required) {
@@ -2080,13 +2163,23 @@ class JdhPatientCasesGrid extends JdhPatientCases
                 $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
             }
         }
-        if ($this->submission_date->Required) {
-            if (!$this->submission_date->IsDetailKey && EmptyValue($this->submission_date->FormValue)) {
-                $this->submission_date->addErrorMessage(str_replace("%s", $this->submission_date->caption(), $this->submission_date->RequiredErrorMessage));
+        if ($this->bed_id->Required) {
+            if (!$this->bed_id->IsDetailKey && EmptyValue($this->bed_id->FormValue)) {
+                $this->bed_id->addErrorMessage(str_replace("%s", $this->bed_id->caption(), $this->bed_id->RequiredErrorMessage));
             }
         }
-        if (!CheckDate($this->submission_date->FormValue, $this->submission_date->formatPattern())) {
-            $this->submission_date->addErrorMessage($this->submission_date->getErrorMessage(false));
+        if ($this->date_submitted->Required) {
+            if (!$this->date_submitted->IsDetailKey && EmptyValue($this->date_submitted->FormValue)) {
+                $this->date_submitted->addErrorMessage(str_replace("%s", $this->date_submitted->caption(), $this->date_submitted->RequiredErrorMessage));
+            }
+        }
+        if (!CheckDate($this->date_submitted->FormValue, $this->date_submitted->formatPattern())) {
+            $this->date_submitted->addErrorMessage($this->date_submitted->getErrorMessage(false));
+        }
+        if ($this->submittedby_user_id->Required) {
+            if (!$this->submittedby_user_id->IsDetailKey && EmptyValue($this->submittedby_user_id->FormValue)) {
+                $this->submittedby_user_id->addErrorMessage(str_replace("%s", $this->submittedby_user_id->caption(), $this->submittedby_user_id->RequiredErrorMessage));
+            }
         }
 
         // Return validate result
@@ -2116,9 +2209,6 @@ class JdhPatientCasesGrid extends JdhPatientCases
             $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
             return false;
         }
-        if ($this->AuditTrailOnDelete) {
-            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
-        }
 
         // Clone old rows
         $rsold = $rows;
@@ -2129,7 +2219,7 @@ class JdhPatientCasesGrid extends JdhPatientCases
             if ($thisKey != "") {
                 $thisKey .= Config("COMPOSITE_KEY_SEPARATOR");
             }
-            $thisKey .= $row['case_id'];
+            $thisKey .= $row['id'];
 
             // Call row deleting event
             $deleteRow = $this->rowDeleting($row);
@@ -2201,8 +2291,11 @@ class JdhPatientCasesGrid extends JdhPatientCases
         }
         $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, $this->patient_id->ReadOnly);
 
-        // submission_date
-        $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), $this->submission_date->ReadOnly);
+        // bed_id
+        $this->bed_id->setDbValueDef($rsnew, $this->bed_id->CurrentValue, 0, $this->bed_id->ReadOnly);
+
+        // date_submitted
+        $this->date_submitted->setDbValueDef($rsnew, UnFormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern()), CurrentDate(), $this->date_submitted->ReadOnly);
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -2256,13 +2349,15 @@ class JdhPatientCasesGrid extends JdhPatientCases
         // patient_id
         $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, false);
 
-        // submission_date
-        $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), false);
+        // bed_id
+        $this->bed_id->setDbValueDef($rsnew, $this->bed_id->CurrentValue, 0, false);
 
-        // submitted_by_user_id
-        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
-            $rsnew['submitted_by_user_id'] = CurrentUserID();
-        }
+        // date_submitted
+        $this->date_submitted->setDbValueDef($rsnew, UnFormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern()), CurrentDate(), false);
+
+        // submittedby_user_id
+        $this->submittedby_user_id->CurrentValue = $this->submittedby_user_id->getAutoUpdateValue(); // PHP
+        $this->submittedby_user_id->setDbValueDef($rsnew, $this->submittedby_user_id->CurrentValue, 0);
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -2324,7 +2419,7 @@ class JdhPatientCasesGrid extends JdhPatientCases
     {
         global $Security;
         if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
-            return $Security->isValidUserID($this->submitted_by_user_id->CurrentValue);
+            return $Security->isValidUserID($this->submittedby_user_id->CurrentValue);
         }
         return true;
     }
@@ -2359,6 +2454,10 @@ class JdhPatientCasesGrid extends JdhPatientCases
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_patient_id":
+                    $lookupFilter = $fld->getSelectFilter(); // PHP
+                    break;
+                case "x_bed_id":
+                    $lookupFilter = $fld->getSelectFilter(); // PHP
                     break;
                 default:
                     $lookupFilter = "";
