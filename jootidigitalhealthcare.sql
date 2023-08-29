@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Aug 28, 2023 at 08:29 PM
+-- Generation Time: Aug 29, 2023 at 01:45 PM
 -- Server version: 8.0.31
 -- PHP Version: 8.1.13
 
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS `jdh_audittrail` (
   `OldValue` longtext,
   `NewValue` longtext,
   PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=694 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=701 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_audittrail`
@@ -793,7 +793,14 @@ INSERT INTO `jdh_audittrail` (`Id`, `DateTime`, `Script`, `User`, `Action`, `Tab
 (690, '2023-08-28 20:21:34', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
 (691, '2023-08-28 20:21:43', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', ''),
 (692, '2023-08-28 20:24:13', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
-(693, '2023-08-28 20:24:50', '/jootidigitalhealthcare/login', '4', 'login', '::1', '', '', '', '');
+(693, '2023-08-28 20:24:50', '/jootidigitalhealthcare/login', '4', 'login', '::1', '', '', '', ''),
+(694, '2023-08-28 20:31:25', '/jootidigitalhealthcare/logout', '4', 'logout', '::1', '', '', '', ''),
+(695, '2023-08-28 20:31:34', '/jootidigitalhealthcare/login', '4', 'login', '::1', '', '', '', ''),
+(696, '2023-08-29 12:14:44', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', ''),
+(697, '2023-08-29 12:14:57', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
+(698, '2023-08-29 12:58:16', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', ''),
+(699, '2023-08-29 13:29:18', '/jootidigitalhealthcare/logout', '1', 'logout', '::1', '', '', '', ''),
+(700, '2023-08-29 13:30:01', '/jootidigitalhealthcare/login', '1', 'login', '::1', '', '', '', '');
 
 -- --------------------------------------------------------
 
