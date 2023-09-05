@@ -49,6 +49,14 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
     public $CopyUrl;
     public $ListUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -554,7 +562,7 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
         $this->patient_id->setVisibility();
         $this->bed_id->setVisibility();
         $this->date_submitted->setVisibility();
-        $this->submittedby_user_id->setVisibility();
+        $this->submittedby_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -859,6 +867,9 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
             return false;
         }
         $this->loadDefaultValues();
+        if ($this->AuditTrailOnEdit) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchUpdateBegin")); // Batch update begin
+        }
         $wrkfilter = "";
         $key = "";
 
@@ -926,8 +937,39 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
 
             // Call Grid_Updated event
             $this->gridUpdated($rsold, $rsnew);
+            if ($this->AuditTrailOnEdit) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchUpdateSuccess")); // Batch update success
+            }
             $this->clearInlineMode(); // Clear inline edit mode
+
+            // Send notify email
+            $table = 'jdh_beds_assignment';
+            $subject = $table . " " . $Language->phrase("RecordUpdated");
+            $action = $Language->phrase("ActionUpdatedGridEdit");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", $key);
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rsold"] = &$rsold;
+            $args["rsnew"] = &$rsnew;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+
+            // Set up error message
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
         } else {
+            if ($this->AuditTrailOnEdit) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchUpdateRollback")); // Batch update rollback
+            }
             if ($this->getFailureMessage() == "") {
                 $this->setFailureMessage($Language->phrase("UpdateFailed")); // Set update failed message
             }
@@ -987,6 +1029,9 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
         // Init key filter
         $wrkfilter = "";
         $addcnt = 0;
+        if ($this->AuditTrailOnAdd) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchInsertBegin")); // Batch insert begin
+        }
         $key = "";
 
         // Get row count
@@ -1041,8 +1086,36 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
 
             // Call Grid_Inserted event
             $this->gridInserted($rsnew);
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchInsertSuccess")); // Batch insert success
+            }
             $this->clearInlineMode(); // Clear grid add mode
+
+            // Send notify email
+            $table = 'jdh_beds_assignment';
+            $subject = $table . " " . $Language->phrase("RecordInserted");
+            $action = $Language->phrase("ActionInsertedGridAdd");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", $key);
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rsnew"] = &$rsnew;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
         } else {
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchInsertRollback")); // Batch insert rollback
+            }
             if ($this->getFailureMessage() == "") {
                 $this->setFailureMessage($Language->phrase("InsertFailed")); // Set insert failed message
             }
@@ -1152,7 +1225,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
         $this->patient_id->clearErrorMessage();
         $this->bed_id->clearErrorMessage();
         $this->date_submitted->clearErrorMessage();
-        $this->submittedby_user_id->clearErrorMessage();
     }
 
     // Set up sort parameters
@@ -1234,12 +1306,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
         $item = &$this->ListOptions->add("edit");
         $item->CssClass = "text-nowrap";
         $item->Visible = $Security->canEdit();
-        $item->OnLeft = false;
-
-        // "copy"
-        $item = &$this->ListOptions->add("copy");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canAdd();
         $item->OnLeft = false;
 
         // "sequence"
@@ -1344,19 +1410,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_beds_assignment\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
-
-            // "copy"
-            $opt = $this->ListOptions["copy"];
-            $copycaption = HtmlTitle($Language->phrase("CopyLink"));
-            if ($Security->canAdd() && $this->showOptionLink("add")) {
-                if ($this->ModalAdd && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_beds_assignment\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("CopyLink") . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1647,19 +1700,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
         if ($CurrentForm->hasValue("o_date_submitted")) {
             $this->date_submitted->setOldValue($CurrentForm->getValue("o_date_submitted"));
         }
-
-        // Check field name 'submittedby_user_id' first before field var 'x_submittedby_user_id'
-        $val = $CurrentForm->hasValue("submittedby_user_id") ? $CurrentForm->getValue("submittedby_user_id") : $CurrentForm->getValue("x_submittedby_user_id");
-        if (!$this->submittedby_user_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->submittedby_user_id->Visible = false; // Disable update for API request
-            } else {
-                $this->submittedby_user_id->setFormValue($val);
-            }
-        }
-        if ($CurrentForm->hasValue("o_submittedby_user_id")) {
-            $this->submittedby_user_id->setOldValue($CurrentForm->getValue("o_submittedby_user_id"));
-        }
     }
 
     // Restore form values
@@ -1673,7 +1713,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
         $this->bed_id->CurrentValue = $this->bed_id->FormValue;
         $this->date_submitted->CurrentValue = $this->date_submitted->FormValue;
         $this->date_submitted->CurrentValue = UnFormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern());
-        $this->submittedby_user_id->CurrentValue = $this->submittedby_user_id->FormValue;
     }
 
     // Load recordset
@@ -1901,10 +1940,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
             // date_submitted
             $this->date_submitted->HrefValue = "";
             $this->date_submitted->TooltipValue = "";
-
-            // submittedby_user_id
-            $this->submittedby_user_id->HrefValue = "";
-            $this->submittedby_user_id->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
             // id
 
@@ -1999,8 +2034,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
             $this->date_submitted->EditValue = HtmlEncode(FormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern()));
             $this->date_submitted->PlaceHolder = RemoveHtml($this->date_submitted->caption());
 
-            // submittedby_user_id
-
             // Add refer script
 
             // id
@@ -2014,9 +2047,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
 
             // date_submitted
             $this->date_submitted->HrefValue = "";
-
-            // submittedby_user_id
-            $this->submittedby_user_id->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
             // id
             $this->id->setupEditAttributes();
@@ -2113,8 +2143,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
             $this->date_submitted->EditValue = HtmlEncode(FormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern()));
             $this->date_submitted->PlaceHolder = RemoveHtml($this->date_submitted->caption());
 
-            // submittedby_user_id
-
             // Edit refer script
 
             // id
@@ -2128,10 +2156,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
 
             // date_submitted
             $this->date_submitted->HrefValue = "";
-
-            // submittedby_user_id
-            $this->submittedby_user_id->HrefValue = "";
-            $this->submittedby_user_id->TooltipValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -2176,11 +2200,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
         if (!CheckDate($this->date_submitted->FormValue, $this->date_submitted->formatPattern())) {
             $this->date_submitted->addErrorMessage($this->date_submitted->getErrorMessage(false));
         }
-        if ($this->submittedby_user_id->Required) {
-            if (!$this->submittedby_user_id->IsDetailKey && EmptyValue($this->submittedby_user_id->FormValue)) {
-                $this->submittedby_user_id->addErrorMessage(str_replace("%s", $this->submittedby_user_id->caption(), $this->submittedby_user_id->RequiredErrorMessage));
-            }
-        }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -2208,6 +2227,9 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
         if (count($rows) == 0) {
             $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
             return false;
+        }
+        if ($this->AuditTrailOnDelete) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
         }
 
         // Clone old rows
@@ -2356,8 +2378,9 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
         $this->date_submitted->setDbValueDef($rsnew, UnFormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern()), CurrentDate(), false);
 
         // submittedby_user_id
-        $this->submittedby_user_id->CurrentValue = $this->submittedby_user_id->getAutoUpdateValue(); // PHP
-        $this->submittedby_user_id->setDbValueDef($rsnew, $this->submittedby_user_id->CurrentValue, 0);
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['submittedby_user_id'] = CurrentUserID();
+        }
 
         // Update current values
         $this->setCurrentValues($rsnew);

@@ -58,8 +58,7 @@ loadjs.ready(["wrapper", "head"], function () {
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_test_reports_report_id"><?= $Page->report_id->caption() ?></span></td>
         <td data-name="report_id"<?= $Page->report_id->cellAttributes() ?>>
 <span id="el_jdh_test_reports_report_id">
-<span<?= $Page->report_id->viewAttributes() ?>>
-<?= $Page->report_id->getViewValue() ?></span>
+<span<?= $Page->report_id->viewAttributes() ?>><?= PhpBarcode::barcode('')->show('', '', 60) ?></span>
 </span>
 </td>
     </tr>

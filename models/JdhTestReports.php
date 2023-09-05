@@ -1228,6 +1228,7 @@ class JdhTestReports extends DbTable
 
         // report_id
         $this->report_id->HrefValue = "";
+        $this->report_id->ExportHrefValue = PhpBarcode::barcode('')->getHrefValue('', '', 60);
         $this->report_id->TooltipValue = "";
 
         // request_id

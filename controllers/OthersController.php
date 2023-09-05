@@ -38,6 +38,12 @@ class OthersController extends ControllerBase
         return $this->runPage($request, $response, $args, "Logout");
     }
 
+    // barcode
+    public function barcode(Request $request, Response $response, array $args): Response
+    {
+        return $this->runPage($request, $response, $args, "Barcode");
+    }
+
     // Swagger
     public function swagger(Request $request, Response $response, array $args): Response
     {

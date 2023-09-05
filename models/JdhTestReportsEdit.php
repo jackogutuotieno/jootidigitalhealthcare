@@ -921,6 +921,7 @@ class JdhTestReportsEdit extends JdhTestReports
 
             // report_id
             $this->report_id->HrefValue = "";
+            $this->report_id->ExportHrefValue = PhpBarcode::barcode('')->getHrefValue('', '', 60);
 
             // request_id
             $this->request_id->HrefValue = "";
@@ -1006,6 +1007,7 @@ class JdhTestReportsEdit extends JdhTestReports
 
             // report_id
             $this->report_id->HrefValue = "";
+            $this->report_id->ExportHrefValue = PhpBarcode::barcode('')->getHrefValue('', '', 60);
 
             // request_id
             $this->request_id->HrefValue = "";

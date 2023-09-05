@@ -26,8 +26,7 @@ loadjs.ready(["wrapper", "head"], function () {
             ["id", [fields.id.visible && fields.id.required ? ew.Validators.required(fields.id.caption) : null], fields.id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["bed_id", [fields.bed_id.visible && fields.bed_id.required ? ew.Validators.required(fields.bed_id.caption) : null], fields.bed_id.isInvalid],
-            ["date_submitted", [fields.date_submitted.visible && fields.date_submitted.required ? ew.Validators.required(fields.date_submitted.caption) : null, ew.Validators.datetime(fields.date_submitted.clientFormatPattern)], fields.date_submitted.isInvalid],
-            ["submittedby_user_id", [fields.submittedby_user_id.visible && fields.submittedby_user_id.required ? ew.Validators.required(fields.submittedby_user_id.caption) : null], fields.submittedby_user_id.isInvalid]
+            ["date_submitted", [fields.date_submitted.visible && fields.date_submitted.required ? ew.Validators.required(fields.date_submitted.caption) : null, ew.Validators.datetime(fields.date_submitted.clientFormatPattern)], fields.date_submitted.isInvalid]
         ])
 
         // Check empty row
@@ -93,9 +92,6 @@ $Grid->ListOptions->render("header", "left");
 <?php } ?>
 <?php if ($Grid->date_submitted->Visible) { // date_submitted ?>
         <th data-name="date_submitted" class="<?= $Grid->date_submitted->headerCellClass() ?>"><div id="elh_jdh_beds_assignment_date_submitted" class="jdh_beds_assignment_date_submitted"><?= $Grid->renderFieldHeader($Grid->date_submitted) ?></div></th>
-<?php } ?>
-<?php if ($Grid->submittedby_user_id->Visible) { // submittedby_user_id ?>
-        <th data-name="submittedby_user_id" class="<?= $Grid->submittedby_user_id->headerCellClass() ?>"><div id="elh_jdh_beds_assignment_submittedby_user_id" class="jdh_beds_assignment_submittedby_user_id"><?= $Grid->renderFieldHeader($Grid->submittedby_user_id) ?></div></th>
 <?php } ?>
 <?php
 // Render list options (header, right)
@@ -412,25 +408,6 @@ loadjs.ready(["fjdh_beds_assignmentgrid", "datetimepicker"], function () {
 <?php if ($Grid->isConfirm()) { ?>
 <input type="hidden" data-table="jdh_beds_assignment" data-field="x_date_submitted" data-hidden="1" name="fjdh_beds_assignmentgrid$x<?= $Grid->RowIndex ?>_date_submitted" id="fjdh_beds_assignmentgrid$x<?= $Grid->RowIndex ?>_date_submitted" value="<?= HtmlEncode($Grid->date_submitted->FormValue) ?>">
 <input type="hidden" data-table="jdh_beds_assignment" data-field="x_date_submitted" data-hidden="1" data-old name="fjdh_beds_assignmentgrid$o<?= $Grid->RowIndex ?>_date_submitted" id="fjdh_beds_assignmentgrid$o<?= $Grid->RowIndex ?>_date_submitted" value="<?= HtmlEncode($Grid->date_submitted->OldValue) ?>">
-<?php } ?>
-<?php } ?>
-</td>
-    <?php } ?>
-    <?php if ($Grid->submittedby_user_id->Visible) { // submittedby_user_id ?>
-        <td data-name="submittedby_user_id"<?= $Grid->submittedby_user_id->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<input type="hidden" data-table="jdh_beds_assignment" data-field="x_submittedby_user_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_submittedby_user_id" id="o<?= $Grid->RowIndex ?>_submittedby_user_id" value="<?= HtmlEncode($Grid->submittedby_user_id->OldValue) ?>">
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_beds_assignment_submittedby_user_id" class="el_jdh_beds_assignment_submittedby_user_id">
-<span<?= $Grid->submittedby_user_id->viewAttributes() ?>>
-<?= $Grid->submittedby_user_id->getViewValue() ?></span>
-</span>
-<?php if ($Grid->isConfirm()) { ?>
-<input type="hidden" data-table="jdh_beds_assignment" data-field="x_submittedby_user_id" data-hidden="1" name="fjdh_beds_assignmentgrid$x<?= $Grid->RowIndex ?>_submittedby_user_id" id="fjdh_beds_assignmentgrid$x<?= $Grid->RowIndex ?>_submittedby_user_id" value="<?= HtmlEncode($Grid->submittedby_user_id->FormValue) ?>">
-<input type="hidden" data-table="jdh_beds_assignment" data-field="x_submittedby_user_id" data-hidden="1" data-old name="fjdh_beds_assignmentgrid$o<?= $Grid->RowIndex ?>_submittedby_user_id" id="fjdh_beds_assignmentgrid$o<?= $Grid->RowIndex ?>_submittedby_user_id" value="<?= HtmlEncode($Grid->submittedby_user_id->OldValue) ?>">
 <?php } ?>
 <?php } ?>
 </td>

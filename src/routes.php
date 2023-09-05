@@ -626,6 +626,9 @@ return function (App $app) {
     // logout
     $app->map(["GET","POST","OPTIONS"], '/logout', OthersController::class . ':logout')->add(PermissionMiddleware::class)->setName('logout');
 
+    // barcode
+    $app->map(["GET","OPTIONS"], '/barcode', OthersController::class . ':barcode')->add(PermissionMiddleware::class)->setName('barcode');
+
     // Swagger
     $app->get('/' . Config("SWAGGER_ACTION"), OthersController::class . ':swagger')->setName(Config("SWAGGER_ACTION")); // Swagger
 

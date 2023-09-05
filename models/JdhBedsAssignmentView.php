@@ -53,6 +53,14 @@ class JdhBedsAssignmentView extends JdhBedsAssignment
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -675,16 +683,6 @@ class JdhBedsAssignmentView extends JdhBedsAssignment
         }
         $item->Visible = $this->EditUrl != "" && $Security->canEdit() && $this->showOptionLink("edit");
 
-        // Copy
-        $item = &$option->add("copy");
-        $copycaption = HtmlTitle($Language->phrase("ViewPageCopyLink"));
-        if ($this->IsModal) {
-            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
-        } else {
-            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
-        }
-        $item->Visible = $this->CopyUrl != "" && $Security->canAdd() && $this->showOptionLink("add");
-
         // Delete
         $item = &$option->add("delete");
         $url = GetUrl($this->DeleteUrl);
@@ -789,6 +787,9 @@ class JdhBedsAssignmentView extends JdhBedsAssignment
 
         // Call Row Selected event
         $this->rowSelected($row);
+        if ($this->AuditTrailOnView) {
+            $this->writeAuditTrailOnView($row);
+        }
         $this->id->setDbValue($row['id']);
         $this->patient_id->setDbValue($row['patient_id']);
         $this->bed_id->setDbValue($row['bed_id']);

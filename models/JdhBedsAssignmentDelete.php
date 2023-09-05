@@ -35,6 +35,14 @@ class JdhBedsAssignmentDelete extends JdhBedsAssignment
     // CSS class/style
     public $CurrentPageName = "jdhbedsassignmentdelete";
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -366,7 +374,7 @@ class JdhBedsAssignmentDelete extends JdhBedsAssignment
         $this->patient_id->setVisibility();
         $this->bed_id->setVisibility();
         $this->date_submitted->setVisibility();
-        $this->submittedby_user_id->setVisibility();
+        $this->submittedby_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -711,10 +719,6 @@ class JdhBedsAssignmentDelete extends JdhBedsAssignment
             // date_submitted
             $this->date_submitted->HrefValue = "";
             $this->date_submitted->TooltipValue = "";
-
-            // submittedby_user_id
-            $this->submittedby_user_id->HrefValue = "";
-            $this->submittedby_user_id->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -740,6 +744,9 @@ class JdhBedsAssignmentDelete extends JdhBedsAssignment
         }
         if ($this->UseTransaction) {
             $conn->beginTransaction();
+        }
+        if ($this->AuditTrailOnDelete) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
         }
 
         // Clone old rows
@@ -800,9 +807,35 @@ class JdhBedsAssignmentDelete extends JdhBedsAssignment
             if (count($failKeys) > 0) {
                 $this->setWarningMessage(str_replace("%k", explode(", ", $failKeys), $Language->phrase("DeleteRecordsFailed")));
             }
+            if ($this->AuditTrailOnDelete) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteSuccess")); // Batch delete success
+            }
+            $table = 'jdh_beds_assignment';
+            $subject = $table . " " . $Language->phrase("RecordDeleted");
+            $action = $Language->phrase("ActionDeleted");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", implode(", ", $successKeys));
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rs"] = &$rsold;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
         } else {
             if ($this->UseTransaction) { // Rollback transaction
                 $conn->rollback();
+            }
+            if ($this->AuditTrailOnDelete) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteRollback")); // Batch delete rollback
             }
         }
 

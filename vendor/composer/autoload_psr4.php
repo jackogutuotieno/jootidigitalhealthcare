@@ -66,6 +66,7 @@ return array(
     'Jose\\Component\\Core\\' => array($vendorDir . '/web-token/jwt-core'),
     'Jawira\\CaseConverter\\' => array($vendorDir . '/jawira/case-converter/src'),
     'Invoker\\' => array($vendorDir . '/php-di/invoker/src'),
+    'Intervention\\Image\\' => array($vendorDir . '/intervention/image/src/Intervention/Image'),
     'GuzzleHttp\\Psr7\\' => array($vendorDir . '/guzzlehttp/psr7/src'),
     'GuzzleHttp\\Promise\\' => array($vendorDir . '/guzzlehttp/promises/src'),
     'GuzzleHttp\\' => array($vendorDir . '/guzzlehttp/guzzle/src'),
@@ -85,6 +86,8 @@ return array(
     'Defuse\\Crypto\\' => array($vendorDir . '/defuse/php-encryption/src'),
     'DI\\' => array($vendorDir . '/php-di/php-di/src'),
     'Complex\\' => array($vendorDir . '/markbaker/complex/classes/src'),
+    'Com\\Tecnick\\Color\\' => array($vendorDir . '/tecnickcom/tc-lib-color/src'),
+    'Com\\Tecnick\\Barcode\\' => array($vendorDir . '/hkvstore/tc-lib-barcode/src'),
     'Brick\\Math\\' => array($vendorDir . '/brick/math/src'),
     'Base64Url\\' => array($vendorDir . '/spomky-labs/base64url/src'),
 );

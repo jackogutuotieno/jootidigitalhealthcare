@@ -28,6 +28,14 @@ class JdhBedsAssignment extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
+    // Audit trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Export
     public $UseAjaxActions = false;
     public $ModalSearch = false;
@@ -222,6 +230,7 @@ class JdhBedsAssignment extends DbTable
         $this->submittedby_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
         $this->submittedby_user_id->InputTextType = "text";
         $this->submittedby_user_id->Nullable = false; // NOT NULL field
+        $this->submittedby_user_id->Sortable = false; // Allow sort
         $this->submittedby_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->submittedby_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['submittedby_user_id'] = &$this->submittedby_user_id;
@@ -680,6 +689,9 @@ class JdhBedsAssignment extends DbTable
             // Get insert id if necessary
             $this->id->setDbValue($conn->lastInsertId());
             $rs['id'] = $this->id->DbValue;
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailOnAdd($rs);
+            }
         }
         return $success;
     }
@@ -733,6 +745,14 @@ class JdhBedsAssignment extends DbTable
                 $rs['id'] = $this->id->CurrentValue;
             }
         }
+        if ($success && $this->AuditTrailOnEdit && $rsold) {
+            $rsaudit = $rs;
+            $fldname = 'id';
+            if (!array_key_exists($fldname, $rsaudit)) {
+                $rsaudit[$fldname] = $rsold[$fldname];
+            }
+            $this->writeAuditTrailOnEdit($rsold, $rsaudit);
+        }
         return $success;
     }
 
@@ -773,6 +793,9 @@ class JdhBedsAssignment extends DbTable
                 $success = false;
                 $this->DbErrorMessage = $e->getMessage();
             }
+        }
+        if ($success && $this->AuditTrailOnDelete) {
+            $this->writeAuditTrailOnDelete($rs);
         }
         return $success;
     }
@@ -1504,6 +1527,192 @@ class JdhBedsAssignment extends DbTable
 
         // No binary fields
         return false;
+    }
+
+    // Write audit trail start/end for grid update
+    public function writeAuditTrailDummy($typ)
+    {
+        WriteAuditLog(CurrentUser(), $typ, 'jdh_beds_assignment', "", "", "", "");
+    }
+
+    // Write audit trail (add page)
+    public function writeAuditTrailOnAdd(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnAdd) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $newvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo Field
+                    $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML Field
+                    $newvalue = "[XML]";
+                } else {
+                    $newvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "A", 'jdh_beds_assignment', $fldname, $key, "", $newvalue);
+            }
+        }
+    }
+
+    // Write audit trail (edit page)
+    public function writeAuditTrailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnEdit) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rsnew) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && array_key_exists($fldname, $rsold) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->DataType == DATATYPE_DATE) { // DateTime field
+                    $modified = (FormatDateTime($rsold[$fldname], 0) != FormatDateTime($rsnew[$fldname], 0));
+                } else {
+                    $modified = !CompareValue($rsold[$fldname], $rsnew[$fldname]);
+                }
+                if ($modified) {
+                    if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                        $oldvalue = $Language->phrase("PasswordMask");
+                        $newvalue = $Language->phrase("PasswordMask");
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                        $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsold[$fldname] : "[MEMO]";
+                        $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsnew[$fldname] : "[MEMO]";
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                        $oldvalue = "[XML]";
+                        $newvalue = "[XML]";
+                    } else {
+                        $oldvalue = $rsold[$fldname];
+                        $newvalue = $rsnew[$fldname];
+                    }
+                    WriteAuditLog($usr, "U", 'jdh_beds_assignment', $fldname, $key, $oldvalue, $newvalue);
+                }
+            }
+        }
+    }
+
+    // Write audit trail (delete page)
+    public function writeAuditTrailOnDelete(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnDelete) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $oldvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                    $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                    $oldvalue = "[XML]";
+                } else {
+                    $oldvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "D", 'jdh_beds_assignment', $fldname, $key, $oldvalue, "");
+            }
+        }
+    }
+
+    // Send email after add success
+    public function sendEmailOnAdd(&$rs)
+    {
+        global $Language;
+        $table = 'jdh_beds_assignment';
+        $subject = $table . " " . $Language->phrase("RecordInserted");
+        $action = $Language->phrase("ActionInserted");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = ["rsnew" => $rs];
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
+    }
+
+    // Send email after update success
+    public function sendEmailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        $table = 'jdh_beds_assignment';
+        $subject = $table . " ". $Language->phrase("RecordUpdated");
+        $action = $Language->phrase("ActionUpdated");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = [];
+        $args["rsold"] = &$rsold;
+        $args["rsnew"] = &$rsnew;
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
     }
 
     // Table level events

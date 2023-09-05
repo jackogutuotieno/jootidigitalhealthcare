@@ -59,6 +59,14 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -618,9 +626,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
         // View
         $this->View = Get(Config("VIEW"));
 
-        // Create form object
-        $CurrentForm = new HttpForm();
-
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -647,11 +652,14 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
 
         // Setup export options
         $this->setupExportOptions();
+
+        // Setup import options
+        $this->setupImportOptions();
         $this->id->setVisibility();
         $this->patient_id->setVisibility();
         $this->bed_id->setVisibility();
         $this->date_submitted->setVisibility();
-        $this->submittedby_user_id->setVisibility();
+        $this->submittedby_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -690,9 +698,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
         $this->setupLookupOptions($this->patient_id);
         $this->setupLookupOptions($this->bed_id);
 
-        // Load default values for add
-        $this->loadDefaultValues();
-
         // Update form name to avoid conflict
         if ($this->IsModal) {
             $this->FormName = "fjdh_beds_assignmentgrid";
@@ -730,33 +735,11 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
             $this->setupBreadcrumb();
         }
 
-        // Check QueryString parameters
-        if (Get("action") !== null) {
-            $this->CurrentAction = Get("action");
-        } else {
-            if (Post("action") !== null) {
-                $this->CurrentAction = Post("action"); // Get action
-            }
-        }
-
-        // Clear inline mode
-        if ($this->isCancel()) {
-            $this->clearInlineMode();
-        }
-
-        // Switch to inline add mode
-        if ($this->isAdd() || $this->isCopy()) {
-            $this->inlineAddMode();
-        // Insert Inline
-        } elseif (IsPost() && $this->isInsert() && Session(SESSION_INLINE_MODE) == "add") {
-            $this->setKey(Post($this->OldKeyName));
-            // Return JSON error message if UseAjaxActions
-            if (!$this->inlineInsert() && $this->UseAjaxActions) {
-                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
-                $this->clearFailureMessage();
-                $this->terminate();
-                return;
-            }
+        // Process import
+        if ($this->isImport()) {
+            $this->import(Param(Config("API_FILE_TOKEN_NAME")), ConvertToBool(Param("rollback")));
+            $this->terminate();
+            return;
         }
 
         // Hide list options
@@ -986,54 +969,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
         }
     }
 
-    // Exit inline mode
-    protected function clearInlineMode()
-    {
-        $this->LastAction = $this->CurrentAction; // Save last action
-        $this->CurrentAction = ""; // Clear action
-        $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
-    }
-
-    // Switch to Inline Add mode
-    protected function inlineAddMode()
-    {
-        global $Security, $Language;
-        if (!$Security->canAdd()) {
-            return false; // Add not allowed
-        }
-        $this->CurrentAction = "add";
-        $_SESSION[SESSION_INLINE_MODE] = "add"; // Enable inline add
-        return true;
-    }
-
-    // Perform update to Inline Add/Copy record
-    protected function inlineInsert()
-    {
-        global $Language, $CurrentForm;
-        $rsold = $this->loadOldRecord(); // Load old record
-        $CurrentForm->Index = 0;
-        $this->loadFormValues(); // Get form values
-
-        // Validate form
-        if (!$this->validateForm()) {
-            $this->EventCancelled = true; // Set event cancelled
-            $this->CurrentAction = "add"; // Stay in add mode
-            return false;
-        }
-        $this->SendEmail = true; // Send email on add success
-        if ($this->addRow($rsold)) { // Add record
-            if ($this->getSuccessMessage() == "") {
-                $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up add success message
-            }
-            $this->clearInlineMode(); // Clear inline add mode
-            return true;
-        } else { // Add failed
-            $this->EventCancelled = true; // Set event cancelled
-            $this->CurrentAction = "add"; // Stay in add mode
-            return false;
-        }
-    }
-
     // Build filter for all keys
     protected function buildKeyFilter()
     {
@@ -1065,16 +1000,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
         return $wrkFilter;
     }
 
-    // Reset form status
-    public function resetFormError()
-    {
-        $this->id->clearErrorMessage();
-        $this->patient_id->clearErrorMessage();
-        $this->bed_id->clearErrorMessage();
-        $this->date_submitted->clearErrorMessage();
-        $this->submittedby_user_id->clearErrorMessage();
-    }
-
     // Set up sort parameters
     protected function setupSortOrder()
     {
@@ -1094,7 +1019,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
             $this->updateSort($this->patient_id); // patient_id
             $this->updateSort($this->bed_id); // bed_id
             $this->updateSort($this->date_submitted); // date_submitted
-            $this->updateSort($this->submittedby_user_id); // submittedby_user_id
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1156,12 +1080,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
         $item = &$this->ListOptions->add("edit");
         $item->CssClass = "text-nowrap";
         $item->Visible = $Security->canEdit();
-        $item->OnLeft = false;
-
-        // "copy"
-        $item = &$this->ListOptions->add("copy");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canAdd();
         $item->OnLeft = false;
 
         // List actions
@@ -1229,58 +1147,10 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
 
-        // Set up row action and key
-        if ($CurrentForm && is_numeric($this->RowIndex) && $this->RowType != "view") {
-            $CurrentForm->Index = $this->RowIndex;
-            $actionName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormActionName);
-            $oldKeyName = str_replace("k_", "k" . $this->RowIndex . "_", $this->OldKeyName);
-            $blankRowName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormBlankRowName);
-            if ($this->RowAction != "") {
-                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $actionName . "\" id=\"" . $actionName . "\" value=\"" . $this->RowAction . "\">";
-            }
-            $oldKey = $this->getKey(false); // Get from OldValue
-            if ($oldKeyName != "" && $oldKey != "") {
-                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $oldKeyName . "\" id=\"" . $oldKeyName . "\" value=\"" . HtmlEncode($oldKey) . "\">";
-            }
-            if ($this->RowAction == "insert" && $this->isConfirm() && $this->emptyRow()) {
-                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $blankRowName . "\" id=\"" . $blankRowName . "\" value=\"1\">";
-            }
-        }
-
         // "sequence"
         $opt = $this->ListOptions["sequence"];
         $opt->Body = FormatSequenceNumber($this->RecordCount);
         $pageUrl = $this->pageUrl(false);
-
-        // "copy"
-        $opt = $this->ListOptions["copy"];
-        if ($this->isInlineAddRow() || $this->isInlineCopyRow()) { // Inline Add/Copy
-            $this->ListOptions->CustomItem = "copy"; // Show copy column only
-            $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
-            $insertCaption = $Language->phrase("InsertLink");
-            $insertTitle = HtmlTitle($insertCaption);
-            $cancelCaption = $Language->phrase("CancelLink");
-            $cancelTitle = HtmlTitle($cancelCaption);
-            $inlineInsertUrl = GetUrl($this->pageName());
-            if ($this->UseAjaxActions) {
-                $opt->Body = <<<INLINEADDAJAX
-                    <div{$divClass}>
-                        <button type="button" class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" data-ew-action="inline" data-action="insert" data-key="" data-url="{$inlineInsertUrl}">{$insertCaption}</button>
-                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel">{$cancelCaption}</button>
-                    </div>
-                    INLINEADDAJAX;
-            } else {
-                $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
-                $opt->Body = <<<INLINEADD
-                    <div{$divClass}>
-                        <button class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" form="fjdh_beds_assignmentlist" formaction="{$inlineInsertUrl}">{$insertCaption}</button>
-                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$insertTitle}" href="{$cancelurl}">{$cancelCaption}</a>
-                        <input type="hidden" name="action" id="action" value="insert">
-                    </div>
-                    INLINEADD;
-            }
-            return;
-        }
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1303,19 +1173,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_beds_assignment\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
-
-            // "copy"
-            $opt = $this->ListOptions["copy"];
-            $copycaption = HtmlTitle($Language->phrase("CopyLink"));
-            if ($Security->canAdd() && $this->showOptionLink("add")) {
-                if ($this->ModalAdd && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_beds_assignment\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("CopyLink") . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1388,15 +1245,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
             $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
         }
         $item->Visible = $this->AddUrl != "" && $Security->canAdd();
-
-        // Inline Add
-        $item = &$option->add("inlineadd");
-        if ($this->UseAjaxActions) {
-            $item->Body = "<button class=\"ew-add-edit ew-inline-add\" title=\"" . $Language->phrase("InlineAddLink", true) . "\" data-caption=\"" . $Language->phrase("InlineAddLink", true) . "\" data-ew-action=\"inline\" data-action=\"add\" data-position=\"top\" data-url=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</button>";
-        } else {
-            $item->Body = "<a class=\"ew-add-edit ew-inline-add\" title=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</a>";
-        }
-        $item->Visible = $this->InlineAddUrl != "" && $Security->canAdd();
         $option = $options["action"];
 
         // Add multi delete
@@ -1421,7 +1269,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
             $option->add("patient_id", $this->createColumnOption("patient_id"));
             $option->add("bed_id", $this->createColumnOption("bed_id"));
             $option->add("date_submitted", $this->createColumnOption("date_submitted"));
-            $option->add("submittedby_user_id", $this->createColumnOption("submittedby_user_id"));
         }
 
         // Set up options default
@@ -1604,15 +1451,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
                 $this->StopRecord = $this->TotalRecords;
             }
         }
-
-        // Restore number of post back records
-        if ($CurrentForm && ($this->isConfirm() || $this->EventCancelled)) {
-            $CurrentForm->Index = -1;
-            if ($CurrentForm->hasValue($this->FormKeyCountName) && ($this->isGridAdd() || $this->isGridEdit() || $this->isConfirm())) {
-                $this->KeyCount = $CurrentForm->getValue($this->FormKeyCountName);
-                $this->StopRecord = $this->StartRecord + $this->KeyCount - 1;
-            }
-        }
         $this->RecordCount = $this->StartRecord - 1;
         if ($this->Recordset && !$this->Recordset->EOF) {
             // Nothing to do
@@ -1626,12 +1464,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
         $this->RowType = ROWTYPE_AGGREGATEINIT;
         $this->resetAttributes();
         $this->renderRow();
-        if ($this->isAdd() || $this->isCopy() || $this->isInlineInserted()) {
-            $this->RowIndex = 0;
-            if ($this->UseInfiniteScroll) {
-                $this->StopRecord = $this->StartRecord; // Show this record only
-            }
-        }
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
             $this->RowIndex = '$rowindex$';
         }
@@ -1721,80 +1553,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
 
         // Render list options
         $this->renderListOptions();
-    }
-
-    // Load default values
-    protected function loadDefaultValues()
-    {
-    }
-
-    // Load form values
-    protected function loadFormValues()
-    {
-        // Load from form
-        global $CurrentForm;
-        $validate = !Config("SERVER_VALIDATE");
-
-        // Check field name 'id' first before field var 'x_id'
-        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
-        if (!$this->id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->id->setFormValue($val);
-        }
-
-        // Check field name 'patient_id' first before field var 'x_patient_id'
-        $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
-        if (!$this->patient_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->patient_id->Visible = false; // Disable update for API request
-            } else {
-                $this->patient_id->setFormValue($val);
-            }
-        }
-
-        // Check field name 'bed_id' first before field var 'x_bed_id'
-        $val = $CurrentForm->hasValue("bed_id") ? $CurrentForm->getValue("bed_id") : $CurrentForm->getValue("x_bed_id");
-        if (!$this->bed_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->bed_id->Visible = false; // Disable update for API request
-            } else {
-                $this->bed_id->setFormValue($val);
-            }
-        }
-
-        // Check field name 'date_submitted' first before field var 'x_date_submitted'
-        $val = $CurrentForm->hasValue("date_submitted") ? $CurrentForm->getValue("date_submitted") : $CurrentForm->getValue("x_date_submitted");
-        if (!$this->date_submitted->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->date_submitted->Visible = false; // Disable update for API request
-            } else {
-                $this->date_submitted->setFormValue($val, true, $validate);
-            }
-            $this->date_submitted->CurrentValue = UnFormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern());
-        }
-
-        // Check field name 'submittedby_user_id' first before field var 'x_submittedby_user_id'
-        $val = $CurrentForm->hasValue("submittedby_user_id") ? $CurrentForm->getValue("submittedby_user_id") : $CurrentForm->getValue("x_submittedby_user_id");
-        if (!$this->submittedby_user_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->submittedby_user_id->Visible = false; // Disable update for API request
-            } else {
-                $this->submittedby_user_id->setFormValue($val);
-            }
-        }
-    }
-
-    // Restore form values
-    public function restoreFormValues()
-    {
-        global $CurrentForm;
-        if (!$this->isGridAdd() && !$this->isAdd()) {
-            $this->id->CurrentValue = $this->id->FormValue;
-        }
-        $this->patient_id->CurrentValue = $this->patient_id->FormValue;
-        $this->bed_id->CurrentValue = $this->bed_id->FormValue;
-        $this->date_submitted->CurrentValue = $this->date_submitted->FormValue;
-        $this->date_submitted->CurrentValue = UnFormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern());
-        $this->submittedby_user_id->CurrentValue = $this->submittedby_user_id->FormValue;
     }
 
     // Load recordset
@@ -2024,124 +1782,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
             // date_submitted
             $this->date_submitted->HrefValue = "";
             $this->date_submitted->TooltipValue = "";
-
-            // submittedby_user_id
-            $this->submittedby_user_id->HrefValue = "";
-            $this->submittedby_user_id->TooltipValue = "";
-        } elseif ($this->RowType == ROWTYPE_ADD) {
-            // id
-
-            // patient_id
-            $this->patient_id->setupEditAttributes();
-            if ($this->patient_id->getSessionValue() != "") {
-                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
-                $curVal = strval($this->patient_id->CurrentValue);
-                if ($curVal != "") {
-                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                    if ($this->patient_id->ViewValue === null) { // Lookup from database
-                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                        $lookupFilter = $this->patient_id->getSelectFilter($this); // PHP
-                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
-                        $conn = Conn();
-                        $config = $conn->getConfiguration();
-                        $config->setResultCacheImpl($this->Cache);
-                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                        $ari = count($rswrk);
-                        if ($ari > 0) { // Lookup values found
-                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                        } else {
-                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                        }
-                    }
-                } else {
-                    $this->patient_id->ViewValue = null;
-                }
-            } else {
-                $curVal = trim(strval($this->patient_id->CurrentValue));
-                if ($curVal != "") {
-                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                } else {
-                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
-                }
-                if ($this->patient_id->ViewValue !== null) { // Load from cache
-                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
-                } else { // Lookup from database
-                    if ($curVal == "") {
-                        $filterWrk = "0=1";
-                    } else {
-                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
-                    }
-                    $lookupFilter = $this->patient_id->getSelectFilter($this); // PHP
-                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    $arwrk = $rswrk;
-                    $this->patient_id->EditValue = $arwrk;
-                }
-                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
-            }
-
-            // bed_id
-            $this->bed_id->setupEditAttributes();
-            $curVal = trim(strval($this->bed_id->CurrentValue));
-            if ($curVal != "") {
-                $this->bed_id->ViewValue = $this->bed_id->lookupCacheOption($curVal);
-            } else {
-                $this->bed_id->ViewValue = $this->bed_id->Lookup !== null && is_array($this->bed_id->lookupOptions()) ? $curVal : null;
-            }
-            if ($this->bed_id->ViewValue !== null) { // Load from cache
-                $this->bed_id->EditValue = array_values($this->bed_id->lookupOptions());
-            } else { // Lookup from database
-                if ($curVal == "") {
-                    $filterWrk = "0=1";
-                } else {
-                    $filterWrk = SearchFilter("`bed_id`", "=", $this->bed_id->CurrentValue, DATATYPE_NUMBER, "");
-                }
-                $lookupFilter = $this->bed_id->getSelectFilter($this); // PHP
-                $sqlWrk = $this->bed_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                $arwrk = $rswrk;
-                foreach ($arwrk as &$row) {
-                    $row = $this->bed_id->Lookup->renderViewRow($row);
-                }
-                $this->bed_id->EditValue = $arwrk;
-            }
-            $this->bed_id->PlaceHolder = RemoveHtml($this->bed_id->caption());
-
-            // date_submitted
-            $this->date_submitted->setupEditAttributes();
-            $this->date_submitted->EditValue = HtmlEncode(FormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern()));
-            $this->date_submitted->PlaceHolder = RemoveHtml($this->date_submitted->caption());
-
-            // submittedby_user_id
-
-            // Add refer script
-
-            // id
-            $this->id->HrefValue = "";
-
-            // patient_id
-            $this->patient_id->HrefValue = "";
-
-            // bed_id
-            $this->bed_id->HrefValue = "";
-
-            // date_submitted
-            $this->date_submitted->HrefValue = "";
-
-            // submittedby_user_id
-            $this->submittedby_user_id->HrefValue = "";
-        }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
-            $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
@@ -2150,131 +1790,281 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
         }
     }
 
-    // Validate form
-    protected function validateForm()
+    /**
+     * Import file
+     *
+     * @param string $filetoken File token to locate the uploaded import file
+     * @param bool $rollback Try import and then rollback
+     * @return bool
+     */
+    public function import($filetoken, $rollback = false)
     {
-        global $Language, $Security;
-
-        // Check if validation required
-        if (!Config("SERVER_VALIDATE")) {
-            return true;
-        }
-        $validateForm = true;
-        if ($this->id->Required) {
-            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
-                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
-            }
-        }
-        if ($this->patient_id->Required) {
-            if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
-                $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->bed_id->Required) {
-            if (!$this->bed_id->IsDetailKey && EmptyValue($this->bed_id->FormValue)) {
-                $this->bed_id->addErrorMessage(str_replace("%s", $this->bed_id->caption(), $this->bed_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->date_submitted->Required) {
-            if (!$this->date_submitted->IsDetailKey && EmptyValue($this->date_submitted->FormValue)) {
-                $this->date_submitted->addErrorMessage(str_replace("%s", $this->date_submitted->caption(), $this->date_submitted->RequiredErrorMessage));
-            }
-        }
-        if (!CheckDate($this->date_submitted->FormValue, $this->date_submitted->formatPattern())) {
-            $this->date_submitted->addErrorMessage($this->date_submitted->getErrorMessage(false));
-        }
-        if ($this->submittedby_user_id->Required) {
-            if (!$this->submittedby_user_id->IsDetailKey && EmptyValue($this->submittedby_user_id->FormValue)) {
-                $this->submittedby_user_id->addErrorMessage(str_replace("%s", $this->submittedby_user_id->caption(), $this->submittedby_user_id->RequiredErrorMessage));
-            }
+        global $Security, $Language;
+        if (!$Security->canImport()) {
+            return false; // Import not allowed
         }
 
-        // Return validate result
-        $validateForm = $validateForm && !$this->hasInvalidFields();
-
-        // Call Form_CustomValidate event
-        $formCustomError = "";
-        $validateForm = $validateForm && $this->formCustomValidate($formCustomError);
-        if ($formCustomError != "") {
-            $this->setFailureMessage($formCustomError);
+        // Check if valid token
+        if (EmptyValue($filetoken)) {
+            return false;
         }
-        return $validateForm;
-    }
 
-    // Add record
-    protected function addRow($rsold = null)
-    {
-        global $Language, $Security;
+        // Get uploaded files by token
+        $files = GetUploadedFileNames($filetoken);
+        $exts = explode(",", Config("IMPORT_FILE_ALLOWED_EXTENSIONS"));
+        $result = [Config("API_FILE_TOKEN_NAME") => $filetoken, "files" => []];
 
-        // Set new row
-        $rsnew = [];
+        // Set header
+        if (ob_get_length()) {
+            ob_clean();
+        }
+        header("Cache-Control: no-store");
+        header("Content-Type: text/event-stream");
 
-        // patient_id
-        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, false);
+        // Import records
+        try {
+            foreach ($files as $file) {
+                $res = ["file" => basename($file)];
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
 
-        // bed_id
-        $this->bed_id->setDbValueDef($rsnew, $this->bed_id->CurrentValue, 0, false);
-
-        // date_submitted
-        $this->date_submitted->setDbValueDef($rsnew, UnFormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern()), CurrentDate(), false);
-
-        // submittedby_user_id
-        $this->submittedby_user_id->CurrentValue = $this->submittedby_user_id->getAutoUpdateValue(); // PHP
-        $this->submittedby_user_id->setDbValueDef($rsnew, $this->submittedby_user_id->CurrentValue, 0);
-
-        // Update current values
-        $this->setCurrentValues($rsnew);
-
-        // Check if valid key values for master user
-        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
-            $detailKeys = [];
-            $detailKeys["patient_id"] = $this->patient_id->CurrentValue;
-            $masterTable = Container("jdh_patients");
-            $masterFilter = $this->getMasterFilter($masterTable, $detailKeys);
-            if (!EmptyValue($masterFilter)) {
-                $validMasterKey = true;
-                if ($rsmaster = $masterTable->loadRs($masterFilter)->fetchAssociative()) {
-                    $validMasterKey = $Security->isValidUserID($rsmaster['submitted_by_user_id']);
-                } elseif ($this->getCurrentMasterTable() == "jdh_patients") {
-                    $validMasterKey = false;
+                // Ignore log file
+                if ($ext == "txt") {
+                    continue;
                 }
-                if (!$validMasterKey) {
-                    $masterUserIdMsg = str_replace("%c", CurrentUserID(), $Language->phrase("UnAuthorizedMasterUserID"));
-                    $masterUserIdMsg = str_replace("%f", $masterFilter, $masterUserIdMsg);
-                    $this->setFailureMessage($masterUserIdMsg);
+
+                // Check file extension
+                if (!in_array($ext, $exts)) {
+                    $res = array_merge($res, ["error" => str_replace("%e", $ext, $Language->phrase("ImportInvalidFileExtension"))]);
+                    SendEvent($res, "error");
                     return false;
                 }
+
+                // Set up options
+                $options = [
+                    "file" => $file,
+                    "inputEncoding" => "", // For CSV only
+                    "delimiter" => ",", // For CSV only
+                    "enclosure" => "\"", // For CSV only
+                    "escape" => "\\", // For CSV only
+                    "activeSheet" => null, // For PhpSpreadsheet only
+                    "readOnly" => true, // For PhpSpreadsheet only
+                    "maxRows" => null, // For PhpSpreadsheet only
+                    "headerRowNumber" => 0,
+                    "headers" => []
+                ];
+                foreach ($_GET as $key => $value) {
+                    if (!in_array($key, [Config("API_ACTION_NAME"), Config("API_FILE_TOKEN_NAME")])) {
+                        $options[$key] = $value;
+                    }
+                }
+
+                // Workflow builder
+                $builder = fn($workflow) => $workflow;
+
+                // Call Page Importing server event
+                if (!$this->pageImporting($builder, $options)) {
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Set max execution time
+                if (Config("IMPORT_MAX_EXECUTION_TIME") > 0) {
+                    ini_set("max_execution_time", Config("IMPORT_MAX_EXECUTION_TIME"));
+                }
+
+                // Reader
+                try {
+                    if ($ext == "csv") {
+                        $csv = file_get_contents($file);
+                        if ($csv !== false) {
+                            if (StartsString("\xEF\xBB\xBF", $csv)) { // UTF-8 BOM
+                                $csv = substr($csv, 3);
+                            } elseif ($options["inputEncoding"] != "" && !SameText($options["inputEncoding"], "UTF-8")) {
+                                $csv = Convert($options["inputEncoding"], "UTF-8", $csv);
+                            }
+                            file_put_contents($file, $csv);
+                        }
+                        $reader = new \Port\Csv\CsvReader(new \SplFileObject($file), $options["delimiter"], $options["enclosure"], $options["escape"]);
+                    } else {
+                        $reader = new \Port\Spreadsheet\SpreadsheetReader(new \SplFileObject($file), $options["headerRowNumber"], $options["activeSheet"], $options["readOnly"], $options["maxRows"]);
+                    }
+                    if (is_array($options["headers"]) && count($options["headers"]) > 0) {
+                        $reader->setColumnHeaders($options["headers"]);
+                    } elseif (is_int($options["headerRowNumber"])) {
+                        $reader->setHeaderRowNumber($options["headerRowNumber"]);
+                    }
+                } catch (\Exception $e) {
+                    $res = array_merge($res, ["error" => $e->getMessage()]);
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Column headers
+                $headers = $reader->getColumnHeaders();
+                if (count($headers) == 0) { // Missing headers
+                    $res["error"] = $Language->phrase("ImportNoHeaderRow");
+                    SendEvent($res, "error");
+                    return false;
+                }
+
+                // Counts
+                $recordCnt = $reader->count();
+                $cnt = 0;
+                $successCnt = 0;
+                $failCnt = 0;
+                $res = array_merge($res, ["totalCount" => $recordCnt, "count" => $cnt, "successCount" => 0, "failCount" => 0]);
+
+                // Writer
+                $writer = new \Port\Writer\CallbackWriter(function ($row) use (&$res, &$cnt, &$successCnt, &$failCnt) {
+                    try {
+                        $success = $this->importRow($row, ++$cnt); // Import row
+                        if ($success) {
+                            $successCnt++;
+                        } else {
+                            $failCnt++;
+                        }
+                        $err = "";
+                    } catch (\Port\Exception $e) { // Catch exception so the workflow continues
+                        $failCnt++;
+                        $err = $e->getMessage();
+                        if ($failCnt > $this->ImportMaxFailures) {
+                            throw $e; // Throw \Port\Exception to terminate the workflow
+                        }
+                    } finally {
+                        $res = array_merge($res, [
+                            "row" => $row, // Current row
+                            "success" => $success, // For current row
+                            "error" => $err, // For current row
+                            "count" => $cnt,
+                            "successCount" => $successCnt,
+                            "failCount" => $failCnt
+                        ]);
+                        SendEvent($res);
+                    }
+                });
+
+                // Connection
+                $conn = $this->getConnection();
+
+                // Begin transaction
+                if ($this->ImportUseTransaction) {
+                    $conn->beginTransaction();
+                }
+
+                // Workflow
+                $workflow = new \Port\Steps\StepAggregator($reader);
+                $workflow->setLogger(Logger());
+                $workflow->setSkipItemOnFailure(false); // Stop on exception
+                $workflow = $builder($workflow);
+                try {
+                    $info = @$workflow->addWriter($writer)->process();
+                } finally {
+                    // Rollback transaction
+                    if ($this->ImportUseTransaction) {
+                        if ($rollback || $failCnt > $this->ImportMaxFailures) {
+                            $res["rollbacked"] = $conn->rollback();
+                        } else {
+                            $conn->commit();
+                        }
+                    }
+                    unset($res["row"], $res["error"]); // Remove current row info
+                    $res["success"] = $cnt > 0 && $failCnt <= $this->ImportMaxFailures; // Set success status of current file
+                    SendEvent($res); // Current file imported
+                    $result["files"][] = $res;
+
+                    // Call Page Imported server event
+                    $this->pageImported($info, $res);
+                }
+            }
+        } finally {
+            $result["failCount"] = array_reduce($result["files"], fn($carry, $item) => $carry + $item["failCount"], 0); // For client side
+            $result["success"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"], true); // All files successful
+            $result["rollbacked"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"] && ($item["rollbacked"] ?? false), true); // All file rollbacked successfully
+            if ($result["success"] && !$result["rollbacked"]) {
+                CleanUploadTempPaths($filetoken);
+            }
+            SendEvent($result, "complete"); // All files imported
+            return $result["success"];
+        }
+    }
+
+    /**
+     * Import a row
+     *
+     * @param array $row Row to be imported
+     * @param int $cnt Index of the row (1-based)
+     * @return bool
+     */
+    protected function importRow(&$row, $cnt)
+    {
+        global $Language;
+
+        // Call Row Import server event
+        if (!$this->rowImport($row, $cnt)) {
+            return false;
+        }
+
+        // Check field names and values
+        foreach ($row as $name => $value) {
+            $fld = $this->Fields[$name];
+            if (!$fld) {
+                throw new \Port\Exception\UnexpectedValueException(str_replace("%f", $name, $Language->phrase("ImportInvalidFieldName")));
+            }
+            if (!$this->checkValue($fld, $value)) {
+                throw new \Port\Exception\UnexpectedValueException(str_replace(["%f", "%v"], [$name, $value], $Language->phrase("ImportInvalidFieldValue")));
             }
         }
-        $conn = $this->getConnection();
 
-        // Load db values from old row
-        $this->loadDbValues($rsold);
-
-        // Call Row Inserting event
-        $insertRow = $this->rowInserting($rsold, $rsnew);
-        if ($insertRow) {
-            $addRow = $this->insert($rsnew);
-            if ($addRow) {
-            } elseif (!EmptyValue($this->DbErrorMessage)) { // Show database error
-                $this->setFailureMessage($this->DbErrorMessage);
+        // Insert/Update to database
+        $res = false;
+        if (!$this->ImportInsertOnly && $oldrow = $this->load($row)) {
+            if (!method_exists($this, "rowUpdating") || $this->rowUpdating($oldrow, $row)) {
+                if ($res = $this->update($row, "", $oldrow)) {
+                    if (method_exists($this, "rowUpdated")) {
+                        $this->rowUpdated($oldrow, $row);
+                    }
+                }
             }
         } else {
-            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
-                // Use the message, do nothing
-            } elseif ($this->CancelMessage != "") {
-                $this->setFailureMessage($this->CancelMessage);
-                $this->CancelMessage = "";
-            } else {
-                $this->setFailureMessage($Language->phrase("InsertCancelled"));
+            if (!method_exists($this, "rowInserting") || $this->rowInserting(null, $row)) {
+                if ($res = $this->insert($row)) {
+                    if (method_exists($this, "rowInserted")) {
+                        $this->rowInserted(null, $row);
+                    }
+                }
             }
-            $addRow = false;
         }
-        if ($addRow) {
-            // Call Row Inserted event
-            $this->rowInserted($rsold, $rsnew);
+        return $res;
+    }
+
+    /**
+     * Check field value
+     *
+     * @param object $fld Field object
+     * @param object $value
+     * @return bool
+     */
+    protected function checkValue($fld, $value)
+    {
+        if ($fld->DataType == DATATYPE_NUMBER && !is_numeric($value)) {
+            return false;
+        } elseif ($fld->DataType == DATATYPE_DATE && !CheckDate($value, $fld->formatPattern())) {
+            return false;
         }
-        return $addRow;
+        return true;
+    }
+
+    // Load row
+    protected function load($row)
+    {
+        $filter = $this->getRecordFilter($row);
+        if (!$filter) {
+            return null;
+        }
+        $this->CurrentFilter = $filter;
+        $sql = $this->getCurrentSql();
+        $conn = $this->getConnection();
+        return $conn->fetchAssociative($sql);
     }
 
     // Get export HTML tag
@@ -2420,6 +2210,25 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
         if (!$this->hasSearchFields() && $this->SearchOptions["searchtoggle"]) {
             $this->SearchOptions["searchtoggle"]->Visible = false;
         }
+    }
+
+    // Set up import options
+    protected function setupImportOptions()
+    {
+        global $Security, $Language;
+
+        // Import
+        $item = &$this->ImportOptions->add("import");
+        $item->Body = "<a class=\"ew-import-link ew-import\" role=\"button\" title=\"" . $Language->phrase("Import", true) . "\" data-caption=\"" . $Language->phrase("Import", true) . "\" data-ew-action=\"import\" data-hdr=\"" . $Language->phrase("Import", true) . "\">" . $Language->phrase("Import") . "</a>";
+        $item->Visible = $Security->canImport();
+        $this->ImportOptions->UseButtonGroup = true;
+        $this->ImportOptions->UseDropDownButton = false;
+        $this->ImportOptions->DropDownButtonPhrase = $Language->phrase("Import");
+
+        // Add group option item
+        $item = &$this->ImportOptions->addGroupOption();
+        $item->Body = "";
+        $item->Visible = false;
     }
 
     /**

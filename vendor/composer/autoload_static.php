@@ -113,6 +113,7 @@ class ComposerStaticInit2017a48aff752ea5876304cad9390580
         'I' => 
         array (
             'Invoker\\' => 8,
+            'Intervention\\Image\\' => 19,
         ),
         'G' => 
         array (
@@ -144,6 +145,8 @@ class ComposerStaticInit2017a48aff752ea5876304cad9390580
         'C' => 
         array (
             'Complex\\' => 8,
+            'Com\\Tecnick\\Color\\' => 18,
+            'Com\\Tecnick\\Barcode\\' => 20,
         ),
         'B' => 
         array (
@@ -397,6 +400,10 @@ class ComposerStaticInit2017a48aff752ea5876304cad9390580
         array (
             0 => __DIR__ . '/..' . '/php-di/invoker/src',
         ),
+        'Intervention\\Image\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/intervention/image/src/Intervention/Image',
+        ),
         'GuzzleHttp\\Psr7\\' => 
         array (
             0 => __DIR__ . '/..' . '/guzzlehttp/psr7/src',
@@ -473,6 +480,14 @@ class ComposerStaticInit2017a48aff752ea5876304cad9390580
         array (
             0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
         ),
+        'Com\\Tecnick\\Color\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/tecnickcom/tc-lib-color/src',
+        ),
+        'Com\\Tecnick\\Barcode\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/hkvstore/tc-lib-barcode/src',
+        ),
         'Brick\\Math\\' => 
         array (
             0 => __DIR__ . '/..' . '/brick/math/src',
@@ -509,10 +524,21 @@ class ComposerStaticInit2017a48aff752ea5876304cad9390580
 
     public static $classMap = array (
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
+        'CURLStringFile' => __DIR__ . '/..' . '/symfony/polyfill-php81/Resources/stubs/CURLStringFile.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'DateError' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateError.php',
+        'DateException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateException.php',
+        'DateInvalidOperationException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateInvalidOperationException.php',
+        'DateInvalidTimeZoneException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateInvalidTimeZoneException.php',
+        'DateMalformedIntervalStringException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateMalformedIntervalStringException.php',
+        'DateMalformedPeriodStringException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateMalformedPeriodStringException.php',
+        'DateMalformedStringException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateMalformedStringException.php',
+        'DateObjectError' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateObjectError.php',
+        'DateRangeError' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateRangeError.php',
         'Dompdf\\Cpdf' => __DIR__ . '/..' . '/hkvstore/dompdf/lib/Cpdf.php',
         'Mobile_Detect' => __DIR__ . '/..' . '/mobiledetect/mobiledetectlib/Mobile_Detect.php',
         'Normalizer' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/Resources/stubs/Normalizer.php',
+        'Override' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/Override.php',
         'PasswordHash' => __DIR__ . '/../..' . '/src/PasswordHash.php',
         'PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
         'ReturnTypeWillChange' => __DIR__ . '/..' . '/symfony/polyfill-php81/Resources/stubs/ReturnTypeWillChange.php',

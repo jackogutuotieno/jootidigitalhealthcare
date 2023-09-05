@@ -62,9 +62,6 @@ $Page->showMessage();
 <?php if ($Page->date_submitted->Visible) { // date_submitted ?>
         <th class="<?= $Page->date_submitted->headerCellClass() ?>"><span id="elh_jdh_beds_assignment_date_submitted" class="jdh_beds_assignment_date_submitted"><?= $Page->date_submitted->caption() ?></span></th>
 <?php } ?>
-<?php if ($Page->submittedby_user_id->Visible) { // submittedby_user_id ?>
-        <th class="<?= $Page->submittedby_user_id->headerCellClass() ?>"><span id="elh_jdh_beds_assignment_submittedby_user_id" class="jdh_beds_assignment_submittedby_user_id"><?= $Page->submittedby_user_id->caption() ?></span></th>
-<?php } ?>
     </tr>
     </thead>
     <tbody>
@@ -115,14 +112,6 @@ while (!$Page->Recordset->EOF) {
 <span id="el<?= $Page->RowCount ?>_jdh_beds_assignment_date_submitted" class="el_jdh_beds_assignment_date_submitted">
 <span<?= $Page->date_submitted->viewAttributes() ?>>
 <?= $Page->date_submitted->getViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
-<?php if ($Page->submittedby_user_id->Visible) { // submittedby_user_id ?>
-        <td<?= $Page->submittedby_user_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_assignment_submittedby_user_id" class="el_jdh_beds_assignment_submittedby_user_id">
-<span<?= $Page->submittedby_user_id->viewAttributes() ?>>
-<?= $Page->submittedby_user_id->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>
