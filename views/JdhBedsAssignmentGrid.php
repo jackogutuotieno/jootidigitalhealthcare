@@ -23,7 +23,6 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Add fields
         .setFields([
-            ["id", [fields.id.visible && fields.id.required ? ew.Validators.required(fields.id.caption) : null], fields.id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["bed_id", [fields.bed_id.visible && fields.bed_id.required ? ew.Validators.required(fields.bed_id.caption) : null], fields.bed_id.isInvalid],
             ["date_submitted", [fields.date_submitted.visible && fields.date_submitted.required ? ew.Validators.required(fields.date_submitted.caption) : null, ew.Validators.datetime(fields.date_submitted.clientFormatPattern)], fields.date_submitted.isInvalid]
@@ -81,9 +80,6 @@ $Grid->renderListOptions();
 // Render list options (header, left)
 $Grid->ListOptions->render("header", "left");
 ?>
-<?php if ($Grid->id->Visible) { // id ?>
-        <th data-name="id" class="<?= $Grid->id->headerCellClass() ?>"><div id="elh_jdh_beds_assignment_id" class="jdh_beds_assignment_id"><?= $Grid->renderFieldHeader($Grid->id) ?></div></th>
-<?php } ?>
 <?php if ($Grid->patient_id->Visible) { // patient_id ?>
         <th data-name="patient_id" class="<?= $Grid->patient_id->headerCellClass() ?>"><div id="elh_jdh_beds_assignment_patient_id" class="jdh_beds_assignment_patient_id"><?= $Grid->renderFieldHeader($Grid->patient_id) ?></div></th>
 <?php } ?>
@@ -120,33 +116,6 @@ while ($Grid->RecordCount < $Grid->StopRecord) {
 // Render list options (body, left)
 $Grid->ListOptions->render("body", "left", $Grid->RowCount);
 ?>
-    <?php if ($Grid->id->Visible) { // id ?>
-        <td data-name="id"<?= $Grid->id->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_beds_assignment_id" class="el_jdh_beds_assignment_id"></span>
-<input type="hidden" data-table="jdh_beds_assignment" data-field="x_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_id" id="o<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->OldValue) ?>">
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_beds_assignment_id" class="el_jdh_beds_assignment_id">
-<span<?= $Grid->id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Grid->id->getDisplayValue($Grid->id->EditValue))) ?>"></span>
-<input type="hidden" data-table="jdh_beds_assignment" data-field="x_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_id" id="x<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->CurrentValue) ?>">
-</span>
-<?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_beds_assignment_id" class="el_jdh_beds_assignment_id">
-<span<?= $Grid->id->viewAttributes() ?>>
-<?= $Grid->id->getViewValue() ?></span>
-</span>
-<?php if ($Grid->isConfirm()) { ?>
-<input type="hidden" data-table="jdh_beds_assignment" data-field="x_id" data-hidden="1" name="fjdh_beds_assignmentgrid$x<?= $Grid->RowIndex ?>_id" id="fjdh_beds_assignmentgrid$x<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->FormValue) ?>">
-<input type="hidden" data-table="jdh_beds_assignment" data-field="x_id" data-hidden="1" data-old name="fjdh_beds_assignmentgrid$o<?= $Grid->RowIndex ?>_id" id="fjdh_beds_assignmentgrid$o<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->OldValue) ?>">
-<?php } ?>
-<?php } ?>
-</td>
-    <?php } else { ?>
-            <input type="hidden" data-table="jdh_beds_assignment" data-field="x_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_id" id="x<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->CurrentValue) ?>">
-    <?php } ?>
     <?php if ($Grid->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Grid->patient_id->cellAttributes() ?>>
 <?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>

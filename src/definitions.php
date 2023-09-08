@@ -76,6 +76,7 @@ return [
     "jdh_wards" => \DI\create(JdhWards::class),
     "beds" => \DI\create(Beds::class),
     "jdh_beds_assignment" => \DI\create(JdhBedsAssignment::class),
+    "jdh_branding" => \DI\create(JdhBranding::class),
 
     // User table
     "usertable" => \DI\get("jdh_users"),

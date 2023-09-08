@@ -3,21 +3,21 @@
 namespace PHPMaker2023\jootidigitalhealthcare;
 
 // Page object
-$JdhBedsAssignmentDelete = &$Page;
+$JdhBrandingDelete = &$Page;
 ?>
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
-ew.deepAssign(ew.vars, { tables: { jdh_beds_assignment: currentTable } });
+ew.deepAssign(ew.vars, { tables: { jdh_branding: currentTable } });
 var currentPageID = ew.PAGE_ID = "delete";
 var currentForm;
-var fjdh_beds_assignmentdelete;
+var fjdh_brandingdelete;
 loadjs.ready(["wrapper", "head"], function () {
     let $ = jQuery;
     let fields = currentTable.fields;
 
     // Form object
     let form = new ew.FormBuilder()
-        .setId("fjdh_beds_assignmentdelete")
+        .setId("fjdh_brandingdelete")
         .setPageId("delete")
         .build();
     window[form.id] = form;
@@ -34,12 +34,12 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_beds_assignmentdelete" id="fjdh_beds_assignmentdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_brandingdelete" id="fjdh_brandingdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
 <?php } ?>
-<input type="hidden" name="t" value="jdh_beds_assignment">
+<input type="hidden" name="t" value="jdh_branding">
 <input type="hidden" name="action" id="action" value="delete">
 <?php foreach ($Page->RecKeys as $key) { ?>
 <?php $keyvalue = is_array($key) ? implode(Config("COMPOSITE_KEY_SEPARATOR"), $key) : $key; ?>
@@ -50,14 +50,14 @@ $Page->showMessage();
 <table class="<?= $Page->TableClass ?>">
     <thead>
     <tr class="ew-table-header">
-<?php if ($Page->patient_id->Visible) { // patient_id ?>
-        <th class="<?= $Page->patient_id->headerCellClass() ?>"><span id="elh_jdh_beds_assignment_patient_id" class="jdh_beds_assignment_patient_id"><?= $Page->patient_id->caption() ?></span></th>
+<?php if ($Page->id->Visible) { // id ?>
+        <th class="<?= $Page->id->headerCellClass() ?>"><span id="elh_jdh_branding_id" class="jdh_branding_id"><?= $Page->id->caption() ?></span></th>
 <?php } ?>
-<?php if ($Page->bed_id->Visible) { // bed_id ?>
-        <th class="<?= $Page->bed_id->headerCellClass() ?>"><span id="elh_jdh_beds_assignment_bed_id" class="jdh_beds_assignment_bed_id"><?= $Page->bed_id->caption() ?></span></th>
+<?php if ($Page->header_image->Visible) { // header_image ?>
+        <th class="<?= $Page->header_image->headerCellClass() ?>"><span id="elh_jdh_branding_header_image" class="jdh_branding_header_image"><?= $Page->header_image->caption() ?></span></th>
 <?php } ?>
-<?php if ($Page->date_submitted->Visible) { // date_submitted ?>
-        <th class="<?= $Page->date_submitted->headerCellClass() ?>"><span id="elh_jdh_beds_assignment_date_submitted" class="jdh_beds_assignment_date_submitted"><?= $Page->date_submitted->caption() ?></span></th>
+<?php if ($Page->footer_image->Visible) { // footer_image ?>
+        <th class="<?= $Page->footer_image->headerCellClass() ?>"><span id="elh_jdh_branding_footer_image" class="jdh_branding_footer_image"><?= $Page->footer_image->caption() ?></span></th>
 <?php } ?>
     </tr>
     </thead>
@@ -80,27 +80,29 @@ while (!$Page->Recordset->EOF) {
     $Page->renderRow();
 ?>
     <tr <?= $Page->rowAttributes() ?>>
-<?php if ($Page->patient_id->Visible) { // patient_id ?>
-        <td<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_assignment_patient_id" class="el_jdh_beds_assignment_patient_id">
-<span<?= $Page->patient_id->viewAttributes() ?>>
-<?= $Page->patient_id->getViewValue() ?></span>
+<?php if ($Page->id->Visible) { // id ?>
+        <td<?= $Page->id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_branding_id" class="el_jdh_branding_id">
+<span<?= $Page->id->viewAttributes() ?>>
+<?= $Page->id->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>
-<?php if ($Page->bed_id->Visible) { // bed_id ?>
-        <td<?= $Page->bed_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_assignment_bed_id" class="el_jdh_beds_assignment_bed_id">
-<span<?= $Page->bed_id->viewAttributes() ?>>
-<?= $Page->bed_id->getViewValue() ?></span>
+<?php if ($Page->header_image->Visible) { // header_image ?>
+        <td<?= $Page->header_image->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_branding_header_image" class="el_jdh_branding_header_image">
+<span>
+<?= GetFileViewTag($Page->header_image, $Page->header_image->getViewValue(), false) ?>
+</span>
 </span>
 </td>
 <?php } ?>
-<?php if ($Page->date_submitted->Visible) { // date_submitted ?>
-        <td<?= $Page->date_submitted->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_assignment_date_submitted" class="el_jdh_beds_assignment_date_submitted">
-<span<?= $Page->date_submitted->viewAttributes() ?>>
-<?= $Page->date_submitted->getViewValue() ?></span>
+<?php if ($Page->footer_image->Visible) { // footer_image ?>
+        <td<?= $Page->footer_image->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_branding_footer_image" class="el_jdh_branding_footer_image">
+<span>
+<?= GetFileViewTag($Page->footer_image, $Page->footer_image->getViewValue(), false) ?>
+</span>
 </span>
 </td>
 <?php } ?>

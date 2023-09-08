@@ -149,6 +149,9 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
+<?php if ($Page->report_id->Visible) { // report_id ?>
+        <th data-name="report_id" class="<?= $Page->report_id->headerCellClass() ?>"><div id="elh_jdh_test_reports_report_id" class="jdh_test_reports_report_id"><?= $Page->renderFieldHeader($Page->report_id) ?></div></th>
+<?php } ?>
 <?php if ($Page->request_id->Visible) { // request_id ?>
         <th data-name="request_id" class="<?= $Page->request_id->headerCellClass() ?>"><div id="elh_jdh_test_reports_request_id" class="jdh_test_reports_request_id"><?= $Page->renderFieldHeader($Page->request_id) ?></div></th>
 <?php } ?>
@@ -157,9 +160,6 @@ $Page->ListOptions->render("header", "left");
 <?php } ?>
 <?php if ($Page->report_findings->Visible) { // report_findings ?>
         <th data-name="report_findings" class="<?= $Page->report_findings->headerCellClass() ?>"><div id="elh_jdh_test_reports_report_findings" class="jdh_test_reports_report_findings"><?= $Page->renderFieldHeader($Page->report_findings) ?></div></th>
-<?php } ?>
-<?php if ($Page->report_attachment->Visible) { // report_attachment ?>
-        <th data-name="report_attachment" class="<?= $Page->report_attachment->headerCellClass() ?>"><div id="elh_jdh_test_reports_report_attachment" class="jdh_test_reports_report_attachment"><?= $Page->renderFieldHeader($Page->report_attachment) ?></div></th>
 <?php } ?>
 <?php if ($Page->report_date->Visible) { // report_date ?>
         <th data-name="report_date" class="<?= $Page->report_date->headerCellClass() ?>"><div id="elh_jdh_test_reports_report_date" class="jdh_test_reports_report_date"><?= $Page->renderFieldHeader($Page->report_date) ?></div></th>
@@ -183,6 +183,13 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
+    <?php if ($Page->report_id->Visible) { // report_id ?>
+        <td data-name="report_id"<?= $Page->report_id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_test_reports_report_id" class="el_jdh_test_reports_report_id">
+<span<?= $Page->report_id->viewAttributes() ?>><?= PhpBarcode::barcode('')->show('', '', 60) ?></span>
+</span>
+</td>
+    <?php } ?>
     <?php if ($Page->request_id->Visible) { // request_id ?>
         <td data-name="request_id"<?= $Page->request_id->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_test_reports_request_id" class="el_jdh_test_reports_request_id">
@@ -204,15 +211,6 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 <span id="el<?= $Page->RowCount ?>_jdh_test_reports_report_findings" class="el_jdh_test_reports_report_findings">
 <span<?= $Page->report_findings->viewAttributes() ?>>
 <?= $Page->report_findings->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->report_attachment->Visible) { // report_attachment ?>
-        <td data-name="report_attachment"<?= $Page->report_attachment->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_reports_report_attachment" class="el_jdh_test_reports_report_attachment">
-<span<?= $Page->report_attachment->viewAttributes() ?>>
-<?= GetFileViewTag($Page->report_attachment, $Page->report_attachment->getViewValue(), false) ?>
-</span>
 </span>
 </td>
     <?php } ?>

@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhTestReportsDelete extends JdhTestReports
+class JdhBrandingDelete extends JdhBranding
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhTestReportsDelete extends JdhTestReports
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhTestReportsDelete";
+    public $PageObjName = "JdhBrandingDelete";
 
     // View file path
     public $View = null;
@@ -33,15 +33,7 @@ class JdhTestReportsDelete extends JdhTestReports
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "jdhtestreportsdelete";
-
-    // Audit Trail
-    public $AuditTrailOnAdd = true;
-    public $AuditTrailOnEdit = true;
-    public $AuditTrailOnDelete = true;
-    public $AuditTrailOnView = false;
-    public $AuditTrailOnViewData = false;
-    public $AuditTrailOnSearch = false;
+    public $CurrentPageName = "jdhbrandingdelete";
 
     // Page headings
     public $Heading = "";
@@ -126,8 +118,8 @@ class JdhTestReportsDelete extends JdhTestReports
     {
         parent::__construct();
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
-        $this->TableVar = 'jdh_test_reports';
-        $this->TableName = 'jdh_test_reports';
+        $this->TableVar = 'jdh_branding';
+        $this->TableName = 'jdh_branding';
 
         // Table CSS class
         $this->TableClass = "table table-bordered table-hover table-sm ew-table";
@@ -138,14 +130,14 @@ class JdhTestReportsDelete extends JdhTestReports
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_test_reports)
-        if (!isset($GLOBALS["jdh_test_reports"]) || get_class($GLOBALS["jdh_test_reports"]) == PROJECT_NAMESPACE . "jdh_test_reports") {
-            $GLOBALS["jdh_test_reports"] = &$this;
+        // Table object (jdh_branding)
+        if (!isset($GLOBALS["jdh_branding"]) || get_class($GLOBALS["jdh_branding"]) == PROJECT_NAMESPACE . "jdh_branding") {
+            $GLOBALS["jdh_branding"] = &$this;
         }
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_test_reports');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_branding');
         }
 
         // Start timer
@@ -330,7 +322,7 @@ class JdhTestReportsDelete extends JdhTestReports
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['report_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -343,7 +335,7 @@ class JdhTestReportsDelete extends JdhTestReports
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->report_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
     public $DbMasterFilter = "";
@@ -370,13 +362,9 @@ class JdhTestReportsDelete extends JdhTestReports
         // View
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->report_id->setVisibility();
-        $this->request_id->setVisibility();
-        $this->patient_id->setVisibility();
-        $this->report_findings->setVisibility();
-        $this->report_attachment->Visible = false;
-        $this->report_submittedby_user_id->Visible = false;
-        $this->report_date->setVisibility();
+        $this->id->setVisibility();
+        $this->header_image->setVisibility();
+        $this->footer_image->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -400,9 +388,6 @@ class JdhTestReportsDelete extends JdhTestReports
             $this->InlineDelete = true;
         }
 
-        // Set up lookup cache
-        $this->setupLookupOptions($this->patient_id);
-
         // Set up Breadcrumb
         $this->setupBreadcrumb();
 
@@ -410,31 +395,12 @@ class JdhTestReportsDelete extends JdhTestReports
         $this->RecKeys = $this->getRecordKeys(); // Load record keys
         $filter = $this->getFilterFromRecordKeys();
         if ($filter == "") {
-            $this->terminate("jdhtestreportslist"); // Prevent SQL injection, return to list
+            $this->terminate("jdhbrandinglist"); // Prevent SQL injection, return to list
             return;
         }
 
         // Set up filter (WHERE Clause)
         $this->CurrentFilter = $filter;
-
-        // Check if valid User ID
-        $conn = $this->getConnection();
-        $sql = $this->getSql($this->CurrentFilter);
-        $rows = $conn->fetchAllAssociative($sql);
-        $res = true;
-        foreach ($rows as $row) {
-            $this->loadRowValues($row);
-            if (!$this->showOptionLink("delete")) {
-                $userIdMsg = $Language->phrase("NoDeletePermission");
-                $this->setFailureMessage($userIdMsg);
-                $res = false;
-                break;
-            }
-        }
-        if (!$res) {
-            $this->terminate("jdhtestreportslist"); // Return to list
-            return;
-        }
 
         // Get action
         if (IsApi()) {
@@ -487,7 +453,7 @@ class JdhTestReportsDelete extends JdhTestReports
                 if ($this->Recordset) {
                     $this->Recordset->close();
                 }
-                $this->terminate("jdhtestreportslist"); // Return to list
+                $this->terminate("jdhbrandinglist"); // Return to list
                 return;
             }
         }
@@ -600,29 +566,24 @@ class JdhTestReportsDelete extends JdhTestReports
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->report_id->setDbValue($row['report_id']);
-        $this->request_id->setDbValue($row['request_id']);
-        $this->patient_id->setDbValue($row['patient_id']);
-        $this->report_findings->setDbValue($row['report_findings']);
-        $this->report_attachment->Upload->DbValue = $row['report_attachment'];
-        if (is_resource($this->report_attachment->Upload->DbValue) && get_resource_type($this->report_attachment->Upload->DbValue) == "stream") { // Byte array
-            $this->report_attachment->Upload->DbValue = stream_get_contents($this->report_attachment->Upload->DbValue);
+        $this->id->setDbValue($row['id']);
+        $this->header_image->Upload->DbValue = $row['header_image'];
+        if (is_resource($this->header_image->Upload->DbValue) && get_resource_type($this->header_image->Upload->DbValue) == "stream") { // Byte array
+            $this->header_image->Upload->DbValue = stream_get_contents($this->header_image->Upload->DbValue);
         }
-        $this->report_submittedby_user_id->setDbValue($row['report_submittedby_user_id']);
-        $this->report_date->setDbValue($row['report_date']);
+        $this->footer_image->Upload->DbValue = $row['footer_image'];
+        if (is_resource($this->footer_image->Upload->DbValue) && get_resource_type($this->footer_image->Upload->DbValue) == "stream") { // Byte array
+            $this->footer_image->Upload->DbValue = stream_get_contents($this->footer_image->Upload->DbValue);
+        }
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['report_id'] = $this->report_id->DefaultValue;
-        $row['request_id'] = $this->request_id->DefaultValue;
-        $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['report_findings'] = $this->report_findings->DefaultValue;
-        $row['report_attachment'] = $this->report_attachment->DefaultValue;
-        $row['report_submittedby_user_id'] = $this->report_submittedby_user_id->DefaultValue;
-        $row['report_date'] = $this->report_date->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
+        $row['header_image'] = $this->header_image->DefaultValue;
+        $row['footer_image'] = $this->footer_image->DefaultValue;
         return $row;
     }
 
@@ -638,83 +599,90 @@ class JdhTestReportsDelete extends JdhTestReports
 
         // Common render codes for all row types
 
-        // report_id
+        // id
 
-        // request_id
+        // header_image
 
-        // patient_id
-
-        // report_findings
-
-        // report_attachment
-
-        // report_submittedby_user_id
-
-        // report_date
+        // footer_image
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // report_id
-            $this->report_id->ViewValue = $this->report_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
 
-            // request_id
-            $this->request_id->ViewValue = $this->request_id->CurrentValue;
-            $this->request_id->ViewValue = FormatNumber($this->request_id->ViewValue, $this->request_id->formatPattern());
-
-            // patient_id
-            $curVal = strval($this->patient_id->CurrentValue);
-            if ($curVal != "") {
-                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                    } else {
-                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                    }
-                }
+            // header_image
+            if (!EmptyValue($this->header_image->Upload->DbValue)) {
+                $this->header_image->ImageWidth = 800;
+                $this->header_image->ImageHeight = 200;
+                $this->header_image->ImageAlt = $this->header_image->alt();
+                $this->header_image->ImageCssClass = "ew-image";
+                $this->header_image->ViewValue = $this->id->CurrentValue;
+                $this->header_image->IsBlobImage = IsImageFile(ContentExtension($this->header_image->Upload->DbValue));
             } else {
-                $this->patient_id->ViewValue = null;
+                $this->header_image->ViewValue = "";
             }
 
-            // report_findings
-            $this->report_findings->ViewValue = $this->report_findings->CurrentValue;
+            // footer_image
+            if (!EmptyValue($this->footer_image->Upload->DbValue)) {
+                $this->footer_image->ImageWidth = 800;
+                $this->footer_image->ImageHeight = 200;
+                $this->footer_image->ImageAlt = $this->footer_image->alt();
+                $this->footer_image->ImageCssClass = "ew-image";
+                $this->footer_image->ViewValue = $this->id->CurrentValue;
+                $this->footer_image->IsBlobImage = IsImageFile(ContentExtension($this->footer_image->Upload->DbValue));
+            } else {
+                $this->footer_image->ViewValue = "";
+            }
 
-            // report_submittedby_user_id
-            $this->report_submittedby_user_id->ViewValue = $this->report_submittedby_user_id->CurrentValue;
-            $this->report_submittedby_user_id->ViewValue = FormatNumber($this->report_submittedby_user_id->ViewValue, $this->report_submittedby_user_id->formatPattern());
+            // id
+            $this->id->HrefValue = "";
+            $this->id->TooltipValue = "";
 
-            // report_date
-            $this->report_date->ViewValue = $this->report_date->CurrentValue;
-            $this->report_date->ViewValue = FormatDateTime($this->report_date->ViewValue, $this->report_date->formatPattern());
+            // header_image
+            if (!empty($this->header_image->Upload->DbValue)) {
+                $this->header_image->HrefValue = GetFileUploadUrl($this->header_image, $this->id->CurrentValue);
+                $this->header_image->LinkAttrs["target"] = "";
+                if ($this->header_image->IsBlobImage && empty($this->header_image->LinkAttrs["target"])) {
+                    $this->header_image->LinkAttrs["target"] = "_blank";
+                }
+                if ($this->isExport()) {
+                    $this->header_image->HrefValue = FullUrl($this->header_image->HrefValue, "href");
+                }
+            } else {
+                $this->header_image->HrefValue = "";
+            }
+            $this->header_image->ExportHrefValue = GetFileUploadUrl($this->header_image, $this->id->CurrentValue);
+            $this->header_image->TooltipValue = "";
+            if ($this->header_image->UseColorbox) {
+                if (EmptyValue($this->header_image->TooltipValue)) {
+                    $this->header_image->LinkAttrs["title"] = $Language->phrase("ViewImageGallery");
+                }
+                $this->header_image->LinkAttrs["data-rel"] = "jdh_branding_x_header_image";
+                $this->header_image->LinkAttrs->appendClass("ew-lightbox");
+            }
 
-            // report_id
-            $this->report_id->HrefValue = "";
-            $this->report_id->ExportHrefValue = PhpBarcode::barcode('')->getHrefValue('', '', 60);
-            $this->report_id->TooltipValue = "";
-
-            // request_id
-            $this->request_id->HrefValue = "";
-            $this->request_id->TooltipValue = "";
-
-            // patient_id
-            $this->patient_id->HrefValue = "";
-            $this->patient_id->TooltipValue = "";
-
-            // report_findings
-            $this->report_findings->HrefValue = "";
-            $this->report_findings->TooltipValue = "";
-
-            // report_date
-            $this->report_date->HrefValue = "";
-            $this->report_date->TooltipValue = "";
+            // footer_image
+            if (!empty($this->footer_image->Upload->DbValue)) {
+                $this->footer_image->HrefValue = GetFileUploadUrl($this->footer_image, $this->id->CurrentValue);
+                $this->footer_image->LinkAttrs["target"] = "";
+                if ($this->footer_image->IsBlobImage && empty($this->footer_image->LinkAttrs["target"])) {
+                    $this->footer_image->LinkAttrs["target"] = "_blank";
+                }
+                if ($this->isExport()) {
+                    $this->footer_image->HrefValue = FullUrl($this->footer_image->HrefValue, "href");
+                }
+            } else {
+                $this->footer_image->HrefValue = "";
+            }
+            $this->footer_image->ExportHrefValue = GetFileUploadUrl($this->footer_image, $this->id->CurrentValue);
+            $this->footer_image->TooltipValue = "";
+            if ($this->footer_image->UseColorbox) {
+                if (EmptyValue($this->footer_image->TooltipValue)) {
+                    $this->footer_image->LinkAttrs["title"] = $Language->phrase("ViewImageGallery");
+                }
+                $this->footer_image->LinkAttrs["data-rel"] = "jdh_branding_x_footer_image";
+                $this->footer_image->LinkAttrs->appendClass("ew-lightbox");
+            }
         }
 
         // Call Row Rendered event
@@ -741,9 +709,6 @@ class JdhTestReportsDelete extends JdhTestReports
         if ($this->UseTransaction) {
             $conn->beginTransaction();
         }
-        if ($this->AuditTrailOnDelete) {
-            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
-        }
 
         // Clone old rows
         $rsold = $rows;
@@ -754,7 +719,7 @@ class JdhTestReportsDelete extends JdhTestReports
             if ($thisKey != "") {
                 $thisKey .= Config("COMPOSITE_KEY_SEPARATOR");
             }
-            $thisKey .= $row['report_id'];
+            $thisKey .= $row['id'];
 
             // Call row deleting event
             $deleteRow = $this->rowDeleting($row);
@@ -803,35 +768,9 @@ class JdhTestReportsDelete extends JdhTestReports
             if (count($failKeys) > 0) {
                 $this->setWarningMessage(str_replace("%k", explode(", ", $failKeys), $Language->phrase("DeleteRecordsFailed")));
             }
-            if ($this->AuditTrailOnDelete) {
-                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteSuccess")); // Batch delete success
-            }
-            $table = 'jdh_test_reports';
-            $subject = $table . " " . $Language->phrase("RecordDeleted");
-            $action = $Language->phrase("ActionDeleted");
-            $email = new Email();
-            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-            $email->replaceSubject($subject); // Replace Subject
-            $email->replaceContent("<!--table-->", $table);
-            $email->replaceContent("<!--key-->", implode(", ", $successKeys));
-            $email->replaceContent("<!--action-->", $action);
-            $args = [];
-            $args["rs"] = &$rsold;
-            $emailSent = false;
-            if ($this->emailSending($email, $args)) {
-                $emailSent = $email->send();
-            }
-            if (!$emailSent) {
-                $this->setFailureMessage($email->SendErrDescription);
-            }
         } else {
             if ($this->UseTransaction) { // Rollback transaction
                 $conn->rollback();
-            }
-            if ($this->AuditTrailOnDelete) {
-                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteRollback")); // Batch delete rollback
             }
         }
 
@@ -847,23 +786,13 @@ class JdhTestReportsDelete extends JdhTestReports
         return $deleteRows;
     }
 
-    // Show link optionally based on User ID
-    protected function showOptionLink($id = "")
-    {
-        global $Security;
-        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
-            return $Security->isValidUserID($this->report_submittedby_user_id->CurrentValue);
-        }
-        return true;
-    }
-
     // Set up Breadcrumb
     protected function setupBreadcrumb()
     {
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhtestreportslist"), "", $this->TableVar, true);
+        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhbrandinglist"), "", $this->TableVar, true);
         $pageId = "delete";
         $Breadcrumb->add("delete", $pageId, $url);
     }
@@ -881,8 +810,6 @@ class JdhTestReportsDelete extends JdhTestReports
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
-                case "x_patient_id":
-                    break;
                 default:
                     $lookupFilter = "";
                     break;

@@ -38,6 +38,12 @@ class OthersController extends ControllerBase
         return $this->runPage($request, $response, $args, "Logout");
     }
 
+    // captcha
+    public function captcha(Request $request, Response $response, array $args): Response
+    {
+        return $this->runPage($request, $response, $args, "Captcha");
+    }
+
     // barcode
     public function barcode(Request $request, Response $response, array $args): Response
     {

@@ -614,6 +614,23 @@ return function (App $app) {
         }
     );
 
+    // jdh_branding
+    $app->map(["GET","POST","OPTIONS"], '/jdhbrandinglist[/{id}]', JdhBrandingController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhbrandinglist-jdh_branding-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/jdhbrandingadd[/{id}]', JdhBrandingController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhbrandingadd-jdh_branding-add'); // add
+    $app->map(["GET","POST","OPTIONS"], '/jdhbrandingview[/{id}]', JdhBrandingController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhbrandingview-jdh_branding-view'); // view
+    $app->map(["GET","POST","OPTIONS"], '/jdhbrandingedit[/{id}]', JdhBrandingController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhbrandingedit-jdh_branding-edit'); // edit
+    $app->map(["GET","POST","OPTIONS"], '/jdhbrandingdelete[/{id}]', JdhBrandingController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhbrandingdelete-jdh_branding-delete'); // delete
+    $app->group(
+        '/jdh_branding',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{id}]', JdhBrandingController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_branding/list-jdh_branding-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{id}]', JdhBrandingController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_branding/add-jdh_branding-add-2'); // add
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{id}]', JdhBrandingController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_branding/view-jdh_branding-view-2'); // view
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{id}]', JdhBrandingController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_branding/edit-jdh_branding-edit-2'); // edit
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{id}]', JdhBrandingController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_branding/delete-jdh_branding-delete-2'); // delete
+        }
+    );
+
     // personal_data
     $app->map(["GET","POST","OPTIONS"], '/personaldata', OthersController::class . ':personaldata')->add(PermissionMiddleware::class)->setName('personaldata');
 
@@ -625,6 +642,9 @@ return function (App $app) {
 
     // logout
     $app->map(["GET","POST","OPTIONS"], '/logout', OthersController::class . ':logout')->add(PermissionMiddleware::class)->setName('logout');
+
+    // captcha
+    $app->map(["GET","OPTIONS"], '/captcha[/{page}]', OthersController::class . ':captcha')->add(PermissionMiddleware::class)->setName('captcha');
 
     // barcode
     $app->map(["GET","OPTIONS"], '/barcode', OthersController::class . ':barcode')->add(PermissionMiddleware::class)->setName('barcode');

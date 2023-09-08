@@ -383,7 +383,16 @@ $USER_LEVEL_PRIVS = [["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_beds_assignment","4","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_beds_assignment","5","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_beds_assignment","6","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_beds_assignment","7","0"]];
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_beds_assignment","7","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","-2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","0","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","1","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","3","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","4","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","5","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","6","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","7","0"]];
 // User level table info
 $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhappointmentslist"],
     ["jdh_lab_test_categories","jdh_lab_test_categories","Lab Test Categories",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabtestcategorieslist"],
@@ -425,4 +434,5 @@ $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true
     ["jdh_rooms","jdh_rooms","Rooms",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhroomslist"],
     ["jdh_wards","jdh_wards","Wards",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhwardslist"],
     ["beds","beds","Beds",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","bedslist"],
-    ["jdh_beds_assignment","jdh_beds_assignment","Beds Assignment",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhbedsassignmentlist"]];
+    ["jdh_beds_assignment","jdh_beds_assignment","Beds Assignment",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhbedsassignmentlist"],
+    ["jdh_branding","jdh_branding","Print Header/Footer",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhbrandinglist"]];

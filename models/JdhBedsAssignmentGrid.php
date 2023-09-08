@@ -558,7 +558,7 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
 
         // Set up list options
         $this->setupListOptions();
-        $this->id->setVisibility();
+        $this->id->Visible = false;
         $this->patient_id->setVisibility();
         $this->bed_id->setVisibility();
         $this->date_submitted->setVisibility();
@@ -1221,7 +1221,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
     // Reset form status
     public function resetFormError()
     {
-        $this->id->clearErrorMessage();
         $this->patient_id->clearErrorMessage();
         $this->bed_id->clearErrorMessage();
         $this->date_submitted->clearErrorMessage();
@@ -1655,12 +1654,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
         $CurrentForm->FormName = $this->FormName;
         $validate = !Config("SERVER_VALIDATE");
 
-        // Check field name 'id' first before field var 'x_id'
-        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
-        if (!$this->id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->id->setFormValue($val);
-        }
-
         // Check field name 'patient_id' first before field var 'x_patient_id'
         $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
         if (!$this->patient_id->IsDetailKey) {
@@ -1699,6 +1692,12 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
         }
         if ($CurrentForm->hasValue("o_date_submitted")) {
             $this->date_submitted->setOldValue($CurrentForm->getValue("o_date_submitted"));
+        }
+
+        // Check field name 'id' first before field var 'x_id'
+        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
+        if (!$this->id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->id->setFormValue($val);
         }
     }
 
@@ -1925,10 +1924,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
             $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
             $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
 
-            // id
-            $this->id->HrefValue = "";
-            $this->id->TooltipValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
@@ -1941,8 +1936,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
             $this->date_submitted->HrefValue = "";
             $this->date_submitted->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
-            // id
-
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -2036,9 +2029,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
 
             // Add refer script
 
-            // id
-            $this->id->HrefValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
 
@@ -2048,10 +2038,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
             // date_submitted
             $this->date_submitted->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // id
-            $this->id->setupEditAttributes();
-            $this->id->EditValue = $this->id->CurrentValue;
-
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -2145,9 +2131,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
 
             // Edit refer script
 
-            // id
-            $this->id->HrefValue = "";
-
             // patient_id
             $this->patient_id->HrefValue = "";
 
@@ -2177,11 +2160,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
             return true;
         }
         $validateForm = true;
-        if ($this->id->Required) {
-            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
-                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
-            }
-        }
         if ($this->patient_id->Required) {
             if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
                 $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));

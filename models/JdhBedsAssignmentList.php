@@ -655,7 +655,7 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
 
         // Setup import options
         $this->setupImportOptions();
-        $this->id->setVisibility();
+        $this->id->Visible = false;
         $this->patient_id->setVisibility();
         $this->bed_id->setVisibility();
         $this->date_submitted->setVisibility();
@@ -1015,7 +1015,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
-            $this->updateSort($this->id); // id
             $this->updateSort($this->patient_id); // patient_id
             $this->updateSort($this->bed_id); // bed_id
             $this->updateSort($this->date_submitted); // date_submitted
@@ -1265,7 +1264,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("id", $this->createColumnOption("id"));
             $option->add("patient_id", $this->createColumnOption("patient_id"));
             $option->add("bed_id", $this->createColumnOption("bed_id"));
             $option->add("date_submitted", $this->createColumnOption("date_submitted"));
@@ -1766,10 +1764,6 @@ class JdhBedsAssignmentList extends JdhBedsAssignment
             // submittedby_user_id
             $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
             $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
-
-            // id
-            $this->id->HrefValue = "";
-            $this->id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";

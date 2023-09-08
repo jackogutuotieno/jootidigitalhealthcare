@@ -8,9 +8,9 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 
 /**
- * Table class for jdh_test_reports
+ * Table class for jdh_branding
  */
-class JdhTestReports extends DbTable
+class JdhBranding extends DbTable
 {
     protected $SqlFrom = "";
     protected $SqlSelect = null;
@@ -28,14 +28,6 @@ class JdhTestReports extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
-    // Audit trail
-    public $AuditTrailOnAdd = true;
-    public $AuditTrailOnEdit = true;
-    public $AuditTrailOnDelete = true;
-    public $AuditTrailOnView = false;
-    public $AuditTrailOnViewData = false;
-    public $AuditTrailOnSearch = false;
-
     // Export
     public $UseAjaxActions = false;
     public $ModalSearch = false;
@@ -49,13 +41,9 @@ class JdhTestReports extends DbTable
     public $ModalMultiEdit = false;
 
     // Fields
-    public $report_id;
-    public $request_id;
-    public $patient_id;
-    public $report_findings;
-    public $report_attachment;
-    public $report_submittedby_user_id;
-    public $report_date;
+    public $id;
+    public $header_image;
+    public $footer_image;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -68,14 +56,14 @@ class JdhTestReports extends DbTable
 
         // Language object
         $Language = Container("language");
-        $this->TableVar = "jdh_test_reports";
-        $this->TableName = 'jdh_test_reports';
+        $this->TableVar = "jdh_branding";
+        $this->TableName = 'jdh_branding';
         $this->TableType = "TABLE";
         $this->ImportUseTransaction = $this->supportsTransaction() && Config("IMPORT_USE_TRANSACTION");
         $this->UseTransaction = $this->supportsTransaction() && Config("USE_TRANSACTION");
 
         // Update Table
-        $this->UpdateTable = "`jdh_test_reports`";
+        $this->UpdateTable = "`jdh_branding`";
         $this->Dbid = 'DB';
         $this->ExportAll = true;
         $this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
@@ -92,9 +80,9 @@ class JdhTestReports extends DbTable
         $this->ExportWordPageOrientation = ""; // Page orientation (PHPWord only)
         $this->ExportWordPageSize = ""; // Page orientation (PHPWord only)
         $this->ExportWordColumnWidth = null; // Cell width (PHPWord only)
-        $this->DetailAdd = true; // Allow detail add
-        $this->DetailEdit = true; // Allow detail edit
-        $this->DetailView = true; // Allow detail view
+        $this->DetailAdd = false; // Allow detail add
+        $this->DetailEdit = false; // Allow detail edit
+        $this->DetailView = false; // Allow detail view
         $this->ShowMultipleDetails = false; // Show multiple details
         $this->GridAddRowCount = 5;
         $this->AllowAddDeleteRow = true; // Allow add/delete row
@@ -102,180 +90,76 @@ class JdhTestReports extends DbTable
         $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
         $this->BasicSearch = new BasicSearch($this);
 
-        // report_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->report_id = new DbField(
+        // id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->id = new DbField(
             $this, // Table
-            'x_report_id', // Variable name
-            'report_id', // Name
-            '`report_id`', // Expression
-            '`report_id`', // Basic search expression
+            'x_id', // Variable name
+            'id', // Name
+            '`id`', // Expression
+            '`id`', // Basic search expression
             3, // Type
             11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`report_id`', // Virtual expression
+            '`id`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'NO' // Edit Tag
         );
-        $this->report_id->InputTextType = "text";
-        $this->report_id->IsAutoIncrement = true; // Autoincrement field
-        $this->report_id->IsPrimaryKey = true; // Primary key field
-        $this->report_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->report_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
-        $this->Fields['report_id'] = &$this->report_id;
+        $this->id->InputTextType = "text";
+        $this->id->IsAutoIncrement = true; // Autoincrement field
+        $this->id->IsPrimaryKey = true; // Primary key field
+        $this->id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->Fields['id'] = &$this->id;
 
-        // request_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->request_id = new DbField(
+        // header_image $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->header_image = new DbField(
             $this, // Table
-            'x_request_id', // Variable name
-            'request_id', // Name
-            '`request_id`', // Expression
-            '`request_id`', // Basic search expression
-            3, // Type
-            11, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`request_id`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
-        );
-        $this->request_id->InputTextType = "text";
-        $this->request_id->Nullable = false; // NOT NULL field
-        $this->request_id->Required = true; // Required field
-        $this->request_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->request_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['request_id'] = &$this->request_id;
-
-        // patient_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->patient_id = new DbField(
-            $this, // Table
-            'x_patient_id', // Variable name
-            'patient_id', // Name
-            '`patient_id`', // Expression
-            '`patient_id`', // Basic search expression
-            3, // Type
-            11, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`patient_id`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'SELECT' // Edit Tag
-        );
-        $this->patient_id->InputTextType = "text";
-        $this->patient_id->Nullable = false; // NOT NULL field
-        $this->patient_id->Required = true; // Required field
-        $this->patient_id->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->patient_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->patient_id->Lookup = new Lookup('patient_id', 'jdh_patients', false, 'patient_id', ["patient_name","","",""], '', '', [], [], [], [], [], [], '', '', "`patient_name`");
-        $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->patient_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['patient_id'] = &$this->patient_id;
-
-        // report_findings $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->report_findings = new DbField(
-            $this, // Table
-            'x_report_findings', // Variable name
-            'report_findings', // Name
-            '`report_findings`', // Expression
-            '`report_findings`', // Basic search expression
-            201, // Type
-            65535, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`report_findings`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXTAREA' // Edit Tag
-        );
-        $this->report_findings->InputTextType = "text";
-        $this->report_findings->Nullable = false; // NOT NULL field
-        $this->report_findings->Required = true; // Required field
-        $this->report_findings->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
-        $this->Fields['report_findings'] = &$this->report_findings;
-
-        // report_attachment $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->report_attachment = new DbField(
-            $this, // Table
-            'x_report_attachment', // Variable name
-            'report_attachment', // Name
-            '`report_attachment`', // Expression
-            '`report_attachment`', // Basic search expression
+            'x_header_image', // Variable name
+            'header_image', // Name
+            '`header_image`', // Expression
+            '`header_image`', // Basic search expression
             205, // Type
             0, // Size
             -1, // Date/Time format
             true, // Is upload field
-            '`report_attachment`', // Virtual expression
+            '`header_image`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
+            'IMAGE', // View Tag
             'FILE' // Edit Tag
         );
-        $this->report_attachment->InputTextType = "text";
-        $this->report_attachment->Sortable = false; // Allow sort
-        $this->report_attachment->UploadAllowedFileExt = "doc,docx,pdf,xls";
-        $this->report_attachment->SearchOperators = ["=", "<>", "IS NULL", "IS NOT NULL"];
-        $this->Fields['report_attachment'] = &$this->report_attachment;
+        $this->header_image->InputTextType = "text";
+        $this->header_image->Sortable = false; // Allow sort
+        $this->header_image->SearchOperators = ["=", "<>", "IS NULL", "IS NOT NULL"];
+        $this->Fields['header_image'] = &$this->header_image;
 
-        // report_submittedby_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->report_submittedby_user_id = new DbField(
+        // footer_image $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->footer_image = new DbField(
             $this, // Table
-            'x_report_submittedby_user_id', // Variable name
-            'report_submittedby_user_id', // Name
-            '`report_submittedby_user_id`', // Expression
-            '`report_submittedby_user_id`', // Basic search expression
-            3, // Type
-            11, // Size
+            'x_footer_image', // Variable name
+            'footer_image', // Name
+            '`footer_image`', // Expression
+            '`footer_image`', // Basic search expression
+            205, // Type
+            0, // Size
             -1, // Date/Time format
-            false, // Is upload field
-            '`report_submittedby_user_id`', // Virtual expression
+            true, // Is upload field
+            '`footer_image`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'HIDDEN' // Edit Tag
+            'IMAGE', // View Tag
+            'FILE' // Edit Tag
         );
-        $this->report_submittedby_user_id->InputTextType = "text";
-        $this->report_submittedby_user_id->Nullable = false; // NOT NULL field
-        $this->report_submittedby_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->report_submittedby_user_id->SearchOperators = ["=", "<>"];
-        $this->Fields['report_submittedby_user_id'] = &$this->report_submittedby_user_id;
-
-        // report_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->report_date = new DbField(
-            $this, // Table
-            'x_report_date', // Variable name
-            'report_date', // Name
-            '`report_date`', // Expression
-            CastDateFieldForLike("`report_date`", 11, "DB"), // Basic search expression
-            135, // Type
-            19, // Size
-            11, // Date/Time format
-            false, // Is upload field
-            '`report_date`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
-        );
-        $this->report_date->InputTextType = "text";
-        $this->report_date->Nullable = false; // NOT NULL field
-        $this->report_date->Required = true; // Required field
-        $this->report_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
-        $this->report_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['report_date'] = &$this->report_date;
+        $this->footer_image->InputTextType = "text";
+        $this->footer_image->Sortable = false; // Allow sort
+        $this->footer_image->SearchOperators = ["=", "<>", "IS NULL", "IS NOT NULL"];
+        $this->Fields['footer_image'] = &$this->footer_image;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -344,7 +228,7 @@ class JdhTestReports extends DbTable
     // Table level SQL
     public function getSqlFrom() // From
     {
-        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_test_reports`";
+        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_branding`";
     }
 
     public function sqlFrom() // For backward compatibility
@@ -438,11 +322,6 @@ class JdhTestReports extends DbTable
     // Apply User ID filters
     public function applyUserIDFilters($filter, $id = "")
     {
-        global $Security;
-        // Add User ID filter
-        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
-            $filter = $this->addUserIDFilter($filter, $id);
-        }
         return $filter;
     }
 
@@ -647,11 +526,8 @@ class JdhTestReports extends DbTable
         }
         if ($success) {
             // Get insert id if necessary
-            $this->report_id->setDbValue($conn->lastInsertId());
-            $rs['report_id'] = $this->report_id->DbValue;
-            if ($this->AuditTrailOnAdd) {
-                $this->writeAuditTrailOnAdd($rs);
-            }
+            $this->id->setDbValue($conn->lastInsertId());
+            $rs['id'] = $this->id->DbValue;
         }
         return $success;
     }
@@ -701,17 +577,9 @@ class JdhTestReports extends DbTable
 
         // Return auto increment field
         if ($success) {
-            if (!isset($rs['report_id']) && !EmptyValue($this->report_id->CurrentValue)) {
-                $rs['report_id'] = $this->report_id->CurrentValue;
+            if (!isset($rs['id']) && !EmptyValue($this->id->CurrentValue)) {
+                $rs['id'] = $this->id->CurrentValue;
             }
-        }
-        if ($success && $this->AuditTrailOnEdit && $rsold) {
-            $rsaudit = $rs;
-            $fldname = 'report_id';
-            if (!array_key_exists($fldname, $rsaudit)) {
-                $rsaudit[$fldname] = $rsold[$fldname];
-            }
-            $this->writeAuditTrailOnEdit($rsold, $rsaudit);
         }
         return $success;
     }
@@ -732,8 +600,8 @@ class JdhTestReports extends DbTable
             $where = $this->arrayToFilter($where);
         }
         if ($rs) {
-            if (array_key_exists('report_id', $rs)) {
-                AddFilter($where, QuotedName('report_id', $this->Dbid) . '=' . QuotedValue($rs['report_id'], $this->report_id->DataType, $this->Dbid));
+            if (array_key_exists('id', $rs)) {
+                AddFilter($where, QuotedName('id', $this->Dbid) . '=' . QuotedValue($rs['id'], $this->id->DataType, $this->Dbid));
             }
         }
         $filter = ($curfilter) ? $this->CurrentFilter : "";
@@ -754,9 +622,6 @@ class JdhTestReports extends DbTable
                 $this->DbErrorMessage = $e->getMessage();
             }
         }
-        if ($success && $this->AuditTrailOnDelete) {
-            $this->writeAuditTrailOnDelete($rs);
-        }
         return $success;
     }
 
@@ -766,13 +631,9 @@ class JdhTestReports extends DbTable
         if (!is_array($row)) {
             return;
         }
-        $this->report_id->DbValue = $row['report_id'];
-        $this->request_id->DbValue = $row['request_id'];
-        $this->patient_id->DbValue = $row['patient_id'];
-        $this->report_findings->DbValue = $row['report_findings'];
-        $this->report_attachment->Upload->DbValue = $row['report_attachment'];
-        $this->report_submittedby_user_id->DbValue = $row['report_submittedby_user_id'];
-        $this->report_date->DbValue = $row['report_date'];
+        $this->id->DbValue = $row['id'];
+        $this->header_image->Upload->DbValue = $row['header_image'];
+        $this->footer_image->Upload->DbValue = $row['footer_image'];
     }
 
     // Delete uploaded files
@@ -784,14 +645,14 @@ class JdhTestReports extends DbTable
     // Record filter WHERE clause
     protected function sqlKeyFilter()
     {
-        return "`report_id` = @report_id@";
+        return "`id` = @id@";
     }
 
     // Get Key
     public function getKey($current = false)
     {
         $keys = [];
-        $val = $current ? $this->report_id->CurrentValue : $this->report_id->OldValue;
+        $val = $current ? $this->id->CurrentValue : $this->id->OldValue;
         if (EmptyValue($val)) {
             return "";
         } else {
@@ -807,9 +668,9 @@ class JdhTestReports extends DbTable
         $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
         if (count($keys) == 1) {
             if ($current) {
-                $this->report_id->CurrentValue = $keys[0];
+                $this->id->CurrentValue = $keys[0];
             } else {
-                $this->report_id->OldValue = $keys[0];
+                $this->id->OldValue = $keys[0];
             }
         }
     }
@@ -819,9 +680,9 @@ class JdhTestReports extends DbTable
     {
         $keyFilter = $this->sqlKeyFilter();
         if (is_array($row)) {
-            $val = array_key_exists('report_id', $row) ? $row['report_id'] : null;
+            $val = array_key_exists('id', $row) ? $row['id'] : null;
         } else {
-            $val = !EmptyValue($this->report_id->OldValue) && !$current ? $this->report_id->OldValue : $this->report_id->CurrentValue;
+            $val = !EmptyValue($this->id->OldValue) && !$current ? $this->id->OldValue : $this->id->CurrentValue;
         }
         if (!is_numeric($val)) {
             return "0=1"; // Invalid key
@@ -829,7 +690,7 @@ class JdhTestReports extends DbTable
         if ($val === null) {
             return "0=1"; // Invalid key
         } else {
-            $keyFilter = str_replace("@report_id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
+            $keyFilter = str_replace("@id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
         }
         return $keyFilter;
     }
@@ -844,7 +705,7 @@ class JdhTestReports extends DbTable
         if ($referUrl != "" && $referPageName != CurrentPageName() && $referPageName != "login") { // Referer not same page or login page
             $_SESSION[$name] = $referUrl; // Save to Session
         }
-        return $_SESSION[$name] ?? GetUrl("jdhtestreportslist");
+        return $_SESSION[$name] ?? GetUrl("jdhbrandinglist");
     }
 
     // Set return page URL
@@ -857,11 +718,11 @@ class JdhTestReports extends DbTable
     public function getModalCaption($pageName)
     {
         global $Language;
-        if ($pageName == "jdhtestreportsview") {
+        if ($pageName == "jdhbrandingview") {
             return $Language->phrase("View");
-        } elseif ($pageName == "jdhtestreportsedit") {
+        } elseif ($pageName == "jdhbrandingedit") {
             return $Language->phrase("Edit");
-        } elseif ($pageName == "jdhtestreportsadd") {
+        } elseif ($pageName == "jdhbrandingadd") {
             return $Language->phrase("Add");
         }
         return "";
@@ -872,15 +733,15 @@ class JdhTestReports extends DbTable
     {
         switch (strtolower($action)) {
             case Config("API_VIEW_ACTION"):
-                return "JdhTestReportsView";
+                return "JdhBrandingView";
             case Config("API_ADD_ACTION"):
-                return "JdhTestReportsAdd";
+                return "JdhBrandingAdd";
             case Config("API_EDIT_ACTION"):
-                return "JdhTestReportsEdit";
+                return "JdhBrandingEdit";
             case Config("API_DELETE_ACTION"):
-                return "JdhTestReportsDelete";
+                return "JdhBrandingDelete";
             case Config("API_LIST_ACTION"):
-                return "JdhTestReportsList";
+                return "JdhBrandingList";
             default:
                 return "";
         }
@@ -901,16 +762,16 @@ class JdhTestReports extends DbTable
     // List URL
     public function getListUrl()
     {
-        return "jdhtestreportslist";
+        return "jdhbrandinglist";
     }
 
     // View URL
     public function getViewUrl($parm = "")
     {
         if ($parm != "") {
-            $url = $this->keyUrl("jdhtestreportsview", $parm);
+            $url = $this->keyUrl("jdhbrandingview", $parm);
         } else {
-            $url = $this->keyUrl("jdhtestreportsview", Config("TABLE_SHOW_DETAIL") . "=");
+            $url = $this->keyUrl("jdhbrandingview", Config("TABLE_SHOW_DETAIL") . "=");
         }
         return $this->addMasterUrl($url);
     }
@@ -919,9 +780,9 @@ class JdhTestReports extends DbTable
     public function getAddUrl($parm = "")
     {
         if ($parm != "") {
-            $url = "jdhtestreportsadd?" . $parm;
+            $url = "jdhbrandingadd?" . $parm;
         } else {
-            $url = "jdhtestreportsadd";
+            $url = "jdhbrandingadd";
         }
         return $this->addMasterUrl($url);
     }
@@ -929,28 +790,28 @@ class JdhTestReports extends DbTable
     // Edit URL
     public function getEditUrl($parm = "")
     {
-        $url = $this->keyUrl("jdhtestreportsedit", $parm);
+        $url = $this->keyUrl("jdhbrandingedit", $parm);
         return $this->addMasterUrl($url);
     }
 
     // Inline edit URL
     public function getInlineEditUrl()
     {
-        $url = $this->keyUrl("jdhtestreportslist", "action=edit");
+        $url = $this->keyUrl("jdhbrandinglist", "action=edit");
         return $this->addMasterUrl($url);
     }
 
     // Copy URL
     public function getCopyUrl($parm = "")
     {
-        $url = $this->keyUrl("jdhtestreportsadd", $parm);
+        $url = $this->keyUrl("jdhbrandingadd", $parm);
         return $this->addMasterUrl($url);
     }
 
     // Inline copy URL
     public function getInlineCopyUrl()
     {
-        $url = $this->keyUrl("jdhtestreportslist", "action=copy");
+        $url = $this->keyUrl("jdhbrandinglist", "action=copy");
         return $this->addMasterUrl($url);
     }
 
@@ -960,7 +821,7 @@ class JdhTestReports extends DbTable
         if ($this->UseAjaxActions && ConvertToBool(Param("infinitescroll")) && CurrentPageID() == "list") {
             return $this->keyUrl(GetApiUrl(Config("API_DELETE_ACTION") . "/" . $this->TableVar));
         } else {
-            return $this->keyUrl("jdhtestreportsdelete");
+            return $this->keyUrl("jdhbrandingdelete");
         }
     }
 
@@ -973,7 +834,7 @@ class JdhTestReports extends DbTable
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
-        $json .= "\"report_id\":" . JsonEncode($this->report_id->CurrentValue, "number");
+        $json .= "\"id\":" . JsonEncode($this->id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -984,8 +845,8 @@ class JdhTestReports extends DbTable
     // Add key value to URL
     public function keyUrl($url, $parm = "")
     {
-        if ($this->report_id->CurrentValue !== null) {
-            $url .= "/" . $this->encodeKeyValue($this->report_id->CurrentValue);
+        if ($this->id->CurrentValue !== null) {
+            $url .= "/" . $this->encodeKeyValue($this->id->CurrentValue);
         } else {
             return "javascript:ew.alert(ew.language.phrase('InvalidRecord'));";
         }
@@ -1053,7 +914,7 @@ class JdhTestReports extends DbTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
-            if (($keyValue = Param("report_id") ?? Route("report_id")) !== null) {
+            if (($keyValue = Param("id") ?? Route("id")) !== null) {
                 $arKeys[] = $keyValue;
             } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
                 $arKeys[] = $keyValue;
@@ -1099,9 +960,9 @@ class JdhTestReports extends DbTable
                 $keyFilter .= " OR ";
             }
             if ($setCurrent) {
-                $this->report_id->CurrentValue = $key;
+                $this->id->CurrentValue = $key;
             } else {
-                $this->report_id->OldValue = $key;
+                $this->id->OldValue = $key;
             }
             $keyFilter .= "(" . $this->getRecordFilter() . ")";
         }
@@ -1126,20 +987,16 @@ class JdhTestReports extends DbTable
         } else {
             return;
         }
-        $this->report_id->setDbValue($row['report_id']);
-        $this->request_id->setDbValue($row['request_id']);
-        $this->patient_id->setDbValue($row['patient_id']);
-        $this->report_findings->setDbValue($row['report_findings']);
-        $this->report_attachment->Upload->DbValue = $row['report_attachment'];
-        $this->report_submittedby_user_id->setDbValue($row['report_submittedby_user_id']);
-        $this->report_date->setDbValue($row['report_date']);
+        $this->id->setDbValue($row['id']);
+        $this->header_image->Upload->DbValue = $row['header_image'];
+        $this->footer_image->Upload->DbValue = $row['footer_image'];
     }
 
     // Render list content
     public function renderListContent($filter)
     {
         global $Response;
-        $listPage = "JdhTestReportsList";
+        $listPage = "JdhBrandingList";
         $listClass = PROJECT_NAMESPACE . $listPage;
         $page = new $listClass();
         $page->loadRecordsetFromFilter($filter);
@@ -1163,109 +1020,88 @@ class JdhTestReports extends DbTable
 
         // Common render codes
 
-        // report_id
+        // id
 
-        // request_id
+        // header_image
 
-        // patient_id
+        // footer_image
 
-        // report_findings
+        // id
+        $this->id->ViewValue = $this->id->CurrentValue;
 
-        // report_attachment
-
-        // report_submittedby_user_id
-
-        // report_date
-
-        // report_id
-        $this->report_id->ViewValue = $this->report_id->CurrentValue;
-
-        // request_id
-        $this->request_id->ViewValue = $this->request_id->CurrentValue;
-        $this->request_id->ViewValue = FormatNumber($this->request_id->ViewValue, $this->request_id->formatPattern());
-
-        // patient_id
-        $curVal = strval($this->patient_id->CurrentValue);
-        if ($curVal != "") {
-            $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-            if ($this->patient_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                } else {
-                    $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                }
-            }
+        // header_image
+        if (!EmptyValue($this->header_image->Upload->DbValue)) {
+            $this->header_image->ImageWidth = 800;
+            $this->header_image->ImageHeight = 200;
+            $this->header_image->ImageAlt = $this->header_image->alt();
+            $this->header_image->ImageCssClass = "ew-image";
+            $this->header_image->ViewValue = $this->id->CurrentValue;
+            $this->header_image->IsBlobImage = IsImageFile(ContentExtension($this->header_image->Upload->DbValue));
         } else {
-            $this->patient_id->ViewValue = null;
+            $this->header_image->ViewValue = "";
         }
 
-        // report_findings
-        $this->report_findings->ViewValue = $this->report_findings->CurrentValue;
-
-        // report_attachment
-        if (!EmptyValue($this->report_attachment->Upload->DbValue)) {
-            $this->report_attachment->ViewValue = $this->report_id->CurrentValue;
-            $this->report_attachment->IsBlobImage = IsImageFile(ContentExtension($this->report_attachment->Upload->DbValue));
+        // footer_image
+        if (!EmptyValue($this->footer_image->Upload->DbValue)) {
+            $this->footer_image->ImageWidth = 800;
+            $this->footer_image->ImageHeight = 200;
+            $this->footer_image->ImageAlt = $this->footer_image->alt();
+            $this->footer_image->ImageCssClass = "ew-image";
+            $this->footer_image->ViewValue = $this->id->CurrentValue;
+            $this->footer_image->IsBlobImage = IsImageFile(ContentExtension($this->footer_image->Upload->DbValue));
         } else {
-            $this->report_attachment->ViewValue = "";
+            $this->footer_image->ViewValue = "";
         }
 
-        // report_submittedby_user_id
-        $this->report_submittedby_user_id->ViewValue = $this->report_submittedby_user_id->CurrentValue;
-        $this->report_submittedby_user_id->ViewValue = FormatNumber($this->report_submittedby_user_id->ViewValue, $this->report_submittedby_user_id->formatPattern());
+        // id
+        $this->id->HrefValue = "";
+        $this->id->TooltipValue = "";
 
-        // report_date
-        $this->report_date->ViewValue = $this->report_date->CurrentValue;
-        $this->report_date->ViewValue = FormatDateTime($this->report_date->ViewValue, $this->report_date->formatPattern());
-
-        // report_id
-        $this->report_id->HrefValue = "";
-        $this->report_id->ExportHrefValue = PhpBarcode::barcode('')->getHrefValue('', '', 60);
-        $this->report_id->TooltipValue = "";
-
-        // request_id
-        $this->request_id->HrefValue = "";
-        $this->request_id->TooltipValue = "";
-
-        // patient_id
-        $this->patient_id->HrefValue = "";
-        $this->patient_id->TooltipValue = "";
-
-        // report_findings
-        $this->report_findings->HrefValue = "";
-        $this->report_findings->TooltipValue = "";
-
-        // report_attachment
-        if (!empty($this->report_attachment->Upload->DbValue)) {
-            $this->report_attachment->HrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
-            $this->report_attachment->LinkAttrs["target"] = "";
-            if ($this->report_attachment->IsBlobImage && empty($this->report_attachment->LinkAttrs["target"])) {
-                $this->report_attachment->LinkAttrs["target"] = "_blank";
+        // header_image
+        if (!empty($this->header_image->Upload->DbValue)) {
+            $this->header_image->HrefValue = GetFileUploadUrl($this->header_image, $this->id->CurrentValue);
+            $this->header_image->LinkAttrs["target"] = "";
+            if ($this->header_image->IsBlobImage && empty($this->header_image->LinkAttrs["target"])) {
+                $this->header_image->LinkAttrs["target"] = "_blank";
             }
             if ($this->isExport()) {
-                $this->report_attachment->HrefValue = FullUrl($this->report_attachment->HrefValue, "href");
+                $this->header_image->HrefValue = FullUrl($this->header_image->HrefValue, "href");
             }
         } else {
-            $this->report_attachment->HrefValue = "";
+            $this->header_image->HrefValue = "";
         }
-        $this->report_attachment->ExportHrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
-        $this->report_attachment->TooltipValue = "";
+        $this->header_image->ExportHrefValue = GetFileUploadUrl($this->header_image, $this->id->CurrentValue);
+        $this->header_image->TooltipValue = "";
+        if ($this->header_image->UseColorbox) {
+            if (EmptyValue($this->header_image->TooltipValue)) {
+                $this->header_image->LinkAttrs["title"] = $Language->phrase("ViewImageGallery");
+            }
+            $this->header_image->LinkAttrs["data-rel"] = "jdh_branding_x_header_image";
+            $this->header_image->LinkAttrs->appendClass("ew-lightbox");
+        }
 
-        // report_submittedby_user_id
-        $this->report_submittedby_user_id->HrefValue = "";
-        $this->report_submittedby_user_id->TooltipValue = "";
-
-        // report_date
-        $this->report_date->HrefValue = "";
-        $this->report_date->TooltipValue = "";
+        // footer_image
+        if (!empty($this->footer_image->Upload->DbValue)) {
+            $this->footer_image->HrefValue = GetFileUploadUrl($this->footer_image, $this->id->CurrentValue);
+            $this->footer_image->LinkAttrs["target"] = "";
+            if ($this->footer_image->IsBlobImage && empty($this->footer_image->LinkAttrs["target"])) {
+                $this->footer_image->LinkAttrs["target"] = "_blank";
+            }
+            if ($this->isExport()) {
+                $this->footer_image->HrefValue = FullUrl($this->footer_image->HrefValue, "href");
+            }
+        } else {
+            $this->footer_image->HrefValue = "";
+        }
+        $this->footer_image->ExportHrefValue = GetFileUploadUrl($this->footer_image, $this->id->CurrentValue);
+        $this->footer_image->TooltipValue = "";
+        if ($this->footer_image->UseColorbox) {
+            if (EmptyValue($this->footer_image->TooltipValue)) {
+                $this->footer_image->LinkAttrs["title"] = $Language->phrase("ViewImageGallery");
+            }
+            $this->footer_image->LinkAttrs["data-rel"] = "jdh_branding_x_footer_image";
+            $this->footer_image->LinkAttrs->appendClass("ew-lightbox");
+        }
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1282,47 +1118,35 @@ class JdhTestReports extends DbTable
         // Call Row Rendering event
         $this->rowRendering();
 
-        // report_id
-        $this->report_id->setupEditAttributes();
-        $this->report_id->EditValue = $this->report_id->CurrentValue;
+        // id
+        $this->id->setupEditAttributes();
+        $this->id->EditValue = $this->id->CurrentValue;
 
-        // request_id
-        $this->request_id->setupEditAttributes();
-        $this->request_id->EditValue = $this->request_id->CurrentValue;
-        $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
-        if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
-            $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
-        }
-
-        // patient_id
-        $this->patient_id->setupEditAttributes();
-        $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
-
-        // report_findings
-        $this->report_findings->setupEditAttributes();
-        $this->report_findings->EditValue = $this->report_findings->CurrentValue;
-        $this->report_findings->PlaceHolder = RemoveHtml($this->report_findings->caption());
-
-        // report_attachment
-        $this->report_attachment->setupEditAttributes();
-        if (!EmptyValue($this->report_attachment->Upload->DbValue)) {
-            $this->report_attachment->EditValue = $this->report_id->CurrentValue;
-            $this->report_attachment->IsBlobImage = IsImageFile(ContentExtension($this->report_attachment->Upload->DbValue));
+        // header_image
+        $this->header_image->setupEditAttributes();
+        if (!EmptyValue($this->header_image->Upload->DbValue)) {
+            $this->header_image->ImageWidth = 800;
+            $this->header_image->ImageHeight = 200;
+            $this->header_image->ImageAlt = $this->header_image->alt();
+            $this->header_image->ImageCssClass = "ew-image";
+            $this->header_image->EditValue = $this->id->CurrentValue;
+            $this->header_image->IsBlobImage = IsImageFile(ContentExtension($this->header_image->Upload->DbValue));
         } else {
-            $this->report_attachment->EditValue = "";
+            $this->header_image->EditValue = "";
         }
 
-        // report_submittedby_user_id
-        $this->report_submittedby_user_id->setupEditAttributes();
-        $this->report_submittedby_user_id->CurrentValue = FormatNumber($this->report_submittedby_user_id->CurrentValue, $this->report_submittedby_user_id->formatPattern());
-        if (strval($this->report_submittedby_user_id->EditValue) != "" && is_numeric($this->report_submittedby_user_id->EditValue)) {
-            $this->report_submittedby_user_id->EditValue = FormatNumber($this->report_submittedby_user_id->EditValue, null);
+        // footer_image
+        $this->footer_image->setupEditAttributes();
+        if (!EmptyValue($this->footer_image->Upload->DbValue)) {
+            $this->footer_image->ImageWidth = 800;
+            $this->footer_image->ImageHeight = 200;
+            $this->footer_image->ImageAlt = $this->footer_image->alt();
+            $this->footer_image->ImageCssClass = "ew-image";
+            $this->footer_image->EditValue = $this->id->CurrentValue;
+            $this->footer_image->IsBlobImage = IsImageFile(ContentExtension($this->footer_image->Upload->DbValue));
+        } else {
+            $this->footer_image->EditValue = "";
         }
-
-        // report_date
-        $this->report_date->setupEditAttributes();
-        $this->report_date->EditValue = FormatDateTime($this->report_date->CurrentValue, $this->report_date->formatPattern());
-        $this->report_date->PlaceHolder = RemoveHtml($this->report_date->caption());
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1352,18 +1176,11 @@ class JdhTestReports extends DbTable
             if ($doc->Horizontal) { // Horizontal format, write header
                 $doc->beginExportRow();
                 if ($exportPageType == "view") {
-                    $doc->exportCaption($this->report_id);
-                    $doc->exportCaption($this->request_id);
-                    $doc->exportCaption($this->patient_id);
-                    $doc->exportCaption($this->report_findings);
-                    $doc->exportCaption($this->report_attachment);
-                    $doc->exportCaption($this->report_date);
+                    $doc->exportCaption($this->id);
+                    $doc->exportCaption($this->header_image);
+                    $doc->exportCaption($this->footer_image);
                 } else {
-                    $doc->exportCaption($this->report_id);
-                    $doc->exportCaption($this->request_id);
-                    $doc->exportCaption($this->patient_id);
-                    $doc->exportCaption($this->report_submittedby_user_id);
-                    $doc->exportCaption($this->report_date);
+                    $doc->exportCaption($this->id);
                 }
                 $doc->endExportRow();
             }
@@ -1393,18 +1210,11 @@ class JdhTestReports extends DbTable
                 if (!$doc->ExportCustom) {
                     $doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
                     if ($exportPageType == "view") {
-                        $doc->exportField($this->report_id);
-                        $doc->exportField($this->request_id);
-                        $doc->exportField($this->patient_id);
-                        $doc->exportField($this->report_findings);
-                        $doc->exportField($this->report_attachment);
-                        $doc->exportField($this->report_date);
+                        $doc->exportField($this->id);
+                        $doc->exportField($this->header_image);
+                        $doc->exportField($this->footer_image);
                     } else {
-                        $doc->exportField($this->report_id);
-                        $doc->exportField($this->request_id);
-                        $doc->exportField($this->patient_id);
-                        $doc->exportField($this->report_submittedby_user_id);
-                        $doc->exportField($this->report_date);
+                        $doc->exportField($this->id);
                     }
                     $doc->endExportRow($rowCnt);
                 }
@@ -1421,57 +1231,6 @@ class JdhTestReports extends DbTable
         }
     }
 
-    // Add User ID filter
-    public function addUserIDFilter($filter = "", $id = "")
-    {
-        global $Security;
-        $filterWrk = "";
-        if ($id == "")
-            $id = (CurrentPageID() == "list") ? $this->CurrentAction : CurrentPageID();
-        if (!$this->userIDAllow($id) && !$Security->isAdmin()) {
-            $filterWrk = $Security->userIdList();
-            if ($filterWrk != "") {
-                $filterWrk = '`report_submittedby_user_id` IN (' . $filterWrk . ')';
-            }
-        }
-
-        // Call User ID Filtering event
-        $this->userIdFiltering($filterWrk);
-        AddFilter($filter, $filterWrk);
-        return $filter;
-    }
-
-    // User ID subquery
-    public function getUserIDSubquery(&$fld, &$masterfld)
-    {
-        global $UserTable;
-        $wrk = "";
-        $sql = "SELECT " . $masterfld->Expression . " FROM `jdh_test_reports`";
-        $filter = $this->addUserIDFilter("");
-        if ($filter != "") {
-            $sql .= " WHERE " . $filter;
-        }
-
-        // List all values
-        $conn = Conn($UserTable->Dbid);
-        $config = $conn->getConfiguration();
-        $config->setResultCacheImpl($this->Cache);
-        if ($rs = $conn->executeCacheQuery($sql, [], [], $this->CacheProfile)->fetchAllNumeric()) {
-            foreach ($rs as $row) {
-                if ($wrk != "") {
-                    $wrk .= ",";
-                }
-                $wrk .= QuotedValue($row[0], $masterfld->DataType, Config("USER_TABLE_DBID"));
-            }
-        }
-        if ($wrk != "") {
-            $wrk = $fld->Expression . " IN (" . $wrk . ")";
-        } else { // No User ID value found
-            $wrk = "0=1";
-        }
-        return $wrk;
-    }
-
     // Get file data
     public function getFileData($fldparm, $key, $resize, $width = 0, $height = 0, $plugins = [])
     {
@@ -1483,8 +1242,10 @@ class JdhTestReports extends DbTable
         $fldName = "";
         $fileNameFld = "";
         $fileTypeFld = "";
-        if ($fldparm == 'report_attachment') {
-            $fldName = "report_attachment";
+        if ($fldparm == 'header_image') {
+            $fldName = "header_image";
+        } elseif ($fldparm == 'footer_image') {
+            $fldName = "footer_image";
         } else {
             return false; // Incorrect field
         }
@@ -1492,7 +1253,7 @@ class JdhTestReports extends DbTable
         // Set up key values
         $ar = explode(Config("COMPOSITE_KEY_SEPARATOR"), $key);
         if (count($ar) == 1) {
-            $this->report_id->CurrentValue = $ar[0];
+            $this->id->CurrentValue = $ar[0];
         } else {
             return false; // Incorrect key
         }
@@ -1592,192 +1353,6 @@ class JdhTestReports extends DbTable
             return true;
         }
         return false;
-    }
-
-    // Write audit trail start/end for grid update
-    public function writeAuditTrailDummy($typ)
-    {
-        WriteAuditLog(CurrentUser(), $typ, 'jdh_test_reports', "", "", "", "");
-    }
-
-    // Write audit trail (add page)
-    public function writeAuditTrailOnAdd(&$rs)
-    {
-        global $Language;
-        if (!$this->AuditTrailOnAdd) {
-            return;
-        }
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rs['report_id'];
-
-        // Write audit trail
-        $usr = CurrentUser();
-        foreach (array_keys($rs) as $fldname) {
-            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
-                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
-                    $newvalue = $Language->phrase("PasswordMask");
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo Field
-                    $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML Field
-                    $newvalue = "[XML]";
-                } else {
-                    $newvalue = $rs[$fldname];
-                }
-                WriteAuditLog($usr, "A", 'jdh_test_reports', $fldname, $key, "", $newvalue);
-            }
-        }
-    }
-
-    // Write audit trail (edit page)
-    public function writeAuditTrailOnEdit(&$rsold, &$rsnew)
-    {
-        global $Language;
-        if (!$this->AuditTrailOnEdit) {
-            return;
-        }
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rsold['report_id'];
-
-        // Write audit trail
-        $usr = CurrentUser();
-        foreach (array_keys($rsnew) as $fldname) {
-            if (array_key_exists($fldname, $this->Fields) && array_key_exists($fldname, $rsold) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
-                if ($this->Fields[$fldname]->DataType == DATATYPE_DATE) { // DateTime field
-                    $modified = (FormatDateTime($rsold[$fldname], 0) != FormatDateTime($rsnew[$fldname], 0));
-                } else {
-                    $modified = !CompareValue($rsold[$fldname], $rsnew[$fldname]);
-                }
-                if ($modified) {
-                    if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
-                        $oldvalue = $Language->phrase("PasswordMask");
-                        $newvalue = $Language->phrase("PasswordMask");
-                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
-                        $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsold[$fldname] : "[MEMO]";
-                        $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsnew[$fldname] : "[MEMO]";
-                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
-                        $oldvalue = "[XML]";
-                        $newvalue = "[XML]";
-                    } else {
-                        $oldvalue = $rsold[$fldname];
-                        $newvalue = $rsnew[$fldname];
-                    }
-                    WriteAuditLog($usr, "U", 'jdh_test_reports', $fldname, $key, $oldvalue, $newvalue);
-                }
-            }
-        }
-    }
-
-    // Write audit trail (delete page)
-    public function writeAuditTrailOnDelete(&$rs)
-    {
-        global $Language;
-        if (!$this->AuditTrailOnDelete) {
-            return;
-        }
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rs['report_id'];
-
-        // Write audit trail
-        $usr = CurrentUser();
-        foreach (array_keys($rs) as $fldname) {
-            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
-                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
-                    $oldvalue = $Language->phrase("PasswordMask");
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
-                    $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
-                    $oldvalue = "[XML]";
-                } else {
-                    $oldvalue = $rs[$fldname];
-                }
-                WriteAuditLog($usr, "D", 'jdh_test_reports', $fldname, $key, $oldvalue, "");
-            }
-        }
-    }
-
-    // Send email after add success
-    public function sendEmailOnAdd(&$rs)
-    {
-        global $Language;
-        $table = 'jdh_test_reports';
-        $subject = $table . " " . $Language->phrase("RecordInserted");
-        $action = $Language->phrase("ActionInserted");
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rs['report_id'];
-        $email = new Email();
-        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-        $email->replaceSubject($subject); // Replace Subject
-        $email->replaceContent("<!--table-->", $table);
-        $email->replaceContent("<!--key-->", $key);
-        $email->replaceContent("<!--action-->", $action);
-        $args = ["rsnew" => $rs];
-        $emailSent = false;
-        if ($this->emailSending($email, $args)) {
-            $emailSent = $email->send();
-        }
-
-        // Send email failed
-        if (!$emailSent) {
-            $this->setFailureMessage($email->SendErrDescription);
-        }
-    }
-
-    // Send email after update success
-    public function sendEmailOnEdit(&$rsold, &$rsnew)
-    {
-        global $Language;
-        $table = 'jdh_test_reports';
-        $subject = $table . " ". $Language->phrase("RecordUpdated");
-        $action = $Language->phrase("ActionUpdated");
-
-        // Get key value
-        $key = "";
-        if ($key != "") {
-            $key .= Config("COMPOSITE_KEY_SEPARATOR");
-        }
-        $key .= $rsold['report_id'];
-        $email = new Email();
-        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-        $email->replaceSubject($subject); // Replace Subject
-        $email->replaceContent("<!--table-->", $table);
-        $email->replaceContent("<!--key-->", $key);
-        $email->replaceContent("<!--action-->", $action);
-        $args = [];
-        $args["rsold"] = &$rsold;
-        $args["rsnew"] = &$rsnew;
-        $emailSent = false;
-        if ($this->emailSending($email, $args)) {
-            $emailSent = $email->send();
-        }
-
-        // Send email failed
-        if (!$emailSent) {
-            $this->setFailureMessage($email->SendErrDescription);
-        }
     }
 
     // Table level events

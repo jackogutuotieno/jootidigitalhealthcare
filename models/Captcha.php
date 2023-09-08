@@ -10,12 +10,12 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class PersonalData
+class Captcha
 {
     use MessagesTrait;
 
     // Page ID
-    public $PageID = "personal_data";
+    public $PageID = "captcha";
 
     // Project ID
     public $ProjectID = PROJECT_ID;
@@ -27,7 +27,7 @@ class PersonalData
     public $TableVar;
 
     // Page object name
-    public $PageObjName = "PersonalData";
+    public $PageObjName = "Captcha";
 
     // View file path
     public $View = null;
@@ -39,7 +39,7 @@ class PersonalData
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "jdhbrandingdelete";
+    public $CurrentPageName = "logout";
 
     // Page headings
     public $Heading = "";
@@ -196,8 +196,16 @@ class PersonalData
         // Page is terminated
         $this->terminated = true;
 
+         // Page Unload event
+        if (method_exists($this, "pageUnload")) {
+            $this->pageUnload();
+        }
+
         // Global Page Unloaded event (in userfn*.php)
         Page_Unloaded();
+        if (!IsApi() && method_exists($this, "pageRedirecting")) {
+            $this->pageRedirecting($url);
+        }
 
         // Close connection
         CloseConnections();
@@ -229,131 +237,19 @@ class PersonalData
         return; // Return to controller
     }
 
-    // Properties
-    public $Password;
-
     /**
-     * Page run
-     *
-     * @return void
-     */
+    * Page run
+    *
+    * @return void
+    */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $Breadcrumb;
+        // Captcha
+        $sessionName = Captcha()->getSessionName();
+        $_SESSION[$sessionName] = Captcha()->show();
 
-        // Create Password field object (used by validation only)
-        $this->Password = new DbField(Container("usertable"), "password", "password", "password", "", 202, 255, -1, false, "", false, false, false);
-        $this->Password->EditAttrs->appendClass("form-control ew-form-control");
-
-        // Use layout
-        $this->UseLayout = $this->UseLayout && ConvertToBool(Param(Config("PAGE_LAYOUT"), true));
-
-        // View
-        $this->View = Get(Config("VIEW"));
-
-        // Global Page Loading event (in userfn*.php)
-        Page_Loading();
-        $Breadcrumb = new Breadcrumb("index");
-        $Breadcrumb->add("personal_data", "PersonalDataTitle", CurrentUrl(), "ew-personal-data", "", true);
-        $this->Heading = $Language->phrase("PersonalDataTitle");
-        $cmd = Param("cmd");
-        if (SameText($cmd, "Download")) {
-            if ($this->personalDataResult()) {
-                $this->terminate();
-                return;
-            }
-        } elseif (SameText($cmd, "Delete") && IsPost()) {
-            if ($this->deletePersonalData()) {
-                $this->terminate(GetUrl("logout?deleted=1"));
-                return;
-            }
-        }
-
-        // Set LoginStatus / Page_Rendering / Page_Render
-        if (!IsApi() && !$this->isTerminated()) {
-            // Setup login status
-            SetupLoginStatus();
-
-            // Pass login status to client side
-            SetClientVar("login", LoginStatus());
-
-            // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
-
-            // Page Render event
-            if (method_exists($this, "pageRender")) {
-                $this->pageRender();
-            }
-
-            // Render search option
-            if (method_exists($this, "renderSearchOptions")) {
-                $this->renderSearchOptions();
-            }
-        }
-    }
-
-    /**
-     * Write personal data as JSON
-     *
-     * @return void
-     */
-    protected function personalDataResult()
-    {
-        global $UserTable;
-        $result = [];
-        $fldNames = [];
-        $UserTable = Container("usertable");
-        $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), CurrentUserName());
-        $sql = $UserTable->getSql($filter);
-        if ($row = Conn($UserTable->Dbid)->fetchAssociative($sql)) {
-            foreach ($fldNames as $fldName) {
-                if (array_key_exists($fldName, $row)) {
-                    $result[$fldName] = GetUserInfo($fldName, $row);
-                }
-            }
-
-            // Call PersonalData_Downloading event
-            PersonalData_Downloading($result);
-            $personalDataFileName = Get("_personaldatafilename", "personaldata.json");
-            AddHeader("Content-Disposition", "attachment; filename=\"" . $personalDataFileName . "\"");
-            WriteJson($result);
-            return true;
-        } else {
-            $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
-            return false;
-        }
-    }
-
-    /**
-     * Delete personal data
-     *
-     * @return bool
-     */
-    protected function deletePersonalData()
-    {
-        global $UserTable, $Language;
-        $UserTable = Container("usertable");
-        $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), CurrentUserName());
-        $sql = $UserTable->getSql($filter);
-        $pwd = Post($this->Password->FieldVar, "");
-        if ($row = Conn($UserTable->Dbid)->fetchAssociative($sql)) {
-            if (ComparePassword(GetUserInfo(Config("LOGIN_PASSWORD_FIELD_NAME"), $row), $pwd)) {
-                if (Config("DELETE_UPLOADED_FILES")) // Delete old files
-                    $UserTable->deleteUploadedFiles($row);
-                if ($UserTable->delete($row)) {
-                    // Call PersonalData_Deleted event
-                    PersonalData_Deleted($row);
-                    return true;
-                }
-                $this->setFailureMessage($Language->phrase("PersonalDataDeleteFailure"));
-                return false;
-            } else {
-                $this->Password->addErrorMessage($Language->phrase("InvalidPassword"));
-                return false;
-            }
-        } else {
-            $this->setFailureMessage($Language->phrase("NoRecord"));
-            return false;
-        }
+        // No need for view
+        $this->terminate();
+        return;
     }
 }

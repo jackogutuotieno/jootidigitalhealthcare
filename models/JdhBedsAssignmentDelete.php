@@ -370,7 +370,7 @@ class JdhBedsAssignmentDelete extends JdhBedsAssignment
         // View
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->id->setVisibility();
+        $this->id->Visible = false;
         $this->patient_id->setVisibility();
         $this->bed_id->setVisibility();
         $this->date_submitted->setVisibility();
@@ -703,10 +703,6 @@ class JdhBedsAssignmentDelete extends JdhBedsAssignment
             // submittedby_user_id
             $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
             $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
-
-            // id
-            $this->id->HrefValue = "";
-            $this->id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";

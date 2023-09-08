@@ -3,12 +3,12 @@
 namespace PHPMaker2023\jootidigitalhealthcare;
 
 // Page object
-$JdhBedsAssignmentList = &$Page;
+$JdhBrandingList = &$Page;
 ?>
 <?php if (!$Page->isExport()) { ?>
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
-ew.deepAssign(ew.vars, { tables: { jdh_beds_assignment: currentTable } });
+ew.deepAssign(ew.vars, { tables: { jdh_branding: currentTable } });
 var currentPageID = ew.PAGE_ID = "list";
 var currentForm;
 var <?= $Page->FormName ?>;
@@ -50,15 +50,6 @@ loadjs.ready("head", function () {
 <?php } ?>
 </div>
 <?php } ?>
-<?php if (!$Page->isExport() || Config("EXPORT_MASTER_RECORD") && $Page->isExport("print")) { ?>
-<?php
-if ($Page->DbMasterFilter != "" && $Page->getCurrentMasterTable() == "jdh_patients") {
-    if ($Page->MasterRecordExists) {
-        include_once "views/JdhPatientsMaster.php";
-    }
-}
-?>
-<?php } ?>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
@@ -72,17 +63,13 @@ $Page->showMessage();
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
 <?php } ?>
-<input type="hidden" name="t" value="jdh_beds_assignment">
+<input type="hidden" name="t" value="jdh_branding">
 <?php if ($Page->IsModal) { ?>
 <input type="hidden" name="modal" value="1">
 <?php } ?>
-<?php if ($Page->getCurrentMasterTable() == "jdh_patients" && $Page->CurrentAction) { ?>
-<input type="hidden" name="<?= Config("TABLE_SHOW_MASTER") ?>" value="jdh_patients">
-<input type="hidden" name="fk_patient_id" value="<?= HtmlEncode($Page->patient_id->getSessionValue()) ?>">
-<?php } ?>
-<div id="gmp_jdh_beds_assignment" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
+<div id="gmp_jdh_branding" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
 <?php if ($Page->TotalRecords > 0 || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
-<table id="tbl_jdh_beds_assignmentlist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
+<table id="tbl_jdh_brandinglist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
 <thead>
     <tr class="ew-table-header">
 <?php
@@ -95,14 +82,14 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
-<?php if ($Page->patient_id->Visible) { // patient_id ?>
-        <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_beds_assignment_patient_id" class="jdh_beds_assignment_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
+<?php if ($Page->id->Visible) { // id ?>
+        <th data-name="id" class="<?= $Page->id->headerCellClass() ?>"><div id="elh_jdh_branding_id" class="jdh_branding_id"><?= $Page->renderFieldHeader($Page->id) ?></div></th>
 <?php } ?>
-<?php if ($Page->bed_id->Visible) { // bed_id ?>
-        <th data-name="bed_id" class="<?= $Page->bed_id->headerCellClass() ?>"><div id="elh_jdh_beds_assignment_bed_id" class="jdh_beds_assignment_bed_id"><?= $Page->renderFieldHeader($Page->bed_id) ?></div></th>
+<?php if ($Page->header_image->Visible) { // header_image ?>
+        <th data-name="header_image" class="<?= $Page->header_image->headerCellClass() ?>"><div id="elh_jdh_branding_header_image" class="jdh_branding_header_image"><?= $Page->renderFieldHeader($Page->header_image) ?></div></th>
 <?php } ?>
-<?php if ($Page->date_submitted->Visible) { // date_submitted ?>
-        <th data-name="date_submitted" class="<?= $Page->date_submitted->headerCellClass() ?>"><div id="elh_jdh_beds_assignment_date_submitted" class="jdh_beds_assignment_date_submitted"><?= $Page->renderFieldHeader($Page->date_submitted) ?></div></th>
+<?php if ($Page->footer_image->Visible) { // footer_image ?>
+        <th data-name="footer_image" class="<?= $Page->footer_image->headerCellClass() ?>"><div id="elh_jdh_branding_footer_image" class="jdh_branding_footer_image"><?= $Page->renderFieldHeader($Page->footer_image) ?></div></th>
 <?php } ?>
 <?php
 // Render list options (header, right)
@@ -123,27 +110,29 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
-    <?php if ($Page->patient_id->Visible) { // patient_id ?>
-        <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_assignment_patient_id" class="el_jdh_beds_assignment_patient_id">
-<span<?= $Page->patient_id->viewAttributes() ?>>
-<?= $Page->patient_id->getViewValue() ?></span>
+    <?php if ($Page->id->Visible) { // id ?>
+        <td data-name="id"<?= $Page->id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_branding_id" class="el_jdh_branding_id">
+<span<?= $Page->id->viewAttributes() ?>>
+<?= $Page->id->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->bed_id->Visible) { // bed_id ?>
-        <td data-name="bed_id"<?= $Page->bed_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_assignment_bed_id" class="el_jdh_beds_assignment_bed_id">
-<span<?= $Page->bed_id->viewAttributes() ?>>
-<?= $Page->bed_id->getViewValue() ?></span>
+    <?php if ($Page->header_image->Visible) { // header_image ?>
+        <td data-name="header_image"<?= $Page->header_image->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_branding_header_image" class="el_jdh_branding_header_image">
+<span>
+<?= GetFileViewTag($Page->header_image, $Page->header_image->getViewValue(), false) ?>
+</span>
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->date_submitted->Visible) { // date_submitted ?>
-        <td data-name="date_submitted"<?= $Page->date_submitted->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_assignment_date_submitted" class="el_jdh_beds_assignment_date_submitted">
-<span<?= $Page->date_submitted->viewAttributes() ?>>
-<?= $Page->date_submitted->getViewValue() ?></span>
+    <?php if ($Page->footer_image->Visible) { // footer_image ?>
+        <td data-name="footer_image"<?= $Page->footer_image->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_branding_footer_image" class="el_jdh_branding_footer_image">
+<span>
+<?= GetFileViewTag($Page->footer_image, $Page->footer_image->getViewValue(), false) ?>
+</span>
 </span>
 </td>
     <?php } ?>
@@ -199,7 +188,7 @@ echo GetDebugMessage();
 <script>
 // Field event handlers
 loadjs.ready("head", function() {
-    ew.addEventHandlers("jdh_beds_assignment");
+    ew.addEventHandlers("jdh_branding");
 });
 </script>
 <script>

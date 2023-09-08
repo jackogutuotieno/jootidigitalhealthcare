@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhTestReportsView extends JdhTestReports
+class JdhBrandingView extends JdhBranding
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhTestReportsView extends JdhTestReports
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhTestReportsView";
+    public $PageObjName = "JdhBrandingView";
 
     // View file path
     public $View = null;
@@ -33,7 +33,7 @@ class JdhTestReportsView extends JdhTestReports
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "jdhtestreportsview";
+    public $CurrentPageName = "jdhbrandingview";
 
     // Page URLs
     public $AddUrl;
@@ -52,14 +52,6 @@ class JdhTestReportsView extends JdhTestReports
     public $MultiEditUrl;
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
-
-    // Audit Trail
-    public $AuditTrailOnAdd = true;
-    public $AuditTrailOnEdit = true;
-    public $AuditTrailOnDelete = true;
-    public $AuditTrailOnView = false;
-    public $AuditTrailOnViewData = false;
-    public $AuditTrailOnSearch = false;
 
     // Page headings
     public $Heading = "";
@@ -144,8 +136,8 @@ class JdhTestReportsView extends JdhTestReports
     {
         parent::__construct();
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
-        $this->TableVar = 'jdh_test_reports';
-        $this->TableName = 'jdh_test_reports';
+        $this->TableVar = 'jdh_branding';
+        $this->TableName = 'jdh_branding';
 
         // Table CSS class
         $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-view-table";
@@ -156,19 +148,19 @@ class JdhTestReportsView extends JdhTestReports
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_test_reports)
-        if (!isset($GLOBALS["jdh_test_reports"]) || get_class($GLOBALS["jdh_test_reports"]) == PROJECT_NAMESPACE . "jdh_test_reports") {
-            $GLOBALS["jdh_test_reports"] = &$this;
+        // Table object (jdh_branding)
+        if (!isset($GLOBALS["jdh_branding"]) || get_class($GLOBALS["jdh_branding"]) == PROJECT_NAMESPACE . "jdh_branding") {
+            $GLOBALS["jdh_branding"] = &$this;
         }
 
         // Set up record key
-        if (($keyValue = Get("report_id") ?? Route("report_id")) !== null) {
-            $this->RecKey["report_id"] = $keyValue;
+        if (($keyValue = Get("id") ?? Route("id")) !== null) {
+            $this->RecKey["id"] = $keyValue;
         }
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_test_reports');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_branding');
         }
 
         // Start timer
@@ -292,7 +284,7 @@ class JdhTestReportsView extends JdhTestReports
                 $pageName = GetPageName($url);
                 if ($pageName != $this->getListUrl()) { // Not List page => View page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhtestreportsview"; // If View page, no primary button
+                    $result["view"] = $pageName == "jdhbrandingview"; // If View page, no primary button
                 } else { // List page
                     // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
@@ -382,7 +374,7 @@ class JdhTestReportsView extends JdhTestReports
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['report_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -395,7 +387,7 @@ class JdhTestReportsView extends JdhTestReports
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->report_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
 
@@ -513,13 +505,9 @@ class JdhTestReportsView extends JdhTestReports
             $SkipHeaderFooter = true;
         }
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->report_id->setVisibility();
-        $this->request_id->setVisibility();
-        $this->patient_id->setVisibility();
-        $this->report_findings->setVisibility();
-        $this->report_attachment->setVisibility();
-        $this->report_submittedby_user_id->setVisibility();
-        $this->report_date->setVisibility();
+        $this->id->setVisibility();
+        $this->header_image->setVisibility();
+        $this->footer_image->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -543,9 +531,6 @@ class JdhTestReportsView extends JdhTestReports
             $this->InlineDelete = true;
         }
 
-        // Set up lookup cache
-        $this->setupLookupOptions($this->patient_id);
-
         // Check modal
         if ($this->IsModal) {
             $SkipHeaderFooter = true;
@@ -555,17 +540,17 @@ class JdhTestReportsView extends JdhTestReports
         $loadCurrentRecord = false;
         $returnUrl = "";
         $matchRecord = false;
-        if (($keyValue = Get("report_id") ?? Route("report_id")) !== null) {
-            $this->report_id->setQueryStringValue($keyValue);
-            $this->RecKey["report_id"] = $this->report_id->QueryStringValue;
-        } elseif (Post("report_id") !== null) {
-            $this->report_id->setFormValue(Post("report_id"));
-            $this->RecKey["report_id"] = $this->report_id->FormValue;
+        if (($keyValue = Get("id") ?? Route("id")) !== null) {
+            $this->id->setQueryStringValue($keyValue);
+            $this->RecKey["id"] = $this->id->QueryStringValue;
+        } elseif (Post("id") !== null) {
+            $this->id->setFormValue(Post("id"));
+            $this->RecKey["id"] = $this->id->FormValue;
         } elseif (IsApi() && ($keyValue = Key(0) ?? Route(2)) !== null) {
-            $this->report_id->setQueryStringValue($keyValue);
-            $this->RecKey["report_id"] = $this->report_id->QueryStringValue;
+            $this->id->setQueryStringValue($keyValue);
+            $this->RecKey["id"] = $this->id->QueryStringValue;
         } elseif (!$loadCurrentRecord) {
-            $returnUrl = "jdhtestreportslist"; // Return to list
+            $returnUrl = "jdhbrandinglist"; // Return to list
         }
 
         // Get action
@@ -588,7 +573,7 @@ class JdhTestReportsView extends JdhTestReports
                         if ($this->getSuccessMessage() == "" && $this->getFailureMessage() == "") {
                             $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
                         }
-                        $returnUrl = "jdhtestreportslist"; // No matching record, return to list
+                        $returnUrl = "jdhbrandinglist"; // No matching record, return to list
                     }
                 break;
         }
@@ -679,7 +664,17 @@ class JdhTestReportsView extends JdhTestReports
         } else {
             $item->Body = "<a class=\"ew-action ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("ViewPageEditLink") . "</a>";
         }
-        $item->Visible = $this->EditUrl != "" && $Security->canEdit() && $this->showOptionLink("edit");
+        $item->Visible = $this->EditUrl != "" && $Security->canEdit();
+
+        // Copy
+        $item = &$option->add("copy");
+        $copycaption = HtmlTitle($Language->phrase("ViewPageCopyLink"));
+        if ($this->IsModal) {
+            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
+        } else {
+            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
+        }
+        $item->Visible = $this->CopyUrl != "" && $Security->canAdd();
 
         // Delete
         $item = &$option->add("delete");
@@ -688,7 +683,7 @@ class JdhTestReportsView extends JdhTestReports
             ($this->InlineDelete || $this->IsModal ? " data-ew-action=\"inline-delete\"" : "") .
             " title=\"" . HtmlTitle($Language->phrase("ViewPageDeleteLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("ViewPageDeleteLink")) .
             "\" href=\"" . HtmlEncode($url) . "\">" . $Language->phrase("ViewPageDeleteLink") . "</a>";
-        $item->Visible = $this->DeleteUrl != "" && $Security->canDelete() && $this->showOptionLink("delete");
+        $item->Visible = $this->DeleteUrl != "" && $Security->canDelete();
 
         // Set up action default
         $option = $options["action"];
@@ -785,32 +780,24 @@ class JdhTestReportsView extends JdhTestReports
 
         // Call Row Selected event
         $this->rowSelected($row);
-        if ($this->AuditTrailOnView) {
-            $this->writeAuditTrailOnView($row);
+        $this->id->setDbValue($row['id']);
+        $this->header_image->Upload->DbValue = $row['header_image'];
+        if (is_resource($this->header_image->Upload->DbValue) && get_resource_type($this->header_image->Upload->DbValue) == "stream") { // Byte array
+            $this->header_image->Upload->DbValue = stream_get_contents($this->header_image->Upload->DbValue);
         }
-        $this->report_id->setDbValue($row['report_id']);
-        $this->request_id->setDbValue($row['request_id']);
-        $this->patient_id->setDbValue($row['patient_id']);
-        $this->report_findings->setDbValue($row['report_findings']);
-        $this->report_attachment->Upload->DbValue = $row['report_attachment'];
-        if (is_resource($this->report_attachment->Upload->DbValue) && get_resource_type($this->report_attachment->Upload->DbValue) == "stream") { // Byte array
-            $this->report_attachment->Upload->DbValue = stream_get_contents($this->report_attachment->Upload->DbValue);
+        $this->footer_image->Upload->DbValue = $row['footer_image'];
+        if (is_resource($this->footer_image->Upload->DbValue) && get_resource_type($this->footer_image->Upload->DbValue) == "stream") { // Byte array
+            $this->footer_image->Upload->DbValue = stream_get_contents($this->footer_image->Upload->DbValue);
         }
-        $this->report_submittedby_user_id->setDbValue($row['report_submittedby_user_id']);
-        $this->report_date->setDbValue($row['report_date']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['report_id'] = $this->report_id->DefaultValue;
-        $row['request_id'] = $this->request_id->DefaultValue;
-        $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['report_findings'] = $this->report_findings->DefaultValue;
-        $row['report_attachment'] = $this->report_attachment->DefaultValue;
-        $row['report_submittedby_user_id'] = $this->report_submittedby_user_id->DefaultValue;
-        $row['report_date'] = $this->report_date->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
+        $row['header_image'] = $this->header_image->DefaultValue;
+        $row['footer_image'] = $this->footer_image->DefaultValue;
         return $row;
     }
 
@@ -832,107 +819,90 @@ class JdhTestReportsView extends JdhTestReports
 
         // Common render codes for all row types
 
-        // report_id
+        // id
 
-        // request_id
+        // header_image
 
-        // patient_id
-
-        // report_findings
-
-        // report_attachment
-
-        // report_submittedby_user_id
-
-        // report_date
+        // footer_image
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // report_id
-            $this->report_id->ViewValue = $this->report_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
 
-            // request_id
-            $this->request_id->ViewValue = $this->request_id->CurrentValue;
-            $this->request_id->ViewValue = FormatNumber($this->request_id->ViewValue, $this->request_id->formatPattern());
-
-            // patient_id
-            $curVal = strval($this->patient_id->CurrentValue);
-            if ($curVal != "") {
-                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                    } else {
-                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                    }
-                }
+            // header_image
+            if (!EmptyValue($this->header_image->Upload->DbValue)) {
+                $this->header_image->ImageWidth = 800;
+                $this->header_image->ImageHeight = 200;
+                $this->header_image->ImageAlt = $this->header_image->alt();
+                $this->header_image->ImageCssClass = "ew-image";
+                $this->header_image->ViewValue = $this->id->CurrentValue;
+                $this->header_image->IsBlobImage = IsImageFile(ContentExtension($this->header_image->Upload->DbValue));
             } else {
-                $this->patient_id->ViewValue = null;
+                $this->header_image->ViewValue = "";
             }
 
-            // report_findings
-            $this->report_findings->ViewValue = $this->report_findings->CurrentValue;
-
-            // report_attachment
-            if (!EmptyValue($this->report_attachment->Upload->DbValue)) {
-                $this->report_attachment->ViewValue = $this->report_id->CurrentValue;
-                $this->report_attachment->IsBlobImage = IsImageFile(ContentExtension($this->report_attachment->Upload->DbValue));
+            // footer_image
+            if (!EmptyValue($this->footer_image->Upload->DbValue)) {
+                $this->footer_image->ImageWidth = 800;
+                $this->footer_image->ImageHeight = 200;
+                $this->footer_image->ImageAlt = $this->footer_image->alt();
+                $this->footer_image->ImageCssClass = "ew-image";
+                $this->footer_image->ViewValue = $this->id->CurrentValue;
+                $this->footer_image->IsBlobImage = IsImageFile(ContentExtension($this->footer_image->Upload->DbValue));
             } else {
-                $this->report_attachment->ViewValue = "";
+                $this->footer_image->ViewValue = "";
             }
 
-            // report_submittedby_user_id
-            $this->report_submittedby_user_id->ViewValue = $this->report_submittedby_user_id->CurrentValue;
-            $this->report_submittedby_user_id->ViewValue = FormatNumber($this->report_submittedby_user_id->ViewValue, $this->report_submittedby_user_id->formatPattern());
+            // id
+            $this->id->HrefValue = "";
+            $this->id->TooltipValue = "";
 
-            // report_date
-            $this->report_date->ViewValue = $this->report_date->CurrentValue;
-            $this->report_date->ViewValue = FormatDateTime($this->report_date->ViewValue, $this->report_date->formatPattern());
-
-            // report_id
-            $this->report_id->HrefValue = "";
-            $this->report_id->ExportHrefValue = PhpBarcode::barcode('')->getHrefValue('', '', 60);
-            $this->report_id->TooltipValue = "";
-
-            // request_id
-            $this->request_id->HrefValue = "";
-            $this->request_id->TooltipValue = "";
-
-            // patient_id
-            $this->patient_id->HrefValue = "";
-            $this->patient_id->TooltipValue = "";
-
-            // report_findings
-            $this->report_findings->HrefValue = "";
-            $this->report_findings->TooltipValue = "";
-
-            // report_attachment
-            if (!empty($this->report_attachment->Upload->DbValue)) {
-                $this->report_attachment->HrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
-                $this->report_attachment->LinkAttrs["target"] = "";
-                if ($this->report_attachment->IsBlobImage && empty($this->report_attachment->LinkAttrs["target"])) {
-                    $this->report_attachment->LinkAttrs["target"] = "_blank";
+            // header_image
+            if (!empty($this->header_image->Upload->DbValue)) {
+                $this->header_image->HrefValue = GetFileUploadUrl($this->header_image, $this->id->CurrentValue);
+                $this->header_image->LinkAttrs["target"] = "";
+                if ($this->header_image->IsBlobImage && empty($this->header_image->LinkAttrs["target"])) {
+                    $this->header_image->LinkAttrs["target"] = "_blank";
                 }
                 if ($this->isExport()) {
-                    $this->report_attachment->HrefValue = FullUrl($this->report_attachment->HrefValue, "href");
+                    $this->header_image->HrefValue = FullUrl($this->header_image->HrefValue, "href");
                 }
             } else {
-                $this->report_attachment->HrefValue = "";
+                $this->header_image->HrefValue = "";
             }
-            $this->report_attachment->ExportHrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
-            $this->report_attachment->TooltipValue = "";
+            $this->header_image->ExportHrefValue = GetFileUploadUrl($this->header_image, $this->id->CurrentValue);
+            $this->header_image->TooltipValue = "";
+            if ($this->header_image->UseColorbox) {
+                if (EmptyValue($this->header_image->TooltipValue)) {
+                    $this->header_image->LinkAttrs["title"] = $Language->phrase("ViewImageGallery");
+                }
+                $this->header_image->LinkAttrs["data-rel"] = "jdh_branding_x_header_image";
+                $this->header_image->LinkAttrs->appendClass("ew-lightbox");
+            }
 
-            // report_date
-            $this->report_date->HrefValue = "";
-            $this->report_date->TooltipValue = "";
+            // footer_image
+            if (!empty($this->footer_image->Upload->DbValue)) {
+                $this->footer_image->HrefValue = GetFileUploadUrl($this->footer_image, $this->id->CurrentValue);
+                $this->footer_image->LinkAttrs["target"] = "";
+                if ($this->footer_image->IsBlobImage && empty($this->footer_image->LinkAttrs["target"])) {
+                    $this->footer_image->LinkAttrs["target"] = "_blank";
+                }
+                if ($this->isExport()) {
+                    $this->footer_image->HrefValue = FullUrl($this->footer_image->HrefValue, "href");
+                }
+            } else {
+                $this->footer_image->HrefValue = "";
+            }
+            $this->footer_image->ExportHrefValue = GetFileUploadUrl($this->footer_image, $this->id->CurrentValue);
+            $this->footer_image->TooltipValue = "";
+            if ($this->footer_image->UseColorbox) {
+                if (EmptyValue($this->footer_image->TooltipValue)) {
+                    $this->footer_image->LinkAttrs["title"] = $Language->phrase("ViewImageGallery");
+                }
+                $this->footer_image->LinkAttrs["data-rel"] = "jdh_branding_x_footer_image";
+                $this->footer_image->LinkAttrs->appendClass("ew-lightbox");
+            }
         }
 
         // Call Row Rendered event
@@ -954,19 +924,19 @@ class JdhTestReportsView extends JdhTestReports
         }
         if (SameText($type, "excel")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_test_reportsview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_brandingview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\">" . $Language->phrase("ExportToExcel") . "</a>";
             }
         } elseif (SameText($type, "word")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_test_reportsview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_brandingview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\">" . $Language->phrase("ExportToWord") . "</a>";
             }
         } elseif (SameText($type, "pdf")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_test_reportsview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_brandingview\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\">" . $Language->phrase("ExportToPdf") . "</a>";
             }
@@ -978,7 +948,7 @@ class JdhTestReportsView extends JdhTestReports
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-csv\" title=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\">" . $Language->phrase("ExportToCsv") . "</a>";
         } elseif (SameText($type, "email")) {
             $url = $custom ? ' data-url="' . $exportUrl . '"' : '';
-            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_test_reportsview" data-ew-action="email" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-key="' . HtmlEncode(ArrayToJsonAttribute($this->RecKey)) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
+            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_brandingview" data-ew-action="email" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-key="' . HtmlEncode(ArrayToJsonAttribute($this->RecKey)) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
         } elseif (SameText($type, "print")) {
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-print\" title=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\">" . $Language->phrase("PrinterFriendly") . "</a>";
         }
@@ -1117,23 +1087,13 @@ class JdhTestReportsView extends JdhTestReports
         $this->pageExported($doc);
     }
 
-    // Show link optionally based on User ID
-    protected function showOptionLink($id = "")
-    {
-        global $Security;
-        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
-            return $Security->isValidUserID($this->report_submittedby_user_id->CurrentValue);
-        }
-        return true;
-    }
-
     // Set up Breadcrumb
     protected function setupBreadcrumb()
     {
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhtestreportslist"), "", $this->TableVar, true);
+        $Breadcrumb->add("list", $this->TableVar, $this->addMasterUrl("jdhbrandinglist"), "", $this->TableVar, true);
         $pageId = "view";
         $Breadcrumb->add("view", $pageId, $url);
     }
@@ -1151,8 +1111,6 @@ class JdhTestReportsView extends JdhTestReports
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
-                case "x_patient_id":
-                    break;
                 default:
                     $lookupFilter = "";
                     break;
@@ -1256,21 +1214,18 @@ class JdhTestReportsView extends JdhTestReports
         //Log("Page Render");
     }
 
-    //Rendering event
+    // Page Data Rendering event
     public function pageDataRendering(&$header)
     {
-        if ($this->Export == "print") {
-            $headerImg = ExecuteScalar("SELECT header_image FROM jdh_branding");
-            echo '<img src="data:image/jpeg;base64,'.base64_encode($headerImg).'"   class="img-fluid header-image" />';
-        }
+        // Example:
+        //$header = "your header";
     }
+
     // Page Data Rendered event
     public function pageDataRendered(&$footer)
     {
-        if ($this->Export == "print") {
-            $footerImg = ExecuteScalar("SELECT footer_image FROM jdh_branding");
-            echo '<img src="data:image/jpeg;base64,'.base64_encode($footerImg).'"   class="img-fluid footer-image" />';
-        }
+        // Example:
+        //$footer = "your footer";
     }
 
     // Page Breaking event
@@ -1301,8 +1256,7 @@ class JdhTestReportsView extends JdhTestReports
     // $doc = export document object
     public function pageExported($doc)
     {
-        if ($this->Export == "print") {
-            echo "Test My header"."<br>"."<table> <tr><td>Test Content</td><td><img src="."logo.png"."></td></tr></table>";
-        }
+        //$doc->Text .= "my footer"; // Export footer
+        //Log($doc->Text);
     }
 }
