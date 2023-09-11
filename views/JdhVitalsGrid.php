@@ -24,7 +24,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
-            ["pressure", [fields.pressure.visible && fields.pressure.required ? ew.Validators.required(fields.pressure.caption) : null], fields.pressure.isInvalid],
+            ["pressure", [fields.pressure.visible && fields.pressure.required ? ew.Validators.required(fields.pressure.caption) : null, ew.Validators.integer], fields.pressure.isInvalid],
             ["height", [fields.height.visible && fields.height.required ? ew.Validators.required(fields.height.caption) : null, ew.Validators.float], fields.height.isInvalid],
             ["weight", [fields.weight.visible && fields.weight.required ? ew.Validators.required(fields.weight.caption) : null, ew.Validators.integer], fields.weight.isInvalid],
             ["body_mass_index", [fields.body_mass_index.visible && fields.body_mass_index.required ? ew.Validators.required(fields.body_mass_index.caption) : null], fields.body_mass_index.isInvalid],
@@ -32,6 +32,7 @@ loadjs.ready(["wrapper", "head"], function () {
             ["respiratory_rate", [fields.respiratory_rate.visible && fields.respiratory_rate.required ? ew.Validators.required(fields.respiratory_rate.caption) : null, ew.Validators.integer], fields.respiratory_rate.isInvalid],
             ["temperature", [fields.temperature.visible && fields.temperature.required ? ew.Validators.required(fields.temperature.caption) : null, ew.Validators.float], fields.temperature.isInvalid],
             ["random_blood_sugar", [fields.random_blood_sugar.visible && fields.random_blood_sugar.required ? ew.Validators.required(fields.random_blood_sugar.caption) : null], fields.random_blood_sugar.isInvalid],
+            ["spo_2", [fields.spo_2.visible && fields.spo_2.required ? ew.Validators.required(fields.spo_2.caption) : null, ew.Validators.integer], fields.spo_2.isInvalid],
             ["submission_date", [fields.submission_date.visible && fields.submission_date.required ? ew.Validators.required(fields.submission_date.caption) : null, ew.Validators.datetime(fields.submission_date.clientFormatPattern)], fields.submission_date.isInvalid],
             ["patient_status", [fields.patient_status.visible && fields.patient_status.required ? ew.Validators.required(fields.patient_status.caption) : null], fields.patient_status.isInvalid]
         ])
@@ -40,7 +41,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setEmptyRow(
             function (rowIndex) {
                 let fobj = this.getForm(),
-                    fields = [["patient_id",false],["pressure",false],["height",false],["weight",false],["body_mass_index",false],["pulse_rate",false],["respiratory_rate",false],["temperature",false],["random_blood_sugar",false],["submission_date",false],["patient_status",false]];
+                    fields = [["patient_id",false],["pressure",false],["height",false],["weight",false],["body_mass_index",false],["pulse_rate",false],["respiratory_rate",false],["temperature",false],["random_blood_sugar",false],["spo_2",false],["submission_date",false],["patient_status",false]];
                 if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
                     return false;
                 return true;
@@ -113,6 +114,9 @@ $Grid->ListOptions->render("header", "left");
 <?php } ?>
 <?php if ($Grid->random_blood_sugar->Visible) { // random_blood_sugar ?>
         <th data-name="random_blood_sugar" class="<?= $Grid->random_blood_sugar->headerCellClass() ?>"><div id="elh_jdh_vitals_random_blood_sugar" class="jdh_vitals_random_blood_sugar"><?= $Grid->renderFieldHeader($Grid->random_blood_sugar) ?></div></th>
+<?php } ?>
+<?php if ($Grid->spo_2->Visible) { // spo_2 ?>
+        <th data-name="spo_2" class="<?= $Grid->spo_2->headerCellClass() ?>"><div id="elh_jdh_vitals_spo_2" class="jdh_vitals_spo_2"><?= $Grid->renderFieldHeader($Grid->spo_2) ?></div></th>
 <?php } ?>
 <?php if ($Grid->submission_date->Visible) { // submission_date ?>
         <th data-name="submission_date" class="<?= $Grid->submission_date->headerCellClass() ?>"><div id="elh_jdh_vitals_submission_date" class="jdh_vitals_submission_date"><?= $Grid->renderFieldHeader($Grid->submission_date) ?></div></th>
@@ -455,6 +459,33 @@ loadjs.ready("fjdh_vitalsgrid", function() {
 <?php if ($Grid->isConfirm()) { ?>
 <input type="hidden" data-table="jdh_vitals" data-field="x_random_blood_sugar" data-hidden="1" name="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_random_blood_sugar" id="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_random_blood_sugar" value="<?= HtmlEncode($Grid->random_blood_sugar->FormValue) ?>">
 <input type="hidden" data-table="jdh_vitals" data-field="x_random_blood_sugar" data-hidden="1" data-old name="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_random_blood_sugar" id="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_random_blood_sugar" value="<?= HtmlEncode($Grid->random_blood_sugar->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->spo_2->Visible) { // spo_2 ?>
+        <td data-name="spo_2"<?= $Grid->spo_2->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_spo_2" class="el_jdh_vitals_spo_2">
+<input type="<?= $Grid->spo_2->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_spo_2" id="x<?= $Grid->RowIndex ?>_spo_2" data-table="jdh_vitals" data-field="x_spo_2" value="<?= $Grid->spo_2->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->spo_2->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->spo_2->formatPattern()) ?>"<?= $Grid->spo_2->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->spo_2->getErrorMessage() ?></div>
+</span>
+<input type="hidden" data-table="jdh_vitals" data-field="x_spo_2" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_spo_2" id="o<?= $Grid->RowIndex ?>_spo_2" value="<?= HtmlEncode($Grid->spo_2->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_spo_2" class="el_jdh_vitals_spo_2">
+<input type="<?= $Grid->spo_2->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_spo_2" id="x<?= $Grid->RowIndex ?>_spo_2" data-table="jdh_vitals" data-field="x_spo_2" value="<?= $Grid->spo_2->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->spo_2->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->spo_2->formatPattern()) ?>"<?= $Grid->spo_2->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->spo_2->getErrorMessage() ?></div>
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_vitals_spo_2" class="el_jdh_vitals_spo_2">
+<span<?= $Grid->spo_2->viewAttributes() ?>>
+<?= $Grid->spo_2->getViewValue() ?></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_vitals" data-field="x_spo_2" data-hidden="1" name="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_spo_2" id="fjdh_vitalsgrid$x<?= $Grid->RowIndex ?>_spo_2" value="<?= HtmlEncode($Grid->spo_2->FormValue) ?>">
+<input type="hidden" data-table="jdh_vitals" data-field="x_spo_2" data-hidden="1" data-old name="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_spo_2" id="fjdh_vitalsgrid$o<?= $Grid->RowIndex ?>_spo_2" value="<?= HtmlEncode($Grid->spo_2->OldValue) ?>">
 <?php } ?>
 <?php } ?>
 </td>

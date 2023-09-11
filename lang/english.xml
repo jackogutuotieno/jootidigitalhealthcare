@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/9/8">
+<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/9/11">
   <!--
     IMPORTANT NOTES:
     1. Language ID must be RFC 4646 language tags (which use hyphen, not underscore), e.g. en-US, fr-CA, fr-FR,
@@ -1787,7 +1787,7 @@
       <field id="random_blood_sugar">
         <phrase id="fldcaption" value="RBS(Fasting)" />
       </field>
-      <field id="spo2">
+      <field id="spo_2">
         <phrase id="fldcaption" value="SPO2(%)" />
       </field>
       <field id="submission_date">

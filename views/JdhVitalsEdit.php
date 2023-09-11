@@ -35,13 +35,14 @@ loadjs.ready(["wrapper", "head"], function () {
         .setFields([
             ["vitals_id", [fields.vitals_id.visible && fields.vitals_id.required ? ew.Validators.required(fields.vitals_id.caption) : null], fields.vitals_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
-            ["pressure", [fields.pressure.visible && fields.pressure.required ? ew.Validators.required(fields.pressure.caption) : null], fields.pressure.isInvalid],
+            ["pressure", [fields.pressure.visible && fields.pressure.required ? ew.Validators.required(fields.pressure.caption) : null, ew.Validators.integer], fields.pressure.isInvalid],
             ["height", [fields.height.visible && fields.height.required ? ew.Validators.required(fields.height.caption) : null, ew.Validators.float], fields.height.isInvalid],
             ["weight", [fields.weight.visible && fields.weight.required ? ew.Validators.required(fields.weight.caption) : null, ew.Validators.integer], fields.weight.isInvalid],
             ["pulse_rate", [fields.pulse_rate.visible && fields.pulse_rate.required ? ew.Validators.required(fields.pulse_rate.caption) : null, ew.Validators.integer], fields.pulse_rate.isInvalid],
             ["respiratory_rate", [fields.respiratory_rate.visible && fields.respiratory_rate.required ? ew.Validators.required(fields.respiratory_rate.caption) : null, ew.Validators.integer], fields.respiratory_rate.isInvalid],
             ["temperature", [fields.temperature.visible && fields.temperature.required ? ew.Validators.required(fields.temperature.caption) : null, ew.Validators.float], fields.temperature.isInvalid],
             ["random_blood_sugar", [fields.random_blood_sugar.visible && fields.random_blood_sugar.required ? ew.Validators.required(fields.random_blood_sugar.caption) : null], fields.random_blood_sugar.isInvalid],
+            ["spo_2", [fields.spo_2.visible && fields.spo_2.required ? ew.Validators.required(fields.spo_2.caption) : null, ew.Validators.integer], fields.spo_2.isInvalid],
             ["submitted_by_user_id", [fields.submitted_by_user_id.visible && fields.submitted_by_user_id.required ? ew.Validators.required(fields.submitted_by_user_id.caption) : null], fields.submitted_by_user_id.isInvalid]
         ])
 
@@ -220,6 +221,18 @@ loadjs.ready("fjdh_vitalsedit", function() {
 <input type="<?= $Page->random_blood_sugar->getInputTextType() ?>" name="x_random_blood_sugar" id="x_random_blood_sugar" data-table="jdh_vitals" data-field="x_random_blood_sugar" value="<?= $Page->random_blood_sugar->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Page->random_blood_sugar->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->random_blood_sugar->formatPattern()) ?>"<?= $Page->random_blood_sugar->editAttributes() ?> aria-describedby="x_random_blood_sugar_help">
 <?= $Page->random_blood_sugar->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->random_blood_sugar->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->spo_2->Visible) { // spo_2 ?>
+    <div id="r_spo_2"<?= $Page->spo_2->rowAttributes() ?>>
+        <label id="elh_jdh_vitals_spo_2" for="x_spo_2" class="<?= $Page->LeftColumnClass ?>"><?= $Page->spo_2->caption() ?><?= $Page->spo_2->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->spo_2->cellAttributes() ?>>
+<span id="el_jdh_vitals_spo_2">
+<input type="<?= $Page->spo_2->getInputTextType() ?>" name="x_spo_2" id="x_spo_2" data-table="jdh_vitals" data-field="x_spo_2" value="<?= $Page->spo_2->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->spo_2->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->spo_2->formatPattern()) ?>"<?= $Page->spo_2->editAttributes() ?> aria-describedby="x_spo_2_help">
+<?= $Page->spo_2->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->spo_2->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

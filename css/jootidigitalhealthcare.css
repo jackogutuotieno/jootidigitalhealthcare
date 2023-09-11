@@ -19930,4 +19930,8 @@ hr.divider-vertical-blurry {
   border-bottom: 1px solid #fff;
 }
 
+body {
+  background-image: url("images/jootidigitalhealthcare-bg.jpg");
+}
+
 /*END_USER_STYLES*/

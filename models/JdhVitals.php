@@ -51,7 +51,7 @@ class JdhVitals extends DbTable
     public $respiratory_rate;
     public $temperature;
     public $random_blood_sugar;
-    public $spo2;
+    public $spo_2;
     public $submission_date;
     public $submitted_by_user_id;
     public $patient_status;
@@ -160,8 +160,8 @@ class JdhVitals extends DbTable
             'pressure', // Name
             '`pressure`', // Expression
             '`pressure`', // Basic search expression
-            200, // Type
-            30, // Size
+            3, // Type
+            11, // Size
             -1, // Date/Time format
             false, // Is upload field
             '`pressure`', // Virtual expression
@@ -174,7 +174,8 @@ class JdhVitals extends DbTable
         $this->pressure->InputTextType = "text";
         $this->pressure->Nullable = false; // NOT NULL field
         $this->pressure->Required = true; // Required field
-        $this->pressure->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->pressure->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->pressure->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['pressure'] = &$this->pressure;
 
         // height $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
@@ -350,30 +351,30 @@ class JdhVitals extends DbTable
         $this->random_blood_sugar->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
         $this->Fields['random_blood_sugar'] = &$this->random_blood_sugar;
 
-        // spo2 $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->spo2 = new DbField(
+        // spo_2 $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->spo_2 = new DbField(
             $this, // Table
-            'x_spo2', // Variable name
-            'spo2', // Name
-            '`spo2`', // Expression
-            '`spo2`', // Basic search expression
+            'x_spo_2', // Variable name
+            'spo_2', // Name
+            '`spo_2`', // Expression
+            '`spo_2`', // Basic search expression
             3, // Type
             11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`spo2`', // Virtual expression
+            '`spo_2`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->spo2->InputTextType = "text";
-        $this->spo2->Nullable = false; // NOT NULL field
-        $this->spo2->Required = true; // Required field
-        $this->spo2->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->spo2->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['spo2'] = &$this->spo2;
+        $this->spo_2->InputTextType = "text";
+        $this->spo_2->Nullable = false; // NOT NULL field
+        $this->spo_2->Required = true; // Required field
+        $this->spo_2->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->spo_2->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['spo_2'] = &$this->spo_2;
 
         // submission_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->submission_date = new DbField(
@@ -1015,7 +1016,7 @@ class JdhVitals extends DbTable
         $this->respiratory_rate->DbValue = $row['respiratory_rate'];
         $this->temperature->DbValue = $row['temperature'];
         $this->random_blood_sugar->DbValue = $row['random_blood_sugar'];
-        $this->spo2->DbValue = $row['spo2'];
+        $this->spo_2->DbValue = $row['spo_2'];
         $this->submission_date->DbValue = $row['submission_date'];
         $this->submitted_by_user_id->DbValue = $row['submitted_by_user_id'];
         $this->patient_status->DbValue = $row['patient_status'];
@@ -1386,7 +1387,7 @@ class JdhVitals extends DbTable
         $this->respiratory_rate->setDbValue($row['respiratory_rate']);
         $this->temperature->setDbValue($row['temperature']);
         $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
-        $this->spo2->setDbValue($row['spo2']);
+        $this->spo_2->setDbValue($row['spo_2']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
         $this->patient_status->setDbValue($row['patient_status']);
@@ -1440,7 +1441,7 @@ class JdhVitals extends DbTable
 
         // random_blood_sugar
 
-        // spo2
+        // spo_2
 
         // submission_date
 
@@ -1476,6 +1477,7 @@ class JdhVitals extends DbTable
 
         // pressure
         $this->pressure->ViewValue = $this->pressure->CurrentValue;
+        $this->pressure->ViewValue = FormatNumber($this->pressure->ViewValue, $this->pressure->formatPattern());
 
         // height
         $this->height->ViewValue = $this->height->CurrentValue;
@@ -1504,9 +1506,9 @@ class JdhVitals extends DbTable
         // random_blood_sugar
         $this->random_blood_sugar->ViewValue = $this->random_blood_sugar->CurrentValue;
 
-        // spo2
-        $this->spo2->ViewValue = $this->spo2->CurrentValue;
-        $this->spo2->ViewValue = FormatNumber($this->spo2->ViewValue, $this->spo2->formatPattern());
+        // spo_2
+        $this->spo_2->ViewValue = $this->spo_2->CurrentValue;
+        $this->spo_2->ViewValue = FormatNumber($this->spo_2->ViewValue, $this->spo_2->formatPattern());
 
         // submission_date
         $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
@@ -1559,9 +1561,9 @@ class JdhVitals extends DbTable
         $this->random_blood_sugar->HrefValue = "";
         $this->random_blood_sugar->TooltipValue = "";
 
-        // spo2
-        $this->spo2->HrefValue = "";
-        $this->spo2->TooltipValue = "";
+        // spo_2
+        $this->spo_2->HrefValue = "";
+        $this->spo_2->TooltipValue = "";
 
         // submission_date
         $this->submission_date->HrefValue = "";
@@ -1625,11 +1627,11 @@ class JdhVitals extends DbTable
 
         // pressure
         $this->pressure->setupEditAttributes();
-        if (!$this->pressure->Raw) {
-            $this->pressure->CurrentValue = HtmlDecode($this->pressure->CurrentValue);
-        }
         $this->pressure->EditValue = $this->pressure->CurrentValue;
         $this->pressure->PlaceHolder = RemoveHtml($this->pressure->caption());
+        if (strval($this->pressure->EditValue) != "" && is_numeric($this->pressure->EditValue)) {
+            $this->pressure->EditValue = FormatNumber($this->pressure->EditValue, null);
+        }
 
         // height
         $this->height->setupEditAttributes();
@@ -1684,12 +1686,12 @@ class JdhVitals extends DbTable
         $this->random_blood_sugar->EditValue = $this->random_blood_sugar->CurrentValue;
         $this->random_blood_sugar->PlaceHolder = RemoveHtml($this->random_blood_sugar->caption());
 
-        // spo2
-        $this->spo2->setupEditAttributes();
-        $this->spo2->EditValue = $this->spo2->CurrentValue;
-        $this->spo2->PlaceHolder = RemoveHtml($this->spo2->caption());
-        if (strval($this->spo2->EditValue) != "" && is_numeric($this->spo2->EditValue)) {
-            $this->spo2->EditValue = FormatNumber($this->spo2->EditValue, null);
+        // spo_2
+        $this->spo_2->setupEditAttributes();
+        $this->spo_2->EditValue = $this->spo_2->CurrentValue;
+        $this->spo_2->PlaceHolder = RemoveHtml($this->spo_2->caption());
+        if (strval($this->spo_2->EditValue) != "" && is_numeric($this->spo_2->EditValue)) {
+            $this->spo_2->EditValue = FormatNumber($this->spo_2->EditValue, null);
         }
 
         // submission_date
@@ -1742,6 +1744,7 @@ class JdhVitals extends DbTable
                     $doc->exportCaption($this->respiratory_rate);
                     $doc->exportCaption($this->temperature);
                     $doc->exportCaption($this->random_blood_sugar);
+                    $doc->exportCaption($this->spo_2);
                     $doc->exportCaption($this->submission_date);
                     $doc->exportCaption($this->submitted_by_user_id);
                 } else {
@@ -1755,7 +1758,7 @@ class JdhVitals extends DbTable
                     $doc->exportCaption($this->respiratory_rate);
                     $doc->exportCaption($this->temperature);
                     $doc->exportCaption($this->random_blood_sugar);
-                    $doc->exportCaption($this->spo2);
+                    $doc->exportCaption($this->spo_2);
                     $doc->exportCaption($this->submission_date);
                     $doc->exportCaption($this->submitted_by_user_id);
                 }
@@ -1797,6 +1800,7 @@ class JdhVitals extends DbTable
                         $doc->exportField($this->respiratory_rate);
                         $doc->exportField($this->temperature);
                         $doc->exportField($this->random_blood_sugar);
+                        $doc->exportField($this->spo_2);
                         $doc->exportField($this->submission_date);
                         $doc->exportField($this->submitted_by_user_id);
                     } else {
@@ -1810,7 +1814,7 @@ class JdhVitals extends DbTable
                         $doc->exportField($this->respiratory_rate);
                         $doc->exportField($this->temperature);
                         $doc->exportField($this->random_blood_sugar);
-                        $doc->exportField($this->spo2);
+                        $doc->exportField($this->spo_2);
                         $doc->exportField($this->submission_date);
                         $doc->exportField($this->submitted_by_user_id);
                     }
@@ -2059,17 +2063,28 @@ class JdhVitals extends DbTable
     // Row Rendered event
     public function rowRendered()
     {
-        if (($this->temperature->CurrentValue >= 36.5) && ($this->temperature->CurrentValue <= 37.5)) {
-            $this->patient_status->CellAttrs["style"] = "background-color: green; padding-top: 20px; color: white";
-            $status = "Normal";
+        if (($this->temperature->CurrentValue < 36) || ($this->temperature->CurrentValue > 39)) {
+            $this->patient_status->CellAttrs["style"] = "background-color: green; padding-top: 20px; color: white; min-width: 300px";
+            $status = "Move to low acuity or waiting area";
             $this->patient_status->ViewValue = $status;
-        } else if (($this->temperature->CurrentValue < 36.5)) {
-            $this->patient_status->CellAttrs["style"] = "background-color: orange; padding-top: 20px; color: white";
-            $status = "Needs Attention";
+        } else if (($this->respiratory_rate->CurrentValue < 10) || ($this->respiratory_rate->CurrentValue > 30)) {
+             $this->patient_status->CellAttrs["style"] = "background-color: green; padding-top: 20px; color: white; min-width: 300px";
+            $status = "Move to low acuity or waiting area";
+            $this->patient_status->ViewValue = $status;
+        } else if (($this->pulse_rate->CurrentValue < 60) || ($this->pulse_rate->CurrentValue > 130)) {
+             $this->patient_status->CellAttrs["style"] = "background-color: green; padding-top: 20px; color: white; min-width: 300px";
+            $status = "Move to low acuity or waiting area";
+            $this->patient_status->ViewValue = $status;
+        } else if ($this->spo_2->CurrentValue < 92) {
+             $this->patient_status->CellAttrs["style"] = "background-color: green; padding-top: 20px; color: white; min-width: 300px";
+            $status = "Move to low acuity or waiting area";
+            $this->patient_status->ViewValue = $status;
+        } 
+        if (($this->pressure->CurrentValue >= 160)) {
+             $this->patient_status->CellAttrs["style"] = "background-color: red !important; padding-top: 20px; color: white; min-width: 300px";
+            $status = "Move to high acuity resuscitation area immediately";
             $this->patient_status->ViewValue = $status;
         }
-        // To view properties of field class, use:
-        //var_dump($this-><FieldName>);
     }
 
     // User ID Filtering event

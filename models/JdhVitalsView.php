@@ -515,7 +515,7 @@ class JdhVitalsView extends JdhVitals
         $this->respiratory_rate->setVisibility();
         $this->temperature->setVisibility();
         $this->random_blood_sugar->setVisibility();
-        $this->spo2->setVisibility();
+        $this->spo_2->setVisibility();
         $this->submission_date->setVisibility();
         $this->submitted_by_user_id->setVisibility();
         $this->patient_status->setVisibility();
@@ -797,7 +797,7 @@ class JdhVitalsView extends JdhVitals
         $this->respiratory_rate->setDbValue($row['respiratory_rate']);
         $this->temperature->setDbValue($row['temperature']);
         $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
-        $this->spo2->setDbValue($row['spo2']);
+        $this->spo_2->setDbValue($row['spo_2']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
         $this->patient_status->setDbValue($row['patient_status']);
@@ -817,7 +817,7 @@ class JdhVitalsView extends JdhVitals
         $row['respiratory_rate'] = $this->respiratory_rate->DefaultValue;
         $row['temperature'] = $this->temperature->DefaultValue;
         $row['random_blood_sugar'] = $this->random_blood_sugar->DefaultValue;
-        $row['spo2'] = $this->spo2->DefaultValue;
+        $row['spo_2'] = $this->spo_2->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         $row['patient_status'] = $this->patient_status->DefaultValue;
@@ -862,7 +862,7 @@ class JdhVitalsView extends JdhVitals
 
         // random_blood_sugar
 
-        // spo2
+        // spo_2
 
         // submission_date
 
@@ -900,6 +900,7 @@ class JdhVitalsView extends JdhVitals
 
             // pressure
             $this->pressure->ViewValue = $this->pressure->CurrentValue;
+            $this->pressure->ViewValue = FormatNumber($this->pressure->ViewValue, $this->pressure->formatPattern());
 
             // height
             $this->height->ViewValue = $this->height->CurrentValue;
@@ -928,9 +929,9 @@ class JdhVitalsView extends JdhVitals
             // random_blood_sugar
             $this->random_blood_sugar->ViewValue = $this->random_blood_sugar->CurrentValue;
 
-            // spo2
-            $this->spo2->ViewValue = $this->spo2->CurrentValue;
-            $this->spo2->ViewValue = FormatNumber($this->spo2->ViewValue, $this->spo2->formatPattern());
+            // spo_2
+            $this->spo_2->ViewValue = $this->spo_2->CurrentValue;
+            $this->spo_2->ViewValue = FormatNumber($this->spo_2->ViewValue, $this->spo_2->formatPattern());
 
             // submission_date
             $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
@@ -979,6 +980,10 @@ class JdhVitalsView extends JdhVitals
             // random_blood_sugar
             $this->random_blood_sugar->HrefValue = "";
             $this->random_blood_sugar->TooltipValue = "";
+
+            // spo_2
+            $this->spo_2->HrefValue = "";
+            $this->spo_2->TooltipValue = "";
 
             // submission_date
             $this->submission_date->HrefValue = "";

@@ -77,6 +77,9 @@ $Page->showMessage();
 <?php if ($Page->random_blood_sugar->Visible) { // random_blood_sugar ?>
         <th class="<?= $Page->random_blood_sugar->headerCellClass() ?>"><span id="elh_jdh_vitals_random_blood_sugar" class="jdh_vitals_random_blood_sugar"><?= $Page->random_blood_sugar->caption() ?></span></th>
 <?php } ?>
+<?php if ($Page->spo_2->Visible) { // spo_2 ?>
+        <th class="<?= $Page->spo_2->headerCellClass() ?>"><span id="elh_jdh_vitals_spo_2" class="jdh_vitals_spo_2"><?= $Page->spo_2->caption() ?></span></th>
+<?php } ?>
 <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <th class="<?= $Page->submission_date->headerCellClass() ?>"><span id="elh_jdh_vitals_submission_date" class="jdh_vitals_submission_date"><?= $Page->submission_date->caption() ?></span></th>
 <?php } ?>
@@ -173,6 +176,14 @@ while (!$Page->Recordset->EOF) {
 <span id="el<?= $Page->RowCount ?>_jdh_vitals_random_blood_sugar" class="el_jdh_vitals_random_blood_sugar">
 <span<?= $Page->random_blood_sugar->viewAttributes() ?>>
 <?= $Page->random_blood_sugar->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->spo_2->Visible) { // spo_2 ?>
+        <td<?= $Page->spo_2->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_vitals_spo_2" class="el_jdh_vitals_spo_2">
+<span<?= $Page->spo_2->viewAttributes() ?>>
+<?= $Page->spo_2->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

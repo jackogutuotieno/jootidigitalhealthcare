@@ -465,7 +465,7 @@ class JdhVitalsAdd extends JdhVitals
         $this->respiratory_rate->setVisibility();
         $this->temperature->setVisibility();
         $this->random_blood_sugar->setVisibility();
-        $this->spo2->Visible = false;
+        $this->spo_2->setVisibility();
         $this->submission_date->Visible = false;
         $this->submitted_by_user_id->setVisibility();
         $this->patient_status->Visible = false;
@@ -674,7 +674,7 @@ class JdhVitalsAdd extends JdhVitals
             if (IsApi() && $val === null) {
                 $this->pressure->Visible = false; // Disable update for API request
             } else {
-                $this->pressure->setFormValue($val);
+                $this->pressure->setFormValue($val, true, $validate);
             }
         }
 
@@ -738,6 +738,16 @@ class JdhVitalsAdd extends JdhVitals
             }
         }
 
+        // Check field name 'spo_2' first before field var 'x_spo_2'
+        $val = $CurrentForm->hasValue("spo_2") ? $CurrentForm->getValue("spo_2") : $CurrentForm->getValue("x_spo_2");
+        if (!$this->spo_2->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->spo_2->Visible = false; // Disable update for API request
+            } else {
+                $this->spo_2->setFormValue($val, true, $validate);
+            }
+        }
+
         // Check field name 'submitted_by_user_id' first before field var 'x_submitted_by_user_id'
         $val = $CurrentForm->hasValue("submitted_by_user_id") ? $CurrentForm->getValue("submitted_by_user_id") : $CurrentForm->getValue("x_submitted_by_user_id");
         if (!$this->submitted_by_user_id->IsDetailKey) {
@@ -764,6 +774,7 @@ class JdhVitalsAdd extends JdhVitals
         $this->respiratory_rate->CurrentValue = $this->respiratory_rate->FormValue;
         $this->temperature->CurrentValue = $this->temperature->FormValue;
         $this->random_blood_sugar->CurrentValue = $this->random_blood_sugar->FormValue;
+        $this->spo_2->CurrentValue = $this->spo_2->FormValue;
         $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->FormValue;
     }
 
@@ -833,7 +844,7 @@ class JdhVitalsAdd extends JdhVitals
         $this->respiratory_rate->setDbValue($row['respiratory_rate']);
         $this->temperature->setDbValue($row['temperature']);
         $this->random_blood_sugar->setDbValue($row['random_blood_sugar']);
-        $this->spo2->setDbValue($row['spo2']);
+        $this->spo_2->setDbValue($row['spo_2']);
         $this->submission_date->setDbValue($row['submission_date']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
         $this->patient_status->setDbValue($row['patient_status']);
@@ -853,7 +864,7 @@ class JdhVitalsAdd extends JdhVitals
         $row['respiratory_rate'] = $this->respiratory_rate->DefaultValue;
         $row['temperature'] = $this->temperature->DefaultValue;
         $row['random_blood_sugar'] = $this->random_blood_sugar->DefaultValue;
-        $row['spo2'] = $this->spo2->DefaultValue;
+        $row['spo_2'] = $this->spo_2->DefaultValue;
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         $row['patient_status'] = $this->patient_status->DefaultValue;
@@ -921,8 +932,8 @@ class JdhVitalsAdd extends JdhVitals
         // random_blood_sugar
         $this->random_blood_sugar->RowCssClass = "row";
 
-        // spo2
-        $this->spo2->RowCssClass = "row";
+        // spo_2
+        $this->spo_2->RowCssClass = "row";
 
         // submission_date
         $this->submission_date->RowCssClass = "row";
@@ -963,6 +974,7 @@ class JdhVitalsAdd extends JdhVitals
 
             // pressure
             $this->pressure->ViewValue = $this->pressure->CurrentValue;
+            $this->pressure->ViewValue = FormatNumber($this->pressure->ViewValue, $this->pressure->formatPattern());
 
             // height
             $this->height->ViewValue = $this->height->CurrentValue;
@@ -991,9 +1003,9 @@ class JdhVitalsAdd extends JdhVitals
             // random_blood_sugar
             $this->random_blood_sugar->ViewValue = $this->random_blood_sugar->CurrentValue;
 
-            // spo2
-            $this->spo2->ViewValue = $this->spo2->CurrentValue;
-            $this->spo2->ViewValue = FormatNumber($this->spo2->ViewValue, $this->spo2->formatPattern());
+            // spo_2
+            $this->spo_2->ViewValue = $this->spo_2->CurrentValue;
+            $this->spo_2->ViewValue = FormatNumber($this->spo_2->ViewValue, $this->spo_2->formatPattern());
 
             // submission_date
             $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
@@ -1026,6 +1038,9 @@ class JdhVitalsAdd extends JdhVitals
 
             // random_blood_sugar
             $this->random_blood_sugar->HrefValue = "";
+
+            // spo_2
+            $this->spo_2->HrefValue = "";
 
             // submitted_by_user_id
             $this->submitted_by_user_id->HrefValue = "";
@@ -1084,11 +1099,11 @@ class JdhVitalsAdd extends JdhVitals
 
             // pressure
             $this->pressure->setupEditAttributes();
-            if (!$this->pressure->Raw) {
-                $this->pressure->CurrentValue = HtmlDecode($this->pressure->CurrentValue);
-            }
             $this->pressure->EditValue = HtmlEncode($this->pressure->CurrentValue);
             $this->pressure->PlaceHolder = RemoveHtml($this->pressure->caption());
+            if (strval($this->pressure->EditValue) != "" && is_numeric($this->pressure->EditValue)) {
+                $this->pressure->EditValue = FormatNumber($this->pressure->EditValue, null);
+            }
 
             // height
             $this->height->setupEditAttributes();
@@ -1138,6 +1153,14 @@ class JdhVitalsAdd extends JdhVitals
             $this->random_blood_sugar->EditValue = HtmlEncode($this->random_blood_sugar->CurrentValue);
             $this->random_blood_sugar->PlaceHolder = RemoveHtml($this->random_blood_sugar->caption());
 
+            // spo_2
+            $this->spo_2->setupEditAttributes();
+            $this->spo_2->EditValue = HtmlEncode($this->spo_2->CurrentValue);
+            $this->spo_2->PlaceHolder = RemoveHtml($this->spo_2->caption());
+            if (strval($this->spo_2->EditValue) != "" && is_numeric($this->spo_2->EditValue)) {
+                $this->spo_2->EditValue = FormatNumber($this->spo_2->EditValue, null);
+            }
+
             // submitted_by_user_id
 
             // Add refer script
@@ -1165,6 +1188,9 @@ class JdhVitalsAdd extends JdhVitals
 
             // random_blood_sugar
             $this->random_blood_sugar->HrefValue = "";
+
+            // spo_2
+            $this->spo_2->HrefValue = "";
 
             // submitted_by_user_id
             $this->submitted_by_user_id->HrefValue = "";
@@ -1198,6 +1224,9 @@ class JdhVitalsAdd extends JdhVitals
             if (!$this->pressure->IsDetailKey && EmptyValue($this->pressure->FormValue)) {
                 $this->pressure->addErrorMessage(str_replace("%s", $this->pressure->caption(), $this->pressure->RequiredErrorMessage));
             }
+        }
+        if (!CheckInteger($this->pressure->FormValue)) {
+            $this->pressure->addErrorMessage($this->pressure->getErrorMessage(false));
         }
         if ($this->height->Required) {
             if (!$this->height->IsDetailKey && EmptyValue($this->height->FormValue)) {
@@ -1244,6 +1273,14 @@ class JdhVitalsAdd extends JdhVitals
                 $this->random_blood_sugar->addErrorMessage(str_replace("%s", $this->random_blood_sugar->caption(), $this->random_blood_sugar->RequiredErrorMessage));
             }
         }
+        if ($this->spo_2->Required) {
+            if (!$this->spo_2->IsDetailKey && EmptyValue($this->spo_2->FormValue)) {
+                $this->spo_2->addErrorMessage(str_replace("%s", $this->spo_2->caption(), $this->spo_2->RequiredErrorMessage));
+            }
+        }
+        if (!CheckInteger($this->spo_2->FormValue)) {
+            $this->spo_2->addErrorMessage($this->spo_2->getErrorMessage(false));
+        }
         if ($this->submitted_by_user_id->Required) {
             if (!$this->submitted_by_user_id->IsDetailKey && EmptyValue($this->submitted_by_user_id->FormValue)) {
                 $this->submitted_by_user_id->addErrorMessage(str_replace("%s", $this->submitted_by_user_id->caption(), $this->submitted_by_user_id->RequiredErrorMessage));
@@ -1274,7 +1311,7 @@ class JdhVitalsAdd extends JdhVitals
         $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, null, false);
 
         // pressure
-        $this->pressure->setDbValueDef($rsnew, $this->pressure->CurrentValue, "", false);
+        $this->pressure->setDbValueDef($rsnew, $this->pressure->CurrentValue, 0, false);
 
         // height
         $this->height->setDbValueDef($rsnew, $this->height->CurrentValue, 0, false);
@@ -1293,6 +1330,9 @@ class JdhVitalsAdd extends JdhVitals
 
         // random_blood_sugar
         $this->random_blood_sugar->setDbValueDef($rsnew, $this->random_blood_sugar->CurrentValue, "", false);
+
+        // spo_2
+        $this->spo_2->setDbValueDef($rsnew, $this->spo_2->CurrentValue, 0, false);
 
         // submitted_by_user_id
         $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->getAutoUpdateValue(); // PHP

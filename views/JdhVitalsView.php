@@ -163,6 +163,17 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->spo_2->Visible) { // spo_2 ?>
+    <tr id="r_spo_2"<?= $Page->spo_2->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_vitals_spo_2"><?= $Page->spo_2->caption() ?></span></td>
+        <td data-name="spo_2"<?= $Page->spo_2->cellAttributes() ?>>
+<span id="el_jdh_vitals_spo_2">
+<span<?= $Page->spo_2->viewAttributes() ?>>
+<?= $Page->spo_2->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 <?php if ($Page->submission_date->Visible) { // submission_date ?>
     <tr id="r_submission_date"<?= $Page->submission_date->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_vitals_submission_date"><?= $Page->submission_date->caption() ?></span></td>
