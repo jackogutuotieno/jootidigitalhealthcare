@@ -462,18 +462,18 @@ class JdhVitalsEdit extends JdhVitals
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
         $this->vitals_id->setVisibility();
-        $this->patient_id->setVisibility();
-        $this->pressure->setVisibility();
-        $this->height->setVisibility();
-        $this->weight->setVisibility();
+        $this->patient_id->Visible = false;
+        $this->pressure->Visible = false;
+        $this->height->Visible = false;
+        $this->weight->Visible = false;
         $this->body_mass_index->Visible = false;
-        $this->pulse_rate->setVisibility();
-        $this->respiratory_rate->setVisibility();
-        $this->temperature->setVisibility();
-        $this->random_blood_sugar->setVisibility();
-        $this->spo_2->setVisibility();
+        $this->pulse_rate->Visible = false;
+        $this->respiratory_rate->Visible = false;
+        $this->temperature->Visible = false;
+        $this->random_blood_sugar->Visible = false;
+        $this->spo_2->Visible = false;
         $this->submission_date->Visible = false;
-        $this->submitted_by_user_id->setVisibility();
+        $this->submitted_by_user_id->Visible = false;
         $this->patient_status->Visible = false;
 
         // Set lookup cache
@@ -691,106 +691,6 @@ class JdhVitalsEdit extends JdhVitals
         if (!$this->vitals_id->IsDetailKey) {
             $this->vitals_id->setFormValue($val);
         }
-
-        // Check field name 'patient_id' first before field var 'x_patient_id'
-        $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
-        if (!$this->patient_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->patient_id->Visible = false; // Disable update for API request
-            } else {
-                $this->patient_id->setFormValue($val);
-            }
-        }
-
-        // Check field name 'pressure' first before field var 'x_pressure'
-        $val = $CurrentForm->hasValue("pressure") ? $CurrentForm->getValue("pressure") : $CurrentForm->getValue("x_pressure");
-        if (!$this->pressure->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->pressure->Visible = false; // Disable update for API request
-            } else {
-                $this->pressure->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'height' first before field var 'x_height'
-        $val = $CurrentForm->hasValue("height") ? $CurrentForm->getValue("height") : $CurrentForm->getValue("x_height");
-        if (!$this->height->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->height->Visible = false; // Disable update for API request
-            } else {
-                $this->height->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'weight' first before field var 'x_weight'
-        $val = $CurrentForm->hasValue("weight") ? $CurrentForm->getValue("weight") : $CurrentForm->getValue("x_weight");
-        if (!$this->weight->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->weight->Visible = false; // Disable update for API request
-            } else {
-                $this->weight->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'pulse_rate' first before field var 'x_pulse_rate'
-        $val = $CurrentForm->hasValue("pulse_rate") ? $CurrentForm->getValue("pulse_rate") : $CurrentForm->getValue("x_pulse_rate");
-        if (!$this->pulse_rate->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->pulse_rate->Visible = false; // Disable update for API request
-            } else {
-                $this->pulse_rate->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'respiratory_rate' first before field var 'x_respiratory_rate'
-        $val = $CurrentForm->hasValue("respiratory_rate") ? $CurrentForm->getValue("respiratory_rate") : $CurrentForm->getValue("x_respiratory_rate");
-        if (!$this->respiratory_rate->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->respiratory_rate->Visible = false; // Disable update for API request
-            } else {
-                $this->respiratory_rate->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'temperature' first before field var 'x_temperature'
-        $val = $CurrentForm->hasValue("temperature") ? $CurrentForm->getValue("temperature") : $CurrentForm->getValue("x_temperature");
-        if (!$this->temperature->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->temperature->Visible = false; // Disable update for API request
-            } else {
-                $this->temperature->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'random_blood_sugar' first before field var 'x_random_blood_sugar'
-        $val = $CurrentForm->hasValue("random_blood_sugar") ? $CurrentForm->getValue("random_blood_sugar") : $CurrentForm->getValue("x_random_blood_sugar");
-        if (!$this->random_blood_sugar->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->random_blood_sugar->Visible = false; // Disable update for API request
-            } else {
-                $this->random_blood_sugar->setFormValue($val);
-            }
-        }
-
-        // Check field name 'spo_2' first before field var 'x_spo_2'
-        $val = $CurrentForm->hasValue("spo_2") ? $CurrentForm->getValue("spo_2") : $CurrentForm->getValue("x_spo_2");
-        if (!$this->spo_2->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->spo_2->Visible = false; // Disable update for API request
-            } else {
-                $this->spo_2->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'submitted_by_user_id' first before field var 'x_submitted_by_user_id'
-        $val = $CurrentForm->hasValue("submitted_by_user_id") ? $CurrentForm->getValue("submitted_by_user_id") : $CurrentForm->getValue("x_submitted_by_user_id");
-        if (!$this->submitted_by_user_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->submitted_by_user_id->Visible = false; // Disable update for API request
-            } else {
-                $this->submitted_by_user_id->setFormValue($val);
-            }
-        }
     }
 
     // Restore form values
@@ -798,16 +698,6 @@ class JdhVitalsEdit extends JdhVitals
     {
         global $CurrentForm;
         $this->vitals_id->CurrentValue = $this->vitals_id->FormValue;
-        $this->patient_id->CurrentValue = $this->patient_id->FormValue;
-        $this->pressure->CurrentValue = $this->pressure->FormValue;
-        $this->height->CurrentValue = $this->height->FormValue;
-        $this->weight->CurrentValue = $this->weight->FormValue;
-        $this->pulse_rate->CurrentValue = $this->pulse_rate->FormValue;
-        $this->respiratory_rate->CurrentValue = $this->respiratory_rate->FormValue;
-        $this->temperature->CurrentValue = $this->temperature->FormValue;
-        $this->random_blood_sugar->CurrentValue = $this->random_blood_sugar->FormValue;
-        $this->spo_2->CurrentValue = $this->spo_2->FormValue;
-        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->FormValue;
     }
 
     /**
@@ -1049,193 +939,15 @@ class JdhVitalsEdit extends JdhVitals
 
             // vitals_id
             $this->vitals_id->HrefValue = "";
-
-            // patient_id
-            $this->patient_id->HrefValue = "";
-
-            // pressure
-            $this->pressure->HrefValue = "";
-
-            // height
-            $this->height->HrefValue = "";
-
-            // weight
-            $this->weight->HrefValue = "";
-
-            // pulse_rate
-            $this->pulse_rate->HrefValue = "";
-
-            // respiratory_rate
-            $this->respiratory_rate->HrefValue = "";
-
-            // temperature
-            $this->temperature->HrefValue = "";
-
-            // random_blood_sugar
-            $this->random_blood_sugar->HrefValue = "";
-
-            // spo_2
-            $this->spo_2->HrefValue = "";
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
             // vitals_id
             $this->vitals_id->setupEditAttributes();
             $this->vitals_id->EditValue = $this->vitals_id->CurrentValue;
 
-            // patient_id
-            $this->patient_id->setupEditAttributes();
-            if ($this->patient_id->getSessionValue() != "") {
-                $this->patient_id->CurrentValue = GetForeignKeyValue($this->patient_id->getSessionValue());
-                $curVal = strval($this->patient_id->CurrentValue);
-                if ($curVal != "") {
-                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                    if ($this->patient_id->ViewValue === null) { // Lookup from database
-                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                        $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                        $conn = Conn();
-                        $config = $conn->getConfiguration();
-                        $config->setResultCacheImpl($this->Cache);
-                        $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                        $ari = count($rswrk);
-                        if ($ari > 0) { // Lookup values found
-                            $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                            $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                        } else {
-                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                        }
-                    }
-                } else {
-                    $this->patient_id->ViewValue = null;
-                }
-            } else {
-                $curVal = trim(strval($this->patient_id->CurrentValue));
-                if ($curVal != "") {
-                    $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                } else {
-                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
-                }
-                if ($this->patient_id->ViewValue !== null) { // Load from cache
-                    $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
-                } else { // Lookup from database
-                    if ($curVal == "") {
-                        $filterWrk = "0=1";
-                    } else {
-                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
-                    }
-                    $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    $arwrk = $rswrk;
-                    $this->patient_id->EditValue = $arwrk;
-                }
-                $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
-            }
-
-            // pressure
-            $this->pressure->setupEditAttributes();
-            $this->pressure->EditValue = HtmlEncode($this->pressure->CurrentValue);
-            $this->pressure->PlaceHolder = RemoveHtml($this->pressure->caption());
-            if (strval($this->pressure->EditValue) != "" && is_numeric($this->pressure->EditValue)) {
-                $this->pressure->EditValue = FormatNumber($this->pressure->EditValue, null);
-            }
-
-            // height
-            $this->height->setupEditAttributes();
-            $this->height->EditValue = HtmlEncode($this->height->CurrentValue);
-            $this->height->PlaceHolder = RemoveHtml($this->height->caption());
-            if (strval($this->height->EditValue) != "" && is_numeric($this->height->EditValue)) {
-                $this->height->EditValue = FormatNumber($this->height->EditValue, null);
-            }
-
-            // weight
-            $this->weight->setupEditAttributes();
-            $this->weight->EditValue = HtmlEncode($this->weight->CurrentValue);
-            $this->weight->PlaceHolder = RemoveHtml($this->weight->caption());
-            if (strval($this->weight->EditValue) != "" && is_numeric($this->weight->EditValue)) {
-                $this->weight->EditValue = FormatNumber($this->weight->EditValue, null);
-            }
-
-            // pulse_rate
-            $this->pulse_rate->setupEditAttributes();
-            $this->pulse_rate->EditValue = HtmlEncode($this->pulse_rate->CurrentValue);
-            $this->pulse_rate->PlaceHolder = RemoveHtml($this->pulse_rate->caption());
-            if (strval($this->pulse_rate->EditValue) != "" && is_numeric($this->pulse_rate->EditValue)) {
-                $this->pulse_rate->EditValue = FormatNumber($this->pulse_rate->EditValue, null);
-            }
-
-            // respiratory_rate
-            $this->respiratory_rate->setupEditAttributes();
-            $this->respiratory_rate->EditValue = HtmlEncode($this->respiratory_rate->CurrentValue);
-            $this->respiratory_rate->PlaceHolder = RemoveHtml($this->respiratory_rate->caption());
-            if (strval($this->respiratory_rate->EditValue) != "" && is_numeric($this->respiratory_rate->EditValue)) {
-                $this->respiratory_rate->EditValue = FormatNumber($this->respiratory_rate->EditValue, null);
-            }
-
-            // temperature
-            $this->temperature->setupEditAttributes();
-            $this->temperature->EditValue = HtmlEncode($this->temperature->CurrentValue);
-            $this->temperature->PlaceHolder = RemoveHtml($this->temperature->caption());
-            if (strval($this->temperature->EditValue) != "" && is_numeric($this->temperature->EditValue)) {
-                $this->temperature->EditValue = FormatNumber($this->temperature->EditValue, null);
-            }
-
-            // random_blood_sugar
-            $this->random_blood_sugar->setupEditAttributes();
-            if (!$this->random_blood_sugar->Raw) {
-                $this->random_blood_sugar->CurrentValue = HtmlDecode($this->random_blood_sugar->CurrentValue);
-            }
-            $this->random_blood_sugar->EditValue = HtmlEncode($this->random_blood_sugar->CurrentValue);
-            $this->random_blood_sugar->PlaceHolder = RemoveHtml($this->random_blood_sugar->caption());
-
-            // spo_2
-            $this->spo_2->setupEditAttributes();
-            $this->spo_2->EditValue = HtmlEncode($this->spo_2->CurrentValue);
-            $this->spo_2->PlaceHolder = RemoveHtml($this->spo_2->caption());
-            if (strval($this->spo_2->EditValue) != "" && is_numeric($this->spo_2->EditValue)) {
-                $this->spo_2->EditValue = FormatNumber($this->spo_2->EditValue, null);
-            }
-
-            // submitted_by_user_id
-
             // Edit refer script
 
             // vitals_id
             $this->vitals_id->HrefValue = "";
-
-            // patient_id
-            $this->patient_id->HrefValue = "";
-
-            // pressure
-            $this->pressure->HrefValue = "";
-
-            // height
-            $this->height->HrefValue = "";
-
-            // weight
-            $this->weight->HrefValue = "";
-
-            // pulse_rate
-            $this->pulse_rate->HrefValue = "";
-
-            // respiratory_rate
-            $this->respiratory_rate->HrefValue = "";
-
-            // temperature
-            $this->temperature->HrefValue = "";
-
-            // random_blood_sugar
-            $this->random_blood_sugar->HrefValue = "";
-
-            // spo_2
-            $this->spo_2->HrefValue = "";
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -1260,77 +972,6 @@ class JdhVitalsEdit extends JdhVitals
         if ($this->vitals_id->Required) {
             if (!$this->vitals_id->IsDetailKey && EmptyValue($this->vitals_id->FormValue)) {
                 $this->vitals_id->addErrorMessage(str_replace("%s", $this->vitals_id->caption(), $this->vitals_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->patient_id->Required) {
-            if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
-                $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->pressure->Required) {
-            if (!$this->pressure->IsDetailKey && EmptyValue($this->pressure->FormValue)) {
-                $this->pressure->addErrorMessage(str_replace("%s", $this->pressure->caption(), $this->pressure->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->pressure->FormValue)) {
-            $this->pressure->addErrorMessage($this->pressure->getErrorMessage(false));
-        }
-        if ($this->height->Required) {
-            if (!$this->height->IsDetailKey && EmptyValue($this->height->FormValue)) {
-                $this->height->addErrorMessage(str_replace("%s", $this->height->caption(), $this->height->RequiredErrorMessage));
-            }
-        }
-        if (!CheckNumber($this->height->FormValue)) {
-            $this->height->addErrorMessage($this->height->getErrorMessage(false));
-        }
-        if ($this->weight->Required) {
-            if (!$this->weight->IsDetailKey && EmptyValue($this->weight->FormValue)) {
-                $this->weight->addErrorMessage(str_replace("%s", $this->weight->caption(), $this->weight->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->weight->FormValue)) {
-            $this->weight->addErrorMessage($this->weight->getErrorMessage(false));
-        }
-        if ($this->pulse_rate->Required) {
-            if (!$this->pulse_rate->IsDetailKey && EmptyValue($this->pulse_rate->FormValue)) {
-                $this->pulse_rate->addErrorMessage(str_replace("%s", $this->pulse_rate->caption(), $this->pulse_rate->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->pulse_rate->FormValue)) {
-            $this->pulse_rate->addErrorMessage($this->pulse_rate->getErrorMessage(false));
-        }
-        if ($this->respiratory_rate->Required) {
-            if (!$this->respiratory_rate->IsDetailKey && EmptyValue($this->respiratory_rate->FormValue)) {
-                $this->respiratory_rate->addErrorMessage(str_replace("%s", $this->respiratory_rate->caption(), $this->respiratory_rate->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->respiratory_rate->FormValue)) {
-            $this->respiratory_rate->addErrorMessage($this->respiratory_rate->getErrorMessage(false));
-        }
-        if ($this->temperature->Required) {
-            if (!$this->temperature->IsDetailKey && EmptyValue($this->temperature->FormValue)) {
-                $this->temperature->addErrorMessage(str_replace("%s", $this->temperature->caption(), $this->temperature->RequiredErrorMessage));
-            }
-        }
-        if (!CheckNumber($this->temperature->FormValue)) {
-            $this->temperature->addErrorMessage($this->temperature->getErrorMessage(false));
-        }
-        if ($this->random_blood_sugar->Required) {
-            if (!$this->random_blood_sugar->IsDetailKey && EmptyValue($this->random_blood_sugar->FormValue)) {
-                $this->random_blood_sugar->addErrorMessage(str_replace("%s", $this->random_blood_sugar->caption(), $this->random_blood_sugar->RequiredErrorMessage));
-            }
-        }
-        if ($this->spo_2->Required) {
-            if (!$this->spo_2->IsDetailKey && EmptyValue($this->spo_2->FormValue)) {
-                $this->spo_2->addErrorMessage(str_replace("%s", $this->spo_2->caption(), $this->spo_2->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->spo_2->FormValue)) {
-            $this->spo_2->addErrorMessage($this->spo_2->getErrorMessage(false));
-        }
-        if ($this->submitted_by_user_id->Required) {
-            if (!$this->submitted_by_user_id->IsDetailKey && EmptyValue($this->submitted_by_user_id->FormValue)) {
-                $this->submitted_by_user_id->addErrorMessage(str_replace("%s", $this->submitted_by_user_id->caption(), $this->submitted_by_user_id->RequiredErrorMessage));
             }
         }
 
@@ -1368,40 +1009,6 @@ class JdhVitalsEdit extends JdhVitals
 
         // Set new row
         $rsnew = [];
-
-        // patient_id
-        if ($this->patient_id->getSessionValue() != "") {
-            $this->patient_id->ReadOnly = true;
-        }
-        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, null, $this->patient_id->ReadOnly);
-
-        // pressure
-        $this->pressure->setDbValueDef($rsnew, $this->pressure->CurrentValue, 0, $this->pressure->ReadOnly);
-
-        // height
-        $this->height->setDbValueDef($rsnew, $this->height->CurrentValue, 0, $this->height->ReadOnly);
-
-        // weight
-        $this->weight->setDbValueDef($rsnew, $this->weight->CurrentValue, 0, $this->weight->ReadOnly);
-
-        // pulse_rate
-        $this->pulse_rate->setDbValueDef($rsnew, $this->pulse_rate->CurrentValue, 0, $this->pulse_rate->ReadOnly);
-
-        // respiratory_rate
-        $this->respiratory_rate->setDbValueDef($rsnew, $this->respiratory_rate->CurrentValue, 0, $this->respiratory_rate->ReadOnly);
-
-        // temperature
-        $this->temperature->setDbValueDef($rsnew, $this->temperature->CurrentValue, 0, $this->temperature->ReadOnly);
-
-        // random_blood_sugar
-        $this->random_blood_sugar->setDbValueDef($rsnew, $this->random_blood_sugar->CurrentValue, "", $this->random_blood_sugar->ReadOnly);
-
-        // spo_2
-        $this->spo_2->setDbValueDef($rsnew, $this->spo_2->CurrentValue, 0, $this->spo_2->ReadOnly);
-
-        // submitted_by_user_id
-        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->getAutoUpdateValue(); // PHP
-        $this->submitted_by_user_id->setDbValueDef($rsnew, $this->submitted_by_user_id->CurrentValue, 0);
 
         // Update current values
         $this->setCurrentValues($rsnew);
