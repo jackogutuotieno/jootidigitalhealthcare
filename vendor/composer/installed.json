@@ -845,17 +845,17 @@
         },
         {
             "name": "giggsey/libphonenumber-for-php",
-            "version": "8.13.19",
-            "version_normalized": "8.13.19.0",
+            "version": "8.13.20",
+            "version_normalized": "8.13.20.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/giggsey/libphonenumber-for-php.git",
-                "reference": "7b60d1264ba806e68fb99b06e73e2ed07815689e"
+                "reference": "c8da9366ab46cbc83f9fd0e7b0ac12f8ddbb721a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php/zipball/7b60d1264ba806e68fb99b06e73e2ed07815689e",
-                "reference": "7b60d1264ba806e68fb99b06e73e2ed07815689e",
+                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php/zipball/c8da9366ab46cbc83f9fd0e7b0ac12f8ddbb721a",
+                "reference": "c8da9366ab46cbc83f9fd0e7b0ac12f8ddbb721a",
                 "shasum": ""
             },
             "require": {
@@ -872,7 +872,7 @@
                 "symfony/console": "^2.8|^3.0|^v4.4|^v5.2",
                 "symfony/phpunit-bridge": "^4.2 || ^5"
             },
-            "time": "2023-08-22T13:59:44+00:00",
+            "time": "2023-09-07T06:33:03+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -3055,17 +3055,17 @@
         },
         {
             "name": "php-di/invoker",
-            "version": "2.3.3",
-            "version_normalized": "2.3.3.0",
+            "version": "2.3.4",
+            "version_normalized": "2.3.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-DI/Invoker.git",
-                "reference": "cd6d9f267d1a3474bdddf1be1da079f01b942786"
+                "reference": "33234b32dafa8eb69202f950a1fc92055ed76a86"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-DI/Invoker/zipball/cd6d9f267d1a3474bdddf1be1da079f01b942786",
-                "reference": "cd6d9f267d1a3474bdddf1be1da079f01b942786",
+                "url": "https://api.github.com/repos/PHP-DI/Invoker/zipball/33234b32dafa8eb69202f950a1fc92055ed76a86",
+                "reference": "33234b32dafa8eb69202f950a1fc92055ed76a86",
                 "shasum": ""
             },
             "require": {
@@ -3077,7 +3077,7 @@
                 "mnapoli/hard-mode": "~0.3.0",
                 "phpunit/phpunit": "^9.0"
             },
-            "time": "2021-12-13T09:22:56+00:00",
+            "time": "2023-09-08T09:24:21+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -3101,7 +3101,7 @@
             ],
             "support": {
                 "issues": "https://github.com/PHP-DI/Invoker/issues",
-                "source": "https://github.com/PHP-DI/Invoker/tree/2.3.3"
+                "source": "https://github.com/PHP-DI/Invoker/tree/2.3.4"
             },
             "funding": [
                 {
@@ -6059,17 +6059,17 @@
         },
         {
             "name": "tecnickcom/tc-lib-color",
-            "version": "1.14.24",
-            "version_normalized": "1.14.24.0",
+            "version": "1.14.28",
+            "version_normalized": "1.14.28.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tecnickcom/tc-lib-color.git",
-                "reference": "6207533413f6edc3fea373d0e54041661d2bd905"
+                "reference": "c0ea9b1a8488776d33ae4051aa0701facf79e402"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tecnickcom/tc-lib-color/zipball/6207533413f6edc3fea373d0e54041661d2bd905",
-                "reference": "6207533413f6edc3fea373d0e54041661d2bd905",
+                "url": "https://api.github.com/repos/tecnickcom/tc-lib-color/zipball/c0ea9b1a8488776d33ae4051aa0701facf79e402",
+                "reference": "c0ea9b1a8488776d33ae4051aa0701facf79e402",
                 "shasum": ""
             },
             "require": {
@@ -6084,7 +6084,7 @@
                 "sebastian/phpcpd": "6.0.3 || 5.0.2 || 4.1.0 || 3.0.1 || 2.0.4",
                 "squizlabs/php_codesniffer": "3.7.2 || 2.9.2"
             },
-            "time": "2023-05-18T08:09:02+00:00",
+            "time": "2023-09-06T13:19:19+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -6094,7 +6094,7 @@
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
-                "LGPL-3.0"
+                "LGPL-3.0-or-later"
             ],
             "authors": [
                 {
@@ -6121,7 +6121,7 @@
             ],
             "support": {
                 "issues": "https://github.com/tecnickcom/tc-lib-color/issues",
-                "source": "https://github.com/tecnickcom/tc-lib-color/tree/1.14.24"
+                "source": "https://github.com/tecnickcom/tc-lib-color/tree/1.14.28"
             },
             "funding": [
                 {

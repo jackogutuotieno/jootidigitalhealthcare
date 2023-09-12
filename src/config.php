@@ -142,7 +142,7 @@ $CONFIG = [
 
     // General
     "UNFORMAT_YEAR" => 50, // Unformat year
-    "RANDOM_KEY" => '0H56Kj5qXyhzp2Le', // Random key for encryption
+    "RANDOM_KEY" => 'voY8bl3jp4EnWwsC', // Random key for encryption
     "ENCRYPTION_KEY" => '', // Encryption key for data protection
     "PROJECT_STYLESHEET_FILENAME" => "css/jootidigitalhealthcare.css", // Project stylesheet file name
     "USE_COMPRESSED_STYLESHEET" => true, // Compressed stylesheet
@@ -381,9 +381,9 @@ $CONFIG = [
     "PUSH_SERVER_PRIVATE_KEY" => "l7WHdQNK1RmMe7B5ZWVX0-qXVoAXpwiXSSjY3m9nMC4", // Private Key
     // Subscription table for Push Notification
     "SUBSCRIPTION_DBID" => "DB", // Subscription DBID
-    "SUBSCRIPTION_TABLE" => "`jdh_notifications`", // Subscription table
-    "SUBSCRIPTION_TABLE_NAME" => "jdh_notifications", // Subscription table name
-    "SUBSCRIPTION_TABLE_VAR" => "jdh_notifications", // Subscription table var
+    "SUBSCRIPTION_TABLE" => "undefined", // Subscription table
+    "SUBSCRIPTION_TABLE_NAME" => "subscriptions", // Subscription table name
+    "SUBSCRIPTION_TABLE_VAR" => "subscriptions", // Subscription table var
     "SUBSCRIPTION_FIELD_NAME_ID" => "Id", // Subscription Id field name
     "SUBSCRIPTION_FIELD_NAME_USER" => "User", // Subscription User field name
     "SUBSCRIPTION_FIELD_NAME_ENDPOINT" => "Endpoint", // Subscription Endpoint field name

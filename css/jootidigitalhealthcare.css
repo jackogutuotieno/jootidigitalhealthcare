@@ -19932,6 +19932,20 @@ hr.divider-vertical-blurry {
 
 body {
   background-image: url("images/jootidigitalhealthcare-bg.jpg");
+  font-family: montserrat;
+}
+
+.nav-sidebar .nav-item > .nav-link {
+  color: black;
+  font-size: 0.65rem;
+}
+
+.ew-grid .ew-table > thead > tr > th {
+  font-weight: 600 !important;
+}
+
+.nav-treeview > .nav-item > .nav-link {
+  color: black !important;
 }
 
 /*END_USER_STYLES*/
