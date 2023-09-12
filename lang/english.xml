@@ -1347,7 +1347,7 @@
       </field>
     </table>
     <table id="jdh_lab_test_categories">
-      <phrase id="tblcaption" value="Lab Test Categories" />
+      <phrase id="tblcaption" value="Test Categories" />
       <field id="test_category_id">
         <phrase id="fldcaption" value="No" />
       </field>
@@ -1359,7 +1359,7 @@
       </field>
     </table>
     <table id="jdh_lab_test_subcategories">
-      <phrase id="tblcaption" value="Lab Test Subcategories" />
+      <phrase id="tblcaption" value="Test Subcategories" />
       <field id="test_subcategory_id">
         <phrase id="fldcaption" value="ID" />
       </field>

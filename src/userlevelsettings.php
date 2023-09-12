@@ -395,8 +395,8 @@ $USER_LEVEL_PRIVS = [["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","7","0"]];
 // User level table info
 $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhappointmentslist"],
-    ["jdh_lab_test_categories","jdh_lab_test_categories","Lab Test Categories",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabtestcategorieslist"],
-    ["jdh_lab_test_subcategories","jdh_lab_test_subcategories","Lab Test Subcategories",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabtestsubcategorieslist"],
+    ["jdh_lab_test_categories","jdh_lab_test_categories","Test Categories",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabtestcategorieslist"],
+    ["jdh_lab_test_subcategories","jdh_lab_test_subcategories","Test Subcategories",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabtestsubcategorieslist"],
     ["jdh_medicine_categories","jdh_medicine_categories","Medicine Categories",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhmedicinecategorieslist"],
     ["jdh_medicines","jdh_medicines","Medicines",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhmedicineslist"],
     ["jdh_patient_cases","jdh_patient_cases","Cases",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhpatientcaseslist"],
