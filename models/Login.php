@@ -396,20 +396,9 @@ class Login extends JdhUsers
                 if ($validate) {
                     $validPwd = $Security->validateUser($this->Username->CurrentValue, $this->Password->CurrentValue, false); // Manual login
                     if (!$validPwd) {
-                        // Password expired, force change password
-                        if (IsPasswordExpired()) {
-                            $this->setFailureMessage($Language->phrase("PasswordExpired"));
-                            $this->terminate("changepassword");
-                            return;
-                        }
                         $this->Username->setFormValue(""); // Clear login name
                         $this->Username->addErrorMessage($Language->phrase("InvalidUidPwd")); // Invalid user name or password
                         $this->Password->addErrorMessage($Language->phrase("InvalidUidPwd")); // Invalid user name or password
-
-                    // Password changed date not initialized, set as today
-                    } elseif ($UserProfile->emptyPasswordChangedDate($this->Username->CurrentValue)) {
-                        $UserProfile->setValue(Config("USER_PROFILE_LAST_PASSWORD_CHANGED_DATE"), StdCurrentDate());
-                        $UserProfile->saveProfileToDatabase($this->Username->CurrentValue);
 
                     // Two factor authentication enabled (go to 2fa page)
                     } elseif (!IsSysAdmin() && Config("USE_TWO_FACTOR_AUTHENTICATION") && (Config("FORCE_TWO_FACTOR_AUTHENTICATION") || $UserProfile->hasUserSecret($this->Username->CurrentValue, true))) {

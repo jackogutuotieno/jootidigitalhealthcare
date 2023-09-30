@@ -10,7 +10,6 @@ class UserProfile
     public $Username = "";
     public $Profile = [];
     public $Provider = "";
-    public $PasswordExpiryTime;
     protected $BackupUsername = "";
     protected $BackupProfile = [];
     protected $Excluded = []; // Excluded data (not to be saved to database)
@@ -18,11 +17,7 @@ class UserProfile
     // Constructor
     public function __construct()
     {
-        $this->PasswordExpiryTime = Config("USER_PROFILE_PASSWORD_EXPIRE");
         $this->load();
-
-        // Password Expiry
-        $this->set(Config("USER_PROFILE_LAST_PASSWORD_CHANGED_DATE"), "");
     }
 
     // Has value
@@ -293,69 +288,6 @@ class UserProfile
     {
         $data = array_diff_assoc($this->Profile, $this->Excluded);
         return serialize($data);
-    }
-
-    // Password expired
-    public function passwordExpired($usr)
-    {
-        if ($this->isSystemAdmin($usr)) { // Ignore system admin
-            return false;
-        }
-        try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $dt = $this->get(Config("USER_PROFILE_LAST_PASSWORD_CHANGED_DATE"));
-                if (strval($dt) == "") {
-                    $dt = StdCurrentDate();
-                }
-                return (DateDiff($dt, StdCurrentDate(), "d") >= $this->PasswordExpiryTime);
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-        return false;
-    }
-
-    // Empty password changed date
-    public function emptyPasswordChangedDate($usr)
-    {
-        if ($this->isSystemAdmin($usr)) { // Ignore system admin
-            return false;
-        }
-        try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $dt = $this->get(Config("USER_PROFILE_LAST_PASSWORD_CHANGED_DATE"));
-                return (strval($dt) == "");
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-        return false;
-    }
-
-    // Set password expired
-    public function setPasswordExpired($usr)
-    {
-        try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $this->set(Config("USER_PROFILE_LAST_PASSWORD_CHANGED_DATE"), StdDate(strtotime("-" . ($this->PasswordExpiryTime + 1) . " days")));
-                return $this->saveProfileToDatabase($usr);
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-        return false;
     }
 
     // User has 2FA secret

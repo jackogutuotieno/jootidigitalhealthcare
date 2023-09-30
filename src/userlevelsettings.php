@@ -423,7 +423,7 @@ $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true
     ["jdh_status","jdh_status","jdh status",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhstatuslist"],
     ["jdh_medicine_stock","jdh_medicine_stock","Medicine Stock",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhmedicinestocklist"],
     ["Dashboard","Dashboard2","Dashboard",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","dashboard2"],
-    ["jdh_prescriptions_actions","jdh_prescriptions_actions","Patients Prescriptions",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhprescriptionsactionslist"],
+    ["jdh_prescriptions_actions","jdh_prescriptions_actions","Pharmacy Admnistration",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhprescriptionsactionslist"],
     ["jdh_pharmacy_income","jdh_pharmacy_income","Pharmacy Income",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhpharmacyincomelist"],
     ["jdh_registration_income","jdh_registration_income","Registration Income",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhregistrationincomelist"],
     ["jdh_doctor_charges","jdh_doctor_charges","Doctor Charges",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhdoctorchargeslist"],

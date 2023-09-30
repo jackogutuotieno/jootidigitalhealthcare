@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `beds` (
   `status_id` int NOT NULL,
   `description` text,
   PRIMARY KEY (`bed_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `beds`
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS `jdh_appointments` (
   `submission_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `subbmitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`appointment_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_appointments`
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS `jdh_audittrail` (
   `OldValue` longtext,
   `NewValue` longtext,
   PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=907 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=907 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_audittrail`
@@ -1022,7 +1022,7 @@ CREATE TABLE IF NOT EXISTS `jdh_beds_assignment` (
   `date_submitted` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `submittedby_user_id` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_beds_assignment`
@@ -1043,7 +1043,7 @@ CREATE TABLE IF NOT EXISTS `jdh_branding` (
   `header_image` mediumblob,
   `footer_image` mediumblob,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_branding`
@@ -1068,7 +1068,7 @@ CREATE TABLE IF NOT EXISTS `jdh_chief_complaints` (
   `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_chief_complaints`
@@ -1108,9 +1108,9 @@ DROP TABLE IF EXISTS `jdh_departments`;
 CREATE TABLE IF NOT EXISTS `jdh_departments` (
   `department_id` int NOT NULL AUTO_INCREMENT,
   `department_name` varchar(100) NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   PRIMARY KEY (`department_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_departments`
@@ -1143,7 +1143,7 @@ CREATE TABLE IF NOT EXISTS `jdh_doctor_charges` (
   `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `submitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_doctor_charges`
@@ -1164,12 +1164,12 @@ DROP TABLE IF EXISTS `jdh_examination_findings`;
 CREATE TABLE IF NOT EXISTS `jdh_examination_findings` (
   `id` int NOT NULL AUTO_INCREMENT,
   `patient_id` int NOT NULL,
-  `general_exams` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `systematic_exams` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `general_exams` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `systematic_exams` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `submitted_by_user_id` int NOT NULL,
   `date_submitted` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_examination_findings`
@@ -1197,7 +1197,7 @@ CREATE TABLE IF NOT EXISTS `jdh_exportlog` (
   `Filename` varchar(255) NOT NULL,
   `Request` longtext NOT NULL,
   PRIMARY KEY (`FileId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -1217,7 +1217,7 @@ CREATE TABLE IF NOT EXISTS `jdh_insurance` (
   `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `submitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`insurance_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_insurance`
@@ -1270,7 +1270,7 @@ CREATE TABLE IF NOT EXISTS `jdh_lab_test_categories` (
   `test_category_name` varchar(100) NOT NULL,
   `test_category_description` text,
   PRIMARY KEY (`test_category_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_lab_test_categories`
@@ -1291,9 +1291,9 @@ CREATE TABLE IF NOT EXISTS `jdh_lab_test_subcategories` (
   `test_subcategory_id` int NOT NULL AUTO_INCREMENT,
   `test_category_id` int NOT NULL,
   `test_subcategory_name` varchar(100) NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   PRIMARY KEY (`test_subcategory_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_lab_test_subcategories`
@@ -1454,7 +1454,7 @@ CREATE TABLE IF NOT EXISTS `jdh_medicine_categories` (
   `category_name` varchar(100) NOT NULL,
   `category_description` text NOT NULL,
   PRIMARY KEY (`category_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_medicine_categories`
@@ -1481,7 +1481,7 @@ CREATE TABLE IF NOT EXISTS `jdh_medicine_stock` (
   `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_medicine_stock`
@@ -1507,7 +1507,7 @@ CREATE TABLE IF NOT EXISTS `jdh_notifications` (
   `AuthenticationToken` varchar(255) NOT NULL,
   `ContentEncoding` varchar(255) NOT NULL,
   PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_notifications`
@@ -1528,11 +1528,11 @@ DROP TABLE IF EXISTS `jdh_patients`;
 CREATE TABLE IF NOT EXISTS `jdh_patients` (
   `patient_id` bigint NOT NULL AUTO_INCREMENT,
   `photo` mediumblob,
-  `patient_national_id` char(13) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `patient_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `patient_national_id` char(13) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `patient_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `patient_dob` date NOT NULL,
   `patient_gender` varchar(10) NOT NULL,
-  `patient_phone` char(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `patient_phone` char(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `patient_kin_name` varchar(100) DEFAULT NULL,
   `patient_kin_phone` char(15) DEFAULT NULL,
   `service_id` int NOT NULL,
@@ -1540,7 +1540,7 @@ CREATE TABLE IF NOT EXISTS `jdh_patients` (
   `submitted_by_user_id` int NOT NULL,
   `patient_registration_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`patient_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_patients`
@@ -1563,7 +1563,7 @@ DROP TABLE IF EXISTS `jdh_patient_cases`;
 CREATE TABLE IF NOT EXISTS `jdh_patient_cases` (
   `case_id` int NOT NULL AUTO_INCREMENT,
   `patient_id` int NOT NULL,
-  `random_blood_sugar` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `random_blood_sugar` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `history` text,
   `medical_history` text NOT NULL,
   `family` text NOT NULL,
@@ -1572,7 +1572,7 @@ CREATE TABLE IF NOT EXISTS `jdh_patient_cases` (
   `submission_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `submitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`case_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_patient_cases`
@@ -1613,7 +1613,7 @@ CREATE TABLE IF NOT EXISTS `jdh_patient_visits` (
   `visit_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `subbmitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`visit_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_patient_visits`
@@ -1666,7 +1666,7 @@ CREATE TABLE IF NOT EXISTS `jdh_prescriptions` (
   `prescription_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `submitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`prescription_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_prescriptions`
@@ -1690,7 +1690,7 @@ CREATE TABLE IF NOT EXISTS `jdh_prescriptions_actions` (
   `submittedby_user_id` int NOT NULL,
   `submission_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_prescriptions_actions`
@@ -1727,7 +1727,7 @@ CREATE TABLE IF NOT EXISTS `jdh_roles` (
   `role_name` varchar(100) NOT NULL,
   `role_description` text,
   PRIMARY KEY (`role_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_roles`
@@ -1754,9 +1754,9 @@ CREATE TABLE IF NOT EXISTS `jdh_rooms` (
   `room_id` int NOT NULL AUTO_INCREMENT,
   `ward_id` int NOT NULL,
   `room_number` int NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   PRIMARY KEY (`room_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_rooms`
@@ -1786,7 +1786,7 @@ CREATE TABLE IF NOT EXISTS `jdh_services` (
   `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `submitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`service_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_services`
@@ -1827,9 +1827,9 @@ DROP TABLE IF EXISTS `jdh_service_category`;
 CREATE TABLE IF NOT EXISTS `jdh_service_category` (
   `category_id` int NOT NULL AUTO_INCREMENT,
   `category_name` varchar(100) NOT NULL,
-  `category_description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `category_description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   PRIMARY KEY (`category_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_service_category`
@@ -1851,10 +1851,10 @@ DROP TABLE IF EXISTS `jdh_service_subcategory`;
 CREATE TABLE IF NOT EXISTS `jdh_service_subcategory` (
   `subcategory_id` int NOT NULL AUTO_INCREMENT,
   `category_id` int NOT NULL,
-  `subcategory_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `subcategory_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `description` text NOT NULL,
   PRIMARY KEY (`subcategory_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_service_subcategory`
@@ -1897,7 +1897,7 @@ CREATE TABLE IF NOT EXISTS `jdh_status` (
   `status_id` int NOT NULL AUTO_INCREMENT,
   `status` varchar(50) NOT NULL,
   PRIMARY KEY (`status_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_status`
@@ -1923,7 +1923,7 @@ CREATE TABLE IF NOT EXISTS `jdh_test_reports` (
   `report_submittedby_user_id` int NOT NULL,
   `report_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`report_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_test_reports`
@@ -1951,7 +1951,7 @@ CREATE TABLE IF NOT EXISTS `jdh_test_requests` (
   `status_id` int NOT NULL,
   `request_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`request_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_test_requests`
@@ -1972,18 +1972,18 @@ DROP TABLE IF EXISTS `jdh_users`;
 CREATE TABLE IF NOT EXISTS `jdh_users` (
   `user_id` int NOT NULL AUTO_INCREMENT,
   `photo` mediumblob,
-  `first_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `first_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `last_name` varchar(50) NOT NULL,
-  `national_id` char(14) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `email_address` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `phone` char(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `national_id` char(14) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `email_address` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `phone` char(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `role_id` int NOT NULL,
   `department_id` int NOT NULL,
   `password` varchar(255) NOT NULL,
   `biography` text NOT NULL,
   `registration_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_users`
@@ -2013,7 +2013,7 @@ CREATE TABLE IF NOT EXISTS `jdh_visit_types` (
   `visit_type` varchar(100) NOT NULL,
   `visit_description` text,
   PRIMARY KEY (`visit_type_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_visit_types`
@@ -2045,7 +2045,7 @@ CREATE TABLE IF NOT EXISTS `jdh_vitals` (
   `submission_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `submitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`vitals_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_vitals`
@@ -2068,7 +2068,7 @@ CREATE TABLE IF NOT EXISTS `jdh_wards` (
   `ward_name` varchar(100) NOT NULL,
   `description` text,
   PRIMARY KEY (`ward_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `jdh_wards`

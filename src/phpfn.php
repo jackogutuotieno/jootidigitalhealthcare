@@ -6347,6 +6347,52 @@ function SetupLoginStatus()
     $LoginStatus["loginText"] = $Language->phrase("Login");
     $LoginStatus["canLogin"] = $currentPage != $loginPage && $loginUrl && !IsLoggedIn() && !IsLoggingIn2FA();
 
+    // Reset password page
+    $resetPasswordPage = "resetpassword";
+    $resetPasswordUrl = GetUrl($resetPasswordPage);
+    if ($currentPage != $resetPasswordPage) {
+        if (Config("USE_MODAL_RESET_PASSWORD") && !IsMobile()) {
+            $LoginStatus["resetPassword"] = [
+                "ew-action" => "modal",
+                "footer" => false,
+                "caption" => $Language->phrase("ResetPassword"),
+                "size" => "modal-md",
+                "url" => $resetPasswordUrl
+            ];
+        } else {
+            $LoginStatus["resetPassword"] = [
+                "ew-action" => "redirect",
+                "url" => $resetPasswordUrl
+            ];
+        }
+    }
+    $LoginStatus["resetPasswordUrl"] = $resetPasswordUrl;
+    $LoginStatus["resetPasswordText"] = $Language->phrase("ResetPassword");
+    $LoginStatus["canResetPassword"] = $resetPasswordUrl && !IsLoggedIn();
+
+    // Change password page
+    $changePasswordPage = "changepassword";
+    $changePasswordUrl = GetUrl($changePasswordPage);
+    if ($currentPage != $changePasswordPage) {
+        if (Config("USE_MODAL_CHANGE_PASSWORD") && !IsMobile()) {
+            $LoginStatus["changePassword"] = [
+                "ew-action" => "modal",
+                "footer" => false,
+                "caption" => $Language->phrase("ChangePassword"),
+                "size" => "modal-md",
+                "url" => $changePasswordUrl
+            ];
+        } else {
+            $LoginStatus["changePassword"] = [
+                "ew-action" => "redirect",
+                "url" => $changePasswordUrl
+            ];
+        }
+    }
+    $LoginStatus["changePasswordUrl"] = $changePasswordUrl;
+    $LoginStatus["changePasswordText"] = $Language->phrase("ChangePassword");
+    $LoginStatus["canChangePassword"] = $changePasswordUrl && IsLoggedIn() && !IsSysAdmin();
+
     // Personal data page
     $personalDataPage = "personaldata";
     $personalDataUrl = GetUrl($personalDataPage);

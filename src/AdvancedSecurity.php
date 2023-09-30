@@ -520,16 +520,6 @@ class AdvancedSecurity
             $sql = $UserTable->getSql($filter);
             if ($row = Conn($UserTable->Dbid)->fetchAssociative($sql)) {
                 $valid = $customValid || ComparePassword(GetUserInfo(Config("LOGIN_PASSWORD_FIELD_NAME"), $row), $pwd);
-
-                // Password expiry checking
-                if ($valid && !$autologin && $UserProfile->passwordExpired($usr)) {
-                        $this->setSessionPasswordExpired();
-                        $this->userPasswordExpired($row);
-                    if (IsPasswordExpired()) {
-                        WriteAuditLog($usr, $Language->phrase("AuditTrailPasswordExpired"), CurrentUserIP(), "", "", "", "");
-                        return false;
-                    }
-                }
                 if ($valid) {
                     // Check two factor authentication
                     if (Config("USE_TWO_FACTOR_AUTHENTICATION")) {

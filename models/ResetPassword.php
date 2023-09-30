@@ -10,18 +10,18 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class ChangePassword extends JdhUsers
+class ResetPassword extends JdhUsers
 {
     use MessagesTrait;
 
     // Page ID
-    public $PageID = "change_password";
+    public $PageID = "reset_password";
 
     // Project ID
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "ChangePassword";
+    public $PageObjName = "ResetPassword";
 
     // View file path
     public $View = null;
@@ -33,7 +33,7 @@ class ChangePassword extends JdhUsers
     public $RenderingView = false;
 
     // CSS class/style
-    public $CurrentPageName = "changepassword";
+    public $CurrentPageName = "resetpassword";
 
     // Page headings
     public $Heading = "";
@@ -244,10 +244,8 @@ class ChangePassword extends JdhUsers
         }
         return; // Return to controller
     }
+    public $Email;
     public $IsModal = false;
-    public $OldPassword;
-    public $NewPassword;
-    public $ConfirmPassword;
 
     /**
      * Page run
@@ -259,19 +257,9 @@ class ChangePassword extends JdhUsers
         global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $UserTable, $Breadcrumb, $SkipHeaderFooter;
         $this->OffsetColumnClass = ""; // Override user table
 
-        // Create Password fields object (used by validation only)
-        $this->OldPassword = new DbField(Container("usertable"), "opwd", "opwd", "opwd", "", 202, 255, -1, false, "", false, false, false);
-        $this->OldPassword->EditAttrs->appendClass("form-control ew-form-control");
-        $this->NewPassword = new DbField(Container("usertable"), "npwd", "npwd", "npwd", "", 202, 255, -1, false, "", false, false, false);
-        $this->NewPassword->EditAttrs->appendClass("form-control ew-form-control");
-        $this->NewPassword->EditAttrs->appendClass("ew-password-strength");
-        $this->ConfirmPassword = new DbField(Container("usertable"), "cpwd", "cpwd", "cpwd", "", 202, 255, -1, false, "", false, false, false);
-        $this->ConfirmPassword->EditAttrs->appendClass("form-control ew-form-control");
-        if (Config("ENCRYPTED_PASSWORD")) {
-            $this->OldPassword->Raw = true;
-            $this->NewPassword->Raw = true;
-            $this->ConfirmPassword->Raw = true;
-        }
+        // Create Email field object (used by validation only)
+        $this->Email = new DbField(Container("usertable"), "email", "email", "email", "", 202, 255, -1, false, "", false, false, false);
+        $this->Email->EditAttrs->appendClass("form-control ew-form-control");
 
         // Is modal
         $this->IsModal = ConvertToBool(Param("modal"));
@@ -297,76 +285,109 @@ class ChangePassword extends JdhUsers
             $SkipHeaderFooter = true;
         }
         $Breadcrumb = new Breadcrumb("index");
-        $Breadcrumb->add("change_password", "ChangePasswordPage", CurrentUrl(), "", "", true);
-        $this->Heading = $Language->phrase("ChangePasswordPage");
+        $Breadcrumb->add("reset_password", "ResetPwd", CurrentUrl(), "", "", true);
+        $this->Heading = $Language->phrase("ResetPwd");
         $postBack = IsPost();
-        $validate = true;
+        $validEmail = false;
+        $action = "";
+        $userName = "";
+        $activateCode = "";
+        $filter = "";
         if ($postBack) {
-            $this->OldPassword->setFormValue(Post($this->OldPassword->FieldVar));
-            $this->NewPassword->setFormValue(Post($this->NewPassword->FieldVar));
-            $this->ConfirmPassword->setFormValue(Post($this->ConfirmPassword->FieldVar));
-            $validate = $this->validateForm();
-        }
-        $pwdUpdated = false;
-        if ($postBack && $validate) {
             // Setup variables
-            $userName = $Security->currentUserName();
-            if (IsPasswordReset()) {
-                $userName = Session(SESSION_USER_PROFILE_USER_NAME);
+            $this->Email->setFormValue(Post($this->Email->FieldVar));
+            $validEmail = $this->validateForm();
+            if ($validEmail) {
+                $action = "reset"; // Prompt user to change password
             }
-            $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), $userName);
 
             // Set up filter (WHERE Clause)
+            $emailFld = @$UserTable->Fields[Config("USER_EMAIL_FIELD_NAME")];
+            if ($emailFld && $emailFld->isEncrypt()) { // If encrypted, need to loop all records (to be improved)
+                $filter = "";
+            } else {
+                $filter = GetUserFilter(Config("USER_EMAIL_FIELD_NAME"), $this->Email->CurrentValue);
+            }
+
+        // Handle email activation
+        } elseif (Get("action") != "") {
+            $action = Get("action");
+            $userName = Get("user");
+            $activateCode = Decrypt(Get("code"));
+            @list($activateUserName, $dt) = explode(",", $activateCode);
+            if (
+                $userName != $activateUserName ||
+                EmptyValue($dt) ||
+                DateDiff($dt, StdCurrentDateTime(), "n") < 0 ||
+                DateDiff($dt, StdCurrentDateTime(), "n") > Config("RESET_PASSWORD_TIME_LIMIT") ||
+                !SameText($action, "reset")
+            ) { // Email activation
+                if ($this->getFailureMessage() == "") {
+                    $this->setFailureMessage($Language->phrase("ActivateFailed")); // Set activate failed message
+                }
+                $this->terminate("login"); // Go to login page
+                return;
+            }
+            if (SameText($action, "reset")) {
+                $action = "resetpassword";
+            }
+            $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), $userName);
+        }
+        if ($action != "") {
+            $emailSent = false;
             $this->CurrentFilter = $filter;
             $sql = $this->getCurrentSql();
-            if ($rsold = Conn($UserTable->Dbid)->fetchAssociative($sql)) {
-                if (IsPasswordReset() || ComparePassword(GetUserInfo(Config("LOGIN_PASSWORD_FIELD_NAME"), $rsold), $this->OldPassword->CurrentValue)) {
-                    $validPwd = true;
-                    if (!IsPasswordReset()) {
-                        $validPwd = $this->userChangePassword($rsold, $userName, $this->OldPassword->CurrentValue, $this->NewPassword->CurrentValue);
-                    }
-                    if ($validPwd) {
-                        $rsnew = [Config("LOGIN_PASSWORD_FIELD_NAME") => $this->NewPassword->CurrentValue]; // Change Password
-                        $emailAddress = GetUserInfo(Config("USER_EMAIL_FIELD_NAME"), $rsold);
-                        $validPwd = $this->update($rsnew);
-                        if ($validPwd) {
-                            $pwdUpdated = true;
-                        }
+            if ($rsuser = Conn($UserTable->Dbid)->executeQuery($sql)) {
+                $validEmail = false;
+                $rows = $rsuser->fetchAllAssociative();
+                foreach ($rows as $rsold) {
+                    if ($action == "resetpassword") { // Check username if email activation
+                        $validEmail = SameString($userName, GetUserInfo(Config("LOGIN_USERNAME_FIELD_NAME"), $rsold));
                     } else {
-                        $this->setFailureMessage($Language->phrase("InvalidNewPassword"));
+                        $validEmail = SameText($this->Email->CurrentValue, GetUserInfo(Config("USER_EMAIL_FIELD_NAME"), $rsold));
                     }
-                } else {
-                    $this->setFailureMessage($Language->phrase("InvalidPassword"));
+                    if ($validEmail) {
+                        // Call User Recover Password event
+                        $validEmail = $this->userRecoverPassword($rsold);
+                        if ($validEmail) {
+                            $userName = GetUserInfo(Config("LOGIN_USERNAME_FIELD_NAME"), $rsold);
+                            $password = GetUserInfo(Config("LOGIN_PASSWORD_FIELD_NAME"), $rsold);
+                        }
+                    }
+                    if ($validEmail) {
+                        break;
+                    }
+                }
+                if ($validEmail) {
+                    if (SameText($action, "resetpassword")) { // Reset password
+                        $_SESSION[SESSION_USER_PROFILE_USER_NAME] = $userName; // Save login user name
+                        $_SESSION[SESSION_STATUS] = "passwordreset";
+                        $this->terminate("changepassword");
+                        return;
+                    } else {
+                        $email = new Email();
+                        $email->load(Config("EMAIL_RESET_PASSWORD_TEMPLATE"));
+                        $activateLink = FullUrl("", "resetpwd") . "?action=reset";
+                        $activateLink .= "&user=" . rawurlencode($userName);
+                        $code = $userName . "," . StdCurrentDateTime();
+                        $activateLink .= "&code=" . Encrypt($code);
+                        $email->replaceContent('<!--$ActivateLink-->', $activateLink);
+                        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+                        $email->replaceRecipient($this->Email->CurrentValue); // Replace Recipient
+                        $email->replaceContent('<!--$UserName-->', $userName);
+                        $args = [];
+                        $args["rs"] = &$rsold;
+                        if ($this->emailSending($email, $args)) {
+                            $emailSent = $email->send();
+                        }
+                    }
                 }
             }
-        }
-        if ($pwdUpdated) {
-            if (@$emailAddress != "") {
-                // Load Email Content
-                $email = new Email();
-                $email->load(Config("EMAIL_CHANGE_PASSWORD_TEMPLATE"));
-                $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-                $email->replaceRecipient($emailAddress); // Replace Recipient
-                $args = [];
-                $args["rs"] = &$rsnew;
-                $emailSent = false;
-                if ($this->emailSending($email, $args)) {
-                    $emailSent = $email->send();
-                }
-
-                // Send email failed
-                if (!$emailSent) {
-                    $this->setFailureMessage($email->SendErrDescription);
-                }
+            if ($validEmail && !$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription); // Set up error message
             }
-            if ($this->getSuccessMessage() == "") {
-                $this->setSuccessMessage($Language->phrase("PasswordChanged")); // Set up success message
-            }
-            if (IsPasswordReset()) {
-                $_SESSION[SESSION_STATUS] = "";
-                $_SESSION[SESSION_USER_PROFILE_USER_NAME] = "";
-            }
-            $this->terminate("index"); // Return to default page
+            $this->setSuccessMessage($Language->phrase("ResetPasswordResponse")); // Set up success message
+            $this->terminate("login"); // Return to login page
             return;
         }
 
@@ -402,31 +423,23 @@ class ChangePassword extends JdhUsers
         if (!Config("SERVER_VALIDATE")) {
             return true;
         }
-        $valid = true;
-        if (!IsPasswordReset() && EmptyValue($this->OldPassword->CurrentValue)) {
-            $this->OldPassword->addErrorMessage($Language->phrase("EnterOldPassword"));
-            $valid = false;
+        $validateForm = true;
+        if (EmptyValue($this->Email->CurrentValue)) {
+            $this->Email->addErrorMessage(str_replace("%s", $Language->phrase("Email"), $Language->phrase("EnterRequiredField")));
+            $validateForm = false;
         }
-        if (EmptyValue($this->NewPassword->CurrentValue)) {
-            $this->NewPassword->addErrorMessage($Language->phrase("EnterNewPassword"));
-            $valid = false;
-        }
-        if (!$this->NewPassword->Raw && Config("REMOVE_XSS") && CheckPassword($this->NewPassword->CurrentValue)) {
-            $this->NewPassword->addErrorMessage($Language->phrase("InvalidPasswordChars"));
-            $valid = false;
-        }
-        if ($this->NewPassword->CurrentValue != $this->ConfirmPassword->CurrentValue) {
-            $this->ConfirmPassword->addErrorMessage($Language->phrase("MismatchPassword"));
-            $valid = false;
+        if (!CheckEmail($this->Email->CurrentValue)) {
+            $this->Email->addErrorMessage($Language->phrase("IncorrectEmail"));
+            $validateForm = false;
         }
 
-        // Call Form CustomValidate event
+        // Call Form Custom Validate event
         $formCustomError = "";
-        $valid = $valid && $this->formCustomValidate($formCustomError);
+        $validateForm = $validateForm && $this->formCustomValidate($formCustomError);
         if ($formCustomError != "") {
             $this->setFailureMessage($formCustomError);
         }
-        return $valid;
+        return $validateForm;
     }
 
     // Page Load event
@@ -490,8 +503,8 @@ class ChangePassword extends JdhUsers
         return true;
     }
 
-    // User ChangePassword event
-    public function userChangePassword(&$rs, $usr, $oldpwd, &$newpwd)
+    // User RecoverPassword event
+    public function userRecoverPassword(&$rs)
     {
         // Return false to abort
         return true;

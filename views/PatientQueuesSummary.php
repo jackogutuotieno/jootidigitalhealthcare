@@ -133,19 +133,6 @@ while ($Page->RecordCount < count($Page->DetailRecords) && $Page->RecordCount < 
 <?php if ($Page->TotalGroups > 0) { ?>
 </tbody>
 <tfoot>
-<?php
-    $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_TOTAL;
-    $Page->RowTotalType = ROWTOTAL_GRAND;
-    $Page->RowTotalSubType = ROWTOTAL_FOOTER;
-    $Page->RowAttrs["class"] = "ew-rpt-grand-summary";
-    $Page->renderRow();
-?>
-<?php if ($Page->ShowCompactSummaryFooter) { ?>
-    <tr<?= $Page->rowAttributes() ?>><td colspan="<?= ($Page->GroupColumnCount + $Page->DetailColumnCount) ?>"><?= $Language->phrase("RptGrandSummary") ?> <span class="ew-summary-count">(<span class="ew-aggregate-caption"><?= $Language->phrase("RptCnt") ?></span><span class="ew-aggregate-equal"><?= $Language->phrase("AggregateEqual") ?></span><span class="ew-aggregate-value"><?= FormatNumber($Page->TotalCount, Config("DEFAULT_NUMBER_FORMAT")) ?></span>)</span></td></tr>
-<?php } else { ?>
-    <tr<?= $Page->rowAttributes() ?>><td colspan="<?= ($Page->GroupColumnCount + $Page->DetailColumnCount) ?>"><?= $Language->phrase("RptGrandSummary") ?> <span class="ew-summary-count">(<?= FormatNumber($Page->TotalCount, Config("DEFAULT_NUMBER_FORMAT")) ?><?= $Language->phrase("RptDtlRec") ?>)</span></td></tr>
-<?php } ?>
 </tfoot>
 </table>
 </div>

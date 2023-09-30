@@ -22,45 +22,6 @@ loadjs.ready(["wrapper", "head"], function () {
         .setPageId("list")
         .setSubmitWithFetch(<?= $Page->UseAjaxActions ? "true" : "false" ?>)
         .setFormKeyCountName("<?= $Page->FormKeyCountName ?>")
-
-        // Add fields
-        .setFields([
-            ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
-            ["visit_type_id", [fields.visit_type_id.visible && fields.visit_type_id.required ? ew.Validators.required(fields.visit_type_id.caption) : null], fields.visit_type_id.isInvalid],
-            ["user_id", [fields.user_id.visible && fields.user_id.required ? ew.Validators.required(fields.user_id.caption) : null], fields.user_id.isInvalid],
-            ["insurance_id", [fields.insurance_id.visible && fields.insurance_id.required ? ew.Validators.required(fields.insurance_id.caption) : null], fields.insurance_id.isInvalid],
-            ["visit_date", [fields.visit_date.visible && fields.visit_date.required ? ew.Validators.required(fields.visit_date.caption) : null, ew.Validators.datetime(fields.visit_date.clientFormatPattern)], fields.visit_date.isInvalid]
-        ])
-
-        // Check empty row
-        .setEmptyRow(
-            function (rowIndex) {
-                let fobj = this.getForm(),
-                    fields = [["patient_id",false],["visit_type_id",false],["user_id",false],["insurance_id",false],["visit_date",false]];
-                if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
-                    return false;
-                return true;
-            }
-        )
-
-        // Form_CustomValidate
-        .setCustomValidate(
-            function (fobj) { // DO NOT CHANGE THIS LINE! (except for adding "async" keyword)!
-                    // Your custom validation code here, return false if invalid.
-                    return true;
-                }
-        )
-
-        // Use JavaScript validation or not
-        .setValidateRequired(ew.CLIENT_VALIDATE)
-
-        // Dynamic selection lists
-        .setLists({
-            "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
-            "visit_type_id": <?= $Page->visit_type_id->toClientList($Page) ?>,
-            "user_id": <?= $Page->user_id->toClientList($Page) ?>,
-            "insurance_id": <?= $Page->insurance_id->toClientList($Page) ?>,
-        })
         .build();
     window[form.id] = form;
     currentForm = form;
@@ -120,7 +81,7 @@ $Page->showMessage();
 <input type="hidden" name="fk_patient_id" value="<?= HtmlEncode($Page->patient_id->getSessionValue()) ?>">
 <?php } ?>
 <div id="gmp_jdh_patient_visits" class="card-body ew-grid-middle-panel <?= $Page->TableContainerClass ?>" style="<?= $Page->TableContainerStyle ?>">
-<?php if ($Page->TotalRecords > 0 || $Page->isAdd() || $Page->isCopy() || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
+<?php if ($Page->TotalRecords > 0 || $Page->isGridEdit() || $Page->isMultiEdit()) { ?>
 <table id="tbl_jdh_patient_visitslist" class="<?= $Page->TableClass ?>"><!-- .ew-table -->
 <thead>
     <tr class="ew-table-header">
@@ -162,14 +123,6 @@ while ($Page->RecordCount < $Page->StopRecord) {
     $Page->RecordCount++;
     if ($Page->RecordCount >= $Page->StartRecord) {
         $Page->setupRow();
-
-        // Skip 1) delete row / empty row for confirm page, 2) hidden row
-        if (
-            $Page->RowAction != "delete" &&
-            $Page->RowAction != "insertdelete" &&
-            !($Page->RowAction == "insert" && $Page->isConfirm() && $Page->emptyRow()) &&
-            $Page->RowAction != "hide"
-        ) {
 ?>
     <tr <?= $Page->rowAttributes() ?>>
 <?php
@@ -178,235 +131,42 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
     <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<?php if ($Page->patient_id->getSessionValue() != "") { ?>
-<span<?= $Page->patient_id->viewAttributes() ?>>
-<span class="form-control-plaintext"><?= $Page->patient_id->getDisplayValue($Page->patient_id->ViewValue) ?></span></span>
-<input type="hidden" id="x<?= $Page->RowIndex ?>_patient_id" name="x<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>" data-hidden="1">
-<?php } else { ?>
-<span id="el<?= $Page->RowCount ?>_jdh_patient_visits_patient_id" class="el_jdh_patient_visits_patient_id">
-    <select
-        id="x<?= $Page->RowIndex ?>_patient_id"
-        name="x<?= $Page->RowIndex ?>_patient_id"
-        class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
-        data-select2-id="<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_patient_id"
-        data-table="jdh_patient_visits"
-        data-field="x_patient_id"
-        data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->patient_id->getPlaceHolder()) ?>"
-        <?= $Page->patient_id->editAttributes() ?>>
-        <?= $Page->patient_id->selectOptionListHtml("x{$Page->RowIndex}_patient_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
-<?= $Page->patient_id->Lookup->getParamTag($Page, "p_x" . $Page->RowIndex . "_patient_id") ?>
-<script>
-loadjs.ready("<?= $Page->FormName ?>", function() {
-    var options = { name: "x<?= $Page->RowIndex ?>_patient_id", selectId: "<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_patient_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (<?= $Page->FormName ?>.lists.patient_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Page->RowIndex ?>_patient_id", form: "<?= $Page->FormName ?>" };
-    } else {
-        options.ajax = { id: "x<?= $Page->RowIndex ?>_patient_id", form: "<?= $Page->FormName ?>", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumInputLength = ew.selectMinimumInputLength;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_visits.fields.patient_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
-</span>
-<?php } ?>
-<input type="hidden" data-table="jdh_patient_visits" data-field="x_patient_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_patient_id" id="o<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_patient_visits_patient_id" class="el_jdh_patient_visits_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
-<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->visit_type_id->Visible) { // visit_type_id ?>
         <td data-name="visit_type_id"<?= $Page->visit_type_id->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_patient_visits_visit_type_id" class="el_jdh_patient_visits_visit_type_id">
-    <select
-        id="x<?= $Page->RowIndex ?>_visit_type_id"
-        name="x<?= $Page->RowIndex ?>_visit_type_id"
-        class="form-select ew-select<?= $Page->visit_type_id->isInvalidClass() ?>"
-        data-select2-id="<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_visit_type_id"
-        data-table="jdh_patient_visits"
-        data-field="x_visit_type_id"
-        data-value-separator="<?= $Page->visit_type_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->visit_type_id->getPlaceHolder()) ?>"
-        <?= $Page->visit_type_id->editAttributes() ?>>
-        <?= $Page->visit_type_id->selectOptionListHtml("x{$Page->RowIndex}_visit_type_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Page->visit_type_id->getErrorMessage() ?></div>
-<?= $Page->visit_type_id->Lookup->getParamTag($Page, "p_x" . $Page->RowIndex . "_visit_type_id") ?>
-<script>
-loadjs.ready("<?= $Page->FormName ?>", function() {
-    var options = { name: "x<?= $Page->RowIndex ?>_visit_type_id", selectId: "<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_visit_type_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (<?= $Page->FormName ?>.lists.visit_type_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Page->RowIndex ?>_visit_type_id", form: "<?= $Page->FormName ?>" };
-    } else {
-        options.ajax = { id: "x<?= $Page->RowIndex ?>_visit_type_id", form: "<?= $Page->FormName ?>", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_visits.fields.visit_type_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
-</span>
-<input type="hidden" data-table="jdh_patient_visits" data-field="x_visit_type_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_visit_type_id" id="o<?= $Page->RowIndex ?>_visit_type_id" value="<?= HtmlEncode($Page->visit_type_id->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_patient_visits_visit_type_id" class="el_jdh_patient_visits_visit_type_id">
 <span<?= $Page->visit_type_id->viewAttributes() ?>>
 <?= $Page->visit_type_id->getViewValue() ?></span>
 </span>
-<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->user_id->Visible) { // user_id ?>
         <td data-name="user_id"<?= $Page->user_id->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_patient_visits_user_id" class="el_jdh_patient_visits_user_id">
-    <select
-        id="x<?= $Page->RowIndex ?>_user_id"
-        name="x<?= $Page->RowIndex ?>_user_id"
-        class="form-select ew-select<?= $Page->user_id->isInvalidClass() ?>"
-        data-select2-id="<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_user_id"
-        data-table="jdh_patient_visits"
-        data-field="x_user_id"
-        data-value-separator="<?= $Page->user_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->user_id->getPlaceHolder()) ?>"
-        <?= $Page->user_id->editAttributes() ?>>
-        <?= $Page->user_id->selectOptionListHtml("x{$Page->RowIndex}_user_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Page->user_id->getErrorMessage() ?></div>
-<?= $Page->user_id->Lookup->getParamTag($Page, "p_x" . $Page->RowIndex . "_user_id") ?>
-<script>
-loadjs.ready("<?= $Page->FormName ?>", function() {
-    var options = { name: "x<?= $Page->RowIndex ?>_user_id", selectId: "<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_user_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (<?= $Page->FormName ?>.lists.user_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Page->RowIndex ?>_user_id", form: "<?= $Page->FormName ?>" };
-    } else {
-        options.ajax = { id: "x<?= $Page->RowIndex ?>_user_id", form: "<?= $Page->FormName ?>", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_visits.fields.user_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
-</span>
-<input type="hidden" data-table="jdh_patient_visits" data-field="x_user_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_user_id" id="o<?= $Page->RowIndex ?>_user_id" value="<?= HtmlEncode($Page->user_id->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_patient_visits_user_id" class="el_jdh_patient_visits_user_id">
 <span<?= $Page->user_id->viewAttributes() ?>>
 <?= $Page->user_id->getViewValue() ?></span>
 </span>
-<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->insurance_id->Visible) { // insurance_id ?>
         <td data-name="insurance_id"<?= $Page->insurance_id->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_patient_visits_insurance_id" class="el_jdh_patient_visits_insurance_id">
-    <select
-        id="x<?= $Page->RowIndex ?>_insurance_id"
-        name="x<?= $Page->RowIndex ?>_insurance_id"
-        class="form-select ew-select<?= $Page->insurance_id->isInvalidClass() ?>"
-        data-select2-id="<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_insurance_id"
-        data-table="jdh_patient_visits"
-        data-field="x_insurance_id"
-        data-value-separator="<?= $Page->insurance_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->insurance_id->getPlaceHolder()) ?>"
-        <?= $Page->insurance_id->editAttributes() ?>>
-        <?= $Page->insurance_id->selectOptionListHtml("x{$Page->RowIndex}_insurance_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Page->insurance_id->getErrorMessage() ?></div>
-<?= $Page->insurance_id->Lookup->getParamTag($Page, "p_x" . $Page->RowIndex . "_insurance_id") ?>
-<script>
-loadjs.ready("<?= $Page->FormName ?>", function() {
-    var options = { name: "x<?= $Page->RowIndex ?>_insurance_id", selectId: "<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_insurance_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (<?= $Page->FormName ?>.lists.insurance_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Page->RowIndex ?>_insurance_id", form: "<?= $Page->FormName ?>" };
-    } else {
-        options.ajax = { id: "x<?= $Page->RowIndex ?>_insurance_id", form: "<?= $Page->FormName ?>", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_patient_visits.fields.insurance_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
-</span>
-<input type="hidden" data-table="jdh_patient_visits" data-field="x_insurance_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_insurance_id" id="o<?= $Page->RowIndex ?>_insurance_id" value="<?= HtmlEncode($Page->insurance_id->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_patient_visits_insurance_id" class="el_jdh_patient_visits_insurance_id">
 <span<?= $Page->insurance_id->viewAttributes() ?>>
 <?= $Page->insurance_id->getViewValue() ?></span>
 </span>
-<?php } ?>
 </td>
     <?php } ?>
     <?php if ($Page->visit_date->Visible) { // visit_date ?>
         <td data-name="visit_date"<?= $Page->visit_date->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_patient_visits_visit_date" class="el_jdh_patient_visits_visit_date">
-<input type="<?= $Page->visit_date->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_visit_date" id="x<?= $Page->RowIndex ?>_visit_date" data-table="jdh_patient_visits" data-field="x_visit_date" value="<?= $Page->visit_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->visit_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->visit_date->formatPattern()) ?>"<?= $Page->visit_date->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Page->visit_date->getErrorMessage() ?></div>
-<?php if (!$Page->visit_date->ReadOnly && !$Page->visit_date->Disabled && !isset($Page->visit_date->EditAttrs["readonly"]) && !isset($Page->visit_date->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
-    let format = "<?= DateFormat(11) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_visit_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
-</span>
-<input type="hidden" data-table="jdh_patient_visits" data-field="x_visit_date" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_visit_date" id="o<?= $Page->RowIndex ?>_visit_date" value="<?= HtmlEncode($Page->visit_date->OldValue) ?>">
-<?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Page->RowCount ?>_jdh_patient_visits_visit_date" class="el_jdh_patient_visits_visit_date">
 <span<?= $Page->visit_date->viewAttributes() ?>>
 <?= $Page->visit_date->getViewValue() ?></span>
 </span>
-<?php } ?>
 </td>
     <?php } ?>
 <?php
@@ -414,44 +174,15 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
 $Page->ListOptions->render("body", "right", $Page->RowCount);
 ?>
     </tr>
-<?php if ($Page->RowType == ROWTYPE_ADD || $Page->RowType == ROWTYPE_EDIT) { ?>
-<script data-rowindex="<?= $Page->RowIndex ?>">
-loadjs.ready(["<?= $Page->FormName ?>","load"], () => <?= $Page->FormName ?>.updateLists(<?= $Page->RowIndex ?><?= $Page->RowIndex === '$rowindex$' ? ", true" : "" ?>));
-</script>
-<?php } ?>
 <?php
     }
-    } // End delete row checking
-    if (
-        $Page->Recordset &&
-        !$Page->Recordset->EOF &&
-        $Page->RowIndex !== '$rowindex$' &&
-        (!$Page->isGridAdd() || $Page->CurrentMode == "copy") &&
-        (!(($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0))
-    ) {
+    if (!$Page->isGridAdd()) {
         $Page->Recordset->moveNext();
-    }
-    // Reset for template row
-    if ($Page->RowIndex === '$rowindex$') {
-        $Page->RowIndex = 0;
-    }
-    // Reset inline add/copy row
-    if (($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0) {
-        $Page->RowIndex = 1;
     }
 }
 ?>
 </tbody>
 </table><!-- /.ew-table -->
-<?php } ?>
-<?php if ($Page->isAdd() || $Page->isCopy()) { ?>
-<input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
-<input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
-<?php } ?>
-<?php if ($Page->isGridAdd()) { ?>
-<input type="hidden" name="action" id="action" value="gridinsert">
-<input type="hidden" name="<?= $Page->FormKeyCountName ?>" id="<?= $Page->FormKeyCountName ?>" value="<?= $Page->KeyCount ?>">
-<?= $Page->MultiSelectKey ?>
 <?php } ?>
 </div><!-- /.ew-grid-middle-panel -->
 <?php if (!$Page->CurrentAction && !$Page->UseAjaxActions) { ?>
