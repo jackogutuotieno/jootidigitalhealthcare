@@ -17,7 +17,7 @@ return [
         "SERVER_PASSWORD" => "theclinicianshub_1044", // SMTP server password
     ],
     "JWT" => [
-        "SECRET_KEY" => "tsN8v3f1UM6apw70", // API Secret Key
+        "SECRET_KEY" => "ne57CWetB8zXaArx", // API Secret Key
         "ALGORITHM" => "HS512", // API Algorithm
         "AUTH_HEADER" => "X-Authorization", // API Auth Header (Note: The "Authorization" header is removed by IIS, use "X-Authorization" instead.)
         "NOT_BEFORE_TIME" => 0, // API access time before login

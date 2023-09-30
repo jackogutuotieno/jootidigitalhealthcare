@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhInvoiceItemsList extends JdhInvoiceItems
+class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhInvoiceItemsList";
+    public $PageObjName = "JdhPatientsInsuaranceList";
 
     // View file path
     public $View = null;
@@ -33,13 +33,13 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
     public $RenderingView = false;
 
     // Grid form hidden field names
-    public $FormName = "fjdh_invoice_itemslist";
+    public $FormName = "fjdh_patients_insuarancelist";
     public $FormActionName = "";
     public $FormBlankRowName = "";
     public $FormKeyCountName = "";
 
     // CSS class/style
-    public $CurrentPageName = "jdhinvoiceitemslist";
+    public $CurrentPageName = "jdhpatientsinsuarancelist";
 
     // Page URLs
     public $AddUrl;
@@ -145,8 +145,8 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         $this->FormActionName = Config("FORM_ROW_ACTION_NAME");
         $this->FormBlankRowName = Config("FORM_BLANK_ROW_NAME");
         $this->FormKeyCountName = Config("FORM_KEY_COUNT_NAME");
-        $this->TableVar = 'jdh_invoice_items';
-        $this->TableName = 'jdh_invoice_items';
+        $this->TableVar = 'jdh_patients_insuarance';
+        $this->TableName = 'jdh_patients_insuarance';
 
         // Table CSS class
         $this->TableClass = "table table-bordered table-hover table-sm ew-table";
@@ -166,26 +166,26 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_invoice_items)
-        if (!isset($GLOBALS["jdh_invoice_items"]) || get_class($GLOBALS["jdh_invoice_items"]) == PROJECT_NAMESPACE . "jdh_invoice_items") {
-            $GLOBALS["jdh_invoice_items"] = &$this;
+        // Table object (jdh_patients_insuarance)
+        if (!isset($GLOBALS["jdh_patients_insuarance"]) || get_class($GLOBALS["jdh_patients_insuarance"]) == PROJECT_NAMESPACE . "jdh_patients_insuarance") {
+            $GLOBALS["jdh_patients_insuarance"] = &$this;
         }
 
         // Page URL
         $pageUrl = $this->pageUrl(false);
 
         // Initialize URLs
-        $this->AddUrl = "jdhinvoiceitemsadd";
+        $this->AddUrl = "jdhpatientsinsuaranceadd";
         $this->InlineAddUrl = $pageUrl . "action=add";
         $this->GridAddUrl = $pageUrl . "action=gridadd";
         $this->GridEditUrl = $pageUrl . "action=gridedit";
         $this->MultiEditUrl = $pageUrl . "action=multiedit";
-        $this->MultiDeleteUrl = "jdhinvoiceitemsdelete";
-        $this->MultiUpdateUrl = "jdhinvoiceitemsupdate";
+        $this->MultiDeleteUrl = "jdhpatientsinsuarancedelete";
+        $this->MultiUpdateUrl = "jdhpatientsinsuaranceupdate";
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_invoice_items');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_patients_insuarance');
         }
 
         // Start timer
@@ -340,7 +340,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
                 $pageName = GetPageName($url);
                 if ($pageName != $this->getListUrl()) { // Not List page => View page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhinvoiceitemsview"; // If View page, no primary button
+                    $result["view"] = $pageName == "jdhpatientsinsuaranceview"; // If View page, no primary button
                 } else { // List page
                     // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
@@ -433,7 +433,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['id'];
+            $key .= @$ar['patient_id'];
         }
         return $key;
     }
@@ -446,7 +446,10 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->id->Visible = false;
+            $this->patient_id->Visible = false;
+        }
+        if ($this->isAddOrEdit()) {
+            $this->submitted_by_user_id->Visible = false;
         }
     }
 
@@ -615,9 +618,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         // View
         $this->View = Get(Config("VIEW"));
 
-        // Create form object
-        $CurrentForm = new HttpForm();
-
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -644,11 +644,11 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
 
         // Setup export options
         $this->setupExportOptions();
-        $this->id->setVisibility();
-        $this->service_id->setVisibility();
-        $this->description->Visible = false;
-        $this->submittedby_user_id->setVisibility();
-        $this->date_created->setVisibility();
+        $this->patient_id->setVisibility();
+        $this->patient_name->setVisibility();
+        $this->insurance_name->setVisibility();
+        $this->submitted_by_user_id->Visible = false;
+        $this->patient_dob->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -680,12 +680,9 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
             $this->ListActions->add($name, $action);
         }
 
-        // Load default values for add
-        $this->loadDefaultValues();
-
         // Update form name to avoid conflict
         if ($this->IsModal) {
-            $this->FormName = "fjdh_invoice_itemsgrid";
+            $this->FormName = "fjdh_patients_insuarancegrid";
         }
 
         // Set up page action
@@ -720,35 +717,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
             $this->setupBreadcrumb();
         }
 
-        // Check QueryString parameters
-        if (Get("action") !== null) {
-            $this->CurrentAction = Get("action");
-        } else {
-            if (Post("action") !== null) {
-                $this->CurrentAction = Post("action"); // Get action
-            }
-        }
-
-        // Clear inline mode
-        if ($this->isCancel()) {
-            $this->clearInlineMode();
-        }
-
-        // Switch to inline add mode
-        if ($this->isAdd() || $this->isCopy()) {
-            $this->inlineAddMode();
-        // Insert Inline
-        } elseif (IsPost() && $this->isInsert() && Session(SESSION_INLINE_MODE) == "add") {
-            $this->setKey(Post($this->OldKeyName));
-            // Return JSON error message if UseAjaxActions
-            if (!$this->inlineInsert() && $this->UseAjaxActions) {
-                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
-                $this->clearFailureMessage();
-                $this->terminate();
-                return;
-            }
-        }
-
         // Hide list options
         if ($this->isExport()) {
             $this->ListOptions->hideAllOptions(["sequence"]);
@@ -772,8 +740,33 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
             $this->OtherOptions->hideAllOptions();
         }
 
+        // Get default search criteria
+        AddFilter($this->DefaultSearchWhere, $this->basicSearchWhere(true));
+
+        // Get basic search values
+        $this->loadBasicSearchValues();
+
+        // Process filter list
+        if ($this->processFilterList()) {
+            $this->terminate();
+            return;
+        }
+
+        // Restore search parms from Session if not searching / reset / export
+        if (($this->isExport() || $this->Command != "search" && $this->Command != "reset" && $this->Command != "resetall") && $this->Command != "json" && $this->checkSearchParms()) {
+            $this->restoreSearchParms();
+        }
+
+        // Call Recordset SearchValidated event
+        $this->recordsetSearchValidated();
+
         // Set up sorting order
         $this->setupSortOrder();
+
+        // Get basic search criteria
+        if (!$this->hasInvalidFields()) {
+            $srchBasic = $this->basicSearchWhere();
+        }
 
         // Restore display records
         if ($this->Command != "json" && $this->getRecordsPerPage() != "") {
@@ -781,6 +774,35 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         } else {
             $this->DisplayRecords = 20; // Load default
             $this->setRecordsPerPage($this->DisplayRecords); // Save default to Session
+        }
+
+        // Load search default if no existing search criteria
+        if (!$this->checkSearchParms()) {
+            // Load basic search from default
+            $this->BasicSearch->loadDefault();
+            if ($this->BasicSearch->Keyword != "") {
+                $srchBasic = $this->basicSearchWhere();
+            }
+        }
+
+        // Build search criteria
+        if ($query) {
+            AddFilter($this->SearchWhere, $query);
+        } else {
+            AddFilter($this->SearchWhere, $srchAdvanced);
+            AddFilter($this->SearchWhere, $srchBasic);
+        }
+
+        // Call Recordset_Searching event
+        $this->recordsetSearching($this->SearchWhere);
+
+        // Save search criteria
+        if ($this->Command == "search" && !$this->RestoreSearch) {
+            $this->setSearchWhere($this->SearchWhere); // Save to Session
+            $this->StartRecord = 1; // Reset start record counter
+            $this->setStartRecordNumber($this->StartRecord);
+        } elseif ($this->Command != "json" && !$query) {
+            $this->SearchWhere = $this->getSearchWhere();
         }
 
         // Build filter
@@ -949,54 +971,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         }
     }
 
-    // Exit inline mode
-    protected function clearInlineMode()
-    {
-        $this->LastAction = $this->CurrentAction; // Save last action
-        $this->CurrentAction = ""; // Clear action
-        $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
-    }
-
-    // Switch to Inline Add mode
-    protected function inlineAddMode()
-    {
-        global $Security, $Language;
-        if (!$Security->canAdd()) {
-            return false; // Add not allowed
-        }
-        $this->CurrentAction = "add";
-        $_SESSION[SESSION_INLINE_MODE] = "add"; // Enable inline add
-        return true;
-    }
-
-    // Perform update to Inline Add/Copy record
-    protected function inlineInsert()
-    {
-        global $Language, $CurrentForm;
-        $rsold = $this->loadOldRecord(); // Load old record
-        $CurrentForm->Index = 0;
-        $this->loadFormValues(); // Get form values
-
-        // Validate form
-        if (!$this->validateForm()) {
-            $this->EventCancelled = true; // Set event cancelled
-            $this->CurrentAction = "add"; // Stay in add mode
-            return false;
-        }
-        $this->SendEmail = true; // Send email on add success
-        if ($this->addRow($rsold)) { // Add record
-            if ($this->getSuccessMessage() == "") {
-                $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up add success message
-            }
-            $this->clearInlineMode(); // Clear inline add mode
-            return true;
-        } else { // Add failed
-            $this->EventCancelled = true; // Set event cancelled
-            $this->CurrentAction = "add"; // Stay in add mode
-            return false;
-        }
-    }
-
     // Build filter for all keys
     protected function buildKeyFilter()
     {
@@ -1028,13 +1002,187 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         return $wrkFilter;
     }
 
-    // Reset form status
-    public function resetFormError()
+    // Get list of filters
+    public function getFilterList()
     {
-        $this->id->clearErrorMessage();
-        $this->service_id->clearErrorMessage();
-        $this->submittedby_user_id->clearErrorMessage();
-        $this->date_created->clearErrorMessage();
+        global $UserProfile;
+
+        // Initialize
+        $filterList = "";
+        $savedFilterList = "";
+
+        // Load server side filters
+        if (Config("SEARCH_FILTER_OPTION") == "Server" && isset($UserProfile)) {
+            $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_patients_insuarancesrch");
+        }
+        $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
+        $filterList = Concat($filterList, $this->patient_name->AdvancedSearch->toJson(), ","); // Field patient_name
+        $filterList = Concat($filterList, $this->insurance_name->AdvancedSearch->toJson(), ","); // Field insurance_name
+        if ($this->BasicSearch->Keyword != "") {
+            $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
+            $filterList = Concat($filterList, $wrk, ",");
+        }
+
+        // Return filter list in JSON
+        if ($filterList != "") {
+            $filterList = "\"data\":{" . $filterList . "}";
+        }
+        if ($savedFilterList != "") {
+            $filterList = Concat($filterList, "\"filters\":" . $savedFilterList, ",");
+        }
+        return ($filterList != "") ? "{" . $filterList . "}" : "null";
+    }
+
+    // Process filter list
+    protected function processFilterList()
+    {
+        global $UserProfile;
+        if (Post("ajax") == "savefilters") { // Save filter request (Ajax)
+            $filters = Post("filters");
+            $UserProfile->setSearchFilters(CurrentUserName(), "fjdh_patients_insuarancesrch", $filters);
+            WriteJson([["success" => true]]); // Success
+            return true;
+        } elseif (Post("cmd") == "resetfilter") {
+            $this->restoreFilterList();
+        }
+        return false;
+    }
+
+    // Restore list of filters
+    protected function restoreFilterList()
+    {
+        // Return if not reset filter
+        if (Post("cmd") !== "resetfilter") {
+            return false;
+        }
+        $filter = json_decode(Post("filter"), true);
+        $this->Command = "search";
+
+        // Field patient_id
+        $this->patient_id->AdvancedSearch->SearchValue = @$filter["x_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchOperator = @$filter["z_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchCondition = @$filter["v_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchValue2 = @$filter["y_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_id"];
+        $this->patient_id->AdvancedSearch->save();
+
+        // Field patient_name
+        $this->patient_name->AdvancedSearch->SearchValue = @$filter["x_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchOperator = @$filter["z_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchCondition = @$filter["v_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchValue2 = @$filter["y_patient_name"];
+        $this->patient_name->AdvancedSearch->SearchOperator2 = @$filter["w_patient_name"];
+        $this->patient_name->AdvancedSearch->save();
+
+        // Field insurance_name
+        $this->insurance_name->AdvancedSearch->SearchValue = @$filter["x_insurance_name"];
+        $this->insurance_name->AdvancedSearch->SearchOperator = @$filter["z_insurance_name"];
+        $this->insurance_name->AdvancedSearch->SearchCondition = @$filter["v_insurance_name"];
+        $this->insurance_name->AdvancedSearch->SearchValue2 = @$filter["y_insurance_name"];
+        $this->insurance_name->AdvancedSearch->SearchOperator2 = @$filter["w_insurance_name"];
+        $this->insurance_name->AdvancedSearch->save();
+        $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
+        $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
+    }
+
+    // Show list of filters
+    public function showFilterList()
+    {
+        global $Language;
+
+        // Initialize
+        $filterList = "";
+        $captionClass = $this->isExport("email") ? "ew-filter-caption-email" : "ew-filter-caption";
+        $captionSuffix = $this->isExport("email") ? ": " : "";
+        if ($this->BasicSearch->Keyword != "") {
+            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $Language->phrase("BasicSearchKeyword") . "</span>" . $captionSuffix . $this->BasicSearch->Keyword . "</div>";
+        }
+
+        // Show Filters
+        if ($filterList != "") {
+            $message = "<div id=\"ew-filter-list\" class=\"callout callout-info d-table\"><div id=\"ew-current-filters\">" .
+                $Language->phrase("CurrentFilters") . "</div>" . $filterList . "</div>";
+            $this->messageShowing($message, "");
+            Write($message);
+        } else { // Output empty tag
+            Write("<div id=\"ew-filter-list\"></div>");
+        }
+    }
+
+    // Return basic search WHERE clause based on search keyword and type
+    public function basicSearchWhere($default = false)
+    {
+        global $Security;
+        $searchStr = "";
+        if (!$Security->canSearch()) {
+            return "";
+        }
+
+        // Fields to search
+        $searchFlds = [];
+        $searchFlds[] = &$this->patient_name;
+        $searchFlds[] = &$this->insurance_name;
+        $searchKeyword = $default ? $this->BasicSearch->KeywordDefault : $this->BasicSearch->Keyword;
+        $searchType = $default ? $this->BasicSearch->TypeDefault : $this->BasicSearch->Type;
+
+        // Get search SQL
+        if ($searchKeyword != "") {
+            $ar = $this->BasicSearch->keywordList($default);
+            $searchStr = GetQuickSearchFilter($searchFlds, $ar, $searchType, Config("BASIC_SEARCH_ANY_FIELDS"), $this->Dbid);
+            if (!$default && in_array($this->Command, ["", "reset", "resetall"])) {
+                $this->Command = "search";
+            }
+        }
+        if (!$default && $this->Command == "search") {
+            $this->BasicSearch->setKeyword($searchKeyword);
+            $this->BasicSearch->setType($searchType);
+
+            // Clear rules for QueryBuilder
+            $this->setSessionRules("");
+        }
+        return $searchStr;
+    }
+
+    // Check if search parm exists
+    protected function checkSearchParms()
+    {
+        // Check basic search
+        if ($this->BasicSearch->issetSession()) {
+            return true;
+        }
+        return false;
+    }
+
+    // Clear all search parameters
+    protected function resetSearchParms()
+    {
+        // Clear search WHERE clause
+        $this->SearchWhere = "";
+        $this->setSearchWhere($this->SearchWhere);
+
+        // Clear basic search parameters
+        $this->resetBasicSearchParms();
+    }
+
+    // Load advanced search default values
+    protected function loadAdvancedSearchDefault()
+    {
+        return false;
+    }
+
+    // Clear all basic search parameters
+    protected function resetBasicSearchParms()
+    {
+        $this->BasicSearch->unsetSession();
+    }
+
+    // Restore all search parameters
+    protected function restoreSearchParms()
+    {
+        $this->RestoreSearch = true;
+
+        // Restore basic search values
+        $this->BasicSearch->load();
     }
 
     // Set up sort parameters
@@ -1042,7 +1190,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
     {
         // Load default Sorting Order
         if ($this->Command != "json") {
-            $defaultSort = ""; // Set up default sort
+            $defaultSort = $this->patient_id->Expression . " ASC" . ", " . $this->insurance_name->Expression . " ASC"; // Set up default sort
             if ($this->getSessionOrderBy() == "" && $defaultSort != "") {
                 $this->setSessionOrderBy($defaultSort);
             }
@@ -1052,10 +1200,10 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
-            $this->updateSort($this->id); // id
-            $this->updateSort($this->service_id); // service_id
-            $this->updateSort($this->submittedby_user_id); // submittedby_user_id
-            $this->updateSort($this->date_created); // date_created
+            $this->updateSort($this->patient_id); // patient_id
+            $this->updateSort($this->patient_name); // patient_name
+            $this->updateSort($this->insurance_name); // insurance_name
+            $this->updateSort($this->patient_dob); // patient_dob
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1071,15 +1219,20 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
     {
         // Check if reset command
         if (StartsString("reset", $this->Command)) {
+            // Reset search criteria
+            if ($this->Command == "reset" || $this->Command == "resetall") {
+                $this->resetSearchParms();
+            }
+
             // Reset (clear) sorting order
             if ($this->Command == "resetsort") {
                 $orderBy = "";
                 $this->setSessionOrderBy($orderBy);
-                $this->id->setSort("");
-                $this->service_id->setSort("");
-                $this->description->setSort("");
-                $this->submittedby_user_id->setSort("");
-                $this->date_created->setSort("");
+                $this->patient_id->setSort("");
+                $this->patient_name->setSort("");
+                $this->insurance_name->setSort("");
+                $this->submitted_by_user_id->setSort("");
+                $this->patient_dob->setSort("");
             }
 
             // Reset start position
@@ -1099,24 +1252,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         $item->OnLeft = false;
         $item->Visible = false;
 
-        // "view"
-        $item = &$this->ListOptions->add("view");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canView();
-        $item->OnLeft = false;
-
-        // "edit"
-        $item = &$this->ListOptions->add("edit");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canEdit();
-        $item->OnLeft = false;
-
-        // "copy"
-        $item = &$this->ListOptions->add("copy");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canAdd() && $this->isAdd();
-        $item->OnLeft = false;
-
         // List actions
         $item = &$this->ListOptions->add("listactions");
         $item->CssClass = "text-nowrap";
@@ -1127,7 +1262,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
 
         // "checkbox"
         $item = &$this->ListOptions->add("checkbox");
-        $item->Visible = $Security->canDelete();
+        $item->Visible = false;
         $item->OnLeft = false;
         $item->Header = "<div class=\"form-check\"><input type=\"checkbox\" name=\"key\" id=\"key\" class=\"form-check-input\" data-ew-action=\"select-all-keys\"></div>";
         if ($item->OnLeft) {
@@ -1173,81 +1308,8 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
 
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
-
-        // Set up row action and key
-        if ($CurrentForm && is_numeric($this->RowIndex) && $this->RowType != "view") {
-            $CurrentForm->Index = $this->RowIndex;
-            $actionName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormActionName);
-            $oldKeyName = str_replace("k_", "k" . $this->RowIndex . "_", $this->OldKeyName);
-            $blankRowName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormBlankRowName);
-            if ($this->RowAction != "") {
-                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $actionName . "\" id=\"" . $actionName . "\" value=\"" . $this->RowAction . "\">";
-            }
-            $oldKey = $this->getKey(false); // Get from OldValue
-            if ($oldKeyName != "" && $oldKey != "") {
-                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $oldKeyName . "\" id=\"" . $oldKeyName . "\" value=\"" . HtmlEncode($oldKey) . "\">";
-            }
-            if ($this->RowAction == "insert" && $this->isConfirm() && $this->emptyRow()) {
-                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $blankRowName . "\" id=\"" . $blankRowName . "\" value=\"1\">";
-            }
-        }
         $pageUrl = $this->pageUrl(false);
-
-        // "copy"
-        $opt = $this->ListOptions["copy"];
-        if ($this->isInlineAddRow() || $this->isInlineCopyRow()) { // Inline Add/Copy
-            $this->ListOptions->CustomItem = "copy"; // Show copy column only
-            $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
-            $insertCaption = $Language->phrase("InsertLink");
-            $insertTitle = HtmlTitle($insertCaption);
-            $cancelCaption = $Language->phrase("CancelLink");
-            $cancelTitle = HtmlTitle($cancelCaption);
-            $inlineInsertUrl = GetUrl($this->pageName());
-            if ($this->UseAjaxActions) {
-                $opt->Body = <<<INLINEADDAJAX
-                    <div{$divClass}>
-                        <button type="button" class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" data-ew-action="inline" data-action="insert" data-key="" data-url="{$inlineInsertUrl}">{$insertCaption}</button>
-                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel">{$cancelCaption}</button>
-                    </div>
-                    INLINEADDAJAX;
-            } else {
-                $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
-                $opt->Body = <<<INLINEADD
-                    <div{$divClass}>
-                        <button class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" form="fjdh_invoice_itemslist" formaction="{$inlineInsertUrl}">{$insertCaption}</button>
-                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$insertTitle}" href="{$cancelurl}">{$cancelCaption}</a>
-                        <input type="hidden" name="action" id="action" value="insert">
-                    </div>
-                    INLINEADD;
-            }
-            return;
-        }
-        if ($this->CurrentMode == "view") {
-            // "view"
-            $opt = $this->ListOptions["view"];
-            $viewcaption = HtmlTitle($Language->phrase("ViewLink"));
-            if ($Security->canView()) {
-                if ($this->ModalView && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_invoice_items\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-caption=\"" . $viewcaption . "\" href=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\">" . $Language->phrase("ViewLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
-
-            // "edit"
-            $opt = $this->ListOptions["edit"];
-            $editcaption = HtmlTitle($Language->phrase("EditLink"));
-            if ($Security->canEdit()) {
-                if ($this->ModalEdit && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_invoice_items\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
-                } else {
-                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
-                }
-            } else {
-                $opt->Body = "";
-            }
+        if ($this->CurrentMode == "view") { // Check view mode
         } // End View mode
 
         // Set up list action buttons
@@ -1261,11 +1323,11 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
                 if ($listaction->Select == ACTION_SINGLE && $allowed) {
                     $caption = $listaction->Caption;
                     $icon = ($listaction->Icon != "") ? "<i class=\"" . HtmlEncode(str_replace(" ew-icon", "", $listaction->Icon)) . "\" data-caption=\"" . HtmlTitle($caption) . "\"></i> " : "";
-                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_invoice_itemslist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
+                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_patients_insuarancelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
                     if ($link != "") {
                         $links[] = $link;
                         if ($body == "") { // Setup first button
-                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_invoice_itemslist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
+                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_patients_insuarancelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
                         }
                     }
                 }
@@ -1286,7 +1348,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
 
         // "checkbox"
         $opt = $this->ListOptions["checkbox"];
-        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
+        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->patient_id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
         $this->renderListOptionsExt();
 
         // Call ListOptions_Rendered event
@@ -1305,39 +1367,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
     {
         global $Language, $Security;
         $options = &$this->OtherOptions;
-        $option = $options["addedit"];
-
-        // Add
-        $item = &$option->add("add");
-        $addcaption = HtmlTitle($Language->phrase("AddLink"));
-        if ($this->ModalAdd && !IsMobile()) {
-            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-table=\"jdh_invoice_items\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("AddLink") . "</a>";
-        } else {
-            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
-        }
-        $item->Visible = $this->AddUrl != "" && $Security->canAdd();
-
-        // Inline Add
-        $item = &$option->add("inlineadd");
-        if ($this->UseAjaxActions) {
-            $item->Body = "<button class=\"ew-add-edit ew-inline-add\" title=\"" . $Language->phrase("InlineAddLink", true) . "\" data-caption=\"" . $Language->phrase("InlineAddLink", true) . "\" data-ew-action=\"inline\" data-action=\"add\" data-position=\"top\" data-url=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</button>";
-        } else {
-            $item->Body = "<a class=\"ew-add-edit ew-inline-add\" title=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</a>";
-        }
-        $item->Visible = $this->InlineAddUrl != "" && $Security->canAdd();
         $option = $options["action"];
-
-        // Add multi delete
-        $item = &$option->add("multidelete");
-        $item->Body = "<button type=\"button\" class=\"ew-action ew-multi-delete\" title=\"" .
-            HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" data-caption=\"" .
-            HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" form=\"fjdh_invoice_itemslist\"" .
-            " data-ew-action=\"" . ($this->UseAjaxActions ? "inline" : "submit") . "\"" .
-            ($this->UseAjaxActions ? " data-action=\"delete\"" : "") .
-            " data-url=\"" . GetUrl($this->MultiDeleteUrl) . "\"" .
-            ($this->InlineDelete ? " data-msg=\"" . HtmlEncode($Language->phrase("DeleteConfirm")) . "\" data-data='{\"action\":\"delete\"}'" : " data-data='{\"action\":\"show\"}'") .
-            ">" . $Language->phrase("DeleteSelectedLink") . "</button>";
-        $item->Visible = $Security->canDelete();
 
         // Show column list for column visibility
         if ($this->UseColumnVisibility) {
@@ -1345,10 +1375,10 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("id", $this->createColumnOption("id"));
-            $option->add("service_id", $this->createColumnOption("service_id"));
-            $option->add("submittedby_user_id", $this->createColumnOption("submittedby_user_id"));
-            $option->add("date_created", $this->createColumnOption("date_created"));
+            $option->add("patient_id", $this->createColumnOption("patient_id"));
+            $option->add("patient_name", $this->createColumnOption("patient_name"));
+            $option->add("insurance_name", $this->createColumnOption("insurance_name"));
+            $option->add("patient_dob", $this->createColumnOption("patient_dob"));
         }
 
         // Set up options default
@@ -1368,11 +1398,11 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
 
         // Filter button
         $item = &$this->FilterOptions->add("savecurrentfilter");
-        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_invoice_itemssrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
-        $item->Visible = false;
+        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_patients_insuarancesrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
+        $item->Visible = true;
         $item = &$this->FilterOptions->add("deletefilter");
-        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_invoice_itemssrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
-        $item->Visible = false;
+        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_patients_insuarancesrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
+        $item->Visible = true;
         $this->FilterOptions->UseDropDownButton = true;
         $this->FilterOptions->UseButtonGroup = !$this->FilterOptions->UseDropDownButton;
         $this->FilterOptions->DropDownButtonPhrase = $Language->phrase("Filters");
@@ -1410,7 +1440,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
                 $item = &$option->add("custom_" . $listaction->Action);
                 $caption = $listaction->Caption;
                 $icon = ($listaction->Icon != "") ? '<i class="' . HtmlEncode($listaction->Icon) . '" data-caption="' . HtmlEncode($caption) . '"></i>' . $caption : $caption;
-                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_invoice_itemslist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
+                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_patients_insuarancelist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
                 $item->Visible = $listaction->Allow;
             }
         }
@@ -1531,15 +1561,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
                 $this->StopRecord = $this->TotalRecords;
             }
         }
-
-        // Restore number of post back records
-        if ($CurrentForm && ($this->isConfirm() || $this->EventCancelled)) {
-            $CurrentForm->Index = -1;
-            if ($CurrentForm->hasValue($this->FormKeyCountName) && ($this->isGridAdd() || $this->isGridEdit() || $this->isConfirm())) {
-                $this->KeyCount = $CurrentForm->getValue($this->FormKeyCountName);
-                $this->StopRecord = $this->StartRecord + $this->KeyCount - 1;
-            }
-        }
         $this->RecordCount = $this->StartRecord - 1;
         if ($this->Recordset && !$this->Recordset->EOF) {
             // Nothing to do
@@ -1553,12 +1574,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         $this->RowType = ROWTYPE_AGGREGATEINIT;
         $this->resetAttributes();
         $this->renderRow();
-        if ($this->isAdd() || $this->isCopy() || $this->isInlineInserted()) {
-            $this->RowIndex = 0;
-            if ($this->UseInfiniteScroll) {
-                $this->StopRecord = $this->StartRecord; // Show this record only
-            }
-        }
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
             $this->RowIndex = '$rowindex$';
         }
@@ -1574,7 +1589,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
 
                 // Set row properties
                 $this->resetAttributes();
-                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_invoice_items", "data-rowtype" => ROWTYPE_ADD]);
+                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_patients_insuarance", "data-rowtype" => ROWTYPE_ADD]);
                 $this->RowAttrs->appendClass("ew-template");
                 // Render row
                 $this->RowType = ROWTYPE_ADD;
@@ -1635,7 +1650,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         $this->RowAttrs->merge([
             "data-rowindex" => $this->RowCount,
             "data-key" => $this->getKey(true),
-            "id" => "r" . $this->RowCount . "_jdh_invoice_items",
+            "id" => "r" . $this->RowCount . "_jdh_patients_insuarance",
             "data-rowtype" => $this->RowType,
             "class" => ($this->RowCount % 2 != 1) ? "ew-table-alt-row" : "",
         ]);
@@ -1650,67 +1665,14 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         $this->renderListOptions();
     }
 
-    // Load default values
-    protected function loadDefaultValues()
+    // Load basic search values
+    protected function loadBasicSearchValues()
     {
-    }
-
-    // Load form values
-    protected function loadFormValues()
-    {
-        // Load from form
-        global $CurrentForm;
-        $validate = !Config("SERVER_VALIDATE");
-
-        // Check field name 'id' first before field var 'x_id'
-        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
-        if (!$this->id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->id->setFormValue($val);
+        $this->BasicSearch->setKeyword(Get(Config("TABLE_BASIC_SEARCH"), ""), false);
+        if ($this->BasicSearch->Keyword != "" && $this->Command == "") {
+            $this->Command = "search";
         }
-
-        // Check field name 'service_id' first before field var 'x_service_id'
-        $val = $CurrentForm->hasValue("service_id") ? $CurrentForm->getValue("service_id") : $CurrentForm->getValue("x_service_id");
-        if (!$this->service_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->service_id->Visible = false; // Disable update for API request
-            } else {
-                $this->service_id->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'submittedby_user_id' first before field var 'x_submittedby_user_id'
-        $val = $CurrentForm->hasValue("submittedby_user_id") ? $CurrentForm->getValue("submittedby_user_id") : $CurrentForm->getValue("x_submittedby_user_id");
-        if (!$this->submittedby_user_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->submittedby_user_id->Visible = false; // Disable update for API request
-            } else {
-                $this->submittedby_user_id->setFormValue($val);
-            }
-        }
-
-        // Check field name 'date_created' first before field var 'x_date_created'
-        $val = $CurrentForm->hasValue("date_created") ? $CurrentForm->getValue("date_created") : $CurrentForm->getValue("x_date_created");
-        if (!$this->date_created->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->date_created->Visible = false; // Disable update for API request
-            } else {
-                $this->date_created->setFormValue($val, true, $validate);
-            }
-            $this->date_created->CurrentValue = UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern());
-        }
-    }
-
-    // Restore form values
-    public function restoreFormValues()
-    {
-        global $CurrentForm;
-        if (!$this->isGridAdd() && !$this->isAdd()) {
-            $this->id->CurrentValue = $this->id->FormValue;
-        }
-        $this->service_id->CurrentValue = $this->service_id->FormValue;
-        $this->submittedby_user_id->CurrentValue = $this->submittedby_user_id->FormValue;
-        $this->date_created->CurrentValue = $this->date_created->FormValue;
-        $this->date_created->CurrentValue = UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern());
+        $this->BasicSearch->setType(Get(Config("TABLE_BASIC_SEARCH_TYPE"), ""), false);
     }
 
     // Load recordset
@@ -1798,22 +1760,22 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->id->setDbValue($row['id']);
-        $this->service_id->setDbValue($row['service_id']);
-        $this->description->setDbValue($row['description']);
-        $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
-        $this->date_created->setDbValue($row['date_created']);
+        $this->patient_id->setDbValue($row['patient_id']);
+        $this->patient_name->setDbValue($row['patient_name']);
+        $this->insurance_name->setDbValue($row['insurance_name']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->patient_dob->setDbValue($row['patient_dob']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['id'] = $this->id->DefaultValue;
-        $row['service_id'] = $this->service_id->DefaultValue;
-        $row['description'] = $this->description->DefaultValue;
-        $row['submittedby_user_id'] = $this->submittedby_user_id->DefaultValue;
-        $row['date_created'] = $this->date_created->DefaultValue;
+        $row['patient_id'] = $this->patient_id->DefaultValue;
+        $row['patient_name'] = $this->patient_name->DefaultValue;
+        $row['insurance_name'] = $this->insurance_name->DefaultValue;
+        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['patient_dob'] = $this->patient_dob->DefaultValue;
         return $row;
     }
 
@@ -1854,193 +1816,56 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
 
         // Common render codes for all row types
 
-        // id
+        // patient_id
 
-        // service_id
+        // patient_name
 
-        // description
+        // insurance_name
 
-        // submittedby_user_id
+        // submitted_by_user_id
 
-        // date_created
+        // patient_dob
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // id
-            $this->id->ViewValue = $this->id->CurrentValue;
+            // patient_id
+            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
-            // service_id
-            $this->service_id->ViewValue = $this->service_id->CurrentValue;
-            $this->service_id->ViewValue = FormatNumber($this->service_id->ViewValue, $this->service_id->formatPattern());
+            // patient_name
+            $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
 
-            // submittedby_user_id
-            $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
-            $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
+            // insurance_name
+            $this->insurance_name->ViewValue = $this->insurance_name->CurrentValue;
 
-            // date_created
-            $this->date_created->ViewValue = $this->date_created->CurrentValue;
-            $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
+            // submitted_by_user_id
+            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
-            // id
-            $this->id->HrefValue = "";
-            $this->id->TooltipValue = "";
+            // patient_dob
+            $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
+            $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
 
-            // service_id
-            $this->service_id->HrefValue = "";
-            $this->service_id->TooltipValue = "";
+            // patient_id
+            $this->patient_id->HrefValue = "";
+            $this->patient_id->TooltipValue = "";
 
-            // submittedby_user_id
-            $this->submittedby_user_id->HrefValue = "";
-            $this->submittedby_user_id->TooltipValue = "";
+            // patient_name
+            $this->patient_name->HrefValue = "";
+            $this->patient_name->TooltipValue = "";
 
-            // date_created
-            $this->date_created->HrefValue = "";
-            $this->date_created->TooltipValue = "";
-        } elseif ($this->RowType == ROWTYPE_ADD) {
-            // id
+            // insurance_name
+            $this->insurance_name->HrefValue = "";
+            $this->insurance_name->TooltipValue = "";
 
-            // service_id
-            $this->service_id->setupEditAttributes();
-            $this->service_id->EditValue = HtmlEncode($this->service_id->CurrentValue);
-            $this->service_id->PlaceHolder = RemoveHtml($this->service_id->caption());
-            if (strval($this->service_id->EditValue) != "" && is_numeric($this->service_id->EditValue)) {
-                $this->service_id->EditValue = FormatNumber($this->service_id->EditValue, null);
-            }
-
-            // submittedby_user_id
-            $this->submittedby_user_id->setupEditAttributes();
-            $this->submittedby_user_id->EditValue = HtmlEncode($this->submittedby_user_id->CurrentValue);
-            $this->submittedby_user_id->PlaceHolder = RemoveHtml($this->submittedby_user_id->caption());
-            if (strval($this->submittedby_user_id->EditValue) != "" && is_numeric($this->submittedby_user_id->EditValue)) {
-                $this->submittedby_user_id->EditValue = FormatNumber($this->submittedby_user_id->EditValue, null);
-            }
-
-            // date_created
-            $this->date_created->setupEditAttributes();
-            $this->date_created->EditValue = HtmlEncode(FormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()));
-            $this->date_created->PlaceHolder = RemoveHtml($this->date_created->caption());
-
-            // Add refer script
-
-            // id
-            $this->id->HrefValue = "";
-
-            // service_id
-            $this->service_id->HrefValue = "";
-
-            // submittedby_user_id
-            $this->submittedby_user_id->HrefValue = "";
-
-            // date_created
-            $this->date_created->HrefValue = "";
-        }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
-            $this->setupFieldTitles();
+            // patient_dob
+            $this->patient_dob->HrefValue = "";
+            $this->patient_dob->TooltipValue = "";
         }
 
         // Call Row Rendered event
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
-    }
-
-    // Validate form
-    protected function validateForm()
-    {
-        global $Language, $Security;
-
-        // Check if validation required
-        if (!Config("SERVER_VALIDATE")) {
-            return true;
-        }
-        $validateForm = true;
-        if ($this->id->Required) {
-            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
-                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
-            }
-        }
-        if ($this->service_id->Required) {
-            if (!$this->service_id->IsDetailKey && EmptyValue($this->service_id->FormValue)) {
-                $this->service_id->addErrorMessage(str_replace("%s", $this->service_id->caption(), $this->service_id->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->service_id->FormValue)) {
-            $this->service_id->addErrorMessage($this->service_id->getErrorMessage(false));
-        }
-        if ($this->submittedby_user_id->Required) {
-            if (!$this->submittedby_user_id->IsDetailKey && EmptyValue($this->submittedby_user_id->FormValue)) {
-                $this->submittedby_user_id->addErrorMessage(str_replace("%s", $this->submittedby_user_id->caption(), $this->submittedby_user_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->date_created->Required) {
-            if (!$this->date_created->IsDetailKey && EmptyValue($this->date_created->FormValue)) {
-                $this->date_created->addErrorMessage(str_replace("%s", $this->date_created->caption(), $this->date_created->RequiredErrorMessage));
-            }
-        }
-        if (!CheckDate($this->date_created->FormValue, $this->date_created->formatPattern())) {
-            $this->date_created->addErrorMessage($this->date_created->getErrorMessage(false));
-        }
-
-        // Return validate result
-        $validateForm = $validateForm && !$this->hasInvalidFields();
-
-        // Call Form_CustomValidate event
-        $formCustomError = "";
-        $validateForm = $validateForm && $this->formCustomValidate($formCustomError);
-        if ($formCustomError != "") {
-            $this->setFailureMessage($formCustomError);
-        }
-        return $validateForm;
-    }
-
-    // Add record
-    protected function addRow($rsold = null)
-    {
-        global $Language, $Security;
-
-        // Set new row
-        $rsnew = [];
-
-        // service_id
-        $this->service_id->setDbValueDef($rsnew, $this->service_id->CurrentValue, 0, false);
-
-        // submittedby_user_id
-        $this->submittedby_user_id->setDbValueDef($rsnew, $this->submittedby_user_id->CurrentValue, 0, false);
-
-        // date_created
-        $this->date_created->setDbValueDef($rsnew, UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()), CurrentDate(), false);
-
-        // Update current values
-        $this->setCurrentValues($rsnew);
-        $conn = $this->getConnection();
-
-        // Load db values from old row
-        $this->loadDbValues($rsold);
-
-        // Call Row Inserting event
-        $insertRow = $this->rowInserting($rsold, $rsnew);
-        if ($insertRow) {
-            $addRow = $this->insert($rsnew);
-            if ($addRow) {
-            } elseif (!EmptyValue($this->DbErrorMessage)) { // Show database error
-                $this->setFailureMessage($this->DbErrorMessage);
-            }
-        } else {
-            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
-                // Use the message, do nothing
-            } elseif ($this->CancelMessage != "") {
-                $this->setFailureMessage($this->CancelMessage);
-                $this->CancelMessage = "";
-            } else {
-                $this->setFailureMessage($Language->phrase("InsertCancelled"));
-            }
-            $addRow = false;
-        }
-        if ($addRow) {
-            // Call Row Inserted event
-            $this->rowInserted($rsold, $rsnew);
-        }
-        return $addRow;
     }
 
     // Get export HTML tag
@@ -2055,19 +1880,19 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         }
         if (SameText($type, "excel")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_invoice_itemslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_patients_insuarancelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\">" . $Language->phrase("ExportToExcel") . "</a>";
             }
         } elseif (SameText($type, "word")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_invoice_itemslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_patients_insuarancelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\">" . $Language->phrase("ExportToWord") . "</a>";
             }
         } elseif (SameText($type, "pdf")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_invoice_itemslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_patients_insuarancelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\">" . $Language->phrase("ExportToPdf") . "</a>";
             }
@@ -2079,7 +1904,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-csv\" title=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\">" . $Language->phrase("ExportToCsv") . "</a>";
         } elseif (SameText($type, "email")) {
             $url = $custom ? ' data-url="' . $exportUrl . '"' : '';
-            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_invoice_itemslist" data-ew-action="email" data-custom="false" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
+            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_patients_insuarancelist" data-ew-action="email" data-custom="false" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
         } elseif (SameText($type, "print")) {
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-print\" title=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\">" . $Language->phrase("PrinterFriendly") . "</a>";
         }
@@ -2154,6 +1979,21 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         $pageUrl = $this->pageUrl(false);
         $this->SearchOptions = new ListOptions(["TagClassName" => "ew-search-option"]);
 
+        // Search button
+        $item = &$this->SearchOptions->add("searchtoggle");
+        $searchToggleClass = ($this->SearchWhere != "") ? " active" : " active";
+        $item->Body = "<a class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" role=\"button\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-ew-action=\"search-toggle\" data-form=\"fjdh_patients_insuarancesrch\" aria-pressed=\"" . ($searchToggleClass == " active" ? "true" : "false") . "\">" . $Language->phrase("SearchLink") . "</a>";
+        $item->Visible = true;
+
+        // Show all button
+        $item = &$this->SearchOptions->add("showall");
+        if ($this->UseCustomTemplate || !$this->UseAjaxActions) {
+            $item->Body = "<a class=\"btn btn-default ew-show-all\" role=\"button\" title=\"" . $Language->phrase("ShowAll") . "\" data-caption=\"" . $Language->phrase("ShowAll") . "\" href=\"" . $pageUrl . "cmd=reset\">" . $Language->phrase("ShowAllBtn") . "</a>";
+        } else {
+            $item->Body = "<a class=\"btn btn-default ew-show-all\" role=\"button\" title=\"" . $Language->phrase("ShowAll") . "\" data-caption=\"" . $Language->phrase("ShowAll") . "\" data-ew-action=\"refresh\" data-url=\"" . $pageUrl . "cmd=reset\">" . $Language->phrase("ShowAllBtn") . "</a>";
+        }
+        $item->Visible = ($this->SearchWhere != $this->DefaultSearchWhere && $this->SearchWhere != "0=101");
+
         // Button group for search
         $this->SearchOptions->UseDropDownButton = false;
         $this->SearchOptions->UseButtonGroup = true;
@@ -2177,7 +2017,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
     // Check if any search fields
     public function hasSearchFields()
     {
-        return false;
+        return true;
     }
 
     // Render search options

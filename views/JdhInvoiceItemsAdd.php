@@ -24,7 +24,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setFields([
             ["service_id", [fields.service_id.visible && fields.service_id.required ? ew.Validators.required(fields.service_id.caption) : null, ew.Validators.integer], fields.service_id.isInvalid],
             ["description", [fields.description.visible && fields.description.required ? ew.Validators.required(fields.description.caption) : null], fields.description.isInvalid],
-            ["submittedby_user_id", [fields.submittedby_user_id.visible && fields.submittedby_user_id.required ? ew.Validators.required(fields.submittedby_user_id.caption) : null, ew.Validators.integer], fields.submittedby_user_id.isInvalid],
+            ["submittedby_user_id", [fields.submittedby_user_id.visible && fields.submittedby_user_id.required ? ew.Validators.required(fields.submittedby_user_id.caption) : null], fields.submittedby_user_id.isInvalid],
             ["date_created", [fields.date_created.visible && fields.date_created.required ? ew.Validators.required(fields.date_created.caption) : null, ew.Validators.datetime(fields.date_created.clientFormatPattern)], fields.date_created.isInvalid]
         ])
 
@@ -96,7 +96,7 @@ $Page->showMessage();
 <?php } ?>
 <?php if ($Page->submittedby_user_id->Visible) { // submittedby_user_id ?>
     <div id="r_submittedby_user_id"<?= $Page->submittedby_user_id->rowAttributes() ?>>
-        <label id="elh_jdh_invoice_items_submittedby_user_id" for="x_submittedby_user_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->submittedby_user_id->caption() ?><?= $Page->submittedby_user_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <label id="elh_jdh_invoice_items_submittedby_user_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->submittedby_user_id->caption() ?><?= $Page->submittedby_user_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->submittedby_user_id->cellAttributes() ?>>
 <span id="el_jdh_invoice_items_submittedby_user_id">
 <input type="<?= $Page->submittedby_user_id->getInputTextType() ?>" name="x_submittedby_user_id" id="x_submittedby_user_id" data-table="jdh_invoice_items" data-field="x_submittedby_user_id" value="<?= $Page->submittedby_user_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->submittedby_user_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->submittedby_user_id->formatPattern()) ?>"<?= $Page->submittedby_user_id->editAttributes() ?> aria-describedby="x_submittedby_user_id_help">

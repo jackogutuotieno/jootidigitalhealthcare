@@ -8,9 +8,9 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
 
 /**
- * Table class for jdh_invoice_items
+ * Table class for jdh_patients_insuarance
  */
-class JdhInvoiceItems extends DbTable
+class JdhPatientsInsuarance extends DbTable
 {
     protected $SqlFrom = "";
     protected $SqlSelect = null;
@@ -41,11 +41,11 @@ class JdhInvoiceItems extends DbTable
     public $ModalMultiEdit = false;
 
     // Fields
-    public $id;
-    public $service_id;
-    public $description;
-    public $submittedby_user_id;
-    public $date_created;
+    public $patient_id;
+    public $patient_name;
+    public $insurance_name;
+    public $submitted_by_user_id;
+    public $patient_dob;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -58,14 +58,14 @@ class JdhInvoiceItems extends DbTable
 
         // Language object
         $Language = Container("language");
-        $this->TableVar = "jdh_invoice_items";
-        $this->TableName = 'jdh_invoice_items';
-        $this->TableType = "TABLE";
+        $this->TableVar = "jdh_patients_insuarance";
+        $this->TableName = 'jdh_patients_insuarance';
+        $this->TableType = "VIEW";
         $this->ImportUseTransaction = $this->supportsTransaction() && Config("IMPORT_USE_TRANSACTION");
         $this->UseTransaction = $this->supportsTransaction() && Config("USE_TRANSACTION");
 
         // Update Table
-        $this->UpdateTable = "`jdh_invoice_items`";
+        $this->UpdateTable = "`jdh_patients_insuarance`";
         $this->Dbid = 'DB';
         $this->ExportAll = true;
         $this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
@@ -92,126 +92,128 @@ class JdhInvoiceItems extends DbTable
         $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
         $this->BasicSearch = new BasicSearch($this);
 
-        // id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->id = new DbField(
+        // patient_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_id = new DbField(
             $this, // Table
-            'x_id', // Variable name
-            'id', // Name
-            '`id`', // Expression
-            '`id`', // Basic search expression
-            3, // Type
-            11, // Size
+            'x_patient_id', // Variable name
+            'patient_id', // Name
+            '`patient_id`', // Expression
+            '`patient_id`', // Basic search expression
+            20, // Type
+            20, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`id`', // Virtual expression
+            '`patient_id`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'NO' // Edit Tag
         );
-        $this->id->InputTextType = "text";
-        $this->id->IsAutoIncrement = true; // Autoincrement field
-        $this->id->IsPrimaryKey = true; // Primary key field
-        $this->id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
-        $this->Fields['id'] = &$this->id;
+        $this->patient_id->InputTextType = "text";
+        $this->patient_id->IsAutoIncrement = true; // Autoincrement field
+        $this->patient_id->IsPrimaryKey = true; // Primary key field
+        $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->patient_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->Fields['patient_id'] = &$this->patient_id;
 
-        // service_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->service_id = new DbField(
+        // patient_name $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_name = new DbField(
             $this, // Table
-            'x_service_id', // Variable name
-            'service_id', // Name
-            '`service_id`', // Expression
-            '`service_id`', // Basic search expression
-            3, // Type
-            11, // Size
+            'x_patient_name', // Variable name
+            'patient_name', // Name
+            '`patient_name`', // Expression
+            '`patient_name`', // Basic search expression
+            200, // Type
+            50, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`service_id`', // Virtual expression
+            '`patient_name`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->service_id->InputTextType = "text";
-        $this->service_id->Nullable = false; // NOT NULL field
-        $this->service_id->Required = true; // Required field
-        $this->service_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->service_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['service_id'] = &$this->service_id;
+        $this->patient_name->InputTextType = "text";
+        $this->patient_name->Nullable = false; // NOT NULL field
+        $this->patient_name->Required = true; // Required field
+        $this->patient_name->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['patient_name'] = &$this->patient_name;
 
-        // description $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->description = new DbField(
+        // insurance_name $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->insurance_name = new DbField(
             $this, // Table
-            'x_description', // Variable name
-            'description', // Name
-            '`description`', // Expression
-            '`description`', // Basic search expression
-            201, // Type
-            65535, // Size
+            'x_insurance_name', // Variable name
+            'insurance_name', // Name
+            '`insurance_name`', // Expression
+            '`insurance_name`', // Basic search expression
+            200, // Type
+            100, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`description`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXTAREA' // Edit Tag
-        );
-        $this->description->InputTextType = "text";
-        $this->description->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
-        $this->Fields['description'] = &$this->description;
-
-        // submittedby_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->submittedby_user_id = new DbField(
-            $this, // Table
-            'x_submittedby_user_id', // Variable name
-            'submittedby_user_id', // Name
-            '`submittedby_user_id`', // Expression
-            '`submittedby_user_id`', // Basic search expression
-            3, // Type
-            11, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`submittedby_user_id`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'HIDDEN' // Edit Tag
-        );
-        $this->submittedby_user_id->InputTextType = "text";
-        $this->submittedby_user_id->Nullable = false; // NOT NULL field
-        $this->submittedby_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->submittedby_user_id->SearchOperators = ["=", "<>"];
-        $this->Fields['submittedby_user_id'] = &$this->submittedby_user_id;
-
-        // date_created $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->date_created = new DbField(
-            $this, // Table
-            'x_date_created', // Variable name
-            'date_created', // Name
-            '`date_created`', // Expression
-            CastDateFieldForLike("`date_created`", 0, "DB"), // Basic search expression
-            135, // Type
-            19, // Size
-            0, // Date/Time format
-            false, // Is upload field
-            '`date_created`', // Virtual expression
+            '`insurance_name`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->date_created->InputTextType = "text";
-        $this->date_created->Nullable = false; // NOT NULL field
-        $this->date_created->Required = true; // Required field
-        $this->date_created->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
-        $this->date_created->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['date_created'] = &$this->date_created;
+        $this->insurance_name->InputTextType = "text";
+        $this->insurance_name->Nullable = false; // NOT NULL field
+        $this->insurance_name->Required = true; // Required field
+        $this->insurance_name->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['insurance_name'] = &$this->insurance_name;
+
+        // submitted_by_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->submitted_by_user_id = new DbField(
+            $this, // Table
+            'x_submitted_by_user_id', // Variable name
+            'submitted_by_user_id', // Name
+            '`submitted_by_user_id`', // Expression
+            '`submitted_by_user_id`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`submitted_by_user_id`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->submitted_by_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
+        $this->submitted_by_user_id->InputTextType = "text";
+        $this->submitted_by_user_id->Nullable = false; // NOT NULL field
+        $this->submitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->submitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['submitted_by_user_id'] = &$this->submitted_by_user_id;
+
+        // patient_dob $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_dob = new DbField(
+            $this, // Table
+            'x_patient_dob', // Variable name
+            'patient_dob', // Name
+            '`patient_dob`', // Expression
+            CastDateFieldForLike("`patient_dob`", 7, "DB"), // Basic search expression
+            133, // Type
+            10, // Size
+            7, // Date/Time format
+            false, // Is upload field
+            '`patient_dob`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->patient_dob->InputTextType = "text";
+        $this->patient_dob->Nullable = false; // NOT NULL field
+        $this->patient_dob->Required = true; // Required field
+        $this->patient_dob->DefaultErrorMessage = str_replace("%s", DateFormat(7), $Language->phrase("IncorrectDate"));
+        $this->patient_dob->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['patient_dob'] = &$this->patient_dob;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -280,7 +282,7 @@ class JdhInvoiceItems extends DbTable
     // Table level SQL
     public function getSqlFrom() // From
     {
-        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_invoice_items`";
+        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_patients_insuarance`";
     }
 
     public function sqlFrom() // For backward compatibility
@@ -578,8 +580,8 @@ class JdhInvoiceItems extends DbTable
         }
         if ($success) {
             // Get insert id if necessary
-            $this->id->setDbValue($conn->lastInsertId());
-            $rs['id'] = $this->id->DbValue;
+            $this->patient_id->setDbValue($conn->lastInsertId());
+            $rs['patient_id'] = $this->patient_id->DbValue;
         }
         return $success;
     }
@@ -629,8 +631,8 @@ class JdhInvoiceItems extends DbTable
 
         // Return auto increment field
         if ($success) {
-            if (!isset($rs['id']) && !EmptyValue($this->id->CurrentValue)) {
-                $rs['id'] = $this->id->CurrentValue;
+            if (!isset($rs['patient_id']) && !EmptyValue($this->patient_id->CurrentValue)) {
+                $rs['patient_id'] = $this->patient_id->CurrentValue;
             }
         }
         return $success;
@@ -652,8 +654,8 @@ class JdhInvoiceItems extends DbTable
             $where = $this->arrayToFilter($where);
         }
         if ($rs) {
-            if (array_key_exists('id', $rs)) {
-                AddFilter($where, QuotedName('id', $this->Dbid) . '=' . QuotedValue($rs['id'], $this->id->DataType, $this->Dbid));
+            if (array_key_exists('patient_id', $rs)) {
+                AddFilter($where, QuotedName('patient_id', $this->Dbid) . '=' . QuotedValue($rs['patient_id'], $this->patient_id->DataType, $this->Dbid));
             }
         }
         $filter = ($curfilter) ? $this->CurrentFilter : "";
@@ -683,11 +685,11 @@ class JdhInvoiceItems extends DbTable
         if (!is_array($row)) {
             return;
         }
-        $this->id->DbValue = $row['id'];
-        $this->service_id->DbValue = $row['service_id'];
-        $this->description->DbValue = $row['description'];
-        $this->submittedby_user_id->DbValue = $row['submittedby_user_id'];
-        $this->date_created->DbValue = $row['date_created'];
+        $this->patient_id->DbValue = $row['patient_id'];
+        $this->patient_name->DbValue = $row['patient_name'];
+        $this->insurance_name->DbValue = $row['insurance_name'];
+        $this->submitted_by_user_id->DbValue = $row['submitted_by_user_id'];
+        $this->patient_dob->DbValue = $row['patient_dob'];
     }
 
     // Delete uploaded files
@@ -699,14 +701,14 @@ class JdhInvoiceItems extends DbTable
     // Record filter WHERE clause
     protected function sqlKeyFilter()
     {
-        return "`id` = @id@";
+        return "`patient_id` = @patient_id@";
     }
 
     // Get Key
     public function getKey($current = false)
     {
         $keys = [];
-        $val = $current ? $this->id->CurrentValue : $this->id->OldValue;
+        $val = $current ? $this->patient_id->CurrentValue : $this->patient_id->OldValue;
         if (EmptyValue($val)) {
             return "";
         } else {
@@ -722,9 +724,9 @@ class JdhInvoiceItems extends DbTable
         $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
         if (count($keys) == 1) {
             if ($current) {
-                $this->id->CurrentValue = $keys[0];
+                $this->patient_id->CurrentValue = $keys[0];
             } else {
-                $this->id->OldValue = $keys[0];
+                $this->patient_id->OldValue = $keys[0];
             }
         }
     }
@@ -734,9 +736,9 @@ class JdhInvoiceItems extends DbTable
     {
         $keyFilter = $this->sqlKeyFilter();
         if (is_array($row)) {
-            $val = array_key_exists('id', $row) ? $row['id'] : null;
+            $val = array_key_exists('patient_id', $row) ? $row['patient_id'] : null;
         } else {
-            $val = !EmptyValue($this->id->OldValue) && !$current ? $this->id->OldValue : $this->id->CurrentValue;
+            $val = !EmptyValue($this->patient_id->OldValue) && !$current ? $this->patient_id->OldValue : $this->patient_id->CurrentValue;
         }
         if (!is_numeric($val)) {
             return "0=1"; // Invalid key
@@ -744,7 +746,7 @@ class JdhInvoiceItems extends DbTable
         if ($val === null) {
             return "0=1"; // Invalid key
         } else {
-            $keyFilter = str_replace("@id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
+            $keyFilter = str_replace("@patient_id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
         }
         return $keyFilter;
     }
@@ -759,7 +761,7 @@ class JdhInvoiceItems extends DbTable
         if ($referUrl != "" && $referPageName != CurrentPageName() && $referPageName != "login") { // Referer not same page or login page
             $_SESSION[$name] = $referUrl; // Save to Session
         }
-        return $_SESSION[$name] ?? GetUrl("jdhinvoiceitemslist");
+        return $_SESSION[$name] ?? GetUrl("jdhpatientsinsuarancelist");
     }
 
     // Set return page URL
@@ -772,11 +774,11 @@ class JdhInvoiceItems extends DbTable
     public function getModalCaption($pageName)
     {
         global $Language;
-        if ($pageName == "jdhinvoiceitemsview") {
+        if ($pageName == "jdhpatientsinsuaranceview") {
             return $Language->phrase("View");
-        } elseif ($pageName == "jdhinvoiceitemsedit") {
+        } elseif ($pageName == "jdhpatientsinsuaranceedit") {
             return $Language->phrase("Edit");
-        } elseif ($pageName == "jdhinvoiceitemsadd") {
+        } elseif ($pageName == "jdhpatientsinsuaranceadd") {
             return $Language->phrase("Add");
         }
         return "";
@@ -787,15 +789,15 @@ class JdhInvoiceItems extends DbTable
     {
         switch (strtolower($action)) {
             case Config("API_VIEW_ACTION"):
-                return "JdhInvoiceItemsView";
+                return "JdhPatientsInsuaranceView";
             case Config("API_ADD_ACTION"):
-                return "JdhInvoiceItemsAdd";
+                return "JdhPatientsInsuaranceAdd";
             case Config("API_EDIT_ACTION"):
-                return "JdhInvoiceItemsEdit";
+                return "JdhPatientsInsuaranceEdit";
             case Config("API_DELETE_ACTION"):
-                return "JdhInvoiceItemsDelete";
+                return "JdhPatientsInsuaranceDelete";
             case Config("API_LIST_ACTION"):
-                return "JdhInvoiceItemsList";
+                return "JdhPatientsInsuaranceList";
             default:
                 return "";
         }
@@ -816,16 +818,16 @@ class JdhInvoiceItems extends DbTable
     // List URL
     public function getListUrl()
     {
-        return "jdhinvoiceitemslist";
+        return "jdhpatientsinsuarancelist";
     }
 
     // View URL
     public function getViewUrl($parm = "")
     {
         if ($parm != "") {
-            $url = $this->keyUrl("jdhinvoiceitemsview", $parm);
+            $url = $this->keyUrl("jdhpatientsinsuaranceview", $parm);
         } else {
-            $url = $this->keyUrl("jdhinvoiceitemsview", Config("TABLE_SHOW_DETAIL") . "=");
+            $url = $this->keyUrl("jdhpatientsinsuaranceview", Config("TABLE_SHOW_DETAIL") . "=");
         }
         return $this->addMasterUrl($url);
     }
@@ -834,9 +836,9 @@ class JdhInvoiceItems extends DbTable
     public function getAddUrl($parm = "")
     {
         if ($parm != "") {
-            $url = "jdhinvoiceitemsadd?" . $parm;
+            $url = "jdhpatientsinsuaranceadd?" . $parm;
         } else {
-            $url = "jdhinvoiceitemsadd";
+            $url = "jdhpatientsinsuaranceadd";
         }
         return $this->addMasterUrl($url);
     }
@@ -844,28 +846,28 @@ class JdhInvoiceItems extends DbTable
     // Edit URL
     public function getEditUrl($parm = "")
     {
-        $url = $this->keyUrl("jdhinvoiceitemsedit", $parm);
+        $url = $this->keyUrl("jdhpatientsinsuaranceedit", $parm);
         return $this->addMasterUrl($url);
     }
 
     // Inline edit URL
     public function getInlineEditUrl()
     {
-        $url = $this->keyUrl("jdhinvoiceitemslist", "action=edit");
+        $url = $this->keyUrl("jdhpatientsinsuarancelist", "action=edit");
         return $this->addMasterUrl($url);
     }
 
     // Copy URL
     public function getCopyUrl($parm = "")
     {
-        $url = $this->keyUrl("jdhinvoiceitemsadd", $parm);
+        $url = $this->keyUrl("jdhpatientsinsuaranceadd", $parm);
         return $this->addMasterUrl($url);
     }
 
     // Inline copy URL
     public function getInlineCopyUrl()
     {
-        $url = $this->keyUrl("jdhinvoiceitemslist", "action=copy");
+        $url = $this->keyUrl("jdhpatientsinsuarancelist", "action=copy");
         return $this->addMasterUrl($url);
     }
 
@@ -875,7 +877,7 @@ class JdhInvoiceItems extends DbTable
         if ($this->UseAjaxActions && ConvertToBool(Param("infinitescroll")) && CurrentPageID() == "list") {
             return $this->keyUrl(GetApiUrl(Config("API_DELETE_ACTION") . "/" . $this->TableVar));
         } else {
-            return $this->keyUrl("jdhinvoiceitemsdelete");
+            return $this->keyUrl("jdhpatientsinsuarancedelete");
         }
     }
 
@@ -888,7 +890,7 @@ class JdhInvoiceItems extends DbTable
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
-        $json .= "\"id\":" . JsonEncode($this->id->CurrentValue, "number");
+        $json .= "\"patient_id\":" . JsonEncode($this->patient_id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -899,8 +901,8 @@ class JdhInvoiceItems extends DbTable
     // Add key value to URL
     public function keyUrl($url, $parm = "")
     {
-        if ($this->id->CurrentValue !== null) {
-            $url .= "/" . $this->encodeKeyValue($this->id->CurrentValue);
+        if ($this->patient_id->CurrentValue !== null) {
+            $url .= "/" . $this->encodeKeyValue($this->patient_id->CurrentValue);
         } else {
             return "javascript:ew.alert(ew.language.phrase('InvalidRecord'));";
         }
@@ -968,7 +970,7 @@ class JdhInvoiceItems extends DbTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
-            if (($keyValue = Param("id") ?? Route("id")) !== null) {
+            if (($keyValue = Param("patient_id") ?? Route("patient_id")) !== null) {
                 $arKeys[] = $keyValue;
             } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
                 $arKeys[] = $keyValue;
@@ -1014,9 +1016,9 @@ class JdhInvoiceItems extends DbTable
                 $keyFilter .= " OR ";
             }
             if ($setCurrent) {
-                $this->id->CurrentValue = $key;
+                $this->patient_id->CurrentValue = $key;
             } else {
-                $this->id->OldValue = $key;
+                $this->patient_id->OldValue = $key;
             }
             $keyFilter .= "(" . $this->getRecordFilter() . ")";
         }
@@ -1041,18 +1043,18 @@ class JdhInvoiceItems extends DbTable
         } else {
             return;
         }
-        $this->id->setDbValue($row['id']);
-        $this->service_id->setDbValue($row['service_id']);
-        $this->description->setDbValue($row['description']);
-        $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
-        $this->date_created->setDbValue($row['date_created']);
+        $this->patient_id->setDbValue($row['patient_id']);
+        $this->patient_name->setDbValue($row['patient_name']);
+        $this->insurance_name->setDbValue($row['insurance_name']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->patient_dob->setDbValue($row['patient_dob']);
     }
 
     // Render list content
     public function renderListContent($filter)
     {
         global $Response;
-        $listPage = "JdhInvoiceItemsList";
+        $listPage = "JdhPatientsInsuaranceList";
         $listClass = PROJECT_NAMESPACE . $listPage;
         $page = new $listClass();
         $page->loadRecordsetFromFilter($filter);
@@ -1076,53 +1078,52 @@ class JdhInvoiceItems extends DbTable
 
         // Common render codes
 
-        // id
+        // patient_id
 
-        // service_id
+        // patient_name
 
-        // description
+        // insurance_name
 
-        // submittedby_user_id
+        // submitted_by_user_id
 
-        // date_created
+        // patient_dob
 
-        // id
-        $this->id->ViewValue = $this->id->CurrentValue;
+        // patient_id
+        $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
-        // service_id
-        $this->service_id->ViewValue = $this->service_id->CurrentValue;
-        $this->service_id->ViewValue = FormatNumber($this->service_id->ViewValue, $this->service_id->formatPattern());
+        // patient_name
+        $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
 
-        // description
-        $this->description->ViewValue = $this->description->CurrentValue;
+        // insurance_name
+        $this->insurance_name->ViewValue = $this->insurance_name->CurrentValue;
 
-        // submittedby_user_id
-        $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
-        $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
+        // submitted_by_user_id
+        $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+        $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
-        // date_created
-        $this->date_created->ViewValue = $this->date_created->CurrentValue;
-        $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
+        // patient_dob
+        $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
+        $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
 
-        // id
-        $this->id->HrefValue = "";
-        $this->id->TooltipValue = "";
+        // patient_id
+        $this->patient_id->HrefValue = "";
+        $this->patient_id->TooltipValue = "";
 
-        // service_id
-        $this->service_id->HrefValue = "";
-        $this->service_id->TooltipValue = "";
+        // patient_name
+        $this->patient_name->HrefValue = "";
+        $this->patient_name->TooltipValue = "";
 
-        // description
-        $this->description->HrefValue = "";
-        $this->description->TooltipValue = "";
+        // insurance_name
+        $this->insurance_name->HrefValue = "";
+        $this->insurance_name->TooltipValue = "";
 
-        // submittedby_user_id
-        $this->submittedby_user_id->HrefValue = "";
-        $this->submittedby_user_id->TooltipValue = "";
+        // submitted_by_user_id
+        $this->submitted_by_user_id->HrefValue = "";
+        $this->submitted_by_user_id->TooltipValue = "";
 
-        // date_created
-        $this->date_created->HrefValue = "";
-        $this->date_created->TooltipValue = "";
+        // patient_dob
+        $this->patient_dob->HrefValue = "";
+        $this->patient_dob->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1139,34 +1140,32 @@ class JdhInvoiceItems extends DbTable
         // Call Row Rendering event
         $this->rowRendering();
 
-        // id
-        $this->id->setupEditAttributes();
-        $this->id->EditValue = $this->id->CurrentValue;
+        // patient_id
+        $this->patient_id->setupEditAttributes();
+        $this->patient_id->EditValue = $this->patient_id->CurrentValue;
 
-        // service_id
-        $this->service_id->setupEditAttributes();
-        $this->service_id->EditValue = $this->service_id->CurrentValue;
-        $this->service_id->PlaceHolder = RemoveHtml($this->service_id->caption());
-        if (strval($this->service_id->EditValue) != "" && is_numeric($this->service_id->EditValue)) {
-            $this->service_id->EditValue = FormatNumber($this->service_id->EditValue, null);
+        // patient_name
+        $this->patient_name->setupEditAttributes();
+        if (!$this->patient_name->Raw) {
+            $this->patient_name->CurrentValue = HtmlDecode($this->patient_name->CurrentValue);
         }
+        $this->patient_name->EditValue = $this->patient_name->CurrentValue;
+        $this->patient_name->PlaceHolder = RemoveHtml($this->patient_name->caption());
 
-        // description
-        $this->description->setupEditAttributes();
-        $this->description->EditValue = $this->description->CurrentValue;
-        $this->description->PlaceHolder = RemoveHtml($this->description->caption());
-
-        // submittedby_user_id
-        $this->submittedby_user_id->setupEditAttributes();
-        $this->submittedby_user_id->CurrentValue = FormatNumber($this->submittedby_user_id->CurrentValue, $this->submittedby_user_id->formatPattern());
-        if (strval($this->submittedby_user_id->EditValue) != "" && is_numeric($this->submittedby_user_id->EditValue)) {
-            $this->submittedby_user_id->EditValue = FormatNumber($this->submittedby_user_id->EditValue, null);
+        // insurance_name
+        $this->insurance_name->setupEditAttributes();
+        if (!$this->insurance_name->Raw) {
+            $this->insurance_name->CurrentValue = HtmlDecode($this->insurance_name->CurrentValue);
         }
+        $this->insurance_name->EditValue = $this->insurance_name->CurrentValue;
+        $this->insurance_name->PlaceHolder = RemoveHtml($this->insurance_name->caption());
 
-        // date_created
-        $this->date_created->setupEditAttributes();
-        $this->date_created->EditValue = FormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern());
-        $this->date_created->PlaceHolder = RemoveHtml($this->date_created->caption());
+        // submitted_by_user_id
+
+        // patient_dob
+        $this->patient_dob->setupEditAttributes();
+        $this->patient_dob->EditValue = FormatDateTime($this->patient_dob->CurrentValue, $this->patient_dob->formatPattern());
+        $this->patient_dob->PlaceHolder = RemoveHtml($this->patient_dob->caption());
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1196,16 +1195,15 @@ class JdhInvoiceItems extends DbTable
             if ($doc->Horizontal) { // Horizontal format, write header
                 $doc->beginExportRow();
                 if ($exportPageType == "view") {
-                    $doc->exportCaption($this->id);
-                    $doc->exportCaption($this->service_id);
-                    $doc->exportCaption($this->description);
-                    $doc->exportCaption($this->submittedby_user_id);
-                    $doc->exportCaption($this->date_created);
+                    $doc->exportCaption($this->patient_id);
+                    $doc->exportCaption($this->patient_name);
+                    $doc->exportCaption($this->insurance_name);
                 } else {
-                    $doc->exportCaption($this->id);
-                    $doc->exportCaption($this->service_id);
-                    $doc->exportCaption($this->submittedby_user_id);
-                    $doc->exportCaption($this->date_created);
+                    $doc->exportCaption($this->patient_id);
+                    $doc->exportCaption($this->patient_name);
+                    $doc->exportCaption($this->insurance_name);
+                    $doc->exportCaption($this->submitted_by_user_id);
+                    $doc->exportCaption($this->patient_dob);
                 }
                 $doc->endExportRow();
             }
@@ -1235,16 +1233,15 @@ class JdhInvoiceItems extends DbTable
                 if (!$doc->ExportCustom) {
                     $doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
                     if ($exportPageType == "view") {
-                        $doc->exportField($this->id);
-                        $doc->exportField($this->service_id);
-                        $doc->exportField($this->description);
-                        $doc->exportField($this->submittedby_user_id);
-                        $doc->exportField($this->date_created);
+                        $doc->exportField($this->patient_id);
+                        $doc->exportField($this->patient_name);
+                        $doc->exportField($this->insurance_name);
                     } else {
-                        $doc->exportField($this->id);
-                        $doc->exportField($this->service_id);
-                        $doc->exportField($this->submittedby_user_id);
-                        $doc->exportField($this->date_created);
+                        $doc->exportField($this->patient_id);
+                        $doc->exportField($this->patient_name);
+                        $doc->exportField($this->insurance_name);
+                        $doc->exportField($this->submitted_by_user_id);
+                        $doc->exportField($this->patient_dob);
                     }
                     $doc->endExportRow($rowCnt);
                 }

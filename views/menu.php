@@ -18,8 +18,6 @@ echo $topMenu->toScript();
 
 // Sidebar menu
 $sideMenu = new Menu("menu", true, false);
-$sideMenu->addMenuItem(286, "mi_jdh_invoice", $MenuLanguage->MenuPhrase("286", "MenuText"), $MenuRelativePath . "jdhinvoicelist", -1, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice'), false, false, "", "", false, true);
-$sideMenu->addMenuItem(287, "mi_jdh_invoice_items", $MenuLanguage->MenuPhrase("287", "MenuText"), $MenuRelativePath . "jdhinvoiceitemslist", -1, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items'), false, false, "", "", false, true);
 $sideMenu->addMenuItem(271, "mi_Dashboard2", $MenuLanguage->MenuPhrase("271", "MenuText"), $MenuRelativePath . "dashboard2", -1, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}Dashboard'), false, false, "fa-home", "", false, true);
 $sideMenu->addMenuItem(27, "mi_jdh_notifications", $MenuLanguage->MenuPhrase("27", "MenuText"), $MenuRelativePath . "jdhnotificationslist", -1, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_notifications'), false, false, "fa-bell", "", false, true);
 $sideMenu->addMenuItem(38, "mci_Administrator", $MenuLanguage->MenuPhrase("38", "MenuText"), "", -1, "", IsLoggedIn(), false, true, "fa-cogs", "", false, true);
@@ -27,6 +25,7 @@ $sideMenu->addMenuItem(18, "mi_jdh_users", $MenuLanguage->MenuPhrase("18", "Menu
 $sideMenu->addMenuItem(22, "mi_jdh_departments", $MenuLanguage->MenuPhrase("22", "MenuText"), $MenuRelativePath . "jdhdepartmentslist", 38, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_departments'), false, false, "fa-hospital", "", false, true);
 $sideMenu->addMenuItem(25, "mi_jdh_roles", $MenuLanguage->MenuPhrase("25", "MenuText"), $MenuRelativePath . "jdhroleslist", 38, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_roles'), false, false, "fa-cogs", "", false, true);
 $sideMenu->addMenuItem(26, "mi_jdh_audittrail", $MenuLanguage->MenuPhrase("26", "MenuText"), $MenuRelativePath . "jdhaudittraillist", 38, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_audittrail'), false, false, "fa-print", "", false, true);
+$sideMenu->addMenuItem(28, "mi_jdh_exportlog", $MenuLanguage->MenuPhrase("28", "MenuText"), $MenuRelativePath . "jdhexportloglist", 38, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_exportlog'), false, false, "fa-print", "", false, true);
 $sideMenu->addMenuItem(276, "mi_jdh_doctor_charges", $MenuLanguage->MenuPhrase("276", "MenuText"), $MenuRelativePath . "jdhdoctorchargeslist", 38, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_doctor_charges'), false, false, "fa-user-md", "", false, true);
 $sideMenu->addMenuItem(285, "mi_jdh_branding", $MenuLanguage->MenuPhrase("285", "MenuText"), $MenuRelativePath . "jdhbrandinglist", 38, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding'), false, false, "fa-paintbrush", "", false, true);
 $sideMenu->addMenuItem(102, "mci_Patients", $MenuLanguage->MenuPhrase("102", "MenuText"), "", -1, "", IsLoggedIn(), false, true, "fa-users", "", false, true);
@@ -45,6 +44,7 @@ $sideMenu->addMenuItem(282, "mi_jdh_wards", $MenuLanguage->MenuPhrase("282", "Me
 $sideMenu->addMenuItem(281, "mi_jdh_rooms", $MenuLanguage->MenuPhrase("281", "MenuText"), $MenuRelativePath . "jdhroomslist", 102, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_rooms'), false, false, "fa-hospital", "", false, true);
 $sideMenu->addMenuItem(283, "mi_beds", $MenuLanguage->MenuPhrase("283", "MenuText"), $MenuRelativePath . "bedslist", 102, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}beds'), false, false, "fa-bed", "", false, true);
 $sideMenu->addMenuItem(284, "mi_jdh_beds_assignment", $MenuLanguage->MenuPhrase("284", "MenuText"), $MenuRelativePath . "jdhbedsassignmentlist?cmd=resetall", 102, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_beds_assignment'), false, false, "fa-bed", "", false, true);
+$sideMenu->addMenuItem(288, "mi_jdh_patients_insuarance", $MenuLanguage->MenuPhrase("288", "MenuText"), $MenuRelativePath . "jdhpatientsinsuarancelist", 102, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_patients_insuarance'), false, false, "", "", false, true);
 $sideMenu->addMenuItem(149, "mci_Investigations", $MenuLanguage->MenuPhrase("149", "MenuText"), "", -1, "", IsLoggedIn(), false, true, "fa-flask", "", false, true);
 $sideMenu->addMenuItem(37, "mci_Laboratory", $MenuLanguage->MenuPhrase("37", "MenuText"), "", 149, "", IsLoggedIn(), false, true, "fa-flask", "", false, true);
 $sideMenu->addMenuItem(3, "mi_jdh_lab_test_categories", $MenuLanguage->MenuPhrase("3", "MenuText"), $MenuRelativePath . "jdhlabtestcategorieslist", 37, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_lab_test_categories'), false, false, "fa-vial", "", false, true);

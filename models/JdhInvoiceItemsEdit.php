@@ -703,7 +703,7 @@ class JdhInvoiceItemsEdit extends JdhInvoiceItems
             if (IsApi() && $val === null) {
                 $this->submittedby_user_id->Visible = false; // Disable update for API request
             } else {
-                $this->submittedby_user_id->setFormValue($val, true, $validate);
+                $this->submittedby_user_id->setFormValue($val);
             }
         }
 
@@ -897,8 +897,7 @@ class JdhInvoiceItemsEdit extends JdhInvoiceItems
 
             // submittedby_user_id
             $this->submittedby_user_id->setupEditAttributes();
-            $this->submittedby_user_id->EditValue = HtmlEncode($this->submittedby_user_id->CurrentValue);
-            $this->submittedby_user_id->PlaceHolder = RemoveHtml($this->submittedby_user_id->caption());
+            $this->submittedby_user_id->CurrentValue = FormatNumber($this->submittedby_user_id->CurrentValue, $this->submittedby_user_id->formatPattern());
             if (strval($this->submittedby_user_id->EditValue) != "" && is_numeric($this->submittedby_user_id->EditValue)) {
                 $this->submittedby_user_id->EditValue = FormatNumber($this->submittedby_user_id->EditValue, null);
             }
@@ -967,9 +966,6 @@ class JdhInvoiceItemsEdit extends JdhInvoiceItems
             if (!$this->submittedby_user_id->IsDetailKey && EmptyValue($this->submittedby_user_id->FormValue)) {
                 $this->submittedby_user_id->addErrorMessage(str_replace("%s", $this->submittedby_user_id->caption(), $this->submittedby_user_id->RequiredErrorMessage));
             }
-        }
-        if (!CheckInteger($this->submittedby_user_id->FormValue)) {
-            $this->submittedby_user_id->addErrorMessage($this->submittedby_user_id->getErrorMessage(false));
         }
         if ($this->date_created->Required) {
             if (!$this->date_created->IsDetailKey && EmptyValue($this->date_created->FormValue)) {

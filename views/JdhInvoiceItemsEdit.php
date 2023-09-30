@@ -36,7 +36,7 @@ loadjs.ready(["wrapper", "head"], function () {
             ["id", [fields.id.visible && fields.id.required ? ew.Validators.required(fields.id.caption) : null], fields.id.isInvalid],
             ["service_id", [fields.service_id.visible && fields.service_id.required ? ew.Validators.required(fields.service_id.caption) : null, ew.Validators.integer], fields.service_id.isInvalid],
             ["description", [fields.description.visible && fields.description.required ? ew.Validators.required(fields.description.caption) : null], fields.description.isInvalid],
-            ["submittedby_user_id", [fields.submittedby_user_id.visible && fields.submittedby_user_id.required ? ew.Validators.required(fields.submittedby_user_id.caption) : null, ew.Validators.integer], fields.submittedby_user_id.isInvalid],
+            ["submittedby_user_id", [fields.submittedby_user_id.visible && fields.submittedby_user_id.required ? ew.Validators.required(fields.submittedby_user_id.caption) : null], fields.submittedby_user_id.isInvalid],
             ["date_created", [fields.date_created.visible && fields.date_created.required ? ew.Validators.required(fields.date_created.caption) : null, ew.Validators.datetime(fields.date_created.clientFormatPattern)], fields.date_created.isInvalid]
         ])
 
@@ -108,18 +108,6 @@ loadjs.ready(["wrapper", "head"], function () {
 </div></div>
     </div>
 <?php } ?>
-<?php if ($Page->submittedby_user_id->Visible) { // submittedby_user_id ?>
-    <div id="r_submittedby_user_id"<?= $Page->submittedby_user_id->rowAttributes() ?>>
-        <label id="elh_jdh_invoice_items_submittedby_user_id" for="x_submittedby_user_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->submittedby_user_id->caption() ?><?= $Page->submittedby_user_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->submittedby_user_id->cellAttributes() ?>>
-<span id="el_jdh_invoice_items_submittedby_user_id">
-<input type="<?= $Page->submittedby_user_id->getInputTextType() ?>" name="x_submittedby_user_id" id="x_submittedby_user_id" data-table="jdh_invoice_items" data-field="x_submittedby_user_id" value="<?= $Page->submittedby_user_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->submittedby_user_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->submittedby_user_id->formatPattern()) ?>"<?= $Page->submittedby_user_id->editAttributes() ?> aria-describedby="x_submittedby_user_id_help">
-<?= $Page->submittedby_user_id->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->submittedby_user_id->getErrorMessage() ?></div>
-</span>
-</div></div>
-    </div>
-<?php } ?>
 <?php if ($Page->date_created->Visible) { // date_created ?>
     <div id="r_date_created"<?= $Page->date_created->rowAttributes() ?>>
         <label id="elh_jdh_invoice_items_date_created" for="x_date_created" class="<?= $Page->LeftColumnClass ?>"><?= $Page->date_created->caption() ?><?= $Page->date_created->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
@@ -163,6 +151,9 @@ loadjs.ready(["fjdh_invoice_itemsedit", "datetimepicker"], function () {
     </div>
 <?php } ?>
 </div><!-- /page* -->
+<span id="el_jdh_invoice_items_submittedby_user_id">
+<input type="hidden" data-table="jdh_invoice_items" data-field="x_submittedby_user_id" data-hidden="1" name="x_submittedby_user_id" id="x_submittedby_user_id" value="<?= HtmlEncode($Page->submittedby_user_id->CurrentValue) ?>">
+</span>
 <?= $Page->IsModal ? '<template class="ew-modal-buttons">' : '<div class="row ew-buttons">' ?><!-- buttons .row -->
     <div class="<?= $Page->OffsetColumnClass ?>"><!-- buttons offset -->
 <button class="btn btn-primary ew-btn" name="btn-action" id="btn-action" type="submit" form="fjdh_invoice_itemsedit"><?= $Language->phrase("SaveBtn") ?></button>

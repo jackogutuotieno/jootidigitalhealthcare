@@ -142,8 +142,8 @@ $CONFIG = [
 
     // General
     "UNFORMAT_YEAR" => 50, // Unformat year
-    "RANDOM_KEY" => 'jj4H5c0FZtil2pUR', // Random key for encryption
-    "ENCRYPTION_KEY" => '', // Encryption key for data protection
+    "RANDOM_KEY" => '$rfeddg56t5tgf789ghjeddfvbfty', // Random key for encryption
+    "ENCRYPTION_KEY" => '$rfeddg56t5tgf789ghjeddfvbfty', // Encryption key for data protection
     "PROJECT_STYLESHEET_FILENAME" => "css/jootidigitalhealthcare.css", // Project stylesheet file name
     "USE_COMPRESSED_STYLESHEET" => true, // Compressed stylesheet
     "PROJECT_CHARSET" => "utf-8", // Project charset
@@ -608,7 +608,7 @@ $CONFIG = [
     // Use two factor Authentication
     "USE_TWO_FACTOR_AUTHENTICATION" => false,
     "FORCE_TWO_FACTOR_AUTHENTICATION" => false,
-    "TWO_FACTOR_AUTHENTICATION_TYPE" => "sms",
+    "TWO_FACTOR_AUTHENTICATION_TYPE" => "google",
     "TWO_FACTOR_AUTHENTICATION_ISSUER" => PROJECT_NAME,
     "TWO_FACTOR_AUTHENTICATION_DISCREPANCY" => 1,
     "TWO_FACTOR_AUTHENTICATION_QRCODE_SIZE" => 200,

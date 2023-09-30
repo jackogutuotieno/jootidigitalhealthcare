@@ -633,37 +633,12 @@ return function (App $app) {
         }
     );
 
-    // jdh_invoice
-    $app->map(["GET","POST","OPTIONS"], '/jdhinvoicelist[/{invoice_id}]', JdhInvoiceController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhinvoicelist-jdh_invoice-list'); // list
-    $app->map(["GET","POST","OPTIONS"], '/jdhinvoiceadd[/{invoice_id}]', JdhInvoiceController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhinvoiceadd-jdh_invoice-add'); // add
-    $app->map(["GET","POST","OPTIONS"], '/jdhinvoiceview[/{invoice_id}]', JdhInvoiceController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhinvoiceview-jdh_invoice-view'); // view
-    $app->map(["GET","POST","OPTIONS"], '/jdhinvoiceedit[/{invoice_id}]', JdhInvoiceController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhinvoiceedit-jdh_invoice-edit'); // edit
-    $app->map(["GET","POST","OPTIONS"], '/jdhinvoicedelete[/{invoice_id}]', JdhInvoiceController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhinvoicedelete-jdh_invoice-delete'); // delete
+    // jdh_patients_insuarance
+    $app->map(["GET","POST","OPTIONS"], '/jdhpatientsinsuarancelist[/{patient_id}]', JdhPatientsInsuaranceController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhpatientsinsuarancelist-jdh_patients_insuarance-list'); // list
     $app->group(
-        '/jdh_invoice',
+        '/jdh_patients_insuarance',
         function (RouteCollectorProxy $group) {
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{invoice_id}]', JdhInvoiceController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_invoice/list-jdh_invoice-list-2'); // list
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{invoice_id}]', JdhInvoiceController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_invoice/add-jdh_invoice-add-2'); // add
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{invoice_id}]', JdhInvoiceController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_invoice/view-jdh_invoice-view-2'); // view
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{invoice_id}]', JdhInvoiceController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_invoice/edit-jdh_invoice-edit-2'); // edit
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{invoice_id}]', JdhInvoiceController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_invoice/delete-jdh_invoice-delete-2'); // delete
-        }
-    );
-
-    // jdh_invoice_items
-    $app->map(["GET","POST","OPTIONS"], '/jdhinvoiceitemslist[/{id}]', JdhInvoiceItemsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhinvoiceitemslist-jdh_invoice_items-list'); // list
-    $app->map(["GET","POST","OPTIONS"], '/jdhinvoiceitemsadd[/{id}]', JdhInvoiceItemsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhinvoiceitemsadd-jdh_invoice_items-add'); // add
-    $app->map(["GET","POST","OPTIONS"], '/jdhinvoiceitemsview[/{id}]', JdhInvoiceItemsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhinvoiceitemsview-jdh_invoice_items-view'); // view
-    $app->map(["GET","POST","OPTIONS"], '/jdhinvoiceitemsedit[/{id}]', JdhInvoiceItemsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhinvoiceitemsedit-jdh_invoice_items-edit'); // edit
-    $app->map(["GET","POST","OPTIONS"], '/jdhinvoiceitemsdelete[/{id}]', JdhInvoiceItemsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhinvoiceitemsdelete-jdh_invoice_items-delete'); // delete
-    $app->group(
-        '/jdh_invoice_items',
-        function (RouteCollectorProxy $group) {
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{id}]', JdhInvoiceItemsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_invoice_items/list-jdh_invoice_items-list-2'); // list
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{id}]', JdhInvoiceItemsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_invoice_items/add-jdh_invoice_items-add-2'); // add
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{id}]', JdhInvoiceItemsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_invoice_items/view-jdh_invoice_items-view-2'); // view
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{id}]', JdhInvoiceItemsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_invoice_items/edit-jdh_invoice_items-edit-2'); // edit
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{id}]', JdhInvoiceItemsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_invoice_items/delete-jdh_invoice_items-delete-2'); // delete
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{patient_id}]', JdhPatientsInsuaranceController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_patients_insuarance/list-jdh_patients_insuarance-list-2'); // list
         }
     );
 
