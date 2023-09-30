@@ -650,7 +650,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         $this->department_id->Visible = false;
         $this->service_name->Visible = false;
         $this->service_cost->setVisibility();
-        $this->patient_id->setVisibility();
+        $this->patient_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -1244,7 +1244,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             $this->updateSort($this->first_name); // first_name
             $this->updateSort($this->last_name); // last_name
             $this->updateSort($this->service_cost); // service_cost
-            $this->updateSort($this->patient_id); // patient_id
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1433,7 +1432,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             $option->add("first_name", $this->createColumnOption("first_name"));
             $option->add("last_name", $this->createColumnOption("last_name"));
             $option->add("service_cost", $this->createColumnOption("service_cost"));
-            $option->add("patient_id", $this->createColumnOption("patient_id"));
         }
 
         // Set up options default
@@ -1951,10 +1949,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             // service_cost
             $this->service_cost->HrefValue = "";
             $this->service_cost->TooltipValue = "";
-
-            // patient_id
-            $this->patient_id->HrefValue = "";
-            $this->patient_id->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_AGGREGATEINIT) { // Initialize aggregate row
                     $this->service_cost->Total = 0; // Initialize total
         } elseif ($this->RowType == ROWTYPE_AGGREGATE) { // Aggregate row

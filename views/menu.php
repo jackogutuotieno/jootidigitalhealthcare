@@ -18,6 +18,8 @@ echo $topMenu->toScript();
 
 // Sidebar menu
 $sideMenu = new Menu("menu", true, false);
+$sideMenu->addMenuItem(286, "mi_jdh_invoice", $MenuLanguage->MenuPhrase("286", "MenuText"), $MenuRelativePath . "jdhinvoicelist", -1, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice'), false, false, "", "", false, true);
+$sideMenu->addMenuItem(287, "mi_jdh_invoice_items", $MenuLanguage->MenuPhrase("287", "MenuText"), $MenuRelativePath . "jdhinvoiceitemslist", -1, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items'), false, false, "", "", false, true);
 $sideMenu->addMenuItem(271, "mi_Dashboard2", $MenuLanguage->MenuPhrase("271", "MenuText"), $MenuRelativePath . "dashboard2", -1, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}Dashboard'), false, false, "fa-home", "", false, true);
 $sideMenu->addMenuItem(27, "mi_jdh_notifications", $MenuLanguage->MenuPhrase("27", "MenuText"), $MenuRelativePath . "jdhnotificationslist", -1, "", AllowListMenu('{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_notifications'), false, false, "fa-bell", "", false, true);
 $sideMenu->addMenuItem(38, "mci_Administrator", $MenuLanguage->MenuPhrase("38", "MenuText"), "", -1, "", IsLoggedIn(), false, true, "fa-cogs", "", false, true);

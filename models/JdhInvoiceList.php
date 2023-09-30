@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhPharmacyIncomeList extends JdhPharmacyIncome
+class JdhInvoiceList extends JdhInvoice
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhPharmacyIncomeList";
+    public $PageObjName = "JdhInvoiceList";
 
     // View file path
     public $View = null;
@@ -33,13 +33,13 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
     public $RenderingView = false;
 
     // Grid form hidden field names
-    public $FormName = "fjdh_pharmacy_incomelist";
+    public $FormName = "fjdh_invoicelist";
     public $FormActionName = "";
     public $FormBlankRowName = "";
     public $FormKeyCountName = "";
 
     // CSS class/style
-    public $CurrentPageName = "jdhpharmacyincomelist";
+    public $CurrentPageName = "jdhinvoicelist";
 
     // Page URLs
     public $AddUrl;
@@ -145,8 +145,8 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
         $this->FormActionName = Config("FORM_ROW_ACTION_NAME");
         $this->FormBlankRowName = Config("FORM_BLANK_ROW_NAME");
         $this->FormKeyCountName = Config("FORM_KEY_COUNT_NAME");
-        $this->TableVar = 'jdh_pharmacy_income';
-        $this->TableName = 'jdh_pharmacy_income';
+        $this->TableVar = 'jdh_invoice';
+        $this->TableName = 'jdh_invoice';
 
         // Table CSS class
         $this->TableClass = "table table-bordered table-hover table-sm ew-table";
@@ -166,26 +166,26 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_pharmacy_income)
-        if (!isset($GLOBALS["jdh_pharmacy_income"]) || get_class($GLOBALS["jdh_pharmacy_income"]) == PROJECT_NAMESPACE . "jdh_pharmacy_income") {
-            $GLOBALS["jdh_pharmacy_income"] = &$this;
+        // Table object (jdh_invoice)
+        if (!isset($GLOBALS["jdh_invoice"]) || get_class($GLOBALS["jdh_invoice"]) == PROJECT_NAMESPACE . "jdh_invoice") {
+            $GLOBALS["jdh_invoice"] = &$this;
         }
 
         // Page URL
         $pageUrl = $this->pageUrl(false);
 
         // Initialize URLs
-        $this->AddUrl = "jdhpharmacyincomeadd";
+        $this->AddUrl = "jdhinvoiceadd";
         $this->InlineAddUrl = $pageUrl . "action=add";
         $this->GridAddUrl = $pageUrl . "action=gridadd";
         $this->GridEditUrl = $pageUrl . "action=gridedit";
         $this->MultiEditUrl = $pageUrl . "action=multiedit";
-        $this->MultiDeleteUrl = "jdhpharmacyincomedelete";
-        $this->MultiUpdateUrl = "jdhpharmacyincomeupdate";
+        $this->MultiDeleteUrl = "jdhinvoicedelete";
+        $this->MultiUpdateUrl = "jdhinvoiceupdate";
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_pharmacy_income');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_invoice');
         }
 
         // Start timer
@@ -340,7 +340,7 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
                 $pageName = GetPageName($url);
                 if ($pageName != $this->getListUrl()) { // Not List page => View page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhpharmacyincomeview"; // If View page, no primary button
+                    $result["view"] = $pageName == "jdhinvoiceview"; // If View page, no primary button
                 } else { // List page
                     // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
@@ -433,7 +433,7 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['patient_id'];
+            $key .= @$ar['invoice_id'];
         }
         return $key;
     }
@@ -446,7 +446,10 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->patient_id->Visible = false;
+            $this->invoice_id->Visible = false;
+        }
+        if ($this->isAddOrEdit()) {
+            $this->submitted_by_user_id->Visible = false;
         }
     }
 
@@ -641,15 +644,10 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
 
         // Setup export options
         $this->setupExportOptions();
+        $this->invoice_id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->patient_name->setVisibility();
-        $this->name->setVisibility();
-        $this->selling_price->setVisibility();
-        $this->units_available->Visible = false;
-        $this->units_given->setVisibility();
-        $this->units_remaining->Visible = false;
-        $this->submission_date->Visible = false;
-        $this->line_total_cost->setVisibility();
+        $this->submitted_by_user_id->setVisibility();
+        $this->invoice_date->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -681,9 +679,12 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
             $this->ListActions->add($name, $action);
         }
 
+        // Set up lookup cache
+        $this->setupLookupOptions($this->patient_id);
+
         // Update form name to avoid conflict
         if ($this->IsModal) {
-            $this->FormName = "fjdh_pharmacy_incomegrid";
+            $this->FormName = "fjdh_invoicegrid";
         }
 
         // Set up page action
@@ -741,33 +742,8 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
             $this->OtherOptions->hideAllOptions();
         }
 
-        // Get default search criteria
-        AddFilter($this->DefaultSearchWhere, $this->basicSearchWhere(true));
-
-        // Get basic search values
-        $this->loadBasicSearchValues();
-
-        // Process filter list
-        if ($this->processFilterList()) {
-            $this->terminate();
-            return;
-        }
-
-        // Restore search parms from Session if not searching / reset / export
-        if (($this->isExport() || $this->Command != "search" && $this->Command != "reset" && $this->Command != "resetall") && $this->Command != "json" && $this->checkSearchParms()) {
-            $this->restoreSearchParms();
-        }
-
-        // Call Recordset SearchValidated event
-        $this->recordsetSearchValidated();
-
         // Set up sorting order
         $this->setupSortOrder();
-
-        // Get basic search criteria
-        if (!$this->hasInvalidFields()) {
-            $srchBasic = $this->basicSearchWhere();
-        }
 
         // Restore display records
         if ($this->Command != "json" && $this->getRecordsPerPage() != "") {
@@ -775,35 +751,6 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
         } else {
             $this->DisplayRecords = 20; // Load default
             $this->setRecordsPerPage($this->DisplayRecords); // Save default to Session
-        }
-
-        // Load search default if no existing search criteria
-        if (!$this->checkSearchParms()) {
-            // Load basic search from default
-            $this->BasicSearch->loadDefault();
-            if ($this->BasicSearch->Keyword != "") {
-                $srchBasic = $this->basicSearchWhere();
-            }
-        }
-
-        // Build search criteria
-        if ($query) {
-            AddFilter($this->SearchWhere, $query);
-        } else {
-            AddFilter($this->SearchWhere, $srchAdvanced);
-            AddFilter($this->SearchWhere, $srchBasic);
-        }
-
-        // Call Recordset_Searching event
-        $this->recordsetSearching($this->SearchWhere);
-
-        // Save search criteria
-        if ($this->Command == "search" && !$this->RestoreSearch) {
-            $this->setSearchWhere($this->SearchWhere); // Save to Session
-            $this->StartRecord = 1; // Reset start record counter
-            $this->setStartRecordNumber($this->StartRecord);
-        } elseif ($this->Command != "json" && !$query) {
-            $this->SearchWhere = $this->getSearchWhere();
         }
 
         // Build filter
@@ -1003,243 +950,6 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
         return $wrkFilter;
     }
 
-    // Get list of filters
-    public function getFilterList()
-    {
-        global $UserProfile;
-
-        // Initialize
-        $filterList = "";
-        $savedFilterList = "";
-
-        // Load server side filters
-        if (Config("SEARCH_FILTER_OPTION") == "Server" && isset($UserProfile)) {
-            $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_pharmacy_incomesrch");
-        }
-        $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
-        $filterList = Concat($filterList, $this->patient_name->AdvancedSearch->toJson(), ","); // Field patient_name
-        $filterList = Concat($filterList, $this->name->AdvancedSearch->toJson(), ","); // Field name
-        $filterList = Concat($filterList, $this->selling_price->AdvancedSearch->toJson(), ","); // Field selling_price
-        $filterList = Concat($filterList, $this->units_available->AdvancedSearch->toJson(), ","); // Field units_available
-        $filterList = Concat($filterList, $this->units_given->AdvancedSearch->toJson(), ","); // Field units_given
-        $filterList = Concat($filterList, $this->units_remaining->AdvancedSearch->toJson(), ","); // Field units_remaining
-        $filterList = Concat($filterList, $this->submission_date->AdvancedSearch->toJson(), ","); // Field submission_date
-        $filterList = Concat($filterList, $this->line_total_cost->AdvancedSearch->toJson(), ","); // Field line_total_cost
-        if ($this->BasicSearch->Keyword != "") {
-            $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
-            $filterList = Concat($filterList, $wrk, ",");
-        }
-
-        // Return filter list in JSON
-        if ($filterList != "") {
-            $filterList = "\"data\":{" . $filterList . "}";
-        }
-        if ($savedFilterList != "") {
-            $filterList = Concat($filterList, "\"filters\":" . $savedFilterList, ",");
-        }
-        return ($filterList != "") ? "{" . $filterList . "}" : "null";
-    }
-
-    // Process filter list
-    protected function processFilterList()
-    {
-        global $UserProfile;
-        if (Post("ajax") == "savefilters") { // Save filter request (Ajax)
-            $filters = Post("filters");
-            $UserProfile->setSearchFilters(CurrentUserName(), "fjdh_pharmacy_incomesrch", $filters);
-            WriteJson([["success" => true]]); // Success
-            return true;
-        } elseif (Post("cmd") == "resetfilter") {
-            $this->restoreFilterList();
-        }
-        return false;
-    }
-
-    // Restore list of filters
-    protected function restoreFilterList()
-    {
-        // Return if not reset filter
-        if (Post("cmd") !== "resetfilter") {
-            return false;
-        }
-        $filter = json_decode(Post("filter"), true);
-        $this->Command = "search";
-
-        // Field patient_id
-        $this->patient_id->AdvancedSearch->SearchValue = @$filter["x_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchOperator = @$filter["z_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchCondition = @$filter["v_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchValue2 = @$filter["y_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_id"];
-        $this->patient_id->AdvancedSearch->save();
-
-        // Field patient_name
-        $this->patient_name->AdvancedSearch->SearchValue = @$filter["x_patient_name"];
-        $this->patient_name->AdvancedSearch->SearchOperator = @$filter["z_patient_name"];
-        $this->patient_name->AdvancedSearch->SearchCondition = @$filter["v_patient_name"];
-        $this->patient_name->AdvancedSearch->SearchValue2 = @$filter["y_patient_name"];
-        $this->patient_name->AdvancedSearch->SearchOperator2 = @$filter["w_patient_name"];
-        $this->patient_name->AdvancedSearch->save();
-
-        // Field name
-        $this->name->AdvancedSearch->SearchValue = @$filter["x_name"];
-        $this->name->AdvancedSearch->SearchOperator = @$filter["z_name"];
-        $this->name->AdvancedSearch->SearchCondition = @$filter["v_name"];
-        $this->name->AdvancedSearch->SearchValue2 = @$filter["y_name"];
-        $this->name->AdvancedSearch->SearchOperator2 = @$filter["w_name"];
-        $this->name->AdvancedSearch->save();
-
-        // Field selling_price
-        $this->selling_price->AdvancedSearch->SearchValue = @$filter["x_selling_price"];
-        $this->selling_price->AdvancedSearch->SearchOperator = @$filter["z_selling_price"];
-        $this->selling_price->AdvancedSearch->SearchCondition = @$filter["v_selling_price"];
-        $this->selling_price->AdvancedSearch->SearchValue2 = @$filter["y_selling_price"];
-        $this->selling_price->AdvancedSearch->SearchOperator2 = @$filter["w_selling_price"];
-        $this->selling_price->AdvancedSearch->save();
-
-        // Field units_available
-        $this->units_available->AdvancedSearch->SearchValue = @$filter["x_units_available"];
-        $this->units_available->AdvancedSearch->SearchOperator = @$filter["z_units_available"];
-        $this->units_available->AdvancedSearch->SearchCondition = @$filter["v_units_available"];
-        $this->units_available->AdvancedSearch->SearchValue2 = @$filter["y_units_available"];
-        $this->units_available->AdvancedSearch->SearchOperator2 = @$filter["w_units_available"];
-        $this->units_available->AdvancedSearch->save();
-
-        // Field units_given
-        $this->units_given->AdvancedSearch->SearchValue = @$filter["x_units_given"];
-        $this->units_given->AdvancedSearch->SearchOperator = @$filter["z_units_given"];
-        $this->units_given->AdvancedSearch->SearchCondition = @$filter["v_units_given"];
-        $this->units_given->AdvancedSearch->SearchValue2 = @$filter["y_units_given"];
-        $this->units_given->AdvancedSearch->SearchOperator2 = @$filter["w_units_given"];
-        $this->units_given->AdvancedSearch->save();
-
-        // Field units_remaining
-        $this->units_remaining->AdvancedSearch->SearchValue = @$filter["x_units_remaining"];
-        $this->units_remaining->AdvancedSearch->SearchOperator = @$filter["z_units_remaining"];
-        $this->units_remaining->AdvancedSearch->SearchCondition = @$filter["v_units_remaining"];
-        $this->units_remaining->AdvancedSearch->SearchValue2 = @$filter["y_units_remaining"];
-        $this->units_remaining->AdvancedSearch->SearchOperator2 = @$filter["w_units_remaining"];
-        $this->units_remaining->AdvancedSearch->save();
-
-        // Field submission_date
-        $this->submission_date->AdvancedSearch->SearchValue = @$filter["x_submission_date"];
-        $this->submission_date->AdvancedSearch->SearchOperator = @$filter["z_submission_date"];
-        $this->submission_date->AdvancedSearch->SearchCondition = @$filter["v_submission_date"];
-        $this->submission_date->AdvancedSearch->SearchValue2 = @$filter["y_submission_date"];
-        $this->submission_date->AdvancedSearch->SearchOperator2 = @$filter["w_submission_date"];
-        $this->submission_date->AdvancedSearch->save();
-
-        // Field line_total_cost
-        $this->line_total_cost->AdvancedSearch->SearchValue = @$filter["x_line_total_cost"];
-        $this->line_total_cost->AdvancedSearch->SearchOperator = @$filter["z_line_total_cost"];
-        $this->line_total_cost->AdvancedSearch->SearchCondition = @$filter["v_line_total_cost"];
-        $this->line_total_cost->AdvancedSearch->SearchValue2 = @$filter["y_line_total_cost"];
-        $this->line_total_cost->AdvancedSearch->SearchOperator2 = @$filter["w_line_total_cost"];
-        $this->line_total_cost->AdvancedSearch->save();
-        $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
-        $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
-    }
-
-    // Show list of filters
-    public function showFilterList()
-    {
-        global $Language;
-
-        // Initialize
-        $filterList = "";
-        $captionClass = $this->isExport("email") ? "ew-filter-caption-email" : "ew-filter-caption";
-        $captionSuffix = $this->isExport("email") ? ": " : "";
-        if ($this->BasicSearch->Keyword != "") {
-            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $Language->phrase("BasicSearchKeyword") . "</span>" . $captionSuffix . $this->BasicSearch->Keyword . "</div>";
-        }
-
-        // Show Filters
-        if ($filterList != "") {
-            $message = "<div id=\"ew-filter-list\" class=\"callout callout-info d-table\"><div id=\"ew-current-filters\">" .
-                $Language->phrase("CurrentFilters") . "</div>" . $filterList . "</div>";
-            $this->messageShowing($message, "");
-            Write($message);
-        } else { // Output empty tag
-            Write("<div id=\"ew-filter-list\"></div>");
-        }
-    }
-
-    // Return basic search WHERE clause based on search keyword and type
-    public function basicSearchWhere($default = false)
-    {
-        global $Security;
-        $searchStr = "";
-        if (!$Security->canSearch()) {
-            return "";
-        }
-
-        // Fields to search
-        $searchFlds = [];
-        $searchFlds[] = &$this->patient_name;
-        $searchFlds[] = &$this->name;
-        $searchKeyword = $default ? $this->BasicSearch->KeywordDefault : $this->BasicSearch->Keyword;
-        $searchType = $default ? $this->BasicSearch->TypeDefault : $this->BasicSearch->Type;
-
-        // Get search SQL
-        if ($searchKeyword != "") {
-            $ar = $this->BasicSearch->keywordList($default);
-            $searchStr = GetQuickSearchFilter($searchFlds, $ar, $searchType, Config("BASIC_SEARCH_ANY_FIELDS"), $this->Dbid);
-            if (!$default && in_array($this->Command, ["", "reset", "resetall"])) {
-                $this->Command = "search";
-            }
-        }
-        if (!$default && $this->Command == "search") {
-            $this->BasicSearch->setKeyword($searchKeyword);
-            $this->BasicSearch->setType($searchType);
-
-            // Clear rules for QueryBuilder
-            $this->setSessionRules("");
-        }
-        return $searchStr;
-    }
-
-    // Check if search parm exists
-    protected function checkSearchParms()
-    {
-        // Check basic search
-        if ($this->BasicSearch->issetSession()) {
-            return true;
-        }
-        return false;
-    }
-
-    // Clear all search parameters
-    protected function resetSearchParms()
-    {
-        // Clear search WHERE clause
-        $this->SearchWhere = "";
-        $this->setSearchWhere($this->SearchWhere);
-
-        // Clear basic search parameters
-        $this->resetBasicSearchParms();
-    }
-
-    // Load advanced search default values
-    protected function loadAdvancedSearchDefault()
-    {
-        return false;
-    }
-
-    // Clear all basic search parameters
-    protected function resetBasicSearchParms()
-    {
-        $this->BasicSearch->unsetSession();
-    }
-
-    // Restore all search parameters
-    protected function restoreSearchParms()
-    {
-        $this->RestoreSearch = true;
-
-        // Restore basic search values
-        $this->BasicSearch->load();
-    }
-
     // Set up sort parameters
     protected function setupSortOrder()
     {
@@ -1255,12 +965,10 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
+            $this->updateSort($this->invoice_id); // invoice_id
             $this->updateSort($this->patient_id); // patient_id
-            $this->updateSort($this->patient_name); // patient_name
-            $this->updateSort($this->name); // name
-            $this->updateSort($this->selling_price); // selling_price
-            $this->updateSort($this->units_given); // units_given
-            $this->updateSort($this->line_total_cost); // line_total_cost
+            $this->updateSort($this->submitted_by_user_id); // submitted_by_user_id
+            $this->updateSort($this->invoice_date); // invoice_date
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1276,24 +984,14 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
     {
         // Check if reset command
         if (StartsString("reset", $this->Command)) {
-            // Reset search criteria
-            if ($this->Command == "reset" || $this->Command == "resetall") {
-                $this->resetSearchParms();
-            }
-
             // Reset (clear) sorting order
             if ($this->Command == "resetsort") {
                 $orderBy = "";
                 $this->setSessionOrderBy($orderBy);
+                $this->invoice_id->setSort("");
                 $this->patient_id->setSort("");
-                $this->patient_name->setSort("");
-                $this->name->setSort("");
-                $this->selling_price->setSort("");
-                $this->units_available->setSort("");
-                $this->units_given->setSort("");
-                $this->units_remaining->setSort("");
-                $this->submission_date->setSort("");
-                $this->line_total_cost->setSort("");
+                $this->submitted_by_user_id->setSort("");
+                $this->invoice_date->setSort("");
             }
 
             // Reset start position
@@ -1319,6 +1017,18 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
         $item->Visible = $Security->canView();
         $item->OnLeft = false;
 
+        // "edit"
+        $item = &$this->ListOptions->add("edit");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->canEdit();
+        $item->OnLeft = false;
+
+        // "copy"
+        $item = &$this->ListOptions->add("copy");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->canAdd();
+        $item->OnLeft = false;
+
         // List actions
         $item = &$this->ListOptions->add("listactions");
         $item->CssClass = "text-nowrap";
@@ -1329,7 +1039,7 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
 
         // "checkbox"
         $item = &$this->ListOptions->add("checkbox");
-        $item->Visible = false;
+        $item->Visible = $Security->canDelete();
         $item->OnLeft = false;
         $item->Header = "<div class=\"form-check\"><input type=\"checkbox\" name=\"key\" id=\"key\" class=\"form-check-input\" data-ew-action=\"select-all-keys\"></div>";
         if ($item->OnLeft) {
@@ -1382,9 +1092,35 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
             $viewcaption = HtmlTitle($Language->phrase("ViewLink"));
             if ($Security->canView()) {
                 if ($this->ModalView && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_pharmacy_income\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
+                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_invoice\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-caption=\"" . $viewcaption . "\" href=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\">" . $Language->phrase("ViewLink") . "</a>";
+                }
+            } else {
+                $opt->Body = "";
+            }
+
+            // "edit"
+            $opt = $this->ListOptions["edit"];
+            $editcaption = HtmlTitle($Language->phrase("EditLink"));
+            if ($Security->canEdit()) {
+                if ($this->ModalEdit && !IsMobile()) {
+                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_invoice\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
+                } else {
+                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
+                }
+            } else {
+                $opt->Body = "";
+            }
+
+            // "copy"
+            $opt = $this->ListOptions["copy"];
+            $copycaption = HtmlTitle($Language->phrase("CopyLink"));
+            if ($Security->canAdd()) {
+                if ($this->ModalAdd && !IsMobile()) {
+                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-table=\"jdh_invoice\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("CopyLink") . "</a>";
+                } else {
+                    $opt->Body = "<a class=\"ew-row-link ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("CopyLink") . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1402,11 +1138,11 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
                 if ($listaction->Select == ACTION_SINGLE && $allowed) {
                     $caption = $listaction->Caption;
                     $icon = ($listaction->Icon != "") ? "<i class=\"" . HtmlEncode(str_replace(" ew-icon", "", $listaction->Icon)) . "\" data-caption=\"" . HtmlTitle($caption) . "\"></i> " : "";
-                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_pharmacy_incomelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
+                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_invoicelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
                     if ($link != "") {
                         $links[] = $link;
                         if ($body == "") { // Setup first button
-                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_pharmacy_incomelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
+                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_invoicelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
                         }
                     }
                 }
@@ -1427,7 +1163,7 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
 
         // "checkbox"
         $opt = $this->ListOptions["checkbox"];
-        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->patient_id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
+        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->invoice_id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
         $this->renderListOptionsExt();
 
         // Call ListOptions_Rendered event
@@ -1446,7 +1182,30 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
     {
         global $Language, $Security;
         $options = &$this->OtherOptions;
+        $option = $options["addedit"];
+
+        // Add
+        $item = &$option->add("add");
+        $addcaption = HtmlTitle($Language->phrase("AddLink"));
+        if ($this->ModalAdd && !IsMobile()) {
+            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-table=\"jdh_invoice\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("AddLink") . "</a>";
+        } else {
+            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
+        }
+        $item->Visible = $this->AddUrl != "" && $Security->canAdd();
         $option = $options["action"];
+
+        // Add multi delete
+        $item = &$option->add("multidelete");
+        $item->Body = "<button type=\"button\" class=\"ew-action ew-multi-delete\" title=\"" .
+            HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" data-caption=\"" .
+            HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" form=\"fjdh_invoicelist\"" .
+            " data-ew-action=\"" . ($this->UseAjaxActions ? "inline" : "submit") . "\"" .
+            ($this->UseAjaxActions ? " data-action=\"delete\"" : "") .
+            " data-url=\"" . GetUrl($this->MultiDeleteUrl) . "\"" .
+            ($this->InlineDelete ? " data-msg=\"" . HtmlEncode($Language->phrase("DeleteConfirm")) . "\" data-data='{\"action\":\"delete\"}'" : " data-data='{\"action\":\"show\"}'") .
+            ">" . $Language->phrase("DeleteSelectedLink") . "</button>";
+        $item->Visible = $Security->canDelete();
 
         // Show column list for column visibility
         if ($this->UseColumnVisibility) {
@@ -1454,12 +1213,10 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
+            $option->add("invoice_id", $this->createColumnOption("invoice_id"));
             $option->add("patient_id", $this->createColumnOption("patient_id"));
-            $option->add("patient_name", $this->createColumnOption("patient_name"));
-            $option->add("name", $this->createColumnOption("name"));
-            $option->add("selling_price", $this->createColumnOption("selling_price"));
-            $option->add("units_given", $this->createColumnOption("units_given"));
-            $option->add("line_total_cost", $this->createColumnOption("line_total_cost"));
+            $option->add("submitted_by_user_id", $this->createColumnOption("submitted_by_user_id"));
+            $option->add("invoice_date", $this->createColumnOption("invoice_date"));
         }
 
         // Set up options default
@@ -1479,11 +1236,11 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
 
         // Filter button
         $item = &$this->FilterOptions->add("savecurrentfilter");
-        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_pharmacy_incomesrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
-        $item->Visible = true;
+        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_invoicesrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
+        $item->Visible = false;
         $item = &$this->FilterOptions->add("deletefilter");
-        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_pharmacy_incomesrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
-        $item->Visible = true;
+        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_invoicesrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
+        $item->Visible = false;
         $this->FilterOptions->UseDropDownButton = true;
         $this->FilterOptions->UseButtonGroup = !$this->FilterOptions->UseDropDownButton;
         $this->FilterOptions->DropDownButtonPhrase = $Language->phrase("Filters");
@@ -1521,7 +1278,7 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
                 $item = &$option->add("custom_" . $listaction->Action);
                 $caption = $listaction->Caption;
                 $icon = ($listaction->Icon != "") ? '<i class="' . HtmlEncode($listaction->Icon) . '" data-caption="' . HtmlEncode($caption) . '"></i>' . $caption : $caption;
-                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_pharmacy_incomelist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
+                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_invoicelist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
                 $item->Visible = $listaction->Allow;
             }
         }
@@ -1670,7 +1427,7 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
 
                 // Set row properties
                 $this->resetAttributes();
-                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_pharmacy_income", "data-rowtype" => ROWTYPE_ADD]);
+                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_invoice", "data-rowtype" => ROWTYPE_ADD]);
                 $this->RowAttrs->appendClass("ew-template");
                 // Render row
                 $this->RowType = ROWTYPE_ADD;
@@ -1731,7 +1488,7 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
         $this->RowAttrs->merge([
             "data-rowindex" => $this->RowCount,
             "data-key" => $this->getKey(true),
-            "id" => "r" . $this->RowCount . "_jdh_pharmacy_income",
+            "id" => "r" . $this->RowCount . "_jdh_invoice",
             "data-rowtype" => $this->RowType,
             "class" => ($this->RowCount % 2 != 1) ? "ew-table-alt-row" : "",
         ]);
@@ -1744,16 +1501,6 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
 
         // Render list options
         $this->renderListOptions();
-    }
-
-    // Load basic search values
-    protected function loadBasicSearchValues()
-    {
-        $this->BasicSearch->setKeyword(Get(Config("TABLE_BASIC_SEARCH"), ""), false);
-        if ($this->BasicSearch->Keyword != "" && $this->Command == "") {
-            $this->Command = "search";
-        }
-        $this->BasicSearch->setType(Get(Config("TABLE_BASIC_SEARCH_TYPE"), ""), false);
     }
 
     // Load recordset
@@ -1841,30 +1588,20 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
 
         // Call Row Selected event
         $this->rowSelected($row);
+        $this->invoice_id->setDbValue($row['invoice_id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->patient_name->setDbValue($row['patient_name']);
-        $this->name->setDbValue($row['name']);
-        $this->selling_price->setDbValue($row['selling_price']);
-        $this->units_available->setDbValue($row['units_available']);
-        $this->units_given->setDbValue($row['units_given']);
-        $this->units_remaining->setDbValue($row['units_remaining']);
-        $this->submission_date->setDbValue($row['submission_date']);
-        $this->line_total_cost->setDbValue($row['line_total_cost']);
+        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->invoice_date->setDbValue($row['invoice_date']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
+        $row['invoice_id'] = $this->invoice_id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['patient_name'] = $this->patient_name->DefaultValue;
-        $row['name'] = $this->name->DefaultValue;
-        $row['selling_price'] = $this->selling_price->DefaultValue;
-        $row['units_available'] = $this->units_available->DefaultValue;
-        $row['units_given'] = $this->units_given->DefaultValue;
-        $row['units_remaining'] = $this->units_remaining->DefaultValue;
-        $row['submission_date'] = $this->submission_date->DefaultValue;
-        $row['line_total_cost'] = $this->line_total_cost->DefaultValue;
+        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['invoice_date'] = $this->invoice_date->DefaultValue;
         return $row;
     }
 
@@ -1905,96 +1642,65 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
 
         // Common render codes for all row types
 
+        // invoice_id
+
         // patient_id
 
-        // patient_name
+        // submitted_by_user_id
 
-        // name
-
-        // selling_price
-
-        // units_available
-
-        // units_given
-
-        // units_remaining
-
-        // submission_date
-
-        // line_total_cost
-
-        // Accumulate aggregate value
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT && $this->RowType != ROWTYPE_AGGREGATE && $this->RowType != ROWTYPE_PREVIEW_FIELD) {
-            if (is_numeric($this->line_total_cost->CurrentValue)) {
-                $this->line_total_cost->Total += $this->line_total_cost->CurrentValue; // Accumulate total
-            }
-        }
+        // invoice_date
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
+            // invoice_id
+            $this->invoice_id->ViewValue = $this->invoice_id->CurrentValue;
+
             // patient_id
-            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
+            $curVal = strval($this->patient_id->CurrentValue);
+            if ($curVal != "") {
+                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
+                if ($this->patient_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
+                    } else {
+                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->patient_id->ViewValue = null;
+            }
 
-            // patient_name
-            $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
+            // submitted_by_user_id
+            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
+            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
 
-            // name
-            $this->name->ViewValue = $this->name->CurrentValue;
+            // invoice_date
+            $this->invoice_date->ViewValue = $this->invoice_date->CurrentValue;
+            $this->invoice_date->ViewValue = FormatDateTime($this->invoice_date->ViewValue, $this->invoice_date->formatPattern());
 
-            // selling_price
-            $this->selling_price->ViewValue = $this->selling_price->CurrentValue;
-            $this->selling_price->ViewValue = FormatNumber($this->selling_price->ViewValue, $this->selling_price->formatPattern());
-
-            // units_available
-            $this->units_available->ViewValue = $this->units_available->CurrentValue;
-            $this->units_available->ViewValue = FormatNumber($this->units_available->ViewValue, $this->units_available->formatPattern());
-
-            // units_given
-            $this->units_given->ViewValue = $this->units_given->CurrentValue;
-            $this->units_given->ViewValue = FormatNumber($this->units_given->ViewValue, $this->units_given->formatPattern());
-
-            // units_remaining
-            $this->units_remaining->ViewValue = $this->units_remaining->CurrentValue;
-            $this->units_remaining->ViewValue = FormatNumber($this->units_remaining->ViewValue, $this->units_remaining->formatPattern());
-
-            // submission_date
-            $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
-            $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
-
-            // line_total_cost
-            $this->line_total_cost->ViewValue = $this->line_total_cost->CurrentValue;
-            $this->line_total_cost->ViewValue = FormatNumber($this->line_total_cost->ViewValue, $this->line_total_cost->formatPattern());
+            // invoice_id
+            $this->invoice_id->HrefValue = "";
+            $this->invoice_id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
 
-            // patient_name
-            $this->patient_name->HrefValue = "";
-            $this->patient_name->TooltipValue = "";
+            // submitted_by_user_id
+            $this->submitted_by_user_id->HrefValue = "";
+            $this->submitted_by_user_id->TooltipValue = "";
 
-            // name
-            $this->name->HrefValue = "";
-            $this->name->TooltipValue = "";
-
-            // selling_price
-            $this->selling_price->HrefValue = "";
-            $this->selling_price->TooltipValue = "";
-
-            // units_given
-            $this->units_given->HrefValue = "";
-            $this->units_given->TooltipValue = "";
-
-            // line_total_cost
-            $this->line_total_cost->HrefValue = "";
-            $this->line_total_cost->TooltipValue = "";
-        } elseif ($this->RowType == ROWTYPE_AGGREGATEINIT) { // Initialize aggregate row
-                    $this->line_total_cost->Total = 0; // Initialize total
-        } elseif ($this->RowType == ROWTYPE_AGGREGATE) { // Aggregate row
-            $this->line_total_cost->CurrentValue = $this->line_total_cost->Total;
-            $this->line_total_cost->ViewValue = $this->line_total_cost->CurrentValue;
-            $this->line_total_cost->ViewValue = FormatNumber($this->line_total_cost->ViewValue, $this->line_total_cost->formatPattern());
-            $this->line_total_cost->HrefValue = ""; // Clear href value
+            // invoice_date
+            $this->invoice_date->HrefValue = "";
+            $this->invoice_date->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -2015,19 +1721,19 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
         }
         if (SameText($type, "excel")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_pharmacy_incomelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_invoicelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\">" . $Language->phrase("ExportToExcel") . "</a>";
             }
         } elseif (SameText($type, "word")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_pharmacy_incomelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_invoicelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\">" . $Language->phrase("ExportToWord") . "</a>";
             }
         } elseif (SameText($type, "pdf")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_pharmacy_incomelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_invoicelist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\">" . $Language->phrase("ExportToPdf") . "</a>";
             }
@@ -2039,7 +1745,7 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-csv\" title=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\">" . $Language->phrase("ExportToCsv") . "</a>";
         } elseif (SameText($type, "email")) {
             $url = $custom ? ' data-url="' . $exportUrl . '"' : '';
-            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_pharmacy_incomelist" data-ew-action="email" data-custom="false" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
+            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_invoicelist" data-ew-action="email" data-custom="false" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
         } elseif (SameText($type, "print")) {
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-print\" title=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\">" . $Language->phrase("PrinterFriendly") . "</a>";
         }
@@ -2114,21 +1820,6 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
         $pageUrl = $this->pageUrl(false);
         $this->SearchOptions = new ListOptions(["TagClassName" => "ew-search-option"]);
 
-        // Search button
-        $item = &$this->SearchOptions->add("searchtoggle");
-        $searchToggleClass = ($this->SearchWhere != "") ? " active" : " active";
-        $item->Body = "<a class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" role=\"button\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-ew-action=\"search-toggle\" data-form=\"fjdh_pharmacy_incomesrch\" aria-pressed=\"" . ($searchToggleClass == " active" ? "true" : "false") . "\">" . $Language->phrase("SearchLink") . "</a>";
-        $item->Visible = true;
-
-        // Show all button
-        $item = &$this->SearchOptions->add("showall");
-        if ($this->UseCustomTemplate || !$this->UseAjaxActions) {
-            $item->Body = "<a class=\"btn btn-default ew-show-all\" role=\"button\" title=\"" . $Language->phrase("ShowAll") . "\" data-caption=\"" . $Language->phrase("ShowAll") . "\" href=\"" . $pageUrl . "cmd=reset\">" . $Language->phrase("ShowAllBtn") . "</a>";
-        } else {
-            $item->Body = "<a class=\"btn btn-default ew-show-all\" role=\"button\" title=\"" . $Language->phrase("ShowAll") . "\" data-caption=\"" . $Language->phrase("ShowAll") . "\" data-ew-action=\"refresh\" data-url=\"" . $pageUrl . "cmd=reset\">" . $Language->phrase("ShowAllBtn") . "</a>";
-        }
-        $item->Visible = ($this->SearchWhere != $this->DefaultSearchWhere && $this->SearchWhere != "0=101");
-
         // Button group for search
         $this->SearchOptions->UseDropDownButton = false;
         $this->SearchOptions->UseButtonGroup = true;
@@ -2152,7 +1843,7 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
     // Check if any search fields
     public function hasSearchFields()
     {
-        return true;
+        return false;
     }
 
     // Render search options
@@ -2251,6 +1942,8 @@ class JdhPharmacyIncomeList extends JdhPharmacyIncome
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
+                case "x_patient_id":
+                    break;
                 default:
                     $lookupFilter = "";
                     break;

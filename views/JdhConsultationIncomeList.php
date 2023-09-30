@@ -158,9 +158,6 @@ $Page->ListOptions->render("header", "left");
 <?php if ($Page->service_cost->Visible) { // service_cost ?>
         <th data-name="service_cost" class="<?= $Page->service_cost->headerCellClass() ?>"><div id="elh_jdh_consultation_income_service_cost" class="jdh_consultation_income_service_cost"><?= $Page->renderFieldHeader($Page->service_cost) ?></div></th>
 <?php } ?>
-<?php if ($Page->patient_id->Visible) { // patient_id ?>
-        <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_consultation_income_patient_id" class="jdh_consultation_income_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
-<?php } ?>
 <?php
 // Render list options (header, right)
 $Page->ListOptions->render("header", "right");
@@ -201,14 +198,6 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 <span id="el<?= $Page->RowCount ?>_jdh_consultation_income_service_cost" class="el_jdh_consultation_income_service_cost">
 <span<?= $Page->service_cost->viewAttributes() ?>>
 <?= $Page->service_cost->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->patient_id->Visible) { // patient_id ?>
-        <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_consultation_income_patient_id" class="el_jdh_consultation_income_patient_id">
-<span<?= $Page->patient_id->viewAttributes() ?>>
-<?= $Page->patient_id->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
@@ -253,10 +242,6 @@ $Page->ListOptions->render("footer", "left");
         <td data-name="service_cost" class="<?= $Page->service_cost->footerCellClass() ?>"><span id="elf_jdh_consultation_income_service_cost" class="jdh_consultation_income_service_cost">
         <span class="ew-aggregate"><?= $Language->phrase("TOTAL") ?></span><span class="ew-aggregate-value">
         <?= $Page->service_cost->ViewValue ?></span>
-        </span></td>
-    <?php } ?>
-    <?php if ($Page->patient_id->Visible) { // patient_id ?>
-        <td data-name="patient_id" class="<?= $Page->patient_id->footerCellClass() ?>"><span id="elf_jdh_consultation_income_patient_id" class="jdh_consultation_income_patient_id">
         </span></td>
     <?php } ?>
 <?php

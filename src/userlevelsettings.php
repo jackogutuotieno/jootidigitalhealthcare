@@ -392,7 +392,25 @@ $USER_LEVEL_PRIVS = [["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","4","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","5","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","6","0"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","7","0"]];
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_branding","7","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","-2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","0","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","1","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","3","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","4","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","5","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","6","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","7","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","-2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","0","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","1","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","3","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","4","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","5","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","6","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","7","0"]];
 // User level table info
 $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhappointmentslist"],
     ["jdh_lab_test_categories","jdh_lab_test_categories","Test Categories",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabtestcategorieslist"],
@@ -435,4 +453,6 @@ $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true
     ["jdh_wards","jdh_wards","Wards",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhwardslist"],
     ["beds","beds","Beds",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","bedslist"],
     ["jdh_beds_assignment","jdh_beds_assignment","Beds Assignment",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhbedsassignmentlist"],
-    ["jdh_branding","jdh_branding","Print Header/Footer",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhbrandinglist"]];
+    ["jdh_branding","jdh_branding","Print Header/Footer",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhbrandinglist"],
+    ["jdh_invoice","jdh_invoice","Invoice",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhinvoicelist"],
+    ["jdh_invoice_items","jdh_invoice_items","jdh invoice items",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhinvoiceitemslist"]];
