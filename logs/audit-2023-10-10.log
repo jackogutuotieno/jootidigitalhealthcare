@@ -1,0 +1,5 @@
+date/time,script,user,action,table,field,"key value","old value","new value"
+"2023-10-10 13:45:25",/jootidigitalhealthcare/jdhmedicinestockedit/1,1,U,jdh_medicine_stock,expiry_date,1,0000-00-00,2025-05-19
+"2023-10-10 13:45:51",/jootidigitalhealthcare/jdhmedicinestockedit/2,1,U,jdh_medicine_stock,expiry_date,2,0000-00-00,2026-04-07
+"2023-10-10 13:46:17",/jootidigitalhealthcare/jdhmedicinestockedit/3,1,U,jdh_medicine_stock,expiry_date,3,0000-00-00,2027-09-15
+"2023-10-10 13:49:20",/jootidigitalhealthcare/jdhmedicinestockedit/1,1,U,jdh_medicine_stock,expiry_date,1,2025-05-19,2022-04-07

@@ -2742,5 +2742,18 @@ body {
 .content-header .h1, .content-header h1{
 	font-weight: 700;
 }
+.d-block {
+	font-size: .8rem;
+}
+.user-panel {
+	display: flex !important;
+    justify-content: center;
+}
+.brand-link {
+	text-align: center;
+}
+.brand-link .brand-image {
+	max-height: 50px !important;
+}
 
 /*END_USER_STYLES*/

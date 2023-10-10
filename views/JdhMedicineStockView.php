@@ -86,6 +86,28 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->expiry_date->Visible) { // expiry_date ?>
+    <tr id="r_expiry_date"<?= $Page->expiry_date->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_medicine_stock_expiry_date"><?= $Page->expiry_date->caption() ?></span></td>
+        <td data-name="expiry_date"<?= $Page->expiry_date->cellAttributes() ?>>
+<span id="el_jdh_medicine_stock_expiry_date">
+<span<?= $Page->expiry_date->viewAttributes() ?>>
+<?= $Page->expiry_date->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
+<?php if ($Page->status->Visible) { // status ?>
+    <tr id="r_status"<?= $Page->status->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_medicine_stock_status"><?= $Page->status->caption() ?></span></td>
+        <td data-name="status"<?= $Page->status->cellAttributes() ?>>
+<span id="el_jdh_medicine_stock_status">
+<span<?= $Page->status->viewAttributes() ?>>
+<?= $Page->status->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 <?php if ($Page->date_created->Visible) { // date_created ?>
     <tr id="r_date_created"<?= $Page->date_created->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_medicine_stock_date_created"><?= $Page->date_created->caption() ?></span></td>

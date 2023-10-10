@@ -472,6 +472,8 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         $this->id->setVisibility();
         $this->medicine_id->setVisibility();
         $this->units_available->setVisibility();
+        $this->expiry_date->setVisibility();
+        $this->status->setVisibility();
         $this->submittedby_user_id->Visible = false;
         $this->date_created->Visible = false;
         $this->date_updated->Visible = false;
@@ -708,6 +710,27 @@ class JdhMedicineStockEdit extends JdhMedicineStock
                 $this->units_available->setFormValue($val, true, $validate);
             }
         }
+
+        // Check field name 'expiry_date' first before field var 'x_expiry_date'
+        $val = $CurrentForm->hasValue("expiry_date") ? $CurrentForm->getValue("expiry_date") : $CurrentForm->getValue("x_expiry_date");
+        if (!$this->expiry_date->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->expiry_date->Visible = false; // Disable update for API request
+            } else {
+                $this->expiry_date->setFormValue($val, true, $validate);
+            }
+            $this->expiry_date->CurrentValue = UnFormatDateTime($this->expiry_date->CurrentValue, $this->expiry_date->formatPattern());
+        }
+
+        // Check field name 'status' first before field var 'x_status'
+        $val = $CurrentForm->hasValue("status") ? $CurrentForm->getValue("status") : $CurrentForm->getValue("x_status");
+        if (!$this->status->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->status->Visible = false; // Disable update for API request
+            } else {
+                $this->status->setFormValue($val);
+            }
+        }
     }
 
     // Restore form values
@@ -717,6 +740,9 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         $this->id->CurrentValue = $this->id->FormValue;
         $this->medicine_id->CurrentValue = $this->medicine_id->FormValue;
         $this->units_available->CurrentValue = $this->units_available->FormValue;
+        $this->expiry_date->CurrentValue = $this->expiry_date->FormValue;
+        $this->expiry_date->CurrentValue = UnFormatDateTime($this->expiry_date->CurrentValue, $this->expiry_date->formatPattern());
+        $this->status->CurrentValue = $this->status->FormValue;
     }
 
     /**
@@ -778,6 +804,8 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         $this->id->setDbValue($row['id']);
         $this->medicine_id->setDbValue($row['medicine_id']);
         $this->units_available->setDbValue($row['units_available']);
+        $this->expiry_date->setDbValue($row['expiry_date']);
+        $this->status->setDbValue($row['status']);
         $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
         $this->date_created->setDbValue($row['date_created']);
         $this->date_updated->setDbValue($row['date_updated']);
@@ -790,6 +818,8 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         $row['id'] = $this->id->DefaultValue;
         $row['medicine_id'] = $this->medicine_id->DefaultValue;
         $row['units_available'] = $this->units_available->DefaultValue;
+        $row['expiry_date'] = $this->expiry_date->DefaultValue;
+        $row['status'] = $this->status->DefaultValue;
         $row['submittedby_user_id'] = $this->submittedby_user_id->DefaultValue;
         $row['date_created'] = $this->date_created->DefaultValue;
         $row['date_updated'] = $this->date_updated->DefaultValue;
@@ -836,6 +866,12 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         // units_available
         $this->units_available->RowCssClass = "row";
 
+        // expiry_date
+        $this->expiry_date->RowCssClass = "row";
+
+        // status
+        $this->status->RowCssClass = "row";
+
         // submittedby_user_id
         $this->submittedby_user_id->RowCssClass = "row";
 
@@ -877,6 +913,13 @@ class JdhMedicineStockEdit extends JdhMedicineStock
             $this->units_available->ViewValue = $this->units_available->CurrentValue;
             $this->units_available->ViewValue = FormatNumber($this->units_available->ViewValue, $this->units_available->formatPattern());
 
+            // expiry_date
+            $this->expiry_date->ViewValue = $this->expiry_date->CurrentValue;
+            $this->expiry_date->ViewValue = FormatDateTime($this->expiry_date->ViewValue, $this->expiry_date->formatPattern());
+
+            // status
+            $this->status->ViewValue = $this->status->CurrentValue;
+
             // submittedby_user_id
             $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
             $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
@@ -897,6 +940,12 @@ class JdhMedicineStockEdit extends JdhMedicineStock
 
             // units_available
             $this->units_available->HrefValue = "";
+
+            // expiry_date
+            $this->expiry_date->HrefValue = "";
+
+            // status
+            $this->status->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
             // id
             $this->id->setupEditAttributes();
@@ -937,6 +986,16 @@ class JdhMedicineStockEdit extends JdhMedicineStock
                 $this->units_available->EditValue = FormatNumber($this->units_available->EditValue, null);
             }
 
+            // expiry_date
+            $this->expiry_date->setupEditAttributes();
+            $this->expiry_date->EditValue = HtmlEncode(FormatDateTime($this->expiry_date->CurrentValue, $this->expiry_date->formatPattern()));
+            $this->expiry_date->PlaceHolder = RemoveHtml($this->expiry_date->caption());
+
+            // status
+            $this->status->setupEditAttributes();
+            $this->status->EditValue = HtmlEncode($this->status->CurrentValue);
+            $this->status->PlaceHolder = RemoveHtml($this->status->caption());
+
             // Edit refer script
 
             // id
@@ -947,6 +1006,12 @@ class JdhMedicineStockEdit extends JdhMedicineStock
 
             // units_available
             $this->units_available->HrefValue = "";
+
+            // expiry_date
+            $this->expiry_date->HrefValue = "";
+
+            // status
+            $this->status->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -985,6 +1050,19 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         }
         if (!CheckInteger($this->units_available->FormValue)) {
             $this->units_available->addErrorMessage($this->units_available->getErrorMessage(false));
+        }
+        if ($this->expiry_date->Required) {
+            if (!$this->expiry_date->IsDetailKey && EmptyValue($this->expiry_date->FormValue)) {
+                $this->expiry_date->addErrorMessage(str_replace("%s", $this->expiry_date->caption(), $this->expiry_date->RequiredErrorMessage));
+            }
+        }
+        if (!CheckDate($this->expiry_date->FormValue, $this->expiry_date->formatPattern())) {
+            $this->expiry_date->addErrorMessage($this->expiry_date->getErrorMessage(false));
+        }
+        if ($this->status->Required) {
+            if (!$this->status->IsDetailKey && EmptyValue($this->status->FormValue)) {
+                $this->status->addErrorMessage(str_replace("%s", $this->status->caption(), $this->status->RequiredErrorMessage));
+            }
         }
 
         // Return validate result
@@ -1027,6 +1105,12 @@ class JdhMedicineStockEdit extends JdhMedicineStock
 
         // units_available
         $this->units_available->setDbValueDef($rsnew, $this->units_available->CurrentValue, 0, $this->units_available->ReadOnly);
+
+        // expiry_date
+        $this->expiry_date->setDbValueDef($rsnew, UnFormatDateTime($this->expiry_date->CurrentValue, $this->expiry_date->formatPattern()), CurrentDate(), $this->expiry_date->ReadOnly);
+
+        // status
+        $this->status->setDbValueDef($rsnew, $this->status->CurrentValue, "", $this->status->ReadOnly);
 
         // Update current values
         $this->setCurrentValues($rsnew);

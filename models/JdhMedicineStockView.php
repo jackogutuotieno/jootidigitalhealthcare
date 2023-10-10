@@ -516,6 +516,8 @@ class JdhMedicineStockView extends JdhMedicineStock
         $this->id->setVisibility();
         $this->medicine_id->setVisibility();
         $this->units_available->setVisibility();
+        $this->expiry_date->setVisibility();
+        $this->status->setVisibility();
         $this->submittedby_user_id->setVisibility();
         $this->date_created->setVisibility();
         $this->date_updated->setVisibility();
@@ -790,6 +792,8 @@ class JdhMedicineStockView extends JdhMedicineStock
         $this->id->setDbValue($row['id']);
         $this->medicine_id->setDbValue($row['medicine_id']);
         $this->units_available->setDbValue($row['units_available']);
+        $this->expiry_date->setDbValue($row['expiry_date']);
+        $this->status->setDbValue($row['status']);
         $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
         $this->date_created->setDbValue($row['date_created']);
         $this->date_updated->setDbValue($row['date_updated']);
@@ -802,6 +806,8 @@ class JdhMedicineStockView extends JdhMedicineStock
         $row['id'] = $this->id->DefaultValue;
         $row['medicine_id'] = $this->medicine_id->DefaultValue;
         $row['units_available'] = $this->units_available->DefaultValue;
+        $row['expiry_date'] = $this->expiry_date->DefaultValue;
+        $row['status'] = $this->status->DefaultValue;
         $row['submittedby_user_id'] = $this->submittedby_user_id->DefaultValue;
         $row['date_created'] = $this->date_created->DefaultValue;
         $row['date_updated'] = $this->date_updated->DefaultValue;
@@ -831,6 +837,10 @@ class JdhMedicineStockView extends JdhMedicineStock
         // medicine_id
 
         // units_available
+
+        // expiry_date
+
+        // status
 
         // submittedby_user_id
 
@@ -870,6 +880,13 @@ class JdhMedicineStockView extends JdhMedicineStock
             $this->units_available->ViewValue = $this->units_available->CurrentValue;
             $this->units_available->ViewValue = FormatNumber($this->units_available->ViewValue, $this->units_available->formatPattern());
 
+            // expiry_date
+            $this->expiry_date->ViewValue = $this->expiry_date->CurrentValue;
+            $this->expiry_date->ViewValue = FormatDateTime($this->expiry_date->ViewValue, $this->expiry_date->formatPattern());
+
+            // status
+            $this->status->ViewValue = $this->status->CurrentValue;
+
             // submittedby_user_id
             $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
             $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
@@ -893,6 +910,14 @@ class JdhMedicineStockView extends JdhMedicineStock
             // units_available
             $this->units_available->HrefValue = "";
             $this->units_available->TooltipValue = "";
+
+            // expiry_date
+            $this->expiry_date->HrefValue = "";
+            $this->expiry_date->TooltipValue = "";
+
+            // status
+            $this->status->HrefValue = "";
+            $this->status->TooltipValue = "";
 
             // date_created
             $this->date_created->HrefValue = "";

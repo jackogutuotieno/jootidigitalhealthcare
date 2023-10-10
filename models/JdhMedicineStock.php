@@ -52,6 +52,8 @@ class JdhMedicineStock extends DbTable
     public $id;
     public $medicine_id;
     public $units_available;
+    public $expiry_date;
+    public $status;
     public $submittedby_user_id;
     public $date_created;
     public $date_updated;
@@ -178,6 +180,54 @@ class JdhMedicineStock extends DbTable
         $this->units_available->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->units_available->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['units_available'] = &$this->units_available;
+
+        // expiry_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->expiry_date = new DbField(
+            $this, // Table
+            'x_expiry_date', // Variable name
+            'expiry_date', // Name
+            '`expiry_date`', // Expression
+            CastDateFieldForLike("`expiry_date`", 7, "DB"), // Basic search expression
+            133, // Type
+            10, // Size
+            7, // Date/Time format
+            false, // Is upload field
+            '`expiry_date`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->expiry_date->InputTextType = "text";
+        $this->expiry_date->Nullable = false; // NOT NULL field
+        $this->expiry_date->Required = true; // Required field
+        $this->expiry_date->DefaultErrorMessage = str_replace("%s", DateFormat(7), $Language->phrase("IncorrectDate"));
+        $this->expiry_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['expiry_date'] = &$this->expiry_date;
+
+        // status $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->status = new DbField(
+            $this, // Table
+            'x_status', // Variable name
+            'status', // Name
+            '\'\'', // Expression
+            '\'\'', // Basic search expression
+            201, // Type
+            65530, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '\'\'', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXTAREA' // Edit Tag
+        );
+        $this->status->InputTextType = "text";
+        $this->status->IsCustom = true; // Custom field
+        $this->status->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
+        $this->Fields['status'] = &$this->status;
 
         // submittedby_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->submittedby_user_id = new DbField(
@@ -336,7 +386,7 @@ class JdhMedicineStock extends DbTable
 
     public function getSqlSelect() // Select
     {
-        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*");
+        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*, '' AS `status`");
     }
 
     public function sqlSelect() // For backward compatibility
@@ -746,6 +796,8 @@ class JdhMedicineStock extends DbTable
         $this->id->DbValue = $row['id'];
         $this->medicine_id->DbValue = $row['medicine_id'];
         $this->units_available->DbValue = $row['units_available'];
+        $this->expiry_date->DbValue = $row['expiry_date'];
+        $this->status->DbValue = $row['status'];
         $this->submittedby_user_id->DbValue = $row['submittedby_user_id'];
         $this->date_created->DbValue = $row['date_created'];
         $this->date_updated->DbValue = $row['date_updated'];
@@ -1105,6 +1157,8 @@ class JdhMedicineStock extends DbTable
         $this->id->setDbValue($row['id']);
         $this->medicine_id->setDbValue($row['medicine_id']);
         $this->units_available->setDbValue($row['units_available']);
+        $this->expiry_date->setDbValue($row['expiry_date']);
+        $this->status->setDbValue($row['status']);
         $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
         $this->date_created->setDbValue($row['date_created']);
         $this->date_updated->setDbValue($row['date_updated']);
@@ -1144,6 +1198,10 @@ class JdhMedicineStock extends DbTable
 
         // units_available
 
+        // expiry_date
+
+        // status
+
         // submittedby_user_id
 
         // date_created
@@ -1180,6 +1238,13 @@ class JdhMedicineStock extends DbTable
         $this->units_available->ViewValue = $this->units_available->CurrentValue;
         $this->units_available->ViewValue = FormatNumber($this->units_available->ViewValue, $this->units_available->formatPattern());
 
+        // expiry_date
+        $this->expiry_date->ViewValue = $this->expiry_date->CurrentValue;
+        $this->expiry_date->ViewValue = FormatDateTime($this->expiry_date->ViewValue, $this->expiry_date->formatPattern());
+
+        // status
+        $this->status->ViewValue = $this->status->CurrentValue;
+
         // submittedby_user_id
         $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
         $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
@@ -1203,6 +1268,14 @@ class JdhMedicineStock extends DbTable
         // units_available
         $this->units_available->HrefValue = "";
         $this->units_available->TooltipValue = "";
+
+        // expiry_date
+        $this->expiry_date->HrefValue = "";
+        $this->expiry_date->TooltipValue = "";
+
+        // status
+        $this->status->HrefValue = "";
+        $this->status->TooltipValue = "";
 
         // submittedby_user_id
         $this->submittedby_user_id->HrefValue = "";
@@ -1247,6 +1320,16 @@ class JdhMedicineStock extends DbTable
             $this->units_available->EditValue = FormatNumber($this->units_available->EditValue, null);
         }
 
+        // expiry_date
+        $this->expiry_date->setupEditAttributes();
+        $this->expiry_date->EditValue = FormatDateTime($this->expiry_date->CurrentValue, $this->expiry_date->formatPattern());
+        $this->expiry_date->PlaceHolder = RemoveHtml($this->expiry_date->caption());
+
+        // status
+        $this->status->setupEditAttributes();
+        $this->status->EditValue = $this->status->CurrentValue;
+        $this->status->PlaceHolder = RemoveHtml($this->status->caption());
+
         // submittedby_user_id
 
         // date_created
@@ -1290,12 +1373,15 @@ class JdhMedicineStock extends DbTable
                     $doc->exportCaption($this->id);
                     $doc->exportCaption($this->medicine_id);
                     $doc->exportCaption($this->units_available);
+                    $doc->exportCaption($this->expiry_date);
+                    $doc->exportCaption($this->status);
                     $doc->exportCaption($this->date_created);
                     $doc->exportCaption($this->date_updated);
                 } else {
                     $doc->exportCaption($this->id);
                     $doc->exportCaption($this->medicine_id);
                     $doc->exportCaption($this->units_available);
+                    $doc->exportCaption($this->expiry_date);
                     $doc->exportCaption($this->submittedby_user_id);
                     $doc->exportCaption($this->date_created);
                     $doc->exportCaption($this->date_updated);
@@ -1331,12 +1417,15 @@ class JdhMedicineStock extends DbTable
                         $doc->exportField($this->id);
                         $doc->exportField($this->medicine_id);
                         $doc->exportField($this->units_available);
+                        $doc->exportField($this->expiry_date);
+                        $doc->exportField($this->status);
                         $doc->exportField($this->date_created);
                         $doc->exportField($this->date_updated);
                     } else {
                         $doc->exportField($this->id);
                         $doc->exportField($this->medicine_id);
                         $doc->exportField($this->units_available);
+                        $doc->exportField($this->expiry_date);
                         $doc->exportField($this->submittedby_user_id);
                         $doc->exportField($this->date_created);
                         $doc->exportField($this->date_updated);
@@ -1748,8 +1837,16 @@ class JdhMedicineStock extends DbTable
     // Row Rendered event
     public function rowRendered()
     {
-        // To view properties of field class, use:
-        //var_dump($this-><FieldName>);
+        /*$date = date();
+        if ($this->expiry_date->CurrentValue < $date) {
+            $this->status->CellAttrs["style"] = "background-color: green; padding-top: 20px; color: white; min-width: 300px";
+            $status = "Active";
+            $this->status->ViewValue = $status;
+        } else if ($this->expiry_date->CurrentValue > $date) {
+            $this->status->CellAttrs["style"] = "background-color: red; padding-top: 20px; color: white; min-width: 300px";
+            $status = "Expired";
+            $this->status->ViewValue = $status;
+        } */
     }
 
     // User ID Filtering event

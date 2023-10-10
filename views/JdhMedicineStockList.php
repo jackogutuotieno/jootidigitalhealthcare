@@ -91,6 +91,9 @@ $Page->ListOptions->render("header", "left");
 <?php if ($Page->units_available->Visible) { // units_available ?>
         <th data-name="units_available" class="<?= $Page->units_available->headerCellClass() ?>"><div id="elh_jdh_medicine_stock_units_available" class="jdh_medicine_stock_units_available"><?= $Page->renderFieldHeader($Page->units_available) ?></div></th>
 <?php } ?>
+<?php if ($Page->expiry_date->Visible) { // expiry_date ?>
+        <th data-name="expiry_date" class="<?= $Page->expiry_date->headerCellClass() ?>"><div id="elh_jdh_medicine_stock_expiry_date" class="jdh_medicine_stock_expiry_date"><?= $Page->renderFieldHeader($Page->expiry_date) ?></div></th>
+<?php } ?>
 <?php if ($Page->date_created->Visible) { // date_created ?>
         <th data-name="date_created" class="<?= $Page->date_created->headerCellClass() ?>"><div id="elh_jdh_medicine_stock_date_created" class="jdh_medicine_stock_date_created"><?= $Page->renderFieldHeader($Page->date_created) ?></div></th>
 <?php } ?>
@@ -137,6 +140,14 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 <span id="el<?= $Page->RowCount ?>_jdh_medicine_stock_units_available" class="el_jdh_medicine_stock_units_available">
 <span<?= $Page->units_available->viewAttributes() ?>>
 <?= $Page->units_available->getViewValue() ?></span>
+</span>
+</td>
+    <?php } ?>
+    <?php if ($Page->expiry_date->Visible) { // expiry_date ?>
+        <td data-name="expiry_date"<?= $Page->expiry_date->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_medicine_stock_expiry_date" class="el_jdh_medicine_stock_expiry_date">
+<span<?= $Page->expiry_date->viewAttributes() ?>>
+<?= $Page->expiry_date->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>

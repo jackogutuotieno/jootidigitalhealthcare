@@ -2016,6 +2016,12 @@
       <field id="units_available">
         <phrase id="fldcaption" value="Units" />
       </field>
+      <field id="expiry_date">
+        <phrase id="fldcaption" value="Expiry Date" />
+      </field>
+      <field id="status">
+        <phrase id="fldcaption" value="Status" />
+      </field>
       <field id="submittedby_user_id">
         <phrase id="fldcaption" value="User ID" />
       </field>

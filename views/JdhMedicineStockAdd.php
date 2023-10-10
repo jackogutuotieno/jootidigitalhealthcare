@@ -23,7 +23,9 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["medicine_id", [fields.medicine_id.visible && fields.medicine_id.required ? ew.Validators.required(fields.medicine_id.caption) : null], fields.medicine_id.isInvalid],
-            ["units_available", [fields.units_available.visible && fields.units_available.required ? ew.Validators.required(fields.units_available.caption) : null, ew.Validators.integer], fields.units_available.isInvalid]
+            ["units_available", [fields.units_available.visible && fields.units_available.required ? ew.Validators.required(fields.units_available.caption) : null, ew.Validators.integer], fields.units_available.isInvalid],
+            ["expiry_date", [fields.expiry_date.visible && fields.expiry_date.required ? ew.Validators.required(fields.expiry_date.caption) : null, ew.Validators.datetime(fields.expiry_date.clientFormatPattern)], fields.expiry_date.isInvalid],
+            ["status", [fields.status.visible && fields.status.required ? ew.Validators.required(fields.status.caption) : null], fields.status.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -117,6 +119,60 @@ loadjs.ready("fjdh_medicine_stockadd", function() {
 <input type="<?= $Page->units_available->getInputTextType() ?>" name="x_units_available" id="x_units_available" data-table="jdh_medicine_stock" data-field="x_units_available" value="<?= $Page->units_available->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->units_available->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->units_available->formatPattern()) ?>"<?= $Page->units_available->editAttributes() ?> aria-describedby="x_units_available_help">
 <?= $Page->units_available->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->units_available->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->expiry_date->Visible) { // expiry_date ?>
+    <div id="r_expiry_date"<?= $Page->expiry_date->rowAttributes() ?>>
+        <label id="elh_jdh_medicine_stock_expiry_date" for="x_expiry_date" class="<?= $Page->LeftColumnClass ?>"><?= $Page->expiry_date->caption() ?><?= $Page->expiry_date->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->expiry_date->cellAttributes() ?>>
+<span id="el_jdh_medicine_stock_expiry_date">
+<input type="<?= $Page->expiry_date->getInputTextType() ?>" name="x_expiry_date" id="x_expiry_date" data-table="jdh_medicine_stock" data-field="x_expiry_date" value="<?= $Page->expiry_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->expiry_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->expiry_date->formatPattern()) ?>"<?= $Page->expiry_date->editAttributes() ?> aria-describedby="x_expiry_date_help">
+<?= $Page->expiry_date->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->expiry_date->getErrorMessage() ?></div>
+<?php if (!$Page->expiry_date->ReadOnly && !$Page->expiry_date->Disabled && !isset($Page->expiry_date->EditAttrs["readonly"]) && !isset($Page->expiry_date->EditAttrs["disabled"])) { ?>
+<script>
+loadjs.ready(["fjdh_medicine_stockadd", "datetimepicker"], function () {
+    let format = "<?= DateFormat(7) ?>",
+        options = {
+            localization: {
+                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                ...ew.language.phrase("datetimepicker")
+            },
+            display: {
+                icons: {
+                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
+                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
+                },
+                components: {
+                    hours: !!format.match(/h/i),
+                    minutes: !!format.match(/m/),
+                    seconds: !!format.match(/s/i),
+                    useTwentyfourHour: !!format.match(/H/)
+                },
+                theme: ew.isDark() ? "dark" : "auto"
+            },
+            meta: {
+                format
+            }
+        };
+    ew.createDateTimePicker("fjdh_medicine_stockadd", "x_expiry_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+});
+</script>
+<?php } ?>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->status->Visible) { // status ?>
+    <div id="r_status"<?= $Page->status->rowAttributes() ?>>
+        <label id="elh_jdh_medicine_stock_status" for="x_status" class="<?= $Page->LeftColumnClass ?>"><?= $Page->status->caption() ?><?= $Page->status->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->status->cellAttributes() ?>>
+<span id="el_jdh_medicine_stock_status">
+<textarea data-table="jdh_medicine_stock" data-field="x_status" name="x_status" id="x_status" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->status->getPlaceHolder()) ?>"<?= $Page->status->editAttributes() ?> aria-describedby="x_status_help"><?= $Page->status->EditValue ?></textarea>
+<?= $Page->status->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->status->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>
