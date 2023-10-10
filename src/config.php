@@ -340,7 +340,7 @@ $CONFIG = [
     "LOG_USER_ID" => true, // Write to database
 
     // Audit Trail
-    "AUDIT_TRAIL_TO_DATABASE" => true, // Write to database
+    "AUDIT_TRAIL_TO_DATABASE" => false, // Write to database
     "AUDIT_TRAIL_DBID" => "DB", // DB ID
     "AUDIT_TRAIL_TABLE_NAME" => "jdh_audittrail", // Table name
     "AUDIT_TRAIL_TABLE_VAR" => "jdh_audittrail", // Table var
@@ -381,7 +381,7 @@ $CONFIG = [
     "PUSH_SERVER_PRIVATE_KEY" => "l7WHdQNK1RmMe7B5ZWVX0-qXVoAXpwiXSSjY3m9nMC4", // Private Key
     // Subscription table for Push Notification
     "SUBSCRIPTION_DBID" => "DB", // Subscription DBID
-    "SUBSCRIPTION_TABLE" => "undefined", // Subscription table
+    "SUBSCRIPTION_TABLE" => "`subscriptions`", // Subscription table
     "SUBSCRIPTION_TABLE_NAME" => "subscriptions", // Subscription table name
     "SUBSCRIPTION_TABLE_VAR" => "subscriptions", // Subscription table var
     "SUBSCRIPTION_FIELD_NAME_ID" => "Id", // Subscription Id field name
@@ -621,7 +621,7 @@ $CONFIG = [
     "RESIZE_OPTIONS" => ["keepAspectRatio" => false, "resizeUp" => !true, "jpegQuality" => 100],
 
     // Audit trail
-    "AUDIT_TRAIL_PATH" => "", // Audit trail path (relative to app root)
+    "AUDIT_TRAIL_PATH" => "logs/", // Audit trail path (relative to app root)
 
     // Import records
     "IMPORT_MAX_EXECUTION_TIME" => 300, // Import max execution time

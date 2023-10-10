@@ -16,8 +16,8 @@ return [
     "cache" => \DI\create(CacheProvider::class),
     "flash" => fn(ContainerInterface $c) => new Messages(),
     "view" => fn(ContainerInterface $c) => new PhpRenderer($GLOBALS["RELATIVE_PATH"] . "views/"),
-    "audit" => fn(ContainerInterface $c) => (new Logger("audit"))->pushHandler(new AuditTrailHandler("audit.log")), // For audit trail
-    "log" => fn(ContainerInterface $c) => (new Logger("log"))->pushHandler(new RotatingFileHandler($GLOBALS["RELATIVE_PATH"] . "log.log")),
+    "audit" => fn(ContainerInterface $c) => (new Logger("audit"))->pushHandler(new AuditTrailHandler("logs/audit.log")), // For audit trail
+    "log" => fn(ContainerInterface $c) => (new Logger("log"))->pushHandler(new RotatingFileHandler($GLOBALS["RELATIVE_PATH"] . "logs/log.log")),
     "sqllogger" => function (ContainerInterface $c) {
         $loggers = [];
         if (Config("DEBUG")) {
@@ -55,7 +55,6 @@ return [
     "jdh_departments" => \DI\create(JdhDepartments::class),
     "jdh_roles" => \DI\create(JdhRoles::class),
     "jdh_audittrail" => \DI\create(JdhAudittrail::class),
-    "jdh_notifications" => \DI\create(JdhNotifications::class),
     "jdh_exportlog" => \DI\create(JdhExportlog::class),
     "jdh_insurance" => \DI\create(JdhInsurance::class),
     "Patient_Appointments" => \DI\create(PatientAppointments::class),
@@ -78,6 +77,7 @@ return [
     "jdh_beds_assignment" => \DI\create(JdhBedsAssignment::class),
     "jdh_branding" => \DI\create(JdhBranding::class),
     "jdh_patients_insuarance" => \DI\create(JdhPatientsInsuarance::class),
+    "subscriptions" => \DI\create(Subscriptions::class),
 
     // User table
     "usertable" => \DI\get("jdh_users"),

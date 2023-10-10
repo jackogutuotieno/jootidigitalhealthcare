@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/9/30">
+<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/10/10">
   <!--
     IMPORTANT NOTES:
     1. Language ID must be RFC 4646 language tags (which use hyphen, not underscore), e.g. en-US, fr-CA, fr-FR,
@@ -1165,9 +1165,6 @@
     <menu id="150">
       <phrase id="menutext" value="Status Types" />
     </menu>
-    <menu id="27">
-      <phrase id="menutext" value="Notifications" />
-    </menu>
     <menu id="38">
       <phrase id="menutext" value="Administrator" />
     </menu>
@@ -1243,6 +1240,9 @@
     <menu id="288">
       <phrase id="menutext" value="Patients Insurance" />
     </menu>
+    <menu id="289">
+      <phrase id="menutext" value="Notifications" />
+    </menu>
     <menu id="149">
       <phrase id="menutext" value="Investigations" />
     </menu>
@@ -1271,7 +1271,7 @@
       <phrase id="menutext" value="Medicines" />
     </menu>
     <menu id="273">
-      <phrase id="menutext" value="Pharmacy Admnistration" />
+      <phrase id="menutext" value="Pharmacy Administration" />
     </menu>
     <menu id="141">
       <phrase id="menutext" value="Services" />
@@ -1860,27 +1860,6 @@
         <phrase id="fldcaption" value="New Value" />
       </field>
     </table>
-    <table id="jdh_notifications">
-      <phrase id="tblcaption" value="Notifications" />
-      <field id="id">
-        <phrase id="fldcaption" value="No" />
-      </field>
-      <field id="user">
-        <phrase id="fldcaption" value="User" />
-      </field>
-      <field id="endpoint">
-        <phrase id="fldcaption" value="Endpoint" />
-      </field>
-      <field id="publickey">
-        <phrase id="fldcaption" value="Public Key" />
-      </field>
-      <field id="authenticationtoken">
-        <phrase id="fldcaption" value="Authentication Token" />
-      </field>
-      <field id="contentencoding">
-        <phrase id="fldcaption" value="Content Encoding" />
-      </field>
-    </table>
     <table id="jdh_exportlog">
       <phrase id="tblcaption" value="Export Logs" />
       <field id="fileid">
@@ -2051,7 +2030,7 @@
       <phrase id="tblcaption" value="Dashboard" />
     </table>
     <table id="jdh_prescriptions_actions">
-      <phrase id="tblcaption" value="Pharmacy Admnistration" />
+      <phrase id="tblcaption" value="Pharmacy Administration" />
       <field id="id">
         <phrase id="fldcaption" value="ID" />
       </field>
@@ -2328,6 +2307,27 @@
       </field>
       <field id="patient_dob">
         <phrase id="fldcaption" value="Date of Birth" />
+      </field>
+    </table>
+    <table id="subscriptions">
+      <phrase id="tblcaption" value="Notifications" />
+      <field id="id">
+        <phrase id="fldcaption" value="Id" />
+      </field>
+      <field id="user">
+        <phrase id="fldcaption" value="User" />
+      </field>
+      <field id="endpoint">
+        <phrase id="fldcaption" value="Endpoint" />
+      </field>
+      <field id="publickey">
+        <phrase id="fldcaption" value="Public Key" />
+      </field>
+      <field id="authenticationtoken">
+        <phrase id="fldcaption" value="Authentication Token" />
+      </field>
+      <field id="contentencoding">
+        <phrase id="fldcaption" value="Content Encoding" />
       </field>
     </table>
   </project>

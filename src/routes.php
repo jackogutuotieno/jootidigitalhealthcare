@@ -340,23 +340,6 @@ return function (App $app) {
         }
     );
 
-    // jdh_notifications
-    $app->map(["GET","POST","OPTIONS"], '/jdhnotificationslist[/{Id}]', JdhNotificationsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhnotificationslist-jdh_notifications-list'); // list
-    $app->map(["GET","POST","OPTIONS"], '/jdhnotificationsadd[/{Id}]', JdhNotificationsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhnotificationsadd-jdh_notifications-add'); // add
-    $app->map(["GET","POST","OPTIONS"], '/jdhnotificationsview[/{Id}]', JdhNotificationsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhnotificationsview-jdh_notifications-view'); // view
-    $app->map(["GET","POST","OPTIONS"], '/jdhnotificationsedit[/{Id}]', JdhNotificationsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhnotificationsedit-jdh_notifications-edit'); // edit
-    $app->map(["GET","POST","OPTIONS"], '/jdhnotificationsdelete[/{Id}]', JdhNotificationsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhnotificationsdelete-jdh_notifications-delete'); // delete
-    $app->group(
-        '/jdh_notifications',
-        function (RouteCollectorProxy $group) {
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{Id}]', JdhNotificationsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_notifications/list-jdh_notifications-list-2'); // list
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{Id}]', JdhNotificationsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_notifications/add-jdh_notifications-add-2'); // add
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{Id}]', JdhNotificationsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_notifications/view-jdh_notifications-view-2'); // view
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{Id}]', JdhNotificationsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_notifications/edit-jdh_notifications-edit-2'); // edit
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{Id}]', JdhNotificationsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_notifications/delete-jdh_notifications-delete-2'); // delete
-        }
-    );
-
     // jdh_exportlog
     $app->map(["GET","POST","OPTIONS"], '/jdhexportloglist[/{FileId:.*}]', JdhExportlogController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhexportloglist-jdh_exportlog-list'); // list
     $app->map(["GET","POST","OPTIONS"], '/jdhexportlogadd[/{FileId:.*}]', JdhExportlogController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhexportlogadd-jdh_exportlog-add'); // add
@@ -639,6 +622,23 @@ return function (App $app) {
         '/jdh_patients_insuarance',
         function (RouteCollectorProxy $group) {
             $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{patient_id}]', JdhPatientsInsuaranceController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_patients_insuarance/list-jdh_patients_insuarance-list-2'); // list
+        }
+    );
+
+    // subscriptions
+    $app->map(["GET","POST","OPTIONS"], '/subscriptionslist[/{Id}]', SubscriptionsController::class . ':list')->add(PermissionMiddleware::class)->setName('subscriptionslist-subscriptions-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/subscriptionsadd[/{Id}]', SubscriptionsController::class . ':add')->add(PermissionMiddleware::class)->setName('subscriptionsadd-subscriptions-add'); // add
+    $app->map(["GET","POST","OPTIONS"], '/subscriptionsview[/{Id}]', SubscriptionsController::class . ':view')->add(PermissionMiddleware::class)->setName('subscriptionsview-subscriptions-view'); // view
+    $app->map(["GET","POST","OPTIONS"], '/subscriptionsedit[/{Id}]', SubscriptionsController::class . ':edit')->add(PermissionMiddleware::class)->setName('subscriptionsedit-subscriptions-edit'); // edit
+    $app->map(["GET","POST","OPTIONS"], '/subscriptionsdelete[/{Id}]', SubscriptionsController::class . ':delete')->add(PermissionMiddleware::class)->setName('subscriptionsdelete-subscriptions-delete'); // delete
+    $app->group(
+        '/subscriptions',
+        function (RouteCollectorProxy $group) {
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{Id}]', SubscriptionsController::class . ':list')->add(PermissionMiddleware::class)->setName('subscriptions/list-subscriptions-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{Id}]', SubscriptionsController::class . ':add')->add(PermissionMiddleware::class)->setName('subscriptions/add-subscriptions-add-2'); // add
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{Id}]', SubscriptionsController::class . ':view')->add(PermissionMiddleware::class)->setName('subscriptions/view-subscriptions-view-2'); // view
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{Id}]', SubscriptionsController::class . ':edit')->add(PermissionMiddleware::class)->setName('subscriptions/edit-subscriptions-edit-2'); // edit
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{Id}]', SubscriptionsController::class . ':delete')->add(PermissionMiddleware::class)->setName('subscriptions/delete-subscriptions-delete-2'); // delete
         }
     );
 
