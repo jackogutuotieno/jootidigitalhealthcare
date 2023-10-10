@@ -19905,8 +19905,8 @@ hr.divider-vertical-blurry {
 
 .counters .record-count {
   position: relative;
-  left: 60px;
-  font-size: 2rem;
+  left: 20px;
+  font-size: 1.9rem;
   font-weight: 900;
   margin-bottom: 5px;
 }

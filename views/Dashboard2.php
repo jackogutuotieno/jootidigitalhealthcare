@@ -45,7 +45,7 @@ $Page->showMessage();
 <div id="ew-dashboard" class="ew-dashboard">
 <div class="container">
     <div class="row">
-        <div class="col-lg-3 col-md-6 col-sm-12">
+        <div class="col-lg-4 col-md-6 col-sm-12">
             <div class="card counters">
                 <div class="card-header">
                     Patients
@@ -63,13 +63,13 @@ $Page->showMessage();
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-12">
+        <div class="col-lg-4 col-md-6 col-sm-12">
             <div class="card counters">
                 <div class="card-header">
                     Receptionists
                 </div>
                 <div class="card-body d-flex align-items-center pt-0 pb-0">
-                    <p class="card-text"><i class="fas fa-phone-office"></i></p>
+                    <p class="card-text"><i class="fas fa-phone"></i></p>
                     <p class="record-count">
                         <?php
                             $conn =& DbHelper();
@@ -81,7 +81,7 @@ $Page->showMessage();
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-12">
+        <div class="col-lg-4 col-md-6 col-sm-12">
             <div class="card counters">
                 <div class="card-header">
                     Doctors
@@ -99,7 +99,7 @@ $Page->showMessage();
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-12">
+        <div class="col-lg-4 col-md-6 col-sm-12">
             <div class="card counters">
                 <div class="card-header">
                     Nurses
@@ -117,7 +117,7 @@ $Page->showMessage();
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-12">
+        <div class="col-lg-4 col-md-6 col-sm-12">
             <div class="card counters">
                 <div class="card-header">
                     Lab Technicians
@@ -135,7 +135,7 @@ $Page->showMessage();
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-12">
+        <div class="col-lg-4 col-md-6 col-sm-12">
             <div class="card counters">
                 <div class="card-header">
                     Pharmacists
@@ -153,7 +153,7 @@ $Page->showMessage();
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-12">
+        <div class="col-lg-4 col-md-6 col-sm-12">
             <div class="card counters">
                 <div class="card-header">
                     Accountants
@@ -171,7 +171,7 @@ $Page->showMessage();
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-12">
+        <div class="col-lg-4 col-md-6 col-sm-12">
             <div class="card counters">
                 <div class="card-header">
                     Inventory Managers
@@ -189,7 +189,7 @@ $Page->showMessage();
                 </div>
             </div>
         </div>
-        <div class="col-lg-6 col-md-12">
+        <div class="col-lg-4 col-md-12">
             <div class="card counters">
                 <div class="card-header">
                     Total Income(KES)
