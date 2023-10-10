@@ -23,6 +23,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
+            ["user_id", [fields.user_id.visible && fields.user_id.required ? ew.Validators.required(fields.user_id.caption) : null], fields.user_id.isInvalid],
             ["appointment_title", [fields.appointment_title.visible && fields.appointment_title.required ? ew.Validators.required(fields.appointment_title.caption) : null], fields.appointment_title.isInvalid],
             ["appointment_start_date", [fields.appointment_start_date.visible && fields.appointment_start_date.required ? ew.Validators.required(fields.appointment_start_date.caption) : null, ew.Validators.datetime(fields.appointment_start_date.clientFormatPattern)], fields.appointment_start_date.isInvalid],
             ["appointment_end_date", [fields.appointment_end_date.visible && fields.appointment_end_date.required ? ew.Validators.required(fields.appointment_end_date.caption) : null, ew.Validators.datetime(fields.appointment_end_date.clientFormatPattern)], fields.appointment_end_date.isInvalid],
@@ -45,6 +46,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Dynamic selection lists
         .setLists({
             "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
+            "user_id": <?= $Page->user_id->toClientList($Page) ?>,
             "appointment_all_day": <?= $Page->appointment_all_day->toClientList($Page) ?>,
         })
         .build();
@@ -122,6 +124,46 @@ loadjs.ready("fjdh_appointmentsadd", function() {
 </script>
 </span>
 <?php } ?>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->user_id->Visible) { // user_id ?>
+    <div id="r_user_id"<?= $Page->user_id->rowAttributes() ?>>
+        <label id="elh_jdh_appointments_user_id" for="x_user_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->user_id->caption() ?><?= $Page->user_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->user_id->cellAttributes() ?>>
+<span id="el_jdh_appointments_user_id">
+    <select
+        id="x_user_id"
+        name="x_user_id"
+        class="form-select ew-select<?= $Page->user_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_appointmentsadd_x_user_id"
+        data-table="jdh_appointments"
+        data-field="x_user_id"
+        data-value-separator="<?= $Page->user_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->user_id->getPlaceHolder()) ?>"
+        <?= $Page->user_id->editAttributes() ?>>
+        <?= $Page->user_id->selectOptionListHtml("x_user_id") ?>
+    </select>
+    <?= $Page->user_id->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->user_id->getErrorMessage() ?></div>
+<?= $Page->user_id->Lookup->getParamTag($Page, "p_x_user_id") ?>
+<script>
+loadjs.ready("fjdh_appointmentsadd", function() {
+    var options = { name: "x_user_id", selectId: "fjdh_appointmentsadd_x_user_id" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (fjdh_appointmentsadd.lists.user_id?.lookupOptions.length) {
+        options.data = { id: "x_user_id", form: "fjdh_appointmentsadd" };
+    } else {
+        options.ajax = { id: "x_user_id", form: "fjdh_appointmentsadd", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_appointments.fields.user_id.selectOptions);
+    ew.createSelect(options);
+});
+</script>
+</span>
 </div></div>
     </div>
 <?php } ?>

@@ -704,6 +704,16 @@ class PatientAppointmentsAdd extends PatientAppointments
                 $this->appointment_all_day->setFormValue($val);
             }
         }
+
+        // Check field name 'user_id' first before field var 'x_user_id'
+        $val = $CurrentForm->hasValue("user_id") ? $CurrentForm->getValue("user_id") : $CurrentForm->getValue("x_user_id");
+        if (!$this->user_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->user_id->Visible = false; // Disable update for API request
+            } else {
+                $this->user_id->setFormValue($val, true, $validate);
+            }
+        }
     }
 
     // Restore form values
@@ -719,6 +729,7 @@ class PatientAppointmentsAdd extends PatientAppointments
         $this->appointment_description->CurrentValue = $this->appointment_description->FormValue;
         $this->subbmitted_by_user_id->CurrentValue = $this->subbmitted_by_user_id->FormValue;
         $this->appointment_all_day->CurrentValue = $this->appointment_all_day->FormValue;
+        $this->user_id->CurrentValue = $this->user_id->FormValue;
     }
 
     /**
@@ -777,6 +788,7 @@ class PatientAppointmentsAdd extends PatientAppointments
         $this->submission_date->setDbValue($row['submission_date']);
         $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
         $this->appointment_all_day->setDbValue($row['appointment_all_day']);
+        $this->user_id->setDbValue($row['user_id']);
     }
 
     // Return a row with default values
@@ -792,6 +804,7 @@ class PatientAppointmentsAdd extends PatientAppointments
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['subbmitted_by_user_id'] = $this->subbmitted_by_user_id->DefaultValue;
         $row['appointment_all_day'] = $this->appointment_all_day->DefaultValue;
+        $row['user_id'] = $this->user_id->DefaultValue;
         return $row;
     }
 
@@ -853,6 +866,9 @@ class PatientAppointmentsAdd extends PatientAppointments
         // appointment_all_day
         $this->appointment_all_day->RowCssClass = "row";
 
+        // user_id
+        $this->user_id->RowCssClass = "row";
+
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
             // appointment_id
@@ -891,6 +907,10 @@ class PatientAppointmentsAdd extends PatientAppointments
                 $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(2) != "" ? $this->appointment_all_day->tagCaption(2) : "No";
             }
 
+            // user_id
+            $this->user_id->ViewValue = $this->user_id->CurrentValue;
+            $this->user_id->ViewValue = FormatNumber($this->user_id->ViewValue, $this->user_id->formatPattern());
+
             // appointment_id
             $this->appointment_id->HrefValue = "";
 
@@ -914,6 +934,9 @@ class PatientAppointmentsAdd extends PatientAppointments
 
             // appointment_all_day
             $this->appointment_all_day->HrefValue = "";
+
+            // user_id
+            $this->user_id->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
             // appointment_id
 
@@ -954,6 +977,14 @@ class PatientAppointmentsAdd extends PatientAppointments
             $this->appointment_all_day->EditValue = $this->appointment_all_day->options(false);
             $this->appointment_all_day->PlaceHolder = RemoveHtml($this->appointment_all_day->caption());
 
+            // user_id
+            $this->user_id->setupEditAttributes();
+            $this->user_id->EditValue = HtmlEncode($this->user_id->CurrentValue);
+            $this->user_id->PlaceHolder = RemoveHtml($this->user_id->caption());
+            if (strval($this->user_id->EditValue) != "" && is_numeric($this->user_id->EditValue)) {
+                $this->user_id->EditValue = FormatNumber($this->user_id->EditValue, null);
+            }
+
             // Add refer script
 
             // appointment_id
@@ -979,6 +1010,9 @@ class PatientAppointmentsAdd extends PatientAppointments
 
             // appointment_all_day
             $this->appointment_all_day->HrefValue = "";
+
+            // user_id
+            $this->user_id->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -1049,6 +1083,14 @@ class PatientAppointmentsAdd extends PatientAppointments
                 $this->appointment_all_day->addErrorMessage(str_replace("%s", $this->appointment_all_day->caption(), $this->appointment_all_day->RequiredErrorMessage));
             }
         }
+        if ($this->user_id->Required) {
+            if (!$this->user_id->IsDetailKey && EmptyValue($this->user_id->FormValue)) {
+                $this->user_id->addErrorMessage(str_replace("%s", $this->user_id->caption(), $this->user_id->RequiredErrorMessage));
+            }
+        }
+        if (!CheckInteger($this->user_id->FormValue)) {
+            $this->user_id->addErrorMessage($this->user_id->getErrorMessage(false));
+        }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -1095,6 +1137,9 @@ class PatientAppointmentsAdd extends PatientAppointments
             $tmpBool = !empty($tmpBool) ? "1" : "0";
         }
         $this->appointment_all_day->setDbValueDef($rsnew, $tmpBool, 0, false);
+
+        // user_id
+        $this->user_id->setDbValueDef($rsnew, $this->user_id->CurrentValue, 0, false);
 
         // Update current values
         $this->setCurrentValues($rsnew);

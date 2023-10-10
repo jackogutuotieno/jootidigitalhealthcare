@@ -51,6 +51,7 @@ class JdhAppointments extends DbTable
     // Fields
     public $appointment_id;
     public $patient_id;
+    public $user_id;
     public $appointment_title;
     public $appointment_start_date;
     public $appointment_end_date;
@@ -157,6 +158,35 @@ class JdhAppointments extends DbTable
         $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->patient_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_id'] = &$this->patient_id;
+
+        // user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->user_id = new DbField(
+            $this, // Table
+            'x_user_id', // Variable name
+            'user_id', // Name
+            '`user_id`', // Expression
+            '`user_id`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`user_id`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'SELECT' // Edit Tag
+        );
+        $this->user_id->addMethod("getSelectFilter", fn() => "`role_id`=2");
+        $this->user_id->InputTextType = "text";
+        $this->user_id->Nullable = false; // NOT NULL field
+        $this->user_id->Required = true; // Required field
+        $this->user_id->UsePleaseSelect = true; // Use PleaseSelect by default
+        $this->user_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
+        $this->user_id->Lookup = new Lookup('user_id', 'jdh_users', false, 'user_id', ["first_name","last_name","",""], '', '', [], [], [], [], [], [], '', '', "CONCAT(COALESCE(`first_name`, ''),'" . ValueSeparator(1, $this->user_id) . "',COALESCE(`last_name`,''))");
+        $this->user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->user_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['user_id'] = &$this->user_id;
 
         // appointment_title $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->appointment_title = new DbField(
@@ -906,6 +936,7 @@ class JdhAppointments extends DbTable
         }
         $this->appointment_id->DbValue = $row['appointment_id'];
         $this->patient_id->DbValue = $row['patient_id'];
+        $this->user_id->DbValue = $row['user_id'];
         $this->appointment_title->DbValue = $row['appointment_title'];
         $this->appointment_start_date->DbValue = $row['appointment_start_date'];
         $this->appointment_end_date->DbValue = $row['appointment_end_date'];
@@ -1272,6 +1303,7 @@ class JdhAppointments extends DbTable
         }
         $this->appointment_id->setDbValue($row['appointment_id']);
         $this->patient_id->setDbValue($row['patient_id']);
+        $this->user_id->setDbValue($row['user_id']);
         $this->appointment_title->setDbValue($row['appointment_title']);
         $this->appointment_start_date->setDbValue($row['appointment_start_date']);
         $this->appointment_end_date->setDbValue($row['appointment_end_date']);
@@ -1313,6 +1345,8 @@ class JdhAppointments extends DbTable
 
         // patient_id
 
+        // user_id
+
         // appointment_title
 
         // appointment_start_date
@@ -1353,6 +1387,30 @@ class JdhAppointments extends DbTable
             $this->patient_id->ViewValue = null;
         }
 
+        // user_id
+        $curVal = strval($this->user_id->CurrentValue);
+        if ($curVal != "") {
+            $this->user_id->ViewValue = $this->user_id->lookupCacheOption($curVal);
+            if ($this->user_id->ViewValue === null) { // Lookup from database
+                $filterWrk = SearchFilter("`user_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                $lookupFilter = $this->user_id->getSelectFilter($this); // PHP
+                $sqlWrk = $this->user_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                if ($ari > 0) { // Lookup values found
+                    $arwrk = $this->user_id->Lookup->renderViewRow($rswrk[0]);
+                    $this->user_id->ViewValue = $this->user_id->displayValue($arwrk);
+                } else {
+                    $this->user_id->ViewValue = FormatNumber($this->user_id->CurrentValue, $this->user_id->formatPattern());
+                }
+            }
+        } else {
+            $this->user_id->ViewValue = null;
+        }
+
         // appointment_title
         $this->appointment_title->ViewValue = $this->appointment_title->CurrentValue;
 
@@ -1389,6 +1447,10 @@ class JdhAppointments extends DbTable
         // patient_id
         $this->patient_id->HrefValue = "";
         $this->patient_id->TooltipValue = "";
+
+        // user_id
+        $this->user_id->HrefValue = "";
+        $this->user_id->TooltipValue = "";
 
         // appointment_title
         $this->appointment_title->HrefValue = "";
@@ -1466,6 +1528,10 @@ class JdhAppointments extends DbTable
             $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
         }
 
+        // user_id
+        $this->user_id->setupEditAttributes();
+        $this->user_id->PlaceHolder = RemoveHtml($this->user_id->caption());
+
         // appointment_title
         $this->appointment_title->setupEditAttributes();
         if (!$this->appointment_title->Raw) {
@@ -1530,6 +1596,7 @@ class JdhAppointments extends DbTable
                 if ($exportPageType == "view") {
                     $doc->exportCaption($this->appointment_id);
                     $doc->exportCaption($this->patient_id);
+                    $doc->exportCaption($this->user_id);
                     $doc->exportCaption($this->appointment_title);
                     $doc->exportCaption($this->appointment_start_date);
                     $doc->exportCaption($this->appointment_end_date);
@@ -1538,6 +1605,7 @@ class JdhAppointments extends DbTable
                 } else {
                     $doc->exportCaption($this->appointment_id);
                     $doc->exportCaption($this->patient_id);
+                    $doc->exportCaption($this->user_id);
                     $doc->exportCaption($this->appointment_title);
                     $doc->exportCaption($this->appointment_start_date);
                     $doc->exportCaption($this->appointment_end_date);
@@ -1575,6 +1643,7 @@ class JdhAppointments extends DbTable
                     if ($exportPageType == "view") {
                         $doc->exportField($this->appointment_id);
                         $doc->exportField($this->patient_id);
+                        $doc->exportField($this->user_id);
                         $doc->exportField($this->appointment_title);
                         $doc->exportField($this->appointment_start_date);
                         $doc->exportField($this->appointment_end_date);
@@ -1583,6 +1652,7 @@ class JdhAppointments extends DbTable
                     } else {
                         $doc->exportField($this->appointment_id);
                         $doc->exportField($this->patient_id);
+                        $doc->exportField($this->user_id);
                         $doc->exportField($this->appointment_title);
                         $doc->exportField($this->appointment_start_date);
                         $doc->exportField($this->appointment_end_date);

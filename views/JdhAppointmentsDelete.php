@@ -53,6 +53,9 @@ $Page->showMessage();
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <th class="<?= $Page->patient_id->headerCellClass() ?>"><span id="elh_jdh_appointments_patient_id" class="jdh_appointments_patient_id"><?= $Page->patient_id->caption() ?></span></th>
 <?php } ?>
+<?php if ($Page->user_id->Visible) { // user_id ?>
+        <th class="<?= $Page->user_id->headerCellClass() ?>"><span id="elh_jdh_appointments_user_id" class="jdh_appointments_user_id"><?= $Page->user_id->caption() ?></span></th>
+<?php } ?>
 <?php if ($Page->appointment_title->Visible) { // appointment_title ?>
         <th class="<?= $Page->appointment_title->headerCellClass() ?>"><span id="elh_jdh_appointments_appointment_title" class="jdh_appointments_appointment_title"><?= $Page->appointment_title->caption() ?></span></th>
 <?php } ?>
@@ -94,6 +97,14 @@ while (!$Page->Recordset->EOF) {
 <span id="el<?= $Page->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->user_id->Visible) { // user_id ?>
+        <td<?= $Page->user_id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_appointments_user_id" class="el_jdh_appointments_user_id">
+<span<?= $Page->user_id->viewAttributes() ?>>
+<?= $Page->user_id->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

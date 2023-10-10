@@ -383,6 +383,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
         $this->appointment_end_date->setDbValue($row['appointment_end_date']);
         $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
         $this->appointment_all_day->setDbValue($row['appointment_all_day']);
+        $this->user_id->setDbValue($row['user_id']);
     }
 
     /**
@@ -411,6 +412,8 @@ class PatientAppointmentsCalendar extends PatientAppointments
         // subbmitted_by_user_id
 
         // appointment_all_day
+
+        // user_id
         if ($this->RowType == ROWTYPE_VIEW) {
             // appointment_id
             $this->appointment_id->ViewValue = $this->appointment_id->CurrentValue;
@@ -441,6 +444,10 @@ class PatientAppointmentsCalendar extends PatientAppointments
                 $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(2) != "" ? $this->appointment_all_day->tagCaption(2) : "No";
             }
 
+            // user_id
+            $this->user_id->ViewValue = $this->user_id->CurrentValue;
+            $this->user_id->ViewValue = FormatNumber($this->user_id->ViewValue, $this->user_id->formatPattern());
+
             // appointment_id
             $this->appointment_id->HrefValue = "";
             $this->appointment_id->TooltipValue = "";
@@ -468,6 +475,10 @@ class PatientAppointmentsCalendar extends PatientAppointments
             // appointment_all_day
             $this->appointment_all_day->HrefValue = "";
             $this->appointment_all_day->TooltipValue = "";
+
+            // user_id
+            $this->user_id->HrefValue = "";
+            $this->user_id->TooltipValue = "";
         }
 
         // Call Row_Rendered event
@@ -481,7 +492,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
      */
     protected function getEvent()
     {
-        $eventListFields = ["appointment_id","patient_id","appointment_title","appointment_start_date","appointment_end_date","subbmitted_by_user_id","appointment_all_day"];
+        $eventListFields = ["appointment_id","patient_id","appointment_title","appointment_start_date","appointment_end_date","subbmitted_by_user_id","appointment_all_day","user_id"];
         $event = [];
         foreach ($this->Fields as $fld) {
             if ($fld->DataType == DATATYPE_BLOB || !in_array($fld->Name, $eventListFields)) { // Skip blob fields / non list fields
@@ -695,6 +706,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
             $this->appointment_end_date->setSort("");
             $this->subbmitted_by_user_id->setSort("");
             $this->appointment_all_day->setSort("");
+            $this->user_id->setSort("");
 
         // Check for an Order parameter
         } elseif ($orderBy != "") {
@@ -707,6 +719,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
             $this->updateSort($this->appointment_end_date); // appointment_end_date
             $this->updateSort($this->subbmitted_by_user_id); // subbmitted_by_user_id
             $this->updateSort($this->appointment_all_day); // appointment_all_day
+            $this->updateSort($this->user_id); // user_id
             $sortSql = $this->sortSql();
             $this->setOrderBy($sortSql);
             $this->setStartGroup(1);

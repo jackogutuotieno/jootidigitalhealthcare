@@ -132,7 +132,7 @@ $CONFIG = [
         '</div><div class="card-body">%s</div></div>', // Debug message template
 
     // Environment
-    "ENVIRONMENT" => "development",
+    "ENVIRONMENT" => "production",
 
     // Container
     "COMPILE_CONTAINER" => false,

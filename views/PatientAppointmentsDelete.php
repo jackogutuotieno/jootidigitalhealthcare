@@ -71,6 +71,9 @@ $Page->showMessage();
 <?php if ($Page->appointment_all_day->Visible) { // appointment_all_day ?>
         <th class="<?= $Page->appointment_all_day->headerCellClass() ?>"><span id="elh_Patient_Appointments_appointment_all_day" class="Patient_Appointments_appointment_all_day"><?= $Page->appointment_all_day->caption() ?></span></th>
 <?php } ?>
+<?php if ($Page->user_id->Visible) { // user_id ?>
+        <th class="<?= $Page->user_id->headerCellClass() ?>"><span id="elh_Patient_Appointments_user_id" class="Patient_Appointments_user_id"><?= $Page->user_id->caption() ?></span></th>
+<?php } ?>
     </tr>
     </thead>
     <tbody>
@@ -148,6 +151,14 @@ while (!$Page->Recordset->EOF) {
     <input type="checkbox" id="x_appointment_all_day_<?= $Page->RowCount ?>" class="form-check-input" value="<?= $Page->appointment_all_day->getViewValue() ?>" disabled<?php if (ConvertToBool($Page->appointment_all_day->CurrentValue)) { ?> checked<?php } ?>>
     <label class="form-check-label" for="x_appointment_all_day_<?= $Page->RowCount ?>"></label>
 </div></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->user_id->Visible) { // user_id ?>
+        <td<?= $Page->user_id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_Patient_Appointments_user_id" class="el_Patient_Appointments_user_id">
+<span<?= $Page->user_id->viewAttributes() ?>>
+<?= $Page->user_id->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

@@ -350,7 +350,7 @@ ew.createChart = function (args) {
                     <a class="nav-link" data-widget="pushmenu" data-enable-remember="true" data-ew-action="none"><i class="fa-solid fa-bars ew-icon"></i></a>
                 </li>
                 <a class="navbar-brand d-none" href="#" data-ew-action="none">
-                    <img src="<?= GetUrl("images/ch_app_logo.png") ?>" alt="" class="brand-image ew-brand-image">
+                    <span class="brand-text">Jooti Digital | Healthcare V1.0</span>
                 </a>
             </ul>
             <!-- Right navbar links -->
@@ -363,7 +363,7 @@ ew.createChart = function (args) {
         <div class="brand-container">
             <!-- Brand Logo //** Note: Only licensed users are allowed to change the logo ** -->
             <a href="#" class="brand-link">
-                <img src="<?= GetUrl("images/ch_app_logo.png") ?>" alt="" class="brand-image ew-brand-image">
+                <span class="brand-text">Jooti Digital | Healthcare V1.0</span>
             </a>
             <?php if (preg_match('/\bsidebar-mini\b/', Config("BODY_CLASS"))) { ?>
             <a class="pushmenu mx-1" data-pushmenu="mini" role="button"><i class="fa-solid fa-angle-double-left"></i></a>

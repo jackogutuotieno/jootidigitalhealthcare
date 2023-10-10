@@ -50,6 +50,7 @@ class PatientAppointments extends DbTable
     public $submission_date;
     public $subbmitted_by_user_id;
     public $appointment_all_day;
+    public $user_id;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -317,6 +318,32 @@ class PatientAppointments extends DbTable
         $this->appointment_all_day->SearchOperators = ["=", "<>"];
         $this->appointment_all_day->SourceTableVar = 'jdh_appointments';
         $this->Fields['appointment_all_day'] = &$this->appointment_all_day;
+
+        // user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->user_id = new ReportField(
+            $this, // Table
+            'x_user_id', // Variable name
+            'user_id', // Name
+            '`user_id`', // Expression
+            '`user_id`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`user_id`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->user_id->InputTextType = "text";
+        $this->user_id->Nullable = false; // NOT NULL field
+        $this->user_id->Required = true; // Required field
+        $this->user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->user_id->SourceTableVar = 'jdh_appointments';
+        $this->Fields['user_id'] = &$this->user_id;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -816,6 +843,7 @@ class PatientAppointments extends DbTable
         $this->submission_date->DbValue = $row['submission_date'];
         $this->subbmitted_by_user_id->DbValue = $row['subbmitted_by_user_id'];
         $this->appointment_all_day->DbValue = $row['appointment_all_day'];
+        $this->user_id->DbValue = $row['user_id'];
     }
 
     // Delete uploaded files

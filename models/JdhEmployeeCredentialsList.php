@@ -10,7 +10,7 @@ use Doctrine\DBAL\Query\QueryBuilder;
 /**
  * Page class
  */
-class JdhAppointmentsList extends JdhAppointments
+class JdhEmployeeCredentialsList extends JdhEmployeeCredentials
 {
     use MessagesTrait;
 
@@ -21,7 +21,7 @@ class JdhAppointmentsList extends JdhAppointments
     public $ProjectID = PROJECT_ID;
 
     // Page object name
-    public $PageObjName = "JdhAppointmentsList";
+    public $PageObjName = "JdhEmployeeCredentialsList";
 
     // View file path
     public $View = null;
@@ -33,13 +33,13 @@ class JdhAppointmentsList extends JdhAppointments
     public $RenderingView = false;
 
     // Grid form hidden field names
-    public $FormName = "fjdh_appointmentslist";
+    public $FormName = "fjdh_employee_credentialslist";
     public $FormActionName = "";
     public $FormBlankRowName = "";
     public $FormKeyCountName = "";
 
     // CSS class/style
-    public $CurrentPageName = "jdhappointmentslist";
+    public $CurrentPageName = "jdhemployeecredentialslist";
 
     // Page URLs
     public $AddUrl;
@@ -58,14 +58,6 @@ class JdhAppointmentsList extends JdhAppointments
     public $MultiEditUrl;
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
-
-    // Audit Trail
-    public $AuditTrailOnAdd = true;
-    public $AuditTrailOnEdit = true;
-    public $AuditTrailOnDelete = true;
-    public $AuditTrailOnView = false;
-    public $AuditTrailOnViewData = false;
-    public $AuditTrailOnSearch = false;
 
     // Page headings
     public $Heading = "";
@@ -153,8 +145,8 @@ class JdhAppointmentsList extends JdhAppointments
         $this->FormActionName = Config("FORM_ROW_ACTION_NAME");
         $this->FormBlankRowName = Config("FORM_BLANK_ROW_NAME");
         $this->FormKeyCountName = Config("FORM_KEY_COUNT_NAME");
-        $this->TableVar = 'jdh_appointments';
-        $this->TableName = 'jdh_appointments';
+        $this->TableVar = 'jdh_employee_credentials';
+        $this->TableName = 'jdh_employee_credentials';
 
         // Table CSS class
         $this->TableClass = "table table-bordered table-hover table-sm ew-table";
@@ -174,26 +166,26 @@ class JdhAppointmentsList extends JdhAppointments
         // Language object
         $Language = Container("language");
 
-        // Table object (jdh_appointments)
-        if (!isset($GLOBALS["jdh_appointments"]) || get_class($GLOBALS["jdh_appointments"]) == PROJECT_NAMESPACE . "jdh_appointments") {
-            $GLOBALS["jdh_appointments"] = &$this;
+        // Table object (jdh_employee_credentials)
+        if (!isset($GLOBALS["jdh_employee_credentials"]) || get_class($GLOBALS["jdh_employee_credentials"]) == PROJECT_NAMESPACE . "jdh_employee_credentials") {
+            $GLOBALS["jdh_employee_credentials"] = &$this;
         }
 
         // Page URL
         $pageUrl = $this->pageUrl(false);
 
         // Initialize URLs
-        $this->AddUrl = "jdhappointmentsadd";
+        $this->AddUrl = "jdhemployeecredentialsadd";
         $this->InlineAddUrl = $pageUrl . "action=add";
         $this->GridAddUrl = $pageUrl . "action=gridadd";
         $this->GridEditUrl = $pageUrl . "action=gridedit";
         $this->MultiEditUrl = $pageUrl . "action=multiedit";
-        $this->MultiDeleteUrl = "jdhappointmentsdelete";
-        $this->MultiUpdateUrl = "jdhappointmentsupdate";
+        $this->MultiDeleteUrl = "jdhemployeecredentialsdelete";
+        $this->MultiUpdateUrl = "jdhemployeecredentialsupdate";
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
-            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_appointments');
+            define(PROJECT_NAMESPACE . "TABLE_NAME", 'jdh_employee_credentials');
         }
 
         // Start timer
@@ -348,7 +340,7 @@ class JdhAppointmentsList extends JdhAppointments
                 $pageName = GetPageName($url);
                 if ($pageName != $this->getListUrl()) { // Not List page => View page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhappointmentsview"; // If View page, no primary button
+                    $result["view"] = $pageName == "jdhemployeecredentialsview"; // If View page, no primary button
                 } else { // List page
                     // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
@@ -441,7 +433,7 @@ class JdhAppointmentsList extends JdhAppointments
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['appointment_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -454,10 +446,7 @@ class JdhAppointmentsList extends JdhAppointments
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->appointment_id->Visible = false;
-        }
-        if ($this->isAddOrEdit()) {
-            $this->subbmitted_by_user_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
 
@@ -652,19 +641,15 @@ class JdhAppointmentsList extends JdhAppointments
 
         // Setup export options
         $this->setupExportOptions();
-
-        // Setup import options
-        $this->setupImportOptions();
-        $this->appointment_id->Visible = false;
-        $this->patient_id->setVisibility();
-        $this->user_id->setVisibility();
-        $this->appointment_title->setVisibility();
-        $this->appointment_start_date->setVisibility();
-        $this->appointment_end_date->setVisibility();
-        $this->appointment_all_day->setVisibility();
-        $this->appointment_description->Visible = false;
-        $this->submission_date->setVisibility();
-        $this->subbmitted_by_user_id->Visible = false;
+        $this->id->setVisibility();
+        $this->user_id->Visible = false;
+        $this->cv->setVisibility();
+        $this->academic_certificates->setVisibility();
+        $this->professional_certifications->setVisibility();
+        $this->submittedby_user_id->Visible = false;
+        $this->updatedby_user_id->Visible = false;
+        $this->date_created->setVisibility();
+        $this->date_updated->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -699,14 +684,9 @@ class JdhAppointmentsList extends JdhAppointments
             $this->ListActions->add($name, $action);
         }
 
-        // Set up lookup cache
-        $this->setupLookupOptions($this->patient_id);
-        $this->setupLookupOptions($this->user_id);
-        $this->setupLookupOptions($this->appointment_all_day);
-
         // Update form name to avoid conflict
         if ($this->IsModal) {
-            $this->FormName = "fjdh_appointmentsgrid";
+            $this->FormName = "fjdh_employee_credentialsgrid";
         }
 
         // Set up page action
@@ -741,13 +721,6 @@ class JdhAppointmentsList extends JdhAppointments
             $this->setupBreadcrumb();
         }
 
-        // Process import
-        if ($this->isImport()) {
-            $this->import(Param(Config("API_FILE_TOKEN_NAME")), ConvertToBool(Param("rollback")));
-            $this->terminate();
-            return;
-        }
-
         // Hide list options
         if ($this->isExport()) {
             $this->ListOptions->hideAllOptions(["sequence"]);
@@ -771,33 +744,8 @@ class JdhAppointmentsList extends JdhAppointments
             $this->OtherOptions->hideAllOptions();
         }
 
-        // Get default search criteria
-        AddFilter($this->DefaultSearchWhere, $this->basicSearchWhere(true));
-
-        // Get basic search values
-        $this->loadBasicSearchValues();
-
-        // Process filter list
-        if ($this->processFilterList()) {
-            $this->terminate();
-            return;
-        }
-
-        // Restore search parms from Session if not searching / reset / export
-        if (($this->isExport() || $this->Command != "search" && $this->Command != "reset" && $this->Command != "resetall") && $this->Command != "json" && $this->checkSearchParms()) {
-            $this->restoreSearchParms();
-        }
-
-        // Call Recordset SearchValidated event
-        $this->recordsetSearchValidated();
-
         // Set up sorting order
         $this->setupSortOrder();
-
-        // Get basic search criteria
-        if (!$this->hasInvalidFields()) {
-            $srchBasic = $this->basicSearchWhere();
-        }
 
         // Restore display records
         if ($this->Command != "json" && $this->getRecordsPerPage() != "") {
@@ -805,35 +753,6 @@ class JdhAppointmentsList extends JdhAppointments
         } else {
             $this->DisplayRecords = 20; // Load default
             $this->setRecordsPerPage($this->DisplayRecords); // Save default to Session
-        }
-
-        // Load search default if no existing search criteria
-        if (!$this->checkSearchParms()) {
-            // Load basic search from default
-            $this->BasicSearch->loadDefault();
-            if ($this->BasicSearch->Keyword != "") {
-                $srchBasic = $this->basicSearchWhere();
-            }
-        }
-
-        // Build search criteria
-        if ($query) {
-            AddFilter($this->SearchWhere, $query);
-        } else {
-            AddFilter($this->SearchWhere, $srchAdvanced);
-            AddFilter($this->SearchWhere, $srchBasic);
-        }
-
-        // Call Recordset_Searching event
-        $this->recordsetSearching($this->SearchWhere);
-
-        // Save search criteria
-        if ($this->Command == "search" && !$this->RestoreSearch) {
-            $this->setSearchWhere($this->SearchWhere); // Save to Session
-            $this->StartRecord = 1; // Reset start record counter
-            $this->setStartRecordNumber($this->StartRecord);
-        } elseif ($this->Command != "json" && !$query) {
-            $this->SearchWhere = $this->getSearchWhere();
         }
 
         // Build filter
@@ -845,24 +764,17 @@ class JdhAppointmentsList extends JdhAppointments
         // Restore master/detail filter from session
         $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Restore master filter from session
         $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Restore detail filter from session
-
-        // Add master User ID filter
-        if ($Security->currentUserID() != "" && !$Security->isAdmin()) { // Non system admin
-                if ($this->getCurrentMasterTable() == "jdh_patients") {
-                    $this->DbMasterFilter = $this->addMasterUserIDFilter($this->DbMasterFilter, "jdh_patients"); // Add master User ID filter
-                }
-        }
         AddFilter($filter, $this->DbDetailFilter);
         AddFilter($filter, $this->SearchWhere);
 
         // Load master record
-        if ($this->CurrentMode != "add" && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_patients") {
-            $masterTbl = Container("jdh_patients");
+        if ($this->CurrentMode != "add" && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_users") {
+            $masterTbl = Container("jdh_users");
             $rsmaster = $masterTbl->loadRs($this->DbMasterFilter)->fetchAssociative();
             $this->MasterRecordExists = $rsmaster !== false;
             if (!$this->MasterRecordExists) {
                 $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record found
-                $this->terminate("jdhpatientslist"); // Return to master page
+                $this->terminate("jdhuserslist"); // Return to master page
                 return;
             } else {
                 $masterTbl->loadListRowValues($rsmaster);
@@ -924,13 +836,6 @@ class JdhAppointmentsList extends JdhAppointments
                 } else {
                     $this->setWarningMessage($Language->phrase("NoRecord"));
                 }
-            }
-
-            // Audit trail on search
-            if ($this->AuditTrailOnSearch && $this->Command == "search" && !$this->RestoreSearch) {
-                $searchParm = ServerVar("QUERY_STRING");
-                $searchSql = $this->getSessionWhere();
-                $this->writeAuditTrailOnSearch($searchParm, $searchSql);
             }
         }
 
@@ -1067,252 +972,6 @@ class JdhAppointmentsList extends JdhAppointments
         return $wrkFilter;
     }
 
-    // Get list of filters
-    public function getFilterList()
-    {
-        global $UserProfile;
-
-        // Initialize
-        $filterList = "";
-        $savedFilterList = "";
-
-        // Load server side filters
-        if (Config("SEARCH_FILTER_OPTION") == "Server" && isset($UserProfile)) {
-            $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_appointmentssrch");
-        }
-        $filterList = Concat($filterList, $this->appointment_id->AdvancedSearch->toJson(), ","); // Field appointment_id
-        $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
-        $filterList = Concat($filterList, $this->user_id->AdvancedSearch->toJson(), ","); // Field user_id
-        $filterList = Concat($filterList, $this->appointment_title->AdvancedSearch->toJson(), ","); // Field appointment_title
-        $filterList = Concat($filterList, $this->appointment_start_date->AdvancedSearch->toJson(), ","); // Field appointment_start_date
-        $filterList = Concat($filterList, $this->appointment_end_date->AdvancedSearch->toJson(), ","); // Field appointment_end_date
-        $filterList = Concat($filterList, $this->appointment_all_day->AdvancedSearch->toJson(), ","); // Field appointment_all_day
-        $filterList = Concat($filterList, $this->appointment_description->AdvancedSearch->toJson(), ","); // Field appointment_description
-        $filterList = Concat($filterList, $this->submission_date->AdvancedSearch->toJson(), ","); // Field submission_date
-        $filterList = Concat($filterList, $this->subbmitted_by_user_id->AdvancedSearch->toJson(), ","); // Field subbmitted_by_user_id
-        if ($this->BasicSearch->Keyword != "") {
-            $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
-            $filterList = Concat($filterList, $wrk, ",");
-        }
-
-        // Return filter list in JSON
-        if ($filterList != "") {
-            $filterList = "\"data\":{" . $filterList . "}";
-        }
-        if ($savedFilterList != "") {
-            $filterList = Concat($filterList, "\"filters\":" . $savedFilterList, ",");
-        }
-        return ($filterList != "") ? "{" . $filterList . "}" : "null";
-    }
-
-    // Process filter list
-    protected function processFilterList()
-    {
-        global $UserProfile;
-        if (Post("ajax") == "savefilters") { // Save filter request (Ajax)
-            $filters = Post("filters");
-            $UserProfile->setSearchFilters(CurrentUserName(), "fjdh_appointmentssrch", $filters);
-            WriteJson([["success" => true]]); // Success
-            return true;
-        } elseif (Post("cmd") == "resetfilter") {
-            $this->restoreFilterList();
-        }
-        return false;
-    }
-
-    // Restore list of filters
-    protected function restoreFilterList()
-    {
-        // Return if not reset filter
-        if (Post("cmd") !== "resetfilter") {
-            return false;
-        }
-        $filter = json_decode(Post("filter"), true);
-        $this->Command = "search";
-
-        // Field appointment_id
-        $this->appointment_id->AdvancedSearch->SearchValue = @$filter["x_appointment_id"];
-        $this->appointment_id->AdvancedSearch->SearchOperator = @$filter["z_appointment_id"];
-        $this->appointment_id->AdvancedSearch->SearchCondition = @$filter["v_appointment_id"];
-        $this->appointment_id->AdvancedSearch->SearchValue2 = @$filter["y_appointment_id"];
-        $this->appointment_id->AdvancedSearch->SearchOperator2 = @$filter["w_appointment_id"];
-        $this->appointment_id->AdvancedSearch->save();
-
-        // Field patient_id
-        $this->patient_id->AdvancedSearch->SearchValue = @$filter["x_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchOperator = @$filter["z_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchCondition = @$filter["v_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchValue2 = @$filter["y_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_id"];
-        $this->patient_id->AdvancedSearch->save();
-
-        // Field user_id
-        $this->user_id->AdvancedSearch->SearchValue = @$filter["x_user_id"];
-        $this->user_id->AdvancedSearch->SearchOperator = @$filter["z_user_id"];
-        $this->user_id->AdvancedSearch->SearchCondition = @$filter["v_user_id"];
-        $this->user_id->AdvancedSearch->SearchValue2 = @$filter["y_user_id"];
-        $this->user_id->AdvancedSearch->SearchOperator2 = @$filter["w_user_id"];
-        $this->user_id->AdvancedSearch->save();
-
-        // Field appointment_title
-        $this->appointment_title->AdvancedSearch->SearchValue = @$filter["x_appointment_title"];
-        $this->appointment_title->AdvancedSearch->SearchOperator = @$filter["z_appointment_title"];
-        $this->appointment_title->AdvancedSearch->SearchCondition = @$filter["v_appointment_title"];
-        $this->appointment_title->AdvancedSearch->SearchValue2 = @$filter["y_appointment_title"];
-        $this->appointment_title->AdvancedSearch->SearchOperator2 = @$filter["w_appointment_title"];
-        $this->appointment_title->AdvancedSearch->save();
-
-        // Field appointment_start_date
-        $this->appointment_start_date->AdvancedSearch->SearchValue = @$filter["x_appointment_start_date"];
-        $this->appointment_start_date->AdvancedSearch->SearchOperator = @$filter["z_appointment_start_date"];
-        $this->appointment_start_date->AdvancedSearch->SearchCondition = @$filter["v_appointment_start_date"];
-        $this->appointment_start_date->AdvancedSearch->SearchValue2 = @$filter["y_appointment_start_date"];
-        $this->appointment_start_date->AdvancedSearch->SearchOperator2 = @$filter["w_appointment_start_date"];
-        $this->appointment_start_date->AdvancedSearch->save();
-
-        // Field appointment_end_date
-        $this->appointment_end_date->AdvancedSearch->SearchValue = @$filter["x_appointment_end_date"];
-        $this->appointment_end_date->AdvancedSearch->SearchOperator = @$filter["z_appointment_end_date"];
-        $this->appointment_end_date->AdvancedSearch->SearchCondition = @$filter["v_appointment_end_date"];
-        $this->appointment_end_date->AdvancedSearch->SearchValue2 = @$filter["y_appointment_end_date"];
-        $this->appointment_end_date->AdvancedSearch->SearchOperator2 = @$filter["w_appointment_end_date"];
-        $this->appointment_end_date->AdvancedSearch->save();
-
-        // Field appointment_all_day
-        $this->appointment_all_day->AdvancedSearch->SearchValue = @$filter["x_appointment_all_day"];
-        $this->appointment_all_day->AdvancedSearch->SearchOperator = @$filter["z_appointment_all_day"];
-        $this->appointment_all_day->AdvancedSearch->SearchCondition = @$filter["v_appointment_all_day"];
-        $this->appointment_all_day->AdvancedSearch->SearchValue2 = @$filter["y_appointment_all_day"];
-        $this->appointment_all_day->AdvancedSearch->SearchOperator2 = @$filter["w_appointment_all_day"];
-        $this->appointment_all_day->AdvancedSearch->save();
-
-        // Field appointment_description
-        $this->appointment_description->AdvancedSearch->SearchValue = @$filter["x_appointment_description"];
-        $this->appointment_description->AdvancedSearch->SearchOperator = @$filter["z_appointment_description"];
-        $this->appointment_description->AdvancedSearch->SearchCondition = @$filter["v_appointment_description"];
-        $this->appointment_description->AdvancedSearch->SearchValue2 = @$filter["y_appointment_description"];
-        $this->appointment_description->AdvancedSearch->SearchOperator2 = @$filter["w_appointment_description"];
-        $this->appointment_description->AdvancedSearch->save();
-
-        // Field submission_date
-        $this->submission_date->AdvancedSearch->SearchValue = @$filter["x_submission_date"];
-        $this->submission_date->AdvancedSearch->SearchOperator = @$filter["z_submission_date"];
-        $this->submission_date->AdvancedSearch->SearchCondition = @$filter["v_submission_date"];
-        $this->submission_date->AdvancedSearch->SearchValue2 = @$filter["y_submission_date"];
-        $this->submission_date->AdvancedSearch->SearchOperator2 = @$filter["w_submission_date"];
-        $this->submission_date->AdvancedSearch->save();
-
-        // Field subbmitted_by_user_id
-        $this->subbmitted_by_user_id->AdvancedSearch->SearchValue = @$filter["x_subbmitted_by_user_id"];
-        $this->subbmitted_by_user_id->AdvancedSearch->SearchOperator = @$filter["z_subbmitted_by_user_id"];
-        $this->subbmitted_by_user_id->AdvancedSearch->SearchCondition = @$filter["v_subbmitted_by_user_id"];
-        $this->subbmitted_by_user_id->AdvancedSearch->SearchValue2 = @$filter["y_subbmitted_by_user_id"];
-        $this->subbmitted_by_user_id->AdvancedSearch->SearchOperator2 = @$filter["w_subbmitted_by_user_id"];
-        $this->subbmitted_by_user_id->AdvancedSearch->save();
-        $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
-        $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
-    }
-
-    // Show list of filters
-    public function showFilterList()
-    {
-        global $Language;
-
-        // Initialize
-        $filterList = "";
-        $captionClass = $this->isExport("email") ? "ew-filter-caption-email" : "ew-filter-caption";
-        $captionSuffix = $this->isExport("email") ? ": " : "";
-        if ($this->BasicSearch->Keyword != "") {
-            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $Language->phrase("BasicSearchKeyword") . "</span>" . $captionSuffix . $this->BasicSearch->Keyword . "</div>";
-        }
-
-        // Show Filters
-        if ($filterList != "") {
-            $message = "<div id=\"ew-filter-list\" class=\"callout callout-info d-table\"><div id=\"ew-current-filters\">" .
-                $Language->phrase("CurrentFilters") . "</div>" . $filterList . "</div>";
-            $this->messageShowing($message, "");
-            Write($message);
-        } else { // Output empty tag
-            Write("<div id=\"ew-filter-list\"></div>");
-        }
-    }
-
-    // Return basic search WHERE clause based on search keyword and type
-    public function basicSearchWhere($default = false)
-    {
-        global $Security;
-        $searchStr = "";
-        if (!$Security->canSearch()) {
-            return "";
-        }
-
-        // Fields to search
-        $searchFlds = [];
-        $searchFlds[] = &$this->appointment_title;
-        $searchFlds[] = &$this->appointment_description;
-        $searchKeyword = $default ? $this->BasicSearch->KeywordDefault : $this->BasicSearch->Keyword;
-        $searchType = $default ? $this->BasicSearch->TypeDefault : $this->BasicSearch->Type;
-
-        // Get search SQL
-        if ($searchKeyword != "") {
-            $ar = $this->BasicSearch->keywordList($default);
-            $searchStr = GetQuickSearchFilter($searchFlds, $ar, $searchType, Config("BASIC_SEARCH_ANY_FIELDS"), $this->Dbid);
-            if (!$default && in_array($this->Command, ["", "reset", "resetall"])) {
-                $this->Command = "search";
-            }
-        }
-        if (!$default && $this->Command == "search") {
-            $this->BasicSearch->setKeyword($searchKeyword);
-            $this->BasicSearch->setType($searchType);
-
-            // Clear rules for QueryBuilder
-            $this->setSessionRules("");
-        }
-        return $searchStr;
-    }
-
-    // Check if search parm exists
-    protected function checkSearchParms()
-    {
-        // Check basic search
-        if ($this->BasicSearch->issetSession()) {
-            return true;
-        }
-        return false;
-    }
-
-    // Clear all search parameters
-    protected function resetSearchParms()
-    {
-        // Clear search WHERE clause
-        $this->SearchWhere = "";
-        $this->setSearchWhere($this->SearchWhere);
-
-        // Clear basic search parameters
-        $this->resetBasicSearchParms();
-    }
-
-    // Load advanced search default values
-    protected function loadAdvancedSearchDefault()
-    {
-        return false;
-    }
-
-    // Clear all basic search parameters
-    protected function resetBasicSearchParms()
-    {
-        $this->BasicSearch->unsetSession();
-    }
-
-    // Restore all search parameters
-    protected function restoreSearchParms()
-    {
-        $this->RestoreSearch = true;
-
-        // Restore basic search values
-        $this->BasicSearch->load();
-    }
-
     // Set up sort parameters
     protected function setupSortOrder()
     {
@@ -1328,13 +987,9 @@ class JdhAppointmentsList extends JdhAppointments
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
-            $this->updateSort($this->patient_id); // patient_id
-            $this->updateSort($this->user_id); // user_id
-            $this->updateSort($this->appointment_title); // appointment_title
-            $this->updateSort($this->appointment_start_date); // appointment_start_date
-            $this->updateSort($this->appointment_end_date); // appointment_end_date
-            $this->updateSort($this->appointment_all_day); // appointment_all_day
-            $this->updateSort($this->submission_date); // submission_date
+            $this->updateSort($this->id); // id
+            $this->updateSort($this->date_created); // date_created
+            $this->updateSort($this->date_updated); // date_updated
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1350,33 +1005,24 @@ class JdhAppointmentsList extends JdhAppointments
     {
         // Check if reset command
         if (StartsString("reset", $this->Command)) {
-            // Reset search criteria
-            if ($this->Command == "reset" || $this->Command == "resetall") {
-                $this->resetSearchParms();
-            }
-
             // Reset master/detail keys
             if ($this->Command == "resetall") {
                 $this->setCurrentMasterTable(""); // Clear master table
                 $this->DbMasterFilter = "";
                 $this->DbDetailFilter = "";
-                        $this->patient_id->setSessionValue("");
+                        $this->user_id->setSessionValue("");
             }
 
             // Reset (clear) sorting order
             if ($this->Command == "resetsort") {
                 $orderBy = "";
                 $this->setSessionOrderBy($orderBy);
-                $this->appointment_id->setSort("");
-                $this->patient_id->setSort("");
+                $this->id->setSort("");
                 $this->user_id->setSort("");
-                $this->appointment_title->setSort("");
-                $this->appointment_start_date->setSort("");
-                $this->appointment_end_date->setSort("");
-                $this->appointment_all_day->setSort("");
-                $this->appointment_description->setSort("");
-                $this->submission_date->setSort("");
-                $this->subbmitted_by_user_id->setSort("");
+                $this->submittedby_user_id->setSort("");
+                $this->updatedby_user_id->setSort("");
+                $this->date_created->setSort("");
+                $this->date_updated->setSort("");
             }
 
             // Reset start position
@@ -1469,9 +1115,9 @@ class JdhAppointmentsList extends JdhAppointments
             // "view"
             $opt = $this->ListOptions["view"];
             $viewcaption = HtmlTitle($Language->phrase("ViewLink"));
-            if ($Security->canView() && $this->showOptionLink("view")) {
+            if ($Security->canView()) {
                 if ($this->ModalView && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_appointments\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
+                    $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-table=\"jdh_employee_credentials\" data-caption=\"" . $viewcaption . "\" data-ew-action=\"modal\" data-action=\"view\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\" data-btn=\"null\">" . $Language->phrase("ViewLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-view\" title=\"" . $viewcaption . "\" data-caption=\"" . $viewcaption . "\" href=\"" . HtmlEncode(GetUrl($this->ViewUrl)) . "\">" . $Language->phrase("ViewLink") . "</a>";
                 }
@@ -1482,9 +1128,9 @@ class JdhAppointmentsList extends JdhAppointments
             // "edit"
             $opt = $this->ListOptions["edit"];
             $editcaption = HtmlTitle($Language->phrase("EditLink"));
-            if ($Security->canEdit() && $this->showOptionLink("edit")) {
+            if ($Security->canEdit()) {
                 if ($this->ModalEdit && !IsMobile()) {
-                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_appointments\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
+                    $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_employee_credentials\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
                 }
@@ -1504,11 +1150,11 @@ class JdhAppointmentsList extends JdhAppointments
                 if ($listaction->Select == ACTION_SINGLE && $allowed) {
                     $caption = $listaction->Caption;
                     $icon = ($listaction->Icon != "") ? "<i class=\"" . HtmlEncode(str_replace(" ew-icon", "", $listaction->Icon)) . "\" data-caption=\"" . HtmlTitle($caption) . "\"></i> " : "";
-                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_appointmentslist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
+                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_employee_credentialslist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
                     if ($link != "") {
                         $links[] = $link;
                         if ($body == "") { // Setup first button
-                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_appointmentslist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
+                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_employee_credentialslist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
                         }
                     }
                 }
@@ -1529,7 +1175,7 @@ class JdhAppointmentsList extends JdhAppointments
 
         // "checkbox"
         $opt = $this->ListOptions["checkbox"];
-        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->appointment_id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
+        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
         $this->renderListOptionsExt();
 
         // Call ListOptions_Rendered event
@@ -1554,7 +1200,7 @@ class JdhAppointmentsList extends JdhAppointments
         $item = &$option->add("add");
         $addcaption = HtmlTitle($Language->phrase("AddLink"));
         if ($this->ModalAdd && !IsMobile()) {
-            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-table=\"jdh_appointments\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("AddLink") . "</a>";
+            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-table=\"jdh_employee_credentials\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("AddLink") . "</a>";
         } else {
             $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
         }
@@ -1565,7 +1211,7 @@ class JdhAppointmentsList extends JdhAppointments
         $item = &$option->add("multidelete");
         $item->Body = "<button type=\"button\" class=\"ew-action ew-multi-delete\" title=\"" .
             HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" data-caption=\"" .
-            HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" form=\"fjdh_appointmentslist\"" .
+            HtmlTitle($Language->phrase("DeleteSelectedLink")) . "\" form=\"fjdh_employee_credentialslist\"" .
             " data-ew-action=\"" . ($this->UseAjaxActions ? "inline" : "submit") . "\"" .
             ($this->UseAjaxActions ? " data-action=\"delete\"" : "") .
             " data-url=\"" . GetUrl($this->MultiDeleteUrl) . "\"" .
@@ -1579,13 +1225,12 @@ class JdhAppointmentsList extends JdhAppointments
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("patient_id", $this->createColumnOption("patient_id"));
-            $option->add("user_id", $this->createColumnOption("user_id"));
-            $option->add("appointment_title", $this->createColumnOption("appointment_title"));
-            $option->add("appointment_start_date", $this->createColumnOption("appointment_start_date"));
-            $option->add("appointment_end_date", $this->createColumnOption("appointment_end_date"));
-            $option->add("appointment_all_day", $this->createColumnOption("appointment_all_day"));
-            $option->add("submission_date", $this->createColumnOption("submission_date"));
+            $option->add("id", $this->createColumnOption("id"));
+            $option->add("cv", $this->createColumnOption("cv"));
+            $option->add("academic_certificates", $this->createColumnOption("academic_certificates"));
+            $option->add("professional_certifications", $this->createColumnOption("professional_certifications"));
+            $option->add("date_created", $this->createColumnOption("date_created"));
+            $option->add("date_updated", $this->createColumnOption("date_updated"));
         }
 
         // Set up options default
@@ -1605,11 +1250,11 @@ class JdhAppointmentsList extends JdhAppointments
 
         // Filter button
         $item = &$this->FilterOptions->add("savecurrentfilter");
-        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_appointmentssrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
-        $item->Visible = true;
+        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_employee_credentialssrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
+        $item->Visible = false;
         $item = &$this->FilterOptions->add("deletefilter");
-        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_appointmentssrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
-        $item->Visible = true;
+        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_employee_credentialssrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
+        $item->Visible = false;
         $this->FilterOptions->UseDropDownButton = true;
         $this->FilterOptions->UseButtonGroup = !$this->FilterOptions->UseDropDownButton;
         $this->FilterOptions->DropDownButtonPhrase = $Language->phrase("Filters");
@@ -1647,7 +1292,7 @@ class JdhAppointmentsList extends JdhAppointments
                 $item = &$option->add("custom_" . $listaction->Action);
                 $caption = $listaction->Caption;
                 $icon = ($listaction->Icon != "") ? '<i class="' . HtmlEncode($listaction->Icon) . '" data-caption="' . HtmlEncode($caption) . '"></i>' . $caption : $caption;
-                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_appointmentslist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
+                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_employee_credentialslist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
                 $item->Visible = $listaction->Allow;
             }
         }
@@ -1796,7 +1441,7 @@ class JdhAppointmentsList extends JdhAppointments
 
                 // Set row properties
                 $this->resetAttributes();
-                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_appointments", "data-rowtype" => ROWTYPE_ADD]);
+                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_employee_credentials", "data-rowtype" => ROWTYPE_ADD]);
                 $this->RowAttrs->appendClass("ew-template");
                 // Render row
                 $this->RowType = ROWTYPE_ADD;
@@ -1857,7 +1502,7 @@ class JdhAppointmentsList extends JdhAppointments
         $this->RowAttrs->merge([
             "data-rowindex" => $this->RowCount,
             "data-key" => $this->getKey(true),
-            "id" => "r" . $this->RowCount . "_jdh_appointments",
+            "id" => "r" . $this->RowCount . "_jdh_employee_credentials",
             "data-rowtype" => $this->RowType,
             "class" => ($this->RowCount % 2 != 1) ? "ew-table-alt-row" : "",
         ]);
@@ -1870,16 +1515,6 @@ class JdhAppointmentsList extends JdhAppointments
 
         // Render list options
         $this->renderListOptions();
-    }
-
-    // Load basic search values
-    protected function loadBasicSearchValues()
-    {
-        $this->BasicSearch->setKeyword(Get(Config("TABLE_BASIC_SEARCH"), ""), false);
-        if ($this->BasicSearch->Keyword != "" && $this->Command == "") {
-            $this->Command = "search";
-        }
-        $this->BasicSearch->setType(Get(Config("TABLE_BASIC_SEARCH_TYPE"), ""), false);
     }
 
     // Load recordset
@@ -1967,32 +1602,39 @@ class JdhAppointmentsList extends JdhAppointments
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->appointment_id->setDbValue($row['appointment_id']);
-        $this->patient_id->setDbValue($row['patient_id']);
+        $this->id->setDbValue($row['id']);
         $this->user_id->setDbValue($row['user_id']);
-        $this->appointment_title->setDbValue($row['appointment_title']);
-        $this->appointment_start_date->setDbValue($row['appointment_start_date']);
-        $this->appointment_end_date->setDbValue($row['appointment_end_date']);
-        $this->appointment_all_day->setDbValue($row['appointment_all_day']);
-        $this->appointment_description->setDbValue($row['appointment_description']);
-        $this->submission_date->setDbValue($row['submission_date']);
-        $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
+        $this->cv->Upload->DbValue = $row['cv'];
+        if (is_resource($this->cv->Upload->DbValue) && get_resource_type($this->cv->Upload->DbValue) == "stream") { // Byte array
+            $this->cv->Upload->DbValue = stream_get_contents($this->cv->Upload->DbValue);
+        }
+        $this->academic_certificates->Upload->DbValue = $row['academic_certificates'];
+        if (is_resource($this->academic_certificates->Upload->DbValue) && get_resource_type($this->academic_certificates->Upload->DbValue) == "stream") { // Byte array
+            $this->academic_certificates->Upload->DbValue = stream_get_contents($this->academic_certificates->Upload->DbValue);
+        }
+        $this->professional_certifications->Upload->DbValue = $row['professional_certifications'];
+        if (is_resource($this->professional_certifications->Upload->DbValue) && get_resource_type($this->professional_certifications->Upload->DbValue) == "stream") { // Byte array
+            $this->professional_certifications->Upload->DbValue = stream_get_contents($this->professional_certifications->Upload->DbValue);
+        }
+        $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
+        $this->updatedby_user_id->setDbValue($row['updatedby_user_id']);
+        $this->date_created->setDbValue($row['date_created']);
+        $this->date_updated->setDbValue($row['date_updated']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['appointment_id'] = $this->appointment_id->DefaultValue;
-        $row['patient_id'] = $this->patient_id->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
         $row['user_id'] = $this->user_id->DefaultValue;
-        $row['appointment_title'] = $this->appointment_title->DefaultValue;
-        $row['appointment_start_date'] = $this->appointment_start_date->DefaultValue;
-        $row['appointment_end_date'] = $this->appointment_end_date->DefaultValue;
-        $row['appointment_all_day'] = $this->appointment_all_day->DefaultValue;
-        $row['appointment_description'] = $this->appointment_description->DefaultValue;
-        $row['submission_date'] = $this->submission_date->DefaultValue;
-        $row['subbmitted_by_user_id'] = $this->subbmitted_by_user_id->DefaultValue;
+        $row['cv'] = $this->cv->DefaultValue;
+        $row['academic_certificates'] = $this->academic_certificates->DefaultValue;
+        $row['professional_certifications'] = $this->professional_certifications->DefaultValue;
+        $row['submittedby_user_id'] = $this->submittedby_user_id->DefaultValue;
+        $row['updatedby_user_id'] = $this->updatedby_user_id->DefaultValue;
+        $row['date_created'] = $this->date_created->DefaultValue;
+        $row['date_updated'] = $this->date_updated->DefaultValue;
         return $row;
     }
 
@@ -2033,414 +1675,126 @@ class JdhAppointmentsList extends JdhAppointments
 
         // Common render codes for all row types
 
-        // appointment_id
-
-        // patient_id
+        // id
 
         // user_id
 
-        // appointment_title
+        // cv
 
-        // appointment_start_date
+        // academic_certificates
 
-        // appointment_end_date
+        // professional_certifications
 
-        // appointment_all_day
+        // submittedby_user_id
 
-        // appointment_description
+        // updatedby_user_id
 
-        // submission_date
+        // date_created
 
-        // subbmitted_by_user_id
+        // date_updated
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // appointment_id
-            $this->appointment_id->ViewValue = $this->appointment_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
 
-            // patient_id
-            $curVal = strval($this->patient_id->CurrentValue);
-            if ($curVal != "") {
-                $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
-                if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
-                    } else {
-                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
-                    }
+            // cv
+            if (!EmptyValue($this->cv->Upload->DbValue)) {
+                $this->cv->ViewValue = $this->id->CurrentValue;
+                $this->cv->IsBlobImage = IsImageFile(ContentExtension($this->cv->Upload->DbValue));
+            } else {
+                $this->cv->ViewValue = "";
+            }
+
+            // academic_certificates
+            if (!EmptyValue($this->academic_certificates->Upload->DbValue)) {
+                $this->academic_certificates->ViewValue = $this->id->CurrentValue;
+                $this->academic_certificates->IsBlobImage = IsImageFile(ContentExtension($this->academic_certificates->Upload->DbValue));
+            } else {
+                $this->academic_certificates->ViewValue = "";
+            }
+
+            // professional_certifications
+            if (!EmptyValue($this->professional_certifications->Upload->DbValue)) {
+                $this->professional_certifications->ViewValue = $this->id->CurrentValue;
+                $this->professional_certifications->IsBlobImage = IsImageFile(ContentExtension($this->professional_certifications->Upload->DbValue));
+            } else {
+                $this->professional_certifications->ViewValue = "";
+            }
+
+            // date_created
+            $this->date_created->ViewValue = $this->date_created->CurrentValue;
+            $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
+
+            // date_updated
+            $this->date_updated->ViewValue = $this->date_updated->CurrentValue;
+            $this->date_updated->ViewValue = FormatDateTime($this->date_updated->ViewValue, $this->date_updated->formatPattern());
+
+            // id
+            $this->id->HrefValue = "";
+            $this->id->TooltipValue = "";
+
+            // cv
+            if (!empty($this->cv->Upload->DbValue)) {
+                $this->cv->HrefValue = GetFileUploadUrl($this->cv, $this->id->CurrentValue);
+                $this->cv->LinkAttrs["target"] = "";
+                if ($this->cv->IsBlobImage && empty($this->cv->LinkAttrs["target"])) {
+                    $this->cv->LinkAttrs["target"] = "_blank";
+                }
+                if ($this->isExport()) {
+                    $this->cv->HrefValue = FullUrl($this->cv->HrefValue, "href");
                 }
             } else {
-                $this->patient_id->ViewValue = null;
+                $this->cv->HrefValue = "";
             }
+            $this->cv->ExportHrefValue = GetFileUploadUrl($this->cv, $this->id->CurrentValue);
+            $this->cv->TooltipValue = "";
 
-            // user_id
-            $curVal = strval($this->user_id->CurrentValue);
-            if ($curVal != "") {
-                $this->user_id->ViewValue = $this->user_id->lookupCacheOption($curVal);
-                if ($this->user_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`user_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $lookupFilter = $this->user_id->getSelectFilter($this); // PHP
-                    $sqlWrk = $this->user_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->user_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->user_id->ViewValue = $this->user_id->displayValue($arwrk);
-                    } else {
-                        $this->user_id->ViewValue = FormatNumber($this->user_id->CurrentValue, $this->user_id->formatPattern());
-                    }
+            // academic_certificates
+            if (!empty($this->academic_certificates->Upload->DbValue)) {
+                $this->academic_certificates->HrefValue = GetFileUploadUrl($this->academic_certificates, $this->id->CurrentValue);
+                $this->academic_certificates->LinkAttrs["target"] = "";
+                if ($this->academic_certificates->IsBlobImage && empty($this->academic_certificates->LinkAttrs["target"])) {
+                    $this->academic_certificates->LinkAttrs["target"] = "_blank";
+                }
+                if ($this->isExport()) {
+                    $this->academic_certificates->HrefValue = FullUrl($this->academic_certificates->HrefValue, "href");
                 }
             } else {
-                $this->user_id->ViewValue = null;
+                $this->academic_certificates->HrefValue = "";
             }
+            $this->academic_certificates->ExportHrefValue = GetFileUploadUrl($this->academic_certificates, $this->id->CurrentValue);
+            $this->academic_certificates->TooltipValue = "";
 
-            // appointment_title
-            $this->appointment_title->ViewValue = $this->appointment_title->CurrentValue;
-
-            // appointment_start_date
-            $this->appointment_start_date->ViewValue = $this->appointment_start_date->CurrentValue;
-            $this->appointment_start_date->ViewValue = FormatDateTime($this->appointment_start_date->ViewValue, $this->appointment_start_date->formatPattern());
-
-            // appointment_end_date
-            $this->appointment_end_date->ViewValue = $this->appointment_end_date->CurrentValue;
-            $this->appointment_end_date->ViewValue = FormatDateTime($this->appointment_end_date->ViewValue, $this->appointment_end_date->formatPattern());
-
-            // appointment_all_day
-            if (ConvertToBool($this->appointment_all_day->CurrentValue)) {
-                $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(1) != "" ? $this->appointment_all_day->tagCaption(1) : "Yes";
+            // professional_certifications
+            if (!empty($this->professional_certifications->Upload->DbValue)) {
+                $this->professional_certifications->HrefValue = GetFileUploadUrl($this->professional_certifications, $this->id->CurrentValue);
+                $this->professional_certifications->LinkAttrs["target"] = "";
+                if ($this->professional_certifications->IsBlobImage && empty($this->professional_certifications->LinkAttrs["target"])) {
+                    $this->professional_certifications->LinkAttrs["target"] = "_blank";
+                }
+                if ($this->isExport()) {
+                    $this->professional_certifications->HrefValue = FullUrl($this->professional_certifications->HrefValue, "href");
+                }
             } else {
-                $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(2) != "" ? $this->appointment_all_day->tagCaption(2) : "No";
+                $this->professional_certifications->HrefValue = "";
             }
+            $this->professional_certifications->ExportHrefValue = GetFileUploadUrl($this->professional_certifications, $this->id->CurrentValue);
+            $this->professional_certifications->TooltipValue = "";
 
-            // submission_date
-            $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
-            $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
+            // date_created
+            $this->date_created->HrefValue = "";
+            $this->date_created->TooltipValue = "";
 
-            // subbmitted_by_user_id
-            $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
-            $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
-
-            // patient_id
-            $this->patient_id->HrefValue = "";
-            $this->patient_id->TooltipValue = "";
-
-            // user_id
-            $this->user_id->HrefValue = "";
-            $this->user_id->TooltipValue = "";
-
-            // appointment_title
-            $this->appointment_title->HrefValue = "";
-            $this->appointment_title->TooltipValue = "";
-
-            // appointment_start_date
-            $this->appointment_start_date->HrefValue = "";
-            $this->appointment_start_date->TooltipValue = "";
-
-            // appointment_end_date
-            $this->appointment_end_date->HrefValue = "";
-            $this->appointment_end_date->TooltipValue = "";
-
-            // appointment_all_day
-            $this->appointment_all_day->HrefValue = "";
-            $this->appointment_all_day->TooltipValue = "";
-
-            // submission_date
-            $this->submission_date->HrefValue = "";
-            $this->submission_date->TooltipValue = "";
+            // date_updated
+            $this->date_updated->HrefValue = "";
+            $this->date_updated->TooltipValue = "";
         }
 
         // Call Row Rendered event
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
-    }
-
-    /**
-     * Import file
-     *
-     * @param string $filetoken File token to locate the uploaded import file
-     * @param bool $rollback Try import and then rollback
-     * @return bool
-     */
-    public function import($filetoken, $rollback = false)
-    {
-        global $Security, $Language;
-        if (!$Security->canImport()) {
-            return false; // Import not allowed
-        }
-
-        // Check if valid token
-        if (EmptyValue($filetoken)) {
-            return false;
-        }
-
-        // Get uploaded files by token
-        $files = GetUploadedFileNames($filetoken);
-        $exts = explode(",", Config("IMPORT_FILE_ALLOWED_EXTENSIONS"));
-        $result = [Config("API_FILE_TOKEN_NAME") => $filetoken, "files" => []];
-
-        // Set header
-        if (ob_get_length()) {
-            ob_clean();
-        }
-        header("Cache-Control: no-store");
-        header("Content-Type: text/event-stream");
-
-        // Import records
-        try {
-            foreach ($files as $file) {
-                $res = ["file" => basename($file)];
-                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-
-                // Ignore log file
-                if ($ext == "txt") {
-                    continue;
-                }
-
-                // Check file extension
-                if (!in_array($ext, $exts)) {
-                    $res = array_merge($res, ["error" => str_replace("%e", $ext, $Language->phrase("ImportInvalidFileExtension"))]);
-                    SendEvent($res, "error");
-                    return false;
-                }
-
-                // Set up options
-                $options = [
-                    "file" => $file,
-                    "inputEncoding" => "", // For CSV only
-                    "delimiter" => ",", // For CSV only
-                    "enclosure" => "\"", // For CSV only
-                    "escape" => "\\", // For CSV only
-                    "activeSheet" => null, // For PhpSpreadsheet only
-                    "readOnly" => true, // For PhpSpreadsheet only
-                    "maxRows" => null, // For PhpSpreadsheet only
-                    "headerRowNumber" => 0,
-                    "headers" => []
-                ];
-                foreach ($_GET as $key => $value) {
-                    if (!in_array($key, [Config("API_ACTION_NAME"), Config("API_FILE_TOKEN_NAME")])) {
-                        $options[$key] = $value;
-                    }
-                }
-
-                // Workflow builder
-                $builder = fn($workflow) => $workflow;
-
-                // Call Page Importing server event
-                if (!$this->pageImporting($builder, $options)) {
-                    SendEvent($res, "error");
-                    return false;
-                }
-
-                // Set max execution time
-                if (Config("IMPORT_MAX_EXECUTION_TIME") > 0) {
-                    ini_set("max_execution_time", Config("IMPORT_MAX_EXECUTION_TIME"));
-                }
-
-                // Reader
-                try {
-                    if ($ext == "csv") {
-                        $csv = file_get_contents($file);
-                        if ($csv !== false) {
-                            if (StartsString("\xEF\xBB\xBF", $csv)) { // UTF-8 BOM
-                                $csv = substr($csv, 3);
-                            } elseif ($options["inputEncoding"] != "" && !SameText($options["inputEncoding"], "UTF-8")) {
-                                $csv = Convert($options["inputEncoding"], "UTF-8", $csv);
-                            }
-                            file_put_contents($file, $csv);
-                        }
-                        $reader = new \Port\Csv\CsvReader(new \SplFileObject($file), $options["delimiter"], $options["enclosure"], $options["escape"]);
-                    } else {
-                        $reader = new \Port\Spreadsheet\SpreadsheetReader(new \SplFileObject($file), $options["headerRowNumber"], $options["activeSheet"], $options["readOnly"], $options["maxRows"]);
-                    }
-                    if (is_array($options["headers"]) && count($options["headers"]) > 0) {
-                        $reader->setColumnHeaders($options["headers"]);
-                    } elseif (is_int($options["headerRowNumber"])) {
-                        $reader->setHeaderRowNumber($options["headerRowNumber"]);
-                    }
-                } catch (\Exception $e) {
-                    $res = array_merge($res, ["error" => $e->getMessage()]);
-                    SendEvent($res, "error");
-                    return false;
-                }
-
-                // Column headers
-                $headers = $reader->getColumnHeaders();
-                if (count($headers) == 0) { // Missing headers
-                    $res["error"] = $Language->phrase("ImportNoHeaderRow");
-                    SendEvent($res, "error");
-                    return false;
-                }
-
-                // Counts
-                $recordCnt = $reader->count();
-                $cnt = 0;
-                $successCnt = 0;
-                $failCnt = 0;
-                $res = array_merge($res, ["totalCount" => $recordCnt, "count" => $cnt, "successCount" => 0, "failCount" => 0]);
-
-                // Writer
-                $writer = new \Port\Writer\CallbackWriter(function ($row) use (&$res, &$cnt, &$successCnt, &$failCnt) {
-                    try {
-                        $success = $this->importRow($row, ++$cnt); // Import row
-                        if ($success) {
-                            $successCnt++;
-                        } else {
-                            $failCnt++;
-                        }
-                        $err = "";
-                    } catch (\Port\Exception $e) { // Catch exception so the workflow continues
-                        $failCnt++;
-                        $err = $e->getMessage();
-                        if ($failCnt > $this->ImportMaxFailures) {
-                            throw $e; // Throw \Port\Exception to terminate the workflow
-                        }
-                    } finally {
-                        $res = array_merge($res, [
-                            "row" => $row, // Current row
-                            "success" => $success, // For current row
-                            "error" => $err, // For current row
-                            "count" => $cnt,
-                            "successCount" => $successCnt,
-                            "failCount" => $failCnt
-                        ]);
-                        SendEvent($res);
-                    }
-                });
-
-                // Connection
-                $conn = $this->getConnection();
-
-                // Begin transaction
-                if ($this->ImportUseTransaction) {
-                    $conn->beginTransaction();
-                }
-
-                // Workflow
-                $workflow = new \Port\Steps\StepAggregator($reader);
-                $workflow->setLogger(Logger());
-                $workflow->setSkipItemOnFailure(false); // Stop on exception
-                $workflow = $builder($workflow);
-                try {
-                    $info = @$workflow->addWriter($writer)->process();
-                } finally {
-                    // Rollback transaction
-                    if ($this->ImportUseTransaction) {
-                        if ($rollback || $failCnt > $this->ImportMaxFailures) {
-                            $res["rollbacked"] = $conn->rollback();
-                        } else {
-                            $conn->commit();
-                        }
-                    }
-                    unset($res["row"], $res["error"]); // Remove current row info
-                    $res["success"] = $cnt > 0 && $failCnt <= $this->ImportMaxFailures; // Set success status of current file
-                    SendEvent($res); // Current file imported
-                    $result["files"][] = $res;
-
-                    // Call Page Imported server event
-                    $this->pageImported($info, $res);
-                }
-            }
-        } finally {
-            $result["failCount"] = array_reduce($result["files"], fn($carry, $item) => $carry + $item["failCount"], 0); // For client side
-            $result["success"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"], true); // All files successful
-            $result["rollbacked"] = array_reduce($result["files"], fn($carry, $item) => $carry && $item["success"] && ($item["rollbacked"] ?? false), true); // All file rollbacked successfully
-            if ($result["success"] && !$result["rollbacked"]) {
-                CleanUploadTempPaths($filetoken);
-            }
-            SendEvent($result, "complete"); // All files imported
-            return $result["success"];
-        }
-    }
-
-    /**
-     * Import a row
-     *
-     * @param array $row Row to be imported
-     * @param int $cnt Index of the row (1-based)
-     * @return bool
-     */
-    protected function importRow(&$row, $cnt)
-    {
-        global $Language;
-
-        // Call Row Import server event
-        if (!$this->rowImport($row, $cnt)) {
-            return false;
-        }
-
-        // Check field names and values
-        foreach ($row as $name => $value) {
-            $fld = $this->Fields[$name];
-            if (!$fld) {
-                throw new \Port\Exception\UnexpectedValueException(str_replace("%f", $name, $Language->phrase("ImportInvalidFieldName")));
-            }
-            if (!$this->checkValue($fld, $value)) {
-                throw new \Port\Exception\UnexpectedValueException(str_replace(["%f", "%v"], [$name, $value], $Language->phrase("ImportInvalidFieldValue")));
-            }
-        }
-
-        // Insert/Update to database
-        $res = false;
-        if (!$this->ImportInsertOnly && $oldrow = $this->load($row)) {
-            if (!method_exists($this, "rowUpdating") || $this->rowUpdating($oldrow, $row)) {
-                if ($res = $this->update($row, "", $oldrow)) {
-                    if (method_exists($this, "rowUpdated")) {
-                        $this->rowUpdated($oldrow, $row);
-                    }
-                }
-            }
-        } else {
-            if (!method_exists($this, "rowInserting") || $this->rowInserting(null, $row)) {
-                if ($res = $this->insert($row)) {
-                    if (method_exists($this, "rowInserted")) {
-                        $this->rowInserted(null, $row);
-                    }
-                }
-            }
-        }
-        return $res;
-    }
-
-    /**
-     * Check field value
-     *
-     * @param object $fld Field object
-     * @param object $value
-     * @return bool
-     */
-    protected function checkValue($fld, $value)
-    {
-        if ($fld->DataType == DATATYPE_NUMBER && !is_numeric($value)) {
-            return false;
-        } elseif ($fld->DataType == DATATYPE_DATE && !CheckDate($value, $fld->formatPattern())) {
-            return false;
-        }
-        return true;
-    }
-
-    // Load row
-    protected function load($row)
-    {
-        $filter = $this->getRecordFilter($row);
-        if (!$filter) {
-            return null;
-        }
-        $this->CurrentFilter = $filter;
-        $sql = $this->getCurrentSql();
-        $conn = $this->getConnection();
-        return $conn->fetchAssociative($sql);
     }
 
     // Get export HTML tag
@@ -2455,19 +1809,19 @@ class JdhAppointmentsList extends JdhAppointments
         }
         if (SameText($type, "excel")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_appointmentslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" form=\"fjdh_employee_credentialslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"excel\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToExcel") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-excel\" title=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToExcel", true)) . "\">" . $Language->phrase("ExportToExcel") . "</a>";
             }
         } elseif (SameText($type, "word")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_appointmentslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" form=\"fjdh_employee_credentialslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"word\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToWord") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-word\" title=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToWord", true)) . "\">" . $Language->phrase("ExportToWord") . "</a>";
             }
         } elseif (SameText($type, "pdf")) {
             if ($custom) {
-                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_appointmentslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
+                return "<button type=\"button\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" form=\"fjdh_employee_credentialslist\" data-url=\"$exportUrl\" data-ew-action=\"export\" data-export=\"pdf\" data-custom=\"true\" data-export-selected=\"false\">" . $Language->phrase("ExportToPdf") . "</button>";
             } else {
                 return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-pdf\" title=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToPdf", true)) . "\">" . $Language->phrase("ExportToPdf") . "</a>";
             }
@@ -2479,7 +1833,7 @@ class JdhAppointmentsList extends JdhAppointments
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-csv\" title=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\">" . $Language->phrase("ExportToCsv") . "</a>";
         } elseif (SameText($type, "email")) {
             $url = $custom ? ' data-url="' . $exportUrl . '"' : '';
-            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_appointmentslist" data-ew-action="email" data-custom="false" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
+            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_employee_credentialslist" data-ew-action="email" data-custom="false" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
         } elseif (SameText($type, "print")) {
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-print\" title=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\">" . $Language->phrase("PrinterFriendly") . "</a>";
         }
@@ -2554,21 +1908,6 @@ class JdhAppointmentsList extends JdhAppointments
         $pageUrl = $this->pageUrl(false);
         $this->SearchOptions = new ListOptions(["TagClassName" => "ew-search-option"]);
 
-        // Search button
-        $item = &$this->SearchOptions->add("searchtoggle");
-        $searchToggleClass = ($this->SearchWhere != "") ? " active" : " active";
-        $item->Body = "<a class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" role=\"button\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-ew-action=\"search-toggle\" data-form=\"fjdh_appointmentssrch\" aria-pressed=\"" . ($searchToggleClass == " active" ? "true" : "false") . "\">" . $Language->phrase("SearchLink") . "</a>";
-        $item->Visible = true;
-
-        // Show all button
-        $item = &$this->SearchOptions->add("showall");
-        if ($this->UseCustomTemplate || !$this->UseAjaxActions) {
-            $item->Body = "<a class=\"btn btn-default ew-show-all\" role=\"button\" title=\"" . $Language->phrase("ShowAll") . "\" data-caption=\"" . $Language->phrase("ShowAll") . "\" href=\"" . $pageUrl . "cmd=reset\">" . $Language->phrase("ShowAllBtn") . "</a>";
-        } else {
-            $item->Body = "<a class=\"btn btn-default ew-show-all\" role=\"button\" title=\"" . $Language->phrase("ShowAll") . "\" data-caption=\"" . $Language->phrase("ShowAll") . "\" data-ew-action=\"refresh\" data-url=\"" . $pageUrl . "cmd=reset\">" . $Language->phrase("ShowAllBtn") . "</a>";
-        }
-        $item->Visible = ($this->SearchWhere != $this->DefaultSearchWhere && $this->SearchWhere != "0=101");
-
         // Button group for search
         $this->SearchOptions->UseDropDownButton = false;
         $this->SearchOptions->UseButtonGroup = true;
@@ -2592,7 +1931,7 @@ class JdhAppointmentsList extends JdhAppointments
     // Check if any search fields
     public function hasSearchFields()
     {
-        return true;
+        return false;
     }
 
     // Render search options
@@ -2601,25 +1940,6 @@ class JdhAppointmentsList extends JdhAppointments
         if (!$this->hasSearchFields() && $this->SearchOptions["searchtoggle"]) {
             $this->SearchOptions["searchtoggle"]->Visible = false;
         }
-    }
-
-    // Set up import options
-    protected function setupImportOptions()
-    {
-        global $Security, $Language;
-
-        // Import
-        $item = &$this->ImportOptions->add("import");
-        $item->Body = "<a class=\"ew-import-link ew-import\" role=\"button\" title=\"" . $Language->phrase("Import", true) . "\" data-caption=\"" . $Language->phrase("Import", true) . "\" data-ew-action=\"import\" data-hdr=\"" . $Language->phrase("Import", true) . "\">" . $Language->phrase("Import") . "</a>";
-        $item->Visible = $Security->canImport();
-        $this->ImportOptions->UseButtonGroup = true;
-        $this->ImportOptions->UseDropDownButton = false;
-        $this->ImportOptions->DropDownButtonPhrase = $Language->phrase("Import");
-
-        // Add group option item
-        $item = &$this->ImportOptions->addGroupOption();
-        $item->Body = "";
-        $item->Visible = false;
     }
 
     /**
@@ -2667,15 +1987,15 @@ class JdhAppointmentsList extends JdhAppointments
         $doc->ExportCustom = !$this->pageExporting($doc);
 
         // Export master record
-        if (Config("EXPORT_MASTER_RECORD") && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_patients") {
-            $jdh_patients = new JdhPatientsList();
-            $rsmaster = $jdh_patients->loadRs($this->DbMasterFilter); // Load master record
+        if (Config("EXPORT_MASTER_RECORD") && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_users") {
+            $jdh_users = new JdhUsersList();
+            $rsmaster = $jdh_users->loadRs($this->DbMasterFilter); // Load master record
             if ($rsmaster) {
                 $exportStyle = $doc->Style;
                 $doc->setStyle("v"); // Change to vertical
                 if (!$this->isExport("csv") || Config("EXPORT_MASTER_RECORD_FOR_CSV")) {
-                    $doc->Table = $jdh_patients;
-                    $jdh_patients->exportDocument($doc, new Recordset($rsmaster));
+                    $doc->Table = $jdh_users;
+                    $jdh_users->exportDocument($doc, new Recordset($rsmaster));
                     $doc->exportEmptyRow();
                     $doc->Table = &$this;
                 }
@@ -2704,16 +2024,6 @@ class JdhAppointmentsList extends JdhAppointments
         $this->pageExported($doc);
     }
 
-    // Show link optionally based on User ID
-    protected function showOptionLink($id = "")
-    {
-        global $Security;
-        if ($Security->isLoggedIn() && !$Security->isAdmin() && !$this->userIDAllow($id)) {
-            return $Security->isValidUserID($this->subbmitted_by_user_id->CurrentValue);
-        }
-        return true;
-    }
-
     // Set up master/detail based on QueryString
     protected function setupMasterParms()
     {
@@ -2726,16 +2036,13 @@ class JdhAppointmentsList extends JdhAppointments
                 $this->DbMasterFilter = "";
                 $this->DbDetailFilter = "";
             }
-            if ($masterTblVar == "jdh_patients") {
+            if ($masterTblVar == "jdh_users") {
                 $validMaster = true;
-                $masterTbl = Container("jdh_patients");
-                if (($parm = Get("fk_patient_id", Get("patient_id"))) !== null) {
-                    $masterTbl->patient_id->setQueryStringValue($parm);
-                    $this->patient_id->QueryStringValue = $masterTbl->patient_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
-                    $this->patient_id->setSessionValue($this->patient_id->QueryStringValue);
-                    if (!is_numeric($masterTbl->patient_id->QueryStringValue)) {
-                        $validMaster = false;
-                    }
+                $masterTbl = Container("jdh_users");
+                if (($parm = Get("fk_photo", Get("user_id"))) !== null) {
+                    $masterTbl->photo->setQueryStringValue($parm);
+                    $this->user_id->QueryStringValue = $masterTbl->photo->QueryStringValue; // DO NOT change, master/detail key data type can be different
+                    $this->user_id->setSessionValue($this->user_id->QueryStringValue);
                 } else {
                     $validMaster = false;
                 }
@@ -2747,16 +2054,13 @@ class JdhAppointmentsList extends JdhAppointments
                     $this->DbMasterFilter = "";
                     $this->DbDetailFilter = "";
             }
-            if ($masterTblVar == "jdh_patients") {
+            if ($masterTblVar == "jdh_users") {
                 $validMaster = true;
-                $masterTbl = Container("jdh_patients");
-                if (($parm = Post("fk_patient_id", Post("patient_id"))) !== null) {
-                    $masterTbl->patient_id->setFormValue($parm);
-                    $this->patient_id->setFormValue($masterTbl->patient_id->FormValue);
-                    $this->patient_id->setSessionValue($this->patient_id->FormValue);
-                    if (!is_numeric($masterTbl->patient_id->FormValue)) {
-                        $validMaster = false;
-                    }
+                $masterTbl = Container("jdh_users");
+                if (($parm = Post("fk_photo", Post("user_id"))) !== null) {
+                    $masterTbl->photo->setFormValue($parm);
+                    $this->user_id->setFormValue($masterTbl->photo->FormValue);
+                    $this->user_id->setSessionValue($this->user_id->FormValue);
                 } else {
                     $validMaster = false;
                 }
@@ -2780,9 +2084,9 @@ class JdhAppointmentsList extends JdhAppointments
             }
 
             // Clear previous master key from Session
-            if ($masterTblVar != "jdh_patients") {
-                if ($this->patient_id->CurrentValue == "") {
-                    $this->patient_id->setSessionValue("");
+            if ($masterTblVar != "jdh_users") {
+                if ($this->user_id->CurrentValue == "") {
+                    $this->user_id->setSessionValue("");
                 }
             }
         }
@@ -2813,13 +2117,6 @@ class JdhAppointmentsList extends JdhAppointments
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
-                case "x_patient_id":
-                    break;
-                case "x_user_id":
-                    $lookupFilter = $fld->getSelectFilter(); // PHP
-                    break;
-                case "x_appointment_all_day":
-                    break;
                 default:
                     $lookupFilter = "";
                     break;

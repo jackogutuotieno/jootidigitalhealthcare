@@ -558,6 +558,7 @@ class PatientAppointmentsDelete extends PatientAppointments
         $this->submission_date->setDbValue($row['submission_date']);
         $this->subbmitted_by_user_id->setDbValue($row['subbmitted_by_user_id']);
         $this->appointment_all_day->setDbValue($row['appointment_all_day']);
+        $this->user_id->setDbValue($row['user_id']);
     }
 
     // Return a row with default values
@@ -573,6 +574,7 @@ class PatientAppointmentsDelete extends PatientAppointments
         $row['submission_date'] = $this->submission_date->DefaultValue;
         $row['subbmitted_by_user_id'] = $this->subbmitted_by_user_id->DefaultValue;
         $row['appointment_all_day'] = $this->appointment_all_day->DefaultValue;
+        $row['user_id'] = $this->user_id->DefaultValue;
         return $row;
     }
 
@@ -606,6 +608,8 @@ class PatientAppointmentsDelete extends PatientAppointments
         // subbmitted_by_user_id
 
         // appointment_all_day
+
+        // user_id
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
@@ -642,6 +646,10 @@ class PatientAppointmentsDelete extends PatientAppointments
                 $this->appointment_all_day->ViewValue = $this->appointment_all_day->tagCaption(2) != "" ? $this->appointment_all_day->tagCaption(2) : "No";
             }
 
+            // user_id
+            $this->user_id->ViewValue = $this->user_id->CurrentValue;
+            $this->user_id->ViewValue = FormatNumber($this->user_id->ViewValue, $this->user_id->formatPattern());
+
             // appointment_id
             $this->appointment_id->HrefValue = "";
             $this->appointment_id->TooltipValue = "";
@@ -669,6 +677,10 @@ class PatientAppointmentsDelete extends PatientAppointments
             // appointment_all_day
             $this->appointment_all_day->HrefValue = "";
             $this->appointment_all_day->TooltipValue = "";
+
+            // user_id
+            $this->user_id->HrefValue = "";
+            $this->user_id->TooltipValue = "";
         }
 
         // Call Row Rendered event

@@ -75,6 +75,17 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->user_id->Visible) { // user_id ?>
+    <tr id="r_user_id"<?= $Page->user_id->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_appointments_user_id"><?= $Page->user_id->caption() ?></span></td>
+        <td data-name="user_id"<?= $Page->user_id->cellAttributes() ?>>
+<span id="el_jdh_appointments_user_id">
+<span<?= $Page->user_id->viewAttributes() ?>>
+<?= $Page->user_id->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 <?php if ($Page->appointment_title->Visible) { // appointment_title ?>
     <tr id="r_appointment_title"<?= $Page->appointment_title->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_appointments_appointment_title"><?= $Page->appointment_title->caption() ?></span></td>

@@ -40,7 +40,8 @@ loadjs.ready(["wrapper", "head"], function () {
             ["appointment_end_date", [fields.appointment_end_date.visible && fields.appointment_end_date.required ? ew.Validators.required(fields.appointment_end_date.caption) : null, ew.Validators.datetime(fields.appointment_end_date.clientFormatPattern), ew.Validators.minDate(() => fPatient_Appointmentsedit.getFieldElement("appointment_start_date"))], fields.appointment_end_date.isInvalid],
             ["appointment_description", [fields.appointment_description.visible && fields.appointment_description.required ? ew.Validators.required(fields.appointment_description.caption) : null], fields.appointment_description.isInvalid],
             ["subbmitted_by_user_id", [fields.subbmitted_by_user_id.visible && fields.subbmitted_by_user_id.required ? ew.Validators.required(fields.subbmitted_by_user_id.caption) : null], fields.subbmitted_by_user_id.isInvalid],
-            ["appointment_all_day", [fields.appointment_all_day.visible && fields.appointment_all_day.required ? ew.Validators.required(fields.appointment_all_day.caption) : null], fields.appointment_all_day.isInvalid]
+            ["appointment_all_day", [fields.appointment_all_day.visible && fields.appointment_all_day.required ? ew.Validators.required(fields.appointment_all_day.caption) : null], fields.appointment_all_day.isInvalid],
+            ["user_id", [fields.user_id.visible && fields.user_id.required ? ew.Validators.required(fields.user_id.caption) : null, ew.Validators.integer], fields.user_id.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -224,6 +225,18 @@ loadjs.ready(["fPatient_Appointmentsedit", "editor"], function() {
     <div class="invalid-feedback"><?= $Page->appointment_all_day->getErrorMessage() ?></div>
 </div>
 <?= $Page->appointment_all_day->getCustomMessage() ?>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->user_id->Visible) { // user_id ?>
+    <div id="r_user_id"<?= $Page->user_id->rowAttributes() ?>>
+        <label id="elh_Patient_Appointments_user_id" for="x_user_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->user_id->caption() ?><?= $Page->user_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->user_id->cellAttributes() ?>>
+<span id="el_Patient_Appointments_user_id">
+<input type="<?= $Page->user_id->getInputTextType() ?>" name="x_user_id" id="x_user_id" data-table="Patient_Appointments" data-field="x_user_id" value="<?= $Page->user_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->user_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->user_id->formatPattern()) ?>"<?= $Page->user_id->editAttributes() ?> aria-describedby="x_user_id_help">
+<?= $Page->user_id->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->user_id->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

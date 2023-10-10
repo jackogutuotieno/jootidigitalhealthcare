@@ -19882,7 +19882,8 @@ hr.divider-vertical-blurry {
 
 /* End of Material style : Beginning of custom styles */
 .sidebar-dark-cyan .nav-sidebar > .nav-item > .nav-link.active {
-  background-color: #00ff02;
+  background-color: #7300A1;
+  color: #fff;
 }
 
 .nav-sidebar .nav-link > .right, .nav-sidebar .nav-link > p > .right {
@@ -19913,7 +19914,6 @@ hr.divider-vertical-blurry {
 
 .counters i {
   font-size: 1.6rem;
-  rotate: -25deg;
   opacity: 0.6;
 }
 
@@ -19922,7 +19922,7 @@ hr.divider-vertical-blurry {
 }
 
 .counters {
-  background: #0dcaf0;
+  background: #7300A1;
   color: white;
 }
 
@@ -19971,6 +19971,28 @@ body {
 
 .brand-link .brand-image {
   max-height: 50px !important;
+}
+
+.main-header {
+  background-color: #7300A1;
+}
+
+.navbar-expand .navbar-nav .nav-link {
+  color: #fff;
+}
+
+.counters .card-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.el_jdh_patients_patient_phone a,
+#tbl_jdh_userslist a {
+  color: #7300A1;
+}
+
+.brand-link .brand-text {
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
 /*END_USER_STYLES*/

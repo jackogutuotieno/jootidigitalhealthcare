@@ -1323,6 +1323,9 @@
       <field id="patient_id">
         <phrase id="fldcaption" value="Patient Name" />
       </field>
+      <field id="user_id">
+        <phrase id="fldcaption" value="Doctor" />
+      </field>
       <field id="appointment_title">
         <phrase id="fldcaption" value="Title" />
       </field>
@@ -1424,6 +1427,11 @@
     <table id="jdh_patient_cases">
       <phrase id="tblcaption" value="Cases" />
       <phrase id="tblpagecaption1" value="Page 1" />
+      <phrase id="tblpagecaption2" value="Page 2" />
+      <phrase id="tblpagecaption3" value="Page 3" />
+      <phrase id="tblpagecaption4" value="Page 4" />
+      <phrase id="tblpagecaption5" value="Page 5" />
+      <phrase id="tblpagecaption6" value="Page 6" />
       <field id="case_id">
         <phrase id="fldcaption" value="Case No." />
       </field>
@@ -1744,6 +1752,8 @@
         <phrase id="fldtagcaption9" value="Accountant" />
         <phrase id="fldtagvalue10" value="7" />
         <phrase id="fldtagcaption10" value="Stores" />
+        <phrase id="fldtagvalue11" value="8" />
+        <phrase id="fldtagcaption11" value="Human Resources" />
       </field>
     </table>
     <table id="jdh_visit_types">
@@ -1949,6 +1959,9 @@
         <phrase id="fldtagcaption1" value="Yes" />
         <phrase id="fldtagvalue2" value="0" />
         <phrase id="fldtagcaption2" value="No" />
+      </field>
+      <field id="user_id">
+        <phrase id="fldcaption" value="user id" />
       </field>
     </table>
     <table id="jdh_chief_complaints">

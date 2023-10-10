@@ -24,6 +24,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
+            ["user_id", [fields.user_id.visible && fields.user_id.required ? ew.Validators.required(fields.user_id.caption) : null], fields.user_id.isInvalid],
             ["appointment_title", [fields.appointment_title.visible && fields.appointment_title.required ? ew.Validators.required(fields.appointment_title.caption) : null], fields.appointment_title.isInvalid],
             ["appointment_start_date", [fields.appointment_start_date.visible && fields.appointment_start_date.required ? ew.Validators.required(fields.appointment_start_date.caption) : null, ew.Validators.datetime(fields.appointment_start_date.clientFormatPattern)], fields.appointment_start_date.isInvalid],
             ["appointment_end_date", [fields.appointment_end_date.visible && fields.appointment_end_date.required ? ew.Validators.required(fields.appointment_end_date.caption) : null, ew.Validators.datetime(fields.appointment_end_date.clientFormatPattern)], fields.appointment_end_date.isInvalid],
@@ -35,7 +36,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setEmptyRow(
             function (rowIndex) {
                 let fobj = this.getForm(),
-                    fields = [["patient_id",false],["appointment_title",false],["appointment_start_date",false],["appointment_end_date",false],["appointment_all_day",true],["submission_date",false]];
+                    fields = [["patient_id",false],["user_id",false],["appointment_title",false],["appointment_start_date",false],["appointment_end_date",false],["appointment_all_day",true],["submission_date",false]];
                 if (fields.some(field => ew.valueChanged(fobj, rowIndex, ...field)))
                     return false;
                 return true;
@@ -56,6 +57,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Dynamic selection lists
         .setLists({
             "patient_id": <?= $Grid->patient_id->toClientList($Grid) ?>,
+            "user_id": <?= $Grid->user_id->toClientList($Grid) ?>,
             "appointment_all_day": <?= $Grid->appointment_all_day->toClientList($Grid) ?>,
         })
         .build();
@@ -85,6 +87,9 @@ $Grid->ListOptions->render("header", "left");
 ?>
 <?php if ($Grid->patient_id->Visible) { // patient_id ?>
         <th data-name="patient_id" class="<?= $Grid->patient_id->headerCellClass() ?>"><div id="elh_jdh_appointments_patient_id" class="jdh_appointments_patient_id"><?= $Grid->renderFieldHeader($Grid->patient_id) ?></div></th>
+<?php } ?>
+<?php if ($Grid->user_id->Visible) { // user_id ?>
+        <th data-name="user_id" class="<?= $Grid->user_id->headerCellClass() ?>"><div id="elh_jdh_appointments_user_id" class="jdh_appointments_user_id"><?= $Grid->renderFieldHeader($Grid->user_id) ?></div></th>
 <?php } ?>
 <?php if ($Grid->appointment_title->Visible) { // appointment_title ?>
         <th data-name="appointment_title" class="<?= $Grid->appointment_title->headerCellClass() ?>"><div id="elh_jdh_appointments_appointment_title" class="jdh_appointments_appointment_title"><?= $Grid->renderFieldHeader($Grid->appointment_title) ?></div></th>
@@ -219,6 +224,89 @@ loadjs.ready("fjdh_appointmentsgrid", function() {
 <?php if ($Grid->isConfirm()) { ?>
 <input type="hidden" data-table="jdh_appointments" data-field="x_patient_id" data-hidden="1" name="fjdh_appointmentsgrid$x<?= $Grid->RowIndex ?>_patient_id" id="fjdh_appointmentsgrid$x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->FormValue) ?>">
 <input type="hidden" data-table="jdh_appointments" data-field="x_patient_id" data-hidden="1" data-old name="fjdh_appointmentsgrid$o<?= $Grid->RowIndex ?>_patient_id" id="fjdh_appointmentsgrid$o<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->OldValue) ?>">
+<?php } ?>
+<?php } ?>
+</td>
+    <?php } ?>
+    <?php if ($Grid->user_id->Visible) { // user_id ?>
+        <td data-name="user_id"<?= $Grid->user_id->cellAttributes() ?>>
+<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_appointments_user_id" class="el_jdh_appointments_user_id">
+    <select
+        id="x<?= $Grid->RowIndex ?>_user_id"
+        name="x<?= $Grid->RowIndex ?>_user_id"
+        class="form-select ew-select<?= $Grid->user_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_appointmentsgrid_x<?= $Grid->RowIndex ?>_user_id"
+        data-table="jdh_appointments"
+        data-field="x_user_id"
+        data-value-separator="<?= $Grid->user_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Grid->user_id->getPlaceHolder()) ?>"
+        <?= $Grid->user_id->editAttributes() ?>>
+        <?= $Grid->user_id->selectOptionListHtml("x{$Grid->RowIndex}_user_id") ?>
+    </select>
+    <div class="invalid-feedback"><?= $Grid->user_id->getErrorMessage() ?></div>
+<?= $Grid->user_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_user_id") ?>
+<script>
+loadjs.ready("fjdh_appointmentsgrid", function() {
+    var options = { name: "x<?= $Grid->RowIndex ?>_user_id", selectId: "fjdh_appointmentsgrid_x<?= $Grid->RowIndex ?>_user_id" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (fjdh_appointmentsgrid.lists.user_id?.lookupOptions.length) {
+        options.data = { id: "x<?= $Grid->RowIndex ?>_user_id", form: "fjdh_appointmentsgrid" };
+    } else {
+        options.ajax = { id: "x<?= $Grid->RowIndex ?>_user_id", form: "fjdh_appointmentsgrid", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_appointments.fields.user_id.selectOptions);
+    ew.createSelect(options);
+});
+</script>
+</span>
+<input type="hidden" data-table="jdh_appointments" data-field="x_user_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_user_id" id="o<?= $Grid->RowIndex ?>_user_id" value="<?= HtmlEncode($Grid->user_id->OldValue) ?>">
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_appointments_user_id" class="el_jdh_appointments_user_id">
+    <select
+        id="x<?= $Grid->RowIndex ?>_user_id"
+        name="x<?= $Grid->RowIndex ?>_user_id"
+        class="form-select ew-select<?= $Grid->user_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_appointmentsgrid_x<?= $Grid->RowIndex ?>_user_id"
+        data-table="jdh_appointments"
+        data-field="x_user_id"
+        data-value-separator="<?= $Grid->user_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Grid->user_id->getPlaceHolder()) ?>"
+        <?= $Grid->user_id->editAttributes() ?>>
+        <?= $Grid->user_id->selectOptionListHtml("x{$Grid->RowIndex}_user_id") ?>
+    </select>
+    <div class="invalid-feedback"><?= $Grid->user_id->getErrorMessage() ?></div>
+<?= $Grid->user_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_user_id") ?>
+<script>
+loadjs.ready("fjdh_appointmentsgrid", function() {
+    var options = { name: "x<?= $Grid->RowIndex ?>_user_id", selectId: "fjdh_appointmentsgrid_x<?= $Grid->RowIndex ?>_user_id" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (fjdh_appointmentsgrid.lists.user_id?.lookupOptions.length) {
+        options.data = { id: "x<?= $Grid->RowIndex ?>_user_id", form: "fjdh_appointmentsgrid" };
+    } else {
+        options.ajax = { id: "x<?= $Grid->RowIndex ?>_user_id", form: "fjdh_appointmentsgrid", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_appointments.fields.user_id.selectOptions);
+    ew.createSelect(options);
+});
+</script>
+</span>
+<?php } ?>
+<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
+<span id="el<?= $Grid->RowCount ?>_jdh_appointments_user_id" class="el_jdh_appointments_user_id">
+<span<?= $Grid->user_id->viewAttributes() ?>>
+<?= $Grid->user_id->getViewValue() ?></span>
+</span>
+<?php if ($Grid->isConfirm()) { ?>
+<input type="hidden" data-table="jdh_appointments" data-field="x_user_id" data-hidden="1" name="fjdh_appointmentsgrid$x<?= $Grid->RowIndex ?>_user_id" id="fjdh_appointmentsgrid$x<?= $Grid->RowIndex ?>_user_id" value="<?= HtmlEncode($Grid->user_id->FormValue) ?>">
+<input type="hidden" data-table="jdh_appointments" data-field="x_user_id" data-hidden="1" data-old name="fjdh_appointmentsgrid$o<?= $Grid->RowIndex ?>_user_id" id="fjdh_appointmentsgrid$o<?= $Grid->RowIndex ?>_user_id" value="<?= HtmlEncode($Grid->user_id->OldValue) ?>">
 <?php } ?>
 <?php } ?>
 </td>

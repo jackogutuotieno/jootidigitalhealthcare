@@ -3,3 +3,54 @@ date/time,script,user,action,table,field,"key value","old value","new value"
 "2023-10-10 13:45:51",/jootidigitalhealthcare/jdhmedicinestockedit/2,1,U,jdh_medicine_stock,expiry_date,2,0000-00-00,2026-04-07
 "2023-10-10 13:46:17",/jootidigitalhealthcare/jdhmedicinestockedit/3,1,U,jdh_medicine_stock,expiry_date,3,0000-00-00,2027-09-15
 "2023-10-10 13:49:20",/jootidigitalhealthcare/jdhmedicinestockedit/1,1,U,jdh_medicine_stock,expiry_date,1,2025-05-19,2022-04-07
+"2023-10-10 14:49:06",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-10 14:49:09",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-10 14:50:07",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-10 14:50:15",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-10 15:00:24",/jootidigitalhealthcare/logout,3,logout,::1,,,,
+"2023-10-10 15:00:33",/jootidigitalhealthcare/login,4,login,::1,,,,
+"2023-10-10 15:01:25",/jootidigitalhealthcare/logout,4,logout,::1,,,,
+"2023-10-10 16:43:57",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-10 17:16:47",/jootidigitalhealthcare/jdhmedicinestocklist,administrator@example.com,autologin,::1,,,,
+"2023-10-10 17:21:26",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-10 17:21:30",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-10 17:42:52",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-10 17:42:58",/jootidigitalhealthcare/login,11,login,::1,,,,
+"2023-10-10 17:47:25",/jootidigitalhealthcare/logout,11,logout,::1,,,,
+"2023-10-10 17:47:28",/jootidigitalhealthcare/login,11,login,::1,,,,
+"2023-10-10 17:49:31",/jootidigitalhealthcare/logout,11,logout,::1,,,,
+"2023-10-10 17:49:42",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-10 18:22:46",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-10 18:22:49",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-10 18:22:57",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-10 18:23:04",/jootidigitalhealthcare/login,2,login,::1,,,,
+"2023-10-10 18:24:11",/jootidigitalhealthcare/jdhappointmentsedit/2,2,U,jdh_appointments,user_id,2,0,2
+"2023-10-10 18:24:11",/jootidigitalhealthcare/jdhappointmentsedit/2,2,U,jdh_appointments,appointment_start_date,2,"2023-08-06 19:00:00","2023-11-16 19:00:00"
+"2023-10-10 18:24:11",/jootidigitalhealthcare/jdhappointmentsedit/2,2,U,jdh_appointments,appointment_end_date,2,"2023-08-06 20:00:00","2023-11-16 20:00:00"
+"2023-10-10 18:24:11",/jootidigitalhealthcare/jdhappointmentsedit/2,2,U,jdh_appointments,appointment_description,2,[MEMO],[MEMO]
+"2023-10-10 18:28:26",/jootidigitalhealthcare/jdhappointmentsedit/3,2,U,jdh_appointments,user_id,3,0,10
+"2023-10-10 18:28:26",/jootidigitalhealthcare/jdhappointmentsedit/3,2,U,jdh_appointments,appointment_start_date,3,"2023-08-10 22:20:00","2023-12-13 22:20:00"
+"2023-10-10 18:28:26",/jootidigitalhealthcare/jdhappointmentsedit/3,2,U,jdh_appointments,appointment_end_date,3,"2023-08-10 23:20:00","2023-12-13 23:20:00"
+"2023-10-10 18:28:26",/jootidigitalhealthcare/jdhappointmentsedit/3,2,U,jdh_appointments,appointment_description,3,[MEMO],[MEMO]
+"2023-10-10 18:28:54",/jootidigitalhealthcare/jdhappointmentsedit/2,2,U,jdh_appointments,user_id,2,2,9
+"2023-10-10 18:29:57",/jootidigitalhealthcare/jdhappointmentsedit/2,2,U,jdh_appointments,appointment_title,2,"Consult Dr. Hello World","Coming for some checkup"
+"2023-10-10 18:30:14",/jootidigitalhealthcare/jdhappointmentsedit/3,2,U,jdh_appointments,appointment_title,3,"Seeing another doctor","Coming for post surgery review."
+"2023-10-10 18:30:14",/jootidigitalhealthcare/jdhappointmentsedit/3,2,U,jdh_appointments,appointment_all_day,3,0,1
+"2023-10-10 18:31:57",/jootidigitalhealthcare/jdhappointmentsedit/4,2,U,jdh_appointments,user_id,4,0,10
+"2023-10-10 18:31:57",/jootidigitalhealthcare/jdhappointmentsedit/4,2,U,jdh_appointments,appointment_title,4,"See Dr. Damar Otieno","Coming to examine  x-ray results"
+"2023-10-10 18:31:57",/jootidigitalhealthcare/jdhappointmentsedit/4,2,U,jdh_appointments,appointment_description,4,[MEMO],[MEMO]
+"2023-10-10 18:33:25",/jootidigitalhealthcare/jdhappointmentsedit/5,2,U,jdh_appointments,user_id,5,0,3
+"2023-10-10 18:33:25",/jootidigitalhealthcare/jdhappointmentsedit/5,2,U,jdh_appointments,appointment_title,5,"Mary Doe Visit","Post surgery review"
+"2023-10-10 18:33:25",/jootidigitalhealthcare/jdhappointmentsedit/5,2,U,jdh_appointments,appointment_start_date,5,"2023-08-29 21:45:00","2023-10-23 21:45:00"
+"2023-10-10 18:33:25",/jootidigitalhealthcare/jdhappointmentsedit/5,2,U,jdh_appointments,appointment_description,5,[MEMO],[MEMO]
+"2023-10-10 18:34:31",/jootidigitalhealthcare/jdhappointmentsedit/6,2,U,jdh_appointments,user_id,6,0,9
+"2023-10-10 18:34:31",/jootidigitalhealthcare/jdhappointmentsedit/6,2,U,jdh_appointments,appointment_title,6,"Susan's Appointment with Dr. Miriti","Cancer chemotherapy session"
+"2023-10-10 18:34:31",/jootidigitalhealthcare/jdhappointmentsedit/6,2,U,jdh_appointments,appointment_start_date,6,"2023-08-30 23:48:00","2023-10-26 23:48:00"
+"2023-10-10 18:34:31",/jootidigitalhealthcare/jdhappointmentsedit/6,2,U,jdh_appointments,appointment_end_date,6,"2023-08-30 23:48:00","2023-10-26 23:48:00"
+"2023-10-10 18:34:31",/jootidigitalhealthcare/jdhappointmentsedit/6,2,U,jdh_appointments,appointment_description,6,[MEMO],[MEMO]
+"2023-10-10 18:37:21",/jootidigitalhealthcare/logout,2,logout,::1,,,,
+"2023-10-10 18:37:28",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-10 18:42:55",/jootidigitalhealthcare/logout,3,logout,::1,,,,
+"2023-10-10 18:43:01",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-10 18:44:01",/jootidigitalhealthcare/logout,3,logout,::1,,,,
+"2023-10-10 18:44:05",/jootidigitalhealthcare/login,3,login,::1,,,,
