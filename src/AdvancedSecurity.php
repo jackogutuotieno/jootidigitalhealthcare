@@ -520,6 +520,26 @@ class AdvancedSecurity
             $sql = $UserTable->getSql($filter);
             if ($row = Conn($UserTable->Dbid)->fetchAssociative($sql)) {
                 $valid = $customValid || ComparePassword(GetUserInfo(Config("LOGIN_PASSWORD_FIELD_NAME"), $row), $pwd);
+
+                // Set up retry count from manual login
+                if (!$autologin) {
+                    $UserProfile->loadProfileFromDatabase($usr);
+                    if (!$valid) {
+                        $retrycount = $UserProfile->getValue(Config("USER_PROFILE_LOGIN_RETRY_COUNT"));
+                        $retrycount++;
+                        $UserProfile->setValue(Config("USER_PROFILE_LOGIN_RETRY_COUNT"), $retrycount);
+                        $UserProfile->setValue(Config("USER_PROFILE_LAST_BAD_LOGIN_DATE_TIME"), StdCurrentDateTime());
+                        WriteAuditLog($usr, str_replace("%n", $retrycount, $Language->phrase("AuditTrailFailedAttempt")), CurrentUserIP(), "", "", "", "");
+                    } else {
+                        $UserProfile->setValue(Config("USER_PROFILE_LOGIN_RETRY_COUNT"), 0);
+                    }
+                    $UserProfile->saveProfileToDatabase($usr); // Save profile
+                }
+
+                // Check concurrent user login
+                if ($valid && !$UserProfile->isValidUser($usr, session_id())) {
+                    return true; // Return true but do not login
+                }
                 if ($valid) {
                     // Check two factor authentication
                     if (Config("USE_TWO_FACTOR_AUTHENTICATION")) {

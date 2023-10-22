@@ -388,6 +388,12 @@ class Login extends JdhUsers
                 $_SESSION[SESSION_USER_LOGIN_TYPE] = $this->LoginType->CurrentValue; // Save user login type
                 $_SESSION[SESSION_USER_PROFILE_USER_NAME] = $this->Username->CurrentValue; // Save login user name
                 $_SESSION[SESSION_USER_PROFILE_LOGIN_TYPE] = $this->LoginType->CurrentValue; // Save login type
+
+                // Max login attempt checking
+                if ($UserProfile->exceedLoginRetry($this->Username->CurrentValue)) {
+                    $validate = false;
+                    $this->setFailureMessage(str_replace("%t", Config("USER_PROFILE_RETRY_LOCKOUT"), $Language->phrase("ExceedMaxRetry")));
+                }
             }
             $validPwd = false;
             if ($validate) {
@@ -399,6 +405,19 @@ class Login extends JdhUsers
                         $this->Username->setFormValue(""); // Clear login name
                         $this->Username->addErrorMessage($Language->phrase("InvalidUidPwd")); // Invalid user name or password
                         $this->Password->addErrorMessage($Language->phrase("InvalidUidPwd")); // Invalid user name or password
+
+                    // Check concurrent user login
+                    } elseif (!IsSysAdmin() && !$UserProfile->isValidUser($this->Username->CurrentValue, session_id())) {
+                        WriteAuditLog($this->Username->CurrentValue, $Language->phrase("AuditTrailUserLoggedIn"), CurrentUserIP(), "", "", "", "");
+                        $message = str_replace("%u", $this->Username->CurrentValue, $Language->phrase("UserLoggedIn"));
+                        if ($this->IsModal) {
+                            WriteJson(["error" => ["description" => $message]]);
+                            $this->terminate();
+                            return;
+                        } else {
+                            $this->setFailureMessage($message);
+                            $validPwd = false;
+                        }
 
                     // Two factor authentication enabled (go to 2fa page)
                     } elseif (!IsSysAdmin() && Config("USE_TWO_FACTOR_AUTHENTICATION") && (Config("FORCE_TWO_FACTOR_AUTHENTICATION") || $UserProfile->hasUserSecret($this->Username->CurrentValue, true))) {

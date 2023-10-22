@@ -467,6 +467,13 @@ class JdhPatientsEdit extends JdhPatients
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Update last accessed time
+        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
+            Write($Language->phrase("UserProfileCorrupted"));
+            $this->terminate();
+            return;
+        }
+
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
@@ -1234,10 +1241,6 @@ class JdhPatientsEdit extends JdhPatients
         if (in_array("jdh_patient_visits", $detailTblVar) && $detailPage->DetailEdit) {
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
-        $detailPage = Container("JdhBedsAssignmentGrid");
-        if (in_array("jdh_beds_assignment", $detailTblVar) && $detailPage->DetailEdit) {
-            $validateForm = $validateForm && $detailPage->validateGridForm();
-        }
         $detailPage = Container("JdhChiefComplaintsGrid");
         if (in_array("jdh_chief_complaints", $detailTblVar) && $detailPage->DetailEdit) {
             $validateForm = $validateForm && $detailPage->validateGridForm();
@@ -1330,6 +1333,24 @@ class JdhPatientsEdit extends JdhPatients
         // Update current values
         $this->setCurrentValues($rsnew);
 
+        // Check field with unique index (patient_phone)
+        if ($this->patient_phone->CurrentValue != "") {
+            $filterChk = "(`patient_phone` = '" . AdjustSql($this->patient_phone->CurrentValue, $this->Dbid) . "')";
+            $filterChk .= " AND NOT (" . $filter . ")";
+            $this->CurrentFilter = $filterChk;
+            $sqlChk = $this->getCurrentSql();
+            $rsChk = $conn->executeQuery($sqlChk);
+            if (!$rsChk) {
+                return false;
+            }
+            if ($rsChk->fetch()) {
+                $idxErrMsg = str_replace("%f", $this->patient_phone->caption(), $Language->phrase("DupIndex"));
+                $idxErrMsg = str_replace("%v", $this->patient_phone->CurrentValue, $idxErrMsg);
+                $this->setFailureMessage($idxErrMsg);
+                return false;
+            }
+        }
+
         // Begin transaction
         if ($this->getCurrentDetailTable() != "" && $this->UseTransaction) {
             $conn->beginTransaction();
@@ -1356,14 +1377,6 @@ class JdhPatientsEdit extends JdhPatients
                 $detailPage = Container("JdhPatientVisitsGrid");
                 if (in_array("jdh_patient_visits", $detailTblVar) && $detailPage->DetailEdit) {
                     $Security->loadCurrentUserLevel($this->ProjectID . "jdh_patient_visits"); // Load user level of detail table
-                    $editRow = $detailPage->gridUpdate();
-                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                }
-            }
-            if ($editRow) {
-                $detailPage = Container("JdhBedsAssignmentGrid");
-                if (in_array("jdh_beds_assignment", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_beds_assignment"); // Load user level of detail table
                     $editRow = $detailPage->gridUpdate();
                     $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
                 }
@@ -1505,21 +1518,6 @@ class JdhPatientsEdit extends JdhPatients
                     $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
                 }
             }
-            if (in_array("jdh_beds_assignment", $detailTblVar)) {
-                $detailPageObj = Container("JdhBedsAssignmentGrid");
-                if ($detailPageObj->DetailEdit) {
-                    $detailPageObj->EventCancelled = $this->EventCancelled;
-                    $detailPageObj->CurrentMode = "edit";
-                    $detailPageObj->CurrentAction = "gridedit";
-
-                    // Save current master table to detail table
-                    $detailPageObj->setCurrentMasterTable($this->TableVar);
-                    $detailPageObj->setStartRecordNumber(1);
-                    $detailPageObj->patient_id->IsDetailKey = true;
-                    $detailPageObj->patient_id->CurrentValue = $this->patient_id->CurrentValue;
-                    $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
-                }
-            }
             if (in_array("jdh_chief_complaints", $detailTblVar)) {
                 $detailPageObj = Container("JdhChiefComplaintsGrid");
                 if ($detailPageObj->DetailEdit) {
@@ -1645,7 +1643,6 @@ class JdhPatientsEdit extends JdhPatients
         $pages = new SubPages();
         $pages->Style = "tabs";
         $pages->add('jdh_patient_visits');
-        $pages->add('jdh_beds_assignment');
         $pages->add('jdh_chief_complaints');
         $pages->add('jdh_examination_findings');
         $pages->add('jdh_patient_cases');

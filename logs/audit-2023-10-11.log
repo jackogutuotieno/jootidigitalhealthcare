@@ -1,0 +1,4 @@
+date/time,script,user,action,table,field,"key value","old value","new value"
+"2023-10-11 05:46:22",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-11 05:46:32",/jootidigitalhealthcare/logout,3,logout,::1,,,,
+"2023-10-11 06:12:16",/jootidigitalhealthcare/login,1,login,::1,,,,

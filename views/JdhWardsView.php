@@ -64,6 +64,17 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->facility_id->Visible) { // facility_id ?>
+    <tr id="r_facility_id"<?= $Page->facility_id->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_wards_facility_id"><?= $Page->facility_id->caption() ?></span></td>
+        <td data-name="facility_id"<?= $Page->facility_id->cellAttributes() ?>>
+<span id="el_jdh_wards_facility_id">
+<span<?= $Page->facility_id->viewAttributes() ?>>
+<?= $Page->facility_id->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 <?php if ($Page->ward_name->Visible) { // ward_name ?>
     <tr id="r_ward_name"<?= $Page->ward_name->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_wards_ward_name"><?= $Page->ward_name->caption() ?></span></td>

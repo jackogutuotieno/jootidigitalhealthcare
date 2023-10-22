@@ -35,7 +35,7 @@ loadjs.ready(["wrapper", "head"], function () {
         .setFields([
             ["id", [fields.id.visible && fields.id.required ? ew.Validators.required(fields.id.caption) : null], fields.id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
-            ["bed_id", [fields.bed_id.visible && fields.bed_id.required ? ew.Validators.required(fields.bed_id.caption) : null], fields.bed_id.isInvalid]
+            ["bed_id", [fields.bed_id.visible && fields.bed_id.required ? ew.Validators.required(fields.bed_id.caption) : null, ew.Validators.integer], fields.bed_id.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -52,7 +52,6 @@ loadjs.ready(["wrapper", "head"], function () {
         // Dynamic selection lists
         .setLists({
             "patient_id": <?= $Page->patient_id->toClientList($Page) ?>,
-            "bed_id": <?= $Page->bed_id->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -139,37 +138,9 @@ loadjs.ready("fjdh_beds_assignmentedit", function() {
         <label id="elh_jdh_beds_assignment_bed_id" for="x_bed_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->bed_id->caption() ?><?= $Page->bed_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->bed_id->cellAttributes() ?>>
 <span id="el_jdh_beds_assignment_bed_id">
-    <select
-        id="x_bed_id"
-        name="x_bed_id"
-        class="form-select ew-select<?= $Page->bed_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_beds_assignmentedit_x_bed_id"
-        data-table="jdh_beds_assignment"
-        data-field="x_bed_id"
-        data-value-separator="<?= $Page->bed_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Page->bed_id->getPlaceHolder()) ?>"
-        <?= $Page->bed_id->editAttributes() ?>>
-        <?= $Page->bed_id->selectOptionListHtml("x_bed_id") ?>
-    </select>
-    <?= $Page->bed_id->getCustomMessage() ?>
-    <div class="invalid-feedback"><?= $Page->bed_id->getErrorMessage() ?></div>
-<?= $Page->bed_id->Lookup->getParamTag($Page, "p_x_bed_id") ?>
-<script>
-loadjs.ready("fjdh_beds_assignmentedit", function() {
-    var options = { name: "x_bed_id", selectId: "fjdh_beds_assignmentedit_x_bed_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_beds_assignmentedit.lists.bed_id?.lookupOptions.length) {
-        options.data = { id: "x_bed_id", form: "fjdh_beds_assignmentedit" };
-    } else {
-        options.ajax = { id: "x_bed_id", form: "fjdh_beds_assignmentedit", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_beds_assignment.fields.bed_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<input type="<?= $Page->bed_id->getInputTextType() ?>" name="x_bed_id" id="x_bed_id" data-table="jdh_beds_assignment" data-field="x_bed_id" value="<?= $Page->bed_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->bed_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->bed_id->formatPattern()) ?>"<?= $Page->bed_id->editAttributes() ?> aria-describedby="x_bed_id_help">
+<?= $Page->bed_id->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->bed_id->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

@@ -202,7 +202,9 @@ class JdhPatients extends DbTable
             'TEXT' // Edit Tag
         );
         $this->patient_national_id->InputTextType = "text";
-        $this->patient_national_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
+        $this->patient_national_id->Nullable = false; // NOT NULL field
+        $this->patient_national_id->Required = true; // Required field
+        $this->patient_national_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
         $this->Fields['patient_national_id'] = &$this->patient_national_id;
 
         // patient_dob $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
@@ -535,10 +537,6 @@ class JdhPatients extends DbTable
         $detailUrl = "";
         if ($this->getCurrentDetailTable() == "jdh_patient_visits") {
             $detailUrl = Container("jdh_patient_visits")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
-        }
-        if ($this->getCurrentDetailTable() == "jdh_beds_assignment") {
-            $detailUrl = Container("jdh_beds_assignment")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
             $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
         }
         if ($this->getCurrentDetailTable() == "jdh_chief_complaints") {

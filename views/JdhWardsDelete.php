@@ -53,6 +53,9 @@ $Page->showMessage();
 <?php if ($Page->ward_id->Visible) { // ward_id ?>
         <th class="<?= $Page->ward_id->headerCellClass() ?>"><span id="elh_jdh_wards_ward_id" class="jdh_wards_ward_id"><?= $Page->ward_id->caption() ?></span></th>
 <?php } ?>
+<?php if ($Page->facility_id->Visible) { // facility_id ?>
+        <th class="<?= $Page->facility_id->headerCellClass() ?>"><span id="elh_jdh_wards_facility_id" class="jdh_wards_facility_id"><?= $Page->facility_id->caption() ?></span></th>
+<?php } ?>
 <?php if ($Page->ward_name->Visible) { // ward_name ?>
         <th class="<?= $Page->ward_name->headerCellClass() ?>"><span id="elh_jdh_wards_ward_name" class="jdh_wards_ward_name"><?= $Page->ward_name->caption() ?></span></th>
 <?php } ?>
@@ -82,6 +85,14 @@ while (!$Page->Recordset->EOF) {
 <span id="el<?= $Page->RowCount ?>_jdh_wards_ward_id" class="el_jdh_wards_ward_id">
 <span<?= $Page->ward_id->viewAttributes() ?>>
 <?= $Page->ward_id->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
+<?php if ($Page->facility_id->Visible) { // facility_id ?>
+        <td<?= $Page->facility_id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_wards_facility_id" class="el_jdh_wards_facility_id">
+<span<?= $Page->facility_id->viewAttributes() ?>>
+<?= $Page->facility_id->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

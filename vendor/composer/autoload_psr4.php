@@ -40,6 +40,7 @@ return array(
     'Psr\\Http\\Client\\' => array($vendorDir . '/psr/http-client/src'),
     'Psr\\Container\\' => array($vendorDir . '/psr/container/src'),
     'Psr\\Cache\\' => array($vendorDir . '/psr/cache/src'),
+    'PragmaRX\\Google2FA\\' => array($vendorDir . '/pragmarx/google2fa/src'),
     'Port\\Steps\\' => array($vendorDir . '/hkvstore/steps/src'),
     'Port\\Spreadsheet\\' => array($vendorDir . '/hkvstore/spreadsheet/src'),
     'Port\\Csv\\' => array($vendorDir . '/portphp/csv/src'),

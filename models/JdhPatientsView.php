@@ -500,6 +500,13 @@ class JdhPatientsView extends JdhPatients
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Update last accessed time
+        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
+            Write($Language->phrase("UserProfileCorrupted"));
+            $this->terminate();
+            return;
+        }
+
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -745,45 +752,6 @@ class JdhPatientsView extends JdhPatients
                 $detailTableLink .= ",";
             }
             $detailTableLink .= "jdh_patient_visits";
-        }
-        if ($this->ShowMultipleDetails) {
-            $item->Visible = false;
-        }
-
-        // "detail_jdh_beds_assignment"
-        $item = &$option->add("detail_jdh_beds_assignment");
-        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_beds_assignment", "TblCaption");
-        $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhbedsassignmentlist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
-        $links = "";
-        $detailPageObj = Container("JdhBedsAssignmentGrid");
-        if ($detailPageObj->DetailView && $Security->canView() && $Security->allowView(CurrentProjectID() . 'jdh_patients')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailViewLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_beds_assignment"))) . "\">" . $Language->phrase("MasterDetailViewLink", null) . "</a></li>";
-            if ($detailViewTblVar != "") {
-                $detailViewTblVar .= ",";
-            }
-            $detailViewTblVar .= "jdh_beds_assignment";
-        }
-        if ($detailPageObj->DetailEdit && $Security->canEdit() && $Security->allowEdit(CurrentProjectID() . 'jdh_patients')) {
-            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailEditLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_beds_assignment"))) . "\">" . $Language->phrase("MasterDetailEditLink", null) . "</a></li>";
-            if ($detailEditTblVar != "") {
-                $detailEditTblVar .= ",";
-            }
-            $detailEditTblVar .= "jdh_beds_assignment";
-        }
-        if ($links != "") {
-            $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
-            $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
-        } else {
-            $body = preg_replace('/\b\s+dropdown-toggle\b/', "", $body);
-        }
-        $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">" . $body . "</div>";
-        $item->Body = $body;
-        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_beds_assignment');
-        if ($item->Visible) {
-            if ($detailTableLink != "") {
-                $detailTableLink .= ",";
-            }
-            $detailTableLink .= "jdh_beds_assignment";
         }
         if ($this->ShowMultipleDetails) {
             $item->Visible = false;
@@ -1561,25 +1529,6 @@ class JdhPatientsView extends JdhPatients
             }
         }
 
-        // Export detail records (jdh_beds_assignment)
-        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_beds_assignment", explode(",", $this->getCurrentDetailTable() ?? ""))) {
-            $jdh_beds_assignment = new JdhBedsAssignmentList();
-            $rsdetail = $jdh_beds_assignment->loadRs($jdh_beds_assignment->getDetailFilterFromSession()); // Load detail records
-            if ($rsdetail) {
-                $exportStyle = $doc->Style;
-                $doc->setStyle("h"); // Change to horizontal
-                if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
-                    $doc->exportEmptyRow();
-                    $detailcnt = $rsdetail->rowCount();
-                    $oldtbl = $doc->Table;
-                    $doc->Table = $jdh_beds_assignment;
-                    $jdh_beds_assignment->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
-                    $doc->Table = $oldtbl;
-                }
-                $doc->setStyle($exportStyle); // Restore
-            }
-        }
-
         // Export detail records (jdh_chief_complaints)
         if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_chief_complaints", explode(",", $this->getCurrentDetailTable() ?? ""))) {
             $jdh_chief_complaints = new JdhChiefComplaintsList();
@@ -1764,20 +1713,6 @@ class JdhPatientsView extends JdhPatients
                     $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
                 }
             }
-            if (in_array("jdh_beds_assignment", $detailTblVar)) {
-                $detailPageObj = Container("JdhBedsAssignmentGrid");
-                if ($detailPageObj->DetailView) {
-                    $detailPageObj->EventCancelled = $this->EventCancelled;
-                    $detailPageObj->CurrentMode = "view";
-
-                    // Save current master table to detail table
-                    $detailPageObj->setCurrentMasterTable($this->TableVar);
-                    $detailPageObj->setStartRecordNumber(1);
-                    $detailPageObj->patient_id->IsDetailKey = true;
-                    $detailPageObj->patient_id->CurrentValue = $this->patient_id->CurrentValue;
-                    $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
-                }
-            }
             if (in_array("jdh_chief_complaints", $detailTblVar)) {
                 $detailPageObj = Container("JdhChiefComplaintsGrid");
                 if ($detailPageObj->DetailView) {
@@ -1896,7 +1831,6 @@ class JdhPatientsView extends JdhPatients
         $pages = new SubPages();
         $pages->Style = "tabs";
         $pages->add('jdh_patient_visits');
-        $pages->add('jdh_beds_assignment');
         $pages->add('jdh_chief_complaints');
         $pages->add('jdh_examination_findings');
         $pages->add('jdh_patient_cases');

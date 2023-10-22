@@ -24,6 +24,7 @@ return function (App $app) {
     $app->map(['GET', 'OPTIONS'], '/' . Config('API_EXPORT_CHART_ACTION') . '[/{params:.*}]', ApiController::class)->add(ApiPermissionMiddleware::class)->setName('api/' . Config('API_EXPORT_CHART_ACTION')); // chart
     $app->map(['GET', 'POST', 'OPTIONS'], '/' . Config('API_PERMISSIONS_ACTION') . '[/{params:.*}]', ApiController::class)->add(ApiPermissionMiddleware::class)->add(new JwtMiddleware())->setName('api/' . Config('API_PERMISSIONS_ACTION')); // permissions
     $app->map(['GET', 'POST', 'OPTIONS'], '/' . Config('API_PUSH_NOTIFICATION_ACTION') . '[/{params:.*}]', ApiController::class)->add(ApiPermissionMiddleware::class)->setName('api/' . Config('API_PUSH_NOTIFICATION_ACTION')); // push notification
+    $app->map(['GET', 'POST', 'OPTIONS'], '/' . Config('API_2FA_ACTION') . '[/{params:.*}]', ApiController::class)->add(ApiPermissionMiddleware::class)->setName('api/' . Config('API_2FA_ACTION')); // two factor authentication
 
     // User API actions
     if (function_exists(PROJECT_NAMESPACE . "Api_Action")) {

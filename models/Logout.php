@@ -259,6 +259,9 @@ class Logout
             }
             WriteCookie("Password", ""); // Clear password cookie
             WriteCookie("LastUrl", ""); // Clear last URL
+
+            // Clear session ID
+            $UserProfile->removeUser($username, session_id());
             $this->writeAuditTrailOnLogout();
 
             // Call User LoggedOut event

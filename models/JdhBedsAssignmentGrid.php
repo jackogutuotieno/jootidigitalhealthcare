@@ -550,6 +550,13 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Update last accessed time
+        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
+            Write($Language->phrase("UserProfileCorrupted"));
+            $this->terminate();
+            return;
+        }
+
         // Get grid add count
         $gridaddcnt = Get(Config("TABLE_GRID_ADD_ROW_COUNT"), "");
         if (is_numeric($gridaddcnt) && $gridaddcnt > 0) {
@@ -594,7 +601,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
 
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
-        $this->setupLookupOptions($this->bed_id);
 
         // Load default values for add
         $this->loadDefaultValues();
@@ -1661,7 +1667,7 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
             if (IsApi() && $val === null) {
                 $this->bed_id->Visible = false; // Disable update for API request
             } else {
-                $this->bed_id->setFormValue($val);
+                $this->bed_id->setFormValue($val, true, $validate);
             }
         }
         if ($CurrentForm->hasValue("o_bed_id")) {
@@ -1873,7 +1879,7 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
                         $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
                         $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
                     } else {
-                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                        $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
                     }
                 }
             } else {
@@ -1881,28 +1887,8 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
             }
 
             // bed_id
-            $curVal = strval($this->bed_id->CurrentValue);
-            if ($curVal != "") {
-                $this->bed_id->ViewValue = $this->bed_id->lookupCacheOption($curVal);
-                if ($this->bed_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`bed_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $lookupFilter = $this->bed_id->getSelectFilter($this); // PHP
-                    $sqlWrk = $this->bed_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->bed_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->bed_id->ViewValue = $this->bed_id->displayValue($arwrk);
-                    } else {
-                        $this->bed_id->ViewValue = FormatNumber($this->bed_id->CurrentValue, $this->bed_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->bed_id->ViewValue = null;
-            }
+            $this->bed_id->ViewValue = $this->bed_id->CurrentValue;
+            $this->bed_id->ViewValue = FormatNumber($this->bed_id->ViewValue, $this->bed_id->formatPattern());
 
             // date_submitted
             $this->date_submitted->ViewValue = $this->date_submitted->CurrentValue;
@@ -1945,7 +1931,7 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
                             $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
                             $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
                         } else {
-                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
                         }
                     }
                 } else {
@@ -1981,34 +1967,11 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
 
             // bed_id
             $this->bed_id->setupEditAttributes();
-            $curVal = trim(strval($this->bed_id->CurrentValue));
-            if ($curVal != "") {
-                $this->bed_id->ViewValue = $this->bed_id->lookupCacheOption($curVal);
-            } else {
-                $this->bed_id->ViewValue = $this->bed_id->Lookup !== null && is_array($this->bed_id->lookupOptions()) ? $curVal : null;
-            }
-            if ($this->bed_id->ViewValue !== null) { // Load from cache
-                $this->bed_id->EditValue = array_values($this->bed_id->lookupOptions());
-            } else { // Lookup from database
-                if ($curVal == "") {
-                    $filterWrk = "0=1";
-                } else {
-                    $filterWrk = SearchFilter("`bed_id`", "=", $this->bed_id->CurrentValue, DATATYPE_NUMBER, "");
-                }
-                $lookupFilter = $this->bed_id->getSelectFilter($this); // PHP
-                $sqlWrk = $this->bed_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                $arwrk = $rswrk;
-                foreach ($arwrk as &$row) {
-                    $row = $this->bed_id->Lookup->renderViewRow($row);
-                }
-                $this->bed_id->EditValue = $arwrk;
-            }
+            $this->bed_id->EditValue = HtmlEncode($this->bed_id->CurrentValue);
             $this->bed_id->PlaceHolder = RemoveHtml($this->bed_id->caption());
+            if (strval($this->bed_id->EditValue) != "" && is_numeric($this->bed_id->EditValue)) {
+                $this->bed_id->EditValue = FormatNumber($this->bed_id->EditValue, null);
+            }
 
             // date_submitted
             $this->date_submitted->setupEditAttributes();
@@ -2047,7 +2010,7 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
                             $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
                             $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
                         } else {
-                            $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
                         }
                     }
                 } else {
@@ -2083,34 +2046,11 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
 
             // bed_id
             $this->bed_id->setupEditAttributes();
-            $curVal = trim(strval($this->bed_id->CurrentValue));
-            if ($curVal != "") {
-                $this->bed_id->ViewValue = $this->bed_id->lookupCacheOption($curVal);
-            } else {
-                $this->bed_id->ViewValue = $this->bed_id->Lookup !== null && is_array($this->bed_id->lookupOptions()) ? $curVal : null;
-            }
-            if ($this->bed_id->ViewValue !== null) { // Load from cache
-                $this->bed_id->EditValue = array_values($this->bed_id->lookupOptions());
-            } else { // Lookup from database
-                if ($curVal == "") {
-                    $filterWrk = "0=1";
-                } else {
-                    $filterWrk = SearchFilter("`bed_id`", "=", $this->bed_id->CurrentValue, DATATYPE_NUMBER, "");
-                }
-                $lookupFilter = $this->bed_id->getSelectFilter($this); // PHP
-                $sqlWrk = $this->bed_id->Lookup->getSql(true, $filterWrk, $lookupFilter, $this, false, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                $arwrk = $rswrk;
-                foreach ($arwrk as &$row) {
-                    $row = $this->bed_id->Lookup->renderViewRow($row);
-                }
-                $this->bed_id->EditValue = $arwrk;
-            }
+            $this->bed_id->EditValue = HtmlEncode($this->bed_id->CurrentValue);
             $this->bed_id->PlaceHolder = RemoveHtml($this->bed_id->caption());
+            if (strval($this->bed_id->EditValue) != "" && is_numeric($this->bed_id->EditValue)) {
+                $this->bed_id->EditValue = FormatNumber($this->bed_id->EditValue, null);
+            }
 
             // date_submitted
             $this->date_submitted->setupEditAttributes();
@@ -2157,6 +2097,9 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
             if (!$this->bed_id->IsDetailKey && EmptyValue($this->bed_id->FormValue)) {
                 $this->bed_id->addErrorMessage(str_replace("%s", $this->bed_id->caption(), $this->bed_id->RequiredErrorMessage));
             }
+        }
+        if (!CheckInteger($this->bed_id->FormValue)) {
+            $this->bed_id->addErrorMessage($this->bed_id->getErrorMessage(false));
         }
         if ($this->date_submitted->Required) {
             if (!$this->date_submitted->IsDetailKey && EmptyValue($this->date_submitted->FormValue)) {
@@ -2443,9 +2386,6 @@ class JdhBedsAssignmentGrid extends JdhBedsAssignment
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_patient_id":
-                    $lookupFilter = $fld->getSelectFilter(); // PHP
-                    break;
-                case "x_bed_id":
                     $lookupFilter = $fld->getSelectFilter(); // PHP
                     break;
                 default:

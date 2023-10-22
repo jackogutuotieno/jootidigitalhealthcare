@@ -28,6 +28,14 @@ class JdhWards extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
+    // Audit trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Export
     public $UseAjaxActions = false;
     public $ModalSearch = false;
@@ -42,6 +50,7 @@ class JdhWards extends DbTable
 
     // Fields
     public $ward_id;
+    public $facility_id;
     public $ward_name;
     public $description;
 
@@ -114,6 +123,34 @@ class JdhWards extends DbTable
         $this->ward_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->ward_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->Fields['ward_id'] = &$this->ward_id;
+
+        // facility_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->facility_id = new DbField(
+            $this, // Table
+            'x_facility_id', // Variable name
+            'facility_id', // Name
+            '`facility_id`', // Expression
+            '`facility_id`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`facility_id`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'SELECT' // Edit Tag
+        );
+        $this->facility_id->InputTextType = "text";
+        $this->facility_id->Nullable = false; // NOT NULL field
+        $this->facility_id->Required = true; // Required field
+        $this->facility_id->UsePleaseSelect = true; // Use PleaseSelect by default
+        $this->facility_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
+        $this->facility_id->Lookup = new Lookup('facility_id', 'jdh_facility_units', false, 'id', ["unit_name","","",""], '', '', [], [], [], [], [], [], '', '', "`unit_name`");
+        $this->facility_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->facility_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['facility_id'] = &$this->facility_id;
 
         // ward_name $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->ward_name = new DbField(
@@ -528,6 +565,9 @@ class JdhWards extends DbTable
             // Get insert id if necessary
             $this->ward_id->setDbValue($conn->lastInsertId());
             $rs['ward_id'] = $this->ward_id->DbValue;
+            if ($this->AuditTrailOnAdd) {
+                $this->writeAuditTrailOnAdd($rs);
+            }
         }
         return $success;
     }
@@ -581,6 +621,14 @@ class JdhWards extends DbTable
                 $rs['ward_id'] = $this->ward_id->CurrentValue;
             }
         }
+        if ($success && $this->AuditTrailOnEdit && $rsold) {
+            $rsaudit = $rs;
+            $fldname = 'ward_id';
+            if (!array_key_exists($fldname, $rsaudit)) {
+                $rsaudit[$fldname] = $rsold[$fldname];
+            }
+            $this->writeAuditTrailOnEdit($rsold, $rsaudit);
+        }
         return $success;
     }
 
@@ -622,6 +670,9 @@ class JdhWards extends DbTable
                 $this->DbErrorMessage = $e->getMessage();
             }
         }
+        if ($success && $this->AuditTrailOnDelete) {
+            $this->writeAuditTrailOnDelete($rs);
+        }
         return $success;
     }
 
@@ -632,6 +683,7 @@ class JdhWards extends DbTable
             return;
         }
         $this->ward_id->DbValue = $row['ward_id'];
+        $this->facility_id->DbValue = $row['facility_id'];
         $this->ward_name->DbValue = $row['ward_name'];
         $this->description->DbValue = $row['description'];
     }
@@ -988,6 +1040,7 @@ class JdhWards extends DbTable
             return;
         }
         $this->ward_id->setDbValue($row['ward_id']);
+        $this->facility_id->setDbValue($row['facility_id']);
         $this->ward_name->setDbValue($row['ward_name']);
         $this->description->setDbValue($row['description']);
     }
@@ -1022,12 +1075,37 @@ class JdhWards extends DbTable
 
         // ward_id
 
+        // facility_id
+
         // ward_name
 
         // description
 
         // ward_id
         $this->ward_id->ViewValue = $this->ward_id->CurrentValue;
+
+        // facility_id
+        $curVal = strval($this->facility_id->CurrentValue);
+        if ($curVal != "") {
+            $this->facility_id->ViewValue = $this->facility_id->lookupCacheOption($curVal);
+            if ($this->facility_id->ViewValue === null) { // Lookup from database
+                $filterWrk = SearchFilter("`id`", "=", $curVal, DATATYPE_NUMBER, "");
+                $sqlWrk = $this->facility_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                if ($ari > 0) { // Lookup values found
+                    $arwrk = $this->facility_id->Lookup->renderViewRow($rswrk[0]);
+                    $this->facility_id->ViewValue = $this->facility_id->displayValue($arwrk);
+                } else {
+                    $this->facility_id->ViewValue = FormatNumber($this->facility_id->CurrentValue, $this->facility_id->formatPattern());
+                }
+            }
+        } else {
+            $this->facility_id->ViewValue = null;
+        }
 
         // ward_name
         $this->ward_name->ViewValue = $this->ward_name->CurrentValue;
@@ -1038,6 +1116,10 @@ class JdhWards extends DbTable
         // ward_id
         $this->ward_id->HrefValue = "";
         $this->ward_id->TooltipValue = "";
+
+        // facility_id
+        $this->facility_id->HrefValue = "";
+        $this->facility_id->TooltipValue = "";
 
         // ward_name
         $this->ward_name->HrefValue = "";
@@ -1065,6 +1147,10 @@ class JdhWards extends DbTable
         // ward_id
         $this->ward_id->setupEditAttributes();
         $this->ward_id->EditValue = $this->ward_id->CurrentValue;
+
+        // facility_id
+        $this->facility_id->setupEditAttributes();
+        $this->facility_id->PlaceHolder = RemoveHtml($this->facility_id->caption());
 
         // ward_name
         $this->ward_name->setupEditAttributes();
@@ -1108,10 +1194,12 @@ class JdhWards extends DbTable
                 $doc->beginExportRow();
                 if ($exportPageType == "view") {
                     $doc->exportCaption($this->ward_id);
+                    $doc->exportCaption($this->facility_id);
                     $doc->exportCaption($this->ward_name);
                     $doc->exportCaption($this->description);
                 } else {
                     $doc->exportCaption($this->ward_id);
+                    $doc->exportCaption($this->facility_id);
                     $doc->exportCaption($this->ward_name);
                 }
                 $doc->endExportRow();
@@ -1143,10 +1231,12 @@ class JdhWards extends DbTable
                     $doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
                     if ($exportPageType == "view") {
                         $doc->exportField($this->ward_id);
+                        $doc->exportField($this->facility_id);
                         $doc->exportField($this->ward_name);
                         $doc->exportField($this->description);
                     } else {
                         $doc->exportField($this->ward_id);
+                        $doc->exportField($this->facility_id);
                         $doc->exportField($this->ward_name);
                     }
                     $doc->endExportRow($rowCnt);
@@ -1171,6 +1261,192 @@ class JdhWards extends DbTable
 
         // No binary fields
         return false;
+    }
+
+    // Write audit trail start/end for grid update
+    public function writeAuditTrailDummy($typ)
+    {
+        WriteAuditLog(CurrentUser(), $typ, 'jdh_wards', "", "", "", "");
+    }
+
+    // Write audit trail (add page)
+    public function writeAuditTrailOnAdd(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnAdd) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['ward_id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $newvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo Field
+                    $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML Field
+                    $newvalue = "[XML]";
+                } else {
+                    $newvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "A", 'jdh_wards', $fldname, $key, "", $newvalue);
+            }
+        }
+    }
+
+    // Write audit trail (edit page)
+    public function writeAuditTrailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnEdit) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['ward_id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rsnew) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && array_key_exists($fldname, $rsold) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->DataType == DATATYPE_DATE) { // DateTime field
+                    $modified = (FormatDateTime($rsold[$fldname], 0) != FormatDateTime($rsnew[$fldname], 0));
+                } else {
+                    $modified = !CompareValue($rsold[$fldname], $rsnew[$fldname]);
+                }
+                if ($modified) {
+                    if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                        $oldvalue = $Language->phrase("PasswordMask");
+                        $newvalue = $Language->phrase("PasswordMask");
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                        $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsold[$fldname] : "[MEMO]";
+                        $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsnew[$fldname] : "[MEMO]";
+                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                        $oldvalue = "[XML]";
+                        $newvalue = "[XML]";
+                    } else {
+                        $oldvalue = $rsold[$fldname];
+                        $newvalue = $rsnew[$fldname];
+                    }
+                    WriteAuditLog($usr, "U", 'jdh_wards', $fldname, $key, $oldvalue, $newvalue);
+                }
+            }
+        }
+    }
+
+    // Write audit trail (delete page)
+    public function writeAuditTrailOnDelete(&$rs)
+    {
+        global $Language;
+        if (!$this->AuditTrailOnDelete) {
+            return;
+        }
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['ward_id'];
+
+        // Write audit trail
+        $usr = CurrentUser();
+        foreach (array_keys($rs) as $fldname) {
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
+                    $oldvalue = $Language->phrase("PasswordMask");
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                    $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
+                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                    $oldvalue = "[XML]";
+                } else {
+                    $oldvalue = $rs[$fldname];
+                }
+                WriteAuditLog($usr, "D", 'jdh_wards', $fldname, $key, $oldvalue, "");
+            }
+        }
+    }
+
+    // Send email after add success
+    public function sendEmailOnAdd(&$rs)
+    {
+        global $Language;
+        $table = 'jdh_wards';
+        $subject = $table . " " . $Language->phrase("RecordInserted");
+        $action = $Language->phrase("ActionInserted");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rs['ward_id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = ["rsnew" => $rs];
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
+    }
+
+    // Send email after update success
+    public function sendEmailOnEdit(&$rsold, &$rsnew)
+    {
+        global $Language;
+        $table = 'jdh_wards';
+        $subject = $table . " ". $Language->phrase("RecordUpdated");
+        $action = $Language->phrase("ActionUpdated");
+
+        // Get key value
+        $key = "";
+        if ($key != "") {
+            $key .= Config("COMPOSITE_KEY_SEPARATOR");
+        }
+        $key .= $rsold['ward_id'];
+        $email = new Email();
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+        $email->replaceSubject($subject); // Replace Subject
+        $email->replaceContent("<!--table-->", $table);
+        $email->replaceContent("<!--key-->", $key);
+        $email->replaceContent("<!--action-->", $action);
+        $args = [];
+        $args["rsold"] = &$rsold;
+        $args["rsnew"] = &$rsnew;
+        $emailSent = false;
+        if ($this->emailSending($email, $args)) {
+            $emailSent = $email->send();
+        }
+
+        // Send email failed
+        if (!$emailSent) {
+            $this->setFailureMessage($email->SendErrDescription);
+        }
     }
 
     // Table level events

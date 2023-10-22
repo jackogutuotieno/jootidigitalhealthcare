@@ -34,6 +34,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["ward_id", [fields.ward_id.visible && fields.ward_id.required ? ew.Validators.required(fields.ward_id.caption) : null], fields.ward_id.isInvalid],
+            ["facility_id", [fields.facility_id.visible && fields.facility_id.required ? ew.Validators.required(fields.facility_id.caption) : null], fields.facility_id.isInvalid],
             ["ward_name", [fields.ward_name.visible && fields.ward_name.required ? ew.Validators.required(fields.ward_name.caption) : null], fields.ward_name.isInvalid],
             ["description", [fields.description.visible && fields.description.required ? ew.Validators.required(fields.description.caption) : null], fields.description.isInvalid]
         ])
@@ -51,6 +52,7 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Dynamic selection lists
         .setLists({
+            "facility_id": <?= $Page->facility_id->toClientList($Page) ?>,
         })
         .build();
     window[form.id] = form;
@@ -78,6 +80,46 @@ loadjs.ready(["wrapper", "head"], function () {
 <span<?= $Page->ward_id->viewAttributes() ?>>
 <input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->ward_id->getDisplayValue($Page->ward_id->EditValue))) ?>"></span>
 <input type="hidden" data-table="jdh_wards" data-field="x_ward_id" data-hidden="1" name="x_ward_id" id="x_ward_id" value="<?= HtmlEncode($Page->ward_id->CurrentValue) ?>">
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->facility_id->Visible) { // facility_id ?>
+    <div id="r_facility_id"<?= $Page->facility_id->rowAttributes() ?>>
+        <label id="elh_jdh_wards_facility_id" for="x_facility_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->facility_id->caption() ?><?= $Page->facility_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->facility_id->cellAttributes() ?>>
+<span id="el_jdh_wards_facility_id">
+    <select
+        id="x_facility_id"
+        name="x_facility_id"
+        class="form-select ew-select<?= $Page->facility_id->isInvalidClass() ?>"
+        data-select2-id="fjdh_wardsedit_x_facility_id"
+        data-table="jdh_wards"
+        data-field="x_facility_id"
+        data-value-separator="<?= $Page->facility_id->displayValueSeparatorAttribute() ?>"
+        data-placeholder="<?= HtmlEncode($Page->facility_id->getPlaceHolder()) ?>"
+        <?= $Page->facility_id->editAttributes() ?>>
+        <?= $Page->facility_id->selectOptionListHtml("x_facility_id") ?>
+    </select>
+    <?= $Page->facility_id->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->facility_id->getErrorMessage() ?></div>
+<?= $Page->facility_id->Lookup->getParamTag($Page, "p_x_facility_id") ?>
+<script>
+loadjs.ready("fjdh_wardsedit", function() {
+    var options = { name: "x_facility_id", selectId: "fjdh_wardsedit_x_facility_id" },
+        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    options.closeOnSelect = !options.multiple;
+    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
+    if (fjdh_wardsedit.lists.facility_id?.lookupOptions.length) {
+        options.data = { id: "x_facility_id", form: "fjdh_wardsedit" };
+    } else {
+        options.ajax = { id: "x_facility_id", form: "fjdh_wardsedit", limit: ew.LOOKUP_PAGE_SIZE };
+    }
+    options.minimumResultsForSearch = Infinity;
+    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_wards.fields.facility_id.selectOptions);
+    ew.createSelect(options);
+});
+</script>
 </span>
 </div></div>
     </div>

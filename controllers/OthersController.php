@@ -26,6 +26,12 @@ class OthersController extends ControllerBase
         return $this->runPage($request, $response, $args, "Login");
     }
 
+    // login2fa
+    public function login2fa(Request $request, Response $response, array $args): Response
+    {
+        return $this->runPage($request, $response, $args, "Login2fa");
+    }
+
     // resetpassword
     public function resetpassword(Request $request, Response $response, array $args): Response
     {

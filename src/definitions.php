@@ -71,13 +71,13 @@ return [
     "jdh_lab_income" => \DI\create(JdhLabIncome::class),
     "jdh_patient_queue" => \DI\create(JdhPatientQueue::class),
     "Patient_Queues" => \DI\create(PatientQueues::class),
-    "jdh_rooms" => \DI\create(JdhRooms::class),
     "jdh_wards" => \DI\create(JdhWards::class),
-    "beds" => \DI\create(Beds::class),
-    "jdh_beds_assignment" => \DI\create(JdhBedsAssignment::class),
     "jdh_branding" => \DI\create(JdhBranding::class),
     "jdh_patients_insuarance" => \DI\create(JdhPatientsInsuarance::class),
     "subscriptions" => \DI\create(Subscriptions::class),
+    "jdh_beds" => \DI\create(JdhBeds::class),
+    "jdh_ipd_admission" => \DI\create(JdhIpdAdmission::class),
+    "jdh_facility_units" => \DI\create(JdhFacilityUnits::class),
 
     // User table
     "usertable" => \DI\get("jdh_users"),

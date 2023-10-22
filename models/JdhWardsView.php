@@ -53,6 +53,14 @@ class JdhWardsView extends JdhWards
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -491,6 +499,13 @@ class JdhWardsView extends JdhWards
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Update last accessed time
+        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
+            Write($Language->phrase("UserProfileCorrupted"));
+            $this->terminate();
+            return;
+        }
+
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -506,6 +521,7 @@ class JdhWardsView extends JdhWards
         }
         $this->CurrentAction = Param("action"); // Set up current action
         $this->ward_id->setVisibility();
+        $this->facility_id->setVisibility();
         $this->ward_name->setVisibility();
         $this->description->setVisibility();
 
@@ -530,6 +546,9 @@ class JdhWardsView extends JdhWards
         if ($this->UseAjaxActions) {
             $this->InlineDelete = true;
         }
+
+        // Set up lookup cache
+        $this->setupLookupOptions($this->facility_id);
 
         // Check modal
         if ($this->IsModal) {
@@ -770,7 +789,11 @@ class JdhWardsView extends JdhWards
 
         // Call Row Selected event
         $this->rowSelected($row);
+        if ($this->AuditTrailOnView) {
+            $this->writeAuditTrailOnView($row);
+        }
         $this->ward_id->setDbValue($row['ward_id']);
+        $this->facility_id->setDbValue($row['facility_id']);
         $this->ward_name->setDbValue($row['ward_name']);
         $this->description->setDbValue($row['description']);
     }
@@ -780,6 +803,7 @@ class JdhWardsView extends JdhWards
     {
         $row = [];
         $row['ward_id'] = $this->ward_id->DefaultValue;
+        $row['facility_id'] = $this->facility_id->DefaultValue;
         $row['ward_name'] = $this->ward_name->DefaultValue;
         $row['description'] = $this->description->DefaultValue;
         return $row;
@@ -805,6 +829,8 @@ class JdhWardsView extends JdhWards
 
         // ward_id
 
+        // facility_id
+
         // ward_name
 
         // description
@@ -813,6 +839,29 @@ class JdhWardsView extends JdhWards
         if ($this->RowType == ROWTYPE_VIEW) {
             // ward_id
             $this->ward_id->ViewValue = $this->ward_id->CurrentValue;
+
+            // facility_id
+            $curVal = strval($this->facility_id->CurrentValue);
+            if ($curVal != "") {
+                $this->facility_id->ViewValue = $this->facility_id->lookupCacheOption($curVal);
+                if ($this->facility_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->facility_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->facility_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->facility_id->ViewValue = $this->facility_id->displayValue($arwrk);
+                    } else {
+                        $this->facility_id->ViewValue = FormatNumber($this->facility_id->CurrentValue, $this->facility_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->facility_id->ViewValue = null;
+            }
 
             // ward_name
             $this->ward_name->ViewValue = $this->ward_name->CurrentValue;
@@ -823,6 +872,10 @@ class JdhWardsView extends JdhWards
             // ward_id
             $this->ward_id->HrefValue = "";
             $this->ward_id->TooltipValue = "";
+
+            // facility_id
+            $this->facility_id->HrefValue = "";
+            $this->facility_id->TooltipValue = "";
 
             // ward_name
             $this->ward_name->HrefValue = "";
@@ -1039,6 +1092,8 @@ class JdhWardsView extends JdhWards
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
+                case "x_facility_id":
+                    break;
                 default:
                     $lookupFilter = "";
                     break;

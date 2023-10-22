@@ -6319,7 +6319,8 @@ function SetupLoginStatus()
     ];
     $LoginStatus["logoutUrl"] = $logoutUrl;
     $LoginStatus["logoutText"] = $Language->phrase("Logout", null);
-    $LoginStatus["canLogout"] = $logoutPage && IsLoggedIn();
+    $login2FAPage = "login2fa";
+    $LoginStatus["canLogout"] = $logoutPage && (IsLoggedIn() || $currentPage != $login2FAPage && IsLoggingIn2FA());
 
     // Login page
     $loginPage = "login";
@@ -6409,6 +6410,18 @@ function SetupLoginStatus()
     // Notifications
     $LoginStatus["canSubscribe"] = Config("PUSH_ANONYMOUS") && !IsLoggedIn() || IsloggedIn() && !IsSysAdmin();
     $LoginStatus["subscribeText"] = $Language->phrase("Notifications");
+
+    // Two factor authentication
+    global $UserProfile;
+    $UserProfile->loadProfileFromDatabase(CurrentUserName());
+    $login2FAPage = "login2fa";
+    $LoginStatus["login2FAUrl"] = GetUrl($login2FAPage);
+    $LoginStatus["backupCodes"] = $Language->phrase("BackupCodes");
+    $LoginStatus["showBackupCodes"] = IsLoggedIn() && !IsSysAdmin() && $UserProfile->hasUserSecret(CurrentUserName(), true);
+    $LoginStatus["enable2FA"] = IsLoggedIn() && !IsSysAdmin() && !$UserProfile->hasUserSecret(CurrentUserName(), true) && !Config("FORCE_TWO_FACTOR_AUTHENTICATION");
+    $LoginStatus["enable2FAText"] = $Language->phrase("Enable2FA");
+    $LoginStatus["disable2FA"] = IsLoggedIn() && !IsSysAdmin() && $UserProfile->hasUserSecret(CurrentUserName(), true) && !Config("FORCE_TWO_FACTOR_AUTHENTICATION");
+    $LoginStatus["disable2FAText"] = $Language->phrase("Disable2FA");
 }
 
 // Is remote path

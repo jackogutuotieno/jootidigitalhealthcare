@@ -213,13 +213,6 @@ loadjs.ready("fjdh_patientsedit", function() {
     }
 ?>
 <?php
-    if (in_array("jdh_beds_assignment", explode(",", $Page->getCurrentDetailTable())) && $jdh_beds_assignment->DetailEdit) {
-?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_beds_assignment") ?><?= $Page->DetailPages->activeClasses("jdh_beds_assignment") ?>" data-bs-target="#tab_jdh_beds_assignment" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_beds_assignment" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_beds_assignment")) ?>"><?= $Language->tablePhrase("jdh_beds_assignment", "TblCaption") ?></button></li>
-<?php
-    }
-?>
-<?php
     if (in_array("jdh_chief_complaints", explode(",", $Page->getCurrentDetailTable())) && $jdh_chief_complaints->DetailEdit) {
 ?>
         <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_chief_complaints") ?><?= $Page->DetailPages->activeClasses("jdh_chief_complaints") ?>" data-bs-target="#tab_jdh_chief_complaints" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_chief_complaints" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_chief_complaints")) ?>"><?= $Language->tablePhrase("jdh_chief_complaints", "TblCaption") ?></button></li>
@@ -275,13 +268,6 @@ loadjs.ready("fjdh_patientsedit", function() {
 ?>
         <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_patient_visits") ?><?= $Page->DetailPages->activeClasses("jdh_patient_visits") ?>" id="tab_jdh_patient_visits" role="tabpanel"><!-- page* -->
 <?php include_once "JdhPatientVisitsGrid.php" ?>
-        </div><!-- /page* -->
-<?php } ?>
-<?php
-    if (in_array("jdh_beds_assignment", explode(",", $Page->getCurrentDetailTable())) && $jdh_beds_assignment->DetailEdit) {
-?>
-        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_beds_assignment") ?><?= $Page->DetailPages->activeClasses("jdh_beds_assignment") ?>" id="tab_jdh_beds_assignment" role="tabpanel"><!-- page* -->
-<?php include_once "JdhBedsAssignmentGrid.php" ?>
         </div><!-- /page* -->
 <?php } ?>
 <?php

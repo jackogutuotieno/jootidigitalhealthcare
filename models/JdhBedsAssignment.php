@@ -150,7 +150,7 @@ class JdhBedsAssignment extends DbTable
         $this->patient_id->Required = true; // Required field
         $this->patient_id->UsePleaseSelect = true; // Use PleaseSelect by default
         $this->patient_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->patient_id->Lookup = new Lookup('patient_id', 'jdh_patients', false, 'patient_id', ["patient_id","patient_name","",""], '', '', [], [], [], [], [], [], '', '', "CONCAT(COALESCE(`patient_id`, ''),'" . ValueSeparator(1, $this->patient_id) . "',COALESCE(`patient_name`,''))");
+        $this->patient_id->Lookup = new Lookup('patient_id', 'jdh_patients', false, 'patient_id', ["patient_name","","",""], '', '', [], [], [], [], [], [], '', '', "`patient_name`");
         $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->patient_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_id'] = &$this->patient_id;
@@ -171,17 +171,14 @@ class JdhBedsAssignment extends DbTable
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'SELECT' // Edit Tag
+            'TEXT' // Edit Tag
         );
         $this->bed_id->addMethod("getSelectFilter", fn() => "`status_id`=0");
         $this->bed_id->InputTextType = "text";
         $this->bed_id->Nullable = false; // NOT NULL field
         $this->bed_id->Required = true; // Required field
-        $this->bed_id->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->bed_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->bed_id->Lookup = new Lookup('bed_id', 'beds', false, 'bed_id', ["bed_number","","",""], '', '', [], [], [], [], [], [], '', '', "`bed_number`");
         $this->bed_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->bed_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->bed_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['bed_id'] = &$this->bed_id;
 
         // date_submitted $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
@@ -1233,7 +1230,7 @@ class JdhBedsAssignment extends DbTable
                     $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
                     $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
                 } else {
-                    $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                    $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
                 }
             }
         } else {
@@ -1241,28 +1238,8 @@ class JdhBedsAssignment extends DbTable
         }
 
         // bed_id
-        $curVal = strval($this->bed_id->CurrentValue);
-        if ($curVal != "") {
-            $this->bed_id->ViewValue = $this->bed_id->lookupCacheOption($curVal);
-            if ($this->bed_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`bed_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                $lookupFilter = $this->bed_id->getSelectFilter($this); // PHP
-                $sqlWrk = $this->bed_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
-                $conn = Conn();
-                $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
-                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                $ari = count($rswrk);
-                if ($ari > 0) { // Lookup values found
-                    $arwrk = $this->bed_id->Lookup->renderViewRow($rswrk[0]);
-                    $this->bed_id->ViewValue = $this->bed_id->displayValue($arwrk);
-                } else {
-                    $this->bed_id->ViewValue = FormatNumber($this->bed_id->CurrentValue, $this->bed_id->formatPattern());
-                }
-            }
-        } else {
-            $this->bed_id->ViewValue = null;
-        }
+        $this->bed_id->ViewValue = $this->bed_id->CurrentValue;
+        $this->bed_id->ViewValue = FormatNumber($this->bed_id->ViewValue, $this->bed_id->formatPattern());
 
         // date_submitted
         $this->date_submitted->ViewValue = $this->date_submitted->CurrentValue;
@@ -1331,7 +1308,7 @@ class JdhBedsAssignment extends DbTable
                         $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
                         $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
                     } else {
-                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                        $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
                     }
                 }
             } else {
@@ -1343,7 +1320,11 @@ class JdhBedsAssignment extends DbTable
 
         // bed_id
         $this->bed_id->setupEditAttributes();
+        $this->bed_id->EditValue = $this->bed_id->CurrentValue;
         $this->bed_id->PlaceHolder = RemoveHtml($this->bed_id->caption());
+        if (strval($this->bed_id->EditValue) != "" && is_numeric($this->bed_id->EditValue)) {
+            $this->bed_id->EditValue = FormatNumber($this->bed_id->EditValue, null);
+        }
 
         // date_submitted
         $this->date_submitted->setupEditAttributes();

@@ -41,6 +41,8 @@
 		"jawira/case-converter": "^3.5.1",
 		"filp/whoops": "^2.14.5",
 		"minishlink/web-push": "^7.0.0",
+		"pragmarx/google2fa": "^8.0.1",
+		"hkvstore/tc-lib-barcode": "^1.17.14",
 		"giggsey/libphonenumber-for-php": "^8.12.45",
 		"portphp/portphp": "^1.7.0",
 		"portphp/csv": "^2.0.1",
@@ -48,7 +50,6 @@
 		"hkvstore/steps": "^1.4.1",
 		"hkvstore/dompdf": "~2.0.0",
 		"ckeditor/ckeditor": "dev-full/stable",
-		"hkvstore/tc-lib-barcode": "^1.17.14",
 		"intervention/image": "^2.7.2"
 	},
 	"autoload": {

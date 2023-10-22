@@ -369,6 +369,13 @@ class JdhAppointmentsDelete extends JdhAppointments
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Update last accessed time
+        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
+            Write($Language->phrase("UserProfileCorrupted"));
+            $this->terminate();
+            return;
+        }
         $this->CurrentAction = Param("action"); // Set up current action
         $this->appointment_id->Visible = false;
         $this->patient_id->setVisibility();

@@ -499,6 +499,13 @@ class JdhBedsAssignmentView extends JdhBedsAssignment
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Update last accessed time
+        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
+            Write($Language->phrase("UserProfileCorrupted"));
+            $this->terminate();
+            return;
+        }
+
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -543,7 +550,6 @@ class JdhBedsAssignmentView extends JdhBedsAssignment
 
         // Set up lookup cache
         $this->setupLookupOptions($this->patient_id);
-        $this->setupLookupOptions($this->bed_id);
 
         // Check modal
         if ($this->IsModal) {
@@ -859,7 +865,7 @@ class JdhBedsAssignmentView extends JdhBedsAssignment
                         $arwrk = $this->patient_id->Lookup->renderViewRow($rswrk[0]);
                         $this->patient_id->ViewValue = $this->patient_id->displayValue($arwrk);
                     } else {
-                        $this->patient_id->ViewValue = FormatNumber($this->patient_id->CurrentValue, $this->patient_id->formatPattern());
+                        $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
                     }
                 }
             } else {
@@ -867,28 +873,8 @@ class JdhBedsAssignmentView extends JdhBedsAssignment
             }
 
             // bed_id
-            $curVal = strval($this->bed_id->CurrentValue);
-            if ($curVal != "") {
-                $this->bed_id->ViewValue = $this->bed_id->lookupCacheOption($curVal);
-                if ($this->bed_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`bed_id`", "=", $curVal, DATATYPE_NUMBER, "");
-                    $lookupFilter = $this->bed_id->getSelectFilter($this); // PHP
-                    $sqlWrk = $this->bed_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
-                    $conn = Conn();
-                    $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
-                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
-                    $ari = count($rswrk);
-                    if ($ari > 0) { // Lookup values found
-                        $arwrk = $this->bed_id->Lookup->renderViewRow($rswrk[0]);
-                        $this->bed_id->ViewValue = $this->bed_id->displayValue($arwrk);
-                    } else {
-                        $this->bed_id->ViewValue = FormatNumber($this->bed_id->CurrentValue, $this->bed_id->formatPattern());
-                    }
-                }
-            } else {
-                $this->bed_id->ViewValue = null;
-            }
+            $this->bed_id->ViewValue = $this->bed_id->CurrentValue;
+            $this->bed_id->ViewValue = FormatNumber($this->bed_id->ViewValue, $this->bed_id->formatPattern());
 
             // date_submitted
             $this->date_submitted->ViewValue = $this->date_submitted->CurrentValue;
@@ -1202,9 +1188,6 @@ class JdhBedsAssignmentView extends JdhBedsAssignment
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
                 case "x_patient_id":
-                    $lookupFilter = $fld->getSelectFilter(); // PHP
-                    break;
-                case "x_bed_id":
                     $lookupFilter = $fld->getSelectFilter(); // PHP
                     break;
                 default:

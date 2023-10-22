@@ -24,7 +24,7 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
-            ["bed_id", [fields.bed_id.visible && fields.bed_id.required ? ew.Validators.required(fields.bed_id.caption) : null], fields.bed_id.isInvalid],
+            ["bed_id", [fields.bed_id.visible && fields.bed_id.required ? ew.Validators.required(fields.bed_id.caption) : null, ew.Validators.integer], fields.bed_id.isInvalid],
             ["date_submitted", [fields.date_submitted.visible && fields.date_submitted.required ? ew.Validators.required(fields.date_submitted.caption) : null, ew.Validators.datetime(fields.date_submitted.clientFormatPattern)], fields.date_submitted.isInvalid]
         ])
 
@@ -53,7 +53,6 @@ loadjs.ready(["wrapper", "head"], function () {
         // Dynamic selection lists
         .setLists({
             "patient_id": <?= $Grid->patient_id->toClientList($Grid) ?>,
-            "bed_id": <?= $Grid->bed_id->toClientList($Grid) ?>,
         })
         .build();
     window[form.id] = form;
@@ -215,71 +214,15 @@ loadjs.ready("fjdh_beds_assignmentgrid", function() {
         <td data-name="bed_id"<?= $Grid->bed_id->cellAttributes() ?>>
 <?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_beds_assignment_bed_id" class="el_jdh_beds_assignment_bed_id">
-    <select
-        id="x<?= $Grid->RowIndex ?>_bed_id"
-        name="x<?= $Grid->RowIndex ?>_bed_id"
-        class="form-select ew-select<?= $Grid->bed_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_beds_assignmentgrid_x<?= $Grid->RowIndex ?>_bed_id"
-        data-table="jdh_beds_assignment"
-        data-field="x_bed_id"
-        data-value-separator="<?= $Grid->bed_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->bed_id->getPlaceHolder()) ?>"
-        <?= $Grid->bed_id->editAttributes() ?>>
-        <?= $Grid->bed_id->selectOptionListHtml("x{$Grid->RowIndex}_bed_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Grid->bed_id->getErrorMessage() ?></div>
-<?= $Grid->bed_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_bed_id") ?>
-<script>
-loadjs.ready("fjdh_beds_assignmentgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_bed_id", selectId: "fjdh_beds_assignmentgrid_x<?= $Grid->RowIndex ?>_bed_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_beds_assignmentgrid.lists.bed_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_bed_id", form: "fjdh_beds_assignmentgrid" };
-    } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_bed_id", form: "fjdh_beds_assignmentgrid", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_beds_assignment.fields.bed_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<input type="<?= $Grid->bed_id->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_bed_id" id="x<?= $Grid->RowIndex ?>_bed_id" data-table="jdh_beds_assignment" data-field="x_bed_id" value="<?= $Grid->bed_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->bed_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->bed_id->formatPattern()) ?>"<?= $Grid->bed_id->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->bed_id->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_beds_assignment" data-field="x_bed_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_bed_id" id="o<?= $Grid->RowIndex ?>_bed_id" value="<?= HtmlEncode($Grid->bed_id->OldValue) ?>">
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_beds_assignment_bed_id" class="el_jdh_beds_assignment_bed_id">
-    <select
-        id="x<?= $Grid->RowIndex ?>_bed_id"
-        name="x<?= $Grid->RowIndex ?>_bed_id"
-        class="form-select ew-select<?= $Grid->bed_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_beds_assignmentgrid_x<?= $Grid->RowIndex ?>_bed_id"
-        data-table="jdh_beds_assignment"
-        data-field="x_bed_id"
-        data-value-separator="<?= $Grid->bed_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->bed_id->getPlaceHolder()) ?>"
-        <?= $Grid->bed_id->editAttributes() ?>>
-        <?= $Grid->bed_id->selectOptionListHtml("x{$Grid->RowIndex}_bed_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Grid->bed_id->getErrorMessage() ?></div>
-<?= $Grid->bed_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_bed_id") ?>
-<script>
-loadjs.ready("fjdh_beds_assignmentgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_bed_id", selectId: "fjdh_beds_assignmentgrid_x<?= $Grid->RowIndex ?>_bed_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_beds_assignmentgrid.lists.bed_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_bed_id", form: "fjdh_beds_assignmentgrid" };
-    } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_bed_id", form: "fjdh_beds_assignmentgrid", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_beds_assignment.fields.bed_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<input type="<?= $Grid->bed_id->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_bed_id" id="x<?= $Grid->RowIndex ?>_bed_id" data-table="jdh_beds_assignment" data-field="x_bed_id" value="<?= $Grid->bed_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->bed_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->bed_id->formatPattern()) ?>"<?= $Grid->bed_id->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Grid->bed_id->getErrorMessage() ?></div>
 </span>
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>

@@ -35,6 +35,14 @@ class JdhWardsDelete extends JdhWards
     // CSS class/style
     public $CurrentPageName = "jdhwardsdelete";
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -361,8 +369,16 @@ class JdhWardsDelete extends JdhWards
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Update last accessed time
+        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
+            Write($Language->phrase("UserProfileCorrupted"));
+            $this->terminate();
+            return;
+        }
         $this->CurrentAction = Param("action"); // Set up current action
         $this->ward_id->setVisibility();
+        $this->facility_id->setVisibility();
         $this->ward_name->setVisibility();
         $this->description->Visible = false;
 
@@ -387,6 +403,9 @@ class JdhWardsDelete extends JdhWards
         if ($this->UseAjaxActions) {
             $this->InlineDelete = true;
         }
+
+        // Set up lookup cache
+        $this->setupLookupOptions($this->facility_id);
 
         // Set up Breadcrumb
         $this->setupBreadcrumb();
@@ -567,6 +586,7 @@ class JdhWardsDelete extends JdhWards
         // Call Row Selected event
         $this->rowSelected($row);
         $this->ward_id->setDbValue($row['ward_id']);
+        $this->facility_id->setDbValue($row['facility_id']);
         $this->ward_name->setDbValue($row['ward_name']);
         $this->description->setDbValue($row['description']);
     }
@@ -576,6 +596,7 @@ class JdhWardsDelete extends JdhWards
     {
         $row = [];
         $row['ward_id'] = $this->ward_id->DefaultValue;
+        $row['facility_id'] = $this->facility_id->DefaultValue;
         $row['ward_name'] = $this->ward_name->DefaultValue;
         $row['description'] = $this->description->DefaultValue;
         return $row;
@@ -595,6 +616,8 @@ class JdhWardsDelete extends JdhWards
 
         // ward_id
 
+        // facility_id
+
         // ward_name
 
         // description
@@ -604,12 +627,39 @@ class JdhWardsDelete extends JdhWards
             // ward_id
             $this->ward_id->ViewValue = $this->ward_id->CurrentValue;
 
+            // facility_id
+            $curVal = strval($this->facility_id->CurrentValue);
+            if ($curVal != "") {
+                $this->facility_id->ViewValue = $this->facility_id->lookupCacheOption($curVal);
+                if ($this->facility_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->facility_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->facility_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->facility_id->ViewValue = $this->facility_id->displayValue($arwrk);
+                    } else {
+                        $this->facility_id->ViewValue = FormatNumber($this->facility_id->CurrentValue, $this->facility_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->facility_id->ViewValue = null;
+            }
+
             // ward_name
             $this->ward_name->ViewValue = $this->ward_name->CurrentValue;
 
             // ward_id
             $this->ward_id->HrefValue = "";
             $this->ward_id->TooltipValue = "";
+
+            // facility_id
+            $this->facility_id->HrefValue = "";
+            $this->facility_id->TooltipValue = "";
 
             // ward_name
             $this->ward_name->HrefValue = "";
@@ -639,6 +689,9 @@ class JdhWardsDelete extends JdhWards
         }
         if ($this->UseTransaction) {
             $conn->beginTransaction();
+        }
+        if ($this->AuditTrailOnDelete) {
+            $this->writeAuditTrailDummy($Language->phrase("BatchDeleteBegin")); // Batch delete begin
         }
 
         // Clone old rows
@@ -699,9 +752,35 @@ class JdhWardsDelete extends JdhWards
             if (count($failKeys) > 0) {
                 $this->setWarningMessage(str_replace("%k", explode(", ", $failKeys), $Language->phrase("DeleteRecordsFailed")));
             }
+            if ($this->AuditTrailOnDelete) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteSuccess")); // Batch delete success
+            }
+            $table = 'jdh_wards';
+            $subject = $table . " " . $Language->phrase("RecordDeleted");
+            $action = $Language->phrase("ActionDeleted");
+            $email = new Email();
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
+            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
+            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
+            $email->replaceSubject($subject); // Replace Subject
+            $email->replaceContent("<!--table-->", $table);
+            $email->replaceContent("<!--key-->", implode(", ", $successKeys));
+            $email->replaceContent("<!--action-->", $action);
+            $args = [];
+            $args["rs"] = &$rsold;
+            $emailSent = false;
+            if ($this->emailSending($email, $args)) {
+                $emailSent = $email->send();
+            }
+            if (!$emailSent) {
+                $this->setFailureMessage($email->SendErrDescription);
+            }
         } else {
             if ($this->UseTransaction) { // Rollback transaction
                 $conn->rollback();
+            }
+            if ($this->AuditTrailOnDelete) {
+                $this->writeAuditTrailDummy($Language->phrase("BatchDeleteRollback")); // Batch delete rollback
             }
         }
 
@@ -741,6 +820,8 @@ class JdhWardsDelete extends JdhWards
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
+                case "x_facility_id":
+                    break;
                 default:
                     $lookupFilter = "";
                     break;

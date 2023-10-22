@@ -59,6 +59,14 @@ class JdhWardsList extends JdhWards
     public $MultiDeleteUrl;
     public $MultiUpdateUrl;
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -615,6 +623,13 @@ class JdhWardsList extends JdhWards
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Update last accessed time
+        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
+            Write($Language->phrase("UserProfileCorrupted"));
+            $this->terminate();
+            return;
+        }
+
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -642,6 +657,7 @@ class JdhWardsList extends JdhWards
         // Setup export options
         $this->setupExportOptions();
         $this->ward_id->setVisibility();
+        $this->facility_id->setVisibility();
         $this->ward_name->setVisibility();
         $this->description->Visible = false;
 
@@ -674,6 +690,9 @@ class JdhWardsList extends JdhWards
         foreach ($this->CustomActions as $name => $action) {
             $this->ListActions->add($name, $action);
         }
+
+        // Set up lookup cache
+        $this->setupLookupOptions($this->facility_id);
 
         // Update form name to avoid conflict
         if ($this->IsModal) {
@@ -862,6 +881,13 @@ class JdhWardsList extends JdhWards
                     $this->setWarningMessage($Language->phrase("NoRecord"));
                 }
             }
+
+            // Audit trail on search
+            if ($this->AuditTrailOnSearch && $this->Command == "search" && !$this->RestoreSearch) {
+                $searchParm = ServerVar("QUERY_STRING");
+                $searchSql = $this->getSessionWhere();
+                $this->writeAuditTrailOnSearch($searchParm, $searchSql);
+            }
         }
 
         // Set up list action columns
@@ -1011,6 +1037,7 @@ class JdhWardsList extends JdhWards
             $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_wardssrch");
         }
         $filterList = Concat($filterList, $this->ward_id->AdvancedSearch->toJson(), ","); // Field ward_id
+        $filterList = Concat($filterList, $this->facility_id->AdvancedSearch->toJson(), ","); // Field facility_id
         $filterList = Concat($filterList, $this->ward_name->AdvancedSearch->toJson(), ","); // Field ward_name
         $filterList = Concat($filterList, $this->description->AdvancedSearch->toJson(), ","); // Field description
         if ($this->BasicSearch->Keyword != "") {
@@ -1060,6 +1087,14 @@ class JdhWardsList extends JdhWards
         $this->ward_id->AdvancedSearch->SearchValue2 = @$filter["y_ward_id"];
         $this->ward_id->AdvancedSearch->SearchOperator2 = @$filter["w_ward_id"];
         $this->ward_id->AdvancedSearch->save();
+
+        // Field facility_id
+        $this->facility_id->AdvancedSearch->SearchValue = @$filter["x_facility_id"];
+        $this->facility_id->AdvancedSearch->SearchOperator = @$filter["z_facility_id"];
+        $this->facility_id->AdvancedSearch->SearchCondition = @$filter["v_facility_id"];
+        $this->facility_id->AdvancedSearch->SearchValue2 = @$filter["y_facility_id"];
+        $this->facility_id->AdvancedSearch->SearchOperator2 = @$filter["w_facility_id"];
+        $this->facility_id->AdvancedSearch->save();
 
         // Field ward_name
         $this->ward_name->AdvancedSearch->SearchValue = @$filter["x_ward_name"];
@@ -1196,6 +1231,7 @@ class JdhWardsList extends JdhWards
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
             $this->updateSort($this->ward_id); // ward_id
+            $this->updateSort($this->facility_id); // facility_id
             $this->updateSort($this->ward_name); // ward_name
             $this->setStartRecordNumber(1); // Reset start position
         }
@@ -1222,6 +1258,7 @@ class JdhWardsList extends JdhWards
                 $orderBy = "";
                 $this->setSessionOrderBy($orderBy);
                 $this->ward_id->setSort("");
+                $this->facility_id->setSort("");
                 $this->ward_name->setSort("");
                 $this->description->setSort("");
             }
@@ -1427,6 +1464,7 @@ class JdhWardsList extends JdhWards
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
             $option->add("ward_id", $this->createColumnOption("ward_id"));
+            $option->add("facility_id", $this->createColumnOption("facility_id"));
             $option->add("ward_name", $this->createColumnOption("ward_name"));
         }
 
@@ -1810,6 +1848,7 @@ class JdhWardsList extends JdhWards
         // Call Row Selected event
         $this->rowSelected($row);
         $this->ward_id->setDbValue($row['ward_id']);
+        $this->facility_id->setDbValue($row['facility_id']);
         $this->ward_name->setDbValue($row['ward_name']);
         $this->description->setDbValue($row['description']);
     }
@@ -1819,6 +1858,7 @@ class JdhWardsList extends JdhWards
     {
         $row = [];
         $row['ward_id'] = $this->ward_id->DefaultValue;
+        $row['facility_id'] = $this->facility_id->DefaultValue;
         $row['ward_name'] = $this->ward_name->DefaultValue;
         $row['description'] = $this->description->DefaultValue;
         return $row;
@@ -1863,6 +1903,8 @@ class JdhWardsList extends JdhWards
 
         // ward_id
 
+        // facility_id
+
         // ward_name
 
         // description
@@ -1872,12 +1914,39 @@ class JdhWardsList extends JdhWards
             // ward_id
             $this->ward_id->ViewValue = $this->ward_id->CurrentValue;
 
+            // facility_id
+            $curVal = strval($this->facility_id->CurrentValue);
+            if ($curVal != "") {
+                $this->facility_id->ViewValue = $this->facility_id->lookupCacheOption($curVal);
+                if ($this->facility_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->facility_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->facility_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->facility_id->ViewValue = $this->facility_id->displayValue($arwrk);
+                    } else {
+                        $this->facility_id->ViewValue = FormatNumber($this->facility_id->CurrentValue, $this->facility_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->facility_id->ViewValue = null;
+            }
+
             // ward_name
             $this->ward_name->ViewValue = $this->ward_name->CurrentValue;
 
             // ward_id
             $this->ward_id->HrefValue = "";
             $this->ward_id->TooltipValue = "";
+
+            // facility_id
+            $this->facility_id->HrefValue = "";
+            $this->facility_id->TooltipValue = "";
 
             // ward_name
             $this->ward_name->HrefValue = "";
@@ -2138,6 +2207,8 @@ class JdhWardsList extends JdhWards
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
+                case "x_facility_id":
+                    break;
                 default:
                     $lookupFilter = "";
                     break;

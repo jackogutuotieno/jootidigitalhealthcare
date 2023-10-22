@@ -54,3 +54,4 @@ date/time,script,user,action,table,field,"key value","old value","new value"
 "2023-10-10 18:43:01",/jootidigitalhealthcare/login,3,login,::1,,,,
 "2023-10-10 18:44:01",/jootidigitalhealthcare/logout,3,logout,::1,,,,
 "2023-10-10 18:44:05",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-10 18:45:03",/jootidigitalhealthcare/logout,3,logout,::1,,,,

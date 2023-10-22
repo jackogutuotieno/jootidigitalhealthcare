@@ -35,6 +35,14 @@ class JdhWardsAdd extends JdhWards
     // CSS class/style
     public $CurrentPageName = "jdhwardsadd";
 
+    // Audit Trail
+    public $AuditTrailOnAdd = true;
+    public $AuditTrailOnEdit = true;
+    public $AuditTrailOnDelete = true;
+    public $AuditTrailOnView = false;
+    public $AuditTrailOnViewData = false;
+    public $AuditTrailOnSearch = false;
+
     // Page headings
     public $Heading = "";
     public $Subheading = "";
@@ -452,10 +460,18 @@ class JdhWardsAdd extends JdhWards
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Update last accessed time
+        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
+            Write($Language->phrase("UserProfileCorrupted"));
+            $this->terminate();
+            return;
+        }
+
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
         $this->ward_id->Visible = false;
+        $this->facility_id->setVisibility();
         $this->ward_name->setVisibility();
         $this->description->setVisibility();
 
@@ -480,6 +496,9 @@ class JdhWardsAdd extends JdhWards
         if ($this->UseAjaxActions) {
             $this->InlineDelete = true;
         }
+
+        // Set up lookup cache
+        $this->setupLookupOptions($this->facility_id);
 
         // Load default values for add
         $this->loadDefaultValues();
@@ -640,6 +659,16 @@ class JdhWardsAdd extends JdhWards
         global $CurrentForm;
         $validate = !Config("SERVER_VALIDATE");
 
+        // Check field name 'facility_id' first before field var 'x_facility_id'
+        $val = $CurrentForm->hasValue("facility_id") ? $CurrentForm->getValue("facility_id") : $CurrentForm->getValue("x_facility_id");
+        if (!$this->facility_id->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->facility_id->Visible = false; // Disable update for API request
+            } else {
+                $this->facility_id->setFormValue($val);
+            }
+        }
+
         // Check field name 'ward_name' first before field var 'x_ward_name'
         $val = $CurrentForm->hasValue("ward_name") ? $CurrentForm->getValue("ward_name") : $CurrentForm->getValue("x_ward_name");
         if (!$this->ward_name->IsDetailKey) {
@@ -668,6 +697,7 @@ class JdhWardsAdd extends JdhWards
     public function restoreFormValues()
     {
         global $CurrentForm;
+        $this->facility_id->CurrentValue = $this->facility_id->FormValue;
         $this->ward_name->CurrentValue = $this->ward_name->FormValue;
         $this->description->CurrentValue = $this->description->FormValue;
     }
@@ -720,6 +750,7 @@ class JdhWardsAdd extends JdhWards
         // Call Row Selected event
         $this->rowSelected($row);
         $this->ward_id->setDbValue($row['ward_id']);
+        $this->facility_id->setDbValue($row['facility_id']);
         $this->ward_name->setDbValue($row['ward_name']);
         $this->description->setDbValue($row['description']);
     }
@@ -729,6 +760,7 @@ class JdhWardsAdd extends JdhWards
     {
         $row = [];
         $row['ward_id'] = $this->ward_id->DefaultValue;
+        $row['facility_id'] = $this->facility_id->DefaultValue;
         $row['ward_name'] = $this->ward_name->DefaultValue;
         $row['description'] = $this->description->DefaultValue;
         return $row;
@@ -768,6 +800,9 @@ class JdhWardsAdd extends JdhWards
         // ward_id
         $this->ward_id->RowCssClass = "row";
 
+        // facility_id
+        $this->facility_id->RowCssClass = "row";
+
         // ward_name
         $this->ward_name->RowCssClass = "row";
 
@@ -779,11 +814,37 @@ class JdhWardsAdd extends JdhWards
             // ward_id
             $this->ward_id->ViewValue = $this->ward_id->CurrentValue;
 
+            // facility_id
+            $curVal = strval($this->facility_id->CurrentValue);
+            if ($curVal != "") {
+                $this->facility_id->ViewValue = $this->facility_id->lookupCacheOption($curVal);
+                if ($this->facility_id->ViewValue === null) { // Lookup from database
+                    $filterWrk = SearchFilter("`id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $sqlWrk = $this->facility_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
+                    $conn = Conn();
+                    $config = $conn->getConfiguration();
+                    $config->setResultCacheImpl($this->Cache);
+                    $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                    $ari = count($rswrk);
+                    if ($ari > 0) { // Lookup values found
+                        $arwrk = $this->facility_id->Lookup->renderViewRow($rswrk[0]);
+                        $this->facility_id->ViewValue = $this->facility_id->displayValue($arwrk);
+                    } else {
+                        $this->facility_id->ViewValue = FormatNumber($this->facility_id->CurrentValue, $this->facility_id->formatPattern());
+                    }
+                }
+            } else {
+                $this->facility_id->ViewValue = null;
+            }
+
             // ward_name
             $this->ward_name->ViewValue = $this->ward_name->CurrentValue;
 
             // description
             $this->description->ViewValue = $this->description->CurrentValue;
+
+            // facility_id
+            $this->facility_id->HrefValue = "";
 
             // ward_name
             $this->ward_name->HrefValue = "";
@@ -791,6 +852,33 @@ class JdhWardsAdd extends JdhWards
             // description
             $this->description->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
+            // facility_id
+            $this->facility_id->setupEditAttributes();
+            $curVal = trim(strval($this->facility_id->CurrentValue));
+            if ($curVal != "") {
+                $this->facility_id->ViewValue = $this->facility_id->lookupCacheOption($curVal);
+            } else {
+                $this->facility_id->ViewValue = $this->facility_id->Lookup !== null && is_array($this->facility_id->lookupOptions()) ? $curVal : null;
+            }
+            if ($this->facility_id->ViewValue !== null) { // Load from cache
+                $this->facility_id->EditValue = array_values($this->facility_id->lookupOptions());
+            } else { // Lookup from database
+                if ($curVal == "") {
+                    $filterWrk = "0=1";
+                } else {
+                    $filterWrk = SearchFilter("`id`", "=", $this->facility_id->CurrentValue, DATATYPE_NUMBER, "");
+                }
+                $sqlWrk = $this->facility_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
+                $conn = Conn();
+                $config = $conn->getConfiguration();
+                $config->setResultCacheImpl($this->Cache);
+                $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
+                $ari = count($rswrk);
+                $arwrk = $rswrk;
+                $this->facility_id->EditValue = $arwrk;
+            }
+            $this->facility_id->PlaceHolder = RemoveHtml($this->facility_id->caption());
+
             // ward_name
             $this->ward_name->setupEditAttributes();
             if (!$this->ward_name->Raw) {
@@ -805,6 +893,9 @@ class JdhWardsAdd extends JdhWards
             $this->description->PlaceHolder = RemoveHtml($this->description->caption());
 
             // Add refer script
+
+            // facility_id
+            $this->facility_id->HrefValue = "";
 
             // ward_name
             $this->ward_name->HrefValue = "";
@@ -832,6 +923,11 @@ class JdhWardsAdd extends JdhWards
             return true;
         }
         $validateForm = true;
+        if ($this->facility_id->Required) {
+            if (!$this->facility_id->IsDetailKey && EmptyValue($this->facility_id->FormValue)) {
+                $this->facility_id->addErrorMessage(str_replace("%s", $this->facility_id->caption(), $this->facility_id->RequiredErrorMessage));
+            }
+        }
         if ($this->ward_name->Required) {
             if (!$this->ward_name->IsDetailKey && EmptyValue($this->ward_name->FormValue)) {
                 $this->ward_name->addErrorMessage(str_replace("%s", $this->ward_name->caption(), $this->ward_name->RequiredErrorMessage));
@@ -862,6 +958,9 @@ class JdhWardsAdd extends JdhWards
 
         // Set new row
         $rsnew = [];
+
+        // facility_id
+        $this->facility_id->setDbValueDef($rsnew, $this->facility_id->CurrentValue, 0, false);
 
         // ward_name
         $this->ward_name->setDbValueDef($rsnew, $this->ward_name->CurrentValue, "", false);
@@ -898,6 +997,9 @@ class JdhWardsAdd extends JdhWards
         if ($addRow) {
             // Call Row Inserted event
             $this->rowInserted($rsold, $rsnew);
+            if ($this->SendEmail) {
+                $this->sendEmailOnAdd($rsnew);
+            }
         }
 
         // Write JSON response
@@ -933,6 +1035,8 @@ class JdhWardsAdd extends JdhWards
 
             // Set up lookup SQL and connection
             switch ($fld->FieldVar) {
+                case "x_facility_id":
+                    break;
                 default:
                     $lookupFilter = "";
                     break;
