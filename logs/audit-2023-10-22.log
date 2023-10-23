@@ -83,3 +83,15 @@ date/time,script,user,action,table,field,"key value","old value","new value"
 "2023-10-22 18:41:42",/jootidigitalhealthcare/jdhipdadmissionadd,4,A,jdh_ipd_admission,patient_id,2,,6
 "2023-10-22 18:41:42",/jootidigitalhealthcare/jdhipdadmissionadd,4,A,jdh_ipd_admission,user_id,2,,4
 "2023-10-22 18:41:42",/jootidigitalhealthcare/jdhipdadmissionadd,4,A,jdh_ipd_admission,id,2,,2
+"2023-10-22 18:44:04",/jootidigitalhealthcare/logout,4,logout,::1,,,,
+"2023-10-22 18:44:11",/jootidigitalhealthcare/login,5,login,::1,,,,
+"2023-10-22 18:44:25",/jootidigitalhealthcare/logout,5,logout,::1,,,,
+"2023-10-22 18:44:39",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-22 18:47:39",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-22 18:47:46",/jootidigitalhealthcare/login,5,login,::1,,,,
+"2023-10-22 18:48:36",/jootidigitalhealthcare/logout,5,logout,::1,,,,
+"2023-10-22 18:48:49",/jootidigitalhealthcare/login,12,login,::1,,,,
+"2023-10-22 18:54:03",/jootidigitalhealthcare/jdhbedslist,manager@example.com,autologin,::1,,,,
+"2023-10-22 18:54:51",/jootidigitalhealthcare/logout,12,logout,::1,,,,
+"2023-10-22 18:54:55",/jootidigitalhealthcare/login,12,login,::1,,,,
+"2023-10-22 18:55:29",/jootidigitalhealthcare/logout,12,logout,::1,,,,
