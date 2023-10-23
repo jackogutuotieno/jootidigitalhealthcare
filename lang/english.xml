@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/10/22">
+<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/10/23">
   <!--
     IMPORTANT NOTES:
     1. Language ID must be RFC 4646 language tags (which use hyphen, not underscore), e.g. en-US, fr-CA, fr-FR,
@@ -1271,7 +1271,7 @@
       <phrase id="menutext" value="Medicines" />
     </menu>
     <menu id="273">
-      <phrase id="menutext" value="Pharmacy Administration" />
+      <phrase id="menutext" value="Administer Drugs" />
     </menu>
     <menu id="141">
       <phrase id="menutext" value="Services" />

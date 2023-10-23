@@ -58,14 +58,14 @@ function MenuItem_Adding($item)
 {
     //var_dump($item);
     // Return false if menu item not allowed
-    /* if ($item->url == "userslist" && CurrentUserLevel() == 0)
-        $item->text = "Edit Profile";
-    return true; */
+    return true;
 }
+
 function Menu_Rendering($menu)
 {
     // Change menu items here
 }
+
 function Menu_Rendered($menu)
 {
     // Clean up here
