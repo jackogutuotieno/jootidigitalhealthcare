@@ -20,6 +20,17 @@ $jdh_patients = Container("jdh_patients");
 </td>
         </tr>
 <?php } ?>
+<?php if ($jdh_patients->patient_ip_number->Visible) { // patient_ip_number ?>
+        <tr id="r_patient_ip_number"<?= $jdh_patients->patient_ip_number->rowAttributes() ?>>
+            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_ip_number->caption() ?></td>
+            <td<?= $jdh_patients->patient_ip_number->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_ip_number">
+<span<?= $jdh_patients->patient_ip_number->viewAttributes() ?>>
+<?= $jdh_patients->patient_ip_number->getViewValue() ?></span>
+</span>
+</td>
+        </tr>
+<?php } ?>
 <?php if ($jdh_patients->patient_name->Visible) { // patient_name ?>
         <tr id="r_patient_name"<?= $jdh_patients->patient_name->rowAttributes() ?>>
             <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_name->caption() ?></td>
@@ -31,24 +42,13 @@ $jdh_patients = Container("jdh_patients");
 </td>
         </tr>
 <?php } ?>
-<?php if ($jdh_patients->patient_national_id->Visible) { // patient_national_id ?>
-        <tr id="r_patient_national_id"<?= $jdh_patients->patient_national_id->rowAttributes() ?>>
-            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_national_id->caption() ?></td>
-            <td<?= $jdh_patients->patient_national_id->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_national_id">
-<span<?= $jdh_patients->patient_national_id->viewAttributes() ?>>
-<?= $jdh_patients->patient_national_id->getViewValue() ?></span>
-</span>
-</td>
-        </tr>
-<?php } ?>
-<?php if ($jdh_patients->patient_dob->Visible) { // patient_dob ?>
-        <tr id="r_patient_dob"<?= $jdh_patients->patient_dob->rowAttributes() ?>>
-            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_dob->caption() ?></td>
-            <td<?= $jdh_patients->patient_dob->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_dob">
-<span<?= $jdh_patients->patient_dob->viewAttributes() ?>>
-<?= $jdh_patients->patient_dob->getViewValue() ?></span>
+<?php if ($jdh_patients->patient_dob_year->Visible) { // patient_dob_year ?>
+        <tr id="r_patient_dob_year"<?= $jdh_patients->patient_dob_year->rowAttributes() ?>>
+            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->patient_dob_year->caption() ?></td>
+            <td<?= $jdh_patients->patient_dob_year->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_dob_year">
+<span<?= $jdh_patients->patient_dob_year->viewAttributes() ?>>
+<?= $jdh_patients->patient_dob_year->getViewValue() ?></span>
 </span>
 </td>
         </tr>

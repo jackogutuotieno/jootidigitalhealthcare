@@ -433,7 +433,6 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['patient_id'];
         }
         return $key;
     }
@@ -445,12 +444,6 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
      */
     protected function hideFieldsForAddEdit()
     {
-        if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->patient_id->Visible = false;
-        }
-        if ($this->isAddOrEdit()) {
-            $this->submitted_by_user_id->Visible = false;
-        }
     }
 
     // Lookup data
@@ -618,13 +611,6 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
         // View
         $this->View = Get(Config("VIEW"));
 
-        // Update last accessed time
-        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
-            Write($Language->phrase("UserProfileCorrupted"));
-            $this->terminate();
-            return;
-        }
-
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -651,11 +637,6 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
 
         // Setup export options
         $this->setupExportOptions();
-        $this->patient_id->setVisibility();
-        $this->patient_name->setVisibility();
-        $this->insurance_name->setVisibility();
-        $this->submitted_by_user_id->Visible = false;
-        $this->patient_dob->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -747,33 +728,8 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
             $this->OtherOptions->hideAllOptions();
         }
 
-        // Get default search criteria
-        AddFilter($this->DefaultSearchWhere, $this->basicSearchWhere(true));
-
-        // Get basic search values
-        $this->loadBasicSearchValues();
-
-        // Process filter list
-        if ($this->processFilterList()) {
-            $this->terminate();
-            return;
-        }
-
-        // Restore search parms from Session if not searching / reset / export
-        if (($this->isExport() || $this->Command != "search" && $this->Command != "reset" && $this->Command != "resetall") && $this->Command != "json" && $this->checkSearchParms()) {
-            $this->restoreSearchParms();
-        }
-
-        // Call Recordset SearchValidated event
-        $this->recordsetSearchValidated();
-
         // Set up sorting order
         $this->setupSortOrder();
-
-        // Get basic search criteria
-        if (!$this->hasInvalidFields()) {
-            $srchBasic = $this->basicSearchWhere();
-        }
 
         // Restore display records
         if ($this->Command != "json" && $this->getRecordsPerPage() != "") {
@@ -781,35 +737,6 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
         } else {
             $this->DisplayRecords = 20; // Load default
             $this->setRecordsPerPage($this->DisplayRecords); // Save default to Session
-        }
-
-        // Load search default if no existing search criteria
-        if (!$this->checkSearchParms()) {
-            // Load basic search from default
-            $this->BasicSearch->loadDefault();
-            if ($this->BasicSearch->Keyword != "") {
-                $srchBasic = $this->basicSearchWhere();
-            }
-        }
-
-        // Build search criteria
-        if ($query) {
-            AddFilter($this->SearchWhere, $query);
-        } else {
-            AddFilter($this->SearchWhere, $srchAdvanced);
-            AddFilter($this->SearchWhere, $srchBasic);
-        }
-
-        // Call Recordset_Searching event
-        $this->recordsetSearching($this->SearchWhere);
-
-        // Save search criteria
-        if ($this->Command == "search" && !$this->RestoreSearch) {
-            $this->setSearchWhere($this->SearchWhere); // Save to Session
-            $this->StartRecord = 1; // Reset start record counter
-            $this->setStartRecordNumber($this->StartRecord);
-        } elseif ($this->Command != "json" && !$query) {
-            $this->SearchWhere = $this->getSearchWhere();
         }
 
         // Build filter
@@ -1009,195 +936,12 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
         return $wrkFilter;
     }
 
-    // Get list of filters
-    public function getFilterList()
-    {
-        global $UserProfile;
-
-        // Initialize
-        $filterList = "";
-        $savedFilterList = "";
-
-        // Load server side filters
-        if (Config("SEARCH_FILTER_OPTION") == "Server" && isset($UserProfile)) {
-            $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_patients_insuarancesrch");
-        }
-        $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
-        $filterList = Concat($filterList, $this->patient_name->AdvancedSearch->toJson(), ","); // Field patient_name
-        $filterList = Concat($filterList, $this->insurance_name->AdvancedSearch->toJson(), ","); // Field insurance_name
-        if ($this->BasicSearch->Keyword != "") {
-            $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
-            $filterList = Concat($filterList, $wrk, ",");
-        }
-
-        // Return filter list in JSON
-        if ($filterList != "") {
-            $filterList = "\"data\":{" . $filterList . "}";
-        }
-        if ($savedFilterList != "") {
-            $filterList = Concat($filterList, "\"filters\":" . $savedFilterList, ",");
-        }
-        return ($filterList != "") ? "{" . $filterList . "}" : "null";
-    }
-
-    // Process filter list
-    protected function processFilterList()
-    {
-        global $UserProfile;
-        if (Post("ajax") == "savefilters") { // Save filter request (Ajax)
-            $filters = Post("filters");
-            $UserProfile->setSearchFilters(CurrentUserName(), "fjdh_patients_insuarancesrch", $filters);
-            WriteJson([["success" => true]]); // Success
-            return true;
-        } elseif (Post("cmd") == "resetfilter") {
-            $this->restoreFilterList();
-        }
-        return false;
-    }
-
-    // Restore list of filters
-    protected function restoreFilterList()
-    {
-        // Return if not reset filter
-        if (Post("cmd") !== "resetfilter") {
-            return false;
-        }
-        $filter = json_decode(Post("filter"), true);
-        $this->Command = "search";
-
-        // Field patient_id
-        $this->patient_id->AdvancedSearch->SearchValue = @$filter["x_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchOperator = @$filter["z_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchCondition = @$filter["v_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchValue2 = @$filter["y_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_id"];
-        $this->patient_id->AdvancedSearch->save();
-
-        // Field patient_name
-        $this->patient_name->AdvancedSearch->SearchValue = @$filter["x_patient_name"];
-        $this->patient_name->AdvancedSearch->SearchOperator = @$filter["z_patient_name"];
-        $this->patient_name->AdvancedSearch->SearchCondition = @$filter["v_patient_name"];
-        $this->patient_name->AdvancedSearch->SearchValue2 = @$filter["y_patient_name"];
-        $this->patient_name->AdvancedSearch->SearchOperator2 = @$filter["w_patient_name"];
-        $this->patient_name->AdvancedSearch->save();
-
-        // Field insurance_name
-        $this->insurance_name->AdvancedSearch->SearchValue = @$filter["x_insurance_name"];
-        $this->insurance_name->AdvancedSearch->SearchOperator = @$filter["z_insurance_name"];
-        $this->insurance_name->AdvancedSearch->SearchCondition = @$filter["v_insurance_name"];
-        $this->insurance_name->AdvancedSearch->SearchValue2 = @$filter["y_insurance_name"];
-        $this->insurance_name->AdvancedSearch->SearchOperator2 = @$filter["w_insurance_name"];
-        $this->insurance_name->AdvancedSearch->save();
-        $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
-        $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
-    }
-
-    // Show list of filters
-    public function showFilterList()
-    {
-        global $Language;
-
-        // Initialize
-        $filterList = "";
-        $captionClass = $this->isExport("email") ? "ew-filter-caption-email" : "ew-filter-caption";
-        $captionSuffix = $this->isExport("email") ? ": " : "";
-        if ($this->BasicSearch->Keyword != "") {
-            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $Language->phrase("BasicSearchKeyword") . "</span>" . $captionSuffix . $this->BasicSearch->Keyword . "</div>";
-        }
-
-        // Show Filters
-        if ($filterList != "") {
-            $message = "<div id=\"ew-filter-list\" class=\"callout callout-info d-table\"><div id=\"ew-current-filters\">" .
-                $Language->phrase("CurrentFilters") . "</div>" . $filterList . "</div>";
-            $this->messageShowing($message, "");
-            Write($message);
-        } else { // Output empty tag
-            Write("<div id=\"ew-filter-list\"></div>");
-        }
-    }
-
-    // Return basic search WHERE clause based on search keyword and type
-    public function basicSearchWhere($default = false)
-    {
-        global $Security;
-        $searchStr = "";
-        if (!$Security->canSearch()) {
-            return "";
-        }
-
-        // Fields to search
-        $searchFlds = [];
-        $searchFlds[] = &$this->patient_name;
-        $searchFlds[] = &$this->insurance_name;
-        $searchKeyword = $default ? $this->BasicSearch->KeywordDefault : $this->BasicSearch->Keyword;
-        $searchType = $default ? $this->BasicSearch->TypeDefault : $this->BasicSearch->Type;
-
-        // Get search SQL
-        if ($searchKeyword != "") {
-            $ar = $this->BasicSearch->keywordList($default);
-            $searchStr = GetQuickSearchFilter($searchFlds, $ar, $searchType, Config("BASIC_SEARCH_ANY_FIELDS"), $this->Dbid);
-            if (!$default && in_array($this->Command, ["", "reset", "resetall"])) {
-                $this->Command = "search";
-            }
-        }
-        if (!$default && $this->Command == "search") {
-            $this->BasicSearch->setKeyword($searchKeyword);
-            $this->BasicSearch->setType($searchType);
-
-            // Clear rules for QueryBuilder
-            $this->setSessionRules("");
-        }
-        return $searchStr;
-    }
-
-    // Check if search parm exists
-    protected function checkSearchParms()
-    {
-        // Check basic search
-        if ($this->BasicSearch->issetSession()) {
-            return true;
-        }
-        return false;
-    }
-
-    // Clear all search parameters
-    protected function resetSearchParms()
-    {
-        // Clear search WHERE clause
-        $this->SearchWhere = "";
-        $this->setSearchWhere($this->SearchWhere);
-
-        // Clear basic search parameters
-        $this->resetBasicSearchParms();
-    }
-
-    // Load advanced search default values
-    protected function loadAdvancedSearchDefault()
-    {
-        return false;
-    }
-
-    // Clear all basic search parameters
-    protected function resetBasicSearchParms()
-    {
-        $this->BasicSearch->unsetSession();
-    }
-
-    // Restore all search parameters
-    protected function restoreSearchParms()
-    {
-        $this->RestoreSearch = true;
-
-        // Restore basic search values
-        $this->BasicSearch->load();
-    }
-
     // Set up sort parameters
     protected function setupSortOrder()
     {
         // Load default Sorting Order
         if ($this->Command != "json") {
-            $defaultSort = $this->patient_id->Expression . " ASC" . ", " . $this->insurance_name->Expression . " ASC"; // Set up default sort
+            $defaultSort = ""; // Set up default sort
             if ($this->getSessionOrderBy() == "" && $defaultSort != "") {
                 $this->setSessionOrderBy($defaultSort);
             }
@@ -1207,10 +951,6 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
-            $this->updateSort($this->patient_id); // patient_id
-            $this->updateSort($this->patient_name); // patient_name
-            $this->updateSort($this->insurance_name); // insurance_name
-            $this->updateSort($this->patient_dob); // patient_dob
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1226,20 +966,10 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
     {
         // Check if reset command
         if (StartsString("reset", $this->Command)) {
-            // Reset search criteria
-            if ($this->Command == "reset" || $this->Command == "resetall") {
-                $this->resetSearchParms();
-            }
-
             // Reset (clear) sorting order
             if ($this->Command == "resetsort") {
                 $orderBy = "";
                 $this->setSessionOrderBy($orderBy);
-                $this->patient_id->setSort("");
-                $this->patient_name->setSort("");
-                $this->insurance_name->setSort("");
-                $this->submitted_by_user_id->setSort("");
-                $this->patient_dob->setSort("");
             }
 
             // Reset start position
@@ -1355,7 +1085,6 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
 
         // "checkbox"
         $opt = $this->ListOptions["checkbox"];
-        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->patient_id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
         $this->renderListOptionsExt();
 
         // Call ListOptions_Rendered event
@@ -1382,10 +1111,6 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("patient_id", $this->createColumnOption("patient_id"));
-            $option->add("patient_name", $this->createColumnOption("patient_name"));
-            $option->add("insurance_name", $this->createColumnOption("insurance_name"));
-            $option->add("patient_dob", $this->createColumnOption("patient_dob"));
         }
 
         // Set up options default
@@ -1406,10 +1131,10 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
         // Filter button
         $item = &$this->FilterOptions->add("savecurrentfilter");
         $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_patients_insuarancesrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
-        $item->Visible = true;
+        $item->Visible = false;
         $item = &$this->FilterOptions->add("deletefilter");
         $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_patients_insuarancesrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
-        $item->Visible = true;
+        $item->Visible = false;
         $this->FilterOptions->UseDropDownButton = true;
         $this->FilterOptions->UseButtonGroup = !$this->FilterOptions->UseDropDownButton;
         $this->FilterOptions->DropDownButtonPhrase = $Language->phrase("Filters");
@@ -1672,16 +1397,6 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
         $this->renderListOptions();
     }
 
-    // Load basic search values
-    protected function loadBasicSearchValues()
-    {
-        $this->BasicSearch->setKeyword(Get(Config("TABLE_BASIC_SEARCH"), ""), false);
-        if ($this->BasicSearch->Keyword != "" && $this->Command == "") {
-            $this->Command = "search";
-        }
-        $this->BasicSearch->setType(Get(Config("TABLE_BASIC_SEARCH_TYPE"), ""), false);
-    }
-
     // Load recordset
     public function loadRecordset($offset = -1, $rowcnt = -1)
     {
@@ -1767,40 +1482,18 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->patient_id->setDbValue($row['patient_id']);
-        $this->patient_name->setDbValue($row['patient_name']);
-        $this->insurance_name->setDbValue($row['insurance_name']);
-        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
-        $this->patient_dob->setDbValue($row['patient_dob']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['patient_name'] = $this->patient_name->DefaultValue;
-        $row['insurance_name'] = $this->insurance_name->DefaultValue;
-        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
-        $row['patient_dob'] = $this->patient_dob->DefaultValue;
         return $row;
     }
 
     // Load old record
     protected function loadOldRecord()
     {
-        // Load old record
-        if ($this->OldKey != "") {
-            $this->setKey($this->OldKey);
-            $this->CurrentFilter = $this->getRecordFilter();
-            $sql = $this->getCurrentSql();
-            $conn = $this->getConnection();
-            $rs = LoadRecordset($sql, $conn);
-            if ($rs && ($row = $rs->fields)) {
-                $this->loadRowValues($row); // Load row values
-                return $row;
-            }
-        }
         $this->loadRowValues(); // Load default row values
         return null;
     }
@@ -1823,50 +1516,8 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
 
         // Common render codes for all row types
 
-        // patient_id
-
-        // patient_name
-
-        // insurance_name
-
-        // submitted_by_user_id
-
-        // patient_dob
-
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // patient_id
-            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
-
-            // patient_name
-            $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
-
-            // insurance_name
-            $this->insurance_name->ViewValue = $this->insurance_name->CurrentValue;
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
-            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
-
-            // patient_dob
-            $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
-            $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
-
-            // patient_id
-            $this->patient_id->HrefValue = "";
-            $this->patient_id->TooltipValue = "";
-
-            // patient_name
-            $this->patient_name->HrefValue = "";
-            $this->patient_name->TooltipValue = "";
-
-            // insurance_name
-            $this->insurance_name->HrefValue = "";
-            $this->insurance_name->TooltipValue = "";
-
-            // patient_dob
-            $this->patient_dob->HrefValue = "";
-            $this->patient_dob->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -1986,21 +1637,6 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
         $pageUrl = $this->pageUrl(false);
         $this->SearchOptions = new ListOptions(["TagClassName" => "ew-search-option"]);
 
-        // Search button
-        $item = &$this->SearchOptions->add("searchtoggle");
-        $searchToggleClass = ($this->SearchWhere != "") ? " active" : " active";
-        $item->Body = "<a class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" role=\"button\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-ew-action=\"search-toggle\" data-form=\"fjdh_patients_insuarancesrch\" aria-pressed=\"" . ($searchToggleClass == " active" ? "true" : "false") . "\">" . $Language->phrase("SearchLink") . "</a>";
-        $item->Visible = true;
-
-        // Show all button
-        $item = &$this->SearchOptions->add("showall");
-        if ($this->UseCustomTemplate || !$this->UseAjaxActions) {
-            $item->Body = "<a class=\"btn btn-default ew-show-all\" role=\"button\" title=\"" . $Language->phrase("ShowAll") . "\" data-caption=\"" . $Language->phrase("ShowAll") . "\" href=\"" . $pageUrl . "cmd=reset\">" . $Language->phrase("ShowAllBtn") . "</a>";
-        } else {
-            $item->Body = "<a class=\"btn btn-default ew-show-all\" role=\"button\" title=\"" . $Language->phrase("ShowAll") . "\" data-caption=\"" . $Language->phrase("ShowAll") . "\" data-ew-action=\"refresh\" data-url=\"" . $pageUrl . "cmd=reset\">" . $Language->phrase("ShowAllBtn") . "</a>";
-        }
-        $item->Visible = ($this->SearchWhere != $this->DefaultSearchWhere && $this->SearchWhere != "0=101");
-
         // Button group for search
         $this->SearchOptions->UseDropDownButton = false;
         $this->SearchOptions->UseButtonGroup = true;
@@ -2024,7 +1660,7 @@ class JdhPatientsInsuaranceList extends JdhPatientsInsuarance
     // Check if any search fields
     public function hasSearchFields()
     {
-        return true;
+        return false;
     }
 
     // Render search options

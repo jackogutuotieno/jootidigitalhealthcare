@@ -8,9 +8,4 @@ use Psr\Http\Message\ResponseInterface as Response;
 
 class JdhPatientsInsuaranceController extends ControllerBase
 {
-    // list
-    public function list(Request $request, Response $response, array $args): Response
-    {
-        return $this->runPage($request, $response, $args, "JdhPatientsInsuaranceList");
-    }
 }

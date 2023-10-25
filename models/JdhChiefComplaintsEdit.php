@@ -466,13 +466,6 @@ class JdhChiefComplaintsEdit extends JdhChiefComplaints
         // View
         $this->View = Get(Config("VIEW"));
 
-        // Update last accessed time
-        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
-            Write($Language->phrase("UserProfileCorrupted"));
-            $this->terminate();
-            return;
-        }
-
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action

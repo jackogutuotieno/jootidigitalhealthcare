@@ -433,7 +433,6 @@ class JdhLabIncomeList extends JdhLabIncome
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['patient_id'];
         }
         return $key;
     }
@@ -612,13 +611,6 @@ class JdhLabIncomeList extends JdhLabIncome
         // View
         $this->View = Get(Config("VIEW"));
 
-        // Update last accessed time
-        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
-            Write($Language->phrase("UserProfileCorrupted"));
-            $this->terminate();
-            return;
-        }
-
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -650,7 +642,7 @@ class JdhLabIncomeList extends JdhLabIncome
         $this->service_name->setVisibility();
         $this->service_cost->setVisibility();
         $this->request_date->setVisibility();
-        $this->patient_dob->Visible = false;
+        $this->patient_dob_year->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -1021,7 +1013,8 @@ class JdhLabIncomeList extends JdhLabIncome
         $filterList = Concat($filterList, $this->patient_name->AdvancedSearch->toJson(), ","); // Field patient_name
         $filterList = Concat($filterList, $this->service_name->AdvancedSearch->toJson(), ","); // Field service_name
         $filterList = Concat($filterList, $this->service_cost->AdvancedSearch->toJson(), ","); // Field service_cost
-        $filterList = Concat($filterList, $this->patient_dob->AdvancedSearch->toJson(), ","); // Field patient_dob
+        $filterList = Concat($filterList, $this->request_date->AdvancedSearch->toJson(), ","); // Field request_date
+        $filterList = Concat($filterList, $this->patient_dob_year->AdvancedSearch->toJson(), ","); // Field patient_dob_year
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
             $filterList = Concat($filterList, $wrk, ",");
@@ -1094,13 +1087,21 @@ class JdhLabIncomeList extends JdhLabIncome
         $this->service_cost->AdvancedSearch->SearchOperator2 = @$filter["w_service_cost"];
         $this->service_cost->AdvancedSearch->save();
 
-        // Field patient_dob
-        $this->patient_dob->AdvancedSearch->SearchValue = @$filter["x_patient_dob"];
-        $this->patient_dob->AdvancedSearch->SearchOperator = @$filter["z_patient_dob"];
-        $this->patient_dob->AdvancedSearch->SearchCondition = @$filter["v_patient_dob"];
-        $this->patient_dob->AdvancedSearch->SearchValue2 = @$filter["y_patient_dob"];
-        $this->patient_dob->AdvancedSearch->SearchOperator2 = @$filter["w_patient_dob"];
-        $this->patient_dob->AdvancedSearch->save();
+        // Field request_date
+        $this->request_date->AdvancedSearch->SearchValue = @$filter["x_request_date"];
+        $this->request_date->AdvancedSearch->SearchOperator = @$filter["z_request_date"];
+        $this->request_date->AdvancedSearch->SearchCondition = @$filter["v_request_date"];
+        $this->request_date->AdvancedSearch->SearchValue2 = @$filter["y_request_date"];
+        $this->request_date->AdvancedSearch->SearchOperator2 = @$filter["w_request_date"];
+        $this->request_date->AdvancedSearch->save();
+
+        // Field patient_dob_year
+        $this->patient_dob_year->AdvancedSearch->SearchValue = @$filter["x_patient_dob_year"];
+        $this->patient_dob_year->AdvancedSearch->SearchOperator = @$filter["z_patient_dob_year"];
+        $this->patient_dob_year->AdvancedSearch->SearchCondition = @$filter["v_patient_dob_year"];
+        $this->patient_dob_year->AdvancedSearch->SearchValue2 = @$filter["y_patient_dob_year"];
+        $this->patient_dob_year->AdvancedSearch->SearchOperator2 = @$filter["w_patient_dob_year"];
+        $this->patient_dob_year->AdvancedSearch->save();
         $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
     }
@@ -1254,7 +1255,7 @@ class JdhLabIncomeList extends JdhLabIncome
                 $this->service_name->setSort("");
                 $this->service_cost->setSort("");
                 $this->request_date->setSort("");
-                $this->patient_dob->setSort("");
+                $this->patient_dob_year->setSort("");
             }
 
             // Reset start position
@@ -1370,7 +1371,6 @@ class JdhLabIncomeList extends JdhLabIncome
 
         // "checkbox"
         $opt = $this->ListOptions["checkbox"];
-        $opt->Body = "<div class=\"form-check\"><input type=\"checkbox\" id=\"key_m_" . $this->RowCount . "\" name=\"key_m[]\" class=\"form-check-input ew-multi-select\" value=\"" . HtmlEncode($this->patient_id->CurrentValue) . "\" data-ew-action=\"select-key\"></div>";
         $this->renderListOptionsExt();
 
         // Call ListOptions_Rendered event
@@ -1788,7 +1788,7 @@ class JdhLabIncomeList extends JdhLabIncome
         $this->service_name->setDbValue($row['service_name']);
         $this->service_cost->setDbValue($row['service_cost']);
         $this->request_date->setDbValue($row['request_date']);
-        $this->patient_dob->setDbValue($row['patient_dob']);
+        $this->patient_dob_year->setDbValue($row['patient_dob_year']);
     }
 
     // Return a row with default values
@@ -1800,25 +1800,13 @@ class JdhLabIncomeList extends JdhLabIncome
         $row['service_name'] = $this->service_name->DefaultValue;
         $row['service_cost'] = $this->service_cost->DefaultValue;
         $row['request_date'] = $this->request_date->DefaultValue;
-        $row['patient_dob'] = $this->patient_dob->DefaultValue;
+        $row['patient_dob_year'] = $this->patient_dob_year->DefaultValue;
         return $row;
     }
 
     // Load old record
     protected function loadOldRecord()
     {
-        // Load old record
-        if ($this->OldKey != "") {
-            $this->setKey($this->OldKey);
-            $this->CurrentFilter = $this->getRecordFilter();
-            $sql = $this->getCurrentSql();
-            $conn = $this->getConnection();
-            $rs = LoadRecordset($sql, $conn);
-            if ($rs && ($row = $rs->fields)) {
-                $this->loadRowValues($row); // Load row values
-                return $row;
-            }
-        }
         $this->loadRowValues(); // Load default row values
         return null;
     }
@@ -1851,7 +1839,7 @@ class JdhLabIncomeList extends JdhLabIncome
 
         // request_date
 
-        // patient_dob
+        // patient_dob_year
 
         // Accumulate aggregate value
         if ($this->RowType != ROWTYPE_AGGREGATEINIT && $this->RowType != ROWTYPE_AGGREGATE && $this->RowType != ROWTYPE_PREVIEW_FIELD) {
@@ -1864,6 +1852,7 @@ class JdhLabIncomeList extends JdhLabIncome
         if ($this->RowType == ROWTYPE_VIEW) {
             // patient_id
             $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
+            $this->patient_id->ViewValue = FormatNumber($this->patient_id->ViewValue, $this->patient_id->formatPattern());
 
             // patient_name
             $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
@@ -1879,9 +1868,9 @@ class JdhLabIncomeList extends JdhLabIncome
             $this->request_date->ViewValue = $this->request_date->CurrentValue;
             $this->request_date->ViewValue = FormatDateTime($this->request_date->ViewValue, $this->request_date->formatPattern());
 
-            // patient_dob
-            $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
-            $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
+            // patient_dob_year
+            $this->patient_dob_year->ViewValue = $this->patient_dob_year->CurrentValue;
+            $this->patient_dob_year->ViewValue = FormatNumber($this->patient_dob_year->ViewValue, $this->patient_dob_year->formatPattern());
 
             // patient_id
             $this->patient_id->HrefValue = "";
@@ -2027,12 +2016,6 @@ class JdhLabIncomeList extends JdhLabIncome
         global $Language, $Security;
         $pageUrl = $this->pageUrl(false);
         $this->SearchOptions = new ListOptions(["TagClassName" => "ew-search-option"]);
-
-        // Search button
-        $item = &$this->SearchOptions->add("searchtoggle");
-        $searchToggleClass = ($this->SearchWhere != "") ? " active" : " active";
-        $item->Body = "<a class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" role=\"button\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-ew-action=\"search-toggle\" data-form=\"fjdh_lab_incomesrch\" aria-pressed=\"" . ($searchToggleClass == " active" ? "true" : "false") . "\">" . $Language->phrase("SearchLink") . "</a>";
-        $item->Visible = true;
 
         // Show all button
         $item = &$this->SearchOptions->add("showall");

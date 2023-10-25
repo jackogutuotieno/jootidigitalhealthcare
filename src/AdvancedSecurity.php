@@ -535,11 +535,6 @@ class AdvancedSecurity
                     }
                     $UserProfile->saveProfileToDatabase($usr); // Save profile
                 }
-
-                // Check concurrent user login
-                if ($valid && !$UserProfile->isValidUser($usr, session_id())) {
-                    return true; // Return true but do not login
-                }
                 if ($valid) {
                     // Check two factor authentication
                     if (Config("USE_TWO_FACTOR_AUTHENTICATION")) {

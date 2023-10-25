@@ -92,26 +92,35 @@ loadjs.ready(["wrapper", "head"], function () {
 <input type="hidden" name="cmd" value="search">
 <input type="hidden" name="t" value="jdh_patients">
 <div class="ew-extended-search container-fluid ps-2">
-<div class="row mb-0">
-    <div class="col-sm-auto px-0 pe-sm-2">
-        <div class="ew-basic-search input-group">
-            <input type="search" name="<?= Config("TABLE_BASIC_SEARCH") ?>" id="<?= Config("TABLE_BASIC_SEARCH") ?>" class="form-control ew-basic-search-keyword" value="<?= HtmlEncode($Page->BasicSearch->getKeyword()) ?>" placeholder="<?= HtmlEncode($Language->phrase("Search")) ?>" aria-label="<?= HtmlEncode($Language->phrase("Search")) ?>">
-            <input type="hidden" name="<?= Config("TABLE_BASIC_SEARCH_TYPE") ?>" id="<?= Config("TABLE_BASIC_SEARCH_TYPE") ?>" class="ew-basic-search-type" value="<?= HtmlEncode($Page->BasicSearch->getType()) ?>">
-            <button type="button" data-bs-toggle="dropdown" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" aria-haspopup="true" aria-expanded="false">
-                <span id="searchtype"><?= $Page->BasicSearch->getTypeNameShort() ?></span>
-            </button>
-            <div class="dropdown-menu dropdown-menu-end">
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "" ? " active" : "" ?>" form="fjdh_patientssrch" data-ew-action="search-type"><?= $Language->phrase("QuickSearchAuto") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "=" ? " active" : "" ?>" form="fjdh_patientssrch" data-ew-action="search-type" data-search-type="="><?= $Language->phrase("QuickSearchExact") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "AND" ? " active" : "" ?>" form="fjdh_patientssrch" data-ew-action="search-type" data-search-type="AND"><?= $Language->phrase("QuickSearchAll") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "OR" ? " active" : "" ?>" form="fjdh_patientssrch" data-ew-action="search-type" data-search-type="OR"><?= $Language->phrase("QuickSearchAny") ?></button>
+<!-- template for quick search in navbar -->
+<script id="navbar-basic-search" type="text/html" class="ew-js-template" data-name="search" data-seq="10" data-data="menu" data-target="#ew-navbar-end" data-method="prependTo">
+    <li class="nav-item navbar-basic-search">
+        <a class="nav-link" data-widget="navbar-search" href="#" role="button">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </a>
+        <div class="navbar-search-block">
+            <div class="ew-basic-search input-group input-group-sm">
+                <input type="text" name="<?= Config("TABLE_BASIC_SEARCH") ?>" id="<?= Config("TABLE_BASIC_SEARCH") ?>" class="form-control form-control-navbar ew-basic-search-keyword" form="fjdh_patientssrch" value="<?= HtmlEncode($Page->BasicSearch->getKeyword()) ?>" placeholder="<?= HtmlEncode($Language->phrase("Search")) ?>" aria-label="<?= HtmlEncode($Language->phrase("Search")) ?>">
+                <input type="hidden" name="<?= Config("TABLE_BASIC_SEARCH_TYPE") ?>" id="<?= Config("TABLE_BASIC_SEARCH_TYPE") ?>" class="form-control-navbar ew-basic-search-type" form="fjdh_patientssrch" value="<?= HtmlEncode($Page->BasicSearch->getType()) ?>">
+                <button class="btn btn-navbar" form="fjdh_patientssrch" type="submit">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                <button type="button" data-bs-toggle="dropdown" class="btn btn-navbar dropdown-toggle" aria-haspopup="true" aria-expanded="false">
+                    <span id="searchtype"><?= $Page->BasicSearch->getTypeNameShort() ?></span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end">
+                    <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "" ? " active" : "" ?>" form="fjdh_patientssrch" data-ew-action="search-type"><?= $Language->phrase("QuickSearchAuto") ?></button>
+                    <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "=" ? " active" : "" ?>" form="fjdh_patientssrch" data-ew-action="search-type" data-search-type="="><?= $Language->phrase("QuickSearchExact") ?></button>
+                    <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "AND" ? " active" : "" ?>" form="fjdh_patientssrch" data-ew-action="search-type" data-search-type="AND"><?= $Language->phrase("QuickSearchAll") ?></button>
+                    <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "OR" ? " active" : "" ?>" form="fjdh_patientssrch" data-ew-action="search-type" data-search-type="OR"><?= $Language->phrase("QuickSearchAny") ?></button>
+                </div>
+                <button class="btn btn-navbar" type="button" data-widget="navbar-search">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
         </div>
-    </div>
-    <div class="col-sm-auto mb-3">
-        <button class="btn btn-primary" name="btn-submit" id="btn-submit" type="submit"><?= $Language->phrase("SearchBtn") ?></button>
-    </div>
-</div>
+    </li>
+</script>
 </div><!-- /.ew-extended-search -->
 </div><!-- /.ew-search-panel -->
 </form>
@@ -152,14 +161,14 @@ $Page->ListOptions->render("header", "left");
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_patients_patient_id" class="jdh_patients_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
 <?php } ?>
+<?php if ($Page->patient_ip_number->Visible) { // patient_ip_number ?>
+        <th data-name="patient_ip_number" class="<?= $Page->patient_ip_number->headerCellClass() ?>"><div id="elh_jdh_patients_patient_ip_number" class="jdh_patients_patient_ip_number"><?= $Page->renderFieldHeader($Page->patient_ip_number) ?></div></th>
+<?php } ?>
 <?php if ($Page->patient_name->Visible) { // patient_name ?>
         <th data-name="patient_name" class="<?= $Page->patient_name->headerCellClass() ?>"><div id="elh_jdh_patients_patient_name" class="jdh_patients_patient_name"><?= $Page->renderFieldHeader($Page->patient_name) ?></div></th>
 <?php } ?>
-<?php if ($Page->patient_national_id->Visible) { // patient_national_id ?>
-        <th data-name="patient_national_id" class="<?= $Page->patient_national_id->headerCellClass() ?>"><div id="elh_jdh_patients_patient_national_id" class="jdh_patients_patient_national_id"><?= $Page->renderFieldHeader($Page->patient_national_id) ?></div></th>
-<?php } ?>
-<?php if ($Page->patient_dob->Visible) { // patient_dob ?>
-        <th data-name="patient_dob" class="<?= $Page->patient_dob->headerCellClass() ?>"><div id="elh_jdh_patients_patient_dob" class="jdh_patients_patient_dob"><?= $Page->renderFieldHeader($Page->patient_dob) ?></div></th>
+<?php if ($Page->patient_dob_year->Visible) { // patient_dob_year ?>
+        <th data-name="patient_dob_year" class="<?= $Page->patient_dob_year->headerCellClass() ?>"><div id="elh_jdh_patients_patient_dob_year" class="jdh_patients_patient_dob_year"><?= $Page->renderFieldHeader($Page->patient_dob_year) ?></div></th>
 <?php } ?>
 <?php if ($Page->patient_age->Visible) { // patient_age ?>
         <th data-name="patient_age" class="<?= $Page->patient_age->headerCellClass() ?>"><div id="elh_jdh_patients_patient_age" class="jdh_patients_patient_age"><?= $Page->renderFieldHeader($Page->patient_age) ?></div></th>
@@ -203,6 +212,14 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 </span>
 </td>
     <?php } ?>
+    <?php if ($Page->patient_ip_number->Visible) { // patient_ip_number ?>
+        <td data-name="patient_ip_number"<?= $Page->patient_ip_number->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_ip_number" class="el_jdh_patients_patient_ip_number">
+<span<?= $Page->patient_ip_number->viewAttributes() ?>>
+<?= $Page->patient_ip_number->getViewValue() ?></span>
+</span>
+</td>
+    <?php } ?>
     <?php if ($Page->patient_name->Visible) { // patient_name ?>
         <td data-name="patient_name"<?= $Page->patient_name->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_patients_patient_name" class="el_jdh_patients_patient_name">
@@ -211,19 +228,11 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->patient_national_id->Visible) { // patient_national_id ?>
-        <td data-name="patient_national_id"<?= $Page->patient_national_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_national_id" class="el_jdh_patients_patient_national_id">
-<span<?= $Page->patient_national_id->viewAttributes() ?>>
-<?= $Page->patient_national_id->getViewValue() ?></span>
-</span>
-</td>
-    <?php } ?>
-    <?php if ($Page->patient_dob->Visible) { // patient_dob ?>
-        <td data-name="patient_dob"<?= $Page->patient_dob->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_dob" class="el_jdh_patients_patient_dob">
-<span<?= $Page->patient_dob->viewAttributes() ?>>
-<?= $Page->patient_dob->getViewValue() ?></span>
+    <?php if ($Page->patient_dob_year->Visible) { // patient_dob_year ?>
+        <td data-name="patient_dob_year"<?= $Page->patient_dob_year->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_dob_year" class="el_jdh_patients_patient_dob_year">
+<span<?= $Page->patient_dob_year->viewAttributes() ?>>
+<?= $Page->patient_dob_year->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>

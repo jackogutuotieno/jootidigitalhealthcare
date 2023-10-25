@@ -618,13 +618,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         // View
         $this->View = Get(Config("VIEW"));
 
-        // Update last accessed time
-        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
-            Write($Language->phrase("UserProfileCorrupted"));
-            $this->terminate();
-            return;
-        }
-
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -652,12 +645,12 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         // Setup export options
         $this->setupExportOptions();
         $this->user_id->Visible = false;
+        $this->patient_id->setVisibility();
         $this->first_name->setVisibility();
         $this->last_name->setVisibility();
         $this->department_id->Visible = false;
         $this->service_name->Visible = false;
         $this->service_cost->setVisibility();
-        $this->patient_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -1028,12 +1021,12 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_consultation_incomesrch");
         }
         $filterList = Concat($filterList, $this->user_id->AdvancedSearch->toJson(), ","); // Field user_id
+        $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
         $filterList = Concat($filterList, $this->first_name->AdvancedSearch->toJson(), ","); // Field first_name
         $filterList = Concat($filterList, $this->last_name->AdvancedSearch->toJson(), ","); // Field last_name
         $filterList = Concat($filterList, $this->department_id->AdvancedSearch->toJson(), ","); // Field department_id
         $filterList = Concat($filterList, $this->service_name->AdvancedSearch->toJson(), ","); // Field service_name
         $filterList = Concat($filterList, $this->service_cost->AdvancedSearch->toJson(), ","); // Field service_cost
-        $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
             $filterList = Concat($filterList, $wrk, ",");
@@ -1082,6 +1075,14 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         $this->user_id->AdvancedSearch->SearchOperator2 = @$filter["w_user_id"];
         $this->user_id->AdvancedSearch->save();
 
+        // Field patient_id
+        $this->patient_id->AdvancedSearch->SearchValue = @$filter["x_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchOperator = @$filter["z_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchCondition = @$filter["v_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchValue2 = @$filter["y_patient_id"];
+        $this->patient_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_id"];
+        $this->patient_id->AdvancedSearch->save();
+
         // Field first_name
         $this->first_name->AdvancedSearch->SearchValue = @$filter["x_first_name"];
         $this->first_name->AdvancedSearch->SearchOperator = @$filter["z_first_name"];
@@ -1121,14 +1122,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         $this->service_cost->AdvancedSearch->SearchValue2 = @$filter["y_service_cost"];
         $this->service_cost->AdvancedSearch->SearchOperator2 = @$filter["w_service_cost"];
         $this->service_cost->AdvancedSearch->save();
-
-        // Field patient_id
-        $this->patient_id->AdvancedSearch->SearchValue = @$filter["x_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchOperator = @$filter["z_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchCondition = @$filter["v_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchValue2 = @$filter["y_patient_id"];
-        $this->patient_id->AdvancedSearch->SearchOperator2 = @$filter["w_patient_id"];
-        $this->patient_id->AdvancedSearch->save();
         $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
     }
@@ -1248,6 +1241,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         if (Get("order") !== null) {
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
+            $this->updateSort($this->patient_id); // patient_id
             $this->updateSort($this->first_name); // first_name
             $this->updateSort($this->last_name); // last_name
             $this->updateSort($this->service_cost); // service_cost
@@ -1276,12 +1270,12 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
                 $orderBy = "";
                 $this->setSessionOrderBy($orderBy);
                 $this->user_id->setSort("");
+                $this->patient_id->setSort("");
                 $this->first_name->setSort("");
                 $this->last_name->setSort("");
                 $this->department_id->setSort("");
                 $this->service_name->setSort("");
                 $this->service_cost->setSort("");
-                $this->patient_id->setSort("");
             }
 
             // Reset start position
@@ -1436,6 +1430,7 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
+            $option->add("patient_id", $this->createColumnOption("patient_id"));
             $option->add("first_name", $this->createColumnOption("first_name"));
             $option->add("last_name", $this->createColumnOption("last_name"));
             $option->add("service_cost", $this->createColumnOption("service_cost"));
@@ -1821,12 +1816,12 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         // Call Row Selected event
         $this->rowSelected($row);
         $this->user_id->setDbValue($row['user_id']);
+        $this->patient_id->setDbValue($row['patient_id']);
         $this->first_name->setDbValue($row['first_name']);
         $this->last_name->setDbValue($row['last_name']);
         $this->department_id->setDbValue($row['department_id']);
         $this->service_name->setDbValue($row['service_name']);
         $this->service_cost->setDbValue($row['service_cost']);
-        $this->patient_id->setDbValue($row['patient_id']);
     }
 
     // Return a row with default values
@@ -1834,12 +1829,12 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
     {
         $row = [];
         $row['user_id'] = $this->user_id->DefaultValue;
+        $row['patient_id'] = $this->patient_id->DefaultValue;
         $row['first_name'] = $this->first_name->DefaultValue;
         $row['last_name'] = $this->last_name->DefaultValue;
         $row['department_id'] = $this->department_id->DefaultValue;
         $row['service_name'] = $this->service_name->DefaultValue;
         $row['service_cost'] = $this->service_cost->DefaultValue;
-        $row['patient_id'] = $this->patient_id->DefaultValue;
         return $row;
     }
 
@@ -1882,6 +1877,8 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
 
         // user_id
 
+        // patient_id
+
         // first_name
 
         // last_name
@@ -1891,8 +1888,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         // service_name
 
         // service_cost
-
-        // patient_id
 
         // Accumulate aggregate value
         if ($this->RowType != ROWTYPE_AGGREGATEINIT && $this->RowType != ROWTYPE_AGGREGATE && $this->RowType != ROWTYPE_PREVIEW_FIELD) {
@@ -1905,6 +1900,9 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         if ($this->RowType == ROWTYPE_VIEW) {
             // user_id
             $this->user_id->ViewValue = $this->user_id->CurrentValue;
+
+            // patient_id
+            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
             // first_name
             $this->first_name->ViewValue = $this->first_name->CurrentValue;
@@ -1943,7 +1941,8 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
             $this->service_cost->ViewValue = FormatNumber($this->service_cost->ViewValue, $this->service_cost->formatPattern());
 
             // patient_id
-            $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
+            $this->patient_id->HrefValue = "";
+            $this->patient_id->TooltipValue = "";
 
             // first_name
             $this->first_name->HrefValue = "";
@@ -2081,12 +2080,6 @@ class JdhConsultationIncomeList extends JdhConsultationIncome
         global $Language, $Security;
         $pageUrl = $this->pageUrl(false);
         $this->SearchOptions = new ListOptions(["TagClassName" => "ew-search-option"]);
-
-        // Search button
-        $item = &$this->SearchOptions->add("searchtoggle");
-        $searchToggleClass = ($this->SearchWhere != "") ? " active" : " active";
-        $item->Body = "<a class=\"btn btn-default ew-search-toggle" . $searchToggleClass . "\" role=\"button\" title=\"" . $Language->phrase("SearchPanel") . "\" data-caption=\"" . $Language->phrase("SearchPanel") . "\" data-ew-action=\"search-toggle\" data-form=\"fjdh_consultation_incomesrch\" aria-pressed=\"" . ($searchToggleClass == " active" ? "true" : "false") . "\">" . $Language->phrase("SearchLink") . "</a>";
-        $item->Visible = true;
 
         // Show all button
         $item = &$this->SearchOptions->add("showall");

@@ -42,12 +42,12 @@ class JdhConsultationIncome extends DbTable
 
     // Fields
     public $user_id;
+    public $patient_id;
     public $first_name;
     public $last_name;
     public $department_id;
     public $service_name;
     public $service_cost;
-    public $patient_id;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -118,6 +118,30 @@ class JdhConsultationIncome extends DbTable
         $this->user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->Fields['user_id'] = &$this->user_id;
+
+        // patient_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_id = new DbField(
+            $this, // Table
+            'x_patient_id', // Variable name
+            'patient_id', // Name
+            '`patient_id`', // Expression
+            '`patient_id`', // Basic search expression
+            20, // Type
+            20, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`patient_id`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'NO' // Edit Tag
+        );
+        $this->patient_id->InputTextType = "text";
+        $this->patient_id->IsAutoIncrement = true; // Autoincrement field
+        $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->patient_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->Fields['patient_id'] = &$this->patient_id;
 
         // first_name $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->first_name = new DbField(
@@ -243,30 +267,6 @@ class JdhConsultationIncome extends DbTable
         $this->service_cost->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->service_cost->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['service_cost'] = &$this->service_cost;
-
-        // patient_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->patient_id = new DbField(
-            $this, // Table
-            'x_patient_id', // Variable name
-            'patient_id', // Name
-            '`patient_id`', // Expression
-            '`patient_id`', // Basic search expression
-            20, // Type
-            20, // Size
-            -1, // Date/Time format
-            false, // Is upload field
-            '`patient_id`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'NO' // Edit Tag
-        );
-        $this->patient_id->InputTextType = "text";
-        $this->patient_id->IsAutoIncrement = true; // Autoincrement field
-        $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->patient_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
-        $this->Fields['patient_id'] = &$this->patient_id;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -750,12 +750,12 @@ class JdhConsultationIncome extends DbTable
             return;
         }
         $this->user_id->DbValue = $row['user_id'];
+        $this->patient_id->DbValue = $row['patient_id'];
         $this->first_name->DbValue = $row['first_name'];
         $this->last_name->DbValue = $row['last_name'];
         $this->department_id->DbValue = $row['department_id'];
         $this->service_name->DbValue = $row['service_name'];
         $this->service_cost->DbValue = $row['service_cost'];
-        $this->patient_id->DbValue = $row['patient_id'];
     }
 
     // Delete uploaded files
@@ -1110,12 +1110,12 @@ class JdhConsultationIncome extends DbTable
             return;
         }
         $this->user_id->setDbValue($row['user_id']);
+        $this->patient_id->setDbValue($row['patient_id']);
         $this->first_name->setDbValue($row['first_name']);
         $this->last_name->setDbValue($row['last_name']);
         $this->department_id->setDbValue($row['department_id']);
         $this->service_name->setDbValue($row['service_name']);
         $this->service_cost->setDbValue($row['service_cost']);
-        $this->patient_id->setDbValue($row['patient_id']);
     }
 
     // Render list content
@@ -1148,6 +1148,8 @@ class JdhConsultationIncome extends DbTable
 
         // user_id
 
+        // patient_id
+
         // first_name
 
         // last_name
@@ -1158,10 +1160,11 @@ class JdhConsultationIncome extends DbTable
 
         // service_cost
 
-        // patient_id
-
         // user_id
         $this->user_id->ViewValue = $this->user_id->CurrentValue;
+
+        // patient_id
+        $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
         // first_name
         $this->first_name->ViewValue = $this->first_name->CurrentValue;
@@ -1199,12 +1202,13 @@ class JdhConsultationIncome extends DbTable
         $this->service_cost->ViewValue = $this->service_cost->CurrentValue;
         $this->service_cost->ViewValue = FormatNumber($this->service_cost->ViewValue, $this->service_cost->formatPattern());
 
-        // patient_id
-        $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
-
         // user_id
         $this->user_id->HrefValue = "";
         $this->user_id->TooltipValue = "";
+
+        // patient_id
+        $this->patient_id->HrefValue = "";
+        $this->patient_id->TooltipValue = "";
 
         // first_name
         $this->first_name->HrefValue = "";
@@ -1226,10 +1230,6 @@ class JdhConsultationIncome extends DbTable
         $this->service_cost->HrefValue = "";
         $this->service_cost->TooltipValue = "";
 
-        // patient_id
-        $this->patient_id->HrefValue = "";
-        $this->patient_id->TooltipValue = "";
-
         // Call Row Rendered event
         $this->rowRendered();
 
@@ -1248,6 +1248,14 @@ class JdhConsultationIncome extends DbTable
         // user_id
         $this->user_id->setupEditAttributes();
         $this->user_id->EditValue = $this->user_id->CurrentValue;
+
+        // patient_id
+        $this->patient_id->setupEditAttributes();
+        $this->patient_id->EditValue = $this->patient_id->CurrentValue;
+        $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+        if (strval($this->patient_id->EditValue) != "" && is_numeric($this->patient_id->EditValue)) {
+            $this->patient_id->EditValue = $this->patient_id->EditValue;
+        }
 
         // first_name
         $this->first_name->setupEditAttributes();
@@ -1283,14 +1291,6 @@ class JdhConsultationIncome extends DbTable
         $this->service_cost->PlaceHolder = RemoveHtml($this->service_cost->caption());
         if (strval($this->service_cost->EditValue) != "" && is_numeric($this->service_cost->EditValue)) {
             $this->service_cost->EditValue = FormatNumber($this->service_cost->EditValue, null);
-        }
-
-        // patient_id
-        $this->patient_id->setupEditAttributes();
-        $this->patient_id->EditValue = $this->patient_id->CurrentValue;
-        $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
-        if (strval($this->patient_id->EditValue) != "" && is_numeric($this->patient_id->EditValue)) {
-            $this->patient_id->EditValue = $this->patient_id->EditValue;
         }
 
         // Call Row Rendered event
@@ -1330,20 +1330,20 @@ class JdhConsultationIncome extends DbTable
                 $doc->beginExportRow();
                 if ($exportPageType == "view") {
                     $doc->exportCaption($this->user_id);
+                    $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->first_name);
                     $doc->exportCaption($this->last_name);
                     $doc->exportCaption($this->department_id);
                     $doc->exportCaption($this->service_name);
                     $doc->exportCaption($this->service_cost);
-                    $doc->exportCaption($this->patient_id);
                 } else {
                     $doc->exportCaption($this->user_id);
+                    $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->first_name);
                     $doc->exportCaption($this->last_name);
                     $doc->exportCaption($this->department_id);
                     $doc->exportCaption($this->service_name);
                     $doc->exportCaption($this->service_cost);
-                    $doc->exportCaption($this->patient_id);
                 }
                 $doc->endExportRow();
             }
@@ -1375,20 +1375,20 @@ class JdhConsultationIncome extends DbTable
                     $doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
                     if ($exportPageType == "view") {
                         $doc->exportField($this->user_id);
+                        $doc->exportField($this->patient_id);
                         $doc->exportField($this->first_name);
                         $doc->exportField($this->last_name);
                         $doc->exportField($this->department_id);
                         $doc->exportField($this->service_name);
                         $doc->exportField($this->service_cost);
-                        $doc->exportField($this->patient_id);
                     } else {
                         $doc->exportField($this->user_id);
+                        $doc->exportField($this->patient_id);
                         $doc->exportField($this->first_name);
                         $doc->exportField($this->last_name);
                         $doc->exportField($this->department_id);
                         $doc->exportField($this->service_name);
                         $doc->exportField($this->service_cost);
-                        $doc->exportField($this->patient_id);
                     }
                     $doc->endExportRow($rowCnt);
                 }
@@ -1409,12 +1409,12 @@ class JdhConsultationIncome extends DbTable
             if (!$doc->ExportCustom) {
                 $doc->beginExportRow(-1);
                 $doc->exportAggregate($this->user_id, '');
+                $doc->exportAggregate($this->patient_id, '');
                 $doc->exportAggregate($this->first_name, '');
                 $doc->exportAggregate($this->last_name, '');
                 $doc->exportAggregate($this->department_id, '');
                 $doc->exportAggregate($this->service_name, '');
                 $doc->exportAggregate($this->service_cost, 'TOTAL');
-                $doc->exportAggregate($this->patient_id, '');
                 $doc->endExportRow();
             }
         }

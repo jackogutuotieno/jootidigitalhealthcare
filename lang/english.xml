@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/10/23">
+<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/10/25">
   <!--
     IMPORTANT NOTES:
     1. Language ID must be RFC 4646 language tags (which use hyphen, not underscore), e.g. en-US, fr-CA, fr-FR,
@@ -1499,14 +1499,14 @@
         <phrase id="fldcaption" value="Photo" />
         <phrase id="fldalt" value="Patient Photo" />
       </field>
+      <field id="patient_ip_number">
+        <phrase id="fldcaption" value="IP Number" />
+      </field>
       <field id="patient_name">
         <phrase id="fldcaption" value="Name" />
       </field>
-      <field id="patient_national_id">
-        <phrase id="fldcaption" value="National ID/Passport No" />
-      </field>
-      <field id="patient_dob">
-        <phrase id="fldcaption" value="Date of Birth" />
+      <field id="patient_dob_year">
+        <phrase id="fldcaption" value="Year of Birth" />
       </field>
       <field id="patient_age">
         <phrase id="fldcaption" value="Age (Y)" />
@@ -2104,26 +2104,22 @@
     <table id="jdh_registration_income">
       <phrase id="tblcaption" value="Registration Income" />
       <field id="patient_id">
-        <phrase id="fldcaption" value="No" />
+        <phrase id="fldcaption" value="Patient ID" />
       </field>
       <field id="patient_name">
         <phrase id="fldcaption" value="Name" />
       </field>
-      <field id="patient_dob">
-        <phrase id="fldcaption" value="Date of Birth" />
-      </field>
       <field id="patient_gender">
         <phrase id="fldcaption" value="Gender" />
-        <phrase id="fldtagvalue1" value="Male" />
-        <phrase id="fldtagcaption1" value="Male" />
-        <phrase id="fldtagvalue2" value="Female" />
-        <phrase id="fldtagcaption2" value="Female" />
       </field>
       <field id="service_cost">
-        <phrase id="fldcaption" value="Cost (KES)" />
+        <phrase id="fldcaption" value="Regeistration Fee" />
       </field>
       <field id="patient_registration_date">
         <phrase id="fldcaption" value="Registration Date" />
+      </field>
+      <field id="patient_dob_year">
+        <phrase id="fldcaption" value="Year of Birth" />
       </field>
     </table>
     <table id="jdh_doctor_charges">
@@ -2155,6 +2151,9 @@
       <field id="user_id">
         <phrase id="fldcaption" value="User No." />
       </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient ID" />
+      </field>
       <field id="first_name">
         <phrase id="fldcaption" value="First Name" />
       </field>
@@ -2170,29 +2169,26 @@
       <field id="service_cost">
         <phrase id="fldcaption" value="Cost (KES)" />
       </field>
-      <field id="patient_id">
-        <phrase id="fldcaption" value="Patient ID" />
-      </field>
     </table>
     <table id="jdh_lab_income">
       <phrase id="tblcaption" value="Laboratory Income" />
       <field id="patient_id">
-        <phrase id="fldcaption" value="No" />
+        <phrase id="fldcaption" value="Patient ID" />
       </field>
       <field id="patient_name">
         <phrase id="fldcaption" value="Name" />
       </field>
       <field id="service_name">
-        <phrase id="fldcaption" value="Service Name" />
+        <phrase id="fldcaption" value="Service" />
       </field>
       <field id="service_cost">
-        <phrase id="fldcaption" value="Cost (KES)" />
+        <phrase id="fldcaption" value="Cost" />
       </field>
       <field id="request_date">
-        <phrase id="fldcaption" value="Submission Date" />
+        <phrase id="fldcaption" value="Request Date" />
       </field>
-      <field id="patient_dob">
-        <phrase id="fldcaption" value="Date of Birth" />
+      <field id="patient_dob_year">
+        <phrase id="fldcaption" value="Year of Birth" />
       </field>
     </table>
     <table id="jdh_patient_queue">
@@ -2259,21 +2255,6 @@
     </table>
     <table id="jdh_patients_insuarance">
       <phrase id="tblcaption" value="Patients Insurance" />
-      <field id="patient_id">
-        <phrase id="fldcaption" value="No" />
-      </field>
-      <field id="patient_name">
-        <phrase id="fldcaption" value="Name" />
-      </field>
-      <field id="insurance_name">
-        <phrase id="fldcaption" value="Name" />
-      </field>
-      <field id="submitted_by_user_id">
-        <phrase id="fldcaption" value="User ID" />
-      </field>
-      <field id="patient_dob">
-        <phrase id="fldcaption" value="Date of Birth" />
-      </field>
     </table>
     <table id="subscriptions">
       <phrase id="tblcaption" value="Notifications" />

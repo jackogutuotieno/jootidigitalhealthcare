@@ -10,7 +10,6 @@ class UserProfile
     public $Username = "";
     public $Profile = [];
     public $Provider = "";
-    public $TimeoutTime;
     public $MaxRetryCount;
     public $RetryLockoutTime;
     protected $BackupUsername = "";
@@ -20,14 +19,9 @@ class UserProfile
     // Constructor
     public function __construct()
     {
-        $this->TimeoutTime = Config("USER_PROFILE_SESSION_TIMEOUT");
         $this->MaxRetryCount = Config("USER_PROFILE_MAX_RETRY");
         $this->RetryLockoutTime = Config("USER_PROFILE_RETRY_LOCKOUT");
         $this->load();
-
-        // Concurrent login checking
-        $this->set(Config("USER_PROFILE_SESSION_ID"), "");
-        $this->set(Config("USER_PROFILE_LAST_ACCESSED_DATE_TIME"), "");
 
         // Max login retry
         $this->set(Config("USER_PROFILE_LOGIN_RETRY_COUNT"), 0);
@@ -302,124 +296,6 @@ class UserProfile
     {
         $data = array_diff_assoc($this->Profile, $this->Excluded);
         return serialize($data);
-    }
-
-    // Is valid user
-    public function isValidUser($usr, $sessionID)
-    {
-        if ($this->isSystemAdmin($usr) || IsApi()) { // Ignore system admin / API
-            return true;
-        }
-        try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $sessid = strval($this->get(Config("USER_PROFILE_SESSION_ID")));
-                $dt = strval($this->get(Config("USER_PROFILE_LAST_ACCESSED_DATE_TIME")));
-                $valid = false;
-                if ($sessid == "" || $sessid == $sessionID || $dt == "") {
-                    $sessid = $sessionID;
-                    $dt = StdCurrentDateTime();
-                    $valid = true;
-                } elseif ($sessid != "" && $dt != "") {
-                    $ars = explode(",", $sessid);
-                    $ard = explode(",", $dt);
-                    $cnt = (count($ars) <= count($ard)) ? count($ars) : count($ard);
-                    $ars = array_slice($ars, 0, $cnt);
-                    $ard = array_slice($ard, 0, $cnt);
-                    for ($i = 0; $i < $cnt; $i++) {
-                        $sessid = $ars[$i];
-                        $dt = $ard[$i];
-                        if ($sessid == "" || $sessid == $sessionID || $dt == "" || DateDiff($dt, StdCurrentDateTime(), "n") > $this->TimeoutTime) {
-                            $valid = true;
-                            $ars[$i] = $sessionID;
-                            $ard[$i] = StdCurrentDateTime();
-                            break;
-                        }
-                    }
-                    if (!$valid && $cnt < Config("USER_PROFILE_CONCURRENT_SESSION_COUNT")) {
-                        $valid = true;
-                        $ars[] = $sessionID;
-                        $ard[] = StdCurrentDateTime();
-                    }
-                    $sessid = implode(",", $ars);
-                    $dt = implode(",", $ard);
-                }
-                if ($valid) {
-                    $this->set(Config("USER_PROFILE_SESSION_ID"), $sessid);
-                    $this->set(Config("USER_PROFILE_LAST_ACCESSED_DATE_TIME"), $dt);
-                    $this->saveProfileToDatabase($usr);
-                }
-                return $valid;
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-        return false;
-    }
-
-    // Remove user
-    public function removeUser($usr, $sessionID)
-    {
-        if ($this->isSystemAdmin($usr)) { // Ignore system admin
-            return true;
-        }
-        try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $sessid = strval($this->get(Config("USER_PROFILE_SESSION_ID")));
-                $dt = strval($this->get(Config("USER_PROFILE_LAST_ACCESSED_DATE_TIME")));
-                if ($sessid == $sessionID) {
-                    $this->set(Config("USER_PROFILE_SESSION_ID"), "");
-                    $this->set(Config("USER_PROFILE_LAST_ACCESSED_DATE_TIME"), "");
-                    return $this->saveProfileToDatabase($usr);
-                } elseif ($sessid != "" && $dt != "") {
-                    $ars = explode(",", $sessid);
-                    $ard = explode(",", $dt);
-                    $cnt = (count($ars) <= count($ard)) ? count($ars) : count($ard);
-                    $ars = array_slice($ars, 0, $cnt);
-                    $ard = array_slice($ard, 0, $cnt);
-                    for ($i = 0; $i < $cnt; $i++) {
-                        $sessid = $ars[$i];
-                        $dt = $ard[$i];
-                        if ($sessid == $sessionID) {
-                            unset($ars[$i]);
-                            unset($ard[$i]);
-                            $this->set(Config("USER_PROFILE_SESSION_ID"), implode(",", $ars));
-                            $this->set(Config("USER_PROFILE_LAST_ACCESSED_DATE_TIME"), implode(",", $ard));
-                            return $this->saveProfileToDatabase($usr);
-                        }
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-        return false;
-    }
-
-    // Reset concurrent user
-    public function resetConcurrentUser($usr)
-    {
-        try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $this->set(Config("USER_PROFILE_SESSION_ID"), "");
-                $this->set(Config("USER_PROFILE_LAST_ACCESSED_DATE_TIME"), "");
-                return $this->saveProfileToDatabase($usr);
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-        return false;
     }
 
     // Exceed login retry

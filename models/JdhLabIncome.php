@@ -46,7 +46,7 @@ class JdhLabIncome extends DbTable
     public $service_name;
     public $service_cost;
     public $request_date;
-    public $patient_dob;
+    public $patient_dob_year;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -112,7 +112,6 @@ class JdhLabIncome extends DbTable
             'TEXT' // Edit Tag
         );
         $this->patient_id->InputTextType = "text";
-        $this->patient_id->IsPrimaryKey = true; // Primary key field
         $this->patient_id->Nullable = false; // NOT NULL field
         $this->patient_id->Required = true; // Required field
         $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
@@ -198,10 +197,10 @@ class JdhLabIncome extends DbTable
             'x_request_date', // Variable name
             'request_date', // Name
             '`request_date`', // Expression
-            CastDateFieldForLike("`request_date`", 11, "DB"), // Basic search expression
+            CastDateFieldForLike("`request_date`", 7, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            11, // Date/Time format
+            7, // Date/Time format
             false, // Is upload field
             '`request_date`', // Virtual expression
             false, // Is virtual
@@ -213,34 +212,34 @@ class JdhLabIncome extends DbTable
         $this->request_date->InputTextType = "text";
         $this->request_date->Nullable = false; // NOT NULL field
         $this->request_date->Required = true; // Required field
-        $this->request_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
+        $this->request_date->DefaultErrorMessage = str_replace("%s", DateFormat(7), $Language->phrase("IncorrectDate"));
         $this->request_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['request_date'] = &$this->request_date;
 
-        // patient_dob $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->patient_dob = new DbField(
+        // patient_dob_year $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_dob_year = new DbField(
             $this, // Table
-            'x_patient_dob', // Variable name
-            'patient_dob', // Name
-            '`patient_dob`', // Expression
-            CastDateFieldForLike("`patient_dob`", 7, "DB"), // Basic search expression
-            133, // Type
-            10, // Size
-            7, // Date/Time format
+            'x_patient_dob_year', // Variable name
+            'patient_dob_year', // Name
+            '`patient_dob_year`', // Expression
+            '`patient_dob_year`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
             false, // Is upload field
-            '`patient_dob`', // Virtual expression
+            '`patient_dob_year`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->patient_dob->InputTextType = "text";
-        $this->patient_dob->Nullable = false; // NOT NULL field
-        $this->patient_dob->Required = true; // Required field
-        $this->patient_dob->DefaultErrorMessage = str_replace("%s", DateFormat(7), $Language->phrase("IncorrectDate"));
-        $this->patient_dob->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['patient_dob'] = &$this->patient_dob;
+        $this->patient_dob_year->InputTextType = "text";
+        $this->patient_dob_year->Nullable = false; // NOT NULL field
+        $this->patient_dob_year->Required = true; // Required field
+        $this->patient_dob_year->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->patient_dob_year->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['patient_dob_year'] = &$this->patient_dob_year;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -671,9 +670,6 @@ class JdhLabIncome extends DbTable
             $where = $this->arrayToFilter($where);
         }
         if ($rs) {
-            if (array_key_exists('patient_id', $rs)) {
-                AddFilter($where, QuotedName('patient_id', $this->Dbid) . '=' . QuotedValue($rs['patient_id'], $this->patient_id->DataType, $this->Dbid));
-            }
         }
         $filter = ($curfilter) ? $this->CurrentFilter : "";
         AddFilter($filter, $where);
@@ -707,7 +703,7 @@ class JdhLabIncome extends DbTable
         $this->service_name->DbValue = $row['service_name'];
         $this->service_cost->DbValue = $row['service_cost'];
         $this->request_date->DbValue = $row['request_date'];
-        $this->patient_dob->DbValue = $row['patient_dob'];
+        $this->patient_dob_year->DbValue = $row['patient_dob_year'];
     }
 
     // Delete uploaded files
@@ -719,19 +715,13 @@ class JdhLabIncome extends DbTable
     // Record filter WHERE clause
     protected function sqlKeyFilter()
     {
-        return "`patient_id` = @patient_id@";
+        return "";
     }
 
     // Get Key
     public function getKey($current = false)
     {
         $keys = [];
-        $val = $current ? $this->patient_id->CurrentValue : $this->patient_id->OldValue;
-        if (EmptyValue($val)) {
-            return "";
-        } else {
-            $keys[] = $val;
-        }
         return implode(Config("COMPOSITE_KEY_SEPARATOR"), $keys);
     }
 
@@ -740,12 +730,7 @@ class JdhLabIncome extends DbTable
     {
         $this->OldKey = strval($key);
         $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
-        if (count($keys) == 1) {
-            if ($current) {
-                $this->patient_id->CurrentValue = $keys[0];
-            } else {
-                $this->patient_id->OldValue = $keys[0];
-            }
+        if (count($keys) == 0) {
         }
     }
 
@@ -753,19 +738,6 @@ class JdhLabIncome extends DbTable
     public function getRecordFilter($row = null, $current = false)
     {
         $keyFilter = $this->sqlKeyFilter();
-        if (is_array($row)) {
-            $val = array_key_exists('patient_id', $row) ? $row['patient_id'] : null;
-        } else {
-            $val = !EmptyValue($this->patient_id->OldValue) && !$current ? $this->patient_id->OldValue : $this->patient_id->CurrentValue;
-        }
-        if (!is_numeric($val)) {
-            return "0=1"; // Invalid key
-        }
-        if ($val === null) {
-            return "0=1"; // Invalid key
-        } else {
-            $keyFilter = str_replace("@patient_id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
-        }
         return $keyFilter;
     }
 
@@ -908,7 +880,6 @@ class JdhLabIncome extends DbTable
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
-        $json .= "\"patient_id\":" . JsonEncode($this->patient_id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -919,11 +890,6 @@ class JdhLabIncome extends DbTable
     // Add key value to URL
     public function keyUrl($url, $parm = "")
     {
-        if ($this->patient_id->CurrentValue !== null) {
-            $url .= "/" . $this->encodeKeyValue($this->patient_id->CurrentValue);
-        } else {
-            return "javascript:ew.alert(ew.language.phrase('InvalidRecord'));";
-        }
         if ($parm != "") {
             $url .= "?" . $parm;
         }
@@ -988,23 +954,12 @@ class JdhLabIncome extends DbTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
-            if (($keyValue = Param("patient_id") ?? Route("patient_id")) !== null) {
-                $arKeys[] = $keyValue;
-            } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
-                $arKeys[] = $keyValue;
-            } else {
-                $arKeys = null; // Do not setup
-            }
-
             //return $arKeys; // Do not return yet, so the values will also be checked by the following code
         }
         // Check keys
         $ar = [];
         if (is_array($arKeys)) {
             foreach ($arKeys as $key) {
-                if (!is_numeric($key)) {
-                    continue;
-                }
                 $ar[] = $key;
             }
         }
@@ -1032,11 +987,6 @@ class JdhLabIncome extends DbTable
         foreach ($arKeys as $key) {
             if ($keyFilter != "") {
                 $keyFilter .= " OR ";
-            }
-            if ($setCurrent) {
-                $this->patient_id->CurrentValue = $key;
-            } else {
-                $this->patient_id->OldValue = $key;
             }
             $keyFilter .= "(" . $this->getRecordFilter() . ")";
         }
@@ -1066,7 +1016,7 @@ class JdhLabIncome extends DbTable
         $this->service_name->setDbValue($row['service_name']);
         $this->service_cost->setDbValue($row['service_cost']);
         $this->request_date->setDbValue($row['request_date']);
-        $this->patient_dob->setDbValue($row['patient_dob']);
+        $this->patient_dob_year->setDbValue($row['patient_dob_year']);
     }
 
     // Render list content
@@ -1107,10 +1057,11 @@ class JdhLabIncome extends DbTable
 
         // request_date
 
-        // patient_dob
+        // patient_dob_year
 
         // patient_id
         $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
+        $this->patient_id->ViewValue = FormatNumber($this->patient_id->ViewValue, $this->patient_id->formatPattern());
 
         // patient_name
         $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
@@ -1126,9 +1077,9 @@ class JdhLabIncome extends DbTable
         $this->request_date->ViewValue = $this->request_date->CurrentValue;
         $this->request_date->ViewValue = FormatDateTime($this->request_date->ViewValue, $this->request_date->formatPattern());
 
-        // patient_dob
-        $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
-        $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
+        // patient_dob_year
+        $this->patient_dob_year->ViewValue = $this->patient_dob_year->CurrentValue;
+        $this->patient_dob_year->ViewValue = FormatNumber($this->patient_dob_year->ViewValue, $this->patient_dob_year->formatPattern());
 
         // patient_id
         $this->patient_id->HrefValue = "";
@@ -1150,9 +1101,9 @@ class JdhLabIncome extends DbTable
         $this->request_date->HrefValue = "";
         $this->request_date->TooltipValue = "";
 
-        // patient_dob
-        $this->patient_dob->HrefValue = "";
-        $this->patient_dob->TooltipValue = "";
+        // patient_dob_year
+        $this->patient_dob_year->HrefValue = "";
+        $this->patient_dob_year->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1173,6 +1124,9 @@ class JdhLabIncome extends DbTable
         $this->patient_id->setupEditAttributes();
         $this->patient_id->EditValue = $this->patient_id->CurrentValue;
         $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
+        if (strval($this->patient_id->EditValue) != "" && is_numeric($this->patient_id->EditValue)) {
+            $this->patient_id->EditValue = FormatNumber($this->patient_id->EditValue, null);
+        }
 
         // patient_name
         $this->patient_name->setupEditAttributes();
@@ -1203,10 +1157,13 @@ class JdhLabIncome extends DbTable
         $this->request_date->EditValue = FormatDateTime($this->request_date->CurrentValue, $this->request_date->formatPattern());
         $this->request_date->PlaceHolder = RemoveHtml($this->request_date->caption());
 
-        // patient_dob
-        $this->patient_dob->setupEditAttributes();
-        $this->patient_dob->EditValue = FormatDateTime($this->patient_dob->CurrentValue, $this->patient_dob->formatPattern());
-        $this->patient_dob->PlaceHolder = RemoveHtml($this->patient_dob->caption());
+        // patient_dob_year
+        $this->patient_dob_year->setupEditAttributes();
+        $this->patient_dob_year->EditValue = $this->patient_dob_year->CurrentValue;
+        $this->patient_dob_year->PlaceHolder = RemoveHtml($this->patient_dob_year->caption());
+        if (strval($this->patient_dob_year->EditValue) != "" && is_numeric($this->patient_dob_year->EditValue)) {
+            $this->patient_dob_year->EditValue = FormatNumber($this->patient_dob_year->EditValue, null);
+        }
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1249,13 +1206,14 @@ class JdhLabIncome extends DbTable
                     $doc->exportCaption($this->service_name);
                     $doc->exportCaption($this->service_cost);
                     $doc->exportCaption($this->request_date);
+                    $doc->exportCaption($this->patient_dob_year);
                 } else {
                     $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->patient_name);
                     $doc->exportCaption($this->service_name);
                     $doc->exportCaption($this->service_cost);
                     $doc->exportCaption($this->request_date);
-                    $doc->exportCaption($this->patient_dob);
+                    $doc->exportCaption($this->patient_dob_year);
                 }
                 $doc->endExportRow();
             }
@@ -1291,13 +1249,14 @@ class JdhLabIncome extends DbTable
                         $doc->exportField($this->service_name);
                         $doc->exportField($this->service_cost);
                         $doc->exportField($this->request_date);
+                        $doc->exportField($this->patient_dob_year);
                     } else {
                         $doc->exportField($this->patient_id);
                         $doc->exportField($this->patient_name);
                         $doc->exportField($this->service_name);
                         $doc->exportField($this->service_cost);
                         $doc->exportField($this->request_date);
-                        $doc->exportField($this->patient_dob);
+                        $doc->exportField($this->patient_dob_year);
                     }
                     $doc->endExportRow($rowCnt);
                 }
@@ -1322,7 +1281,7 @@ class JdhLabIncome extends DbTable
                 $doc->exportAggregate($this->service_name, '');
                 $doc->exportAggregate($this->service_cost, 'TOTAL');
                 $doc->exportAggregate($this->request_date, '');
-                $doc->exportAggregate($this->patient_dob, '');
+                $doc->exportAggregate($this->patient_dob_year, '');
                 $doc->endExportRow();
             }
         }

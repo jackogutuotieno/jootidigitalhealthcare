@@ -92,26 +92,35 @@ loadjs.ready(["wrapper", "head"], function () {
 <input type="hidden" name="cmd" value="search">
 <input type="hidden" name="t" value="jdh_consultation_income">
 <div class="ew-extended-search container-fluid ps-2">
-<div class="row mb-0">
-    <div class="col-sm-auto px-0 pe-sm-2">
-        <div class="ew-basic-search input-group">
-            <input type="search" name="<?= Config("TABLE_BASIC_SEARCH") ?>" id="<?= Config("TABLE_BASIC_SEARCH") ?>" class="form-control ew-basic-search-keyword" value="<?= HtmlEncode($Page->BasicSearch->getKeyword()) ?>" placeholder="<?= HtmlEncode($Language->phrase("Search")) ?>" aria-label="<?= HtmlEncode($Language->phrase("Search")) ?>">
-            <input type="hidden" name="<?= Config("TABLE_BASIC_SEARCH_TYPE") ?>" id="<?= Config("TABLE_BASIC_SEARCH_TYPE") ?>" class="ew-basic-search-type" value="<?= HtmlEncode($Page->BasicSearch->getType()) ?>">
-            <button type="button" data-bs-toggle="dropdown" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" aria-haspopup="true" aria-expanded="false">
-                <span id="searchtype"><?= $Page->BasicSearch->getTypeNameShort() ?></span>
-            </button>
-            <div class="dropdown-menu dropdown-menu-end">
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "" ? " active" : "" ?>" form="fjdh_consultation_incomesrch" data-ew-action="search-type"><?= $Language->phrase("QuickSearchAuto") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "=" ? " active" : "" ?>" form="fjdh_consultation_incomesrch" data-ew-action="search-type" data-search-type="="><?= $Language->phrase("QuickSearchExact") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "AND" ? " active" : "" ?>" form="fjdh_consultation_incomesrch" data-ew-action="search-type" data-search-type="AND"><?= $Language->phrase("QuickSearchAll") ?></button>
-                <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "OR" ? " active" : "" ?>" form="fjdh_consultation_incomesrch" data-ew-action="search-type" data-search-type="OR"><?= $Language->phrase("QuickSearchAny") ?></button>
+<!-- template for quick search in navbar -->
+<script id="navbar-basic-search" type="text/html" class="ew-js-template" data-name="search" data-seq="10" data-data="menu" data-target="#ew-navbar-end" data-method="prependTo">
+    <li class="nav-item navbar-basic-search">
+        <a class="nav-link" data-widget="navbar-search" href="#" role="button">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </a>
+        <div class="navbar-search-block">
+            <div class="ew-basic-search input-group input-group-sm">
+                <input type="text" name="<?= Config("TABLE_BASIC_SEARCH") ?>" id="<?= Config("TABLE_BASIC_SEARCH") ?>" class="form-control form-control-navbar ew-basic-search-keyword" form="fjdh_consultation_incomesrch" value="<?= HtmlEncode($Page->BasicSearch->getKeyword()) ?>" placeholder="<?= HtmlEncode($Language->phrase("Search")) ?>" aria-label="<?= HtmlEncode($Language->phrase("Search")) ?>">
+                <input type="hidden" name="<?= Config("TABLE_BASIC_SEARCH_TYPE") ?>" id="<?= Config("TABLE_BASIC_SEARCH_TYPE") ?>" class="form-control-navbar ew-basic-search-type" form="fjdh_consultation_incomesrch" value="<?= HtmlEncode($Page->BasicSearch->getType()) ?>">
+                <button class="btn btn-navbar" form="fjdh_consultation_incomesrch" type="submit">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                <button type="button" data-bs-toggle="dropdown" class="btn btn-navbar dropdown-toggle" aria-haspopup="true" aria-expanded="false">
+                    <span id="searchtype"><?= $Page->BasicSearch->getTypeNameShort() ?></span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end">
+                    <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "" ? " active" : "" ?>" form="fjdh_consultation_incomesrch" data-ew-action="search-type"><?= $Language->phrase("QuickSearchAuto") ?></button>
+                    <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "=" ? " active" : "" ?>" form="fjdh_consultation_incomesrch" data-ew-action="search-type" data-search-type="="><?= $Language->phrase("QuickSearchExact") ?></button>
+                    <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "AND" ? " active" : "" ?>" form="fjdh_consultation_incomesrch" data-ew-action="search-type" data-search-type="AND"><?= $Language->phrase("QuickSearchAll") ?></button>
+                    <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "OR" ? " active" : "" ?>" form="fjdh_consultation_incomesrch" data-ew-action="search-type" data-search-type="OR"><?= $Language->phrase("QuickSearchAny") ?></button>
+                </div>
+                <button class="btn btn-navbar" type="button" data-widget="navbar-search">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
         </div>
-    </div>
-    <div class="col-sm-auto mb-3">
-        <button class="btn btn-primary" name="btn-submit" id="btn-submit" type="submit"><?= $Language->phrase("SearchBtn") ?></button>
-    </div>
-</div>
+    </li>
+</script>
 </div><!-- /.ew-extended-search -->
 </div><!-- /.ew-search-panel -->
 </form>
@@ -149,6 +158,9 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
+<?php if ($Page->patient_id->Visible) { // patient_id ?>
+        <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_consultation_income_patient_id" class="jdh_consultation_income_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
+<?php } ?>
 <?php if ($Page->first_name->Visible) { // first_name ?>
         <th data-name="first_name" class="<?= $Page->first_name->headerCellClass() ?>"><div id="elh_jdh_consultation_income_first_name" class="jdh_consultation_income_first_name"><?= $Page->renderFieldHeader($Page->first_name) ?></div></th>
 <?php } ?>
@@ -177,6 +189,14 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
+    <?php if ($Page->patient_id->Visible) { // patient_id ?>
+        <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_consultation_income_patient_id" class="el_jdh_consultation_income_patient_id">
+<span<?= $Page->patient_id->viewAttributes() ?>>
+<?= $Page->patient_id->getViewValue() ?></span>
+</span>
+</td>
+    <?php } ?>
     <?php if ($Page->first_name->Visible) { // first_name ?>
         <td data-name="first_name"<?= $Page->first_name->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_consultation_income_first_name" class="el_jdh_consultation_income_first_name">
@@ -230,6 +250,10 @@ $Page->renderListOptions();
 // Render list options (footer, left)
 $Page->ListOptions->render("footer", "left");
 ?>
+    <?php if ($Page->patient_id->Visible) { // patient_id ?>
+        <td data-name="patient_id" class="<?= $Page->patient_id->footerCellClass() ?>"><span id="elf_jdh_consultation_income_patient_id" class="jdh_consultation_income_patient_id">
+        </span></td>
+    <?php } ?>
     <?php if ($Page->first_name->Visible) { // first_name ?>
         <td data-name="first_name" class="<?= $Page->first_name->footerCellClass() ?>"><span id="elf_jdh_consultation_income_first_name" class="jdh_consultation_income_first_name">
         </span></td>

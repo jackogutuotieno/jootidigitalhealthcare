@@ -1,0 +1,32 @@
+date/time,script,user,action,table,field,"key value","old value","new value"
+"2023-10-25 07:37:48",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-25 07:42:31",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_ip_number,8,,008
+"2023-10-25 07:42:31",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_name,8,,"Anne Jeremy"
+"2023-10-25 07:42:31",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_dob_year,8,,2001
+"2023-10-25 07:42:31",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_gender,8,,Female
+"2023-10-25 07:42:31",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_phone,8,,098776554
+"2023-10-25 07:42:31",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_kin_name,8,,None
+"2023-10-25 07:42:31",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_kin_phone,8,,
+"2023-10-25 07:42:31",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,service_id,8,,1
+"2023-10-25 07:42:31",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,is_inpatient,8,,0
+"2023-10-25 07:42:31",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,submitted_by_user_id,8,,1
+"2023-10-25 07:42:31",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_id,8,,8
+"2023-10-25 08:02:36",/jootidigitalhealthcare/logout,-2,logout,::1,,,,
+"2023-10-25 08:02:57",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-25 08:22:17",/jootidigitalhealthcare/jdhpatientvisitsadd,1,A,jdh_patient_visits,patient_id,12,,8
+"2023-10-25 08:22:17",/jootidigitalhealthcare/jdhpatientvisitsadd,1,A,jdh_patient_visits,visit_type_id,12,,2
+"2023-10-25 08:22:17",/jootidigitalhealthcare/jdhpatientvisitsadd,1,A,jdh_patient_visits,user_id,12,,10
+"2023-10-25 08:22:17",/jootidigitalhealthcare/jdhpatientvisitsadd,1,A,jdh_patient_visits,insurance_id,12,,3
+"2023-10-25 08:22:17",/jootidigitalhealthcare/jdhpatientvisitsadd,1,A,jdh_patient_visits,visit_description,12,,[MEMO]
+"2023-10-25 08:22:17",/jootidigitalhealthcare/jdhpatientvisitsadd,1,A,jdh_patient_visits,visit_id,12,,12
+"2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_ip_number,9,,009
+"2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_name,9,,"Rude Jude"
+"2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_dob_year,9,,1998
+"2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_gender,9,,Male
+"2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_phone,9,,892873743
+"2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_kin_name,9,,
+"2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_kin_phone,9,,
+"2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,service_id,9,,1
+"2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,is_inpatient,9,,0
+"2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,submitted_by_user_id,9,,1
+"2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_id,9,,9

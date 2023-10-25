@@ -72,7 +72,6 @@ class ComposerStaticInit2017a48aff752ea5876304cad9390580
             'Psr\\Http\\Client\\' => 16,
             'Psr\\Container\\' => 14,
             'Psr\\Cache\\' => 10,
-            'PragmaRX\\Google2FA\\' => 19,
             'Port\\Steps\\' => 11,
             'Port\\Spreadsheet\\' => 17,
             'Port\\Csv\\' => 9,
@@ -294,10 +293,6 @@ class ComposerStaticInit2017a48aff752ea5876304cad9390580
         'Psr\\Cache\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/cache/src',
-        ),
-        'PragmaRX\\Google2FA\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/pragmarx/google2fa/src',
         ),
         'Port\\Steps\\' => 
         array (

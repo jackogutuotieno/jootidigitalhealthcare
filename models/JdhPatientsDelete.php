@@ -369,19 +369,12 @@ class JdhPatientsDelete extends JdhPatients
 
         // View
         $this->View = Get(Config("VIEW"));
-
-        // Update last accessed time
-        if (!IsSysAdmin() && !$UserProfile->isValidUser(CurrentUserName(), session_id())) {
-            Write($Language->phrase("UserProfileCorrupted"));
-            $this->terminate();
-            return;
-        }
         $this->CurrentAction = Param("action"); // Set up current action
         $this->patient_id->setVisibility();
         $this->photo->Visible = false;
+        $this->patient_ip_number->setVisibility();
         $this->patient_name->setVisibility();
-        $this->patient_national_id->setVisibility();
-        $this->patient_dob->setVisibility();
+        $this->patient_dob_year->setVisibility();
         $this->patient_age->setVisibility();
         $this->patient_gender->setVisibility();
         $this->patient_phone->setVisibility();
@@ -621,9 +614,9 @@ class JdhPatientsDelete extends JdhPatients
         if (is_resource($this->photo->Upload->DbValue) && get_resource_type($this->photo->Upload->DbValue) == "stream") { // Byte array
             $this->photo->Upload->DbValue = stream_get_contents($this->photo->Upload->DbValue);
         }
+        $this->patient_ip_number->setDbValue($row['patient_ip_number']);
         $this->patient_name->setDbValue($row['patient_name']);
-        $this->patient_national_id->setDbValue($row['patient_national_id']);
-        $this->patient_dob->setDbValue($row['patient_dob']);
+        $this->patient_dob_year->setDbValue($row['patient_dob_year']);
         $this->patient_age->setDbValue($row['patient_age']);
         $this->patient_gender->setDbValue($row['patient_gender']);
         $this->patient_phone->setDbValue($row['patient_phone']);
@@ -641,9 +634,9 @@ class JdhPatientsDelete extends JdhPatients
         $row = [];
         $row['patient_id'] = $this->patient_id->DefaultValue;
         $row['photo'] = $this->photo->DefaultValue;
+        $row['patient_ip_number'] = $this->patient_ip_number->DefaultValue;
         $row['patient_name'] = $this->patient_name->DefaultValue;
-        $row['patient_national_id'] = $this->patient_national_id->DefaultValue;
-        $row['patient_dob'] = $this->patient_dob->DefaultValue;
+        $row['patient_dob_year'] = $this->patient_dob_year->DefaultValue;
         $row['patient_age'] = $this->patient_age->DefaultValue;
         $row['patient_gender'] = $this->patient_gender->DefaultValue;
         $row['patient_phone'] = $this->patient_phone->DefaultValue;
@@ -672,11 +665,11 @@ class JdhPatientsDelete extends JdhPatients
 
         // photo
 
+        // patient_ip_number
+
         // patient_name
 
-        // patient_national_id
-
-        // patient_dob
+        // patient_dob_year
 
         // patient_age
 
@@ -701,15 +694,14 @@ class JdhPatientsDelete extends JdhPatients
             // patient_id
             $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
+            // patient_ip_number
+            $this->patient_ip_number->ViewValue = $this->patient_ip_number->CurrentValue;
+
             // patient_name
             $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
 
-            // patient_national_id
-            $this->patient_national_id->ViewValue = $this->patient_national_id->CurrentValue;
-
-            // patient_dob
-            $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
-            $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
+            // patient_dob_year
+            $this->patient_dob_year->ViewValue = $this->patient_dob_year->CurrentValue;
 
             // patient_age
             $this->patient_age->ViewValue = $this->patient_age->CurrentValue;
@@ -774,17 +766,17 @@ class JdhPatientsDelete extends JdhPatients
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
 
+            // patient_ip_number
+            $this->patient_ip_number->HrefValue = "";
+            $this->patient_ip_number->TooltipValue = "";
+
             // patient_name
             $this->patient_name->HrefValue = "";
             $this->patient_name->TooltipValue = "";
 
-            // patient_national_id
-            $this->patient_national_id->HrefValue = "";
-            $this->patient_national_id->TooltipValue = "";
-
-            // patient_dob
-            $this->patient_dob->HrefValue = "";
-            $this->patient_dob->TooltipValue = "";
+            // patient_dob_year
+            $this->patient_dob_year->HrefValue = "";
+            $this->patient_dob_year->TooltipValue = "";
 
             // patient_age
             $this->patient_age->HrefValue = "";

@@ -53,14 +53,14 @@ $Page->showMessage();
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <th class="<?= $Page->patient_id->headerCellClass() ?>"><span id="elh_jdh_patients_patient_id" class="jdh_patients_patient_id"><?= $Page->patient_id->caption() ?></span></th>
 <?php } ?>
+<?php if ($Page->patient_ip_number->Visible) { // patient_ip_number ?>
+        <th class="<?= $Page->patient_ip_number->headerCellClass() ?>"><span id="elh_jdh_patients_patient_ip_number" class="jdh_patients_patient_ip_number"><?= $Page->patient_ip_number->caption() ?></span></th>
+<?php } ?>
 <?php if ($Page->patient_name->Visible) { // patient_name ?>
         <th class="<?= $Page->patient_name->headerCellClass() ?>"><span id="elh_jdh_patients_patient_name" class="jdh_patients_patient_name"><?= $Page->patient_name->caption() ?></span></th>
 <?php } ?>
-<?php if ($Page->patient_national_id->Visible) { // patient_national_id ?>
-        <th class="<?= $Page->patient_national_id->headerCellClass() ?>"><span id="elh_jdh_patients_patient_national_id" class="jdh_patients_patient_national_id"><?= $Page->patient_national_id->caption() ?></span></th>
-<?php } ?>
-<?php if ($Page->patient_dob->Visible) { // patient_dob ?>
-        <th class="<?= $Page->patient_dob->headerCellClass() ?>"><span id="elh_jdh_patients_patient_dob" class="jdh_patients_patient_dob"><?= $Page->patient_dob->caption() ?></span></th>
+<?php if ($Page->patient_dob_year->Visible) { // patient_dob_year ?>
+        <th class="<?= $Page->patient_dob_year->headerCellClass() ?>"><span id="elh_jdh_patients_patient_dob_year" class="jdh_patients_patient_dob_year"><?= $Page->patient_dob_year->caption() ?></span></th>
 <?php } ?>
 <?php if ($Page->patient_age->Visible) { // patient_age ?>
         <th class="<?= $Page->patient_age->headerCellClass() ?>"><span id="elh_jdh_patients_patient_age" class="jdh_patients_patient_age"><?= $Page->patient_age->caption() ?></span></th>
@@ -106,6 +106,14 @@ while (!$Page->Recordset->EOF) {
 </span>
 </td>
 <?php } ?>
+<?php if ($Page->patient_ip_number->Visible) { // patient_ip_number ?>
+        <td<?= $Page->patient_ip_number->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_ip_number" class="el_jdh_patients_patient_ip_number">
+<span<?= $Page->patient_ip_number->viewAttributes() ?>>
+<?= $Page->patient_ip_number->getViewValue() ?></span>
+</span>
+</td>
+<?php } ?>
 <?php if ($Page->patient_name->Visible) { // patient_name ?>
         <td<?= $Page->patient_name->cellAttributes() ?>>
 <span id="el<?= $Page->RowCount ?>_jdh_patients_patient_name" class="el_jdh_patients_patient_name">
@@ -114,19 +122,11 @@ while (!$Page->Recordset->EOF) {
 </span>
 </td>
 <?php } ?>
-<?php if ($Page->patient_national_id->Visible) { // patient_national_id ?>
-        <td<?= $Page->patient_national_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_national_id" class="el_jdh_patients_patient_national_id">
-<span<?= $Page->patient_national_id->viewAttributes() ?>>
-<?= $Page->patient_national_id->getViewValue() ?></span>
-</span>
-</td>
-<?php } ?>
-<?php if ($Page->patient_dob->Visible) { // patient_dob ?>
-        <td<?= $Page->patient_dob->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_dob" class="el_jdh_patients_patient_dob">
-<span<?= $Page->patient_dob->viewAttributes() ?>>
-<?= $Page->patient_dob->getViewValue() ?></span>
+<?php if ($Page->patient_dob_year->Visible) { // patient_dob_year ?>
+        <td<?= $Page->patient_dob_year->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_dob_year" class="el_jdh_patients_patient_dob_year">
+<span<?= $Page->patient_dob_year->viewAttributes() ?>>
+<?= $Page->patient_dob_year->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

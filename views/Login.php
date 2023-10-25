@@ -68,46 +68,6 @@ loadjs.ready(["wrapper", "head"], function() {
         // Use JavaScript validation
         .setValidateRequired(ew.CLIENT_VALIDATE)
         .build();
-
-    // Submit
-    loadjs.ready("load", function () {
-        let $form = form.$element,
-            $card = $(".ew-login-card").removeData("lte.cardrefresh");
-        $card.CardRefresh({
-            source: ew.sanitize(ew.setLayout(form.element.action, false)),
-            loadOnInit: false,
-            sourceSelector: ".card-body",
-            overlayTemplate: ew.overlayTemplate(),
-            ajaxSettings: {
-                method: form.element.method
-            },
-            onLoadStart: function() {
-                this.prop("_settings").params = this.prop("_element").find("form").serialize()
-            },
-            onLoadDone: function(result) {
-                if ($.isObject(result)) {
-                    if (result?.error?.description) {
-                        ew.alert(result.error.description);
-                    } else if (result?.url) {
-                        ew.setValid(form.element.<?= $Page->Username->FieldVar ?>);
-                        ew.setValid(form.element.<?= $Page->Password->FieldVar ?>);
-                        this.prop("_element").one("overlay.removed.lte.cardrefresh", function() {
-                            $(this).data("lte.cardrefresh")._addOverlay();
-                        });
-                        window.location = ew.sanitize(result.url);
-                    }
-                } else {
-                    let e = $.Event({ type: "load.ew", target: $card[0] })
-                    ew.initPage(e);
-                    $(document).trigger(e);
-                }
-            }
-        });
-        $form.off("beforesubmit").on("beforesubmit", function(e) {
-            e.preventDefault();
-            $card.CardRefresh("load");
-        });
-    });
     window[form.id] = form;
     window.currentForm ||= form;
     loadjs.done(form.id);

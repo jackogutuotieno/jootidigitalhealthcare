@@ -606,7 +606,7 @@ $CONFIG = [
     "PUSH_ANONYMOUS" => false,
 
     // Use two factor Authentication
-    "USE_TWO_FACTOR_AUTHENTICATION" => true,
+    "USE_TWO_FACTOR_AUTHENTICATION" => false,
     "FORCE_TWO_FACTOR_AUTHENTICATION" => false,
     "TWO_FACTOR_AUTHENTICATION_TYPE" => "email",
     "TWO_FACTOR_AUTHENTICATION_ISSUER" => PROJECT_NAME,

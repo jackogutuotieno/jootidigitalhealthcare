@@ -26,7 +26,10 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .addFields([
             ["patient_id", [ew.Validators.integer], fields.patient_id.isInvalid],
+            ["patient_ip_number", [], fields.patient_ip_number.isInvalid],
             ["patient_name", [], fields.patient_name.isInvalid],
+            ["patient_dob_year", [ew.Validators.integer], fields.patient_dob_year.isInvalid],
+            ["patient_age", [], fields.patient_age.isInvalid],
             ["is_inpatient", [], fields.is_inpatient.isInvalid]
         ])
         // Validate form
@@ -114,6 +117,26 @@ $Page->showMessage();
         </div>
     </div>
 <?php } ?>
+<?php if ($Page->patient_ip_number->Visible) { // patient_ip_number ?>
+    <div id="r_patient_ip_number" class="row"<?= $Page->patient_ip_number->rowAttributes() ?>>
+        <label for="x_patient_ip_number" class="<?= $Page->LeftColumnClass ?>"><span id="elh_jdh_patients_patient_ip_number"><?= $Page->patient_ip_number->caption() ?></span>
+        <span class="ew-search-operator">
+<?= $Language->phrase("LIKE") ?>
+<input type="hidden" name="z_patient_ip_number" id="z_patient_ip_number" value="LIKE">
+</span>
+        </label>
+        <div class="<?= $Page->RightColumnClass ?>">
+            <div<?= $Page->patient_ip_number->cellAttributes() ?>>
+                <div class="d-flex align-items-start">
+                <span id="el_jdh_patients_patient_ip_number" class="ew-search-field ew-search-field-single">
+<input type="<?= $Page->patient_ip_number->getInputTextType() ?>" name="x_patient_ip_number" id="x_patient_ip_number" data-table="jdh_patients" data-field="x_patient_ip_number" value="<?= $Page->patient_ip_number->EditValue ?>" size="30" maxlength="13" placeholder="<?= HtmlEncode($Page->patient_ip_number->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_ip_number->formatPattern()) ?>"<?= $Page->patient_ip_number->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->patient_ip_number->getErrorMessage(false) ?></div>
+</span>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php } ?>
 <?php if ($Page->patient_name->Visible) { // patient_name ?>
     <div id="r_patient_name" class="row"<?= $Page->patient_name->rowAttributes() ?>>
         <label for="x_patient_name" class="<?= $Page->LeftColumnClass ?>"><span id="elh_jdh_patients_patient_name"><?= $Page->patient_name->caption() ?></span>
@@ -128,6 +151,46 @@ $Page->showMessage();
                 <span id="el_jdh_patients_patient_name" class="ew-search-field ew-search-field-single">
 <input type="<?= $Page->patient_name->getInputTextType() ?>" name="x_patient_name" id="x_patient_name" data-table="jdh_patients" data-field="x_patient_name" value="<?= $Page->patient_name->EditValue ?>" size="30" maxlength="50" placeholder="<?= HtmlEncode($Page->patient_name->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_name->formatPattern()) ?>"<?= $Page->patient_name->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Page->patient_name->getErrorMessage(false) ?></div>
+</span>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php } ?>
+<?php if ($Page->patient_dob_year->Visible) { // patient_dob_year ?>
+    <div id="r_patient_dob_year" class="row"<?= $Page->patient_dob_year->rowAttributes() ?>>
+        <label for="x_patient_dob_year" class="<?= $Page->LeftColumnClass ?>"><span id="elh_jdh_patients_patient_dob_year"><?= $Page->patient_dob_year->caption() ?></span>
+        <span class="ew-search-operator">
+<?= $Language->phrase("=") ?>
+<input type="hidden" name="z_patient_dob_year" id="z_patient_dob_year" value="=">
+</span>
+        </label>
+        <div class="<?= $Page->RightColumnClass ?>">
+            <div<?= $Page->patient_dob_year->cellAttributes() ?>>
+                <div class="d-flex align-items-start">
+                <span id="el_jdh_patients_patient_dob_year" class="ew-search-field ew-search-field-single">
+<input type="<?= $Page->patient_dob_year->getInputTextType() ?>" name="x_patient_dob_year" id="x_patient_dob_year" data-table="jdh_patients" data-field="x_patient_dob_year" value="<?= $Page->patient_dob_year->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->patient_dob_year->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_dob_year->formatPattern()) ?>"<?= $Page->patient_dob_year->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->patient_dob_year->getErrorMessage(false) ?></div>
+</span>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php } ?>
+<?php if ($Page->patient_age->Visible) { // patient_age ?>
+    <div id="r_patient_age" class="row"<?= $Page->patient_age->rowAttributes() ?>>
+        <label class="<?= $Page->LeftColumnClass ?>"><span id="elh_jdh_patients_patient_age"><?= $Page->patient_age->caption() ?></span>
+        <span class="ew-search-operator">
+<?= $Language->phrase("=") ?>
+<input type="hidden" name="z_patient_age" id="z_patient_age" value="=">
+</span>
+        </label>
+        <div class="<?= $Page->RightColumnClass ?>">
+            <div<?= $Page->patient_age->cellAttributes() ?>>
+                <div class="d-flex align-items-start">
+                <span id="el_jdh_patients_patient_age" class="ew-search-field ew-search-field-single">
+<input type="<?= $Page->patient_age->getInputTextType() ?>" name="x_patient_age" id="x_patient_age" data-table="jdh_patients" data-field="x_patient_age" value="<?= $Page->patient_age->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->patient_age->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_age->formatPattern()) ?>"<?= $Page->patient_age->editAttributes() ?>>
+<div class="invalid-feedback"><?= $Page->patient_age->getErrorMessage(false) ?></div>
 </span>
                 </div>
             </div>

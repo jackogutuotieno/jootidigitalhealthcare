@@ -510,11 +510,11 @@ return function (App $app) {
     );
 
     // jdh_lab_income
-    $app->map(["GET","POST","OPTIONS"], '/jdhlabincomelist[/{patient_id}]', JdhLabIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhlabincomelist-jdh_lab_income-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/jdhlabincomelist', JdhLabIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhlabincomelist-jdh_lab_income-list'); // list
     $app->group(
         '/jdh_lab_income',
         function (RouteCollectorProxy $group) {
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{patient_id}]', JdhLabIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_lab_income/list-jdh_lab_income-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '', JdhLabIncomeController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_lab_income/list-jdh_lab_income-list-2'); // list
         }
     );
 
@@ -562,15 +562,6 @@ return function (App $app) {
             $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{id}]', JdhBrandingController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_branding/view-jdh_branding-view-2'); // view
             $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{id}]', JdhBrandingController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_branding/edit-jdh_branding-edit-2'); // edit
             $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{id}]', JdhBrandingController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_branding/delete-jdh_branding-delete-2'); // delete
-        }
-    );
-
-    // jdh_patients_insuarance
-    $app->map(["GET","POST","OPTIONS"], '/jdhpatientsinsuarancelist[/{patient_id}]', JdhPatientsInsuaranceController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhpatientsinsuarancelist-jdh_patients_insuarance-list'); // list
-    $app->group(
-        '/jdh_patients_insuarance',
-        function (RouteCollectorProxy $group) {
-            $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{patient_id}]', JdhPatientsInsuaranceController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_patients_insuarance/list-jdh_patients_insuarance-list-2'); // list
         }
     );
 
@@ -645,9 +636,6 @@ return function (App $app) {
 
     // login
     $app->map(["GET","POST","OPTIONS"], '/login[/{provider}]', OthersController::class . ':login')->add(PermissionMiddleware::class)->setName('login');
-
-    // login2fa
-    $app->map(["GET","POST","OPTIONS"], '/login2fa', OthersController::class . ':login2fa')->add(PermissionMiddleware::class)->setName('login2fa');
 
     // reset_password
     $app->map(["GET","POST","OPTIONS"], '/resetpassword', OthersController::class . ':resetpassword')->add(PermissionMiddleware::class)->setName('resetpassword');

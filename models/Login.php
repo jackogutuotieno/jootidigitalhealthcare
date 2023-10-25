@@ -406,19 +406,6 @@ class Login extends JdhUsers
                         $this->Username->addErrorMessage($Language->phrase("InvalidUidPwd")); // Invalid user name or password
                         $this->Password->addErrorMessage($Language->phrase("InvalidUidPwd")); // Invalid user name or password
 
-                    // Check concurrent user login
-                    } elseif (!IsSysAdmin() && !$UserProfile->isValidUser($this->Username->CurrentValue, session_id())) {
-                        WriteAuditLog($this->Username->CurrentValue, $Language->phrase("AuditTrailUserLoggedIn"), CurrentUserIP(), "", "", "", "");
-                        $message = str_replace("%u", $this->Username->CurrentValue, $Language->phrase("UserLoggedIn"));
-                        if ($this->IsModal) {
-                            WriteJson(["error" => ["description" => $message]]);
-                            $this->terminate();
-                            return;
-                        } else {
-                            $this->setFailureMessage($message);
-                            $validPwd = false;
-                        }
-
                     // Two factor authentication enabled (go to 2fa page)
                     } elseif (!IsSysAdmin() && Config("USE_TWO_FACTOR_AUTHENTICATION") && (Config("FORCE_TWO_FACTOR_AUTHENTICATION") || $UserProfile->hasUserSecret($this->Username->CurrentValue, true))) {
                         $_SESSION[SESSION_STATUS] = "loggingin2fa";

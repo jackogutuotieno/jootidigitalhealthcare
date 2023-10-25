@@ -26,12 +26,6 @@ class OthersController extends ControllerBase
         return $this->runPage($request, $response, $args, "Login");
     }
 
-    // login2fa
-    public function login2fa(Request $request, Response $response, array $args): Response
-    {
-        return $this->runPage($request, $response, $args, "Login2fa");
-    }
-
     // resetpassword
     public function resetpassword(Request $request, Response $response, array $args): Response
     {
@@ -87,7 +81,7 @@ class OthersController extends ControllerBase
         global $Security, $USER_LEVEL_TABLES;
         $url = "";
         foreach ($USER_LEVEL_TABLES as $t) {
-            if ($t[0] == "Dashboard") { // Check default table
+            if ($t[0] == "jdh_patients") { // Check default table
                 if ($Security->allowList($t[4] . $t[0])) {
                     $url = $t[5];
                     break;

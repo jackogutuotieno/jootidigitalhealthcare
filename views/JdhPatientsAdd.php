@@ -23,9 +23,9 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["photo", [fields.photo.visible && fields.photo.required ? ew.Validators.fileRequired(fields.photo.caption) : null], fields.photo.isInvalid],
+            ["patient_ip_number", [fields.patient_ip_number.visible && fields.patient_ip_number.required ? ew.Validators.required(fields.patient_ip_number.caption) : null], fields.patient_ip_number.isInvalid],
             ["patient_name", [fields.patient_name.visible && fields.patient_name.required ? ew.Validators.required(fields.patient_name.caption) : null], fields.patient_name.isInvalid],
-            ["patient_national_id", [fields.patient_national_id.visible && fields.patient_national_id.required ? ew.Validators.required(fields.patient_national_id.caption) : null], fields.patient_national_id.isInvalid],
-            ["patient_dob", [fields.patient_dob.visible && fields.patient_dob.required ? ew.Validators.required(fields.patient_dob.caption) : null, ew.Validators.datetime(fields.patient_dob.clientFormatPattern)], fields.patient_dob.isInvalid],
+            ["patient_dob_year", [fields.patient_dob_year.visible && fields.patient_dob_year.required ? ew.Validators.required(fields.patient_dob_year.caption) : null, ew.Validators.integer], fields.patient_dob_year.isInvalid],
             ["patient_gender", [fields.patient_gender.visible && fields.patient_gender.required ? ew.Validators.required(fields.patient_gender.caption) : null], fields.patient_gender.isInvalid],
             ["patient_phone", [fields.patient_phone.visible && fields.patient_phone.required ? ew.Validators.required(fields.patient_phone.caption) : null], fields.patient_phone.isInvalid],
             ["patient_kin_name", [fields.patient_kin_name.visible && fields.patient_kin_name.required ? ew.Validators.required(fields.patient_kin_name.caption) : null], fields.patient_kin_name.isInvalid],
@@ -115,6 +115,18 @@ $Page->showMessage();
 </div></div>
     </div>
 <?php } ?>
+<?php if ($Page->patient_ip_number->Visible) { // patient_ip_number ?>
+    <div id="r_patient_ip_number"<?= $Page->patient_ip_number->rowAttributes() ?>>
+        <label id="elh_jdh_patients_patient_ip_number" for="x_patient_ip_number" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_ip_number->caption() ?><?= $Page->patient_ip_number->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_ip_number->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_ip_number">
+<input type="<?= $Page->patient_ip_number->getInputTextType() ?>" name="x_patient_ip_number" id="x_patient_ip_number" data-table="jdh_patients" data-field="x_patient_ip_number" value="<?= $Page->patient_ip_number->EditValue ?>" size="30" maxlength="13" placeholder="<?= HtmlEncode($Page->patient_ip_number->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_ip_number->formatPattern()) ?>"<?= $Page->patient_ip_number->editAttributes() ?> aria-describedby="x_patient_ip_number_help">
+<?= $Page->patient_ip_number->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->patient_ip_number->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
 <?php if ($Page->patient_name->Visible) { // patient_name ?>
     <div id="r_patient_name"<?= $Page->patient_name->rowAttributes() ?>>
         <label id="elh_jdh_patients_patient_name" for="x_patient_name" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_name->caption() ?><?= $Page->patient_name->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
@@ -127,56 +139,14 @@ $Page->showMessage();
 </div></div>
     </div>
 <?php } ?>
-<?php if ($Page->patient_national_id->Visible) { // patient_national_id ?>
-    <div id="r_patient_national_id"<?= $Page->patient_national_id->rowAttributes() ?>>
-        <label id="elh_jdh_patients_patient_national_id" for="x_patient_national_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_national_id->caption() ?><?= $Page->patient_national_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_national_id->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_national_id">
-<input type="<?= $Page->patient_national_id->getInputTextType() ?>" name="x_patient_national_id" id="x_patient_national_id" data-table="jdh_patients" data-field="x_patient_national_id" value="<?= $Page->patient_national_id->EditValue ?>" size="30" maxlength="13" placeholder="<?= HtmlEncode($Page->patient_national_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_national_id->formatPattern()) ?>"<?= $Page->patient_national_id->editAttributes() ?> aria-describedby="x_patient_national_id_help">
-<?= $Page->patient_national_id->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->patient_national_id->getErrorMessage() ?></div>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->patient_dob->Visible) { // patient_dob ?>
-    <div id="r_patient_dob"<?= $Page->patient_dob->rowAttributes() ?>>
-        <label id="elh_jdh_patients_patient_dob" for="x_patient_dob" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_dob->caption() ?><?= $Page->patient_dob->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_dob->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_dob">
-<input type="<?= $Page->patient_dob->getInputTextType() ?>" name="x_patient_dob" id="x_patient_dob" data-table="jdh_patients" data-field="x_patient_dob" value="<?= $Page->patient_dob->EditValue ?>" placeholder="<?= HtmlEncode($Page->patient_dob->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_dob->formatPattern()) ?>"<?= $Page->patient_dob->editAttributes() ?> aria-describedby="x_patient_dob_help">
-<?= $Page->patient_dob->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->patient_dob->getErrorMessage() ?></div>
-<?php if (!$Page->patient_dob->ReadOnly && !$Page->patient_dob->Disabled && !isset($Page->patient_dob->EditAttrs["readonly"]) && !isset($Page->patient_dob->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["fjdh_patientsadd", "datetimepicker"], function () {
-    let format = "<?= DateFormat(7) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("fjdh_patientsadd", "x_patient_dob", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
+<?php if ($Page->patient_dob_year->Visible) { // patient_dob_year ?>
+    <div id="r_patient_dob_year"<?= $Page->patient_dob_year->rowAttributes() ?>>
+        <label id="elh_jdh_patients_patient_dob_year" for="x_patient_dob_year" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_dob_year->caption() ?><?= $Page->patient_dob_year->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_dob_year->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_dob_year">
+<input type="<?= $Page->patient_dob_year->getInputTextType() ?>" name="x_patient_dob_year" id="x_patient_dob_year" data-table="jdh_patients" data-field="x_patient_dob_year" value="<?= $Page->patient_dob_year->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->patient_dob_year->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_dob_year->formatPattern()) ?>"<?= $Page->patient_dob_year->editAttributes() ?> aria-describedby="x_patient_dob_year_help">
+<?= $Page->patient_dob_year->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->patient_dob_year->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

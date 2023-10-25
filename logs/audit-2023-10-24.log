@@ -1,0 +1,33 @@
+date/time,script,user,action,table,field,"key value","old value","new value"
+"2023-10-24 06:45:35",/jootidigitalhealthcare/logout,-2,logout,::1,,,,
+"2023-10-24 06:46:40",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-24 11:39:47",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-24 11:42:08",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-24 11:42:16",/jootidigitalhealthcare/login,4,login,::1,,,,
+"2023-10-24 11:42:59",/jootidigitalhealthcare/logout,4,logout,::1,,,,
+"2023-10-24 11:43:23",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-24 11:46:47",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-24 11:46:51",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-24 12:09:32",/jootidigitalhealthcare/jdhpatientsedit/1,1,U,jdh_patients,patient_dob_year,1,19840806,1984
+"2023-10-24 12:29:56",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-24 12:30:01",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-24 12:34:13",/jootidigitalhealthcare/jdhpatientsedit/2,1,U,jdh_patients,patient_dob_year,2,19840807,1984
+"2023-10-24 12:37:27",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-24 12:40:04",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_ip_number,7,,007
+"2023-10-24 12:40:04",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_name,7,,"Peter Doe"
+"2023-10-24 12:40:04",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_dob_year,7,,1990
+"2023-10-24 12:40:04",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_gender,7,,Male
+"2023-10-24 12:40:04",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_phone,7,,98002234
+"2023-10-24 12:40:04",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_kin_name,7,,
+"2023-10-24 12:40:04",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_kin_phone,7,,
+"2023-10-24 12:40:04",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,service_id,7,,1
+"2023-10-24 12:40:04",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,is_inpatient,7,,0
+"2023-10-24 12:40:04",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,submitted_by_user_id,7,,1
+"2023-10-24 12:40:04",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_id,7,,7
+"2023-10-24 12:42:43",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-24 12:42:50",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-24 12:46:21",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-24 12:46:24",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-24 12:48:52",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-24 12:49:00",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-24 13:12:56",/jootidigitalhealthcare/login,1,login,::1,,,,

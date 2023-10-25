@@ -35,6 +35,8 @@ loadjs.ready(["wrapper", "head"], function () {
         .setFields([
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
             ["photo", [fields.photo.visible && fields.photo.required ? ew.Validators.fileRequired(fields.photo.caption) : null], fields.photo.isInvalid],
+            ["patient_ip_number", [fields.patient_ip_number.visible && fields.patient_ip_number.required ? ew.Validators.required(fields.patient_ip_number.caption) : null], fields.patient_ip_number.isInvalid],
+            ["patient_dob_year", [fields.patient_dob_year.visible && fields.patient_dob_year.required ? ew.Validators.required(fields.patient_dob_year.caption) : null, ew.Validators.integer], fields.patient_dob_year.isInvalid],
             ["patient_phone", [fields.patient_phone.visible && fields.patient_phone.required ? ew.Validators.required(fields.patient_phone.caption) : null], fields.patient_phone.isInvalid],
             ["patient_kin_name", [fields.patient_kin_name.visible && fields.patient_kin_name.required ? ew.Validators.required(fields.patient_kin_name.caption) : null], fields.patient_kin_name.isInvalid],
             ["patient_kin_phone", [fields.patient_kin_phone.visible && fields.patient_kin_phone.required ? ew.Validators.required(fields.patient_kin_phone.caption) : null], fields.patient_kin_phone.isInvalid],
@@ -118,6 +120,30 @@ loadjs.ready(["wrapper", "head"], function () {
 <input type="hidden" name="fn_x_photo" id= "fn_x_photo" value="<?= $Page->photo->Upload->FileName ?>">
 <input type="hidden" name="fa_x_photo" id= "fa_x_photo" value="<?= (Post("fa_x_photo") == "0") ? "0" : "1" ?>">
 <table id="ft_x_photo" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->patient_ip_number->Visible) { // patient_ip_number ?>
+    <div id="r_patient_ip_number"<?= $Page->patient_ip_number->rowAttributes() ?>>
+        <label id="elh_jdh_patients_patient_ip_number" for="x_patient_ip_number" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_ip_number->caption() ?><?= $Page->patient_ip_number->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_ip_number->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_ip_number">
+<input type="<?= $Page->patient_ip_number->getInputTextType() ?>" name="x_patient_ip_number" id="x_patient_ip_number" data-table="jdh_patients" data-field="x_patient_ip_number" value="<?= $Page->patient_ip_number->EditValue ?>" size="30" maxlength="13" placeholder="<?= HtmlEncode($Page->patient_ip_number->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_ip_number->formatPattern()) ?>"<?= $Page->patient_ip_number->editAttributes() ?> aria-describedby="x_patient_ip_number_help">
+<?= $Page->patient_ip_number->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->patient_ip_number->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->patient_dob_year->Visible) { // patient_dob_year ?>
+    <div id="r_patient_dob_year"<?= $Page->patient_dob_year->rowAttributes() ?>>
+        <label id="elh_jdh_patients_patient_dob_year" for="x_patient_dob_year" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_dob_year->caption() ?><?= $Page->patient_dob_year->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->patient_dob_year->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_dob_year">
+<input type="<?= $Page->patient_dob_year->getInputTextType() ?>" name="x_patient_dob_year" id="x_patient_dob_year" data-table="jdh_patients" data-field="x_patient_dob_year" value="<?= $Page->patient_dob_year->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->patient_dob_year->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->patient_dob_year->formatPattern()) ?>"<?= $Page->patient_dob_year->editAttributes() ?> aria-describedby="x_patient_dob_year_help">
+<?= $Page->patient_dob_year->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->patient_dob_year->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>

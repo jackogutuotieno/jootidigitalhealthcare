@@ -43,10 +43,10 @@ class JdhRegistrationIncome extends DbTable
     // Fields
     public $patient_id;
     public $patient_name;
-    public $patient_dob;
     public $patient_gender;
     public $service_cost;
     public $patient_registration_date;
+    public $patient_dob_year;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -142,31 +142,6 @@ class JdhRegistrationIncome extends DbTable
         $this->patient_name->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
         $this->Fields['patient_name'] = &$this->patient_name;
 
-        // patient_dob $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->patient_dob = new DbField(
-            $this, // Table
-            'x_patient_dob', // Variable name
-            'patient_dob', // Name
-            '`patient_dob`', // Expression
-            CastDateFieldForLike("`patient_dob`", 7, "DB"), // Basic search expression
-            133, // Type
-            10, // Size
-            7, // Date/Time format
-            false, // Is upload field
-            '`patient_dob`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
-        );
-        $this->patient_dob->InputTextType = "text";
-        $this->patient_dob->Nullable = false; // NOT NULL field
-        $this->patient_dob->Required = true; // Required field
-        $this->patient_dob->DefaultErrorMessage = str_replace("%s", DateFormat(7), $Language->phrase("IncorrectDate"));
-        $this->patient_dob->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['patient_dob'] = &$this->patient_dob;
-
         // patient_gender $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->patient_gender = new DbField(
             $this, // Table
@@ -183,16 +158,12 @@ class JdhRegistrationIncome extends DbTable
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'SELECT' // Edit Tag
+            'TEXT' // Edit Tag
         );
         $this->patient_gender->InputTextType = "text";
         $this->patient_gender->Nullable = false; // NOT NULL field
         $this->patient_gender->Required = true; // Required field
-        $this->patient_gender->UsePleaseSelect = true; // Use PleaseSelect by default
-        $this->patient_gender->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->patient_gender->Lookup = new Lookup('patient_gender', 'jdh_registration_income', false, '', ["","","",""], '', '', [], [], [], [], [], [], '', '', "");
-        $this->patient_gender->OptionCount = 2;
-        $this->patient_gender->SearchOperators = ["=", "<>"];
+        $this->patient_gender->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
         $this->Fields['patient_gender'] = &$this->patient_gender;
 
         // service_cost $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
@@ -226,10 +197,10 @@ class JdhRegistrationIncome extends DbTable
             'x_patient_registration_date', // Variable name
             'patient_registration_date', // Name
             '`patient_registration_date`', // Expression
-            CastDateFieldForLike("`patient_registration_date`", 11, "DB"), // Basic search expression
+            CastDateFieldForLike("`patient_registration_date`", 0, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            11, // Date/Time format
+            0, // Date/Time format
             false, // Is upload field
             '`patient_registration_date`', // Virtual expression
             false, // Is virtual
@@ -241,9 +212,34 @@ class JdhRegistrationIncome extends DbTable
         $this->patient_registration_date->InputTextType = "text";
         $this->patient_registration_date->Nullable = false; // NOT NULL field
         $this->patient_registration_date->Required = true; // Required field
-        $this->patient_registration_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
+        $this->patient_registration_date->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
         $this->patient_registration_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_registration_date'] = &$this->patient_registration_date;
+
+        // patient_dob_year $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_dob_year = new DbField(
+            $this, // Table
+            'x_patient_dob_year', // Variable name
+            'patient_dob_year', // Name
+            '`patient_dob_year`', // Expression
+            '`patient_dob_year`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`patient_dob_year`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->patient_dob_year->InputTextType = "text";
+        $this->patient_dob_year->Nullable = false; // NOT NULL field
+        $this->patient_dob_year->Required = true; // Required field
+        $this->patient_dob_year->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->patient_dob_year->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['patient_dob_year'] = &$this->patient_dob_year;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -717,10 +713,10 @@ class JdhRegistrationIncome extends DbTable
         }
         $this->patient_id->DbValue = $row['patient_id'];
         $this->patient_name->DbValue = $row['patient_name'];
-        $this->patient_dob->DbValue = $row['patient_dob'];
         $this->patient_gender->DbValue = $row['patient_gender'];
         $this->service_cost->DbValue = $row['service_cost'];
         $this->patient_registration_date->DbValue = $row['patient_registration_date'];
+        $this->patient_dob_year->DbValue = $row['patient_dob_year'];
     }
 
     // Delete uploaded files
@@ -1076,10 +1072,10 @@ class JdhRegistrationIncome extends DbTable
         }
         $this->patient_id->setDbValue($row['patient_id']);
         $this->patient_name->setDbValue($row['patient_name']);
-        $this->patient_dob->setDbValue($row['patient_dob']);
         $this->patient_gender->setDbValue($row['patient_gender']);
         $this->service_cost->setDbValue($row['service_cost']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
+        $this->patient_dob_year->setDbValue($row['patient_dob_year']);
     }
 
     // Render list content
@@ -1114,13 +1110,13 @@ class JdhRegistrationIncome extends DbTable
 
         // patient_name
 
-        // patient_dob
-
         // patient_gender
 
         // service_cost
 
         // patient_registration_date
+
+        // patient_dob_year
 
         // patient_id
         $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
@@ -1128,16 +1124,8 @@ class JdhRegistrationIncome extends DbTable
         // patient_name
         $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
 
-        // patient_dob
-        $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
-        $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
-
         // patient_gender
-        if (strval($this->patient_gender->CurrentValue) != "") {
-            $this->patient_gender->ViewValue = $this->patient_gender->optionCaption($this->patient_gender->CurrentValue);
-        } else {
-            $this->patient_gender->ViewValue = null;
-        }
+        $this->patient_gender->ViewValue = $this->patient_gender->CurrentValue;
 
         // service_cost
         $this->service_cost->ViewValue = $this->service_cost->CurrentValue;
@@ -1147,6 +1135,9 @@ class JdhRegistrationIncome extends DbTable
         $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
         $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
+        // patient_dob_year
+        $this->patient_dob_year->ViewValue = $this->patient_dob_year->CurrentValue;
+
         // patient_id
         $this->patient_id->HrefValue = "";
         $this->patient_id->TooltipValue = "";
@@ -1154,10 +1145,6 @@ class JdhRegistrationIncome extends DbTable
         // patient_name
         $this->patient_name->HrefValue = "";
         $this->patient_name->TooltipValue = "";
-
-        // patient_dob
-        $this->patient_dob->HrefValue = "";
-        $this->patient_dob->TooltipValue = "";
 
         // patient_gender
         $this->patient_gender->HrefValue = "";
@@ -1170,6 +1157,10 @@ class JdhRegistrationIncome extends DbTable
         // patient_registration_date
         $this->patient_registration_date->HrefValue = "";
         $this->patient_registration_date->TooltipValue = "";
+
+        // patient_dob_year
+        $this->patient_dob_year->HrefValue = "";
+        $this->patient_dob_year->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1198,14 +1189,12 @@ class JdhRegistrationIncome extends DbTable
         $this->patient_name->EditValue = $this->patient_name->CurrentValue;
         $this->patient_name->PlaceHolder = RemoveHtml($this->patient_name->caption());
 
-        // patient_dob
-        $this->patient_dob->setupEditAttributes();
-        $this->patient_dob->EditValue = FormatDateTime($this->patient_dob->CurrentValue, $this->patient_dob->formatPattern());
-        $this->patient_dob->PlaceHolder = RemoveHtml($this->patient_dob->caption());
-
         // patient_gender
         $this->patient_gender->setupEditAttributes();
-        $this->patient_gender->EditValue = $this->patient_gender->options(true);
+        if (!$this->patient_gender->Raw) {
+            $this->patient_gender->CurrentValue = HtmlDecode($this->patient_gender->CurrentValue);
+        }
+        $this->patient_gender->EditValue = $this->patient_gender->CurrentValue;
         $this->patient_gender->PlaceHolder = RemoveHtml($this->patient_gender->caption());
 
         // service_cost
@@ -1220,6 +1209,14 @@ class JdhRegistrationIncome extends DbTable
         $this->patient_registration_date->setupEditAttributes();
         $this->patient_registration_date->EditValue = FormatDateTime($this->patient_registration_date->CurrentValue, $this->patient_registration_date->formatPattern());
         $this->patient_registration_date->PlaceHolder = RemoveHtml($this->patient_registration_date->caption());
+
+        // patient_dob_year
+        $this->patient_dob_year->setupEditAttributes();
+        $this->patient_dob_year->EditValue = $this->patient_dob_year->CurrentValue;
+        $this->patient_dob_year->PlaceHolder = RemoveHtml($this->patient_dob_year->caption());
+        if (strval($this->patient_dob_year->EditValue) != "" && is_numeric($this->patient_dob_year->EditValue)) {
+            $this->patient_dob_year->EditValue = $this->patient_dob_year->EditValue;
+        }
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1261,13 +1258,15 @@ class JdhRegistrationIncome extends DbTable
                     $doc->exportCaption($this->patient_name);
                     $doc->exportCaption($this->patient_gender);
                     $doc->exportCaption($this->service_cost);
+                    $doc->exportCaption($this->patient_registration_date);
+                    $doc->exportCaption($this->patient_dob_year);
                 } else {
                     $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->patient_name);
-                    $doc->exportCaption($this->patient_dob);
                     $doc->exportCaption($this->patient_gender);
                     $doc->exportCaption($this->service_cost);
                     $doc->exportCaption($this->patient_registration_date);
+                    $doc->exportCaption($this->patient_dob_year);
                 }
                 $doc->endExportRow();
             }
@@ -1302,13 +1301,15 @@ class JdhRegistrationIncome extends DbTable
                         $doc->exportField($this->patient_name);
                         $doc->exportField($this->patient_gender);
                         $doc->exportField($this->service_cost);
+                        $doc->exportField($this->patient_registration_date);
+                        $doc->exportField($this->patient_dob_year);
                     } else {
                         $doc->exportField($this->patient_id);
                         $doc->exportField($this->patient_name);
-                        $doc->exportField($this->patient_dob);
                         $doc->exportField($this->patient_gender);
                         $doc->exportField($this->service_cost);
                         $doc->exportField($this->patient_registration_date);
+                        $doc->exportField($this->patient_dob_year);
                     }
                     $doc->endExportRow($rowCnt);
                 }
@@ -1330,10 +1331,10 @@ class JdhRegistrationIncome extends DbTable
                 $doc->beginExportRow(-1);
                 $doc->exportAggregate($this->patient_id, '');
                 $doc->exportAggregate($this->patient_name, '');
-                $doc->exportAggregate($this->patient_dob, '');
                 $doc->exportAggregate($this->patient_gender, '');
                 $doc->exportAggregate($this->service_cost, 'TOTAL');
                 $doc->exportAggregate($this->patient_registration_date, '');
+                $doc->exportAggregate($this->patient_dob_year, '');
                 $doc->endExportRow();
             }
         }

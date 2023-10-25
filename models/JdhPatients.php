@@ -51,9 +51,9 @@ class JdhPatients extends DbTable
     // Fields
     public $patient_id;
     public $photo;
+    public $patient_ip_number;
     public $patient_name;
-    public $patient_national_id;
-    public $patient_dob;
+    public $patient_dob_year;
     public $patient_age;
     public $patient_gender;
     public $patient_phone;
@@ -159,6 +159,28 @@ class JdhPatients extends DbTable
         $this->photo->SearchOperators = ["=", "<>", "IS NULL", "IS NOT NULL"];
         $this->Fields['photo'] = &$this->photo;
 
+        // patient_ip_number $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_ip_number = new DbField(
+            $this, // Table
+            'x_patient_ip_number', // Variable name
+            'patient_ip_number', // Name
+            '`patient_ip_number`', // Expression
+            '`patient_ip_number`', // Basic search expression
+            200, // Type
+            13, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`patient_ip_number`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->patient_ip_number->InputTextType = "text";
+        $this->patient_ip_number->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
+        $this->Fields['patient_ip_number'] = &$this->patient_ip_number;
+
         // patient_name $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->patient_name = new DbField(
             $this, // Table
@@ -183,77 +205,53 @@ class JdhPatients extends DbTable
         $this->patient_name->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
         $this->Fields['patient_name'] = &$this->patient_name;
 
-        // patient_national_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->patient_national_id = new DbField(
+        // patient_dob_year $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->patient_dob_year = new DbField(
             $this, // Table
-            'x_patient_national_id', // Variable name
-            'patient_national_id', // Name
-            '`patient_national_id`', // Expression
-            '`patient_national_id`', // Basic search expression
-            200, // Type
-            13, // Size
+            'x_patient_dob_year', // Variable name
+            'patient_dob_year', // Name
+            '`patient_dob_year`', // Expression
+            '`patient_dob_year`', // Basic search expression
+            3, // Type
+            11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`patient_national_id`', // Virtual expression
+            '`patient_dob_year`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->patient_national_id->InputTextType = "text";
-        $this->patient_national_id->Nullable = false; // NOT NULL field
-        $this->patient_national_id->Required = true; // Required field
-        $this->patient_national_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
-        $this->Fields['patient_national_id'] = &$this->patient_national_id;
-
-        // patient_dob $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->patient_dob = new DbField(
-            $this, // Table
-            'x_patient_dob', // Variable name
-            'patient_dob', // Name
-            '`patient_dob`', // Expression
-            CastDateFieldForLike("`patient_dob`", 7, "DB"), // Basic search expression
-            133, // Type
-            10, // Size
-            7, // Date/Time format
-            false, // Is upload field
-            '`patient_dob`', // Virtual expression
-            false, // Is virtual
-            false, // Force selection
-            false, // Is Virtual search
-            'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
-        );
-        $this->patient_dob->InputTextType = "text";
-        $this->patient_dob->Nullable = false; // NOT NULL field
-        $this->patient_dob->Required = true; // Required field
-        $this->patient_dob->DefaultErrorMessage = str_replace("%s", DateFormat(7), $Language->phrase("IncorrectDate"));
-        $this->patient_dob->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['patient_dob'] = &$this->patient_dob;
+        $this->patient_dob_year->InputTextType = "text";
+        $this->patient_dob_year->Nullable = false; // NOT NULL field
+        $this->patient_dob_year->Required = true; // Required field
+        $this->patient_dob_year->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->patient_dob_year->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['patient_dob_year'] = &$this->patient_dob_year;
 
         // patient_age $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->patient_age = new DbField(
             $this, // Table
             'x_patient_age', // Variable name
             'patient_age', // Name
-            '(SELECT TIMESTAMPDIFF(YEAR, patient_dob, CURDATE()))', // Expression
-            '(SELECT TIMESTAMPDIFF(YEAR, patient_dob, CURDATE()))', // Basic search expression
+            '(SELECT YEAR(CURRENT_DATE())) - patient_dob_year', // Expression
+            '(SELECT YEAR(CURRENT_DATE())) - patient_dob_year', // Basic search expression
             20, // Type
-            21, // Size
+            12, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '(SELECT TIMESTAMPDIFF(YEAR, patient_dob, CURDATE()))', // Virtual expression
+            '(SELECT YEAR(CURRENT_DATE())) - patient_dob_year', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'TEXT' // Edit Tag
+            'HIDDEN' // Edit Tag
         );
         $this->patient_age->InputTextType = "text";
         $this->patient_age->IsCustom = true; // Custom field
         $this->patient_age->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->patient_age->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->patient_age->SearchOperators = ["=", "<>", "IS NULL", "IS NOT NULL"];
         $this->Fields['patient_age'] = &$this->patient_age;
 
         // patient_gender $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
@@ -597,7 +595,7 @@ class JdhPatients extends DbTable
 
     public function getSqlSelect() // Select
     {
-        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*, (SELECT TIMESTAMPDIFF(YEAR, patient_dob, CURDATE())) AS `patient_age`");
+        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*, (SELECT YEAR(CURRENT_DATE())) - patient_dob_year AS `patient_age`");
     }
 
     public function sqlSelect() // For backward compatibility
@@ -1006,9 +1004,9 @@ class JdhPatients extends DbTable
         }
         $this->patient_id->DbValue = $row['patient_id'];
         $this->photo->Upload->DbValue = $row['photo'];
+        $this->patient_ip_number->DbValue = $row['patient_ip_number'];
         $this->patient_name->DbValue = $row['patient_name'];
-        $this->patient_national_id->DbValue = $row['patient_national_id'];
-        $this->patient_dob->DbValue = $row['patient_dob'];
+        $this->patient_dob_year->DbValue = $row['patient_dob_year'];
         $this->patient_age->DbValue = $row['patient_age'];
         $this->patient_gender->DbValue = $row['patient_gender'];
         $this->patient_phone->DbValue = $row['patient_phone'];
@@ -1381,9 +1379,9 @@ class JdhPatients extends DbTable
         }
         $this->patient_id->setDbValue($row['patient_id']);
         $this->photo->Upload->DbValue = $row['photo'];
+        $this->patient_ip_number->setDbValue($row['patient_ip_number']);
         $this->patient_name->setDbValue($row['patient_name']);
-        $this->patient_national_id->setDbValue($row['patient_national_id']);
-        $this->patient_dob->setDbValue($row['patient_dob']);
+        $this->patient_dob_year->setDbValue($row['patient_dob_year']);
         $this->patient_age->setDbValue($row['patient_age']);
         $this->patient_gender->setDbValue($row['patient_gender']);
         $this->patient_phone->setDbValue($row['patient_phone']);
@@ -1427,11 +1425,11 @@ class JdhPatients extends DbTable
 
         // photo
 
+        // patient_ip_number
+
         // patient_name
 
-        // patient_national_id
-
-        // patient_dob
+        // patient_dob_year
 
         // patient_age
 
@@ -1466,15 +1464,14 @@ class JdhPatients extends DbTable
             $this->photo->ViewValue = "";
         }
 
+        // patient_ip_number
+        $this->patient_ip_number->ViewValue = $this->patient_ip_number->CurrentValue;
+
         // patient_name
         $this->patient_name->ViewValue = $this->patient_name->CurrentValue;
 
-        // patient_national_id
-        $this->patient_national_id->ViewValue = $this->patient_national_id->CurrentValue;
-
-        // patient_dob
-        $this->patient_dob->ViewValue = $this->patient_dob->CurrentValue;
-        $this->patient_dob->ViewValue = FormatDateTime($this->patient_dob->ViewValue, $this->patient_dob->formatPattern());
+        // patient_dob_year
+        $this->patient_dob_year->ViewValue = $this->patient_dob_year->CurrentValue;
 
         // patient_age
         $this->patient_age->ViewValue = $this->patient_age->CurrentValue;
@@ -1562,17 +1559,17 @@ class JdhPatients extends DbTable
             $this->photo->LinkAttrs->appendClass("ew-lightbox");
         }
 
+        // patient_ip_number
+        $this->patient_ip_number->HrefValue = "";
+        $this->patient_ip_number->TooltipValue = "";
+
         // patient_name
         $this->patient_name->HrefValue = "";
         $this->patient_name->TooltipValue = "";
 
-        // patient_national_id
-        $this->patient_national_id->HrefValue = "";
-        $this->patient_national_id->TooltipValue = "";
-
-        // patient_dob
-        $this->patient_dob->HrefValue = "";
-        $this->patient_dob->TooltipValue = "";
+        // patient_dob_year
+        $this->patient_dob_year->HrefValue = "";
+        $this->patient_dob_year->TooltipValue = "";
 
         // patient_age
         $this->patient_age->HrefValue = "";
@@ -1650,6 +1647,14 @@ class JdhPatients extends DbTable
             $this->photo->EditValue = "";
         }
 
+        // patient_ip_number
+        $this->patient_ip_number->setupEditAttributes();
+        if (!$this->patient_ip_number->Raw) {
+            $this->patient_ip_number->CurrentValue = HtmlDecode($this->patient_ip_number->CurrentValue);
+        }
+        $this->patient_ip_number->EditValue = $this->patient_ip_number->CurrentValue;
+        $this->patient_ip_number->PlaceHolder = RemoveHtml($this->patient_ip_number->caption());
+
         // patient_name
         $this->patient_name->setupEditAttributes();
         if (!$this->patient_name->Raw) {
@@ -1658,23 +1663,20 @@ class JdhPatients extends DbTable
         $this->patient_name->EditValue = $this->patient_name->CurrentValue;
         $this->patient_name->PlaceHolder = RemoveHtml($this->patient_name->caption());
 
-        // patient_national_id
-        $this->patient_national_id->setupEditAttributes();
-        if (!$this->patient_national_id->Raw) {
-            $this->patient_national_id->CurrentValue = HtmlDecode($this->patient_national_id->CurrentValue);
+        // patient_dob_year
+        $this->patient_dob_year->setupEditAttributes();
+        $this->patient_dob_year->EditValue = $this->patient_dob_year->CurrentValue;
+        $this->patient_dob_year->PlaceHolder = RemoveHtml($this->patient_dob_year->caption());
+        if (strval($this->patient_dob_year->EditValue) != "" && is_numeric($this->patient_dob_year->EditValue)) {
+            $this->patient_dob_year->EditValue = $this->patient_dob_year->EditValue;
         }
-        $this->patient_national_id->EditValue = $this->patient_national_id->CurrentValue;
-        $this->patient_national_id->PlaceHolder = RemoveHtml($this->patient_national_id->caption());
-
-        // patient_dob
-        $this->patient_dob->setupEditAttributes();
-        $this->patient_dob->EditValue = FormatDateTime($this->patient_dob->CurrentValue, $this->patient_dob->formatPattern());
-        $this->patient_dob->PlaceHolder = RemoveHtml($this->patient_dob->caption());
 
         // patient_age
         $this->patient_age->setupEditAttributes();
-        $this->patient_age->EditValue = $this->patient_age->CurrentValue;
-        $this->patient_age->EditValue = FormatNumber($this->patient_age->EditValue, $this->patient_age->formatPattern());
+        $this->patient_age->CurrentValue = FormatNumber($this->patient_age->CurrentValue, $this->patient_age->formatPattern());
+        if (strval($this->patient_age->EditValue) != "" && is_numeric($this->patient_age->EditValue)) {
+            $this->patient_age->EditValue = FormatNumber($this->patient_age->EditValue, null);
+        }
 
         // patient_gender
         $this->patient_gender->setupEditAttributes();
@@ -1771,15 +1773,17 @@ class JdhPatients extends DbTable
                 $doc->beginExportRow();
                 if ($exportPageType == "view") {
                     $doc->exportCaption($this->patient_id);
+                    $doc->exportCaption($this->patient_ip_number);
                     $doc->exportCaption($this->patient_name);
+                    $doc->exportCaption($this->patient_dob_year);
                     $doc->exportCaption($this->patient_age);
                     $doc->exportCaption($this->patient_gender);
                     $doc->exportCaption($this->is_inpatient);
                 } else {
                     $doc->exportCaption($this->patient_id);
+                    $doc->exportCaption($this->patient_ip_number);
                     $doc->exportCaption($this->patient_name);
-                    $doc->exportCaption($this->patient_national_id);
-                    $doc->exportCaption($this->patient_dob);
+                    $doc->exportCaption($this->patient_dob_year);
                     $doc->exportCaption($this->patient_age);
                     $doc->exportCaption($this->patient_gender);
                     $doc->exportCaption($this->patient_phone);
@@ -1819,15 +1823,17 @@ class JdhPatients extends DbTable
                     $doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
                     if ($exportPageType == "view") {
                         $doc->exportField($this->patient_id);
+                        $doc->exportField($this->patient_ip_number);
                         $doc->exportField($this->patient_name);
+                        $doc->exportField($this->patient_dob_year);
                         $doc->exportField($this->patient_age);
                         $doc->exportField($this->patient_gender);
                         $doc->exportField($this->is_inpatient);
                     } else {
                         $doc->exportField($this->patient_id);
+                        $doc->exportField($this->patient_ip_number);
                         $doc->exportField($this->patient_name);
-                        $doc->exportField($this->patient_national_id);
-                        $doc->exportField($this->patient_dob);
+                        $doc->exportField($this->patient_dob_year);
                         $doc->exportField($this->patient_age);
                         $doc->exportField($this->patient_gender);
                         $doc->exportField($this->patient_phone);

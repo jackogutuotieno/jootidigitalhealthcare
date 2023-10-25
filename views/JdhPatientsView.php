@@ -64,6 +64,17 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->patient_ip_number->Visible) { // patient_ip_number ?>
+    <tr id="r_patient_ip_number"<?= $Page->patient_ip_number->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_patient_ip_number"><?= $Page->patient_ip_number->caption() ?></span></td>
+        <td data-name="patient_ip_number"<?= $Page->patient_ip_number->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_ip_number">
+<span<?= $Page->patient_ip_number->viewAttributes() ?>>
+<?= $Page->patient_ip_number->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 <?php if ($Page->patient_name->Visible) { // patient_name ?>
     <tr id="r_patient_name"<?= $Page->patient_name->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_patient_name"><?= $Page->patient_name->caption() ?></span></td>
@@ -71,6 +82,17 @@ loadjs.ready(["wrapper", "head"], function () {
 <span id="el_jdh_patients_patient_name">
 <span<?= $Page->patient_name->viewAttributes() ?>>
 <?= $Page->patient_name->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
+<?php if ($Page->patient_dob_year->Visible) { // patient_dob_year ?>
+    <tr id="r_patient_dob_year"<?= $Page->patient_dob_year->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_patient_dob_year"><?= $Page->patient_dob_year->caption() ?></span></td>
+        <td data-name="patient_dob_year"<?= $Page->patient_dob_year->cellAttributes() ?>>
+<span id="el_jdh_patients_patient_dob_year">
+<span<?= $Page->patient_dob_year->viewAttributes() ?>>
+<?= $Page->patient_dob_year->getViewValue() ?></span>
 </span>
 </td>
     </tr>
