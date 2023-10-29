@@ -322,7 +322,7 @@ class JdhInvoiceDelete extends JdhInvoice
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['invoice_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -335,7 +335,7 @@ class JdhInvoiceDelete extends JdhInvoice
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->invoice_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
     public $DbMasterFilter = "";
@@ -362,10 +362,12 @@ class JdhInvoiceDelete extends JdhInvoice
         // View
         $this->View = Get(Config("VIEW"));
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->invoice_id->setVisibility();
+        $this->id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->submitted_by_user_id->setVisibility();
+        $this->invoice_title->setVisibility();
+        $this->invoice_description->Visible = false;
         $this->invoice_date->setVisibility();
+        $this->submittedby_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -570,20 +572,24 @@ class JdhInvoiceDelete extends JdhInvoice
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->invoice_id->setDbValue($row['invoice_id']);
+        $this->id->setDbValue($row['id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->invoice_title->setDbValue($row['invoice_title']);
+        $this->invoice_description->setDbValue($row['invoice_description']);
         $this->invoice_date->setDbValue($row['invoice_date']);
+        $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['invoice_id'] = $this->invoice_id->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['invoice_title'] = $this->invoice_title->DefaultValue;
+        $row['invoice_description'] = $this->invoice_description->DefaultValue;
         $row['invoice_date'] = $this->invoice_date->DefaultValue;
+        $row['submittedby_user_id'] = $this->submittedby_user_id->DefaultValue;
         return $row;
     }
 
@@ -599,18 +605,22 @@ class JdhInvoiceDelete extends JdhInvoice
 
         // Common render codes for all row types
 
-        // invoice_id
+        // id
 
         // patient_id
 
-        // submitted_by_user_id
+        // invoice_title
+
+        // invoice_description
 
         // invoice_date
 
+        // submittedby_user_id
+
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // invoice_id
-            $this->invoice_id->ViewValue = $this->invoice_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
 
             // patient_id
             $curVal = strval($this->patient_id->CurrentValue);
@@ -635,25 +645,24 @@ class JdhInvoiceDelete extends JdhInvoice
                 $this->patient_id->ViewValue = null;
             }
 
-            // submitted_by_user_id
-            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
-            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
+            // invoice_title
+            $this->invoice_title->ViewValue = $this->invoice_title->CurrentValue;
 
             // invoice_date
             $this->invoice_date->ViewValue = $this->invoice_date->CurrentValue;
             $this->invoice_date->ViewValue = FormatDateTime($this->invoice_date->ViewValue, $this->invoice_date->formatPattern());
 
-            // invoice_id
-            $this->invoice_id->HrefValue = "";
-            $this->invoice_id->TooltipValue = "";
+            // id
+            $this->id->HrefValue = "";
+            $this->id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
 
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
-            $this->submitted_by_user_id->TooltipValue = "";
+            // invoice_title
+            $this->invoice_title->HrefValue = "";
+            $this->invoice_title->TooltipValue = "";
 
             // invoice_date
             $this->invoice_date->HrefValue = "";
@@ -694,7 +703,7 @@ class JdhInvoiceDelete extends JdhInvoice
             if ($thisKey != "") {
                 $thisKey .= Config("COMPOSITE_KEY_SEPARATOR");
             }
-            $thisKey .= $row['invoice_id'];
+            $thisKey .= $row['id'];
 
             // Call row deleting event
             $deleteRow = $this->rowDeleting($row);

@@ -34,10 +34,9 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["id", [fields.id.visible && fields.id.required ? ew.Validators.required(fields.id.caption) : null], fields.id.isInvalid],
-            ["service_id", [fields.service_id.visible && fields.service_id.required ? ew.Validators.required(fields.service_id.caption) : null, ew.Validators.integer], fields.service_id.isInvalid],
-            ["description", [fields.description.visible && fields.description.required ? ew.Validators.required(fields.description.caption) : null], fields.description.isInvalid],
-            ["submittedby_user_id", [fields.submittedby_user_id.visible && fields.submittedby_user_id.required ? ew.Validators.required(fields.submittedby_user_id.caption) : null], fields.submittedby_user_id.isInvalid],
-            ["date_created", [fields.date_created.visible && fields.date_created.required ? ew.Validators.required(fields.date_created.caption) : null, ew.Validators.datetime(fields.date_created.clientFormatPattern)], fields.date_created.isInvalid]
+            ["invoice_id", [fields.invoice_id.visible && fields.invoice_id.required ? ew.Validators.required(fields.invoice_id.caption) : null, ew.Validators.integer], fields.invoice_id.isInvalid],
+            ["invoice_item", [fields.invoice_item.visible && fields.invoice_item.required ? ew.Validators.required(fields.invoice_item.caption) : null], fields.invoice_item.isInvalid],
+            ["total_amount", [fields.total_amount.visible && fields.total_amount.required ? ew.Validators.required(fields.total_amount.caption) : null, ew.Validators.integer], fields.total_amount.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -71,6 +70,10 @@ loadjs.ready(["wrapper", "head"], function () {
 <input type="hidden" name="json" value="1">
 <?php } ?>
 <input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
+<?php if ($Page->getCurrentMasterTable() == "jdh_invoice") { ?>
+<input type="hidden" name="<?= Config("TABLE_SHOW_MASTER") ?>" value="jdh_invoice">
+<input type="hidden" name="fk_id" value="<?= HtmlEncode($Page->invoice_id->getSessionValue()) ?>">
+<?php } ?>
 <div class="ew-edit-div"><!-- page* -->
 <?php if ($Page->id->Visible) { // id ?>
     <div id="r_id"<?= $Page->id->rowAttributes() ?>>
@@ -84,76 +87,49 @@ loadjs.ready(["wrapper", "head"], function () {
 </div></div>
     </div>
 <?php } ?>
-<?php if ($Page->service_id->Visible) { // service_id ?>
-    <div id="r_service_id"<?= $Page->service_id->rowAttributes() ?>>
-        <label id="elh_jdh_invoice_items_service_id" for="x_service_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->service_id->caption() ?><?= $Page->service_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->service_id->cellAttributes() ?>>
-<span id="el_jdh_invoice_items_service_id">
-<input type="<?= $Page->service_id->getInputTextType() ?>" name="x_service_id" id="x_service_id" data-table="jdh_invoice_items" data-field="x_service_id" value="<?= $Page->service_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->service_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->service_id->formatPattern()) ?>"<?= $Page->service_id->editAttributes() ?> aria-describedby="x_service_id_help">
-<?= $Page->service_id->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->service_id->getErrorMessage() ?></div>
+<?php if ($Page->invoice_id->Visible) { // invoice_id ?>
+    <div id="r_invoice_id"<?= $Page->invoice_id->rowAttributes() ?>>
+        <label id="elh_jdh_invoice_items_invoice_id" for="x_invoice_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->invoice_id->caption() ?><?= $Page->invoice_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->invoice_id->cellAttributes() ?>>
+<?php if ($Page->invoice_id->getSessionValue() != "") { ?>
+<span<?= $Page->invoice_id->viewAttributes() ?>>
+<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->invoice_id->getDisplayValue($Page->invoice_id->ViewValue))) ?>"></span>
+<input type="hidden" id="x_invoice_id" name="x_invoice_id" value="<?= HtmlEncode($Page->invoice_id->CurrentValue) ?>" data-hidden="1">
+<?php } else { ?>
+<span id="el_jdh_invoice_items_invoice_id">
+<input type="<?= $Page->invoice_id->getInputTextType() ?>" name="x_invoice_id" id="x_invoice_id" data-table="jdh_invoice_items" data-field="x_invoice_id" value="<?= $Page->invoice_id->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->invoice_id->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->invoice_id->formatPattern()) ?>"<?= $Page->invoice_id->editAttributes() ?> aria-describedby="x_invoice_id_help">
+<?= $Page->invoice_id->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->invoice_id->getErrorMessage() ?></div>
+</span>
+<?php } ?>
+</div></div>
+    </div>
+<?php } ?>
+<?php if ($Page->invoice_item->Visible) { // invoice_item ?>
+    <div id="r_invoice_item"<?= $Page->invoice_item->rowAttributes() ?>>
+        <label id="elh_jdh_invoice_items_invoice_item" for="x_invoice_item" class="<?= $Page->LeftColumnClass ?>"><?= $Page->invoice_item->caption() ?><?= $Page->invoice_item->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->invoice_item->cellAttributes() ?>>
+<span id="el_jdh_invoice_items_invoice_item">
+<input type="<?= $Page->invoice_item->getInputTextType() ?>" name="x_invoice_item" id="x_invoice_item" data-table="jdh_invoice_items" data-field="x_invoice_item" value="<?= $Page->invoice_item->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Page->invoice_item->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->invoice_item->formatPattern()) ?>"<?= $Page->invoice_item->editAttributes() ?> aria-describedby="x_invoice_item_help">
+<?= $Page->invoice_item->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->invoice_item->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>
 <?php } ?>
-<?php if ($Page->description->Visible) { // description ?>
-    <div id="r_description"<?= $Page->description->rowAttributes() ?>>
-        <label id="elh_jdh_invoice_items_description" for="x_description" class="<?= $Page->LeftColumnClass ?>"><?= $Page->description->caption() ?><?= $Page->description->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->description->cellAttributes() ?>>
-<span id="el_jdh_invoice_items_description">
-<textarea data-table="jdh_invoice_items" data-field="x_description" name="x_description" id="x_description" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->description->getPlaceHolder()) ?>"<?= $Page->description->editAttributes() ?> aria-describedby="x_description_help"><?= $Page->description->EditValue ?></textarea>
-<?= $Page->description->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->description->getErrorMessage() ?></div>
-</span>
-</div></div>
-    </div>
-<?php } ?>
-<?php if ($Page->date_created->Visible) { // date_created ?>
-    <div id="r_date_created"<?= $Page->date_created->rowAttributes() ?>>
-        <label id="elh_jdh_invoice_items_date_created" for="x_date_created" class="<?= $Page->LeftColumnClass ?>"><?= $Page->date_created->caption() ?><?= $Page->date_created->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->date_created->cellAttributes() ?>>
-<span id="el_jdh_invoice_items_date_created">
-<input type="<?= $Page->date_created->getInputTextType() ?>" name="x_date_created" id="x_date_created" data-table="jdh_invoice_items" data-field="x_date_created" value="<?= $Page->date_created->EditValue ?>" placeholder="<?= HtmlEncode($Page->date_created->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->date_created->formatPattern()) ?>"<?= $Page->date_created->editAttributes() ?> aria-describedby="x_date_created_help">
-<?= $Page->date_created->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->date_created->getErrorMessage() ?></div>
-<?php if (!$Page->date_created->ReadOnly && !$Page->date_created->Disabled && !isset($Page->date_created->EditAttrs["readonly"]) && !isset($Page->date_created->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["fjdh_invoice_itemsedit", "datetimepicker"], function () {
-    let format = "<?= DateFormat(0) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("fjdh_invoice_itemsedit", "x_date_created", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
+<?php if ($Page->total_amount->Visible) { // total_amount ?>
+    <div id="r_total_amount"<?= $Page->total_amount->rowAttributes() ?>>
+        <label id="elh_jdh_invoice_items_total_amount" for="x_total_amount" class="<?= $Page->LeftColumnClass ?>"><?= $Page->total_amount->caption() ?><?= $Page->total_amount->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->total_amount->cellAttributes() ?>>
+<span id="el_jdh_invoice_items_total_amount">
+<input type="<?= $Page->total_amount->getInputTextType() ?>" name="x_total_amount" id="x_total_amount" data-table="jdh_invoice_items" data-field="x_total_amount" value="<?= $Page->total_amount->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->total_amount->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->total_amount->formatPattern()) ?>"<?= $Page->total_amount->editAttributes() ?> aria-describedby="x_total_amount_help">
+<?= $Page->total_amount->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->total_amount->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>
 <?php } ?>
 </div><!-- /page* -->
-<span id="el_jdh_invoice_items_submittedby_user_id">
-<input type="hidden" data-table="jdh_invoice_items" data-field="x_submittedby_user_id" data-hidden="1" name="x_submittedby_user_id" id="x_submittedby_user_id" value="<?= HtmlEncode($Page->submittedby_user_id->CurrentValue) ?>">
-</span>
 <?= $Page->IsModal ? '<template class="ew-modal-buttons">' : '<div class="row ew-buttons">' ?><!-- buttons .row -->
     <div class="<?= $Page->OffsetColumnClass ?>"><!-- buttons offset -->
 <button class="btn btn-primary ew-btn" name="btn-action" id="btn-action" type="submit" form="fjdh_invoice_itemsedit"><?= $Language->phrase("SaveBtn") ?></button>

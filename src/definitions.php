@@ -78,6 +78,8 @@ return [
     "jdh_beds" => \DI\create(JdhBeds::class),
     "jdh_ipd_admission" => \DI\create(JdhIpdAdmission::class),
     "jdh_facility_units" => \DI\create(JdhFacilityUnits::class),
+    "jdh_invoice" => \DI\create(JdhInvoice::class),
+    "jdh_invoice_items" => \DI\create(JdhInvoiceItems::class),
 
     // User table
     "usertable" => \DI\get("jdh_users"),

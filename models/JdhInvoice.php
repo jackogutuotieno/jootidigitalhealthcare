@@ -41,10 +41,12 @@ class JdhInvoice extends DbTable
     public $ModalMultiEdit = false;
 
     // Fields
-    public $invoice_id;
+    public $id;
     public $patient_id;
-    public $submitted_by_user_id;
+    public $invoice_title;
+    public $invoice_description;
     public $invoice_date;
+    public $submittedby_user_id;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -91,30 +93,31 @@ class JdhInvoice extends DbTable
         $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
         $this->BasicSearch = new BasicSearch($this);
 
-        // invoice_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->invoice_id = new DbField(
+        // id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->id = new DbField(
             $this, // Table
-            'x_invoice_id', // Variable name
-            'invoice_id', // Name
-            '`invoice_id`', // Expression
-            '`invoice_id`', // Basic search expression
+            'x_id', // Variable name
+            'id', // Name
+            '`id`', // Expression
+            '`id`', // Basic search expression
             3, // Type
             11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`invoice_id`', // Virtual expression
+            '`id`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'NO' // Edit Tag
         );
-        $this->invoice_id->InputTextType = "text";
-        $this->invoice_id->IsAutoIncrement = true; // Autoincrement field
-        $this->invoice_id->IsPrimaryKey = true; // Primary key field
-        $this->invoice_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->invoice_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
-        $this->Fields['invoice_id'] = &$this->invoice_id;
+        $this->id->InputTextType = "text";
+        $this->id->IsAutoIncrement = true; // Autoincrement field
+        $this->id->IsPrimaryKey = true; // Primary key field
+        $this->id->IsForeignKey = true; // Foreign key field
+        $this->id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->Fields['id'] = &$this->id;
 
         // patient_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->patient_id = new DbField(
@@ -144,30 +147,53 @@ class JdhInvoice extends DbTable
         $this->patient_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_id'] = &$this->patient_id;
 
-        // submitted_by_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->submitted_by_user_id = new DbField(
+        // invoice_title $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->invoice_title = new DbField(
             $this, // Table
-            'x_submitted_by_user_id', // Variable name
-            'submitted_by_user_id', // Name
-            '`submitted_by_user_id`', // Expression
-            '`submitted_by_user_id`', // Basic search expression
-            3, // Type
-            11, // Size
+            'x_invoice_title', // Variable name
+            'invoice_title', // Name
+            '`invoice_title`', // Expression
+            '`invoice_title`', // Basic search expression
+            200, // Type
+            100, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`submitted_by_user_id`', // Virtual expression
+            '`invoice_title`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'HIDDEN' // Edit Tag
+            'TEXT' // Edit Tag
         );
-        $this->submitted_by_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
-        $this->submitted_by_user_id->InputTextType = "text";
-        $this->submitted_by_user_id->Nullable = false; // NOT NULL field
-        $this->submitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->submitted_by_user_id->SearchOperators = ["=", "<>"];
-        $this->Fields['submitted_by_user_id'] = &$this->submitted_by_user_id;
+        $this->invoice_title->InputTextType = "text";
+        $this->invoice_title->Nullable = false; // NOT NULL field
+        $this->invoice_title->Required = true; // Required field
+        $this->invoice_title->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['invoice_title'] = &$this->invoice_title;
+
+        // invoice_description $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->invoice_description = new DbField(
+            $this, // Table
+            'x_invoice_description', // Variable name
+            'invoice_description', // Name
+            '`invoice_description`', // Expression
+            '`invoice_description`', // Basic search expression
+            201, // Type
+            65535, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`invoice_description`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXTAREA' // Edit Tag
+        );
+        $this->invoice_description->InputTextType = "text";
+        $this->invoice_description->Nullable = false; // NOT NULL field
+        $this->invoice_description->Required = true; // Required field
+        $this->invoice_description->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['invoice_description'] = &$this->invoice_description;
 
         // invoice_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->invoice_date = new DbField(
@@ -175,10 +201,10 @@ class JdhInvoice extends DbTable
             'x_invoice_date', // Variable name
             'invoice_date', // Name
             '`invoice_date`', // Expression
-            CastDateFieldForLike("`invoice_date`", 11, "DB"), // Basic search expression
+            CastDateFieldForLike("`invoice_date`", 0, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            11, // Date/Time format
+            0, // Date/Time format
             false, // Is upload field
             '`invoice_date`', // Virtual expression
             false, // Is virtual
@@ -190,9 +216,34 @@ class JdhInvoice extends DbTable
         $this->invoice_date->InputTextType = "text";
         $this->invoice_date->Nullable = false; // NOT NULL field
         $this->invoice_date->Required = true; // Required field
-        $this->invoice_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
+        $this->invoice_date->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
         $this->invoice_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['invoice_date'] = &$this->invoice_date;
+
+        // submittedby_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->submittedby_user_id = new DbField(
+            $this, // Table
+            'x_submittedby_user_id', // Variable name
+            'submittedby_user_id', // Name
+            '`submittedby_user_id`', // Expression
+            '`submittedby_user_id`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`submittedby_user_id`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'HIDDEN' // Edit Tag
+        );
+        $this->submittedby_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
+        $this->submittedby_user_id->InputTextType = "text";
+        $this->submittedby_user_id->Nullable = false; // NOT NULL field
+        $this->submittedby_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->submittedby_user_id->SearchOperators = ["=", "<>"];
+        $this->Fields['submittedby_user_id'] = &$this->submittedby_user_id;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -250,6 +301,32 @@ class JdhInvoice extends DbTable
             }
             $field->setSort($fldSort);
         }
+    }
+
+    // Current detail table name
+    public function getCurrentDetailTable()
+    {
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_DETAIL_TABLE"));
+    }
+
+    public function setCurrentDetailTable($v)
+    {
+        $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_DETAIL_TABLE")] = $v;
+    }
+
+    // Get detail url
+    public function getDetailUrl()
+    {
+        // Detail url
+        $detailUrl = "";
+        if ($this->getCurrentDetailTable() == "jdh_invoice_items") {
+            $detailUrl = Container("jdh_invoice_items")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
+            $detailUrl .= "&" . GetForeignKeyUrl("fk_id", $this->id->CurrentValue);
+        }
+        if ($detailUrl == "") {
+            $detailUrl = "jdhinvoicelist";
+        }
+        return $detailUrl;
     }
 
     // Render X Axis for chart
@@ -559,8 +636,8 @@ class JdhInvoice extends DbTable
         }
         if ($success) {
             // Get insert id if necessary
-            $this->invoice_id->setDbValue($conn->lastInsertId());
-            $rs['invoice_id'] = $this->invoice_id->DbValue;
+            $this->id->setDbValue($conn->lastInsertId());
+            $rs['id'] = $this->id->DbValue;
         }
         return $success;
     }
@@ -610,8 +687,8 @@ class JdhInvoice extends DbTable
 
         // Return auto increment field
         if ($success) {
-            if (!isset($rs['invoice_id']) && !EmptyValue($this->invoice_id->CurrentValue)) {
-                $rs['invoice_id'] = $this->invoice_id->CurrentValue;
+            if (!isset($rs['id']) && !EmptyValue($this->id->CurrentValue)) {
+                $rs['id'] = $this->id->CurrentValue;
             }
         }
         return $success;
@@ -633,8 +710,8 @@ class JdhInvoice extends DbTable
             $where = $this->arrayToFilter($where);
         }
         if ($rs) {
-            if (array_key_exists('invoice_id', $rs)) {
-                AddFilter($where, QuotedName('invoice_id', $this->Dbid) . '=' . QuotedValue($rs['invoice_id'], $this->invoice_id->DataType, $this->Dbid));
+            if (array_key_exists('id', $rs)) {
+                AddFilter($where, QuotedName('id', $this->Dbid) . '=' . QuotedValue($rs['id'], $this->id->DataType, $this->Dbid));
             }
         }
         $filter = ($curfilter) ? $this->CurrentFilter : "";
@@ -664,10 +741,12 @@ class JdhInvoice extends DbTable
         if (!is_array($row)) {
             return;
         }
-        $this->invoice_id->DbValue = $row['invoice_id'];
+        $this->id->DbValue = $row['id'];
         $this->patient_id->DbValue = $row['patient_id'];
-        $this->submitted_by_user_id->DbValue = $row['submitted_by_user_id'];
+        $this->invoice_title->DbValue = $row['invoice_title'];
+        $this->invoice_description->DbValue = $row['invoice_description'];
         $this->invoice_date->DbValue = $row['invoice_date'];
+        $this->submittedby_user_id->DbValue = $row['submittedby_user_id'];
     }
 
     // Delete uploaded files
@@ -679,14 +758,14 @@ class JdhInvoice extends DbTable
     // Record filter WHERE clause
     protected function sqlKeyFilter()
     {
-        return "`invoice_id` = @invoice_id@";
+        return "`id` = @id@";
     }
 
     // Get Key
     public function getKey($current = false)
     {
         $keys = [];
-        $val = $current ? $this->invoice_id->CurrentValue : $this->invoice_id->OldValue;
+        $val = $current ? $this->id->CurrentValue : $this->id->OldValue;
         if (EmptyValue($val)) {
             return "";
         } else {
@@ -702,9 +781,9 @@ class JdhInvoice extends DbTable
         $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
         if (count($keys) == 1) {
             if ($current) {
-                $this->invoice_id->CurrentValue = $keys[0];
+                $this->id->CurrentValue = $keys[0];
             } else {
-                $this->invoice_id->OldValue = $keys[0];
+                $this->id->OldValue = $keys[0];
             }
         }
     }
@@ -714,9 +793,9 @@ class JdhInvoice extends DbTable
     {
         $keyFilter = $this->sqlKeyFilter();
         if (is_array($row)) {
-            $val = array_key_exists('invoice_id', $row) ? $row['invoice_id'] : null;
+            $val = array_key_exists('id', $row) ? $row['id'] : null;
         } else {
-            $val = !EmptyValue($this->invoice_id->OldValue) && !$current ? $this->invoice_id->OldValue : $this->invoice_id->CurrentValue;
+            $val = !EmptyValue($this->id->OldValue) && !$current ? $this->id->OldValue : $this->id->CurrentValue;
         }
         if (!is_numeric($val)) {
             return "0=1"; // Invalid key
@@ -724,7 +803,7 @@ class JdhInvoice extends DbTable
         if ($val === null) {
             return "0=1"; // Invalid key
         } else {
-            $keyFilter = str_replace("@invoice_id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
+            $keyFilter = str_replace("@id@", AdjustSql($val, $this->Dbid), $keyFilter); // Replace key value
         }
         return $keyFilter;
     }
@@ -824,7 +903,11 @@ class JdhInvoice extends DbTable
     // Edit URL
     public function getEditUrl($parm = "")
     {
-        $url = $this->keyUrl("jdhinvoiceedit", $parm);
+        if ($parm != "") {
+            $url = $this->keyUrl("jdhinvoiceedit", $parm);
+        } else {
+            $url = $this->keyUrl("jdhinvoiceedit", Config("TABLE_SHOW_DETAIL") . "=");
+        }
         return $this->addMasterUrl($url);
     }
 
@@ -838,7 +921,11 @@ class JdhInvoice extends DbTable
     // Copy URL
     public function getCopyUrl($parm = "")
     {
-        $url = $this->keyUrl("jdhinvoiceadd", $parm);
+        if ($parm != "") {
+            $url = $this->keyUrl("jdhinvoiceadd", $parm);
+        } else {
+            $url = $this->keyUrl("jdhinvoiceadd", Config("TABLE_SHOW_DETAIL") . "=");
+        }
         return $this->addMasterUrl($url);
     }
 
@@ -868,7 +955,7 @@ class JdhInvoice extends DbTable
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
-        $json .= "\"invoice_id\":" . JsonEncode($this->invoice_id->CurrentValue, "number");
+        $json .= "\"id\":" . JsonEncode($this->id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -879,8 +966,8 @@ class JdhInvoice extends DbTable
     // Add key value to URL
     public function keyUrl($url, $parm = "")
     {
-        if ($this->invoice_id->CurrentValue !== null) {
-            $url .= "/" . $this->encodeKeyValue($this->invoice_id->CurrentValue);
+        if ($this->id->CurrentValue !== null) {
+            $url .= "/" . $this->encodeKeyValue($this->id->CurrentValue);
         } else {
             return "javascript:ew.alert(ew.language.phrase('InvalidRecord'));";
         }
@@ -948,7 +1035,7 @@ class JdhInvoice extends DbTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
-            if (($keyValue = Param("invoice_id") ?? Route("invoice_id")) !== null) {
+            if (($keyValue = Param("id") ?? Route("id")) !== null) {
                 $arKeys[] = $keyValue;
             } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
                 $arKeys[] = $keyValue;
@@ -994,9 +1081,9 @@ class JdhInvoice extends DbTable
                 $keyFilter .= " OR ";
             }
             if ($setCurrent) {
-                $this->invoice_id->CurrentValue = $key;
+                $this->id->CurrentValue = $key;
             } else {
-                $this->invoice_id->OldValue = $key;
+                $this->id->OldValue = $key;
             }
             $keyFilter .= "(" . $this->getRecordFilter() . ")";
         }
@@ -1021,10 +1108,12 @@ class JdhInvoice extends DbTable
         } else {
             return;
         }
-        $this->invoice_id->setDbValue($row['invoice_id']);
+        $this->id->setDbValue($row['id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->invoice_title->setDbValue($row['invoice_title']);
+        $this->invoice_description->setDbValue($row['invoice_description']);
         $this->invoice_date->setDbValue($row['invoice_date']);
+        $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
     }
 
     // Render list content
@@ -1055,16 +1144,20 @@ class JdhInvoice extends DbTable
 
         // Common render codes
 
-        // invoice_id
+        // id
 
         // patient_id
 
-        // submitted_by_user_id
+        // invoice_title
+
+        // invoice_description
 
         // invoice_date
 
-        // invoice_id
-        $this->invoice_id->ViewValue = $this->invoice_id->CurrentValue;
+        // submittedby_user_id
+
+        // id
+        $this->id->ViewValue = $this->id->CurrentValue;
 
         // patient_id
         $curVal = strval($this->patient_id->CurrentValue);
@@ -1089,29 +1182,43 @@ class JdhInvoice extends DbTable
             $this->patient_id->ViewValue = null;
         }
 
-        // submitted_by_user_id
-        $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
-        $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
+        // invoice_title
+        $this->invoice_title->ViewValue = $this->invoice_title->CurrentValue;
+
+        // invoice_description
+        $this->invoice_description->ViewValue = $this->invoice_description->CurrentValue;
 
         // invoice_date
         $this->invoice_date->ViewValue = $this->invoice_date->CurrentValue;
         $this->invoice_date->ViewValue = FormatDateTime($this->invoice_date->ViewValue, $this->invoice_date->formatPattern());
 
-        // invoice_id
-        $this->invoice_id->HrefValue = "";
-        $this->invoice_id->TooltipValue = "";
+        // submittedby_user_id
+        $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
+        $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
+
+        // id
+        $this->id->HrefValue = "";
+        $this->id->TooltipValue = "";
 
         // patient_id
         $this->patient_id->HrefValue = "";
         $this->patient_id->TooltipValue = "";
 
-        // submitted_by_user_id
-        $this->submitted_by_user_id->HrefValue = "";
-        $this->submitted_by_user_id->TooltipValue = "";
+        // invoice_title
+        $this->invoice_title->HrefValue = "";
+        $this->invoice_title->TooltipValue = "";
+
+        // invoice_description
+        $this->invoice_description->HrefValue = "";
+        $this->invoice_description->TooltipValue = "";
 
         // invoice_date
         $this->invoice_date->HrefValue = "";
         $this->invoice_date->TooltipValue = "";
+
+        // submittedby_user_id
+        $this->submittedby_user_id->HrefValue = "";
+        $this->submittedby_user_id->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1128,20 +1235,33 @@ class JdhInvoice extends DbTable
         // Call Row Rendering event
         $this->rowRendering();
 
-        // invoice_id
-        $this->invoice_id->setupEditAttributes();
-        $this->invoice_id->EditValue = $this->invoice_id->CurrentValue;
+        // id
+        $this->id->setupEditAttributes();
+        $this->id->EditValue = $this->id->CurrentValue;
 
         // patient_id
         $this->patient_id->setupEditAttributes();
         $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
 
-        // submitted_by_user_id
+        // invoice_title
+        $this->invoice_title->setupEditAttributes();
+        if (!$this->invoice_title->Raw) {
+            $this->invoice_title->CurrentValue = HtmlDecode($this->invoice_title->CurrentValue);
+        }
+        $this->invoice_title->EditValue = $this->invoice_title->CurrentValue;
+        $this->invoice_title->PlaceHolder = RemoveHtml($this->invoice_title->caption());
+
+        // invoice_description
+        $this->invoice_description->setupEditAttributes();
+        $this->invoice_description->EditValue = $this->invoice_description->CurrentValue;
+        $this->invoice_description->PlaceHolder = RemoveHtml($this->invoice_description->caption());
 
         // invoice_date
         $this->invoice_date->setupEditAttributes();
         $this->invoice_date->EditValue = FormatDateTime($this->invoice_date->CurrentValue, $this->invoice_date->formatPattern());
         $this->invoice_date->PlaceHolder = RemoveHtml($this->invoice_date->caption());
+
+        // submittedby_user_id
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1171,14 +1291,15 @@ class JdhInvoice extends DbTable
             if ($doc->Horizontal) { // Horizontal format, write header
                 $doc->beginExportRow();
                 if ($exportPageType == "view") {
-                    $doc->exportCaption($this->invoice_id);
+                    $doc->exportCaption($this->id);
                     $doc->exportCaption($this->patient_id);
-                    $doc->exportCaption($this->submitted_by_user_id);
+                    $doc->exportCaption($this->invoice_title);
+                    $doc->exportCaption($this->invoice_description);
                     $doc->exportCaption($this->invoice_date);
                 } else {
-                    $doc->exportCaption($this->invoice_id);
+                    $doc->exportCaption($this->id);
                     $doc->exportCaption($this->patient_id);
-                    $doc->exportCaption($this->submitted_by_user_id);
+                    $doc->exportCaption($this->invoice_title);
                     $doc->exportCaption($this->invoice_date);
                 }
                 $doc->endExportRow();
@@ -1209,14 +1330,15 @@ class JdhInvoice extends DbTable
                 if (!$doc->ExportCustom) {
                     $doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
                     if ($exportPageType == "view") {
-                        $doc->exportField($this->invoice_id);
+                        $doc->exportField($this->id);
                         $doc->exportField($this->patient_id);
-                        $doc->exportField($this->submitted_by_user_id);
+                        $doc->exportField($this->invoice_title);
+                        $doc->exportField($this->invoice_description);
                         $doc->exportField($this->invoice_date);
                     } else {
-                        $doc->exportField($this->invoice_id);
+                        $doc->exportField($this->id);
                         $doc->exportField($this->patient_id);
-                        $doc->exportField($this->submitted_by_user_id);
+                        $doc->exportField($this->invoice_title);
                         $doc->exportField($this->invoice_date);
                     }
                     $doc->endExportRow($rowCnt);

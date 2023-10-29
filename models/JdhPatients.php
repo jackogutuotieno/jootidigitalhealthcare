@@ -2412,6 +2412,9 @@ class JdhPatients extends DbTable
     {
         // To view properties of field class, use:
         //var_dump($this-><FieldName>);
+        //$this->patient_name->ViewValue = "<a href=\"<URL>\">" . $this->patient_name->ViewValue . "</a>";
+
+        //$this->patient_name->ViewValue = "<a href='jdhpatientslist?showdetail=jdh_chief_complaints&patient_id=".$id."' >".$id= $this->patient_name->ViewValue."</a>";
     }
 
     // User ID Filtering event

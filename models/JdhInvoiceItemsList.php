@@ -615,9 +615,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         // View
         $this->View = Get(Config("VIEW"));
 
-        // Create form object
-        $CurrentForm = new HttpForm();
-
         // Get export parameters
         $custom = "";
         if (Param("export") !== null) {
@@ -645,10 +642,11 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         // Setup export options
         $this->setupExportOptions();
         $this->id->setVisibility();
-        $this->service_id->setVisibility();
-        $this->description->Visible = false;
-        $this->submittedby_user_id->setVisibility();
-        $this->date_created->setVisibility();
+        $this->invoice_id->Visible = false;
+        $this->invoice_item->setVisibility();
+        $this->total_amount->setVisibility();
+        $this->submittedby_user_id->Visible = false;
+        $this->submission_date->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -672,6 +670,9 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
             $this->InlineDelete = true;
         }
 
+        // Set up master detail parameters
+        $this->setupMasterParms();
+
         // Setup other options
         $this->setupOtherOptions();
 
@@ -679,9 +680,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         foreach ($this->CustomActions as $name => $action) {
             $this->ListActions->add($name, $action);
         }
-
-        // Load default values for add
-        $this->loadDefaultValues();
 
         // Update form name to avoid conflict
         if ($this->IsModal) {
@@ -720,35 +718,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
             $this->setupBreadcrumb();
         }
 
-        // Check QueryString parameters
-        if (Get("action") !== null) {
-            $this->CurrentAction = Get("action");
-        } else {
-            if (Post("action") !== null) {
-                $this->CurrentAction = Post("action"); // Get action
-            }
-        }
-
-        // Clear inline mode
-        if ($this->isCancel()) {
-            $this->clearInlineMode();
-        }
-
-        // Switch to inline add mode
-        if ($this->isAdd() || $this->isCopy()) {
-            $this->inlineAddMode();
-        // Insert Inline
-        } elseif (IsPost() && $this->isInsert() && Session(SESSION_INLINE_MODE) == "add") {
-            $this->setKey(Post($this->OldKeyName));
-            // Return JSON error message if UseAjaxActions
-            if (!$this->inlineInsert() && $this->UseAjaxActions) {
-                WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
-                $this->clearFailureMessage();
-                $this->terminate();
-                return;
-            }
-        }
-
         // Hide list options
         if ($this->isExport()) {
             $this->ListOptions->hideAllOptions(["sequence"]);
@@ -772,8 +741,33 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
             $this->OtherOptions->hideAllOptions();
         }
 
+        // Get default search criteria
+        AddFilter($this->DefaultSearchWhere, $this->basicSearchWhere(true));
+
+        // Get basic search values
+        $this->loadBasicSearchValues();
+
+        // Process filter list
+        if ($this->processFilterList()) {
+            $this->terminate();
+            return;
+        }
+
+        // Restore search parms from Session if not searching / reset / export
+        if (($this->isExport() || $this->Command != "search" && $this->Command != "reset" && $this->Command != "resetall") && $this->Command != "json" && $this->checkSearchParms()) {
+            $this->restoreSearchParms();
+        }
+
+        // Call Recordset SearchValidated event
+        $this->recordsetSearchValidated();
+
         // Set up sorting order
         $this->setupSortOrder();
+
+        // Get basic search criteria
+        if (!$this->hasInvalidFields()) {
+            $srchBasic = $this->basicSearchWhere();
+        }
 
         // Restore display records
         if ($this->Command != "json" && $this->getRecordsPerPage() != "") {
@@ -783,13 +777,62 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
             $this->setRecordsPerPage($this->DisplayRecords); // Save default to Session
         }
 
+        // Load search default if no existing search criteria
+        if (!$this->checkSearchParms()) {
+            // Load basic search from default
+            $this->BasicSearch->loadDefault();
+            if ($this->BasicSearch->Keyword != "") {
+                $srchBasic = $this->basicSearchWhere();
+            }
+        }
+
+        // Build search criteria
+        if ($query) {
+            AddFilter($this->SearchWhere, $query);
+        } else {
+            AddFilter($this->SearchWhere, $srchAdvanced);
+            AddFilter($this->SearchWhere, $srchBasic);
+        }
+
+        // Call Recordset_Searching event
+        $this->recordsetSearching($this->SearchWhere);
+
+        // Save search criteria
+        if ($this->Command == "search" && !$this->RestoreSearch) {
+            $this->setSearchWhere($this->SearchWhere); // Save to Session
+            $this->StartRecord = 1; // Reset start record counter
+            $this->setStartRecordNumber($this->StartRecord);
+        } elseif ($this->Command != "json" && !$query) {
+            $this->SearchWhere = $this->getSearchWhere();
+        }
+
         // Build filter
         $filter = "";
         if (!$Security->canList()) {
             $filter = "(0=1)"; // Filter all records
         }
+
+        // Restore master/detail filter from session
+        $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Restore master filter from session
+        $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Restore detail filter from session
         AddFilter($filter, $this->DbDetailFilter);
         AddFilter($filter, $this->SearchWhere);
+
+        // Load master record
+        if ($this->CurrentMode != "add" && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_invoice") {
+            $masterTbl = Container("jdh_invoice");
+            $rsmaster = $masterTbl->loadRs($this->DbMasterFilter)->fetchAssociative();
+            $this->MasterRecordExists = $rsmaster !== false;
+            if (!$this->MasterRecordExists) {
+                $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record found
+                $this->terminate("jdhinvoicelist"); // Return to master page
+                return;
+            } else {
+                $masterTbl->loadListRowValues($rsmaster);
+                $masterTbl->RowType = ROWTYPE_MASTER; // Master row
+                $masterTbl->renderListRow();
+            }
+        }
 
         // Set up filter
         if ($this->Command == "json") {
@@ -949,54 +992,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         }
     }
 
-    // Exit inline mode
-    protected function clearInlineMode()
-    {
-        $this->LastAction = $this->CurrentAction; // Save last action
-        $this->CurrentAction = ""; // Clear action
-        $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
-    }
-
-    // Switch to Inline Add mode
-    protected function inlineAddMode()
-    {
-        global $Security, $Language;
-        if (!$Security->canAdd()) {
-            return false; // Add not allowed
-        }
-        $this->CurrentAction = "add";
-        $_SESSION[SESSION_INLINE_MODE] = "add"; // Enable inline add
-        return true;
-    }
-
-    // Perform update to Inline Add/Copy record
-    protected function inlineInsert()
-    {
-        global $Language, $CurrentForm;
-        $rsold = $this->loadOldRecord(); // Load old record
-        $CurrentForm->Index = 0;
-        $this->loadFormValues(); // Get form values
-
-        // Validate form
-        if (!$this->validateForm()) {
-            $this->EventCancelled = true; // Set event cancelled
-            $this->CurrentAction = "add"; // Stay in add mode
-            return false;
-        }
-        $this->SendEmail = true; // Send email on add success
-        if ($this->addRow($rsold)) { // Add record
-            if ($this->getSuccessMessage() == "") {
-                $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up add success message
-            }
-            $this->clearInlineMode(); // Clear inline add mode
-            return true;
-        } else { // Add failed
-            $this->EventCancelled = true; // Set event cancelled
-            $this->CurrentAction = "add"; // Stay in add mode
-            return false;
-        }
-    }
-
     // Build filter for all keys
     protected function buildKeyFilter()
     {
@@ -1028,13 +1023,204 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         return $wrkFilter;
     }
 
-    // Reset form status
-    public function resetFormError()
+    // Get list of filters
+    public function getFilterList()
     {
-        $this->id->clearErrorMessage();
-        $this->service_id->clearErrorMessage();
-        $this->submittedby_user_id->clearErrorMessage();
-        $this->date_created->clearErrorMessage();
+        global $UserProfile;
+
+        // Initialize
+        $filterList = "";
+        $savedFilterList = "";
+
+        // Load server side filters
+        if (Config("SEARCH_FILTER_OPTION") == "Server" && isset($UserProfile)) {
+            $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_invoice_itemssrch");
+        }
+        $filterList = Concat($filterList, $this->id->AdvancedSearch->toJson(), ","); // Field id
+        $filterList = Concat($filterList, $this->invoice_id->AdvancedSearch->toJson(), ","); // Field invoice_id
+        $filterList = Concat($filterList, $this->invoice_item->AdvancedSearch->toJson(), ","); // Field invoice_item
+        $filterList = Concat($filterList, $this->total_amount->AdvancedSearch->toJson(), ","); // Field total_amount
+        $filterList = Concat($filterList, $this->submission_date->AdvancedSearch->toJson(), ","); // Field submission_date
+        if ($this->BasicSearch->Keyword != "") {
+            $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
+            $filterList = Concat($filterList, $wrk, ",");
+        }
+
+        // Return filter list in JSON
+        if ($filterList != "") {
+            $filterList = "\"data\":{" . $filterList . "}";
+        }
+        if ($savedFilterList != "") {
+            $filterList = Concat($filterList, "\"filters\":" . $savedFilterList, ",");
+        }
+        return ($filterList != "") ? "{" . $filterList . "}" : "null";
+    }
+
+    // Process filter list
+    protected function processFilterList()
+    {
+        global $UserProfile;
+        if (Post("ajax") == "savefilters") { // Save filter request (Ajax)
+            $filters = Post("filters");
+            $UserProfile->setSearchFilters(CurrentUserName(), "fjdh_invoice_itemssrch", $filters);
+            WriteJson([["success" => true]]); // Success
+            return true;
+        } elseif (Post("cmd") == "resetfilter") {
+            $this->restoreFilterList();
+        }
+        return false;
+    }
+
+    // Restore list of filters
+    protected function restoreFilterList()
+    {
+        // Return if not reset filter
+        if (Post("cmd") !== "resetfilter") {
+            return false;
+        }
+        $filter = json_decode(Post("filter"), true);
+        $this->Command = "search";
+
+        // Field id
+        $this->id->AdvancedSearch->SearchValue = @$filter["x_id"];
+        $this->id->AdvancedSearch->SearchOperator = @$filter["z_id"];
+        $this->id->AdvancedSearch->SearchCondition = @$filter["v_id"];
+        $this->id->AdvancedSearch->SearchValue2 = @$filter["y_id"];
+        $this->id->AdvancedSearch->SearchOperator2 = @$filter["w_id"];
+        $this->id->AdvancedSearch->save();
+
+        // Field invoice_id
+        $this->invoice_id->AdvancedSearch->SearchValue = @$filter["x_invoice_id"];
+        $this->invoice_id->AdvancedSearch->SearchOperator = @$filter["z_invoice_id"];
+        $this->invoice_id->AdvancedSearch->SearchCondition = @$filter["v_invoice_id"];
+        $this->invoice_id->AdvancedSearch->SearchValue2 = @$filter["y_invoice_id"];
+        $this->invoice_id->AdvancedSearch->SearchOperator2 = @$filter["w_invoice_id"];
+        $this->invoice_id->AdvancedSearch->save();
+
+        // Field invoice_item
+        $this->invoice_item->AdvancedSearch->SearchValue = @$filter["x_invoice_item"];
+        $this->invoice_item->AdvancedSearch->SearchOperator = @$filter["z_invoice_item"];
+        $this->invoice_item->AdvancedSearch->SearchCondition = @$filter["v_invoice_item"];
+        $this->invoice_item->AdvancedSearch->SearchValue2 = @$filter["y_invoice_item"];
+        $this->invoice_item->AdvancedSearch->SearchOperator2 = @$filter["w_invoice_item"];
+        $this->invoice_item->AdvancedSearch->save();
+
+        // Field total_amount
+        $this->total_amount->AdvancedSearch->SearchValue = @$filter["x_total_amount"];
+        $this->total_amount->AdvancedSearch->SearchOperator = @$filter["z_total_amount"];
+        $this->total_amount->AdvancedSearch->SearchCondition = @$filter["v_total_amount"];
+        $this->total_amount->AdvancedSearch->SearchValue2 = @$filter["y_total_amount"];
+        $this->total_amount->AdvancedSearch->SearchOperator2 = @$filter["w_total_amount"];
+        $this->total_amount->AdvancedSearch->save();
+
+        // Field submission_date
+        $this->submission_date->AdvancedSearch->SearchValue = @$filter["x_submission_date"];
+        $this->submission_date->AdvancedSearch->SearchOperator = @$filter["z_submission_date"];
+        $this->submission_date->AdvancedSearch->SearchCondition = @$filter["v_submission_date"];
+        $this->submission_date->AdvancedSearch->SearchValue2 = @$filter["y_submission_date"];
+        $this->submission_date->AdvancedSearch->SearchOperator2 = @$filter["w_submission_date"];
+        $this->submission_date->AdvancedSearch->save();
+        $this->BasicSearch->setKeyword(@$filter[Config("TABLE_BASIC_SEARCH")]);
+        $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
+    }
+
+    // Show list of filters
+    public function showFilterList()
+    {
+        global $Language;
+
+        // Initialize
+        $filterList = "";
+        $captionClass = $this->isExport("email") ? "ew-filter-caption-email" : "ew-filter-caption";
+        $captionSuffix = $this->isExport("email") ? ": " : "";
+        if ($this->BasicSearch->Keyword != "") {
+            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $Language->phrase("BasicSearchKeyword") . "</span>" . $captionSuffix . $this->BasicSearch->Keyword . "</div>";
+        }
+
+        // Show Filters
+        if ($filterList != "") {
+            $message = "<div id=\"ew-filter-list\" class=\"callout callout-info d-table\"><div id=\"ew-current-filters\">" .
+                $Language->phrase("CurrentFilters") . "</div>" . $filterList . "</div>";
+            $this->messageShowing($message, "");
+            Write($message);
+        } else { // Output empty tag
+            Write("<div id=\"ew-filter-list\"></div>");
+        }
+    }
+
+    // Return basic search WHERE clause based on search keyword and type
+    public function basicSearchWhere($default = false)
+    {
+        global $Security;
+        $searchStr = "";
+        if (!$Security->canSearch()) {
+            return "";
+        }
+
+        // Fields to search
+        $searchFlds = [];
+        $searchFlds[] = &$this->invoice_item;
+        $searchKeyword = $default ? $this->BasicSearch->KeywordDefault : $this->BasicSearch->Keyword;
+        $searchType = $default ? $this->BasicSearch->TypeDefault : $this->BasicSearch->Type;
+
+        // Get search SQL
+        if ($searchKeyword != "") {
+            $ar = $this->BasicSearch->keywordList($default);
+            $searchStr = GetQuickSearchFilter($searchFlds, $ar, $searchType, Config("BASIC_SEARCH_ANY_FIELDS"), $this->Dbid);
+            if (!$default && in_array($this->Command, ["", "reset", "resetall"])) {
+                $this->Command = "search";
+            }
+        }
+        if (!$default && $this->Command == "search") {
+            $this->BasicSearch->setKeyword($searchKeyword);
+            $this->BasicSearch->setType($searchType);
+
+            // Clear rules for QueryBuilder
+            $this->setSessionRules("");
+        }
+        return $searchStr;
+    }
+
+    // Check if search parm exists
+    protected function checkSearchParms()
+    {
+        // Check basic search
+        if ($this->BasicSearch->issetSession()) {
+            return true;
+        }
+        return false;
+    }
+
+    // Clear all search parameters
+    protected function resetSearchParms()
+    {
+        // Clear search WHERE clause
+        $this->SearchWhere = "";
+        $this->setSearchWhere($this->SearchWhere);
+
+        // Clear basic search parameters
+        $this->resetBasicSearchParms();
+    }
+
+    // Load advanced search default values
+    protected function loadAdvancedSearchDefault()
+    {
+        return false;
+    }
+
+    // Clear all basic search parameters
+    protected function resetBasicSearchParms()
+    {
+        $this->BasicSearch->unsetSession();
+    }
+
+    // Restore all search parameters
+    protected function restoreSearchParms()
+    {
+        $this->RestoreSearch = true;
+
+        // Restore basic search values
+        $this->BasicSearch->load();
     }
 
     // Set up sort parameters
@@ -1053,9 +1239,9 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
             $this->CurrentOrder = Get("order");
             $this->CurrentOrderType = Get("ordertype", "");
             $this->updateSort($this->id); // id
-            $this->updateSort($this->service_id); // service_id
-            $this->updateSort($this->submittedby_user_id); // submittedby_user_id
-            $this->updateSort($this->date_created); // date_created
+            $this->updateSort($this->invoice_item); // invoice_item
+            $this->updateSort($this->total_amount); // total_amount
+            $this->updateSort($this->submission_date); // submission_date
             $this->setStartRecordNumber(1); // Reset start position
         }
 
@@ -1071,15 +1257,29 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
     {
         // Check if reset command
         if (StartsString("reset", $this->Command)) {
+            // Reset search criteria
+            if ($this->Command == "reset" || $this->Command == "resetall") {
+                $this->resetSearchParms();
+            }
+
+            // Reset master/detail keys
+            if ($this->Command == "resetall") {
+                $this->setCurrentMasterTable(""); // Clear master table
+                $this->DbMasterFilter = "";
+                $this->DbDetailFilter = "";
+                        $this->invoice_id->setSessionValue("");
+            }
+
             // Reset (clear) sorting order
             if ($this->Command == "resetsort") {
                 $orderBy = "";
                 $this->setSessionOrderBy($orderBy);
                 $this->id->setSort("");
-                $this->service_id->setSort("");
-                $this->description->setSort("");
+                $this->invoice_id->setSort("");
+                $this->invoice_item->setSort("");
+                $this->total_amount->setSort("");
                 $this->submittedby_user_id->setSort("");
-                $this->date_created->setSort("");
+                $this->submission_date->setSort("");
             }
 
             // Reset start position
@@ -1111,12 +1311,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
 
-        // "copy"
-        $item = &$this->ListOptions->add("copy");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->canAdd() && $this->isAdd();
-        $item->OnLeft = false;
-
         // List actions
         $item = &$this->ListOptions->add("listactions");
         $item->CssClass = "text-nowrap";
@@ -1139,7 +1333,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
-        $this->ListOptions->UseButtonGroup = true;
+        $this->ListOptions->UseButtonGroup = false;
         if ($this->ListOptions->UseButtonGroup && IsMobile()) {
             $this->ListOptions->UseDropDownButton = true;
         }
@@ -1173,55 +1367,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
 
         // Call ListOptions_Rendering event
         $this->listOptionsRendering();
-
-        // Set up row action and key
-        if ($CurrentForm && is_numeric($this->RowIndex) && $this->RowType != "view") {
-            $CurrentForm->Index = $this->RowIndex;
-            $actionName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormActionName);
-            $oldKeyName = str_replace("k_", "k" . $this->RowIndex . "_", $this->OldKeyName);
-            $blankRowName = str_replace("k_", "k" . $this->RowIndex . "_", $this->FormBlankRowName);
-            if ($this->RowAction != "") {
-                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $actionName . "\" id=\"" . $actionName . "\" value=\"" . $this->RowAction . "\">";
-            }
-            $oldKey = $this->getKey(false); // Get from OldValue
-            if ($oldKeyName != "" && $oldKey != "") {
-                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $oldKeyName . "\" id=\"" . $oldKeyName . "\" value=\"" . HtmlEncode($oldKey) . "\">";
-            }
-            if ($this->RowAction == "insert" && $this->isConfirm() && $this->emptyRow()) {
-                $this->MultiSelectKey .= "<input type=\"hidden\" name=\"" . $blankRowName . "\" id=\"" . $blankRowName . "\" value=\"1\">";
-            }
-        }
         $pageUrl = $this->pageUrl(false);
-
-        // "copy"
-        $opt = $this->ListOptions["copy"];
-        if ($this->isInlineAddRow() || $this->isInlineCopyRow()) { // Inline Add/Copy
-            $this->ListOptions->CustomItem = "copy"; // Show copy column only
-            $divClass = $opt->OnLeft ? " class=\"text-end\"" : "";
-            $insertCaption = $Language->phrase("InsertLink");
-            $insertTitle = HtmlTitle($insertCaption);
-            $cancelCaption = $Language->phrase("CancelLink");
-            $cancelTitle = HtmlTitle($cancelCaption);
-            $inlineInsertUrl = GetUrl($this->pageName());
-            if ($this->UseAjaxActions) {
-                $opt->Body = <<<INLINEADDAJAX
-                    <div{$divClass}>
-                        <button type="button" class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" data-ew-action="inline" data-action="insert" data-key="" data-url="{$inlineInsertUrl}">{$insertCaption}</button>
-                        <button type="button" class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$cancelTitle}" data-ew-action="inline" data-action="cancel">{$cancelCaption}</button>
-                    </div>
-                    INLINEADDAJAX;
-            } else {
-                $cancelurl = $this->addMasterUrl($pageUrl . "action=cancel");
-                $opt->Body = <<<INLINEADD
-                    <div{$divClass}>
-                        <button class="ew-grid-link ew-inline-insert" title="{$insertTitle}" data-caption="{$insertTitle}" form="fjdh_invoice_itemslist" formaction="{$inlineInsertUrl}">{$insertCaption}</button>
-                        <a class="ew-grid-link ew-inline-cancel" title="{$cancelTitle}" data-caption="{$insertTitle}" href="{$cancelurl}">{$cancelCaption}</a>
-                        <input type="hidden" name="action" id="action" value="insert">
-                    </div>
-                    INLINEADD;
-            }
-            return;
-        }
         if ($this->CurrentMode == "view") {
             // "view"
             $opt = $this->ListOptions["view"];
@@ -1316,15 +1462,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
             $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
         }
         $item->Visible = $this->AddUrl != "" && $Security->canAdd();
-
-        // Inline Add
-        $item = &$option->add("inlineadd");
-        if ($this->UseAjaxActions) {
-            $item->Body = "<button class=\"ew-add-edit ew-inline-add\" title=\"" . $Language->phrase("InlineAddLink", true) . "\" data-caption=\"" . $Language->phrase("InlineAddLink", true) . "\" data-ew-action=\"inline\" data-action=\"add\" data-position=\"top\" data-url=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</button>";
-        } else {
-            $item->Body = "<a class=\"ew-add-edit ew-inline-add\" title=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("InlineAddLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->InlineAddUrl)) . "\">" . $Language->phrase("InlineAddLink") . "</a>";
-        }
-        $item->Visible = $this->InlineAddUrl != "" && $Security->canAdd();
         $option = $options["action"];
 
         // Add multi delete
@@ -1346,9 +1483,9 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
             $option->add("id", $this->createColumnOption("id"));
-            $option->add("service_id", $this->createColumnOption("service_id"));
-            $option->add("submittedby_user_id", $this->createColumnOption("submittedby_user_id"));
-            $option->add("date_created", $this->createColumnOption("date_created"));
+            $option->add("invoice_item", $this->createColumnOption("invoice_item"));
+            $option->add("total_amount", $this->createColumnOption("total_amount"));
+            $option->add("submission_date", $this->createColumnOption("submission_date"));
         }
 
         // Set up options default
@@ -1369,10 +1506,10 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         // Filter button
         $item = &$this->FilterOptions->add("savecurrentfilter");
         $item->Body = "<a class=\"ew-save-filter\" data-form=\"fjdh_invoice_itemssrch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
-        $item->Visible = false;
+        $item->Visible = true;
         $item = &$this->FilterOptions->add("deletefilter");
         $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fjdh_invoice_itemssrch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
-        $item->Visible = false;
+        $item->Visible = true;
         $this->FilterOptions->UseDropDownButton = true;
         $this->FilterOptions->UseButtonGroup = !$this->FilterOptions->UseDropDownButton;
         $this->FilterOptions->DropDownButtonPhrase = $Language->phrase("Filters");
@@ -1531,15 +1668,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
                 $this->StopRecord = $this->TotalRecords;
             }
         }
-
-        // Restore number of post back records
-        if ($CurrentForm && ($this->isConfirm() || $this->EventCancelled)) {
-            $CurrentForm->Index = -1;
-            if ($CurrentForm->hasValue($this->FormKeyCountName) && ($this->isGridAdd() || $this->isGridEdit() || $this->isConfirm())) {
-                $this->KeyCount = $CurrentForm->getValue($this->FormKeyCountName);
-                $this->StopRecord = $this->StartRecord + $this->KeyCount - 1;
-            }
-        }
         $this->RecordCount = $this->StartRecord - 1;
         if ($this->Recordset && !$this->Recordset->EOF) {
             // Nothing to do
@@ -1553,12 +1681,6 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         $this->RowType = ROWTYPE_AGGREGATEINIT;
         $this->resetAttributes();
         $this->renderRow();
-        if ($this->isAdd() || $this->isCopy() || $this->isInlineInserted()) {
-            $this->RowIndex = 0;
-            if ($this->UseInfiniteScroll) {
-                $this->StopRecord = $this->StartRecord; // Show this record only
-            }
-        }
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
             $this->RowIndex = '$rowindex$';
         }
@@ -1650,67 +1772,14 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         $this->renderListOptions();
     }
 
-    // Load default values
-    protected function loadDefaultValues()
+    // Load basic search values
+    protected function loadBasicSearchValues()
     {
-    }
-
-    // Load form values
-    protected function loadFormValues()
-    {
-        // Load from form
-        global $CurrentForm;
-        $validate = !Config("SERVER_VALIDATE");
-
-        // Check field name 'id' first before field var 'x_id'
-        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
-        if (!$this->id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->id->setFormValue($val);
+        $this->BasicSearch->setKeyword(Get(Config("TABLE_BASIC_SEARCH"), ""), false);
+        if ($this->BasicSearch->Keyword != "" && $this->Command == "") {
+            $this->Command = "search";
         }
-
-        // Check field name 'service_id' first before field var 'x_service_id'
-        $val = $CurrentForm->hasValue("service_id") ? $CurrentForm->getValue("service_id") : $CurrentForm->getValue("x_service_id");
-        if (!$this->service_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->service_id->Visible = false; // Disable update for API request
-            } else {
-                $this->service_id->setFormValue($val, true, $validate);
-            }
-        }
-
-        // Check field name 'submittedby_user_id' first before field var 'x_submittedby_user_id'
-        $val = $CurrentForm->hasValue("submittedby_user_id") ? $CurrentForm->getValue("submittedby_user_id") : $CurrentForm->getValue("x_submittedby_user_id");
-        if (!$this->submittedby_user_id->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->submittedby_user_id->Visible = false; // Disable update for API request
-            } else {
-                $this->submittedby_user_id->setFormValue($val);
-            }
-        }
-
-        // Check field name 'date_created' first before field var 'x_date_created'
-        $val = $CurrentForm->hasValue("date_created") ? $CurrentForm->getValue("date_created") : $CurrentForm->getValue("x_date_created");
-        if (!$this->date_created->IsDetailKey) {
-            if (IsApi() && $val === null) {
-                $this->date_created->Visible = false; // Disable update for API request
-            } else {
-                $this->date_created->setFormValue($val, true, $validate);
-            }
-            $this->date_created->CurrentValue = UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern());
-        }
-    }
-
-    // Restore form values
-    public function restoreFormValues()
-    {
-        global $CurrentForm;
-        if (!$this->isGridAdd() && !$this->isAdd()) {
-            $this->id->CurrentValue = $this->id->FormValue;
-        }
-        $this->service_id->CurrentValue = $this->service_id->FormValue;
-        $this->submittedby_user_id->CurrentValue = $this->submittedby_user_id->FormValue;
-        $this->date_created->CurrentValue = $this->date_created->FormValue;
-        $this->date_created->CurrentValue = UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern());
+        $this->BasicSearch->setType(Get(Config("TABLE_BASIC_SEARCH_TYPE"), ""), false);
     }
 
     // Load recordset
@@ -1799,10 +1868,11 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         // Call Row Selected event
         $this->rowSelected($row);
         $this->id->setDbValue($row['id']);
-        $this->service_id->setDbValue($row['service_id']);
-        $this->description->setDbValue($row['description']);
+        $this->invoice_id->setDbValue($row['invoice_id']);
+        $this->invoice_item->setDbValue($row['invoice_item']);
+        $this->total_amount->setDbValue($row['total_amount']);
         $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
-        $this->date_created->setDbValue($row['date_created']);
+        $this->submission_date->setDbValue($row['submission_date']);
     }
 
     // Return a row with default values
@@ -1810,10 +1880,11 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
     {
         $row = [];
         $row['id'] = $this->id->DefaultValue;
-        $row['service_id'] = $this->service_id->DefaultValue;
-        $row['description'] = $this->description->DefaultValue;
+        $row['invoice_id'] = $this->invoice_id->DefaultValue;
+        $row['invoice_item'] = $this->invoice_item->DefaultValue;
+        $row['total_amount'] = $this->total_amount->DefaultValue;
         $row['submittedby_user_id'] = $this->submittedby_user_id->DefaultValue;
-        $row['date_created'] = $this->date_created->DefaultValue;
+        $row['submission_date'] = $this->submission_date->DefaultValue;
         return $row;
     }
 
@@ -1856,191 +1927,71 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
 
         // id
 
-        // service_id
+        // invoice_id
 
-        // description
+        // invoice_item
+
+        // total_amount
 
         // submittedby_user_id
 
-        // date_created
+        // submission_date
+
+        // Accumulate aggregate value
+        if ($this->RowType != ROWTYPE_AGGREGATEINIT && $this->RowType != ROWTYPE_AGGREGATE && $this->RowType != ROWTYPE_PREVIEW_FIELD) {
+            if (is_numeric($this->total_amount->CurrentValue)) {
+                $this->total_amount->Total += $this->total_amount->CurrentValue; // Accumulate total
+            }
+        }
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
             // id
             $this->id->ViewValue = $this->id->CurrentValue;
 
-            // service_id
-            $this->service_id->ViewValue = $this->service_id->CurrentValue;
-            $this->service_id->ViewValue = FormatNumber($this->service_id->ViewValue, $this->service_id->formatPattern());
+            // invoice_id
+            $this->invoice_id->ViewValue = $this->invoice_id->CurrentValue;
+            $this->invoice_id->ViewValue = FormatNumber($this->invoice_id->ViewValue, $this->invoice_id->formatPattern());
 
-            // submittedby_user_id
-            $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
-            $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
+            // invoice_item
+            $this->invoice_item->ViewValue = $this->invoice_item->CurrentValue;
 
-            // date_created
-            $this->date_created->ViewValue = $this->date_created->CurrentValue;
-            $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
+            // total_amount
+            $this->total_amount->ViewValue = $this->total_amount->CurrentValue;
+            $this->total_amount->ViewValue = FormatNumber($this->total_amount->ViewValue, $this->total_amount->formatPattern());
+
+            // submission_date
+            $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
+            $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
 
             // id
             $this->id->HrefValue = "";
             $this->id->TooltipValue = "";
 
-            // service_id
-            $this->service_id->HrefValue = "";
-            $this->service_id->TooltipValue = "";
+            // invoice_item
+            $this->invoice_item->HrefValue = "";
+            $this->invoice_item->TooltipValue = "";
 
-            // submittedby_user_id
-            $this->submittedby_user_id->HrefValue = "";
-            $this->submittedby_user_id->TooltipValue = "";
+            // total_amount
+            $this->total_amount->HrefValue = "";
+            $this->total_amount->TooltipValue = "";
 
-            // date_created
-            $this->date_created->HrefValue = "";
-            $this->date_created->TooltipValue = "";
-        } elseif ($this->RowType == ROWTYPE_ADD) {
-            // id
-
-            // service_id
-            $this->service_id->setupEditAttributes();
-            $this->service_id->EditValue = HtmlEncode($this->service_id->CurrentValue);
-            $this->service_id->PlaceHolder = RemoveHtml($this->service_id->caption());
-            if (strval($this->service_id->EditValue) != "" && is_numeric($this->service_id->EditValue)) {
-                $this->service_id->EditValue = FormatNumber($this->service_id->EditValue, null);
-            }
-
-            // submittedby_user_id
-            $this->submittedby_user_id->setupEditAttributes();
-            $this->submittedby_user_id->EditValue = HtmlEncode($this->submittedby_user_id->CurrentValue);
-            $this->submittedby_user_id->PlaceHolder = RemoveHtml($this->submittedby_user_id->caption());
-            if (strval($this->submittedby_user_id->EditValue) != "" && is_numeric($this->submittedby_user_id->EditValue)) {
-                $this->submittedby_user_id->EditValue = FormatNumber($this->submittedby_user_id->EditValue, null);
-            }
-
-            // date_created
-            $this->date_created->setupEditAttributes();
-            $this->date_created->EditValue = HtmlEncode(FormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()));
-            $this->date_created->PlaceHolder = RemoveHtml($this->date_created->caption());
-
-            // Add refer script
-
-            // id
-            $this->id->HrefValue = "";
-
-            // service_id
-            $this->service_id->HrefValue = "";
-
-            // submittedby_user_id
-            $this->submittedby_user_id->HrefValue = "";
-
-            // date_created
-            $this->date_created->HrefValue = "";
-        }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
-            $this->setupFieldTitles();
+            // submission_date
+            $this->submission_date->HrefValue = "";
+            $this->submission_date->TooltipValue = "";
+        } elseif ($this->RowType == ROWTYPE_AGGREGATEINIT) { // Initialize aggregate row
+                    $this->total_amount->Total = 0; // Initialize total
+        } elseif ($this->RowType == ROWTYPE_AGGREGATE) { // Aggregate row
+            $this->total_amount->CurrentValue = $this->total_amount->Total;
+            $this->total_amount->ViewValue = $this->total_amount->CurrentValue;
+            $this->total_amount->ViewValue = FormatNumber($this->total_amount->ViewValue, $this->total_amount->formatPattern());
+            $this->total_amount->HrefValue = ""; // Clear href value
         }
 
         // Call Row Rendered event
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
-    }
-
-    // Validate form
-    protected function validateForm()
-    {
-        global $Language, $Security;
-
-        // Check if validation required
-        if (!Config("SERVER_VALIDATE")) {
-            return true;
-        }
-        $validateForm = true;
-        if ($this->id->Required) {
-            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
-                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
-            }
-        }
-        if ($this->service_id->Required) {
-            if (!$this->service_id->IsDetailKey && EmptyValue($this->service_id->FormValue)) {
-                $this->service_id->addErrorMessage(str_replace("%s", $this->service_id->caption(), $this->service_id->RequiredErrorMessage));
-            }
-        }
-        if (!CheckInteger($this->service_id->FormValue)) {
-            $this->service_id->addErrorMessage($this->service_id->getErrorMessage(false));
-        }
-        if ($this->submittedby_user_id->Required) {
-            if (!$this->submittedby_user_id->IsDetailKey && EmptyValue($this->submittedby_user_id->FormValue)) {
-                $this->submittedby_user_id->addErrorMessage(str_replace("%s", $this->submittedby_user_id->caption(), $this->submittedby_user_id->RequiredErrorMessage));
-            }
-        }
-        if ($this->date_created->Required) {
-            if (!$this->date_created->IsDetailKey && EmptyValue($this->date_created->FormValue)) {
-                $this->date_created->addErrorMessage(str_replace("%s", $this->date_created->caption(), $this->date_created->RequiredErrorMessage));
-            }
-        }
-        if (!CheckDate($this->date_created->FormValue, $this->date_created->formatPattern())) {
-            $this->date_created->addErrorMessage($this->date_created->getErrorMessage(false));
-        }
-
-        // Return validate result
-        $validateForm = $validateForm && !$this->hasInvalidFields();
-
-        // Call Form_CustomValidate event
-        $formCustomError = "";
-        $validateForm = $validateForm && $this->formCustomValidate($formCustomError);
-        if ($formCustomError != "") {
-            $this->setFailureMessage($formCustomError);
-        }
-        return $validateForm;
-    }
-
-    // Add record
-    protected function addRow($rsold = null)
-    {
-        global $Language, $Security;
-
-        // Set new row
-        $rsnew = [];
-
-        // service_id
-        $this->service_id->setDbValueDef($rsnew, $this->service_id->CurrentValue, 0, false);
-
-        // submittedby_user_id
-        $this->submittedby_user_id->setDbValueDef($rsnew, $this->submittedby_user_id->CurrentValue, 0, false);
-
-        // date_created
-        $this->date_created->setDbValueDef($rsnew, UnFormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern()), CurrentDate(), false);
-
-        // Update current values
-        $this->setCurrentValues($rsnew);
-        $conn = $this->getConnection();
-
-        // Load db values from old row
-        $this->loadDbValues($rsold);
-
-        // Call Row Inserting event
-        $insertRow = $this->rowInserting($rsold, $rsnew);
-        if ($insertRow) {
-            $addRow = $this->insert($rsnew);
-            if ($addRow) {
-            } elseif (!EmptyValue($this->DbErrorMessage)) { // Show database error
-                $this->setFailureMessage($this->DbErrorMessage);
-            }
-        } else {
-            if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
-                // Use the message, do nothing
-            } elseif ($this->CancelMessage != "") {
-                $this->setFailureMessage($this->CancelMessage);
-                $this->CancelMessage = "";
-            } else {
-                $this->setFailureMessage($Language->phrase("InsertCancelled"));
-            }
-            $addRow = false;
-        }
-        if ($addRow) {
-            // Call Row Inserted event
-            $this->rowInserted($rsold, $rsnew);
-        }
-        return $addRow;
     }
 
     // Get export HTML tag
@@ -2154,6 +2105,15 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         $pageUrl = $this->pageUrl(false);
         $this->SearchOptions = new ListOptions(["TagClassName" => "ew-search-option"]);
 
+        // Show all button
+        $item = &$this->SearchOptions->add("showall");
+        if ($this->UseCustomTemplate || !$this->UseAjaxActions) {
+            $item->Body = "<a class=\"btn btn-default ew-show-all\" role=\"button\" title=\"" . $Language->phrase("ShowAll") . "\" data-caption=\"" . $Language->phrase("ShowAll") . "\" href=\"" . $pageUrl . "cmd=reset\">" . $Language->phrase("ShowAllBtn") . "</a>";
+        } else {
+            $item->Body = "<a class=\"btn btn-default ew-show-all\" role=\"button\" title=\"" . $Language->phrase("ShowAll") . "\" data-caption=\"" . $Language->phrase("ShowAll") . "\" data-ew-action=\"refresh\" data-url=\"" . $pageUrl . "cmd=reset\">" . $Language->phrase("ShowAllBtn") . "</a>";
+        }
+        $item->Visible = ($this->SearchWhere != $this->DefaultSearchWhere && $this->SearchWhere != "0=101");
+
         // Button group for search
         $this->SearchOptions->UseDropDownButton = false;
         $this->SearchOptions->UseButtonGroup = true;
@@ -2177,7 +2137,7 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
     // Check if any search fields
     public function hasSearchFields()
     {
-        return false;
+        return true;
     }
 
     // Render search options
@@ -2232,6 +2192,23 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
         // Call Page Exporting server event
         $doc->ExportCustom = !$this->pageExporting($doc);
 
+        // Export master record
+        if (Config("EXPORT_MASTER_RECORD") && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_invoice") {
+            $jdh_invoice = new JdhInvoiceList();
+            $rsmaster = $jdh_invoice->loadRs($this->DbMasterFilter); // Load master record
+            if ($rsmaster) {
+                $exportStyle = $doc->Style;
+                $doc->setStyle("v"); // Change to vertical
+                if (!$this->isExport("csv") || Config("EXPORT_MASTER_RECORD_FOR_CSV")) {
+                    $doc->Table = $jdh_invoice;
+                    $jdh_invoice->exportDocument($doc, new Recordset($rsmaster));
+                    $doc->exportEmptyRow();
+                    $doc->Table = &$this;
+                }
+                $doc->setStyle($exportStyle); // Restore
+            }
+        }
+
         // Page header
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
@@ -2251,6 +2228,82 @@ class JdhInvoiceItemsList extends JdhInvoiceItems
 
         // Call Page Exported server event
         $this->pageExported($doc);
+    }
+
+    // Set up master/detail based on QueryString
+    protected function setupMasterParms()
+    {
+        $validMaster = false;
+        // Get the keys for master table
+        if (($master = Get(Config("TABLE_SHOW_MASTER"), Get(Config("TABLE_MASTER")))) !== null) {
+            $masterTblVar = $master;
+            if ($masterTblVar == "") {
+                $validMaster = true;
+                $this->DbMasterFilter = "";
+                $this->DbDetailFilter = "";
+            }
+            if ($masterTblVar == "jdh_invoice") {
+                $validMaster = true;
+                $masterTbl = Container("jdh_invoice");
+                if (($parm = Get("fk_id", Get("invoice_id"))) !== null) {
+                    $masterTbl->id->setQueryStringValue($parm);
+                    $this->invoice_id->QueryStringValue = $masterTbl->id->QueryStringValue; // DO NOT change, master/detail key data type can be different
+                    $this->invoice_id->setSessionValue($this->invoice_id->QueryStringValue);
+                    if (!is_numeric($masterTbl->id->QueryStringValue)) {
+                        $validMaster = false;
+                    }
+                } else {
+                    $validMaster = false;
+                }
+            }
+        } elseif (($master = Post(Config("TABLE_SHOW_MASTER"), Post(Config("TABLE_MASTER")))) !== null) {
+            $masterTblVar = $master;
+            if ($masterTblVar == "") {
+                    $validMaster = true;
+                    $this->DbMasterFilter = "";
+                    $this->DbDetailFilter = "";
+            }
+            if ($masterTblVar == "jdh_invoice") {
+                $validMaster = true;
+                $masterTbl = Container("jdh_invoice");
+                if (($parm = Post("fk_id", Post("invoice_id"))) !== null) {
+                    $masterTbl->id->setFormValue($parm);
+                    $this->invoice_id->setFormValue($masterTbl->id->FormValue);
+                    $this->invoice_id->setSessionValue($this->invoice_id->FormValue);
+                    if (!is_numeric($masterTbl->id->FormValue)) {
+                        $validMaster = false;
+                    }
+                } else {
+                    $validMaster = false;
+                }
+            }
+        }
+        if ($validMaster) {
+            // Save current master table
+            $this->setCurrentMasterTable($masterTblVar);
+
+            // Update URL
+            $this->AddUrl = $this->addMasterUrl($this->AddUrl);
+            $this->InlineAddUrl = $this->addMasterUrl($this->InlineAddUrl);
+            $this->GridAddUrl = $this->addMasterUrl($this->GridAddUrl);
+            $this->GridEditUrl = $this->addMasterUrl($this->GridEditUrl);
+            $this->MultiEditUrl = $this->addMasterUrl($this->MultiEditUrl);
+
+            // Reset start record counter (new master key)
+            if (!$this->isAddOrEdit()) {
+                $this->StartRecord = 1;
+                $this->setStartRecordNumber($this->StartRecord);
+            }
+
+            // Clear previous master key from Session
+            if ($masterTblVar != "jdh_invoice") {
+                if ($this->invoice_id->CurrentValue == "") {
+                    $this->invoice_id->setSessionValue("");
+                }
+            }
+        }
+        $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Get master filter from session
+        $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Get detail filter from session
     }
 
     // Set up Breadcrumb

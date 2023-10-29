@@ -42,10 +42,11 @@ class JdhInvoiceItems extends DbTable
 
     // Fields
     public $id;
-    public $service_id;
-    public $description;
+    public $invoice_id;
+    public $invoice_item;
+    public $total_amount;
     public $submittedby_user_id;
-    public $date_created;
+    public $submission_date;
 
     // Page ID
     public $PageID = ""; // To be overridden by subclass
@@ -84,7 +85,7 @@ class JdhInvoiceItems extends DbTable
         $this->ExportWordColumnWidth = null; // Cell width (PHPWord only)
         $this->DetailAdd = false; // Allow detail add
         $this->DetailEdit = false; // Allow detail edit
-        $this->DetailView = false; // Allow detail view
+        $this->DetailView = true; // Allow detail view
         $this->ShowMultipleDetails = false; // Show multiple details
         $this->GridAddRowCount = 5;
         $this->AllowAddDeleteRow = true; // Allow add/delete row
@@ -117,52 +118,80 @@ class JdhInvoiceItems extends DbTable
         $this->id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->Fields['id'] = &$this->id;
 
-        // service_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->service_id = new DbField(
+        // invoice_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->invoice_id = new DbField(
             $this, // Table
-            'x_service_id', // Variable name
-            'service_id', // Name
-            '`service_id`', // Expression
-            '`service_id`', // Basic search expression
+            'x_invoice_id', // Variable name
+            'invoice_id', // Name
+            '`invoice_id`', // Expression
+            '`invoice_id`', // Basic search expression
             3, // Type
             11, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`service_id`', // Virtual expression
+            '`invoice_id`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->service_id->InputTextType = "text";
-        $this->service_id->Nullable = false; // NOT NULL field
-        $this->service_id->Required = true; // Required field
-        $this->service_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->service_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['service_id'] = &$this->service_id;
+        $this->invoice_id->InputTextType = "text";
+        $this->invoice_id->IsForeignKey = true; // Foreign key field
+        $this->invoice_id->Nullable = false; // NOT NULL field
+        $this->invoice_id->Required = true; // Required field
+        $this->invoice_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->invoice_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['invoice_id'] = &$this->invoice_id;
 
-        // description $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->description = new DbField(
+        // invoice_item $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->invoice_item = new DbField(
             $this, // Table
-            'x_description', // Variable name
-            'description', // Name
-            '`description`', // Expression
-            '`description`', // Basic search expression
-            201, // Type
-            65535, // Size
+            'x_invoice_item', // Variable name
+            'invoice_item', // Name
+            '`invoice_item`', // Expression
+            '`invoice_item`', // Basic search expression
+            200, // Type
+            100, // Size
             -1, // Date/Time format
             false, // Is upload field
-            '`description`', // Virtual expression
+            '`invoice_item`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'TEXTAREA' // Edit Tag
+            'TEXT' // Edit Tag
         );
-        $this->description->InputTextType = "text";
-        $this->description->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY", "IS NULL", "IS NOT NULL"];
-        $this->Fields['description'] = &$this->description;
+        $this->invoice_item->InputTextType = "text";
+        $this->invoice_item->Nullable = false; // NOT NULL field
+        $this->invoice_item->Required = true; // Required field
+        $this->invoice_item->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
+        $this->Fields['invoice_item'] = &$this->invoice_item;
+
+        // total_amount $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->total_amount = new DbField(
+            $this, // Table
+            'x_total_amount', // Variable name
+            'total_amount', // Name
+            '`total_amount`', // Expression
+            '`total_amount`', // Basic search expression
+            3, // Type
+            11, // Size
+            -1, // Date/Time format
+            false, // Is upload field
+            '`total_amount`', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->total_amount->InputTextType = "text";
+        $this->total_amount->Nullable = false; // NOT NULL field
+        $this->total_amount->Required = true; // Required field
+        $this->total_amount->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
+        $this->total_amount->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['total_amount'] = &$this->total_amount;
 
         // submittedby_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->submittedby_user_id = new DbField(
@@ -180,38 +209,40 @@ class JdhInvoiceItems extends DbTable
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
-            'HIDDEN' // Edit Tag
+            'TEXT' // Edit Tag
         );
         $this->submittedby_user_id->InputTextType = "text";
         $this->submittedby_user_id->Nullable = false; // NOT NULL field
+        $this->submittedby_user_id->Required = true; // Required field
+        $this->submittedby_user_id->Sortable = false; // Allow sort
         $this->submittedby_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->submittedby_user_id->SearchOperators = ["=", "<>"];
+        $this->submittedby_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['submittedby_user_id'] = &$this->submittedby_user_id;
 
-        // date_created $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
-        $this->date_created = new DbField(
+        // submission_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->submission_date = new DbField(
             $this, // Table
-            'x_date_created', // Variable name
-            'date_created', // Name
-            '`date_created`', // Expression
-            CastDateFieldForLike("`date_created`", 0, "DB"), // Basic search expression
+            'x_submission_date', // Variable name
+            'submission_date', // Name
+            '`submission_date`', // Expression
+            CastDateFieldForLike("`submission_date`", 0, "DB"), // Basic search expression
             135, // Type
             19, // Size
             0, // Date/Time format
             false, // Is upload field
-            '`date_created`', // Virtual expression
+            '`submission_date`', // Virtual expression
             false, // Is virtual
             false, // Force selection
             false, // Is Virtual search
             'FORMATTED TEXT', // View Tag
             'TEXT' // Edit Tag
         );
-        $this->date_created->InputTextType = "text";
-        $this->date_created->Nullable = false; // NOT NULL field
-        $this->date_created->Required = true; // Required field
-        $this->date_created->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
-        $this->date_created->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
-        $this->Fields['date_created'] = &$this->date_created;
+        $this->submission_date->InputTextType = "text";
+        $this->submission_date->Nullable = false; // NOT NULL field
+        $this->submission_date->Required = true; // Required field
+        $this->submission_date->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
+        $this->submission_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
+        $this->Fields['submission_date'] = &$this->submission_date;
 
         // Add Doctrine Cache
         $this->Cache = new ArrayCache();
@@ -269,6 +300,88 @@ class JdhInvoiceItems extends DbTable
             }
             $field->setSort($fldSort);
         }
+    }
+
+    // Current master table name
+    public function getCurrentMasterTable()
+    {
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_MASTER_TABLE"));
+    }
+
+    public function setCurrentMasterTable($v)
+    {
+        $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_MASTER_TABLE")] = $v;
+    }
+
+    // Get master WHERE clause from session values
+    public function getMasterFilterFromSession()
+    {
+        // Master filter
+        $masterFilter = "";
+        if ($this->getCurrentMasterTable() == "jdh_invoice") {
+            $masterTable = Container("jdh_invoice");
+            if ($this->invoice_id->getSessionValue() != "") {
+                $masterFilter .= "" . GetKeyFilter($masterTable->id, $this->invoice_id->getSessionValue(), $masterTable->id->DataType, $masterTable->Dbid);
+            } else {
+                return "";
+            }
+        }
+        return $masterFilter;
+    }
+
+    // Get detail WHERE clause from session values
+    public function getDetailFilterFromSession()
+    {
+        // Detail filter
+        $detailFilter = "";
+        if ($this->getCurrentMasterTable() == "jdh_invoice") {
+            $masterTable = Container("jdh_invoice");
+            if ($this->invoice_id->getSessionValue() != "") {
+                $detailFilter .= "" . GetKeyFilter($this->invoice_id, $this->invoice_id->getSessionValue(), $masterTable->id->DataType, $this->Dbid);
+            } else {
+                return "";
+            }
+        }
+        return $detailFilter;
+    }
+
+    /**
+     * Get master filter
+     *
+     * @param object $masterTable Master Table
+     * @param array $keys Detail Keys
+     * @return mixed NULL is returned if all keys are empty, Empty string is returned if some keys are empty and is required
+     */
+    public function getMasterFilter($masterTable, $keys)
+    {
+        $validKeys = true;
+        switch ($masterTable->TableVar) {
+            case "jdh_invoice":
+                $key = $keys["invoice_id"] ?? "";
+                if (EmptyValue($key)) {
+                    if ($masterTable->id->Required) { // Required field and empty value
+                        return ""; // Return empty filter
+                    }
+                    $validKeys = false;
+                } elseif (!$validKeys) { // Already has empty key
+                    return ""; // Return empty filter
+                }
+                if ($validKeys) {
+                    return GetKeyFilter($masterTable->id, $keys["invoice_id"], $this->invoice_id->DataType, $this->Dbid);
+                }
+                break;
+        }
+        return null; // All null values and no required fields
+    }
+
+    // Get detail filter
+    public function getDetailFilter($masterTable)
+    {
+        switch ($masterTable->TableVar) {
+            case "jdh_invoice":
+                return GetKeyFilter($this->invoice_id, $masterTable->id->DbValue, $masterTable->id->DataType, $masterTable->Dbid);
+        }
+        return "";
     }
 
     // Render X Axis for chart
@@ -684,10 +797,11 @@ class JdhInvoiceItems extends DbTable
             return;
         }
         $this->id->DbValue = $row['id'];
-        $this->service_id->DbValue = $row['service_id'];
-        $this->description->DbValue = $row['description'];
+        $this->invoice_id->DbValue = $row['invoice_id'];
+        $this->invoice_item->DbValue = $row['invoice_item'];
+        $this->total_amount->DbValue = $row['total_amount'];
         $this->submittedby_user_id->DbValue = $row['submittedby_user_id'];
-        $this->date_created->DbValue = $row['date_created'];
+        $this->submission_date->DbValue = $row['submission_date'];
     }
 
     // Delete uploaded files
@@ -882,6 +996,10 @@ class JdhInvoiceItems extends DbTable
     // Add master url
     public function addMasterUrl($url)
     {
+        if ($this->getCurrentMasterTable() == "jdh_invoice" && !ContainsString($url, Config("TABLE_SHOW_MASTER") . "=")) {
+            $url .= (ContainsString($url, "?") ? "&" : "?") . Config("TABLE_SHOW_MASTER") . "=" . $this->getCurrentMasterTable();
+            $url .= "&" . GetForeignKeyUrl("fk_id", $this->invoice_id->getSessionValue()); // Use Session Value
+        }
         return $url;
     }
 
@@ -1042,10 +1160,11 @@ class JdhInvoiceItems extends DbTable
             return;
         }
         $this->id->setDbValue($row['id']);
-        $this->service_id->setDbValue($row['service_id']);
-        $this->description->setDbValue($row['description']);
+        $this->invoice_id->setDbValue($row['invoice_id']);
+        $this->invoice_item->setDbValue($row['invoice_item']);
+        $this->total_amount->setDbValue($row['total_amount']);
         $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
-        $this->date_created->setDbValue($row['date_created']);
+        $this->submission_date->setDbValue($row['submission_date']);
     }
 
     // Render list content
@@ -1078,51 +1197,61 @@ class JdhInvoiceItems extends DbTable
 
         // id
 
-        // service_id
+        // invoice_id
 
-        // description
+        // invoice_item
+
+        // total_amount
 
         // submittedby_user_id
 
-        // date_created
+        // submission_date
 
         // id
         $this->id->ViewValue = $this->id->CurrentValue;
 
-        // service_id
-        $this->service_id->ViewValue = $this->service_id->CurrentValue;
-        $this->service_id->ViewValue = FormatNumber($this->service_id->ViewValue, $this->service_id->formatPattern());
+        // invoice_id
+        $this->invoice_id->ViewValue = $this->invoice_id->CurrentValue;
+        $this->invoice_id->ViewValue = FormatNumber($this->invoice_id->ViewValue, $this->invoice_id->formatPattern());
 
-        // description
-        $this->description->ViewValue = $this->description->CurrentValue;
+        // invoice_item
+        $this->invoice_item->ViewValue = $this->invoice_item->CurrentValue;
+
+        // total_amount
+        $this->total_amount->ViewValue = $this->total_amount->CurrentValue;
+        $this->total_amount->ViewValue = FormatNumber($this->total_amount->ViewValue, $this->total_amount->formatPattern());
 
         // submittedby_user_id
         $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
         $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
 
-        // date_created
-        $this->date_created->ViewValue = $this->date_created->CurrentValue;
-        $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
+        // submission_date
+        $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
+        $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
 
         // id
         $this->id->HrefValue = "";
         $this->id->TooltipValue = "";
 
-        // service_id
-        $this->service_id->HrefValue = "";
-        $this->service_id->TooltipValue = "";
+        // invoice_id
+        $this->invoice_id->HrefValue = "";
+        $this->invoice_id->TooltipValue = "";
 
-        // description
-        $this->description->HrefValue = "";
-        $this->description->TooltipValue = "";
+        // invoice_item
+        $this->invoice_item->HrefValue = "";
+        $this->invoice_item->TooltipValue = "";
+
+        // total_amount
+        $this->total_amount->HrefValue = "";
+        $this->total_amount->TooltipValue = "";
 
         // submittedby_user_id
         $this->submittedby_user_id->HrefValue = "";
         $this->submittedby_user_id->TooltipValue = "";
 
-        // date_created
-        $this->date_created->HrefValue = "";
-        $this->date_created->TooltipValue = "";
+        // submission_date
+        $this->submission_date->HrefValue = "";
+        $this->submission_date->TooltipValue = "";
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1143,30 +1272,48 @@ class JdhInvoiceItems extends DbTable
         $this->id->setupEditAttributes();
         $this->id->EditValue = $this->id->CurrentValue;
 
-        // service_id
-        $this->service_id->setupEditAttributes();
-        $this->service_id->EditValue = $this->service_id->CurrentValue;
-        $this->service_id->PlaceHolder = RemoveHtml($this->service_id->caption());
-        if (strval($this->service_id->EditValue) != "" && is_numeric($this->service_id->EditValue)) {
-            $this->service_id->EditValue = FormatNumber($this->service_id->EditValue, null);
+        // invoice_id
+        $this->invoice_id->setupEditAttributes();
+        if ($this->invoice_id->getSessionValue() != "") {
+            $this->invoice_id->CurrentValue = GetForeignKeyValue($this->invoice_id->getSessionValue());
+            $this->invoice_id->ViewValue = $this->invoice_id->CurrentValue;
+            $this->invoice_id->ViewValue = FormatNumber($this->invoice_id->ViewValue, $this->invoice_id->formatPattern());
+        } else {
+            $this->invoice_id->EditValue = $this->invoice_id->CurrentValue;
+            $this->invoice_id->PlaceHolder = RemoveHtml($this->invoice_id->caption());
+            if (strval($this->invoice_id->EditValue) != "" && is_numeric($this->invoice_id->EditValue)) {
+                $this->invoice_id->EditValue = FormatNumber($this->invoice_id->EditValue, null);
+            }
         }
 
-        // description
-        $this->description->setupEditAttributes();
-        $this->description->EditValue = $this->description->CurrentValue;
-        $this->description->PlaceHolder = RemoveHtml($this->description->caption());
+        // invoice_item
+        $this->invoice_item->setupEditAttributes();
+        if (!$this->invoice_item->Raw) {
+            $this->invoice_item->CurrentValue = HtmlDecode($this->invoice_item->CurrentValue);
+        }
+        $this->invoice_item->EditValue = $this->invoice_item->CurrentValue;
+        $this->invoice_item->PlaceHolder = RemoveHtml($this->invoice_item->caption());
+
+        // total_amount
+        $this->total_amount->setupEditAttributes();
+        $this->total_amount->EditValue = $this->total_amount->CurrentValue;
+        $this->total_amount->PlaceHolder = RemoveHtml($this->total_amount->caption());
+        if (strval($this->total_amount->EditValue) != "" && is_numeric($this->total_amount->EditValue)) {
+            $this->total_amount->EditValue = FormatNumber($this->total_amount->EditValue, null);
+        }
 
         // submittedby_user_id
         $this->submittedby_user_id->setupEditAttributes();
-        $this->submittedby_user_id->CurrentValue = FormatNumber($this->submittedby_user_id->CurrentValue, $this->submittedby_user_id->formatPattern());
+        $this->submittedby_user_id->EditValue = $this->submittedby_user_id->CurrentValue;
+        $this->submittedby_user_id->PlaceHolder = RemoveHtml($this->submittedby_user_id->caption());
         if (strval($this->submittedby_user_id->EditValue) != "" && is_numeric($this->submittedby_user_id->EditValue)) {
             $this->submittedby_user_id->EditValue = FormatNumber($this->submittedby_user_id->EditValue, null);
         }
 
-        // date_created
-        $this->date_created->setupEditAttributes();
-        $this->date_created->EditValue = FormatDateTime($this->date_created->CurrentValue, $this->date_created->formatPattern());
-        $this->date_created->PlaceHolder = RemoveHtml($this->date_created->caption());
+        // submission_date
+        $this->submission_date->setupEditAttributes();
+        $this->submission_date->EditValue = FormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern());
+        $this->submission_date->PlaceHolder = RemoveHtml($this->submission_date->caption());
 
         // Call Row Rendered event
         $this->rowRendered();
@@ -1175,11 +1322,19 @@ class JdhInvoiceItems extends DbTable
     // Aggregate list row values
     public function aggregateListRowValues()
     {
+            if (is_numeric($this->total_amount->CurrentValue)) {
+                $this->total_amount->Total += $this->total_amount->CurrentValue; // Accumulate total
+            }
     }
 
     // Aggregate list row (for rendering)
     public function aggregateListRow()
     {
+            $this->total_amount->CurrentValue = $this->total_amount->Total;
+            $this->total_amount->ViewValue = $this->total_amount->CurrentValue;
+            $this->total_amount->ViewValue = FormatNumber($this->total_amount->ViewValue, $this->total_amount->formatPattern());
+            $this->total_amount->HrefValue = ""; // Clear href value
+
         // Call Row Rendered event
         $this->rowRendered();
     }
@@ -1197,15 +1352,16 @@ class JdhInvoiceItems extends DbTable
                 $doc->beginExportRow();
                 if ($exportPageType == "view") {
                     $doc->exportCaption($this->id);
-                    $doc->exportCaption($this->service_id);
-                    $doc->exportCaption($this->description);
-                    $doc->exportCaption($this->submittedby_user_id);
-                    $doc->exportCaption($this->date_created);
+                    $doc->exportCaption($this->invoice_id);
+                    $doc->exportCaption($this->invoice_item);
+                    $doc->exportCaption($this->total_amount);
+                    $doc->exportCaption($this->submission_date);
                 } else {
                     $doc->exportCaption($this->id);
-                    $doc->exportCaption($this->service_id);
-                    $doc->exportCaption($this->submittedby_user_id);
-                    $doc->exportCaption($this->date_created);
+                    $doc->exportCaption($this->invoice_id);
+                    $doc->exportCaption($this->invoice_item);
+                    $doc->exportCaption($this->total_amount);
+                    $doc->exportCaption($this->submission_date);
                 }
                 $doc->endExportRow();
             }
@@ -1227,6 +1383,7 @@ class JdhInvoiceItems extends DbTable
                     }
                 }
                 $this->loadListRowValues($row);
+                $this->aggregateListRowValues(); // Aggregate row values
 
                 // Render row
                 $this->RowType = ROWTYPE_VIEW; // Render view
@@ -1236,15 +1393,16 @@ class JdhInvoiceItems extends DbTable
                     $doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
                     if ($exportPageType == "view") {
                         $doc->exportField($this->id);
-                        $doc->exportField($this->service_id);
-                        $doc->exportField($this->description);
-                        $doc->exportField($this->submittedby_user_id);
-                        $doc->exportField($this->date_created);
+                        $doc->exportField($this->invoice_id);
+                        $doc->exportField($this->invoice_item);
+                        $doc->exportField($this->total_amount);
+                        $doc->exportField($this->submission_date);
                     } else {
                         $doc->exportField($this->id);
-                        $doc->exportField($this->service_id);
-                        $doc->exportField($this->submittedby_user_id);
-                        $doc->exportField($this->date_created);
+                        $doc->exportField($this->invoice_id);
+                        $doc->exportField($this->invoice_item);
+                        $doc->exportField($this->total_amount);
+                        $doc->exportField($this->submission_date);
                     }
                     $doc->endExportRow($rowCnt);
                 }
@@ -1255,6 +1413,22 @@ class JdhInvoiceItems extends DbTable
                 $this->rowExport($doc, $row);
             }
             $recordset->moveNext();
+        }
+
+        // Export aggregates (horizontal format only)
+        if ($doc->Horizontal) {
+            $this->RowType = ROWTYPE_AGGREGATE;
+            $this->resetAttributes();
+            $this->aggregateListRow();
+            if (!$doc->ExportCustom) {
+                $doc->beginExportRow(-1);
+                $doc->exportAggregate($this->id, '');
+                $doc->exportAggregate($this->invoice_id, '');
+                $doc->exportAggregate($this->invoice_item, '');
+                $doc->exportAggregate($this->total_amount, 'TOTAL');
+                $doc->exportAggregate($this->submission_date, '');
+                $doc->endExportRow();
+            }
         }
         if (!$doc->ExportCustom) {
             $doc->exportTableFooter();

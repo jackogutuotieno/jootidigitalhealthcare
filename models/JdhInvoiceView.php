@@ -154,8 +154,8 @@ class JdhInvoiceView extends JdhInvoice
         }
 
         // Set up record key
-        if (($keyValue = Get("invoice_id") ?? Route("invoice_id")) !== null) {
-            $this->RecKey["invoice_id"] = $keyValue;
+        if (($keyValue = Get("id") ?? Route("id")) !== null) {
+            $this->RecKey["id"] = $keyValue;
         }
 
         // Table name (for backward compatibility only)
@@ -374,7 +374,7 @@ class JdhInvoiceView extends JdhInvoice
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['invoice_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -387,7 +387,7 @@ class JdhInvoiceView extends JdhInvoice
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->invoice_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
 
@@ -505,10 +505,12 @@ class JdhInvoiceView extends JdhInvoice
             $SkipHeaderFooter = true;
         }
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->invoice_id->setVisibility();
+        $this->id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->submitted_by_user_id->setVisibility();
+        $this->invoice_title->setVisibility();
+        $this->invoice_description->setVisibility();
         $this->invoice_date->setVisibility();
+        $this->submittedby_user_id->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -544,15 +546,15 @@ class JdhInvoiceView extends JdhInvoice
         $loadCurrentRecord = false;
         $returnUrl = "";
         $matchRecord = false;
-        if (($keyValue = Get("invoice_id") ?? Route("invoice_id")) !== null) {
-            $this->invoice_id->setQueryStringValue($keyValue);
-            $this->RecKey["invoice_id"] = $this->invoice_id->QueryStringValue;
-        } elseif (Post("invoice_id") !== null) {
-            $this->invoice_id->setFormValue(Post("invoice_id"));
-            $this->RecKey["invoice_id"] = $this->invoice_id->FormValue;
+        if (($keyValue = Get("id") ?? Route("id")) !== null) {
+            $this->id->setQueryStringValue($keyValue);
+            $this->RecKey["id"] = $this->id->QueryStringValue;
+        } elseif (Post("id") !== null) {
+            $this->id->setFormValue(Post("id"));
+            $this->RecKey["id"] = $this->id->FormValue;
         } elseif (IsApi() && ($keyValue = Key(0) ?? Route(2)) !== null) {
-            $this->invoice_id->setQueryStringValue($keyValue);
-            $this->RecKey["invoice_id"] = $this->invoice_id->QueryStringValue;
+            $this->id->setQueryStringValue($keyValue);
+            $this->RecKey["id"] = $this->id->QueryStringValue;
         } elseif (!$loadCurrentRecord) {
             $returnUrl = "jdhinvoicelist"; // Return to list
         }
@@ -598,6 +600,9 @@ class JdhInvoiceView extends JdhInvoice
         $this->RowType = ROWTYPE_VIEW;
         $this->resetAttributes();
         $this->renderRow();
+
+        // Set up detail parameters
+        $this->setupDetailParms();
 
         // Normal return
         if (IsApi()) {
@@ -670,16 +675,6 @@ class JdhInvoiceView extends JdhInvoice
         }
         $item->Visible = $this->EditUrl != "" && $Security->canEdit();
 
-        // Copy
-        $item = &$option->add("copy");
-        $copycaption = HtmlTitle($Language->phrase("ViewPageCopyLink"));
-        if ($this->IsModal) {
-            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" data-ew-action=\"modal\" data-url=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
-        } else {
-            $item->Body = "<a class=\"ew-action ew-copy\" title=\"" . $copycaption . "\" data-caption=\"" . $copycaption . "\" href=\"" . HtmlEncode(GetUrl($this->CopyUrl)) . "\">" . $Language->phrase("ViewPageCopyLink") . "</a>";
-        }
-        $item->Visible = $this->CopyUrl != "" && $Security->canAdd();
-
         // Delete
         $item = &$option->add("delete");
         $url = GetUrl($this->DeleteUrl);
@@ -688,6 +683,84 @@ class JdhInvoiceView extends JdhInvoice
             " title=\"" . HtmlTitle($Language->phrase("ViewPageDeleteLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("ViewPageDeleteLink")) .
             "\" href=\"" . HtmlEncode($url) . "\">" . $Language->phrase("ViewPageDeleteLink") . "</a>";
         $item->Visible = $this->DeleteUrl != "" && $Security->canDelete();
+        $option = $options["detail"];
+        $detailTableLink = "";
+        $detailViewTblVar = "";
+        $detailCopyTblVar = "";
+        $detailEditTblVar = "";
+
+        // "detail_jdh_invoice_items"
+        $item = &$option->add("detail_jdh_invoice_items");
+        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_invoice_items", "TblCaption");
+        $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhinvoiceitemslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_invoice&" . GetForeignKeyUrl("fk_id", $this->id->CurrentValue) . "")) . "\">" . $body . "</a>";
+        $links = "";
+        $detailPageObj = Container("JdhInvoiceItemsGrid");
+        if ($detailPageObj->DetailView && $Security->canView() && $Security->allowView(CurrentProjectID() . 'jdh_invoice')) {
+            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailViewLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_invoice_items"))) . "\">" . $Language->phrase("MasterDetailViewLink", null) . "</a></li>";
+            if ($detailViewTblVar != "") {
+                $detailViewTblVar .= ",";
+            }
+            $detailViewTblVar .= "jdh_invoice_items";
+        }
+        if ($detailPageObj->DetailEdit && $Security->canEdit() && $Security->allowEdit(CurrentProjectID() . 'jdh_invoice')) {
+            $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($Language->phrase("MasterDetailEditLink")) . "\" href=\"" . HtmlEncode(GetUrl($this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_invoice_items"))) . "\">" . $Language->phrase("MasterDetailEditLink", null) . "</a></li>";
+            if ($detailEditTblVar != "") {
+                $detailEditTblVar .= ",";
+            }
+            $detailEditTblVar .= "jdh_invoice_items";
+        }
+        if ($links != "") {
+            $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
+            $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
+        } else {
+            $body = preg_replace('/\b\s+dropdown-toggle\b/', "", $body);
+        }
+        $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">" . $body . "</div>";
+        $item->Body = $body;
+        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_invoice_items');
+        if ($item->Visible) {
+            if ($detailTableLink != "") {
+                $detailTableLink .= ",";
+            }
+            $detailTableLink .= "jdh_invoice_items";
+        }
+        if ($this->ShowMultipleDetails) {
+            $item->Visible = false;
+        }
+
+        // Multiple details
+        if ($this->ShowMultipleDetails) {
+            $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">";
+            $links = "";
+            if ($detailViewTblVar != "") {
+                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlEncode($Language->phrase("MasterDetailViewLink", true)) . "\" href=\"" . HtmlEncode(GetUrl($this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=" . $detailViewTblVar))) . "\">" . $Language->phrase("MasterDetailViewLink", null) . "</a></li>";
+            }
+            if ($detailEditTblVar != "") {
+                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlEncode($Language->phrase("MasterDetailEditLink", true)) . "\" href=\"" . HtmlEncode(GetUrl($this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=" . $detailEditTblVar))) . "\">" . $Language->phrase("MasterDetailEditLink", null) . "</a></li>";
+            }
+            if ($detailCopyTblVar != "") {
+                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-copy\" data-action=\"add\" data-caption=\"" . HtmlEncode($Language->phrase("MasterDetailCopyLink", true)) . "\" href=\"" . HtmlEncode(GetUrl($this->getCopyUrl(Config("TABLE_SHOW_DETAIL") . "=" . $detailCopyTblVar))) . "\">" . $Language->phrase("MasterDetailCopyLink", null) . "</a></li>";
+            }
+            if ($links != "") {
+                $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-master-detail\" title=\"" . HtmlEncode($Language->phrase("MultipleMasterDetails", true)) . "\" data-bs-toggle=\"dropdown\">" . $Language->phrase("MultipleMasterDetails") . "</button>";
+                $body .= "<ul class=\"dropdown-menu ew-dropdown-menu\">" . $links . "</ul>";
+            }
+            $body .= "</div>";
+            // Multiple details
+            $item = &$option->add("details");
+            $item->Body = $body;
+        }
+
+        // Set up detail default
+        $option = $options["detail"];
+        $options["detail"]->DropDownButtonPhrase = $Language->phrase("ButtonDetails");
+        $ar = explode(",", $detailTableLink);
+        $cnt = count($ar);
+        $option->UseDropDownButton = ($cnt > 1);
+        $option->UseButtonGroup = true;
+        $item = &$option->addGroupOption();
+        $item->Body = "";
+        $item->Visible = false;
 
         // Set up action default
         $option = $options["action"];
@@ -784,20 +857,24 @@ class JdhInvoiceView extends JdhInvoice
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->invoice_id->setDbValue($row['invoice_id']);
+        $this->id->setDbValue($row['id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->invoice_title->setDbValue($row['invoice_title']);
+        $this->invoice_description->setDbValue($row['invoice_description']);
         $this->invoice_date->setDbValue($row['invoice_date']);
+        $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['invoice_id'] = $this->invoice_id->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['invoice_title'] = $this->invoice_title->DefaultValue;
+        $row['invoice_description'] = $this->invoice_description->DefaultValue;
         $row['invoice_date'] = $this->invoice_date->DefaultValue;
+        $row['submittedby_user_id'] = $this->submittedby_user_id->DefaultValue;
         return $row;
     }
 
@@ -819,18 +896,22 @@ class JdhInvoiceView extends JdhInvoice
 
         // Common render codes for all row types
 
-        // invoice_id
+        // id
 
         // patient_id
 
-        // submitted_by_user_id
+        // invoice_title
+
+        // invoice_description
 
         // invoice_date
 
+        // submittedby_user_id
+
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // invoice_id
-            $this->invoice_id->ViewValue = $this->invoice_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
 
             // patient_id
             $curVal = strval($this->patient_id->CurrentValue);
@@ -855,25 +936,31 @@ class JdhInvoiceView extends JdhInvoice
                 $this->patient_id->ViewValue = null;
             }
 
-            // submitted_by_user_id
-            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
-            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
+            // invoice_title
+            $this->invoice_title->ViewValue = $this->invoice_title->CurrentValue;
+
+            // invoice_description
+            $this->invoice_description->ViewValue = $this->invoice_description->CurrentValue;
 
             // invoice_date
             $this->invoice_date->ViewValue = $this->invoice_date->CurrentValue;
             $this->invoice_date->ViewValue = FormatDateTime($this->invoice_date->ViewValue, $this->invoice_date->formatPattern());
 
-            // invoice_id
-            $this->invoice_id->HrefValue = "";
-            $this->invoice_id->TooltipValue = "";
+            // id
+            $this->id->HrefValue = "";
+            $this->id->TooltipValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
 
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
-            $this->submitted_by_user_id->TooltipValue = "";
+            // invoice_title
+            $this->invoice_title->HrefValue = "";
+            $this->invoice_title->TooltipValue = "";
+
+            // invoice_description
+            $this->invoice_description->HrefValue = "";
+            $this->invoice_description->TooltipValue = "";
 
             // invoice_date
             $this->invoice_date->HrefValue = "";
@@ -1047,6 +1134,25 @@ class JdhInvoiceView extends JdhInvoice
         $doc->Text .= $header;
         $this->exportDocument($doc, $rs, $this->StartRecord, $this->StopRecord, "view");
 
+        // Export detail records (jdh_invoice_items)
+        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_invoice_items", explode(",", $this->getCurrentDetailTable() ?? ""))) {
+            $jdh_invoice_items = new JdhInvoiceItemsList();
+            $rsdetail = $jdh_invoice_items->loadRs($jdh_invoice_items->getDetailFilterFromSession()); // Load detail records
+            if ($rsdetail) {
+                $exportStyle = $doc->Style;
+                $doc->setStyle("h"); // Change to horizontal
+                if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
+                    $doc->exportEmptyRow();
+                    $detailcnt = $rsdetail->rowCount();
+                    $oldtbl = $doc->Table;
+                    $doc->Table = $jdh_invoice_items;
+                    $jdh_invoice_items->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
+                    $doc->Table = $oldtbl;
+                }
+                $doc->setStyle($exportStyle); // Restore
+            }
+        }
+
         // Close recordset
         $rs->close();
 
@@ -1060,6 +1166,35 @@ class JdhInvoiceView extends JdhInvoice
 
         // Call Page Exported server event
         $this->pageExported($doc);
+    }
+
+    // Set up detail parms based on QueryString
+    protected function setupDetailParms()
+    {
+        // Get the keys for master table
+        $detailTblVar = Get(Config("TABLE_SHOW_DETAIL"));
+        if ($detailTblVar !== null) {
+            $this->setCurrentDetailTable($detailTblVar);
+        } else {
+            $detailTblVar = $this->getCurrentDetailTable();
+        }
+        if ($detailTblVar != "") {
+            $detailTblVar = explode(",", $detailTblVar);
+            if (in_array("jdh_invoice_items", $detailTblVar)) {
+                $detailPageObj = Container("JdhInvoiceItemsGrid");
+                if ($detailPageObj->DetailView) {
+                    $detailPageObj->EventCancelled = $this->EventCancelled;
+                    $detailPageObj->CurrentMode = "view";
+
+                    // Save current master table to detail table
+                    $detailPageObj->setCurrentMasterTable($this->TableVar);
+                    $detailPageObj->setStartRecordNumber(1);
+                    $detailPageObj->invoice_id->IsDetailKey = true;
+                    $detailPageObj->invoice_id->CurrentValue = $this->id->CurrentValue;
+                    $detailPageObj->invoice_id->setSessionValue($detailPageObj->invoice_id->CurrentValue);
+                }
+            }
+        }
     }
 
     // Set up Breadcrumb

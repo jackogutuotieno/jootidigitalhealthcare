@@ -23,8 +23,8 @@ loadjs.ready(["wrapper", "head"], function () {
         // Add fields
         .setFields([
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null], fields.patient_id.isInvalid],
-            ["submitted_by_user_id", [fields.submitted_by_user_id.visible && fields.submitted_by_user_id.required ? ew.Validators.required(fields.submitted_by_user_id.caption) : null], fields.submitted_by_user_id.isInvalid],
-            ["invoice_date", [fields.invoice_date.visible && fields.invoice_date.required ? ew.Validators.required(fields.invoice_date.caption) : null, ew.Validators.datetime(fields.invoice_date.clientFormatPattern)], fields.invoice_date.isInvalid]
+            ["invoice_title", [fields.invoice_title.visible && fields.invoice_title.required ? ew.Validators.required(fields.invoice_title.caption) : null], fields.invoice_title.isInvalid],
+            ["invoice_description", [fields.invoice_description.visible && fields.invoice_description.required ? ew.Validators.required(fields.invoice_description.caption) : null], fields.invoice_description.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -110,49 +110,39 @@ loadjs.ready("fjdh_invoiceadd", function() {
 </div></div>
     </div>
 <?php } ?>
-<?php if ($Page->invoice_date->Visible) { // invoice_date ?>
-    <div id="r_invoice_date"<?= $Page->invoice_date->rowAttributes() ?>>
-        <label id="elh_jdh_invoice_invoice_date" for="x_invoice_date" class="<?= $Page->LeftColumnClass ?>"><?= $Page->invoice_date->caption() ?><?= $Page->invoice_date->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->invoice_date->cellAttributes() ?>>
-<span id="el_jdh_invoice_invoice_date">
-<input type="<?= $Page->invoice_date->getInputTextType() ?>" name="x_invoice_date" id="x_invoice_date" data-table="jdh_invoice" data-field="x_invoice_date" value="<?= $Page->invoice_date->EditValue ?>" placeholder="<?= HtmlEncode($Page->invoice_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->invoice_date->formatPattern()) ?>"<?= $Page->invoice_date->editAttributes() ?> aria-describedby="x_invoice_date_help">
-<?= $Page->invoice_date->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->invoice_date->getErrorMessage() ?></div>
-<?php if (!$Page->invoice_date->ReadOnly && !$Page->invoice_date->Disabled && !isset($Page->invoice_date->EditAttrs["readonly"]) && !isset($Page->invoice_date->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["fjdh_invoiceadd", "datetimepicker"], function () {
-    let format = "<?= DateFormat(11) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("fjdh_invoiceadd", "x_invoice_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
+<?php if ($Page->invoice_title->Visible) { // invoice_title ?>
+    <div id="r_invoice_title"<?= $Page->invoice_title->rowAttributes() ?>>
+        <label id="elh_jdh_invoice_invoice_title" for="x_invoice_title" class="<?= $Page->LeftColumnClass ?>"><?= $Page->invoice_title->caption() ?><?= $Page->invoice_title->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->invoice_title->cellAttributes() ?>>
+<span id="el_jdh_invoice_invoice_title">
+<input type="<?= $Page->invoice_title->getInputTextType() ?>" name="x_invoice_title" id="x_invoice_title" data-table="jdh_invoice" data-field="x_invoice_title" value="<?= $Page->invoice_title->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Page->invoice_title->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->invoice_title->formatPattern()) ?>"<?= $Page->invoice_title->editAttributes() ?> aria-describedby="x_invoice_title_help">
+<?= $Page->invoice_title->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->invoice_title->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
 <?php } ?>
+<?php if ($Page->invoice_description->Visible) { // invoice_description ?>
+    <div id="r_invoice_description"<?= $Page->invoice_description->rowAttributes() ?>>
+        <label id="elh_jdh_invoice_invoice_description" for="x_invoice_description" class="<?= $Page->LeftColumnClass ?>"><?= $Page->invoice_description->caption() ?><?= $Page->invoice_description->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->invoice_description->cellAttributes() ?>>
+<span id="el_jdh_invoice_invoice_description">
+<textarea data-table="jdh_invoice" data-field="x_invoice_description" name="x_invoice_description" id="x_invoice_description" cols="35" rows="4" placeholder="<?= HtmlEncode($Page->invoice_description->getPlaceHolder()) ?>"<?= $Page->invoice_description->editAttributes() ?> aria-describedby="x_invoice_description_help"><?= $Page->invoice_description->EditValue ?></textarea>
+<?= $Page->invoice_description->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->invoice_description->getErrorMessage() ?></div>
 </span>
 </div></div>
     </div>
 <?php } ?>
 </div><!-- /page* -->
+<?php
+    if (in_array("jdh_invoice_items", explode(",", $Page->getCurrentDetailTable())) && $jdh_invoice_items->DetailAdd) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_invoice_items", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhInvoiceItemsGrid.php" ?>
+<?php } ?>
 <?= $Page->IsModal ? '<template class="ew-modal-buttons">' : '<div class="row ew-buttons">' ?><!-- buttons .row -->
     <div class="<?= $Page->OffsetColumnClass ?>"><!-- buttons offset -->
 <button class="btn btn-primary ew-btn" name="btn-action" id="btn-action" type="submit" form="fjdh_invoiceadd"><?= $Language->phrase("AddBtn") ?></button>

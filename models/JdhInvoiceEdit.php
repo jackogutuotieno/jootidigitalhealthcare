@@ -338,7 +338,7 @@ class JdhInvoiceEdit extends JdhInvoice
     {
         $key = "";
         if (is_array($ar)) {
-            $key .= @$ar['invoice_id'];
+            $key .= @$ar['id'];
         }
         return $key;
     }
@@ -351,7 +351,7 @@ class JdhInvoiceEdit extends JdhInvoice
     protected function hideFieldsForAddEdit()
     {
         if ($this->isAdd() || $this->isCopy() || $this->isGridAdd()) {
-            $this->invoice_id->Visible = false;
+            $this->id->Visible = false;
         }
     }
 
@@ -461,10 +461,12 @@ class JdhInvoiceEdit extends JdhInvoice
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->invoice_id->setVisibility();
+        $this->id->setVisibility();
         $this->patient_id->setVisibility();
-        $this->submitted_by_user_id->setVisibility();
-        $this->invoice_date->setVisibility();
+        $this->invoice_title->setVisibility();
+        $this->invoice_description->setVisibility();
+        $this->invoice_date->Visible = false;
+        $this->submittedby_user_id->Visible = false;
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -503,12 +505,12 @@ class JdhInvoiceEdit extends JdhInvoice
         if (IsApi()) {
             // Load key values
             $loaded = true;
-            if (($keyValue = Get("invoice_id") ?? Key(0) ?? Route(2)) !== null) {
-                $this->invoice_id->setQueryStringValue($keyValue);
-                $this->invoice_id->setOldValue($this->invoice_id->QueryStringValue);
-            } elseif (Post("invoice_id") !== null) {
-                $this->invoice_id->setFormValue(Post("invoice_id"));
-                $this->invoice_id->setOldValue($this->invoice_id->FormValue);
+            if (($keyValue = Get("id") ?? Key(0) ?? Route(2)) !== null) {
+                $this->id->setQueryStringValue($keyValue);
+                $this->id->setOldValue($this->id->QueryStringValue);
+            } elseif (Post("id") !== null) {
+                $this->id->setFormValue(Post("id"));
+                $this->id->setOldValue($this->id->FormValue);
             } else {
                 $loaded = false; // Unable to load key
             }
@@ -539,11 +541,11 @@ class JdhInvoiceEdit extends JdhInvoice
 
                 // Load key from QueryString
                 $loadByQuery = false;
-                if (($keyValue = Get("invoice_id") ?? Route("invoice_id")) !== null) {
-                    $this->invoice_id->setQueryStringValue($keyValue);
+                if (($keyValue = Get("id") ?? Route("id")) !== null) {
+                    $this->id->setQueryStringValue($keyValue);
                     $loadByQuery = true;
                 } else {
-                    $this->invoice_id->CurrentValue = null;
+                    $this->id->CurrentValue = null;
                 }
             }
 
@@ -558,6 +560,9 @@ class JdhInvoiceEdit extends JdhInvoice
         // Process form if post back
         if ($postBack) {
             $this->loadFormValues(); // Get form values
+
+            // Set up detail parameters
+            $this->setupDetailParms();
         }
 
         // Validate form if post back
@@ -584,9 +589,16 @@ class JdhInvoiceEdit extends JdhInvoice
                         $this->terminate("jdhinvoicelist"); // No matching record, return to list
                         return;
                     }
+
+                // Set up detail parameters
+                $this->setupDetailParms();
                 break;
             case "update": // Update
-                $returnUrl = $this->getReturnUrl();
+                if ($this->getCurrentDetailTable() != "") { // Master/detail edit
+                    $returnUrl = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=" . $this->getCurrentDetailTable()); // Master/Detail view page
+                } else {
+                    $returnUrl = $this->getReturnUrl();
+                }
                 if (GetPageName($returnUrl) == "jdhinvoicelist") {
                     $returnUrl = $this->addMasterUrl($returnUrl); // List page, return to List page with correct master key if necessary
                 }
@@ -626,6 +638,9 @@ class JdhInvoiceEdit extends JdhInvoice
                 } else {
                     $this->EventCancelled = true; // Event cancelled
                     $this->restoreFormValues(); // Restore form values if update failed
+
+                    // Set up detail parameters
+                    $this->setupDetailParms();
                 }
         }
 
@@ -673,10 +688,10 @@ class JdhInvoiceEdit extends JdhInvoice
         global $CurrentForm;
         $validate = !Config("SERVER_VALIDATE");
 
-        // Check field name 'invoice_id' first before field var 'x_invoice_id'
-        $val = $CurrentForm->hasValue("invoice_id") ? $CurrentForm->getValue("invoice_id") : $CurrentForm->getValue("x_invoice_id");
-        if (!$this->invoice_id->IsDetailKey) {
-            $this->invoice_id->setFormValue($val);
+        // Check field name 'id' first before field var 'x_id'
+        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
+        if (!$this->id->IsDetailKey) {
+            $this->id->setFormValue($val);
         }
 
         // Check field name 'patient_id' first before field var 'x_patient_id'
@@ -689,25 +704,24 @@ class JdhInvoiceEdit extends JdhInvoice
             }
         }
 
-        // Check field name 'submitted_by_user_id' first before field var 'x_submitted_by_user_id'
-        $val = $CurrentForm->hasValue("submitted_by_user_id") ? $CurrentForm->getValue("submitted_by_user_id") : $CurrentForm->getValue("x_submitted_by_user_id");
-        if (!$this->submitted_by_user_id->IsDetailKey) {
+        // Check field name 'invoice_title' first before field var 'x_invoice_title'
+        $val = $CurrentForm->hasValue("invoice_title") ? $CurrentForm->getValue("invoice_title") : $CurrentForm->getValue("x_invoice_title");
+        if (!$this->invoice_title->IsDetailKey) {
             if (IsApi() && $val === null) {
-                $this->submitted_by_user_id->Visible = false; // Disable update for API request
+                $this->invoice_title->Visible = false; // Disable update for API request
             } else {
-                $this->submitted_by_user_id->setFormValue($val);
+                $this->invoice_title->setFormValue($val);
             }
         }
 
-        // Check field name 'invoice_date' first before field var 'x_invoice_date'
-        $val = $CurrentForm->hasValue("invoice_date") ? $CurrentForm->getValue("invoice_date") : $CurrentForm->getValue("x_invoice_date");
-        if (!$this->invoice_date->IsDetailKey) {
+        // Check field name 'invoice_description' first before field var 'x_invoice_description'
+        $val = $CurrentForm->hasValue("invoice_description") ? $CurrentForm->getValue("invoice_description") : $CurrentForm->getValue("x_invoice_description");
+        if (!$this->invoice_description->IsDetailKey) {
             if (IsApi() && $val === null) {
-                $this->invoice_date->Visible = false; // Disable update for API request
+                $this->invoice_description->Visible = false; // Disable update for API request
             } else {
-                $this->invoice_date->setFormValue($val, true, $validate);
+                $this->invoice_description->setFormValue($val);
             }
-            $this->invoice_date->CurrentValue = UnFormatDateTime($this->invoice_date->CurrentValue, $this->invoice_date->formatPattern());
         }
     }
 
@@ -715,11 +729,10 @@ class JdhInvoiceEdit extends JdhInvoice
     public function restoreFormValues()
     {
         global $CurrentForm;
-        $this->invoice_id->CurrentValue = $this->invoice_id->FormValue;
+        $this->id->CurrentValue = $this->id->FormValue;
         $this->patient_id->CurrentValue = $this->patient_id->FormValue;
-        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->FormValue;
-        $this->invoice_date->CurrentValue = $this->invoice_date->FormValue;
-        $this->invoice_date->CurrentValue = UnFormatDateTime($this->invoice_date->CurrentValue, $this->invoice_date->formatPattern());
+        $this->invoice_title->CurrentValue = $this->invoice_title->FormValue;
+        $this->invoice_description->CurrentValue = $this->invoice_description->FormValue;
     }
 
     /**
@@ -769,20 +782,24 @@ class JdhInvoiceEdit extends JdhInvoice
 
         // Call Row Selected event
         $this->rowSelected($row);
-        $this->invoice_id->setDbValue($row['invoice_id']);
+        $this->id->setDbValue($row['id']);
         $this->patient_id->setDbValue($row['patient_id']);
-        $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+        $this->invoice_title->setDbValue($row['invoice_title']);
+        $this->invoice_description->setDbValue($row['invoice_description']);
         $this->invoice_date->setDbValue($row['invoice_date']);
+        $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
     }
 
     // Return a row with default values
     protected function newRow()
     {
         $row = [];
-        $row['invoice_id'] = $this->invoice_id->DefaultValue;
+        $row['id'] = $this->id->DefaultValue;
         $row['patient_id'] = $this->patient_id->DefaultValue;
-        $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
+        $row['invoice_title'] = $this->invoice_title->DefaultValue;
+        $row['invoice_description'] = $this->invoice_description->DefaultValue;
         $row['invoice_date'] = $this->invoice_date->DefaultValue;
+        $row['submittedby_user_id'] = $this->submittedby_user_id->DefaultValue;
         return $row;
     }
 
@@ -817,22 +834,28 @@ class JdhInvoiceEdit extends JdhInvoice
 
         // Common render codes for all row types
 
-        // invoice_id
-        $this->invoice_id->RowCssClass = "row";
+        // id
+        $this->id->RowCssClass = "row";
 
         // patient_id
         $this->patient_id->RowCssClass = "row";
 
-        // submitted_by_user_id
-        $this->submitted_by_user_id->RowCssClass = "row";
+        // invoice_title
+        $this->invoice_title->RowCssClass = "row";
+
+        // invoice_description
+        $this->invoice_description->RowCssClass = "row";
 
         // invoice_date
         $this->invoice_date->RowCssClass = "row";
 
+        // submittedby_user_id
+        $this->submittedby_user_id->RowCssClass = "row";
+
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
-            // invoice_id
-            $this->invoice_id->ViewValue = $this->invoice_id->CurrentValue;
+            // id
+            $this->id->ViewValue = $this->id->CurrentValue;
 
             // patient_id
             $curVal = strval($this->patient_id->CurrentValue);
@@ -857,29 +880,31 @@ class JdhInvoiceEdit extends JdhInvoice
                 $this->patient_id->ViewValue = null;
             }
 
-            // submitted_by_user_id
-            $this->submitted_by_user_id->ViewValue = $this->submitted_by_user_id->CurrentValue;
-            $this->submitted_by_user_id->ViewValue = FormatNumber($this->submitted_by_user_id->ViewValue, $this->submitted_by_user_id->formatPattern());
+            // invoice_title
+            $this->invoice_title->ViewValue = $this->invoice_title->CurrentValue;
+
+            // invoice_description
+            $this->invoice_description->ViewValue = $this->invoice_description->CurrentValue;
 
             // invoice_date
             $this->invoice_date->ViewValue = $this->invoice_date->CurrentValue;
             $this->invoice_date->ViewValue = FormatDateTime($this->invoice_date->ViewValue, $this->invoice_date->formatPattern());
 
-            // invoice_id
-            $this->invoice_id->HrefValue = "";
+            // id
+            $this->id->HrefValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
 
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
+            // invoice_title
+            $this->invoice_title->HrefValue = "";
 
-            // invoice_date
-            $this->invoice_date->HrefValue = "";
+            // invoice_description
+            $this->invoice_description->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
-            // invoice_id
-            $this->invoice_id->setupEditAttributes();
-            $this->invoice_id->EditValue = $this->invoice_id->CurrentValue;
+            // id
+            $this->id->setupEditAttributes();
+            $this->id->EditValue = $this->id->CurrentValue;
 
             // patient_id
             $this->patient_id->setupEditAttributes();
@@ -908,26 +933,32 @@ class JdhInvoiceEdit extends JdhInvoice
             }
             $this->patient_id->PlaceHolder = RemoveHtml($this->patient_id->caption());
 
-            // submitted_by_user_id
+            // invoice_title
+            $this->invoice_title->setupEditAttributes();
+            if (!$this->invoice_title->Raw) {
+                $this->invoice_title->CurrentValue = HtmlDecode($this->invoice_title->CurrentValue);
+            }
+            $this->invoice_title->EditValue = HtmlEncode($this->invoice_title->CurrentValue);
+            $this->invoice_title->PlaceHolder = RemoveHtml($this->invoice_title->caption());
 
-            // invoice_date
-            $this->invoice_date->setupEditAttributes();
-            $this->invoice_date->EditValue = HtmlEncode(FormatDateTime($this->invoice_date->CurrentValue, $this->invoice_date->formatPattern()));
-            $this->invoice_date->PlaceHolder = RemoveHtml($this->invoice_date->caption());
+            // invoice_description
+            $this->invoice_description->setupEditAttributes();
+            $this->invoice_description->EditValue = HtmlEncode($this->invoice_description->CurrentValue);
+            $this->invoice_description->PlaceHolder = RemoveHtml($this->invoice_description->caption());
 
             // Edit refer script
 
-            // invoice_id
-            $this->invoice_id->HrefValue = "";
+            // id
+            $this->id->HrefValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
 
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
+            // invoice_title
+            $this->invoice_title->HrefValue = "";
 
-            // invoice_date
-            $this->invoice_date->HrefValue = "";
+            // invoice_description
+            $this->invoice_description->HrefValue = "";
         }
         if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
@@ -949,9 +980,9 @@ class JdhInvoiceEdit extends JdhInvoice
             return true;
         }
         $validateForm = true;
-        if ($this->invoice_id->Required) {
-            if (!$this->invoice_id->IsDetailKey && EmptyValue($this->invoice_id->FormValue)) {
-                $this->invoice_id->addErrorMessage(str_replace("%s", $this->invoice_id->caption(), $this->invoice_id->RequiredErrorMessage));
+        if ($this->id->Required) {
+            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
+                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
             }
         }
         if ($this->patient_id->Required) {
@@ -959,18 +990,22 @@ class JdhInvoiceEdit extends JdhInvoice
                 $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
             }
         }
-        if ($this->submitted_by_user_id->Required) {
-            if (!$this->submitted_by_user_id->IsDetailKey && EmptyValue($this->submitted_by_user_id->FormValue)) {
-                $this->submitted_by_user_id->addErrorMessage(str_replace("%s", $this->submitted_by_user_id->caption(), $this->submitted_by_user_id->RequiredErrorMessage));
+        if ($this->invoice_title->Required) {
+            if (!$this->invoice_title->IsDetailKey && EmptyValue($this->invoice_title->FormValue)) {
+                $this->invoice_title->addErrorMessage(str_replace("%s", $this->invoice_title->caption(), $this->invoice_title->RequiredErrorMessage));
             }
         }
-        if ($this->invoice_date->Required) {
-            if (!$this->invoice_date->IsDetailKey && EmptyValue($this->invoice_date->FormValue)) {
-                $this->invoice_date->addErrorMessage(str_replace("%s", $this->invoice_date->caption(), $this->invoice_date->RequiredErrorMessage));
+        if ($this->invoice_description->Required) {
+            if (!$this->invoice_description->IsDetailKey && EmptyValue($this->invoice_description->FormValue)) {
+                $this->invoice_description->addErrorMessage(str_replace("%s", $this->invoice_description->caption(), $this->invoice_description->RequiredErrorMessage));
             }
         }
-        if (!CheckDate($this->invoice_date->FormValue, $this->invoice_date->formatPattern())) {
-            $this->invoice_date->addErrorMessage($this->invoice_date->getErrorMessage(false));
+
+        // Validate detail grid
+        $detailTblVar = explode(",", $this->getCurrentDetailTable() ?? "");
+        $detailPage = Container("JdhInvoiceItemsGrid");
+        if (in_array("jdh_invoice_items", $detailTblVar) && $detailPage->DetailEdit) {
+            $validateForm = $validateForm && $detailPage->validateGridForm();
         }
 
         // Return validate result
@@ -1011,15 +1046,19 @@ class JdhInvoiceEdit extends JdhInvoice
         // patient_id
         $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, $this->patient_id->ReadOnly);
 
-        // submitted_by_user_id
-        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->getAutoUpdateValue(); // PHP
-        $this->submitted_by_user_id->setDbValueDef($rsnew, $this->submitted_by_user_id->CurrentValue, 0);
+        // invoice_title
+        $this->invoice_title->setDbValueDef($rsnew, $this->invoice_title->CurrentValue, "", $this->invoice_title->ReadOnly);
 
-        // invoice_date
-        $this->invoice_date->setDbValueDef($rsnew, UnFormatDateTime($this->invoice_date->CurrentValue, $this->invoice_date->formatPattern()), CurrentDate(), $this->invoice_date->ReadOnly);
+        // invoice_description
+        $this->invoice_description->setDbValueDef($rsnew, $this->invoice_description->CurrentValue, "", $this->invoice_description->ReadOnly);
 
         // Update current values
         $this->setCurrentValues($rsnew);
+
+        // Begin transaction
+        if ($this->getCurrentDetailTable() != "" && $this->UseTransaction) {
+            $conn->beginTransaction();
+        }
 
         // Call Row Updating event
         $updateRow = $this->rowUpdating($rsold, $rsnew);
@@ -1034,6 +1073,30 @@ class JdhInvoiceEdit extends JdhInvoice
                 $editRow = true; // No field to update
             }
             if ($editRow) {
+            }
+
+            // Update detail records
+            $detailTblVar = explode(",", $this->getCurrentDetailTable() ?? "");
+            if ($editRow) {
+                $detailPage = Container("JdhInvoiceItemsGrid");
+                if (in_array("jdh_invoice_items", $detailTblVar) && $detailPage->DetailEdit) {
+                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_invoice_items"); // Load user level of detail table
+                    $editRow = $detailPage->gridUpdate();
+                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
+                }
+            }
+
+            // Commit/Rollback transaction
+            if ($this->getCurrentDetailTable() != "") {
+                if ($editRow) {
+                    if ($this->UseTransaction) { // Commit transaction
+                        $conn->commit();
+                    }
+                } else {
+                    if ($this->UseTransaction) { // Rollback transaction
+                        $conn->rollback();
+                    }
+                }
             }
         } else {
             if ($this->getSuccessMessage() != "" || $this->getFailureMessage() != "") {
@@ -1059,6 +1122,36 @@ class JdhInvoiceEdit extends JdhInvoice
             WriteJson(["success" => true, "action" => Config("API_EDIT_ACTION"), $table => $row]);
         }
         return $editRow;
+    }
+
+    // Set up detail parms based on QueryString
+    protected function setupDetailParms()
+    {
+        // Get the keys for master table
+        $detailTblVar = Get(Config("TABLE_SHOW_DETAIL"));
+        if ($detailTblVar !== null) {
+            $this->setCurrentDetailTable($detailTblVar);
+        } else {
+            $detailTblVar = $this->getCurrentDetailTable();
+        }
+        if ($detailTblVar != "") {
+            $detailTblVar = explode(",", $detailTblVar);
+            if (in_array("jdh_invoice_items", $detailTblVar)) {
+                $detailPageObj = Container("JdhInvoiceItemsGrid");
+                if ($detailPageObj->DetailEdit) {
+                    $detailPageObj->EventCancelled = $this->EventCancelled;
+                    $detailPageObj->CurrentMode = "edit";
+                    $detailPageObj->CurrentAction = "gridedit";
+
+                    // Save current master table to detail table
+                    $detailPageObj->setCurrentMasterTable($this->TableVar);
+                    $detailPageObj->setStartRecordNumber(1);
+                    $detailPageObj->invoice_id->IsDetailKey = true;
+                    $detailPageObj->invoice_id->CurrentValue = $this->id->CurrentValue;
+                    $detailPageObj->invoice_id->setSessionValue($detailPageObj->invoice_id->CurrentValue);
+                }
+            }
+        }
     }
 
     // Set up Breadcrumb

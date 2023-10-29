@@ -53,14 +53,14 @@ $Page->showMessage();
 <?php if ($Page->id->Visible) { // id ?>
         <th class="<?= $Page->id->headerCellClass() ?>"><span id="elh_jdh_invoice_items_id" class="jdh_invoice_items_id"><?= $Page->id->caption() ?></span></th>
 <?php } ?>
-<?php if ($Page->service_id->Visible) { // service_id ?>
-        <th class="<?= $Page->service_id->headerCellClass() ?>"><span id="elh_jdh_invoice_items_service_id" class="jdh_invoice_items_service_id"><?= $Page->service_id->caption() ?></span></th>
+<?php if ($Page->invoice_item->Visible) { // invoice_item ?>
+        <th class="<?= $Page->invoice_item->headerCellClass() ?>"><span id="elh_jdh_invoice_items_invoice_item" class="jdh_invoice_items_invoice_item"><?= $Page->invoice_item->caption() ?></span></th>
 <?php } ?>
-<?php if ($Page->submittedby_user_id->Visible) { // submittedby_user_id ?>
-        <th class="<?= $Page->submittedby_user_id->headerCellClass() ?>"><span id="elh_jdh_invoice_items_submittedby_user_id" class="jdh_invoice_items_submittedby_user_id"><?= $Page->submittedby_user_id->caption() ?></span></th>
+<?php if ($Page->total_amount->Visible) { // total_amount ?>
+        <th class="<?= $Page->total_amount->headerCellClass() ?>"><span id="elh_jdh_invoice_items_total_amount" class="jdh_invoice_items_total_amount"><?= $Page->total_amount->caption() ?></span></th>
 <?php } ?>
-<?php if ($Page->date_created->Visible) { // date_created ?>
-        <th class="<?= $Page->date_created->headerCellClass() ?>"><span id="elh_jdh_invoice_items_date_created" class="jdh_invoice_items_date_created"><?= $Page->date_created->caption() ?></span></th>
+<?php if ($Page->submission_date->Visible) { // submission_date ?>
+        <th class="<?= $Page->submission_date->headerCellClass() ?>"><span id="elh_jdh_invoice_items_submission_date" class="jdh_invoice_items_submission_date"><?= $Page->submission_date->caption() ?></span></th>
 <?php } ?>
     </tr>
     </thead>
@@ -91,27 +91,27 @@ while (!$Page->Recordset->EOF) {
 </span>
 </td>
 <?php } ?>
-<?php if ($Page->service_id->Visible) { // service_id ?>
-        <td<?= $Page->service_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_invoice_items_service_id" class="el_jdh_invoice_items_service_id">
-<span<?= $Page->service_id->viewAttributes() ?>>
-<?= $Page->service_id->getViewValue() ?></span>
+<?php if ($Page->invoice_item->Visible) { // invoice_item ?>
+        <td<?= $Page->invoice_item->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_invoice_items_invoice_item" class="el_jdh_invoice_items_invoice_item">
+<span<?= $Page->invoice_item->viewAttributes() ?>>
+<?= $Page->invoice_item->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>
-<?php if ($Page->submittedby_user_id->Visible) { // submittedby_user_id ?>
-        <td<?= $Page->submittedby_user_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_invoice_items_submittedby_user_id" class="el_jdh_invoice_items_submittedby_user_id">
-<span<?= $Page->submittedby_user_id->viewAttributes() ?>>
-<?= $Page->submittedby_user_id->getViewValue() ?></span>
+<?php if ($Page->total_amount->Visible) { // total_amount ?>
+        <td<?= $Page->total_amount->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_invoice_items_total_amount" class="el_jdh_invoice_items_total_amount">
+<span<?= $Page->total_amount->viewAttributes() ?>>
+<?= $Page->total_amount->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>
-<?php if ($Page->date_created->Visible) { // date_created ?>
-        <td<?= $Page->date_created->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_invoice_items_date_created" class="el_jdh_invoice_items_date_created">
-<span<?= $Page->date_created->viewAttributes() ?>>
-<?= $Page->date_created->getViewValue() ?></span>
+<?php if ($Page->submission_date->Visible) { // submission_date ?>
+        <td<?= $Page->submission_date->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_invoice_items_submission_date" class="el_jdh_invoice_items_submission_date">
+<span<?= $Page->submission_date->viewAttributes() ?>>
+<?= $Page->submission_date->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

@@ -506,10 +506,11 @@ class JdhInvoiceItemsView extends JdhInvoiceItems
         }
         $this->CurrentAction = Param("action"); // Set up current action
         $this->id->setVisibility();
-        $this->service_id->setVisibility();
-        $this->description->setVisibility();
+        $this->invoice_id->setVisibility();
+        $this->invoice_item->setVisibility();
+        $this->total_amount->setVisibility();
         $this->submittedby_user_id->setVisibility();
-        $this->date_created->setVisibility();
+        $this->submission_date->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -542,6 +543,9 @@ class JdhInvoiceItemsView extends JdhInvoiceItems
         $loadCurrentRecord = false;
         $returnUrl = "";
         $matchRecord = false;
+
+        // Set up master/detail parameters
+        $this->setupMasterParms();
         if (($keyValue = Get("id") ?? Route("id")) !== null) {
             $this->id->setQueryStringValue($keyValue);
             $this->RecKey["id"] = $this->id->QueryStringValue;
@@ -773,10 +777,11 @@ class JdhInvoiceItemsView extends JdhInvoiceItems
         // Call Row Selected event
         $this->rowSelected($row);
         $this->id->setDbValue($row['id']);
-        $this->service_id->setDbValue($row['service_id']);
-        $this->description->setDbValue($row['description']);
+        $this->invoice_id->setDbValue($row['invoice_id']);
+        $this->invoice_item->setDbValue($row['invoice_item']);
+        $this->total_amount->setDbValue($row['total_amount']);
         $this->submittedby_user_id->setDbValue($row['submittedby_user_id']);
-        $this->date_created->setDbValue($row['date_created']);
+        $this->submission_date->setDbValue($row['submission_date']);
     }
 
     // Return a row with default values
@@ -784,10 +789,11 @@ class JdhInvoiceItemsView extends JdhInvoiceItems
     {
         $row = [];
         $row['id'] = $this->id->DefaultValue;
-        $row['service_id'] = $this->service_id->DefaultValue;
-        $row['description'] = $this->description->DefaultValue;
+        $row['invoice_id'] = $this->invoice_id->DefaultValue;
+        $row['invoice_item'] = $this->invoice_item->DefaultValue;
+        $row['total_amount'] = $this->total_amount->DefaultValue;
         $row['submittedby_user_id'] = $this->submittedby_user_id->DefaultValue;
-        $row['date_created'] = $this->date_created->DefaultValue;
+        $row['submission_date'] = $this->submission_date->DefaultValue;
         return $row;
     }
 
@@ -811,53 +817,55 @@ class JdhInvoiceItemsView extends JdhInvoiceItems
 
         // id
 
-        // service_id
+        // invoice_id
 
-        // description
+        // invoice_item
+
+        // total_amount
 
         // submittedby_user_id
 
-        // date_created
+        // submission_date
 
         // View row
         if ($this->RowType == ROWTYPE_VIEW) {
             // id
             $this->id->ViewValue = $this->id->CurrentValue;
 
-            // service_id
-            $this->service_id->ViewValue = $this->service_id->CurrentValue;
-            $this->service_id->ViewValue = FormatNumber($this->service_id->ViewValue, $this->service_id->formatPattern());
+            // invoice_id
+            $this->invoice_id->ViewValue = $this->invoice_id->CurrentValue;
+            $this->invoice_id->ViewValue = FormatNumber($this->invoice_id->ViewValue, $this->invoice_id->formatPattern());
 
-            // description
-            $this->description->ViewValue = $this->description->CurrentValue;
+            // invoice_item
+            $this->invoice_item->ViewValue = $this->invoice_item->CurrentValue;
 
-            // submittedby_user_id
-            $this->submittedby_user_id->ViewValue = $this->submittedby_user_id->CurrentValue;
-            $this->submittedby_user_id->ViewValue = FormatNumber($this->submittedby_user_id->ViewValue, $this->submittedby_user_id->formatPattern());
+            // total_amount
+            $this->total_amount->ViewValue = $this->total_amount->CurrentValue;
+            $this->total_amount->ViewValue = FormatNumber($this->total_amount->ViewValue, $this->total_amount->formatPattern());
 
-            // date_created
-            $this->date_created->ViewValue = $this->date_created->CurrentValue;
-            $this->date_created->ViewValue = FormatDateTime($this->date_created->ViewValue, $this->date_created->formatPattern());
+            // submission_date
+            $this->submission_date->ViewValue = $this->submission_date->CurrentValue;
+            $this->submission_date->ViewValue = FormatDateTime($this->submission_date->ViewValue, $this->submission_date->formatPattern());
 
             // id
             $this->id->HrefValue = "";
             $this->id->TooltipValue = "";
 
-            // service_id
-            $this->service_id->HrefValue = "";
-            $this->service_id->TooltipValue = "";
+            // invoice_id
+            $this->invoice_id->HrefValue = "";
+            $this->invoice_id->TooltipValue = "";
 
-            // description
-            $this->description->HrefValue = "";
-            $this->description->TooltipValue = "";
+            // invoice_item
+            $this->invoice_item->HrefValue = "";
+            $this->invoice_item->TooltipValue = "";
 
-            // submittedby_user_id
-            $this->submittedby_user_id->HrefValue = "";
-            $this->submittedby_user_id->TooltipValue = "";
+            // total_amount
+            $this->total_amount->HrefValue = "";
+            $this->total_amount->TooltipValue = "";
 
-            // date_created
-            $this->date_created->HrefValue = "";
-            $this->date_created->TooltipValue = "";
+            // submission_date
+            $this->submission_date->HrefValue = "";
+            $this->submission_date->TooltipValue = "";
         }
 
         // Call Row Rendered event
@@ -1040,6 +1048,76 @@ class JdhInvoiceItemsView extends JdhInvoiceItems
 
         // Call Page Exported server event
         $this->pageExported($doc);
+    }
+
+    // Set up master/detail based on QueryString
+    protected function setupMasterParms()
+    {
+        $validMaster = false;
+        // Get the keys for master table
+        if (($master = Get(Config("TABLE_SHOW_MASTER"), Get(Config("TABLE_MASTER")))) !== null) {
+            $masterTblVar = $master;
+            if ($masterTblVar == "") {
+                $validMaster = true;
+                $this->DbMasterFilter = "";
+                $this->DbDetailFilter = "";
+            }
+            if ($masterTblVar == "jdh_invoice") {
+                $validMaster = true;
+                $masterTbl = Container("jdh_invoice");
+                if (($parm = Get("fk_id", Get("invoice_id"))) !== null) {
+                    $masterTbl->id->setQueryStringValue($parm);
+                    $this->invoice_id->QueryStringValue = $masterTbl->id->QueryStringValue; // DO NOT change, master/detail key data type can be different
+                    $this->invoice_id->setSessionValue($this->invoice_id->QueryStringValue);
+                    if (!is_numeric($masterTbl->id->QueryStringValue)) {
+                        $validMaster = false;
+                    }
+                } else {
+                    $validMaster = false;
+                }
+            }
+        } elseif (($master = Post(Config("TABLE_SHOW_MASTER"), Post(Config("TABLE_MASTER")))) !== null) {
+            $masterTblVar = $master;
+            if ($masterTblVar == "") {
+                    $validMaster = true;
+                    $this->DbMasterFilter = "";
+                    $this->DbDetailFilter = "";
+            }
+            if ($masterTblVar == "jdh_invoice") {
+                $validMaster = true;
+                $masterTbl = Container("jdh_invoice");
+                if (($parm = Post("fk_id", Post("invoice_id"))) !== null) {
+                    $masterTbl->id->setFormValue($parm);
+                    $this->invoice_id->setFormValue($masterTbl->id->FormValue);
+                    $this->invoice_id->setSessionValue($this->invoice_id->FormValue);
+                    if (!is_numeric($masterTbl->id->FormValue)) {
+                        $validMaster = false;
+                    }
+                } else {
+                    $validMaster = false;
+                }
+            }
+        }
+        if ($validMaster) {
+            // Save current master table
+            $this->setCurrentMasterTable($masterTblVar);
+            $this->setSessionWhere($this->getDetailFilterFromSession());
+
+            // Reset start record counter (new master key)
+            if (!$this->isAddOrEdit()) {
+                $this->StartRecord = 1;
+                $this->setStartRecordNumber($this->StartRecord);
+            }
+
+            // Clear previous master key from Session
+            if ($masterTblVar != "jdh_invoice") {
+                if ($this->invoice_id->CurrentValue == "") {
+                    $this->invoice_id->setSessionValue("");
+                }
+            }
+        }
+        $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Get master filter from session
+        $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Get detail filter from session
     }
 
     // Set up Breadcrumb

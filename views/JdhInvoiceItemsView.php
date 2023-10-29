@@ -64,46 +64,46 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->service_id->Visible) { // service_id ?>
-    <tr id="r_service_id"<?= $Page->service_id->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_items_service_id"><?= $Page->service_id->caption() ?></span></td>
-        <td data-name="service_id"<?= $Page->service_id->cellAttributes() ?>>
-<span id="el_jdh_invoice_items_service_id">
-<span<?= $Page->service_id->viewAttributes() ?>>
-<?= $Page->service_id->getViewValue() ?></span>
+<?php if ($Page->invoice_id->Visible) { // invoice_id ?>
+    <tr id="r_invoice_id"<?= $Page->invoice_id->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_items_invoice_id"><?= $Page->invoice_id->caption() ?></span></td>
+        <td data-name="invoice_id"<?= $Page->invoice_id->cellAttributes() ?>>
+<span id="el_jdh_invoice_items_invoice_id">
+<span<?= $Page->invoice_id->viewAttributes() ?>>
+<?= $Page->invoice_id->getViewValue() ?></span>
 </span>
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->description->Visible) { // description ?>
-    <tr id="r_description"<?= $Page->description->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_items_description"><?= $Page->description->caption() ?></span></td>
-        <td data-name="description"<?= $Page->description->cellAttributes() ?>>
-<span id="el_jdh_invoice_items_description">
-<span<?= $Page->description->viewAttributes() ?>>
-<?= $Page->description->getViewValue() ?></span>
+<?php if ($Page->invoice_item->Visible) { // invoice_item ?>
+    <tr id="r_invoice_item"<?= $Page->invoice_item->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_items_invoice_item"><?= $Page->invoice_item->caption() ?></span></td>
+        <td data-name="invoice_item"<?= $Page->invoice_item->cellAttributes() ?>>
+<span id="el_jdh_invoice_items_invoice_item">
+<span<?= $Page->invoice_item->viewAttributes() ?>>
+<?= $Page->invoice_item->getViewValue() ?></span>
 </span>
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->submittedby_user_id->Visible) { // submittedby_user_id ?>
-    <tr id="r_submittedby_user_id"<?= $Page->submittedby_user_id->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_items_submittedby_user_id"><?= $Page->submittedby_user_id->caption() ?></span></td>
-        <td data-name="submittedby_user_id"<?= $Page->submittedby_user_id->cellAttributes() ?>>
-<span id="el_jdh_invoice_items_submittedby_user_id">
-<span<?= $Page->submittedby_user_id->viewAttributes() ?>>
-<?= $Page->submittedby_user_id->getViewValue() ?></span>
+<?php if ($Page->total_amount->Visible) { // total_amount ?>
+    <tr id="r_total_amount"<?= $Page->total_amount->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_items_total_amount"><?= $Page->total_amount->caption() ?></span></td>
+        <td data-name="total_amount"<?= $Page->total_amount->cellAttributes() ?>>
+<span id="el_jdh_invoice_items_total_amount">
+<span<?= $Page->total_amount->viewAttributes() ?>>
+<?= $Page->total_amount->getViewValue() ?></span>
 </span>
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->date_created->Visible) { // date_created ?>
-    <tr id="r_date_created"<?= $Page->date_created->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_items_date_created"><?= $Page->date_created->caption() ?></span></td>
-        <td data-name="date_created"<?= $Page->date_created->cellAttributes() ?>>
-<span id="el_jdh_invoice_items_date_created">
-<span<?= $Page->date_created->viewAttributes() ?>>
-<?= $Page->date_created->getViewValue() ?></span>
+<?php if ($Page->submission_date->Visible) { // submission_date ?>
+    <tr id="r_submission_date"<?= $Page->submission_date->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_items_submission_date"><?= $Page->submission_date->caption() ?></span></td>
+        <td data-name="submission_date"<?= $Page->submission_date->cellAttributes() ?>>
+<span id="el_jdh_invoice_items_submission_date">
+<span<?= $Page->submission_date->viewAttributes() ?>>
+<?= $Page->submission_date->getViewValue() ?></span>
 </span>
 </td>
     </tr>

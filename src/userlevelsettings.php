@@ -489,7 +489,29 @@ $USER_LEVEL_PRIVS = [["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_facility_units","6","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_facility_units","7","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_facility_units","8","2029"],
-    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_facility_units","9","360"]];
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_facility_units","9","360"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","-2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","0","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","1","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","3","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","4","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","5","2029"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","6","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","7","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","8","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice","9","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","-2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","0","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","1","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","2","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","3","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","4","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","5","2029"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","6","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","7","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","8","0"],
+    ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","9","0"]];
 // User level table info
 $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhappointmentslist"],
     ["jdh_lab_test_categories","jdh_lab_test_categories","Test Categories",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabtestcategorieslist"],
@@ -533,4 +555,6 @@ $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true
     ["subscriptions","subscriptions","Notifications",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","subscriptionslist"],
     ["jdh_beds","jdh_beds","Beds",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhbedslist"],
     ["jdh_ipd_admission","jdh_ipd_admission","Patient Admission/Transfer",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhipdadmissionlist"],
-    ["jdh_facility_units","jdh_facility_units","Facility Wings/Units",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhfacilityunitslist"]];
+    ["jdh_facility_units","jdh_facility_units","Facility Wings/Units",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhfacilityunitslist"],
+    ["jdh_invoice","jdh_invoice","Invoice",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhinvoicelist"],
+    ["jdh_invoice_items","jdh_invoice_items","Invoice Items",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhinvoiceitemslist"]];

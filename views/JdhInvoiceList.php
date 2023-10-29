@@ -48,7 +48,83 @@ loadjs.ready("head", function () {
 <?php if ($Page->ImportOptions->visible()) { ?>
 <?php $Page->ImportOptions->render("body") ?>
 <?php } ?>
+<?php if ($Page->SearchOptions->visible()) { ?>
+<?php $Page->SearchOptions->render("body") ?>
+<?php } ?>
+<?php if ($Page->FilterOptions->visible()) { ?>
+<?php $Page->FilterOptions->render("body") ?>
+<?php } ?>
 </div>
+<?php } ?>
+<?php if ($Security->canSearch()) { ?>
+<?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
+<form name="fjdh_invoicesrch" id="fjdh_invoicesrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="on">
+<div id="fjdh_invoicesrch_search_panel" class="mb-2 mb-sm-0 <?= $Page->SearchPanelClass ?>"><!-- .ew-search-panel -->
+<script>
+var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
+ew.deepAssign(ew.vars, { tables: { jdh_invoice: currentTable } });
+var currentForm;
+var fjdh_invoicesrch, currentSearchForm, currentAdvancedSearchForm;
+loadjs.ready(["wrapper", "head"], function () {
+    let $ = jQuery,
+        fields = currentTable.fields;
+
+    // Form object for search
+    let form = new ew.FormBuilder()
+        .setId("fjdh_invoicesrch")
+        .setPageId("list")
+<?php if ($Page->UseAjaxActions) { ?>
+        .setSubmitWithFetch(true)
+<?php } ?>
+
+        // Dynamic selection lists
+        .setLists({
+        })
+
+        // Filters
+        .setFilterList(<?= $Page->getFilterList() ?>)
+        .build();
+    window[form.id] = form;
+    currentSearchForm = form;
+    loadjs.done(form.id);
+});
+</script>
+<input type="hidden" name="cmd" value="search">
+<input type="hidden" name="t" value="jdh_invoice">
+<div class="ew-extended-search container-fluid ps-2">
+<!-- template for quick search in navbar -->
+<script id="navbar-basic-search" type="text/html" class="ew-js-template" data-name="search" data-seq="10" data-data="menu" data-target="#ew-navbar-end" data-method="prependTo">
+    <li class="nav-item navbar-basic-search">
+        <a class="nav-link" data-widget="navbar-search" href="#" role="button">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </a>
+        <div class="navbar-search-block">
+            <div class="ew-basic-search input-group input-group-sm">
+                <input type="text" name="<?= Config("TABLE_BASIC_SEARCH") ?>" id="<?= Config("TABLE_BASIC_SEARCH") ?>" class="form-control form-control-navbar ew-basic-search-keyword" form="fjdh_invoicesrch" value="<?= HtmlEncode($Page->BasicSearch->getKeyword()) ?>" placeholder="<?= HtmlEncode($Language->phrase("Search")) ?>" aria-label="<?= HtmlEncode($Language->phrase("Search")) ?>">
+                <input type="hidden" name="<?= Config("TABLE_BASIC_SEARCH_TYPE") ?>" id="<?= Config("TABLE_BASIC_SEARCH_TYPE") ?>" class="form-control-navbar ew-basic-search-type" form="fjdh_invoicesrch" value="<?= HtmlEncode($Page->BasicSearch->getType()) ?>">
+                <button class="btn btn-navbar" form="fjdh_invoicesrch" type="submit">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                <button type="button" data-bs-toggle="dropdown" class="btn btn-navbar dropdown-toggle" aria-haspopup="true" aria-expanded="false">
+                    <span id="searchtype"><?= $Page->BasicSearch->getTypeNameShort() ?></span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end">
+                    <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "" ? " active" : "" ?>" form="fjdh_invoicesrch" data-ew-action="search-type"><?= $Language->phrase("QuickSearchAuto") ?></button>
+                    <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "=" ? " active" : "" ?>" form="fjdh_invoicesrch" data-ew-action="search-type" data-search-type="="><?= $Language->phrase("QuickSearchExact") ?></button>
+                    <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "AND" ? " active" : "" ?>" form="fjdh_invoicesrch" data-ew-action="search-type" data-search-type="AND"><?= $Language->phrase("QuickSearchAll") ?></button>
+                    <button type="button" class="dropdown-item<?= $Page->BasicSearch->getType() == "OR" ? " active" : "" ?>" form="fjdh_invoicesrch" data-ew-action="search-type" data-search-type="OR"><?= $Language->phrase("QuickSearchAny") ?></button>
+                </div>
+                <button class="btn btn-navbar" type="button" data-widget="navbar-search">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+    </li>
+</script>
+</div><!-- /.ew-extended-search -->
+</div><!-- /.ew-search-panel -->
+</form>
+<?php } ?>
 <?php } ?>
 <?php $Page->showPageHeader(); ?>
 <?php
@@ -82,14 +158,14 @@ $Page->renderListOptions();
 // Render list options (header, left)
 $Page->ListOptions->render("header", "left");
 ?>
-<?php if ($Page->invoice_id->Visible) { // invoice_id ?>
-        <th data-name="invoice_id" class="<?= $Page->invoice_id->headerCellClass() ?>"><div id="elh_jdh_invoice_invoice_id" class="jdh_invoice_invoice_id"><?= $Page->renderFieldHeader($Page->invoice_id) ?></div></th>
+<?php if ($Page->id->Visible) { // id ?>
+        <th data-name="id" class="<?= $Page->id->headerCellClass() ?>"><div id="elh_jdh_invoice_id" class="jdh_invoice_id"><?= $Page->renderFieldHeader($Page->id) ?></div></th>
 <?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <th data-name="patient_id" class="<?= $Page->patient_id->headerCellClass() ?>"><div id="elh_jdh_invoice_patient_id" class="jdh_invoice_patient_id"><?= $Page->renderFieldHeader($Page->patient_id) ?></div></th>
 <?php } ?>
-<?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
-        <th data-name="submitted_by_user_id" class="<?= $Page->submitted_by_user_id->headerCellClass() ?>"><div id="elh_jdh_invoice_submitted_by_user_id" class="jdh_invoice_submitted_by_user_id"><?= $Page->renderFieldHeader($Page->submitted_by_user_id) ?></div></th>
+<?php if ($Page->invoice_title->Visible) { // invoice_title ?>
+        <th data-name="invoice_title" class="<?= $Page->invoice_title->headerCellClass() ?>"><div id="elh_jdh_invoice_invoice_title" class="jdh_invoice_invoice_title"><?= $Page->renderFieldHeader($Page->invoice_title) ?></div></th>
 <?php } ?>
 <?php if ($Page->invoice_date->Visible) { // invoice_date ?>
         <th data-name="invoice_date" class="<?= $Page->invoice_date->headerCellClass() ?>"><div id="elh_jdh_invoice_invoice_date" class="jdh_invoice_invoice_date"><?= $Page->renderFieldHeader($Page->invoice_date) ?></div></th>
@@ -113,11 +189,11 @@ while ($Page->RecordCount < $Page->StopRecord) {
 // Render list options (body, left)
 $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
-    <?php if ($Page->invoice_id->Visible) { // invoice_id ?>
-        <td data-name="invoice_id"<?= $Page->invoice_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_invoice_invoice_id" class="el_jdh_invoice_invoice_id">
-<span<?= $Page->invoice_id->viewAttributes() ?>>
-<?= $Page->invoice_id->getViewValue() ?></span>
+    <?php if ($Page->id->Visible) { // id ?>
+        <td data-name="id"<?= $Page->id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_invoice_id" class="el_jdh_invoice_id">
+<span<?= $Page->id->viewAttributes() ?>>
+<?= $Page->id->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>
@@ -129,11 +205,11 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 </span>
 </td>
     <?php } ?>
-    <?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
-        <td data-name="submitted_by_user_id"<?= $Page->submitted_by_user_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_invoice_submitted_by_user_id" class="el_jdh_invoice_submitted_by_user_id">
-<span<?= $Page->submitted_by_user_id->viewAttributes() ?>>
-<?= $Page->submitted_by_user_id->getViewValue() ?></span>
+    <?php if ($Page->invoice_title->Visible) { // invoice_title ?>
+        <td data-name="invoice_title"<?= $Page->invoice_title->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_invoice_invoice_title" class="el_jdh_invoice_invoice_title">
+<span<?= $Page->invoice_title->viewAttributes() ?>>
+<?= $Page->invoice_title->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>

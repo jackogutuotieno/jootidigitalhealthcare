@@ -50,14 +50,14 @@ $Page->showMessage();
 <table class="<?= $Page->TableClass ?>">
     <thead>
     <tr class="ew-table-header">
-<?php if ($Page->invoice_id->Visible) { // invoice_id ?>
-        <th class="<?= $Page->invoice_id->headerCellClass() ?>"><span id="elh_jdh_invoice_invoice_id" class="jdh_invoice_invoice_id"><?= $Page->invoice_id->caption() ?></span></th>
+<?php if ($Page->id->Visible) { // id ?>
+        <th class="<?= $Page->id->headerCellClass() ?>"><span id="elh_jdh_invoice_id" class="jdh_invoice_id"><?= $Page->id->caption() ?></span></th>
 <?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <th class="<?= $Page->patient_id->headerCellClass() ?>"><span id="elh_jdh_invoice_patient_id" class="jdh_invoice_patient_id"><?= $Page->patient_id->caption() ?></span></th>
 <?php } ?>
-<?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
-        <th class="<?= $Page->submitted_by_user_id->headerCellClass() ?>"><span id="elh_jdh_invoice_submitted_by_user_id" class="jdh_invoice_submitted_by_user_id"><?= $Page->submitted_by_user_id->caption() ?></span></th>
+<?php if ($Page->invoice_title->Visible) { // invoice_title ?>
+        <th class="<?= $Page->invoice_title->headerCellClass() ?>"><span id="elh_jdh_invoice_invoice_title" class="jdh_invoice_invoice_title"><?= $Page->invoice_title->caption() ?></span></th>
 <?php } ?>
 <?php if ($Page->invoice_date->Visible) { // invoice_date ?>
         <th class="<?= $Page->invoice_date->headerCellClass() ?>"><span id="elh_jdh_invoice_invoice_date" class="jdh_invoice_invoice_date"><?= $Page->invoice_date->caption() ?></span></th>
@@ -83,11 +83,11 @@ while (!$Page->Recordset->EOF) {
     $Page->renderRow();
 ?>
     <tr <?= $Page->rowAttributes() ?>>
-<?php if ($Page->invoice_id->Visible) { // invoice_id ?>
-        <td<?= $Page->invoice_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_invoice_invoice_id" class="el_jdh_invoice_invoice_id">
-<span<?= $Page->invoice_id->viewAttributes() ?>>
-<?= $Page->invoice_id->getViewValue() ?></span>
+<?php if ($Page->id->Visible) { // id ?>
+        <td<?= $Page->id->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_invoice_id" class="el_jdh_invoice_id">
+<span<?= $Page->id->viewAttributes() ?>>
+<?= $Page->id->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>
@@ -99,11 +99,11 @@ while (!$Page->Recordset->EOF) {
 </span>
 </td>
 <?php } ?>
-<?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
-        <td<?= $Page->submitted_by_user_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_invoice_submitted_by_user_id" class="el_jdh_invoice_submitted_by_user_id">
-<span<?= $Page->submitted_by_user_id->viewAttributes() ?>>
-<?= $Page->submitted_by_user_id->getViewValue() ?></span>
+<?php if ($Page->invoice_title->Visible) { // invoice_title ?>
+        <td<?= $Page->invoice_title->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_invoice_invoice_title" class="el_jdh_invoice_invoice_title">
+<span<?= $Page->invoice_title->viewAttributes() ?>>
+<?= $Page->invoice_title->getViewValue() ?></span>
 </span>
 </td>
 <?php } ?>

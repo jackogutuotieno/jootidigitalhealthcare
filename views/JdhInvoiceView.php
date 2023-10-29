@@ -53,13 +53,13 @@ loadjs.ready(["wrapper", "head"], function () {
 <input type="hidden" name="t" value="jdh_invoice">
 <input type="hidden" name="modal" value="<?= (int)$Page->IsModal ?>">
 <table class="<?= $Page->TableClass ?>">
-<?php if ($Page->invoice_id->Visible) { // invoice_id ?>
-    <tr id="r_invoice_id"<?= $Page->invoice_id->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_invoice_id"><?= $Page->invoice_id->caption() ?></span></td>
-        <td data-name="invoice_id"<?= $Page->invoice_id->cellAttributes() ?>>
-<span id="el_jdh_invoice_invoice_id">
-<span<?= $Page->invoice_id->viewAttributes() ?>>
-<?= $Page->invoice_id->getViewValue() ?></span>
+<?php if ($Page->id->Visible) { // id ?>
+    <tr id="r_id"<?= $Page->id->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_id"><?= $Page->id->caption() ?></span></td>
+        <td data-name="id"<?= $Page->id->cellAttributes() ?>>
+<span id="el_jdh_invoice_id">
+<span<?= $Page->id->viewAttributes() ?>>
+<?= $Page->id->getViewValue() ?></span>
 </span>
 </td>
     </tr>
@@ -75,13 +75,24 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->submitted_by_user_id->Visible) { // submitted_by_user_id ?>
-    <tr id="r_submitted_by_user_id"<?= $Page->submitted_by_user_id->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_submitted_by_user_id"><?= $Page->submitted_by_user_id->caption() ?></span></td>
-        <td data-name="submitted_by_user_id"<?= $Page->submitted_by_user_id->cellAttributes() ?>>
-<span id="el_jdh_invoice_submitted_by_user_id">
-<span<?= $Page->submitted_by_user_id->viewAttributes() ?>>
-<?= $Page->submitted_by_user_id->getViewValue() ?></span>
+<?php if ($Page->invoice_title->Visible) { // invoice_title ?>
+    <tr id="r_invoice_title"<?= $Page->invoice_title->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_invoice_title"><?= $Page->invoice_title->caption() ?></span></td>
+        <td data-name="invoice_title"<?= $Page->invoice_title->cellAttributes() ?>>
+<span id="el_jdh_invoice_invoice_title">
+<span<?= $Page->invoice_title->viewAttributes() ?>>
+<?= $Page->invoice_title->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
+<?php if ($Page->invoice_description->Visible) { // invoice_description ?>
+    <tr id="r_invoice_description"<?= $Page->invoice_description->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_invoice_invoice_description"><?= $Page->invoice_description->caption() ?></span></td>
+        <td data-name="invoice_description"<?= $Page->invoice_description->cellAttributes() ?>>
+<span id="el_jdh_invoice_invoice_description">
+<span<?= $Page->invoice_description->viewAttributes() ?>>
+<?= $Page->invoice_description->getViewValue() ?></span>
 </span>
 </td>
     </tr>
@@ -98,6 +109,14 @@ loadjs.ready(["wrapper", "head"], function () {
     </tr>
 <?php } ?>
 </table>
+<?php
+    if (in_array("jdh_invoice_items", explode(",", $Page->getCurrentDetailTable())) && $jdh_invoice_items->DetailView) {
+?>
+<?php if ($Page->getCurrentDetailTable() != "") { ?>
+<h4 class="ew-detail-caption"><?= $Language->tablePhrase("jdh_invoice_items", "TblCaption") ?></h4>
+<?php } ?>
+<?php include_once "JdhInvoiceItemsGrid.php" ?>
+<?php } ?>
 </form>
 </main>
 <?php
