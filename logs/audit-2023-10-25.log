@@ -30,3 +30,34 @@ date/time,script,user,action,table,field,"key value","old value","new value"
 "2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,is_inpatient,9,,0
 "2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,submitted_by_user_id,9,,1
 "2023-10-25 08:23:12",/jootidigitalhealthcare/jdhpatientsadd,1,A,jdh_patients,patient_id,9,,9
+"2023-10-25 20:03:21",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-25 20:06:58",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-25 20:07:06",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-25 20:11:31",/jootidigitalhealthcare/logout,3,logout,::1,,,,
+"2023-10-25 20:11:35",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-25 20:22:40",/jootidigitalhealthcare/logout,3,logout,::1,,,,
+"2023-10-25 20:22:53",/jootidigitalhealthcare/login,2,login,::1,,,,
+"2023-10-25 20:24:10",/jootidigitalhealthcare/logout,2,logout,::1,,,,
+"2023-10-25 20:24:19",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-25 20:42:22",/jootidigitalhealthcare/logout,3,logout,::1,,,,
+"2023-10-25 20:42:25",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-25 20:44:43",/jootidigitalhealthcare/logout,3,logout,::1,,,,
+"2023-10-25 20:44:47",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-25 20:47:09",/jootidigitalhealthcare/logout,3,logout,::1,,,,
+"2023-10-25 20:47:31",/jootidigitalhealthcare/login,2,login,::1,,,,
+"2023-10-25 20:47:47",/jootidigitalhealthcare/logout,2,logout,::1,,,,
+"2023-10-25 20:47:57",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-25 20:48:12",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-25 20:48:36",/jootidigitalhealthcare/login,2,login,::1,,,,
+"2023-10-25 20:52:19",/jootidigitalhealthcare/jdhappointmentsadd,2,A,jdh_appointments,patient_id,7,,3
+"2023-10-25 20:52:19",/jootidigitalhealthcare/jdhappointmentsadd,2,A,jdh_appointments,user_id,7,,10
+"2023-10-25 20:52:19",/jootidigitalhealthcare/jdhappointmentsadd,2,A,jdh_appointments,appointment_title,7,,"See Doctor"
+"2023-10-25 20:52:19",/jootidigitalhealthcare/jdhappointmentsadd,2,A,jdh_appointments,appointment_start_date,7,,"2023-10-30 23:51:00"
+"2023-10-25 20:52:19",/jootidigitalhealthcare/jdhappointmentsadd,2,A,jdh_appointments,appointment_end_date,7,,"2023-10-30 23:51:00"
+"2023-10-25 20:52:19",/jootidigitalhealthcare/jdhappointmentsadd,2,A,jdh_appointments,appointment_all_day,7,,1
+"2023-10-25 20:52:19",/jootidigitalhealthcare/jdhappointmentsadd,2,A,jdh_appointments,appointment_description,7,,[MEMO]
+"2023-10-25 20:52:19",/jootidigitalhealthcare/jdhappointmentsadd,2,A,jdh_appointments,subbmitted_by_user_id,7,,2
+"2023-10-25 20:52:19",/jootidigitalhealthcare/jdhappointmentsadd,2,A,jdh_appointments,appointment_id,7,,7
+"2023-10-25 20:54:56",/jootidigitalhealthcare/logout,2,logout,::1,,,,
+"2023-10-25 20:54:59",/jootidigitalhealthcare/login,2,login,::1,,,,
+"2023-10-25 20:58:31",/jootidigitalhealthcare/logout,2,logout,::1,,,,

@@ -182,6 +182,9 @@ $Page->ListOptions->render("header", "left");
 <?php if ($Page->patient_registration_date->Visible) { // patient_registration_date ?>
         <th data-name="patient_registration_date" class="<?= $Page->patient_registration_date->headerCellClass() ?>"><div id="elh_jdh_patients_patient_registration_date" class="jdh_patients_patient_registration_date"><?= $Page->renderFieldHeader($Page->patient_registration_date) ?></div></th>
 <?php } ?>
+<?php if ($Page->time->Visible) { // time ?>
+        <th data-name="time" class="<?= $Page->time->headerCellClass() ?>"><div id="elh_jdh_patients_time" class="jdh_patients_time"><?= $Page->renderFieldHeader($Page->time) ?></div></th>
+<?php } ?>
 <?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
         <th data-name="is_inpatient" class="<?= $Page->is_inpatient->headerCellClass() ?>"><div id="elh_jdh_patients_is_inpatient" class="jdh_patients_is_inpatient"><?= $Page->renderFieldHeader($Page->is_inpatient) ?></div></th>
 <?php } ?>
@@ -270,6 +273,14 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 <span id="el<?= $Page->RowCount ?>_jdh_patients_patient_registration_date" class="el_jdh_patients_patient_registration_date">
 <span<?= $Page->patient_registration_date->viewAttributes() ?>>
 <?= $Page->patient_registration_date->getViewValue() ?></span>
+</span>
+</td>
+    <?php } ?>
+    <?php if ($Page->time->Visible) { // time ?>
+        <td data-name="time"<?= $Page->time->cellAttributes() ?>>
+<span id="el<?= $Page->RowCount ?>_jdh_patients_time" class="el_jdh_patients_time">
+<span<?= $Page->time->viewAttributes() ?>>
+<?= $Page->time->getViewValue() ?></span>
 </span>
 </td>
     <?php } ?>

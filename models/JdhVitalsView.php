@@ -988,10 +988,6 @@ class JdhVitalsView extends JdhVitals
             // submission_date
             $this->submission_date->HrefValue = "";
             $this->submission_date->TooltipValue = "";
-
-            // submitted_by_user_id
-            $this->submitted_by_user_id->HrefValue = "";
-            $this->submitted_by_user_id->TooltipValue = "";
         }
 
         // Call Row Rendered event

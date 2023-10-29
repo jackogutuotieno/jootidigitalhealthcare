@@ -119,6 +119,17 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
+<?php if ($Page->time->Visible) { // time ?>
+    <tr id="r_time"<?= $Page->time->rowAttributes() ?>>
+        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_time"><?= $Page->time->caption() ?></span></td>
+        <td data-name="time"<?= $Page->time->cellAttributes() ?>>
+<span id="el_jdh_patients_time">
+<span<?= $Page->time->viewAttributes() ?>>
+<?= $Page->time->getViewValue() ?></span>
+</span>
+</td>
+    </tr>
+<?php } ?>
 <?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
     <tr id="r_is_inpatient"<?= $Page->is_inpatient->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_is_inpatient"><?= $Page->is_inpatient->caption() ?></span></td>
@@ -181,16 +192,16 @@ loadjs.ready(["wrapper", "head"], function () {
     }
 ?>
 <?php
-    if (in_array("jdh_vitals", explode(",", $Page->getCurrentDetailTable())) && $jdh_vitals->DetailView) {
+    if (in_array("jdh_appointments", explode(",", $Page->getCurrentDetailTable())) && $jdh_appointments->DetailView) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" data-bs-target="#tab_jdh_vitals" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_vitals" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_vitals")) ?>"><?= $Language->tablePhrase("jdh_vitals", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_appointments") ?><?= $Page->DetailPages->activeClasses("jdh_appointments") ?>" data-bs-target="#tab_jdh_appointments" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_appointments" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_appointments")) ?>"><?= $Language->tablePhrase("jdh_appointments", "TblCaption") ?></button></li>
 <?php
     }
 ?>
 <?php
-    if (in_array("jdh_appointments", explode(",", $Page->getCurrentDetailTable())) && $jdh_appointments->DetailView) {
+    if (in_array("jdh_vitals", explode(",", $Page->getCurrentDetailTable())) && $jdh_vitals->DetailView) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_appointments") ?><?= $Page->DetailPages->activeClasses("jdh_appointments") ?>" data-bs-target="#tab_jdh_appointments" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_appointments" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_appointments")) ?>"><?= $Language->tablePhrase("jdh_appointments", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" data-bs-target="#tab_jdh_vitals" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_vitals" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_vitals")) ?>"><?= $Language->tablePhrase("jdh_vitals", "TblCaption") ?></button></li>
 <?php
     }
 ?>
@@ -239,17 +250,17 @@ loadjs.ready(["wrapper", "head"], function () {
         </div><!-- /page* -->
 <?php } ?>
 <?php
-    if (in_array("jdh_vitals", explode(",", $Page->getCurrentDetailTable())) && $jdh_vitals->DetailView) {
-?>
-        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" id="tab_jdh_vitals" role="tabpanel"><!-- page* -->
-<?php include_once "JdhVitalsGrid.php" ?>
-        </div><!-- /page* -->
-<?php } ?>
-<?php
     if (in_array("jdh_appointments", explode(",", $Page->getCurrentDetailTable())) && $jdh_appointments->DetailView) {
 ?>
         <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_appointments") ?><?= $Page->DetailPages->activeClasses("jdh_appointments") ?>" id="tab_jdh_appointments" role="tabpanel"><!-- page* -->
 <?php include_once "JdhAppointmentsGrid.php" ?>
+        </div><!-- /page* -->
+<?php } ?>
+<?php
+    if (in_array("jdh_vitals", explode(",", $Page->getCurrentDetailTable())) && $jdh_vitals->DetailView) {
+?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" id="tab_jdh_vitals" role="tabpanel"><!-- page* -->
+<?php include_once "JdhVitalsGrid.php" ?>
         </div><!-- /page* -->
 <?php } ?>
     </div><!-- /.tab-content -->

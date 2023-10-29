@@ -1059,7 +1059,7 @@ class JdhDoctorChargesList extends JdhDoctorCharges
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
-        $this->ListOptions->UseButtonGroup = true;
+        $this->ListOptions->UseButtonGroup = false;
         if ($this->ListOptions->UseButtonGroup && IsMobile()) {
             $this->ListOptions->UseDropDownButton = true;
         }

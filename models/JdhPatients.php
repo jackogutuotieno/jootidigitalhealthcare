@@ -61,6 +61,7 @@ class JdhPatients extends DbTable
     public $patient_kin_phone;
     public $service_id;
     public $patient_registration_date;
+    public $time;
     public $is_inpatient;
     public $submitted_by_user_id;
 
@@ -386,10 +387,10 @@ class JdhPatients extends DbTable
             'x_patient_registration_date', // Variable name
             'patient_registration_date', // Name
             '`patient_registration_date`', // Expression
-            CastDateFieldForLike("`patient_registration_date`", 11, "DB"), // Basic search expression
+            CastDateFieldForLike("`patient_registration_date`", 7, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            11, // Date/Time format
+            7, // Date/Time format
             false, // Is upload field
             '`patient_registration_date`', // Virtual expression
             false, // Is virtual
@@ -401,9 +402,33 @@ class JdhPatients extends DbTable
         $this->patient_registration_date->InputTextType = "text";
         $this->patient_registration_date->Nullable = false; // NOT NULL field
         $this->patient_registration_date->Required = true; // Required field
-        $this->patient_registration_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
+        $this->patient_registration_date->DefaultErrorMessage = str_replace("%s", DateFormat(7), $Language->phrase("IncorrectDate"));
         $this->patient_registration_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_registration_date'] = &$this->patient_registration_date;
+
+        // time $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        $this->time = new DbField(
+            $this, // Table
+            'x_time', // Variable name
+            'time', // Name
+            'TIME(patient_registration_date)', // Expression
+            CastDateFieldForLike("TIME(patient_registration_date)", 4, "DB"), // Basic search expression
+            134, // Type
+            10, // Size
+            4, // Date/Time format
+            false, // Is upload field
+            'TIME(patient_registration_date)', // Virtual expression
+            false, // Is virtual
+            false, // Force selection
+            false, // Is Virtual search
+            'FORMATTED TEXT', // View Tag
+            'TEXT' // Edit Tag
+        );
+        $this->time->InputTextType = "text";
+        $this->time->IsCustom = true; // Custom field
+        $this->time->DefaultErrorMessage = str_replace("%s", DateFormat(4), $Language->phrase("IncorrectTime"));
+        $this->time->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->Fields['time'] = &$this->time;
 
         // is_inpatient $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
         $this->is_inpatient = new DbField(
@@ -557,12 +582,12 @@ class JdhPatients extends DbTable
             $detailUrl = Container("jdh_prescriptions_actions")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
             $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
         }
-        if ($this->getCurrentDetailTable() == "jdh_vitals") {
-            $detailUrl = Container("jdh_vitals")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
-            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
-        }
         if ($this->getCurrentDetailTable() == "jdh_appointments") {
             $detailUrl = Container("jdh_appointments")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
+            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
+        }
+        if ($this->getCurrentDetailTable() == "jdh_vitals") {
+            $detailUrl = Container("jdh_vitals")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
             $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
         }
         if ($detailUrl == "") {
@@ -595,7 +620,7 @@ class JdhPatients extends DbTable
 
     public function getSqlSelect() // Select
     {
-        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*, (SELECT YEAR(CURRENT_DATE())) - patient_dob_year AS `patient_age`");
+        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*, (SELECT YEAR(CURRENT_DATE())) - patient_dob_year AS `patient_age`, TIME(patient_registration_date) AS `time`");
     }
 
     public function sqlSelect() // For backward compatibility
@@ -1014,6 +1039,7 @@ class JdhPatients extends DbTable
         $this->patient_kin_phone->DbValue = $row['patient_kin_phone'];
         $this->service_id->DbValue = $row['service_id'];
         $this->patient_registration_date->DbValue = $row['patient_registration_date'];
+        $this->time->DbValue = $row['time'];
         $this->is_inpatient->DbValue = $row['is_inpatient'];
         $this->submitted_by_user_id->DbValue = $row['submitted_by_user_id'];
     }
@@ -1389,6 +1415,7 @@ class JdhPatients extends DbTable
         $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
         $this->service_id->setDbValue($row['service_id']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
+        $this->time->setDbValue($row['time']);
         $this->is_inpatient->setDbValue($row['is_inpatient']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
@@ -1444,6 +1471,8 @@ class JdhPatients extends DbTable
         // service_id
 
         // patient_registration_date
+
+        // time
 
         // is_inpatient
 
@@ -1520,6 +1549,10 @@ class JdhPatients extends DbTable
         // patient_registration_date
         $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
         $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
+
+        // time
+        $this->time->ViewValue = $this->time->CurrentValue;
+        $this->time->ViewValue = FormatDateTime($this->time->ViewValue, $this->time->formatPattern());
 
         // is_inpatient
         if (strval($this->is_inpatient->CurrentValue) != "") {
@@ -1606,6 +1639,10 @@ class JdhPatients extends DbTable
         // patient_registration_date
         $this->patient_registration_date->HrefValue = "";
         $this->patient_registration_date->TooltipValue = "";
+
+        // time
+        $this->time->HrefValue = "";
+        $this->time->TooltipValue = "";
 
         // is_inpatient
         $this->is_inpatient->HrefValue = "";
@@ -1737,6 +1774,11 @@ class JdhPatients extends DbTable
         $this->patient_registration_date->EditValue = FormatDateTime($this->patient_registration_date->CurrentValue, $this->patient_registration_date->formatPattern());
         $this->patient_registration_date->PlaceHolder = RemoveHtml($this->patient_registration_date->caption());
 
+        // time
+        $this->time->setupEditAttributes();
+        $this->time->EditValue = FormatDateTime($this->time->CurrentValue, $this->time->formatPattern());
+        $this->time->PlaceHolder = RemoveHtml($this->time->caption());
+
         // is_inpatient
         $this->is_inpatient->setupEditAttributes();
         $this->is_inpatient->EditValue = $this->is_inpatient->options(true);
@@ -1778,6 +1820,7 @@ class JdhPatients extends DbTable
                     $doc->exportCaption($this->patient_dob_year);
                     $doc->exportCaption($this->patient_age);
                     $doc->exportCaption($this->patient_gender);
+                    $doc->exportCaption($this->time);
                     $doc->exportCaption($this->is_inpatient);
                 } else {
                     $doc->exportCaption($this->patient_id);
@@ -1791,6 +1834,7 @@ class JdhPatients extends DbTable
                     $doc->exportCaption($this->patient_kin_phone);
                     $doc->exportCaption($this->service_id);
                     $doc->exportCaption($this->patient_registration_date);
+                    $doc->exportCaption($this->time);
                     $doc->exportCaption($this->is_inpatient);
                     $doc->exportCaption($this->submitted_by_user_id);
                 }
@@ -1828,6 +1872,7 @@ class JdhPatients extends DbTable
                         $doc->exportField($this->patient_dob_year);
                         $doc->exportField($this->patient_age);
                         $doc->exportField($this->patient_gender);
+                        $doc->exportField($this->time);
                         $doc->exportField($this->is_inpatient);
                     } else {
                         $doc->exportField($this->patient_id);
@@ -1841,6 +1886,7 @@ class JdhPatients extends DbTable
                         $doc->exportField($this->patient_kin_phone);
                         $doc->exportField($this->service_id);
                         $doc->exportField($this->patient_registration_date);
+                        $doc->exportField($this->time);
                         $doc->exportField($this->is_inpatient);
                         $doc->exportField($this->submitted_by_user_id);
                     }

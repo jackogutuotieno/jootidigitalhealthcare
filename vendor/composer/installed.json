@@ -1950,17 +1950,17 @@
         },
         {
             "name": "laravel/serializable-closure",
-            "version": "v1.3.1",
-            "version_normalized": "1.3.1.0",
+            "version": "v1.3.2",
+            "version_normalized": "1.3.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/serializable-closure.git",
-                "reference": "e5a3057a5591e1cfe8183034b0203921abe2c902"
+                "reference": "076fe2cf128bd54b4341cdc6d49b95b34e101e4c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/serializable-closure/zipball/e5a3057a5591e1cfe8183034b0203921abe2c902",
-                "reference": "e5a3057a5591e1cfe8183034b0203921abe2c902",
+                "url": "https://api.github.com/repos/laravel/serializable-closure/zipball/076fe2cf128bd54b4341cdc6d49b95b34e101e4c",
+                "reference": "076fe2cf128bd54b4341cdc6d49b95b34e101e4c",
                 "shasum": ""
             },
             "require": {
@@ -1972,7 +1972,7 @@
                 "phpstan/phpstan": "^1.8.2",
                 "symfony/var-dumper": "^5.4.11"
             },
-            "time": "2023-07-14T13:56:28+00:00",
+            "time": "2023-10-17T13:38:16+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -2344,26 +2344,26 @@
         },
         {
             "name": "mobiledetect/mobiledetectlib",
-            "version": "2.8.41",
-            "version_normalized": "2.8.41.0",
+            "version": "2.8.42",
+            "version_normalized": "2.8.42.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/serbanghita/Mobile-Detect.git",
-                "reference": "fc9cccd4d3706d5a7537b562b59cc18f9e4c0cb1"
+                "reference": "c2941a5e4dc82af10c6bfe44e810bd39b635e07e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/serbanghita/Mobile-Detect/zipball/fc9cccd4d3706d5a7537b562b59cc18f9e4c0cb1",
-                "reference": "fc9cccd4d3706d5a7537b562b59cc18f9e4c0cb1",
+                "url": "https://api.github.com/repos/serbanghita/Mobile-Detect/zipball/c2941a5e4dc82af10c6bfe44e810bd39b635e07e",
+                "reference": "c2941a5e4dc82af10c6bfe44e810bd39b635e07e",
                 "shasum": ""
             },
             "require": {
-                "php": ">=5.0.0"
+                "php": "5.6.*"
             },
             "require-dev": {
-                "phpunit/phpunit": "~4.8.35||~5.7"
+                "phpunit/phpunit": "~4.8.36"
             },
-            "time": "2022-11-08T18:31:26+00:00",
+            "time": "2023-10-27T18:34:38+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -2397,23 +2397,29 @@
             ],
             "support": {
                 "issues": "https://github.com/serbanghita/Mobile-Detect/issues",
-                "source": "https://github.com/serbanghita/Mobile-Detect/tree/2.8.41"
+                "source": "https://github.com/serbanghita/Mobile-Detect/tree/2.8.42"
             },
+            "funding": [
+                {
+                    "url": "https://github.com/serbanghita",
+                    "type": "github"
+                }
+            ],
             "install-path": "../mobiledetect/mobiledetectlib"
         },
         {
             "name": "monolog/monolog",
-            "version": "2.9.1",
-            "version_normalized": "2.9.1.0",
+            "version": "2.9.2",
+            "version_normalized": "2.9.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "f259e2b15fb95494c83f52d3caad003bbf5ffaa1"
+                "reference": "437cb3628f4cf6042cc10ae97fc2b8472e48ca1f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/f259e2b15fb95494c83f52d3caad003bbf5ffaa1",
-                "reference": "f259e2b15fb95494c83f52d3caad003bbf5ffaa1",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/437cb3628f4cf6042cc10ae97fc2b8472e48ca1f",
+                "reference": "437cb3628f4cf6042cc10ae97fc2b8472e48ca1f",
                 "shasum": ""
             },
             "require": {
@@ -2459,7 +2465,7 @@
                 "rollbar/rollbar": "Allow sending log messages to Rollbar",
                 "ruflin/elastica": "Allow sending log messages to an Elastic Search server"
             },
-            "time": "2023-02-06T13:44:46+00:00",
+            "time": "2023-10-27T15:25:26+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -2492,7 +2498,7 @@
             ],
             "support": {
                 "issues": "https://github.com/Seldaek/monolog/issues",
-                "source": "https://github.com/Seldaek/monolog/tree/2.9.1"
+                "source": "https://github.com/Seldaek/monolog/tree/2.9.2"
             },
             "funding": [
                 {

@@ -482,6 +482,7 @@ class JdhPatientsEdit extends JdhPatients
         $this->patient_kin_phone->setVisibility();
         $this->service_id->Visible = false;
         $this->patient_registration_date->Visible = false;
+        $this->time->setVisibility();
         $this->is_inpatient->setVisibility();
         $this->submitted_by_user_id->setVisibility();
 
@@ -768,6 +769,17 @@ class JdhPatientsEdit extends JdhPatients
             }
         }
 
+        // Check field name 'time' first before field var 'x_time'
+        $val = $CurrentForm->hasValue("time") ? $CurrentForm->getValue("time") : $CurrentForm->getValue("x_time");
+        if (!$this->time->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->time->Visible = false; // Disable update for API request
+            } else {
+                $this->time->setFormValue($val, true, $validate);
+            }
+            $this->time->CurrentValue = UnFormatDateTime($this->time->CurrentValue, $this->time->formatPattern());
+        }
+
         // Check field name 'is_inpatient' first before field var 'x_is_inpatient'
         $val = $CurrentForm->hasValue("is_inpatient") ? $CurrentForm->getValue("is_inpatient") : $CurrentForm->getValue("x_is_inpatient");
         if (!$this->is_inpatient->IsDetailKey) {
@@ -800,6 +812,8 @@ class JdhPatientsEdit extends JdhPatients
         $this->patient_phone->CurrentValue = $this->patient_phone->FormValue;
         $this->patient_kin_name->CurrentValue = $this->patient_kin_name->FormValue;
         $this->patient_kin_phone->CurrentValue = $this->patient_kin_phone->FormValue;
+        $this->time->CurrentValue = $this->time->FormValue;
+        $this->time->CurrentValue = UnFormatDateTime($this->time->CurrentValue, $this->time->formatPattern());
         $this->is_inpatient->CurrentValue = $this->is_inpatient->FormValue;
         $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->FormValue;
     }
@@ -875,6 +889,7 @@ class JdhPatientsEdit extends JdhPatients
         $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
         $this->service_id->setDbValue($row['service_id']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
+        $this->time->setDbValue($row['time']);
         $this->is_inpatient->setDbValue($row['is_inpatient']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
@@ -895,6 +910,7 @@ class JdhPatientsEdit extends JdhPatients
         $row['patient_kin_phone'] = $this->patient_kin_phone->DefaultValue;
         $row['service_id'] = $this->service_id->DefaultValue;
         $row['patient_registration_date'] = $this->patient_registration_date->DefaultValue;
+        $row['time'] = $this->time->DefaultValue;
         $row['is_inpatient'] = $this->is_inpatient->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
@@ -966,6 +982,9 @@ class JdhPatientsEdit extends JdhPatients
 
         // patient_registration_date
         $this->patient_registration_date->RowCssClass = "row";
+
+        // time
+        $this->time->RowCssClass = "row";
 
         // is_inpatient
         $this->is_inpatient->RowCssClass = "row";
@@ -1047,6 +1066,10 @@ class JdhPatientsEdit extends JdhPatients
             $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
+            // time
+            $this->time->ViewValue = $this->time->CurrentValue;
+            $this->time->ViewValue = FormatDateTime($this->time->ViewValue, $this->time->formatPattern());
+
             // is_inpatient
             if (strval($this->is_inpatient->CurrentValue) != "") {
                 $this->is_inpatient->ViewValue = $this->is_inpatient->optionCaption($this->is_inpatient->CurrentValue);
@@ -1098,6 +1121,9 @@ class JdhPatientsEdit extends JdhPatients
 
             // patient_kin_phone
             $this->patient_kin_phone->HrefValue = "";
+
+            // time
+            $this->time->HrefValue = "";
 
             // is_inpatient
             $this->is_inpatient->HrefValue = "";
@@ -1165,6 +1191,11 @@ class JdhPatientsEdit extends JdhPatients
             $this->patient_kin_phone->EditValue = HtmlEncode($this->patient_kin_phone->CurrentValue);
             $this->patient_kin_phone->PlaceHolder = RemoveHtml($this->patient_kin_phone->caption());
 
+            // time
+            $this->time->setupEditAttributes();
+            $this->time->EditValue = HtmlEncode(FormatDateTime($this->time->CurrentValue, $this->time->formatPattern()));
+            $this->time->PlaceHolder = RemoveHtml($this->time->caption());
+
             // is_inpatient
             $this->is_inpatient->setupEditAttributes();
             $this->is_inpatient->EditValue = $this->is_inpatient->options(true);
@@ -1214,6 +1245,9 @@ class JdhPatientsEdit extends JdhPatients
 
             // patient_kin_phone
             $this->patient_kin_phone->HrefValue = "";
+
+            // time
+            $this->time->HrefValue = "";
 
             // is_inpatient
             $this->is_inpatient->HrefValue = "";
@@ -1279,6 +1313,14 @@ class JdhPatientsEdit extends JdhPatients
                 $this->patient_kin_phone->addErrorMessage(str_replace("%s", $this->patient_kin_phone->caption(), $this->patient_kin_phone->RequiredErrorMessage));
             }
         }
+        if ($this->time->Required) {
+            if (!$this->time->IsDetailKey && EmptyValue($this->time->FormValue)) {
+                $this->time->addErrorMessage(str_replace("%s", $this->time->caption(), $this->time->RequiredErrorMessage));
+            }
+        }
+        if (!CheckTime($this->time->FormValue, $this->time->formatPattern())) {
+            $this->time->addErrorMessage($this->time->getErrorMessage(false));
+        }
         if ($this->is_inpatient->Required) {
             if (!$this->is_inpatient->IsDetailKey && EmptyValue($this->is_inpatient->FormValue)) {
                 $this->is_inpatient->addErrorMessage(str_replace("%s", $this->is_inpatient->caption(), $this->is_inpatient->RequiredErrorMessage));
@@ -1316,12 +1358,12 @@ class JdhPatientsEdit extends JdhPatients
         if (in_array("jdh_prescriptions_actions", $detailTblVar) && $detailPage->DetailEdit) {
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
-        $detailPage = Container("JdhVitalsGrid");
-        if (in_array("jdh_vitals", $detailTblVar) && $detailPage->DetailEdit) {
-            $validateForm = $validateForm && $detailPage->validateGridForm();
-        }
         $detailPage = Container("JdhAppointmentsGrid");
         if (in_array("jdh_appointments", $detailTblVar) && $detailPage->DetailEdit) {
+            $validateForm = $validateForm && $detailPage->validateGridForm();
+        }
+        $detailPage = Container("JdhVitalsGrid");
+        if (in_array("jdh_vitals", $detailTblVar) && $detailPage->DetailEdit) {
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
 
@@ -1383,6 +1425,9 @@ class JdhPatientsEdit extends JdhPatients
 
         // patient_kin_phone
         $this->patient_kin_phone->setDbValueDef($rsnew, $this->patient_kin_phone->CurrentValue, null, $this->patient_kin_phone->ReadOnly);
+
+        // time
+        $this->time->setDbValueDef($rsnew, UnFormatDateTime($this->time->CurrentValue, $this->time->formatPattern()), null, $this->time->ReadOnly);
 
         // is_inpatient
         $this->is_inpatient->setDbValueDef($rsnew, $this->is_inpatient->CurrentValue, 0, $this->is_inpatient->ReadOnly);
@@ -1501,17 +1546,17 @@ class JdhPatientsEdit extends JdhPatients
                 }
             }
             if ($editRow) {
-                $detailPage = Container("JdhVitalsGrid");
-                if (in_array("jdh_vitals", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_vitals"); // Load user level of detail table
+                $detailPage = Container("JdhAppointmentsGrid");
+                if (in_array("jdh_appointments", $detailTblVar) && $detailPage->DetailEdit) {
+                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_appointments"); // Load user level of detail table
                     $editRow = $detailPage->gridUpdate();
                     $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
                 }
             }
             if ($editRow) {
-                $detailPage = Container("JdhAppointmentsGrid");
-                if (in_array("jdh_appointments", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_appointments"); // Load user level of detail table
+                $detailPage = Container("JdhVitalsGrid");
+                if (in_array("jdh_vitals", $detailTblVar) && $detailPage->DetailEdit) {
+                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_vitals"); // Load user level of detail table
                     $editRow = $detailPage->gridUpdate();
                     $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
                 }
@@ -1672,8 +1717,8 @@ class JdhPatientsEdit extends JdhPatients
                     $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
                 }
             }
-            if (in_array("jdh_vitals", $detailTblVar)) {
-                $detailPageObj = Container("JdhVitalsGrid");
+            if (in_array("jdh_appointments", $detailTblVar)) {
+                $detailPageObj = Container("JdhAppointmentsGrid");
                 if ($detailPageObj->DetailEdit) {
                     $detailPageObj->EventCancelled = $this->EventCancelled;
                     $detailPageObj->CurrentMode = "edit";
@@ -1687,8 +1732,8 @@ class JdhPatientsEdit extends JdhPatients
                     $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
                 }
             }
-            if (in_array("jdh_appointments", $detailTblVar)) {
-                $detailPageObj = Container("JdhAppointmentsGrid");
+            if (in_array("jdh_vitals", $detailTblVar)) {
+                $detailPageObj = Container("JdhVitalsGrid");
                 if ($detailPageObj->DetailEdit) {
                     $detailPageObj->EventCancelled = $this->EventCancelled;
                     $detailPageObj->CurrentMode = "edit";
@@ -1727,8 +1772,8 @@ class JdhPatientsEdit extends JdhPatients
         $pages->add('jdh_patient_cases');
         $pages->add('jdh_prescriptions');
         $pages->add('jdh_prescriptions_actions');
-        $pages->add('jdh_vitals');
         $pages->add('jdh_appointments');
+        $pages->add('jdh_vitals');
         $this->DetailPages = $pages;
     }
 

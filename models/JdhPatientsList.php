@@ -667,6 +667,7 @@ class JdhPatientsList extends JdhPatients
         $this->patient_kin_phone->Visible = false;
         $this->service_id->Visible = false;
         $this->patient_registration_date->setVisibility();
+        $this->time->setVisibility();
         $this->is_inpatient->setVisibility();
         $this->submitted_by_user_id->Visible = false;
 
@@ -774,23 +775,14 @@ class JdhPatientsList extends JdhPatients
 
         // Get default search criteria
         AddFilter($this->DefaultSearchWhere, $this->basicSearchWhere(true));
-        AddFilter($this->DefaultSearchWhere, $this->advancedSearchWhere(true));
 
         // Get basic search values
         $this->loadBasicSearchValues();
-
-        // Get and validate search values for advanced search
-        if (EmptyValue($this->UserAction)) { // Skip if user action
-            $this->loadSearchValues();
-        }
 
         // Process filter list
         if ($this->processFilterList()) {
             $this->terminate();
             return;
-        }
-        if (!$this->validateSearch()) {
-            // Nothing to do
         }
 
         // Restore search parms from Session if not searching / reset / export
@@ -809,14 +801,6 @@ class JdhPatientsList extends JdhPatients
             $srchBasic = $this->basicSearchWhere();
         }
 
-        // Get advanced search criteria
-        if (!$this->hasInvalidFields()) {
-            $srchAdvanced = $this->advancedSearchWhere();
-        }
-
-        // Get query builder criteria
-        $query = $this->queryBuilderWhere();
-
         // Restore display records
         if ($this->Command != "json" && $this->getRecordsPerPage() != "") {
             $this->DisplayRecords = $this->getRecordsPerPage(); // Restore from Session
@@ -832,16 +816,6 @@ class JdhPatientsList extends JdhPatients
             if ($this->BasicSearch->Keyword != "") {
                 $srchBasic = $this->basicSearchWhere();
             }
-
-            // Load advanced search from default
-            if ($this->loadAdvancedSearchDefault()) {
-                $srchAdvanced = $this->advancedSearchWhere();
-            }
-        }
-
-        // Restore search settings from Session
-        if (!$this->hasInvalidFields()) {
-            $this->loadAdvancedSearch();
         }
 
         // Build search criteria
@@ -1086,6 +1060,7 @@ class JdhPatientsList extends JdhPatients
         $filterList = Concat($filterList, $this->patient_name->AdvancedSearch->toJson(), ","); // Field patient_name
         $filterList = Concat($filterList, $this->patient_dob_year->AdvancedSearch->toJson(), ","); // Field patient_dob_year
         $filterList = Concat($filterList, $this->patient_age->AdvancedSearch->toJson(), ","); // Field patient_age
+        $filterList = Concat($filterList, $this->time->AdvancedSearch->toJson(), ","); // Field time
         $filterList = Concat($filterList, $this->is_inpatient->AdvancedSearch->toJson(), ","); // Field is_inpatient
         if ($this->BasicSearch->Keyword != "") {
             $wrk = "\"" . Config("TABLE_BASIC_SEARCH") . "\":\"" . JsEncode($this->BasicSearch->Keyword) . "\",\"" . Config("TABLE_BASIC_SEARCH_TYPE") . "\":\"" . JsEncode($this->BasicSearch->Type) . "\"";
@@ -1167,6 +1142,14 @@ class JdhPatientsList extends JdhPatients
         $this->patient_age->AdvancedSearch->SearchOperator2 = @$filter["w_patient_age"];
         $this->patient_age->AdvancedSearch->save();
 
+        // Field time
+        $this->time->AdvancedSearch->SearchValue = @$filter["x_time"];
+        $this->time->AdvancedSearch->SearchOperator = @$filter["z_time"];
+        $this->time->AdvancedSearch->SearchCondition = @$filter["v_time"];
+        $this->time->AdvancedSearch->SearchValue2 = @$filter["y_time"];
+        $this->time->AdvancedSearch->SearchOperator2 = @$filter["w_time"];
+        $this->time->AdvancedSearch->save();
+
         // Field is_inpatient
         $this->is_inpatient->AdvancedSearch->SearchValue = @$filter["x_is_inpatient"];
         $this->is_inpatient->AdvancedSearch->SearchOperator = @$filter["z_is_inpatient"];
@@ -1178,165 +1161,6 @@ class JdhPatientsList extends JdhPatients
         $this->BasicSearch->setType(@$filter[Config("TABLE_BASIC_SEARCH_TYPE")]);
     }
 
-    // Advanced search WHERE clause based on QueryString
-    public function advancedSearchWhere($default = false)
-    {
-        global $Security;
-        $where = "";
-        if (!$Security->canSearch()) {
-            return "";
-        }
-        $this->buildSearchSql($where, $this->patient_id, $default, false); // patient_id
-        $this->buildSearchSql($where, $this->patient_ip_number, $default, false); // patient_ip_number
-        $this->buildSearchSql($where, $this->patient_name, $default, false); // patient_name
-        $this->buildSearchSql($where, $this->patient_dob_year, $default, false); // patient_dob_year
-        $this->buildSearchSql($where, $this->patient_age, $default, false); // patient_age
-        $this->buildSearchSql($where, $this->is_inpatient, $default, false); // is_inpatient
-
-        // Set up search command
-        if (!$default && $where != "" && in_array($this->Command, ["", "reset", "resetall"])) {
-            $this->Command = "search";
-        }
-        if (!$default && $this->Command == "search") {
-            $this->patient_id->AdvancedSearch->save(); // patient_id
-            $this->patient_ip_number->AdvancedSearch->save(); // patient_ip_number
-            $this->patient_name->AdvancedSearch->save(); // patient_name
-            $this->patient_dob_year->AdvancedSearch->save(); // patient_dob_year
-            $this->patient_age->AdvancedSearch->save(); // patient_age
-            $this->is_inpatient->AdvancedSearch->save(); // is_inpatient
-
-            // Clear rules for QueryBuilder
-            $this->setSessionRules("");
-        }
-        return $where;
-    }
-
-    // Parse query builder rule function
-    protected function parseRules($group, $fieldName = "") {
-        $group["condition"] ??= "AND";
-        if (!in_array($group["condition"], ["AND", "OR"])) {
-            throw new \Exception("Unable to build SQL query with condition '" . $group["condition"] . "'");
-        }
-        if (!is_array($group["rules"] ?? null)) {
-            return "";
-        }
-        $parts = [];
-        foreach ($group["rules"] as $rule) {
-            if (is_array($rule["rules"] ?? null) && count($rule["rules"]) > 0) {
-                $parts[] = "(" . " " . $this->parseRules($rule, $fieldName) . " " . ")" . " ";
-            } else {
-                $field = $rule["field"];
-                $fld = $this->fieldByParam($field);
-                if (!$fld) {
-                    throw new \Exception("Failed to find field '" . $field . "'");
-                }
-                if ($fieldName == "" || $fld->Name == $fieldName) { // Field name not specified or matched field name
-                    $fldOpr = array_search($rule["operator"], Config("CLIENT_SEARCH_OPERATORS"));
-                    $ope = Config("QUERY_BUILDER_OPERATORS")[$rule["operator"]] ?? null;
-                    if (!$ope || !$fldOpr) {
-                        throw new \Exception("Unknown SQL operation for operator '" . $rule["operator"] . "'");
-                    }
-                    if ($ope["nb_inputs"] > 0 && ($rule["value"] ?? false)) {
-                        $rule["value"] = !is_array($rule["value"]) ? [$rule["value"]] : $rule["value"];
-                        $fldVal = $rule["value"][0];
-                        if (is_array($fldVal)) {
-                            $fldVal = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal);
-                        }
-                        $useFilter = $fld->UseFilter; // Query builder does not use filter
-                        try {
-                            if ($fld->isMultiSelect()) {
-                                $parts[] = $fldVal != "" ? GetMultiSearchSql($fld, $fldOpr, ConvertSearchValue($fldVal, $fldOpr, $fld), $this->Dbid) : "";
-                            } else {
-                                $fldVal2 = ContainsString($fldOpr, "BETWEEN") ? $rule["value"][1] : ""; // BETWEEN
-                                if (is_array($fldVal2)) {
-                                    $fldVal2 = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal2);
-                                }
-                                $parts[] = GetSearchSql(
-                                    $fld,
-                                    ConvertSearchValue($fldVal, $fldOpr, $fld), // $fldVal
-                                    $fldOpr,
-                                    "", // $fldCond not used
-                                    ConvertSearchValue($fldVal2, $fldOpr, $fld), // $fldVal2
-                                    "", // $fldOpr2 not used
-                                    $this->Dbid
-                                );
-                            }
-                        } finally {
-                            $fld->UseFilter = $useFilter;
-                        }
-                    }
-                }
-            }
-        }
-        $where = implode(" " . $group["condition"] . " ", array_filter($parts));
-        if ($group["not"] ?? false) {
-            $where = "NOT (" . $where . ")";
-        }
-        return $where;
-    }
-
-    // Quey builder WHERE clause
-    public function queryBuilderWhere($fieldName = "")
-    {
-        global $Security;
-        if (!$Security->canSearch()) {
-            return "";
-        }
-
-        // Get rules by query builder
-        $rules = Post("rules") ?? $this->getSessionRules();
-
-        // Decode and parse rules
-        $where = $rules ? $this->parseRules(json_decode($rules, true), $fieldName) : "";
-
-        // Clear other search and save rules to session
-        if ($where && $fieldName == "") { // Skip if get query for specific field
-            $this->resetSearchParms();
-            $this->setSessionRules($rules);
-        }
-
-        // Return query
-        return $where;
-    }
-
-    // Build search SQL
-    protected function buildSearchSql(&$where, $fld, $default, $multiValue)
-    {
-        $fldParm = $fld->Param;
-        $fldVal = $default ? $fld->AdvancedSearch->SearchValueDefault : $fld->AdvancedSearch->SearchValue;
-        $fldOpr = $default ? $fld->AdvancedSearch->SearchOperatorDefault : $fld->AdvancedSearch->SearchOperator;
-        $fldCond = $default ? $fld->AdvancedSearch->SearchConditionDefault : $fld->AdvancedSearch->SearchCondition;
-        $fldVal2 = $default ? $fld->AdvancedSearch->SearchValue2Default : $fld->AdvancedSearch->SearchValue2;
-        $fldOpr2 = $default ? $fld->AdvancedSearch->SearchOperator2Default : $fld->AdvancedSearch->SearchOperator2;
-        $fldVal = ConvertSearchValue($fldVal, $fldOpr, $fld);
-        $fldVal2 = ConvertSearchValue($fldVal2, $fldOpr2, $fld);
-        $fldOpr = ConvertSearchOperator($fldOpr, $fld, $fldVal);
-        $fldOpr2 = ConvertSearchOperator($fldOpr2, $fld, $fldVal2);
-        $wrk = "";
-        if (is_array($fldVal)) {
-            $fldVal = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal);
-        }
-        if (is_array($fldVal2)) {
-            $fldVal2 = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal2);
-        }
-        if (Config("SEARCH_MULTI_VALUE_OPTION") == 1 && !$fld->UseFilter || !IsMultiSearchOperator($fldOpr)) {
-            $multiValue = false;
-        }
-        if ($multiValue) {
-            $wrk = $fldVal != "" ? GetMultiSearchSql($fld, $fldOpr, $fldVal, $this->Dbid) : ""; // Field value 1
-            $wrk2 = $fldVal2 != "" ? GetMultiSearchSql($fld, $fldOpr2, $fldVal2, $this->Dbid) : ""; // Field value 2
-            AddFilter($wrk, $wrk2, $fldCond);
-        } else {
-            $wrk = GetSearchSql($fld, $fldVal, $fldOpr, $fldCond, $fldVal2, $fldOpr2, $this->Dbid);
-        }
-        if ($this->SearchOption == "AUTO" && in_array($this->BasicSearch->getType(), ["AND", "OR"])) {
-            $cond = $this->BasicSearch->getType();
-        } else {
-            $cond = SameText($this->SearchOption, "OR") ? "OR" : "AND";
-        }
-        AddFilter($where, $wrk, $cond);
-    }
-
     // Show list of filters
     public function showFilterList()
     {
@@ -1346,60 +1170,6 @@ class JdhPatientsList extends JdhPatients
         $filterList = "";
         $captionClass = $this->isExport("email") ? "ew-filter-caption-email" : "ew-filter-caption";
         $captionSuffix = $this->isExport("email") ? ": " : "";
-
-        // Field patient_id
-        $filter = $this->queryBuilderWhere("patient_id");
-        if (!$filter) {
-            $this->buildSearchSql($filter, $this->patient_id, false, false);
-        }
-        if ($filter != "") {
-            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $this->patient_id->caption() . "</span>" . $captionSuffix . $filter . "</div>";
-        }
-
-        // Field patient_ip_number
-        $filter = $this->queryBuilderWhere("patient_ip_number");
-        if (!$filter) {
-            $this->buildSearchSql($filter, $this->patient_ip_number, false, false);
-        }
-        if ($filter != "") {
-            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $this->patient_ip_number->caption() . "</span>" . $captionSuffix . $filter . "</div>";
-        }
-
-        // Field patient_name
-        $filter = $this->queryBuilderWhere("patient_name");
-        if (!$filter) {
-            $this->buildSearchSql($filter, $this->patient_name, false, false);
-        }
-        if ($filter != "") {
-            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $this->patient_name->caption() . "</span>" . $captionSuffix . $filter . "</div>";
-        }
-
-        // Field patient_dob_year
-        $filter = $this->queryBuilderWhere("patient_dob_year");
-        if (!$filter) {
-            $this->buildSearchSql($filter, $this->patient_dob_year, false, false);
-        }
-        if ($filter != "") {
-            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $this->patient_dob_year->caption() . "</span>" . $captionSuffix . $filter . "</div>";
-        }
-
-        // Field patient_age
-        $filter = $this->queryBuilderWhere("patient_age");
-        if (!$filter) {
-            $this->buildSearchSql($filter, $this->patient_age, false, false);
-        }
-        if ($filter != "") {
-            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $this->patient_age->caption() . "</span>" . $captionSuffix . $filter . "</div>";
-        }
-
-        // Field is_inpatient
-        $filter = $this->queryBuilderWhere("is_inpatient");
-        if (!$filter) {
-            $this->buildSearchSql($filter, $this->is_inpatient, false, false);
-        }
-        if ($filter != "") {
-            $filterList .= "<div><span class=\"" . $captionClass . "\">" . $this->is_inpatient->caption() . "</span>" . $captionSuffix . $filter . "</div>";
-        }
         if ($this->BasicSearch->Keyword != "") {
             $filterList .= "<div><span class=\"" . $captionClass . "\">" . $Language->phrase("BasicSearchKeyword") . "</span>" . $captionSuffix . $this->BasicSearch->Keyword . "</div>";
         }
@@ -1459,24 +1229,6 @@ class JdhPatientsList extends JdhPatients
         if ($this->BasicSearch->issetSession()) {
             return true;
         }
-        if ($this->patient_id->AdvancedSearch->issetSession()) {
-            return true;
-        }
-        if ($this->patient_ip_number->AdvancedSearch->issetSession()) {
-            return true;
-        }
-        if ($this->patient_name->AdvancedSearch->issetSession()) {
-            return true;
-        }
-        if ($this->patient_dob_year->AdvancedSearch->issetSession()) {
-            return true;
-        }
-        if ($this->patient_age->AdvancedSearch->issetSession()) {
-            return true;
-        }
-        if ($this->is_inpatient->AdvancedSearch->issetSession()) {
-            return true;
-        }
         return false;
     }
 
@@ -1489,12 +1241,6 @@ class JdhPatientsList extends JdhPatients
 
         // Clear basic search parameters
         $this->resetBasicSearchParms();
-
-        // Clear advanced search parameters
-        $this->resetAdvancedSearchParms();
-
-        // Clear queryBuilder
-        $this->setSessionRules("");
     }
 
     // Load advanced search default values
@@ -1509,17 +1255,6 @@ class JdhPatientsList extends JdhPatients
         $this->BasicSearch->unsetSession();
     }
 
-    // Clear all advanced search parameters
-    protected function resetAdvancedSearchParms()
-    {
-        $this->patient_id->AdvancedSearch->unsetSession();
-        $this->patient_ip_number->AdvancedSearch->unsetSession();
-        $this->patient_name->AdvancedSearch->unsetSession();
-        $this->patient_dob_year->AdvancedSearch->unsetSession();
-        $this->patient_age->AdvancedSearch->unsetSession();
-        $this->is_inpatient->AdvancedSearch->unsetSession();
-    }
-
     // Restore all search parameters
     protected function restoreSearchParms()
     {
@@ -1527,14 +1262,6 @@ class JdhPatientsList extends JdhPatients
 
         // Restore basic search values
         $this->BasicSearch->load();
-
-        // Restore advanced search values
-        $this->patient_id->AdvancedSearch->load();
-        $this->patient_ip_number->AdvancedSearch->load();
-        $this->patient_name->AdvancedSearch->load();
-        $this->patient_dob_year->AdvancedSearch->load();
-        $this->patient_age->AdvancedSearch->load();
-        $this->is_inpatient->AdvancedSearch->load();
     }
 
     // Set up sort parameters
@@ -1560,6 +1287,7 @@ class JdhPatientsList extends JdhPatients
             $this->updateSort($this->patient_gender); // patient_gender
             $this->updateSort($this->patient_phone); // patient_phone
             $this->updateSort($this->patient_registration_date); // patient_registration_date
+            $this->updateSort($this->time); // time
             $this->updateSort($this->is_inpatient); // is_inpatient
             $this->setStartRecordNumber(1); // Reset start position
         }
@@ -1596,6 +1324,7 @@ class JdhPatientsList extends JdhPatients
                 $this->patient_kin_phone->setSort("");
                 $this->service_id->setSort("");
                 $this->patient_registration_date->setSort("");
+                $this->time->setSort("");
                 $this->is_inpatient->setSort("");
                 $this->submitted_by_user_id->setSort("");
             }
@@ -1671,17 +1400,17 @@ class JdhPatientsList extends JdhPatients
         $item->OnLeft = false;
         $item->ShowInButtonGroup = false;
 
-        // "detail_jdh_vitals"
-        $item = &$this->ListOptions->add("detail_jdh_vitals");
-        $item->CssClass = "text-nowrap";
-        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_vitals');
-        $item->OnLeft = false;
-        $item->ShowInButtonGroup = false;
-
         // "detail_jdh_appointments"
         $item = &$this->ListOptions->add("detail_jdh_appointments");
         $item->CssClass = "text-nowrap";
         $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_appointments');
+        $item->OnLeft = false;
+        $item->ShowInButtonGroup = false;
+
+        // "detail_jdh_vitals"
+        $item = &$this->ListOptions->add("detail_jdh_vitals");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->allowList(CurrentProjectID() . 'jdh_vitals');
         $item->OnLeft = false;
         $item->ShowInButtonGroup = false;
 
@@ -1703,8 +1432,8 @@ class JdhPatientsList extends JdhPatients
         $pages->add("jdh_patient_cases");
         $pages->add("jdh_prescriptions");
         $pages->add("jdh_prescriptions_actions");
-        $pages->add("jdh_vitals");
         $pages->add("jdh_appointments");
+        $pages->add("jdh_vitals");
         $this->DetailPages = $pages;
 
         // List actions
@@ -1729,7 +1458,7 @@ class JdhPatientsList extends JdhPatients
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
-        $this->ListOptions->UseButtonGroup = true;
+        $this->ListOptions->UseButtonGroup = false;
         if ($this->ListOptions->UseButtonGroup && IsMobile()) {
             $this->ListOptions->UseDropDownButton = true;
         }
@@ -2057,44 +1786,6 @@ class JdhPatientsList extends JdhPatients
             }
         }
 
-        // "detail_jdh_vitals"
-        $opt = $this->ListOptions["detail_jdh_vitals"];
-        if ($Security->allowList(CurrentProjectID() . 'jdh_vitals') && $this->showOptionLink()) {
-            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_vitals", "TblCaption");
-            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhvitalslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
-            $links = "";
-            $detailPage = Container("JdhVitalsGrid");
-            if ($detailPage->DetailView && $Security->canView() && $this->showOptionLink("view") && $Security->allowView(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailViewLink", null);
-                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailViewTblVar != "") {
-                    $detailViewTblVar .= ",";
-                }
-                $detailViewTblVar .= "jdh_vitals";
-            }
-            if ($detailPage->DetailEdit && $Security->canEdit() && $this->showOptionLink("edit") && $Security->allowEdit(CurrentProjectID() . 'jdh_patients')) {
-                $caption = $Language->phrase("MasterDetailEditLink", null);
-                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
-                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
-                if ($detailEditTblVar != "") {
-                    $detailEditTblVar .= ",";
-                }
-                $detailEditTblVar .= "jdh_vitals";
-            }
-            if ($links != "") {
-                $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
-                $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
-            } else {
-                $body = preg_replace('/\b\s+dropdown-toggle\b/', "", $body);
-            }
-            $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">" . $body . "</div>";
-            $opt->Body = $body;
-            if ($this->ShowMultipleDetails) {
-                $opt->Visible = false;
-            }
-        }
-
         // "detail_jdh_appointments"
         $opt = $this->ListOptions["detail_jdh_appointments"];
         if ($Security->allowList(CurrentProjectID() . 'jdh_appointments') && $this->showOptionLink()) {
@@ -2119,6 +1810,44 @@ class JdhPatientsList extends JdhPatients
                     $detailEditTblVar .= ",";
                 }
                 $detailEditTblVar .= "jdh_appointments";
+            }
+            if ($links != "") {
+                $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
+                $body .= "<ul class=\"dropdown-menu\">" . $links . "</ul>";
+            } else {
+                $body = preg_replace('/\b\s+dropdown-toggle\b/', "", $body);
+            }
+            $body = "<div class=\"btn-group btn-group-sm ew-btn-group\">" . $body . "</div>";
+            $opt->Body = $body;
+            if ($this->ShowMultipleDetails) {
+                $opt->Visible = false;
+            }
+        }
+
+        // "detail_jdh_vitals"
+        $opt = $this->ListOptions["detail_jdh_vitals"];
+        if ($Security->allowList(CurrentProjectID() . 'jdh_vitals') && $this->showOptionLink()) {
+            $body = $Language->phrase("DetailLink") . $Language->TablePhrase("jdh_vitals", "TblCaption");
+            $body = "<a class=\"btn btn-default ew-row-link ew-detail" . ($this->ListOptions->UseDropDownButton ? " dropdown-toggle" : "") . "\" data-action=\"list\" href=\"" . HtmlEncode("jdhvitalslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "") . "\">" . $body . "</a>";
+            $links = "";
+            $detailPage = Container("JdhVitalsGrid");
+            if ($detailPage->DetailView && $Security->canView() && $this->showOptionLink("view") && $Security->allowView(CurrentProjectID() . 'jdh_patients')) {
+                $caption = $Language->phrase("MasterDetailViewLink", null);
+                $url = $this->getViewUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
+                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-view\" data-action=\"view\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
+                if ($detailViewTblVar != "") {
+                    $detailViewTblVar .= ",";
+                }
+                $detailViewTblVar .= "jdh_vitals";
+            }
+            if ($detailPage->DetailEdit && $Security->canEdit() && $this->showOptionLink("edit") && $Security->allowEdit(CurrentProjectID() . 'jdh_patients')) {
+                $caption = $Language->phrase("MasterDetailEditLink", null);
+                $url = $this->getEditUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
+                $links .= "<li><a class=\"dropdown-item ew-row-link ew-detail-edit\" data-action=\"edit\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode($url) . "\">" . $caption . "</a></li>";
+                if ($detailEditTblVar != "") {
+                    $detailEditTblVar .= ",";
+                }
+                $detailEditTblVar .= "jdh_vitals";
             }
             if ($links != "") {
                 $body .= "<button type=\"button\" class=\"dropdown-toggle btn btn-default ew-detail\" data-bs-toggle=\"dropdown\"></button>";
@@ -2175,132 +1904,6 @@ class JdhPatientsList extends JdhPatients
     {
         global $Language, $Security;
         $options = &$this->OtherOptions;
-        $option = $options["addedit"];
-
-        // Add
-        $item = &$option->add("add");
-        $addcaption = HtmlTitle($Language->phrase("AddLink"));
-        if ($this->ModalAdd && !IsMobile()) {
-            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-table=\"jdh_patients\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("AddLink") . "</a>";
-        } else {
-            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
-        }
-        $item->Visible = $this->AddUrl != "" && $Security->canAdd();
-        $option = $options["detail"];
-        $detailTableLink = "";
-                $item = &$option->add("detailadd_jdh_patient_visits");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_visits");
-                $detailPage = Container("JdhPatientVisitsGrid");
-                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
-                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
-                if ($item->Visible) {
-                    if ($detailTableLink != "") {
-                        $detailTableLink .= ",";
-                    }
-                    $detailTableLink .= "jdh_patient_visits";
-                }
-                $item = &$option->add("detailadd_jdh_chief_complaints");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_chief_complaints");
-                $detailPage = Container("JdhChiefComplaintsGrid");
-                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
-                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
-                if ($item->Visible) {
-                    if ($detailTableLink != "") {
-                        $detailTableLink .= ",";
-                    }
-                    $detailTableLink .= "jdh_chief_complaints";
-                }
-                $item = &$option->add("detailadd_jdh_examination_findings");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_examination_findings");
-                $detailPage = Container("JdhExaminationFindingsGrid");
-                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
-                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
-                if ($item->Visible) {
-                    if ($detailTableLink != "") {
-                        $detailTableLink .= ",";
-                    }
-                    $detailTableLink .= "jdh_examination_findings";
-                }
-                $item = &$option->add("detailadd_jdh_patient_cases");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_cases");
-                $detailPage = Container("JdhPatientCasesGrid");
-                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
-                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
-                if ($item->Visible) {
-                    if ($detailTableLink != "") {
-                        $detailTableLink .= ",";
-                    }
-                    $detailTableLink .= "jdh_patient_cases";
-                }
-                $item = &$option->add("detailadd_jdh_prescriptions");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_prescriptions");
-                $detailPage = Container("JdhPrescriptionsGrid");
-                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
-                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
-                if ($item->Visible) {
-                    if ($detailTableLink != "") {
-                        $detailTableLink .= ",";
-                    }
-                    $detailTableLink .= "jdh_prescriptions";
-                }
-                $item = &$option->add("detailadd_jdh_prescriptions_actions");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_prescriptions_actions");
-                $detailPage = Container("JdhPrescriptionsActionsGrid");
-                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
-                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
-                if ($item->Visible) {
-                    if ($detailTableLink != "") {
-                        $detailTableLink .= ",";
-                    }
-                    $detailTableLink .= "jdh_prescriptions_actions";
-                }
-                $item = &$option->add("detailadd_jdh_vitals");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
-                $detailPage = Container("JdhVitalsGrid");
-                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
-                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
-                if ($item->Visible) {
-                    if ($detailTableLink != "") {
-                        $detailTableLink .= ",";
-                    }
-                    $detailTableLink .= "jdh_vitals";
-                }
-                $item = &$option->add("detailadd_jdh_appointments");
-                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_appointments");
-                $detailPage = Container("JdhAppointmentsGrid");
-                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
-                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
-                if ($item->Visible) {
-                    if ($detailTableLink != "") {
-                        $detailTableLink .= ",";
-                    }
-                    $detailTableLink .= "jdh_appointments";
-                }
-
-        // Add multiple details
-        if ($this->ShowMultipleDetails) {
-            $item = &$option->add("detailsadd");
-            $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=" . $detailTableLink);
-            $caption = $Language->phrase("AddMasterDetailLink");
-            $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
-            $item->Visible = $detailTableLink != "" && $Security->canAdd();
-            // Hide single master/detail items
-            $ar = explode(",", $detailTableLink);
-            $cnt = count($ar);
-            for ($i = 0; $i < $cnt; $i++) {
-                if ($item = $option["detailadd_" . $ar[$i]]) {
-                    $item->Visible = false;
-                }
-            }
-        }
         $option = $options["action"];
 
         // Add multi delete
@@ -2329,6 +1932,7 @@ class JdhPatientsList extends JdhPatients
             $option->add("patient_gender", $this->createColumnOption("patient_gender"));
             $option->add("patient_phone", $this->createColumnOption("patient_phone"));
             $option->add("patient_registration_date", $this->createColumnOption("patient_registration_date"));
+            $option->add("time", $this->createColumnOption("time"));
             $option->add("is_inpatient", $this->createColumnOption("is_inpatient"));
         }
 
@@ -2626,69 +2230,6 @@ class JdhPatientsList extends JdhPatients
         $this->BasicSearch->setType(Get(Config("TABLE_BASIC_SEARCH_TYPE"), ""), false);
     }
 
-    // Load search values for validation
-    protected function loadSearchValues()
-    {
-        // Load search values
-        $hasValue = false;
-
-        // Load query builder rules
-        $rules = Post("rules");
-        if ($rules && $this->Command == "") {
-            $this->QueryRules = $rules;
-            $this->Command = "search";
-        }
-
-        // patient_id
-        if ($this->patient_id->AdvancedSearch->get()) {
-            $hasValue = true;
-            if (($this->patient_id->AdvancedSearch->SearchValue != "" || $this->patient_id->AdvancedSearch->SearchValue2 != "") && $this->Command == "") {
-                $this->Command = "search";
-            }
-        }
-
-        // patient_ip_number
-        if ($this->patient_ip_number->AdvancedSearch->get()) {
-            $hasValue = true;
-            if (($this->patient_ip_number->AdvancedSearch->SearchValue != "" || $this->patient_ip_number->AdvancedSearch->SearchValue2 != "") && $this->Command == "") {
-                $this->Command = "search";
-            }
-        }
-
-        // patient_name
-        if ($this->patient_name->AdvancedSearch->get()) {
-            $hasValue = true;
-            if (($this->patient_name->AdvancedSearch->SearchValue != "" || $this->patient_name->AdvancedSearch->SearchValue2 != "") && $this->Command == "") {
-                $this->Command = "search";
-            }
-        }
-
-        // patient_dob_year
-        if ($this->patient_dob_year->AdvancedSearch->get()) {
-            $hasValue = true;
-            if (($this->patient_dob_year->AdvancedSearch->SearchValue != "" || $this->patient_dob_year->AdvancedSearch->SearchValue2 != "") && $this->Command == "") {
-                $this->Command = "search";
-            }
-        }
-
-        // patient_age
-        if ($this->patient_age->AdvancedSearch->get()) {
-            $hasValue = true;
-            if (($this->patient_age->AdvancedSearch->SearchValue != "" || $this->patient_age->AdvancedSearch->SearchValue2 != "") && $this->Command == "") {
-                $this->Command = "search";
-            }
-        }
-
-        // is_inpatient
-        if ($this->is_inpatient->AdvancedSearch->get()) {
-            $hasValue = true;
-            if (($this->is_inpatient->AdvancedSearch->SearchValue != "" || $this->is_inpatient->AdvancedSearch->SearchValue2 != "") && $this->Command == "") {
-                $this->Command = "search";
-            }
-        }
-        return $hasValue;
-    }
-
     // Load recordset
     public function loadRecordset($offset = -1, $rowcnt = -1)
     {
@@ -2789,6 +2330,7 @@ class JdhPatientsList extends JdhPatients
         $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
         $this->service_id->setDbValue($row['service_id']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
+        $this->time->setDbValue($row['time']);
         $this->is_inpatient->setDbValue($row['is_inpatient']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
@@ -2809,6 +2351,7 @@ class JdhPatientsList extends JdhPatients
         $row['patient_kin_phone'] = $this->patient_kin_phone->DefaultValue;
         $row['service_id'] = $this->service_id->DefaultValue;
         $row['patient_registration_date'] = $this->patient_registration_date->DefaultValue;
+        $row['time'] = $this->time->DefaultValue;
         $row['is_inpatient'] = $this->is_inpatient->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
@@ -2874,6 +2417,8 @@ class JdhPatientsList extends JdhPatients
         // service_id
 
         // patient_registration_date
+
+        // time
 
         // is_inpatient
 
@@ -2941,6 +2486,10 @@ class JdhPatientsList extends JdhPatients
             $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
+            // time
+            $this->time->ViewValue = $this->time->CurrentValue;
+            $this->time->ViewValue = FormatDateTime($this->time->ViewValue, $this->time->formatPattern());
+
             // is_inpatient
             if (strval($this->is_inpatient->CurrentValue) != "") {
                 $this->is_inpatient->ViewValue = $this->is_inpatient->optionCaption($this->is_inpatient->CurrentValue);
@@ -2955,9 +2504,6 @@ class JdhPatientsList extends JdhPatients
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
-            if (!$this->isExport()) {
-                $this->patient_id->ViewValue = $this->highlightValue($this->patient_id);
-            }
 
             // patient_ip_number
             $this->patient_ip_number->HrefValue = "";
@@ -2976,9 +2522,6 @@ class JdhPatientsList extends JdhPatients
             // patient_dob_year
             $this->patient_dob_year->HrefValue = "";
             $this->patient_dob_year->TooltipValue = "";
-            if (!$this->isExport()) {
-                $this->patient_dob_year->ViewValue = $this->highlightValue($this->patient_dob_year);
-            }
 
             // patient_age
             $this->patient_age->HrefValue = "";
@@ -3007,6 +2550,10 @@ class JdhPatientsList extends JdhPatients
             $this->patient_registration_date->HrefValue = "";
             $this->patient_registration_date->TooltipValue = "";
 
+            // time
+            $this->time->HrefValue = "";
+            $this->time->TooltipValue = "";
+
             // is_inpatient
             $this->is_inpatient->HrefValue = "";
             $this->is_inpatient->TooltipValue = "";
@@ -3016,26 +2563,6 @@ class JdhPatientsList extends JdhPatients
         if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
             $this->rowRendered();
         }
-    }
-
-    // Validate search
-    protected function validateSearch()
-    {
-        // Check if validation required
-        if (!Config("SERVER_VALIDATE")) {
-            return true;
-        }
-
-        // Return validate result
-        $validateSearch = !$this->hasInvalidFields();
-
-        // Call Form_CustomValidate event
-        $formCustomError = "";
-        $validateSearch = $validateSearch && $this->formCustomValidate($formCustomError);
-        if ($formCustomError != "") {
-            $this->setFailureMessage($formCustomError);
-        }
-        return $validateSearch;
     }
 
     /**
@@ -3315,17 +2842,6 @@ class JdhPatientsList extends JdhPatients
         return $conn->fetchAssociative($sql);
     }
 
-    // Load advanced search
-    public function loadAdvancedSearch()
-    {
-        $this->patient_id->AdvancedSearch->load();
-        $this->patient_ip_number->AdvancedSearch->load();
-        $this->patient_name->AdvancedSearch->load();
-        $this->patient_dob_year->AdvancedSearch->load();
-        $this->patient_age->AdvancedSearch->load();
-        $this->is_inpatient->AdvancedSearch->load();
-    }
-
     // Get export HTML tag
     protected function getExportTag($type, $custom = false)
     {
@@ -3445,15 +2961,6 @@ class JdhPatientsList extends JdhPatients
             $item->Body = "<a class=\"btn btn-default ew-show-all\" role=\"button\" title=\"" . $Language->phrase("ShowAll") . "\" data-caption=\"" . $Language->phrase("ShowAll") . "\" data-ew-action=\"refresh\" data-url=\"" . $pageUrl . "cmd=reset\">" . $Language->phrase("ShowAllBtn") . "</a>";
         }
         $item->Visible = ($this->SearchWhere != $this->DefaultSearchWhere && $this->SearchWhere != "0=101");
-
-        // Advanced search button
-        $item = &$this->SearchOptions->add("advancedsearch");
-        if ($this->ModalSearch && !IsMobile()) {
-            $item->Body = "<a class=\"btn btn-default ew-advanced-search\" title=\"" . $Language->phrase("AdvancedSearch", true) . "\" data-table=\"jdh_patients\" data-caption=\"" . $Language->phrase("AdvancedSearch", true) . "\" data-ew-action=\"modal\" data-url=\"jdhpatientssearch\" data-btn=\"SearchBtn\">" . $Language->phrase("AdvancedSearch", false) . "</a>";
-        } else {
-            $item->Body = "<a class=\"btn btn-default ew-advanced-search\" title=\"" . $Language->phrase("AdvancedSearch", true) . "\" data-caption=\"" . $Language->phrase("AdvancedSearch", true) . "\" href=\"jdhpatientssearch\">" . $Language->phrase("AdvancedSearch", false) . "</a>";
-        }
-        $item->Visible = true;
 
         // Search highlight button
         $item = &$this->SearchOptions->add("searchhighlight");

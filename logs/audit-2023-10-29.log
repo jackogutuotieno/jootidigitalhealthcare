@@ -1,0 +1,12 @@
+date/time,script,user,action,table,field,"key value","old value","new value"
+"2023-10-29 14:57:25",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-29 15:05:52",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-29 15:06:00",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-29 15:06:06",/jootidigitalhealthcare/logout,3,logout,::1,,,,
+"2023-10-29 15:12:40",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-29 15:12:50",/jootidigitalhealthcare/logout,3,logout,::1,,,,
+"2023-10-29 15:23:29",/jootidigitalhealthcare/login,3,login,::1,,,,
+"2023-10-29 15:23:39",/jootidigitalhealthcare/logout,3,logout,::1,,,,
+"2023-10-29 15:24:01",/jootidigitalhealthcare/login,1,login,::1,,,,
+"2023-10-29 16:04:16",/jootidigitalhealthcare/logout,1,logout,::1,,,,
+"2023-10-29 16:04:24",/jootidigitalhealthcare/login,7,login,::1,,,,

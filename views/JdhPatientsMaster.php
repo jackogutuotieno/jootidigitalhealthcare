@@ -102,6 +102,17 @@ $jdh_patients = Container("jdh_patients");
 </td>
         </tr>
 <?php } ?>
+<?php if ($jdh_patients->time->Visible) { // time ?>
+        <tr id="r_time"<?= $jdh_patients->time->rowAttributes() ?>>
+            <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->time->caption() ?></td>
+            <td<?= $jdh_patients->time->cellAttributes() ?>>
+<span id="el_jdh_patients_time">
+<span<?= $jdh_patients->time->viewAttributes() ?>>
+<?= $jdh_patients->time->getViewValue() ?></span>
+</span>
+</td>
+        </tr>
+<?php } ?>
 <?php if ($jdh_patients->is_inpatient->Visible) { // is_inpatient ?>
         <tr id="r_is_inpatient"<?= $jdh_patients->is_inpatient->rowAttributes() ?>>
             <td class="<?= $jdh_patients->TableLeftColumnClass ?>"><?= $jdh_patients->is_inpatient->caption() ?></td>

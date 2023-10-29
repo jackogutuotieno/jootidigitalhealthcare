@@ -2771,6 +2771,43 @@ body {
 .brand-link .brand-text {
 	font-size: .8rem;
     font-weight: 500;
-}    
+}
+.btn-primary {
+	background-color: #7300a1;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+	background-color: #A7AD33 !important;
+}
+.form-check-input[type=checkbox]:checked {
+    background-color: #ADADAD;
+    border: none;
+    padding-top: 0.1rem;
+    padding-left: 0.1rem;
+}
+.ew-list-option-body .ew-row-link {
+	background-color: #A7AD33;
+	color: #fff;
+}
+.ew-list-option-body .ew-row-link:hover {
+	background-color: #fff;
+	color: #A7AD33;
+}
+.breadcrumb-item a {
+	color: #ADADAD;
+}
+.ew-footer-text {
+	font-size: .8rem;
+    font-weight: 500;
+}
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active {
+	color: #7300a1;
+	border-bottom-color: #7300a1;
+}
+.nav-tabs .nav-link {
+	padding-left: 0;
+	padding-right: 0;
+	margin: 0 .9rem;
+}
 
 /*END_USER_STYLES*/

@@ -1746,7 +1746,6 @@ class JdhVitals extends DbTable
                     $doc->exportCaption($this->random_blood_sugar);
                     $doc->exportCaption($this->spo_2);
                     $doc->exportCaption($this->submission_date);
-                    $doc->exportCaption($this->submitted_by_user_id);
                 } else {
                     $doc->exportCaption($this->vitals_id);
                     $doc->exportCaption($this->patient_id);
@@ -1802,7 +1801,6 @@ class JdhVitals extends DbTable
                         $doc->exportField($this->random_blood_sugar);
                         $doc->exportField($this->spo_2);
                         $doc->exportField($this->submission_date);
-                        $doc->exportField($this->submitted_by_user_id);
                     } else {
                         $doc->exportField($this->vitals_id);
                         $doc->exportField($this->patient_id);

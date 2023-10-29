@@ -382,6 +382,7 @@ class JdhPatientsDelete extends JdhPatients
         $this->patient_kin_phone->Visible = false;
         $this->service_id->Visible = false;
         $this->patient_registration_date->setVisibility();
+        $this->time->setVisibility();
         $this->is_inpatient->setVisibility();
         $this->submitted_by_user_id->Visible = false;
 
@@ -624,6 +625,7 @@ class JdhPatientsDelete extends JdhPatients
         $this->patient_kin_phone->setDbValue($row['patient_kin_phone']);
         $this->service_id->setDbValue($row['service_id']);
         $this->patient_registration_date->setDbValue($row['patient_registration_date']);
+        $this->time->setDbValue($row['time']);
         $this->is_inpatient->setDbValue($row['is_inpatient']);
         $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
     }
@@ -644,6 +646,7 @@ class JdhPatientsDelete extends JdhPatients
         $row['patient_kin_phone'] = $this->patient_kin_phone->DefaultValue;
         $row['service_id'] = $this->service_id->DefaultValue;
         $row['patient_registration_date'] = $this->patient_registration_date->DefaultValue;
+        $row['time'] = $this->time->DefaultValue;
         $row['is_inpatient'] = $this->is_inpatient->DefaultValue;
         $row['submitted_by_user_id'] = $this->submitted_by_user_id->DefaultValue;
         return $row;
@@ -684,6 +687,8 @@ class JdhPatientsDelete extends JdhPatients
         // service_id
 
         // patient_registration_date
+
+        // time
 
         // is_inpatient
 
@@ -751,6 +756,10 @@ class JdhPatientsDelete extends JdhPatients
             $this->patient_registration_date->ViewValue = $this->patient_registration_date->CurrentValue;
             $this->patient_registration_date->ViewValue = FormatDateTime($this->patient_registration_date->ViewValue, $this->patient_registration_date->formatPattern());
 
+            // time
+            $this->time->ViewValue = $this->time->CurrentValue;
+            $this->time->ViewValue = FormatDateTime($this->time->ViewValue, $this->time->formatPattern());
+
             // is_inpatient
             if (strval($this->is_inpatient->CurrentValue) != "") {
                 $this->is_inpatient->ViewValue = $this->is_inpatient->optionCaption($this->is_inpatient->CurrentValue);
@@ -801,6 +810,10 @@ class JdhPatientsDelete extends JdhPatients
             // patient_registration_date
             $this->patient_registration_date->HrefValue = "";
             $this->patient_registration_date->TooltipValue = "";
+
+            // time
+            $this->time->HrefValue = "";
+            $this->time->TooltipValue = "";
 
             // is_inpatient
             $this->is_inpatient->HrefValue = "";

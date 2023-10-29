@@ -40,6 +40,7 @@ loadjs.ready(["wrapper", "head"], function () {
             ["patient_phone", [fields.patient_phone.visible && fields.patient_phone.required ? ew.Validators.required(fields.patient_phone.caption) : null], fields.patient_phone.isInvalid],
             ["patient_kin_name", [fields.patient_kin_name.visible && fields.patient_kin_name.required ? ew.Validators.required(fields.patient_kin_name.caption) : null], fields.patient_kin_name.isInvalid],
             ["patient_kin_phone", [fields.patient_kin_phone.visible && fields.patient_kin_phone.required ? ew.Validators.required(fields.patient_kin_phone.caption) : null], fields.patient_kin_phone.isInvalid],
+            ["time", [fields.time.visible && fields.time.required ? ew.Validators.required(fields.time.caption) : null, ew.Validators.time(fields.time.clientFormatPattern)], fields.time.isInvalid],
             ["is_inpatient", [fields.is_inpatient.visible && fields.is_inpatient.required ? ew.Validators.required(fields.is_inpatient.caption) : null], fields.is_inpatient.isInvalid],
             ["submitted_by_user_id", [fields.submitted_by_user_id.visible && fields.submitted_by_user_id.required ? ew.Validators.required(fields.submitted_by_user_id.caption) : null], fields.submitted_by_user_id.isInvalid]
         ])
@@ -184,6 +185,18 @@ loadjs.ready(["wrapper", "head"], function () {
 </div></div>
     </div>
 <?php } ?>
+<?php if ($Page->time->Visible) { // time ?>
+    <div id="r_time"<?= $Page->time->rowAttributes() ?>>
+        <label id="elh_jdh_patients_time" for="x_time" class="<?= $Page->LeftColumnClass ?>"><?= $Page->time->caption() ?><?= $Page->time->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
+        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->time->cellAttributes() ?>>
+<span id="el_jdh_patients_time">
+<input type="<?= $Page->time->getInputTextType() ?>" name="x_time" id="x_time" data-table="jdh_patients" data-field="x_time" value="<?= $Page->time->EditValue ?>" placeholder="<?= HtmlEncode($Page->time->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->time->formatPattern()) ?>"<?= $Page->time->editAttributes() ?> aria-describedby="x_time_help">
+<?= $Page->time->getCustomMessage() ?>
+<div class="invalid-feedback"><?= $Page->time->getErrorMessage() ?></div>
+</span>
+</div></div>
+    </div>
+<?php } ?>
 <?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
     <div id="r_is_inpatient"<?= $Page->is_inpatient->rowAttributes() ?>>
         <label id="elh_jdh_patients_is_inpatient" for="x_is_inpatient" class="<?= $Page->LeftColumnClass ?>"><?= $Page->is_inpatient->caption() ?><?= $Page->is_inpatient->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
@@ -274,16 +287,16 @@ loadjs.ready("fjdh_patientsedit", function() {
     }
 ?>
 <?php
-    if (in_array("jdh_vitals", explode(",", $Page->getCurrentDetailTable())) && $jdh_vitals->DetailEdit) {
+    if (in_array("jdh_appointments", explode(",", $Page->getCurrentDetailTable())) && $jdh_appointments->DetailEdit) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" data-bs-target="#tab_jdh_vitals" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_vitals" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_vitals")) ?>"><?= $Language->tablePhrase("jdh_vitals", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_appointments") ?><?= $Page->DetailPages->activeClasses("jdh_appointments") ?>" data-bs-target="#tab_jdh_appointments" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_appointments" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_appointments")) ?>"><?= $Language->tablePhrase("jdh_appointments", "TblCaption") ?></button></li>
 <?php
     }
 ?>
 <?php
-    if (in_array("jdh_appointments", explode(",", $Page->getCurrentDetailTable())) && $jdh_appointments->DetailEdit) {
+    if (in_array("jdh_vitals", explode(",", $Page->getCurrentDetailTable())) && $jdh_vitals->DetailEdit) {
 ?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_appointments") ?><?= $Page->DetailPages->activeClasses("jdh_appointments") ?>" data-bs-target="#tab_jdh_appointments" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_appointments" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_appointments")) ?>"><?= $Language->tablePhrase("jdh_appointments", "TblCaption") ?></button></li>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" data-bs-target="#tab_jdh_vitals" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_vitals" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_vitals")) ?>"><?= $Language->tablePhrase("jdh_vitals", "TblCaption") ?></button></li>
 <?php
     }
 ?>
@@ -332,17 +345,17 @@ loadjs.ready("fjdh_patientsedit", function() {
         </div><!-- /page* -->
 <?php } ?>
 <?php
-    if (in_array("jdh_vitals", explode(",", $Page->getCurrentDetailTable())) && $jdh_vitals->DetailEdit) {
-?>
-        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" id="tab_jdh_vitals" role="tabpanel"><!-- page* -->
-<?php include_once "JdhVitalsGrid.php" ?>
-        </div><!-- /page* -->
-<?php } ?>
-<?php
     if (in_array("jdh_appointments", explode(",", $Page->getCurrentDetailTable())) && $jdh_appointments->DetailEdit) {
 ?>
         <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_appointments") ?><?= $Page->DetailPages->activeClasses("jdh_appointments") ?>" id="tab_jdh_appointments" role="tabpanel"><!-- page* -->
 <?php include_once "JdhAppointmentsGrid.php" ?>
+        </div><!-- /page* -->
+<?php } ?>
+<?php
+    if (in_array("jdh_vitals", explode(",", $Page->getCurrentDetailTable())) && $jdh_vitals->DetailEdit) {
+?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" id="tab_jdh_vitals" role="tabpanel"><!-- page* -->
+<?php include_once "JdhVitalsGrid.php" ?>
         </div><!-- /page* -->
 <?php } ?>
     </div><!-- /.tab-content -->

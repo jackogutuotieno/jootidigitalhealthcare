@@ -1379,12 +1379,12 @@ class JdhPatientsAdd extends JdhPatients
         if (in_array("jdh_prescriptions_actions", $detailTblVar) && $detailPage->DetailAdd) {
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
-        $detailPage = Container("JdhVitalsGrid");
-        if (in_array("jdh_vitals", $detailTblVar) && $detailPage->DetailAdd) {
-            $validateForm = $validateForm && $detailPage->validateGridForm();
-        }
         $detailPage = Container("JdhAppointmentsGrid");
         if (in_array("jdh_appointments", $detailTblVar) && $detailPage->DetailAdd) {
+            $validateForm = $validateForm && $detailPage->validateGridForm();
+        }
+        $detailPage = Container("JdhVitalsGrid");
+        if (in_array("jdh_vitals", $detailTblVar) && $detailPage->DetailAdd) {
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
 
@@ -1563,20 +1563,20 @@ class JdhPatientsAdd extends JdhPatients
                 $detailPage->patient_id->setSessionValue(""); // Clear master key if insert failed
                 }
             }
-            $detailPage = Container("JdhVitalsGrid");
-            if (in_array("jdh_vitals", $detailTblVar) && $detailPage->DetailAdd) {
+            $detailPage = Container("JdhAppointmentsGrid");
+            if (in_array("jdh_appointments", $detailTblVar) && $detailPage->DetailAdd) {
                 $detailPage->patient_id->setSessionValue($this->patient_id->CurrentValue); // Set master key
-                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_vitals"); // Load user level of detail table
+                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_appointments"); // Load user level of detail table
                 $addRow = $detailPage->gridInsert();
                 $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
                 if (!$addRow) {
                 $detailPage->patient_id->setSessionValue(""); // Clear master key if insert failed
                 }
             }
-            $detailPage = Container("JdhAppointmentsGrid");
-            if (in_array("jdh_appointments", $detailTblVar) && $detailPage->DetailAdd) {
+            $detailPage = Container("JdhVitalsGrid");
+            if (in_array("jdh_vitals", $detailTblVar) && $detailPage->DetailAdd) {
                 $detailPage->patient_id->setSessionValue($this->patient_id->CurrentValue); // Set master key
-                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_appointments"); // Load user level of detail table
+                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_vitals"); // Load user level of detail table
                 $addRow = $detailPage->gridInsert();
                 $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
                 if (!$addRow) {
@@ -1750,8 +1750,8 @@ class JdhPatientsAdd extends JdhPatients
                     $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
                 }
             }
-            if (in_array("jdh_vitals", $detailTblVar)) {
-                $detailPageObj = Container("JdhVitalsGrid");
+            if (in_array("jdh_appointments", $detailTblVar)) {
+                $detailPageObj = Container("JdhAppointmentsGrid");
                 if ($detailPageObj->DetailAdd) {
                     $detailPageObj->EventCancelled = $this->EventCancelled;
                     if ($this->CopyRecord) {
@@ -1769,8 +1769,8 @@ class JdhPatientsAdd extends JdhPatients
                     $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
                 }
             }
-            if (in_array("jdh_appointments", $detailTblVar)) {
-                $detailPageObj = Container("JdhAppointmentsGrid");
+            if (in_array("jdh_vitals", $detailTblVar)) {
+                $detailPageObj = Container("JdhVitalsGrid");
                 if ($detailPageObj->DetailAdd) {
                     $detailPageObj->EventCancelled = $this->EventCancelled;
                     if ($this->CopyRecord) {
@@ -1813,8 +1813,8 @@ class JdhPatientsAdd extends JdhPatients
         $pages->add('jdh_patient_cases');
         $pages->add('jdh_prescriptions');
         $pages->add('jdh_prescriptions_actions');
-        $pages->add('jdh_vitals');
         $pages->add('jdh_appointments');
+        $pages->add('jdh_vitals');
         $this->DetailPages = $pages;
     }
 
