@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Oct 23, 2023 at 08:22 AM
+-- Generation Time: Oct 30, 2023 at 02:14 PM
 -- Server version: 8.0.31
 -- PHP Version: 8.1.13
 
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS `jdh_appointments` (
   `submission_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `subbmitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`appointment_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_appointments`
@@ -51,7 +51,8 @@ INSERT INTO `jdh_appointments` (`appointment_id`, `patient_id`, `user_id`, `appo
 (3, 2, 10, 'Coming for post surgery review.', '2023-12-13 22:20:00', '2023-12-13 23:20:00', 1, 'Coming for post surgery review.', '2023-08-09 21:23:46', 1),
 (4, 1, 10, 'Coming to examine  x-ray results', '2023-08-24 21:25:00', '2023-08-24 22:25:00', 1, 'Coming to examine  x-ray results', '2023-08-16 21:26:10', 2),
 (5, 5, 3, 'Post surgery review', '2023-10-23 21:45:00', '2023-08-29 22:45:00', 1, 'Post surgery review', '2023-08-29 21:46:27', 2),
-(6, 4, 9, 'Cancer chemotherapy session', '2023-10-26 23:48:00', '2023-10-26 23:48:00', 1, 'Cancer chemotherapy session', '2023-08-29 23:48:58', 2);
+(6, 4, 9, 'Cancer chemotherapy session', '2023-10-26 23:48:00', '2023-10-26 23:48:00', 1, 'Cancer chemotherapy session', '2023-08-29 23:48:58', 2),
+(7, 3, 10, 'See Doctor', '2023-10-30 23:51:00', '2023-10-30 23:51:00', 1, 'Test', '2023-10-25 23:52:19', 2);
 
 -- --------------------------------------------------------
 
@@ -72,7 +73,7 @@ CREATE TABLE IF NOT EXISTS `jdh_audittrail` (
   `OldValue` longtext,
   `NewValue` longtext,
   PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=969 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=969 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_audittrail`
@@ -1064,7 +1065,7 @@ CREATE TABLE IF NOT EXISTS `jdh_beds` (
   `bed_number` int NOT NULL,
   `assigned` tinyint(1) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_beds`
@@ -1088,7 +1089,7 @@ CREATE TABLE IF NOT EXISTS `jdh_branding` (
   `header_image` mediumblob,
   `footer_image` mediumblob,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_branding`
@@ -1113,7 +1114,7 @@ CREATE TABLE IF NOT EXISTS `jdh_chief_complaints` (
   `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_chief_complaints`
@@ -1124,7 +1125,8 @@ INSERT INTO `jdh_chief_complaints` (`id`, `patient_id`, `chief_compaints`, `adde
 (2, 1, 'Test complaint', 4, 0, '2023-08-16 11:55:26', '2023-08-16 11:55:26'),
 (3, 2, 'Some chest pain...', 4, 0, '2023-08-29 22:09:55', '2023-08-29 22:20:20'),
 (4, 1, 'ddsdsf', 0, 0, '2023-08-29 22:59:46', '2023-08-29 22:59:46'),
-(5, 1, 'Another test complaint', 4, 0, '2023-08-29 23:50:31', '2023-08-29 23:50:31');
+(5, 1, 'Another test complaint', 4, 0, '2023-08-29 23:50:31', '2023-08-29 23:50:31'),
+(6, 1, 'teste4frg sdffdf.', 0, 0, '2023-10-30 08:58:39', '2023-10-30 08:58:39');
 
 -- --------------------------------------------------------
 
@@ -1153,9 +1155,9 @@ DROP TABLE IF EXISTS `jdh_departments`;
 CREATE TABLE IF NOT EXISTS `jdh_departments` (
   `department_id` int NOT NULL AUTO_INCREMENT,
   `department_name` varchar(100) NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   PRIMARY KEY (`department_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_departments`
@@ -1188,7 +1190,7 @@ CREATE TABLE IF NOT EXISTS `jdh_doctor_charges` (
   `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `submitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_doctor_charges`
@@ -1209,12 +1211,12 @@ DROP TABLE IF EXISTS `jdh_examination_findings`;
 CREATE TABLE IF NOT EXISTS `jdh_examination_findings` (
   `id` int NOT NULL AUTO_INCREMENT,
   `patient_id` int NOT NULL,
-  `general_exams` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `systematic_exams` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `general_exams` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `systematic_exams` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `submitted_by_user_id` int NOT NULL,
   `date_submitted` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_examination_findings`
@@ -1242,7 +1244,7 @@ CREATE TABLE IF NOT EXISTS `jdh_exportlog` (
   `Filename` varchar(255) NOT NULL,
   `Request` longtext NOT NULL,
   PRIMARY KEY (`FileId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -1256,7 +1258,7 @@ CREATE TABLE IF NOT EXISTS `jdh_facility_units` (
   `unit_name` varchar(100) NOT NULL,
   `description` text,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_facility_units`
@@ -1285,7 +1287,7 @@ CREATE TABLE IF NOT EXISTS `jdh_insurance` (
   `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `submitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`insurance_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_insurance`
@@ -1313,6 +1315,54 @@ INSERT INTO `jdh_insurance` (`insurance_id`, `insurance_name`, `insurance_contac
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `jdh_invoice`
+--
+
+DROP TABLE IF EXISTS `jdh_invoice`;
+CREATE TABLE IF NOT EXISTS `jdh_invoice` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `patient_id` int NOT NULL,
+  `invoice_title` varchar(100) NOT NULL,
+  `invoice_description` text NOT NULL,
+  `invoice_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `submittedby_user_id` int NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `jdh_invoice`
+--
+
+INSERT INTO `jdh_invoice` (`id`, `patient_id`, `invoice_title`, `invoice_description`, `invoice_date`, `submittedby_user_id`) VALUES
+(1, 1, 'Patient One\'s Invoice', 'Patient One\'s Invoice', '2023-10-29 20:53:17', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `jdh_invoice_items`
+--
+
+DROP TABLE IF EXISTS `jdh_invoice_items`;
+CREATE TABLE IF NOT EXISTS `jdh_invoice_items` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `invoice_id` int NOT NULL,
+  `invoice_item` varchar(100) NOT NULL,
+  `total_amount` int NOT NULL,
+  `submittedby_user_id` int NOT NULL,
+  `submission_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `jdh_invoice_items`
+--
+
+INSERT INTO `jdh_invoice_items` (`id`, `invoice_id`, `invoice_item`, `total_amount`, `submittedby_user_id`, `submission_date`) VALUES
+(1, 1, 'Pharmacy', 2000, 0, '2023-10-29 21:01:41');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `jdh_ipd_admission`
 --
 
@@ -1327,7 +1377,7 @@ CREATE TABLE IF NOT EXISTS `jdh_ipd_admission` (
   `date_added` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_ipd_admission`
@@ -1349,8 +1399,8 @@ CREATE TABLE IF NOT EXISTS `jdh_lab_income` (
 ,`service_name` varchar(100)
 ,`service_cost` int
 ,`request_date` datetime
-,`patient_dob` date
 ,`patient_id` int
+,`patient_dob_year` int
 );
 
 -- --------------------------------------------------------
@@ -1365,7 +1415,7 @@ CREATE TABLE IF NOT EXISTS `jdh_lab_test_categories` (
   `test_category_name` varchar(100) NOT NULL,
   `test_category_description` text,
   PRIMARY KEY (`test_category_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_lab_test_categories`
@@ -1386,9 +1436,9 @@ CREATE TABLE IF NOT EXISTS `jdh_lab_test_subcategories` (
   `test_subcategory_id` int NOT NULL AUTO_INCREMENT,
   `test_category_id` int NOT NULL,
   `test_subcategory_name` varchar(100) NOT NULL,
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   PRIMARY KEY (`test_subcategory_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_lab_test_subcategories`
@@ -1405,7 +1455,9 @@ INSERT INTO `jdh_lab_test_subcategories` (`test_subcategory_id`, `test_category_
 (8, 2, 'ANC Profile', '<p>ANC Profile Test</p>'),
 (9, 2, 'HIV/PITC', '<p>HIV/PITC Test</p>'),
 (10, 2, 'Rheumatoid Factor', '<p>Rheumatoid Factor Test</p>'),
-(11, 2, 'Stool for o/c', '<p>Stool for o/c test</p>');
+(11, 2, 'Stool for o/c', '<p>Stool for o/c test</p>'),
+(12, 1, 'Ultrasound', 'Ultrasound'),
+(13, 1, 'CT Scan', 'CT Scan');
 
 -- --------------------------------------------------------
 
@@ -1549,7 +1601,7 @@ CREATE TABLE IF NOT EXISTS `jdh_medicine_categories` (
   `category_name` varchar(100) NOT NULL,
   `category_description` text NOT NULL,
   PRIMARY KEY (`category_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_medicine_categories`
@@ -1577,7 +1629,7 @@ CREATE TABLE IF NOT EXISTS `jdh_medicine_stock` (
   `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_medicine_stock`
@@ -1598,11 +1650,11 @@ DROP TABLE IF EXISTS `jdh_patients`;
 CREATE TABLE IF NOT EXISTS `jdh_patients` (
   `patient_id` bigint NOT NULL AUTO_INCREMENT,
   `photo` mediumblob,
-  `patient_national_id` char(13) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `patient_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `patient_dob` date NOT NULL,
+  `patient_ip_number` char(13) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `patient_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `patient_dob_year` int NOT NULL,
   `patient_gender` varchar(10) NOT NULL,
-  `patient_phone` char(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `patient_phone` char(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `patient_kin_name` varchar(100) DEFAULT NULL,
   `patient_kin_phone` char(15) DEFAULT NULL,
   `service_id` int NOT NULL,
@@ -1611,35 +1663,24 @@ CREATE TABLE IF NOT EXISTS `jdh_patients` (
   `patient_registration_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`patient_id`),
   UNIQUE KEY `patient_phone` (`patient_phone`),
-  UNIQUE KEY `patient_national_id` (`patient_national_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  UNIQUE KEY `patient_national_id` (`patient_ip_number`),
+  UNIQUE KEY `patient_ip_number` (`patient_ip_number`)
+) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_patients`
 --
 
-INSERT INTO `jdh_patients` (`patient_id`, `photo`, `patient_national_id`, `patient_name`, `patient_dob`, `patient_gender`, `patient_phone`, `patient_kin_name`, `patient_kin_phone`, `service_id`, `is_inpatient`, `submitted_by_user_id`, `patient_registration_date`) VALUES
-(1, NULL, '001', 'Patient One', '1984-08-06', 'Male', '0722000000', 'Demo Kin', '54566788', 1, 0, 1, '2023-08-03 22:57:29'),
-(2, NULL, '002', 'Patient Two', '1984-08-07', 'Female', '0721123456', 'Demo Kin', '3435545', 1, 0, 1, '2023-08-03 22:58:55'),
-(3, NULL, '003', 'Patient Three', '1989-08-29', 'Male', '0722103853', 'Mufuta', '0712345678', 1, 0, 1, '2023-08-05 18:02:25'),
-(4, NULL, '232434456', 'Susan Rende', '2004-08-17', 'Female', '0722476500', 'Cathy Majiwa', '0722959779', 1, 1, 1, '2023-08-27 14:39:20'),
-(5, NULL, '334454', 'Mary Doe', '1993-02-03', 'Female', '0712345678', 'None', '0712345678', 1, 0, 2, '2023-08-29 21:42:35'),
-(6, NULL, '0012', 'Patient Four', '1992-04-15', 'Female', '23234', NULL, NULL, 1, 1, 1, '2023-10-14 19:50:17');
-
--- --------------------------------------------------------
-
---
--- Stand-in structure for view `jdh_patients_insuarance`
--- (See below for the actual view)
---
-DROP VIEW IF EXISTS `jdh_patients_insuarance`;
-CREATE TABLE IF NOT EXISTS `jdh_patients_insuarance` (
-`patient_id` bigint
-,`patient_name` varchar(50)
-,`insurance_name` varchar(100)
-,`submitted_by_user_id` int
-,`patient_dob` date
-);
+INSERT INTO `jdh_patients` (`patient_id`, `photo`, `patient_ip_number`, `patient_name`, `patient_dob_year`, `patient_gender`, `patient_phone`, `patient_kin_name`, `patient_kin_phone`, `service_id`, `is_inpatient`, `submitted_by_user_id`, `patient_registration_date`) VALUES
+(1, NULL, '001', 'Patient One', 1984, 'Male', '0722000000', 'Demo Kin', '54566788', 1, 0, 1, '2023-08-03 22:57:29'),
+(2, NULL, '002', 'Patient Two', 1984, 'Female', '0721123456', 'Demo Kin', '3435545', 1, 0, 1, '2023-08-03 22:58:55'),
+(3, NULL, '003', 'Patient Three', 1977, 'Male', '0722103853', 'Mufuta', '0712345678', 1, 0, 1, '2023-08-05 18:02:25'),
+(4, NULL, '004', 'Susan Rende', 2004, 'Female', '0722476500', 'Cathy Majiwa', '0722959779', 1, 1, 1, '2023-08-27 14:39:20'),
+(5, NULL, '005', 'Mary Doe', 1969, 'Female', '0712345678', 'None', '0712345678', 1, 0, 2, '2023-08-29 21:42:35'),
+(6, NULL, '006', 'Patient Four', 1972, 'Female', '23234', NULL, NULL, 1, 1, 1, '2023-10-14 19:50:17'),
+(7, NULL, '007', 'Peter Doe', 1990, 'Male', '98002234', NULL, NULL, 1, 0, 1, '2023-10-24 15:40:04'),
+(8, NULL, '008', 'Anne Jeremy', 2001, 'Female', '098776554', 'None', NULL, 1, 0, 1, '2023-10-25 10:42:31'),
+(9, NULL, '009', 'Rude Jude', 1998, 'Male', '892873743', NULL, NULL, 1, 0, 1, '2023-10-25 11:23:12');
 
 -- --------------------------------------------------------
 
@@ -1651,7 +1692,7 @@ DROP TABLE IF EXISTS `jdh_patient_cases`;
 CREATE TABLE IF NOT EXISTS `jdh_patient_cases` (
   `case_id` int NOT NULL AUTO_INCREMENT,
   `patient_id` int NOT NULL,
-  `random_blood_sugar` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `random_blood_sugar` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   `history` text,
   `medical_history` text NOT NULL,
   `family` text NOT NULL,
@@ -1660,7 +1701,7 @@ CREATE TABLE IF NOT EXISTS `jdh_patient_cases` (
   `submission_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `submitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`case_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_patient_cases`
@@ -1701,7 +1742,7 @@ CREATE TABLE IF NOT EXISTS `jdh_patient_visits` (
   `visit_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `subbmitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`visit_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_patient_visits`
@@ -1716,7 +1757,9 @@ INSERT INTO `jdh_patient_visits` (`visit_id`, `patient_id`, `visit_type_id`, `us
 (8, 5, 3, 9, 4, 'Test Visit', '2023-08-29 18:47:16', 2),
 (9, 1, 2, 10, NULL, 'hujhjuhuh', '2023-08-29 19:42:26', 0),
 (10, 2, 1, 9, 2, 'ewrrert frfrtr', '2023-08-29 20:44:19', 2),
-(11, 4, 2, 10, 4, 'Emergency operation', '2023-08-29 20:48:09', 2);
+(11, 4, 2, 10, 4, 'Emergency operation', '2023-08-29 20:48:09', 2),
+(12, 8, 2, 10, 3, 'Test', '2023-10-25 08:22:17', 0),
+(13, 1, 3, 3, 3, 'The patient is coming for some CT scan.', '2023-10-30 05:56:15', 2);
 
 -- --------------------------------------------------------
 
@@ -1754,7 +1797,7 @@ CREATE TABLE IF NOT EXISTS `jdh_prescriptions` (
   `prescription_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `submitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`prescription_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_prescriptions`
@@ -1778,7 +1821,7 @@ CREATE TABLE IF NOT EXISTS `jdh_prescriptions_actions` (
   `submittedby_user_id` int NOT NULL,
   `submission_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_prescriptions_actions`
@@ -1797,10 +1840,10 @@ DROP VIEW IF EXISTS `jdh_registration_income`;
 CREATE TABLE IF NOT EXISTS `jdh_registration_income` (
 `patient_id` bigint
 ,`patient_name` varchar(50)
-,`patient_dob` date
 ,`patient_gender` varchar(10)
 ,`service_cost` int
 ,`patient_registration_date` datetime
+,`patient_dob_year` int
 );
 
 -- --------------------------------------------------------
@@ -1815,7 +1858,7 @@ CREATE TABLE IF NOT EXISTS `jdh_roles` (
   `role_name` varchar(100) NOT NULL,
   `role_description` text,
   PRIMARY KEY (`role_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_roles`
@@ -1849,7 +1892,7 @@ CREATE TABLE IF NOT EXISTS `jdh_services` (
   `date_updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `submitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`service_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_services`
@@ -1890,9 +1933,9 @@ DROP TABLE IF EXISTS `jdh_service_category`;
 CREATE TABLE IF NOT EXISTS `jdh_service_category` (
   `category_id` int NOT NULL AUTO_INCREMENT,
   `category_name` varchar(100) NOT NULL,
-  `category_description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `category_description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   PRIMARY KEY (`category_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_service_category`
@@ -1914,10 +1957,10 @@ DROP TABLE IF EXISTS `jdh_service_subcategory`;
 CREATE TABLE IF NOT EXISTS `jdh_service_subcategory` (
   `subcategory_id` int NOT NULL AUTO_INCREMENT,
   `category_id` int NOT NULL,
-  `subcategory_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `subcategory_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `description` text NOT NULL,
   PRIMARY KEY (`subcategory_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_service_subcategory`
@@ -1960,7 +2003,7 @@ CREATE TABLE IF NOT EXISTS `jdh_status` (
   `status_id` int NOT NULL AUTO_INCREMENT,
   `status` varchar(50) NOT NULL,
   PRIMARY KEY (`status_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_status`
@@ -1986,7 +2029,7 @@ CREATE TABLE IF NOT EXISTS `jdh_test_reports` (
   `report_submittedby_user_id` int NOT NULL,
   `report_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`report_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_test_reports`
@@ -2014,7 +2057,7 @@ CREATE TABLE IF NOT EXISTS `jdh_test_requests` (
   `status_id` int NOT NULL,
   `request_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`request_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_test_requests`
@@ -2022,7 +2065,7 @@ CREATE TABLE IF NOT EXISTS `jdh_test_requests` (
 
 INSERT INTO `jdh_test_requests` (`request_id`, `patient_id`, `request_title`, `request_service_id`, `request_description`, `requested_by_user_id`, `status_id`, `request_date`) VALUES
 (1, 1, 'RBS test request for Patient Demo', 13, 'RBS test request for Patient Demo', 3, 1, '2023-08-05 13:45:01'),
-(2, 2, 'RBS test request for Patient Demo', 13, 'RBS test request for Patient Demo', 3, 0, '2023-08-05 14:14:50'),
+(2, 2, 'RBS test request for Patient Demo', 13, 'RBS test request for Patient Demo', 3, 1, '2023-08-05 14:14:50'),
 (3, 4, 'Susan ANC Profile Test', 20, 'This is first test', 3, 1, '2023-08-30 00:13:13');
 
 -- --------------------------------------------------------
@@ -2035,36 +2078,36 @@ DROP TABLE IF EXISTS `jdh_users`;
 CREATE TABLE IF NOT EXISTS `jdh_users` (
   `user_id` int NOT NULL AUTO_INCREMENT,
   `photo` mediumblob,
-  `first_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `first_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `last_name` varchar(50) NOT NULL,
-  `national_id` char(14) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `email_address` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `phone` char(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `national_id` char(14) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `email_address` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `phone` char(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `role_id` int NOT NULL,
   `department_id` int NOT NULL,
   `password` varchar(255) NOT NULL,
   `biography` text NOT NULL,
   `registration_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_users`
 --
 
 INSERT INTO `jdh_users` (`user_id`, `photo`, `first_name`, `last_name`, `national_id`, `email_address`, `phone`, `role_id`, `department_id`, `password`, `biography`, `registration_date`) VALUES
-(1, NULL, 'Systems', 'Administrator', '1', 'administrator@example.com', '123456789', -1, 4, '12288e7196c773a802343b284b98b755', 'a:23:{s:7:\"user_id\";i:1;s:5:\"photo\";N;s:10:\"first_name\";s:7:\"Systems\";s:9:\"last_name\";s:13:\"Administrator\";s:11:\"national_id\";s:1:\"1\";s:13:\"email_address\";s:25:\"administrator@example.com\";s:5:\"phone\";s:9:\"123456789\";s:4:\"role\";s:13:\"Administrator\";s:13:\"department_id\";i:4;s:9:\"biography\";s:46:\"<p>This is a systems administrator profile</p>\";s:17:\"registration_date\";s:19:\"2023-08-04 20:59:58\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/04\";s:6:\"Secret\";s:8:\"98810353\";s:20:\"SecretCreateDateTime\";s:19:\"2023-09-30 08:14:53\";s:11:\"BackupCodes\";a:10:{i:0;s:184:\"def50200a9e3e15fafb0d2baf8f24e56565a05016636f50fe839ef7336e49a6543cf7609a3308712ac491a813c8f1f8363942b7abf4066b1641eda4ac5e5d7e8f9cc9902dd485c00f0ffe606028ea4e8b12b5f6d157fdbfe81f22a84\";i:1;s:184:\"def5020083461ce99f25bb10a01f2075b15833cc528debd97f2c4298907b68299e6b61992eb947afac9c24922e40769830c475b3c3f1ffb3055a1c814fa79c89d83dc53e3002f97581a9c9a449131a6d39ec0ed5527caa01c0d76b65\";i:2;s:184:\"def5020061ca7b2852a7dbb8a362a800cf92fe63778f515e3bef1cba340aa943a5950e17a9db0662d61d75524d1fa2c3efe1dea73afd9702439d472cd5ea73097c46d8fd8d115e82cc42b7b330b556041aab18a43d93579126160238\";i:3;s:184:\"def50200509ed918d6ca4b1f50c3ce904f800bd2db2ffae68450521feb949ff46f34807c14f894273eb0e49232e3b2b47b41a4ffbb9ddfd8aca4725f264014b966853b69200ec1ba37e21e1bc5be2f02618f8622358c02a73cd1ff87\";i:4;s:184:\"def50200c673b2548574132240adb89fa3ec0d638a974a47ff88bbb224476d5d7b2260a6c841bbb99757332f38320951fbfec2fa4249f62911c15ae71cc48c21d355f2409e3d2fe457ee2de9cf3b32dc7ecb35a3de01b2f8b71087c1\";i:5;s:184:\"def5020030340fdbefd18002dffe81e8b72397a1699d08f3326b768a02a87f4db522e717a81ff301f97f0f7bd37267c96b1eddc5701c53f5f127c5d7d75f8781087d5ab1b9a4c1b1a5e0cdcb0ee55518235affa963824f63d37f8ebc\";i:6;s:184:\"def502000b95ee2a12ef6d1a74a50b23531690d3787be726214ef340bb7c05ca0b0b893f11884fca529771e77d55672114b0473377cf8edb8043062c1f87a64abb4346d7c8006872c4c5f0cc18375131b93311aed4ab6191116beae1\";i:7;s:184:\"def502008d0d9ac7f99fcf9f54a394c71a6ff2eb9c01b7e1a5f8239f3d2daab04a4ef1f639ed6d8feb7ce05954d80e0b8968d70815dc25626ef9a35a7c7be9ec1d854ee0a8716f62cefc41f2862bdfd13f144a771e10affa97766e53\";i:8;s:184:\"def5020070099cda6b9935ac84430e96436402c22e8d6ef766de1be3e89ce53db26aac673b0113df2087c45e4f6937f0e25f42da97209cfd8a2bf2a4415f1cbde4bb62b6021a88f289555351d65c6d7c3ea1a05482ff5f3bfb06972e\";i:9;s:184:\"def502007016973069e25cc6130c478d17e0867535a8b0636f3e6409bc8e17be7b09d0b2e33ad10705625c3c712773d70cbed9c9a1b8f8689c2435fb14ba9fe27fe48e2df27f647b3b6073a7e88719e804da2422aff5a53149b5a9f7\";}s:3:\"OTP\";s:16:\"yyvF9flL8uJtA2tr\";s:10:\"OTPAccount\";s:10:\"0720801001\";s:17:\"OTPCreateDateTime\";s:19:\"2023-09-30 08:14:57\";s:15:\"LoginRetryCount\";i:0;s:9:\"SessionID\";s:0:\"\";s:20:\"LastAccessedDateTime\";s:0:\"\";s:7:\"role_id\";i:-1;}', '2023-08-04 20:59:58'),
-(2, NULL, 'Receptionist', 'Demo', '2', 'receptionist@example.com', '123456789', 1, 7, '12288e7196c773a802343b284b98b755', 'a:13:{s:7:\"user_id\";s:1:\"2\";s:5:\"photo\";N;s:10:\"first_name\";s:12:\"Receptionist\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"2\";s:13:\"email_address\";s:24:\"receptionist@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";s:1:\"2\";s:13:\"department_id\";s:1:\"7\";s:9:\"biography\";s:37:\"<p>This is a receptionist profile</p>\";s:17:\"registration_date\";s:19:\"2023-08-04 21:06:42\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/04\";}', '2023-08-04 21:06:42'),
-(3, NULL, 'Doctor', 'Demo', '3', 'doctor@example.com', '123456789', 2, 1, '12288e7196c773a802343b284b98b755', 'a:13:{s:7:\"user_id\";s:1:\"3\";s:5:\"photo\";N;s:10:\"first_name\";s:6:\"Doctor\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"3\";s:13:\"email_address\";s:18:\"doctor@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";s:1:\"2\";s:13:\"department_id\";s:1:\"1\";s:9:\"biography\";s:31:\"<p>This is a doctor profile</p>\";s:17:\"registration_date\";s:19:\"2023-08-04 22:08:22\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/04\";}', '2023-08-04 22:08:22'),
-(4, NULL, 'Nurse', 'Demo', '4', 'nurse@example.com', '123456789', 9, 9, '12288e7196c773a802343b284b98b755', 'a:16:{s:7:\"user_id\";i:4;s:5:\"photo\";N;s:10:\"first_name\";s:5:\"Nurse\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"4\";s:13:\"email_address\";s:17:\"nurse@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";i:9;s:13:\"department_id\";i:9;s:9:\"biography\";s:488:\"a:15:{s:7:\"user_id\";s:1:\"4\";s:5:\"photo\";N;s:10:\"first_name\";s:5:\"Nurse\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"4\";s:13:\"email_address\";s:17:\"nurse@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";s:1:\"3\";s:13:\"department_id\";s:1:\"9\";s:9:\"biography\";s:30:\"<p>This is a nurse profile</p>\";s:17:\"registration_date\";s:19:\"2023-08-04 22:56:10\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/04\";s:9:\"SessionID\";s:0:\"\";s:20:\"LastAccessedDateTime\";s:0:\"\";}\";s:17:\"registration_date\";s:19:\"2023-08-04 22:56:10\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/04\";s:9:\"SessionID\";s:0:\"\";s:20:\"LastAccessedDateTime\";s:0:\"\";s:15:\"LoginRetryCount\";i:0;}', '2023-08-04 22:56:10'),
-(5, NULL, 'Laboratorist', 'Demo', '5', 'laboratorist@example.com', '123456789', 3, 6, '12288e7196c773a802343b284b98b755', 'a:16:{s:7:\"user_id\";i:5;s:5:\"photo\";N;s:10:\"first_name\";s:12:\"Laboratorist\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"5\";s:13:\"email_address\";s:24:\"laboratorist@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";i:3;s:13:\"department_id\";i:6;s:9:\"biography\";s:442:\"a:13:{s:7:\"user_id\";s:1:\"5\";s:5:\"photo\";N;s:10:\"first_name\";s:12:\"Laboratorist\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"5\";s:13:\"email_address\";s:24:\"laboratorist@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";s:1:\"4\";s:13:\"department_id\";s:1:\"6\";s:9:\"biography\";s:27:\"<p>Laboratorist profile</p>\";s:17:\"registration_date\";s:19:\"2023-08-05 13:43:15\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/05\";}\";s:17:\"registration_date\";s:19:\"2023-08-05 13:43:15\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/05\";s:15:\"LoginRetryCount\";i:0;s:9:\"SessionID\";s:0:\"\";s:20:\"LastAccessedDateTime\";s:0:\"\";}', '2023-08-05 13:43:15'),
-(6, NULL, 'Pharmacist', 'Demo', '6', 'pharmacist@example.com', '123456789', 4, 3, '12288e7196c773a802343b284b98b755', 'a:13:{s:7:\"user_id\";s:1:\"6\";s:5:\"photo\";N;s:10:\"first_name\";s:10:\"Pharmacist\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"6\";s:13:\"email_address\";s:22:\"pharmacist@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";s:1:\"5\";s:13:\"department_id\";s:1:\"3\";s:9:\"biography\";s:35:\"<p>This is a pharmacist profile</p>\";s:17:\"registration_date\";s:19:\"2023-08-08 11:05:42\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/08\";}', '2023-08-08 11:05:42'),
-(7, NULL, 'Accountant', 'Demo', '7', 'accountant@example.com', '123456789', 5, 5, '12288e7196c773a802343b284b98b755', 'a:13:{s:7:\"user_id\";s:1:\"7\";s:5:\"photo\";N;s:10:\"first_name\";s:10:\"Accountant\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"7\";s:13:\"email_address\";s:22:\"accountant@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";s:2:\"-2\";s:13:\"department_id\";s:1:\"5\";s:9:\"biography\";s:35:\"<p>This is accountants profile.</p>\";s:17:\"registration_date\";s:19:\"2023-08-08 14:34:59\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/08\";}', '2023-08-08 14:34:59'),
-(8, NULL, 'Stores', 'Demo', '900', 'stores@example.com', '123456789', 6, 8, '12288e7196c773a802343b284b98b755', 'a:13:{s:7:\"user_id\";i:8;s:5:\"photo\";N;s:10:\"first_name\";s:6:\"Stores\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:3:\"900\";s:13:\"email_address\";s:18:\"stores@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";i:7;s:13:\"department_id\";i:8;s:9:\"biography\";s:22:\"Inventory professional\";s:17:\"registration_date\";s:19:\"2023-08-24 12:15:49\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/24\";}', '2023-08-24 12:15:49'),
-(9, NULL, 'Dennis', 'Miriti', '18982378', 'miritidennis@gmail.com', '0722103853', 2, 1, '12288e7196c773a802343b284b98b755', 'General Doctor', '2023-08-24 19:52:11'),
-(10, NULL, 'John', 'Doe', '35645566', 'johndoe@example.com', '7544544', 2, 2, '12288e7196c773a802343b284b98b755', 'John Doe has joined the club.', '2023-08-27 19:40:41'),
-(11, NULL, 'Human', 'Resources', '3384759', 'humanresources@example.com', '0712345678', 8, 5, '12288e7196c773a802343b284b98b755', 'Test', '2023-10-10 20:37:29'),
-(12, NULL, 'Hospital', 'Manager', '33335677', 'manager@example.com', '0712345678', 8, 5, '12288e7196c773a802343b284b98b755', 'a:15:{s:15:\"LoginRetryCount\";i:0;s:9:\"SessionID\";s:0:\"\";s:20:\"LastAccessedDateTime\";s:0:\"\";s:7:\"user_id\";i:12;s:5:\"photo\";N;s:10:\"first_name\";s:8:\"Hospital\";s:9:\"last_name\";s:7:\"Manager\";s:11:\"national_id\";s:8:\"33335677\";s:13:\"email_address\";s:19:\"manager@example.com\";s:5:\"phone\";s:10:\"0712345678\";s:7:\"role_id\";i:8;s:13:\"department_id\";i:5;s:9:\"biography\";s:458:\"a:15:{s:15:\"LoginRetryCount\";i:0;s:9:\"SessionID\";s:0:\"\";s:20:\"LastAccessedDateTime\";s:0:\"\";s:7:\"user_id\";i:12;s:5:\"photo\";N;s:10:\"first_name\";s:8:\"Hospital\";s:9:\"last_name\";s:7:\"Manager\";s:11:\"national_id\";s:8:\"33335677\";s:13:\"email_address\";s:19:\"manager@example.com\";s:5:\"phone\";s:10:\"0712345678\";s:7:\"role_id\";i:9;s:13:\"department_id\";i:5;s:9:\"biography\";s:16:\"Hospital Manager\";s:17:\"registration_date\";s:19:\"2023-10-22 20:29:56\";s:9:\"UserImage\";s:0:\"\";}\";s:17:\"registration_date\";s:19:\"2023-10-22 20:29:56\";s:9:\"UserImage\";s:0:\"\";}', '2023-10-22 20:29:56');
+(1, NULL, 'Systems', 'Administrator', '001', 'administrator@example.com', '123456789', -1, 4, '12288e7196c773a802343b284b98b755', 'a:23:{s:7:\"user_id\";i:1;s:5:\"photo\";N;s:10:\"first_name\";s:7:\"Systems\";s:9:\"last_name\";s:13:\"Administrator\";s:11:\"national_id\";s:1:\"1\";s:13:\"email_address\";s:25:\"administrator@example.com\";s:5:\"phone\";s:9:\"123456789\";s:4:\"role\";s:13:\"Administrator\";s:13:\"department_id\";i:4;s:9:\"biography\";s:46:\"<p>This is a systems administrator profile</p>\";s:17:\"registration_date\";s:19:\"2023-08-04 20:59:58\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/04\";s:6:\"Secret\";s:8:\"98810353\";s:20:\"SecretCreateDateTime\";s:19:\"2023-09-30 08:14:53\";s:11:\"BackupCodes\";a:10:{i:0;s:184:\"def50200a9e3e15fafb0d2baf8f24e56565a05016636f50fe839ef7336e49a6543cf7609a3308712ac491a813c8f1f8363942b7abf4066b1641eda4ac5e5d7e8f9cc9902dd485c00f0ffe606028ea4e8b12b5f6d157fdbfe81f22a84\";i:1;s:184:\"def5020083461ce99f25bb10a01f2075b15833cc528debd97f2c4298907b68299e6b61992eb947afac9c24922e40769830c475b3c3f1ffb3055a1c814fa79c89d83dc53e3002f97581a9c9a449131a6d39ec0ed5527caa01c0d76b65\";i:2;s:184:\"def5020061ca7b2852a7dbb8a362a800cf92fe63778f515e3bef1cba340aa943a5950e17a9db0662d61d75524d1fa2c3efe1dea73afd9702439d472cd5ea73097c46d8fd8d115e82cc42b7b330b556041aab18a43d93579126160238\";i:3;s:184:\"def50200509ed918d6ca4b1f50c3ce904f800bd2db2ffae68450521feb949ff46f34807c14f894273eb0e49232e3b2b47b41a4ffbb9ddfd8aca4725f264014b966853b69200ec1ba37e21e1bc5be2f02618f8622358c02a73cd1ff87\";i:4;s:184:\"def50200c673b2548574132240adb89fa3ec0d638a974a47ff88bbb224476d5d7b2260a6c841bbb99757332f38320951fbfec2fa4249f62911c15ae71cc48c21d355f2409e3d2fe457ee2de9cf3b32dc7ecb35a3de01b2f8b71087c1\";i:5;s:184:\"def5020030340fdbefd18002dffe81e8b72397a1699d08f3326b768a02a87f4db522e717a81ff301f97f0f7bd37267c96b1eddc5701c53f5f127c5d7d75f8781087d5ab1b9a4c1b1a5e0cdcb0ee55518235affa963824f63d37f8ebc\";i:6;s:184:\"def502000b95ee2a12ef6d1a74a50b23531690d3787be726214ef340bb7c05ca0b0b893f11884fca529771e77d55672114b0473377cf8edb8043062c1f87a64abb4346d7c8006872c4c5f0cc18375131b93311aed4ab6191116beae1\";i:7;s:184:\"def502008d0d9ac7f99fcf9f54a394c71a6ff2eb9c01b7e1a5f8239f3d2daab04a4ef1f639ed6d8feb7ce05954d80e0b8968d70815dc25626ef9a35a7c7be9ec1d854ee0a8716f62cefc41f2862bdfd13f144a771e10affa97766e53\";i:8;s:184:\"def5020070099cda6b9935ac84430e96436402c22e8d6ef766de1be3e89ce53db26aac673b0113df2087c45e4f6937f0e25f42da97209cfd8a2bf2a4415f1cbde4bb62b6021a88f289555351d65c6d7c3ea1a05482ff5f3bfb06972e\";i:9;s:184:\"def502007016973069e25cc6130c478d17e0867535a8b0636f3e6409bc8e17be7b09d0b2e33ad10705625c3c712773d70cbed9c9a1b8f8689c2435fb14ba9fe27fe48e2df27f647b3b6073a7e88719e804da2422aff5a53149b5a9f7\";}s:3:\"OTP\";s:16:\"yyvF9flL8uJtA2tr\";s:10:\"OTPAccount\";s:10:\"0720801001\";s:17:\"OTPCreateDateTime\";s:19:\"2023-09-30 08:14:57\";s:15:\"LoginRetryCount\";i:0;s:9:\"SessionID\";s:26:\"i66ng5gb83fh2gqhq6jd0udtag\";s:20:\"LastAccessedDateTime\";s:19:\"2023/10/24 11:43:23\";s:7:\"role_id\";i:-1;}', '2023-08-04 20:59:58'),
+(2, NULL, 'Receptionist', 'Demo', '002', 'receptionist@example.com', '123456789', 1, 7, '12288e7196c773a802343b284b98b755', 'a:14:{s:7:\"user_id\";s:1:\"2\";s:5:\"photo\";N;s:10:\"first_name\";s:12:\"Receptionist\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"2\";s:13:\"email_address\";s:24:\"receptionist@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";s:1:\"2\";s:13:\"department_id\";s:1:\"7\";s:9:\"biography\";s:37:\"<p>This is a receptionist profile</p>\";s:17:\"registration_date\";s:19:\"2023-08-04 21:06:42\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/04\";s:15:\"LoginRetryCount\";i:0;}', '2023-08-04 21:06:42'),
+(3, NULL, 'Doctor', 'Demo', '003', 'doctor@example.com', '123456789', 2, 1, '12288e7196c773a802343b284b98b755', 'a:14:{s:7:\"user_id\";s:1:\"3\";s:5:\"photo\";N;s:10:\"first_name\";s:6:\"Doctor\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"3\";s:13:\"email_address\";s:18:\"doctor@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";s:1:\"2\";s:13:\"department_id\";s:1:\"1\";s:9:\"biography\";s:31:\"<p>This is a doctor profile</p>\";s:17:\"registration_date\";s:19:\"2023-08-04 22:08:22\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/04\";s:15:\"LoginRetryCount\";i:0;}', '2023-08-04 22:08:22'),
+(4, NULL, 'Nurse', 'Demo', '004', 'nurse@example.com', '123456789', 9, 9, '12288e7196c773a802343b284b98b755', 'a:16:{s:7:\"user_id\";i:4;s:5:\"photo\";N;s:10:\"first_name\";s:5:\"Nurse\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"4\";s:13:\"email_address\";s:17:\"nurse@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";i:9;s:13:\"department_id\";i:9;s:9:\"biography\";s:488:\"a:15:{s:7:\"user_id\";s:1:\"4\";s:5:\"photo\";N;s:10:\"first_name\";s:5:\"Nurse\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"4\";s:13:\"email_address\";s:17:\"nurse@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";s:1:\"3\";s:13:\"department_id\";s:1:\"9\";s:9:\"biography\";s:30:\"<p>This is a nurse profile</p>\";s:17:\"registration_date\";s:19:\"2023-08-04 22:56:10\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/04\";s:9:\"SessionID\";s:0:\"\";s:20:\"LastAccessedDateTime\";s:0:\"\";}\";s:17:\"registration_date\";s:19:\"2023-08-04 22:56:10\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/04\";s:9:\"SessionID\";s:0:\"\";s:20:\"LastAccessedDateTime\";s:0:\"\";s:15:\"LoginRetryCount\";i:0;}', '2023-08-04 22:56:10'),
+(5, NULL, 'Laboratorist', 'Demo', '005', 'laboratorist@example.com', '123456789', 3, 6, '12288e7196c773a802343b284b98b755', 'a:16:{s:7:\"user_id\";i:5;s:5:\"photo\";N;s:10:\"first_name\";s:12:\"Laboratorist\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"5\";s:13:\"email_address\";s:24:\"laboratorist@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";i:3;s:13:\"department_id\";i:6;s:9:\"biography\";s:442:\"a:13:{s:7:\"user_id\";s:1:\"5\";s:5:\"photo\";N;s:10:\"first_name\";s:12:\"Laboratorist\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"5\";s:13:\"email_address\";s:24:\"laboratorist@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";s:1:\"4\";s:13:\"department_id\";s:1:\"6\";s:9:\"biography\";s:27:\"<p>Laboratorist profile</p>\";s:17:\"registration_date\";s:19:\"2023-08-05 13:43:15\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/05\";}\";s:17:\"registration_date\";s:19:\"2023-08-05 13:43:15\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/05\";s:15:\"LoginRetryCount\";i:0;s:9:\"SessionID\";s:0:\"\";s:20:\"LastAccessedDateTime\";s:0:\"\";}', '2023-08-05 13:43:15'),
+(6, NULL, 'Pharmacist', 'Demo', '006', 'pharmacist@example.com', '123456789', 4, 3, '12288e7196c773a802343b284b98b755', 'a:16:{s:7:\"user_id\";i:6;s:5:\"photo\";N;s:10:\"first_name\";s:10:\"Pharmacist\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"6\";s:13:\"email_address\";s:22:\"pharmacist@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";i:4;s:13:\"department_id\";i:3;s:9:\"biography\";s:446:\"a:13:{s:7:\"user_id\";s:1:\"6\";s:5:\"photo\";N;s:10:\"first_name\";s:10:\"Pharmacist\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"6\";s:13:\"email_address\";s:22:\"pharmacist@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";s:1:\"5\";s:13:\"department_id\";s:1:\"3\";s:9:\"biography\";s:35:\"<p>This is a pharmacist profile</p>\";s:17:\"registration_date\";s:19:\"2023-08-08 11:05:42\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/08\";}\";s:17:\"registration_date\";s:19:\"2023-08-08 11:05:42\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/08\";s:15:\"LoginRetryCount\";i:0;s:9:\"SessionID\";s:0:\"\";s:20:\"LastAccessedDateTime\";s:0:\"\";}', '2023-08-08 11:05:42'),
+(7, NULL, 'Accountant', 'Demo', '007', 'accountant@example.com', '123456789', 5, 5, '12288e7196c773a802343b284b98b755', 'a:14:{s:7:\"user_id\";s:1:\"7\";s:5:\"photo\";N;s:10:\"first_name\";s:10:\"Accountant\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:1:\"7\";s:13:\"email_address\";s:22:\"accountant@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";s:2:\"-2\";s:13:\"department_id\";s:1:\"5\";s:9:\"biography\";s:35:\"<p>This is accountants profile.</p>\";s:17:\"registration_date\";s:19:\"2023-08-08 14:34:59\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/08\";s:15:\"LoginRetryCount\";i:0;}', '2023-08-08 14:34:59'),
+(8, NULL, 'Stores', 'Demo', '008', 'stores@example.com', '123456789', 6, 8, '12288e7196c773a802343b284b98b755', 'a:16:{s:7:\"user_id\";i:8;s:5:\"photo\";N;s:10:\"first_name\";s:6:\"Stores\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:3:\"900\";s:13:\"email_address\";s:18:\"stores@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";i:6;s:13:\"department_id\";i:8;s:9:\"biography\";s:414:\"a:13:{s:7:\"user_id\";i:8;s:5:\"photo\";N;s:10:\"first_name\";s:6:\"Stores\";s:9:\"last_name\";s:4:\"Demo\";s:11:\"national_id\";s:3:\"900\";s:13:\"email_address\";s:18:\"stores@example.com\";s:5:\"phone\";s:9:\"123456789\";s:7:\"role_id\";i:7;s:13:\"department_id\";i:8;s:9:\"biography\";s:22:\"Inventory professional\";s:17:\"registration_date\";s:19:\"2023-08-24 12:15:49\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/24\";}\";s:17:\"registration_date\";s:19:\"2023-08-24 12:15:49\";s:9:\"UserImage\";s:0:\"\";s:23:\"LastPasswordChangedDate\";s:10:\"2023/08/24\";s:15:\"LoginRetryCount\";i:0;s:9:\"SessionID\";s:26:\"jti4e485qof5sl2cf2rbe6j4aj\";s:20:\"LastAccessedDateTime\";s:19:\"2023/10/23 13:12:51\";}', '2023-08-24 12:15:49'),
+(9, NULL, 'Dennis', 'Miriti', '009', 'miritidennis@gmail.com', '0722103853', 2, 1, '12288e7196c773a802343b284b98b755', 'General Doctor', '2023-08-24 19:52:11'),
+(10, NULL, 'John', 'Doe', '010', 'johndoe@example.com', '7544544', 2, 2, '12288e7196c773a802343b284b98b755', 'John Doe has joined the club.', '2023-08-27 19:40:41'),
+(11, NULL, 'Human', 'Resources', '011', 'humanresources@example.com', '0712345678', 7, 5, '12288e7196c773a802343b284b98b755', 'Test', '2023-10-10 20:37:29'),
+(12, NULL, 'Hospital', 'Manager', '012', 'manager@example.com', '0712345678', 8, 5, '12288e7196c773a802343b284b98b755', 'a:15:{s:15:\"LoginRetryCount\";i:0;s:9:\"SessionID\";s:0:\"\";s:20:\"LastAccessedDateTime\";s:0:\"\";s:7:\"user_id\";i:12;s:5:\"photo\";N;s:10:\"first_name\";s:8:\"Hospital\";s:9:\"last_name\";s:7:\"Manager\";s:11:\"national_id\";s:8:\"33335677\";s:13:\"email_address\";s:19:\"manager@example.com\";s:5:\"phone\";s:10:\"0712345678\";s:7:\"role_id\";i:8;s:13:\"department_id\";i:5;s:9:\"biography\";s:458:\"a:15:{s:15:\"LoginRetryCount\";i:0;s:9:\"SessionID\";s:0:\"\";s:20:\"LastAccessedDateTime\";s:0:\"\";s:7:\"user_id\";i:12;s:5:\"photo\";N;s:10:\"first_name\";s:8:\"Hospital\";s:9:\"last_name\";s:7:\"Manager\";s:11:\"national_id\";s:8:\"33335677\";s:13:\"email_address\";s:19:\"manager@example.com\";s:5:\"phone\";s:10:\"0712345678\";s:7:\"role_id\";i:9;s:13:\"department_id\";i:5;s:9:\"biography\";s:16:\"Hospital Manager\";s:17:\"registration_date\";s:19:\"2023-10-22 20:29:56\";s:9:\"UserImage\";s:0:\"\";}\";s:17:\"registration_date\";s:19:\"2023-10-22 20:29:56\";s:9:\"UserImage\";s:0:\"\";}', '2023-10-22 20:29:56');
 
 -- --------------------------------------------------------
 
@@ -2078,7 +2121,7 @@ CREATE TABLE IF NOT EXISTS `jdh_visit_types` (
   `visit_type` varchar(100) NOT NULL,
   `visit_description` text,
   PRIMARY KEY (`visit_type_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_visit_types`
@@ -2110,7 +2153,7 @@ CREATE TABLE IF NOT EXISTS `jdh_vitals` (
   `submission_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `submitted_by_user_id` int NOT NULL,
   PRIMARY KEY (`vitals_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_vitals`
@@ -2134,7 +2177,7 @@ CREATE TABLE IF NOT EXISTS `jdh_wards` (
   `ward_name` varchar(100) NOT NULL,
   `description` text,
   PRIMARY KEY (`ward_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `jdh_wards`
@@ -2159,7 +2202,15 @@ CREATE TABLE IF NOT EXISTS `subscriptions` (
   `AuthenticationToken` varchar(255) NOT NULL,
   `ContentEncoding` varchar(255) NOT NULL,
   PRIMARY KEY (`Id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `subscriptions`
+--
+
+INSERT INTO `subscriptions` (`Id`, `User`, `Endpoint`, `PublicKey`, `AuthenticationToken`, `ContentEncoding`) VALUES
+(1, '1', 'https://fcm.googleapis.com/fcm/send/emKddpbX70Y:APA91bGCM9GAsa7rOYwUdDjC2U0PL5eF89v-YNPitT9wm93HM1RGztY2-MGf1z832fK5zSNgw1RxyLOm7tZpjC6sZ9meUJmFswstqphi18YdS3ZqWMywMPIf1NyIUzHyLoGCeGSKud0K', 'BOp74E8EcZQ+n9BO5wSj4Rv9JBTBVFPCRnZYxSgXTckfjdWLsffK+GXOnfmZ11sCLMBj6A58CJe+ADf88atJGKo=', 'eBflwXmON4+bsb6HpSNRkQ==', 'aes128gcm'),
+(2, '1', 'https://fcm.googleapis.com/fcm/send/epcDFVcz56o:APA91bHQgqv7T-yoiSDfNbKHND2jA7-ZTyaDpeCTnqrudNFzAmJDlSVmED20sGB7bfV8kvQv4ZLRl3Ua9LFaU_tIfybgQxBnpDzcHgWKyaAu-p1DRdOIxjgGKm9nQrxWDl4y6mM9f2Yi', 'BDvJ86VQF1hpxCbktIid7KeZ+9CBLBIMEpA7QwutyS0zkBxOxwVLYBAORfE+kO/cEKJ2UYpVoluxBdu5nPCIHcU=', 'FqqvBAjPlG97mTusVu8mBw==', 'aes128gcm');
 
 -- --------------------------------------------------------
 
@@ -2169,7 +2220,7 @@ CREATE TABLE IF NOT EXISTS `subscriptions` (
 DROP TABLE IF EXISTS `jdh_consultation_income`;
 
 DROP VIEW IF EXISTS `jdh_consultation_income`;
-CREATE VIEW `jdh_consultation_income`  AS SELECT `jdh_users`.`user_id` AS `user_id`, `jdh_users`.`first_name` AS `first_name`, `jdh_users`.`last_name` AS `last_name`, `jdh_users`.`department_id` AS `department_id`, `jdh_services`.`service_name` AS `service_name`, `jdh_services`.`service_cost` AS `service_cost`, `jdh_patients`.`patient_id` AS `patient_id` FROM (((((`jdh_doctor_charges` join `jdh_users` on((`jdh_users`.`user_id` = `jdh_doctor_charges`.`user_id`))) join `jdh_services` on((`jdh_doctor_charges`.`service_id` = `jdh_services`.`service_id`))) join `jdh_departments` on((`jdh_users`.`department_id` = `jdh_departments`.`department_id`))) join `jdh_patient_visits` on((`jdh_users`.`user_id` = `jdh_patient_visits`.`user_id`))) join `jdh_patients` on((`jdh_patients`.`patient_id` = `jdh_patient_visits`.`patient_id`)))  ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `jdh_consultation_income`  AS SELECT `jdh_users`.`user_id` AS `user_id`, `jdh_users`.`first_name` AS `first_name`, `jdh_users`.`last_name` AS `last_name`, `jdh_users`.`department_id` AS `department_id`, `jdh_services`.`service_name` AS `service_name`, `jdh_services`.`service_cost` AS `service_cost`, `jdh_patients`.`patient_id` AS `patient_id` FROM (((((`jdh_doctor_charges` join `jdh_users` on((`jdh_users`.`user_id` = `jdh_doctor_charges`.`user_id`))) join `jdh_services` on((`jdh_doctor_charges`.`service_id` = `jdh_services`.`service_id`))) join `jdh_departments` on((`jdh_users`.`department_id` = `jdh_departments`.`department_id`))) join `jdh_patient_visits` on((`jdh_users`.`user_id` = `jdh_patient_visits`.`user_id`))) join `jdh_patients` on((`jdh_patients`.`patient_id` = `jdh_patient_visits`.`patient_id`)))  ;
 
 -- --------------------------------------------------------
 
@@ -2179,17 +2230,7 @@ CREATE VIEW `jdh_consultation_income`  AS SELECT `jdh_users`.`user_id` AS `user_
 DROP TABLE IF EXISTS `jdh_lab_income`;
 
 DROP VIEW IF EXISTS `jdh_lab_income`;
-CREATE VIEW `jdh_lab_income`  AS SELECT `jdh_patients`.`patient_name` AS `patient_name`, `jdh_services`.`service_name` AS `service_name`, `jdh_services`.`service_cost` AS `service_cost`, `jdh_test_requests`.`request_date` AS `request_date`, `jdh_patients`.`patient_dob` AS `patient_dob`, `jdh_test_requests`.`patient_id` AS `patient_id` FROM ((`jdh_patients` join `jdh_test_requests` on((`jdh_patients`.`patient_id` = `jdh_test_requests`.`patient_id`))) join `jdh_services` on((`jdh_test_requests`.`request_service_id` = `jdh_services`.`service_id`)))  ;
-
--- --------------------------------------------------------
-
---
--- Structure for view `jdh_patients_insuarance`
---
-DROP TABLE IF EXISTS `jdh_patients_insuarance`;
-
-DROP VIEW IF EXISTS `jdh_patients_insuarance`;
-CREATE VIEW `jdh_patients_insuarance`  AS SELECT `jdh_patients`.`patient_id` AS `patient_id`, `jdh_patients`.`patient_name` AS `patient_name`, `jdh_insurance`.`insurance_name` AS `insurance_name`, `jdh_patients`.`submitted_by_user_id` AS `submitted_by_user_id`, `jdh_patients`.`patient_dob` AS `patient_dob` FROM ((`jdh_patients` join `jdh_patient_visits` on((`jdh_patients`.`patient_id` = `jdh_patient_visits`.`patient_id`))) join `jdh_insurance` on((`jdh_patient_visits`.`insurance_id` = `jdh_insurance`.`insurance_id`)))  ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `jdh_lab_income`  AS SELECT `jdh_patients`.`patient_name` AS `patient_name`, `jdh_services`.`service_name` AS `service_name`, `jdh_services`.`service_cost` AS `service_cost`, `jdh_test_requests`.`request_date` AS `request_date`, `jdh_test_requests`.`patient_id` AS `patient_id`, `jdh_patients`.`patient_dob_year` AS `patient_dob_year` FROM ((`jdh_patients` join `jdh_test_requests` on((`jdh_patients`.`patient_id` = `jdh_test_requests`.`patient_id`))) join `jdh_services` on((`jdh_test_requests`.`request_service_id` = `jdh_services`.`service_id`)))  ;
 
 -- --------------------------------------------------------
 
@@ -2199,7 +2240,7 @@ CREATE VIEW `jdh_patients_insuarance`  AS SELECT `jdh_patients`.`patient_id` AS 
 DROP TABLE IF EXISTS `jdh_patient_queue`;
 
 DROP VIEW IF EXISTS `jdh_patient_queue`;
-CREATE VIEW `jdh_patient_queue`  AS SELECT `jdh_patient_visits`.`visit_id` AS `visit_id`, `jdh_patients`.`patient_name` AS `patient_name`, `jdh_visit_types`.`visit_type` AS `visit_type`, `jdh_patient_visits`.`visit_date` AS `visit_date` FROM ((`jdh_patient_visits` join `jdh_patients` on((`jdh_patients`.`patient_id` = `jdh_patient_visits`.`patient_id`))) join `jdh_visit_types` on((`jdh_visit_types`.`visit_type_id` = `jdh_patient_visits`.`visit_type_id`)))  ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `jdh_patient_queue`  AS SELECT `jdh_patient_visits`.`visit_id` AS `visit_id`, `jdh_patients`.`patient_name` AS `patient_name`, `jdh_visit_types`.`visit_type` AS `visit_type`, `jdh_patient_visits`.`visit_date` AS `visit_date` FROM ((`jdh_patient_visits` join `jdh_patients` on((`jdh_patients`.`patient_id` = `jdh_patient_visits`.`patient_id`))) join `jdh_visit_types` on((`jdh_visit_types`.`visit_type_id` = `jdh_patient_visits`.`visit_type_id`)))  ;
 
 -- --------------------------------------------------------
 
@@ -2209,7 +2250,7 @@ CREATE VIEW `jdh_patient_queue`  AS SELECT `jdh_patient_visits`.`visit_id` AS `v
 DROP TABLE IF EXISTS `jdh_pharmacy_income`;
 
 DROP VIEW IF EXISTS `jdh_pharmacy_income`;
-CREATE VIEW `jdh_pharmacy_income`  AS SELECT `jdh_patients`.`patient_id` AS `patient_id`, `jdh_patients`.`patient_name` AS `patient_name`, `jdh_medicines`.`name` AS `name`, `jdh_medicines`.`selling_price` AS `selling_price`, `jdh_medicine_stock`.`units_available` AS `units_available`, `jdh_prescriptions_actions`.`units_given` AS `units_given`, `jdh_prescriptions_actions`.`submission_date` AS `submission_date` FROM ((((`jdh_medicines` join `jdh_medicine_stock` on((`jdh_medicines`.`id` = `jdh_medicine_stock`.`medicine_id`))) join `jdh_prescriptions` on((`jdh_medicines`.`id` = `jdh_prescriptions`.`medicine_id`))) join `jdh_patients` on((`jdh_patients`.`patient_id` = `jdh_prescriptions`.`patient_id`))) join `jdh_prescriptions_actions` on((`jdh_patients`.`patient_id` = `jdh_prescriptions_actions`.`patient_id`)))  ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `jdh_pharmacy_income`  AS SELECT `jdh_patients`.`patient_id` AS `patient_id`, `jdh_patients`.`patient_name` AS `patient_name`, `jdh_medicines`.`name` AS `name`, `jdh_medicines`.`selling_price` AS `selling_price`, `jdh_medicine_stock`.`units_available` AS `units_available`, `jdh_prescriptions_actions`.`units_given` AS `units_given`, `jdh_prescriptions_actions`.`submission_date` AS `submission_date` FROM ((((`jdh_medicines` join `jdh_medicine_stock` on((`jdh_medicines`.`id` = `jdh_medicine_stock`.`medicine_id`))) join `jdh_prescriptions` on((`jdh_medicines`.`id` = `jdh_prescriptions`.`medicine_id`))) join `jdh_patients` on((`jdh_patients`.`patient_id` = `jdh_prescriptions`.`patient_id`))) join `jdh_prescriptions_actions` on((`jdh_patients`.`patient_id` = `jdh_prescriptions_actions`.`patient_id`)))  ;
 
 -- --------------------------------------------------------
 
@@ -2219,7 +2260,7 @@ CREATE VIEW `jdh_pharmacy_income`  AS SELECT `jdh_patients`.`patient_id` AS `pat
 DROP TABLE IF EXISTS `jdh_registration_income`;
 
 DROP VIEW IF EXISTS `jdh_registration_income`;
-CREATE VIEW `jdh_registration_income`  AS SELECT `jdh_patients`.`patient_id` AS `patient_id`, `jdh_patients`.`patient_name` AS `patient_name`, `jdh_patients`.`patient_dob` AS `patient_dob`, `jdh_patients`.`patient_gender` AS `patient_gender`, `jdh_services`.`service_cost` AS `service_cost`, `jdh_patients`.`patient_registration_date` AS `patient_registration_date` FROM (`jdh_patients` join `jdh_services` on((`jdh_patients`.`service_id` = `jdh_services`.`service_id`)))  ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `jdh_registration_income`  AS SELECT `jdh_patients`.`patient_id` AS `patient_id`, `jdh_patients`.`patient_name` AS `patient_name`, `jdh_patients`.`patient_gender` AS `patient_gender`, `jdh_services`.`service_cost` AS `service_cost`, `jdh_patients`.`patient_registration_date` AS `patient_registration_date`, `jdh_patients`.`patient_dob_year` AS `patient_dob_year` FROM (`jdh_patients` join `jdh_services` on((`jdh_patients`.`service_id` = `jdh_services`.`service_id`)))  ;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
