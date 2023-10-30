@@ -555,11 +555,11 @@ class JdhTestReportsGrid extends JdhTestReports
 
         // Set up list options
         $this->setupListOptions();
-        $this->report_id->Visible = false;
+        $this->report_id->setVisibility();
         $this->request_id->setVisibility();
         $this->patient_id->setVisibility();
         $this->report_findings->setVisibility();
-        $this->report_attachment->setVisibility();
+        $this->report_attachment->Visible = false;
         $this->report_submittedby_user_id->Visible = false;
         $this->report_date->setVisibility();
 
@@ -1134,9 +1134,6 @@ class JdhTestReportsGrid extends JdhTestReports
         if ($CurrentForm->hasValue("x_report_findings") && $CurrentForm->hasValue("o_report_findings") && $this->report_findings->CurrentValue != $this->report_findings->DefaultValue) {
             return false;
         }
-        if (!EmptyValue($this->report_attachment->Upload->Value)) {
-            return false;
-        }
         if ($CurrentForm->hasValue("x_report_date") && $CurrentForm->hasValue("o_report_date") && $this->report_date->CurrentValue != $this->report_date->DefaultValue) {
             return false;
         }
@@ -1225,10 +1222,10 @@ class JdhTestReportsGrid extends JdhTestReports
     // Reset form status
     public function resetFormError()
     {
+        $this->report_id->clearErrorMessage();
         $this->request_id->clearErrorMessage();
         $this->patient_id->clearErrorMessage();
         $this->report_findings->clearErrorMessage();
-        $this->report_attachment->clearErrorMessage();
         $this->report_date->clearErrorMessage();
     }
 
@@ -1324,7 +1321,7 @@ class JdhTestReportsGrid extends JdhTestReports
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
-        $this->ListOptions->UseButtonGroup = true;
+        $this->ListOptions->UseButtonGroup = false;
         if ($this->ListOptions->UseButtonGroup && IsMobile()) {
             $this->ListOptions->UseDropDownButton = true;
         }
@@ -1643,8 +1640,6 @@ class JdhTestReportsGrid extends JdhTestReports
     protected function getUploadFiles()
     {
         global $CurrentForm, $Language;
-        $this->report_attachment->Upload->Index = $CurrentForm->Index;
-        $this->report_attachment->Upload->uploadFile();
     }
 
     // Load default values
@@ -1662,6 +1657,12 @@ class JdhTestReportsGrid extends JdhTestReports
         global $CurrentForm;
         $CurrentForm->FormName = $this->FormName;
         $validate = !Config("SERVER_VALIDATE");
+
+        // Check field name 'report_id' first before field var 'x_report_id'
+        $val = $CurrentForm->hasValue("report_id") ? $CurrentForm->getValue("report_id") : $CurrentForm->getValue("x_report_id");
+        if (!$this->report_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
+            $this->report_id->setFormValue($val);
+        }
 
         // Check field name 'request_id' first before field var 'x_request_id'
         $val = $CurrentForm->hasValue("request_id") ? $CurrentForm->getValue("request_id") : $CurrentForm->getValue("x_request_id");
@@ -1715,13 +1716,6 @@ class JdhTestReportsGrid extends JdhTestReports
         if ($CurrentForm->hasValue("o_report_date")) {
             $this->report_date->setOldValue($CurrentForm->getValue("o_report_date"));
         }
-
-        // Check field name 'report_id' first before field var 'x_report_id'
-        $val = $CurrentForm->hasValue("report_id") ? $CurrentForm->getValue("report_id") : $CurrentForm->getValue("x_report_id");
-        if (!$this->report_id->IsDetailKey && !$this->isGridAdd() && !$this->isAdd()) {
-            $this->report_id->setFormValue($val);
-        }
-        $this->getUploadFiles(); // Get upload files
     }
 
     // Restore form values
@@ -1934,14 +1928,6 @@ class JdhTestReportsGrid extends JdhTestReports
             // report_findings
             $this->report_findings->ViewValue = $this->report_findings->CurrentValue;
 
-            // report_attachment
-            if (!EmptyValue($this->report_attachment->Upload->DbValue)) {
-                $this->report_attachment->ViewValue = $this->report_id->CurrentValue;
-                $this->report_attachment->IsBlobImage = IsImageFile(ContentExtension($this->report_attachment->Upload->DbValue));
-            } else {
-                $this->report_attachment->ViewValue = "";
-            }
-
             // report_submittedby_user_id
             $this->report_submittedby_user_id->ViewValue = $this->report_submittedby_user_id->CurrentValue;
             $this->report_submittedby_user_id->ViewValue = FormatNumber($this->report_submittedby_user_id->ViewValue, $this->report_submittedby_user_id->formatPattern());
@@ -1949,6 +1935,11 @@ class JdhTestReportsGrid extends JdhTestReports
             // report_date
             $this->report_date->ViewValue = $this->report_date->CurrentValue;
             $this->report_date->ViewValue = FormatDateTime($this->report_date->ViewValue, $this->report_date->formatPattern());
+
+            // report_id
+            $this->report_id->HrefValue = "";
+            $this->report_id->ExportHrefValue = PhpBarcode::barcode('')->getHrefValue('', '', 60);
+            $this->report_id->TooltipValue = "";
 
             // request_id
             $this->request_id->HrefValue = "";
@@ -1962,26 +1953,12 @@ class JdhTestReportsGrid extends JdhTestReports
             $this->report_findings->HrefValue = "";
             $this->report_findings->TooltipValue = "";
 
-            // report_attachment
-            if (!empty($this->report_attachment->Upload->DbValue)) {
-                $this->report_attachment->HrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
-                $this->report_attachment->LinkAttrs["target"] = "";
-                if ($this->report_attachment->IsBlobImage && empty($this->report_attachment->LinkAttrs["target"])) {
-                    $this->report_attachment->LinkAttrs["target"] = "_blank";
-                }
-                if ($this->isExport()) {
-                    $this->report_attachment->HrefValue = FullUrl($this->report_attachment->HrefValue, "href");
-                }
-            } else {
-                $this->report_attachment->HrefValue = "";
-            }
-            $this->report_attachment->ExportHrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
-            $this->report_attachment->TooltipValue = "";
-
             // report_date
             $this->report_date->HrefValue = "";
             $this->report_date->TooltipValue = "";
         } elseif ($this->RowType == ROWTYPE_ADD) {
+            // report_id
+
             // request_id
             $this->request_id->setupEditAttributes();
             $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
@@ -2047,18 +2024,6 @@ class JdhTestReportsGrid extends JdhTestReports
             $this->report_findings->setupEditAttributes();
             $this->report_findings->EditValue = HtmlEncode($this->report_findings->CurrentValue);
             $this->report_findings->PlaceHolder = RemoveHtml($this->report_findings->caption());
-
-            // report_attachment
-            $this->report_attachment->setupEditAttributes();
-            if (!EmptyValue($this->report_attachment->Upload->DbValue)) {
-                $this->report_attachment->EditValue = $this->report_id->CurrentValue;
-                $this->report_attachment->IsBlobImage = IsImageFile(ContentExtension($this->report_attachment->Upload->DbValue));
-            } else {
-                $this->report_attachment->EditValue = "";
-            }
-            if (is_numeric($this->RowIndex)) {
-                RenderUploadField($this->report_attachment, $this->RowIndex);
-            }
 
             // report_date
             $this->report_date->setupEditAttributes();
@@ -2067,6 +2032,10 @@ class JdhTestReportsGrid extends JdhTestReports
 
             // Add refer script
 
+            // report_id
+            $this->report_id->HrefValue = "";
+            $this->report_id->ExportHrefValue = PhpBarcode::barcode('')->getHrefValue('', '', 60);
+
             // request_id
             $this->request_id->HrefValue = "";
 
@@ -2076,24 +2045,13 @@ class JdhTestReportsGrid extends JdhTestReports
             // report_findings
             $this->report_findings->HrefValue = "";
 
-            // report_attachment
-            if (!empty($this->report_attachment->Upload->DbValue)) {
-                $this->report_attachment->HrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
-                $this->report_attachment->LinkAttrs["target"] = "";
-                if ($this->report_attachment->IsBlobImage && empty($this->report_attachment->LinkAttrs["target"])) {
-                    $this->report_attachment->LinkAttrs["target"] = "_blank";
-                }
-                if ($this->isExport()) {
-                    $this->report_attachment->HrefValue = FullUrl($this->report_attachment->HrefValue, "href");
-                }
-            } else {
-                $this->report_attachment->HrefValue = "";
-            }
-            $this->report_attachment->ExportHrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
-
             // report_date
             $this->report_date->HrefValue = "";
         } elseif ($this->RowType == ROWTYPE_EDIT) {
+            // report_id
+            $this->report_id->setupEditAttributes();
+            $this->report_id->EditValue = $this->report_id->CurrentValue;
+
             // request_id
             $this->request_id->setupEditAttributes();
             $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
@@ -2160,24 +2118,16 @@ class JdhTestReportsGrid extends JdhTestReports
             $this->report_findings->EditValue = HtmlEncode($this->report_findings->CurrentValue);
             $this->report_findings->PlaceHolder = RemoveHtml($this->report_findings->caption());
 
-            // report_attachment
-            $this->report_attachment->setupEditAttributes();
-            if (!EmptyValue($this->report_attachment->Upload->DbValue)) {
-                $this->report_attachment->EditValue = $this->report_id->CurrentValue;
-                $this->report_attachment->IsBlobImage = IsImageFile(ContentExtension($this->report_attachment->Upload->DbValue));
-            } else {
-                $this->report_attachment->EditValue = "";
-            }
-            if (is_numeric($this->RowIndex)) {
-                RenderUploadField($this->report_attachment, $this->RowIndex);
-            }
-
             // report_date
             $this->report_date->setupEditAttributes();
             $this->report_date->EditValue = HtmlEncode(FormatDateTime($this->report_date->CurrentValue, $this->report_date->formatPattern()));
             $this->report_date->PlaceHolder = RemoveHtml($this->report_date->caption());
 
             // Edit refer script
+
+            // report_id
+            $this->report_id->HrefValue = "";
+            $this->report_id->ExportHrefValue = PhpBarcode::barcode('')->getHrefValue('', '', 60);
 
             // request_id
             $this->request_id->HrefValue = "";
@@ -2187,21 +2137,6 @@ class JdhTestReportsGrid extends JdhTestReports
 
             // report_findings
             $this->report_findings->HrefValue = "";
-
-            // report_attachment
-            if (!empty($this->report_attachment->Upload->DbValue)) {
-                $this->report_attachment->HrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
-                $this->report_attachment->LinkAttrs["target"] = "";
-                if ($this->report_attachment->IsBlobImage && empty($this->report_attachment->LinkAttrs["target"])) {
-                    $this->report_attachment->LinkAttrs["target"] = "_blank";
-                }
-                if ($this->isExport()) {
-                    $this->report_attachment->HrefValue = FullUrl($this->report_attachment->HrefValue, "href");
-                }
-            } else {
-                $this->report_attachment->HrefValue = "";
-            }
-            $this->report_attachment->ExportHrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
 
             // report_date
             $this->report_date->HrefValue = "";
@@ -2226,6 +2161,11 @@ class JdhTestReportsGrid extends JdhTestReports
             return true;
         }
         $validateForm = true;
+        if ($this->report_id->Required) {
+            if (!$this->report_id->IsDetailKey && EmptyValue($this->report_id->FormValue)) {
+                $this->report_id->addErrorMessage(str_replace("%s", $this->report_id->caption(), $this->report_id->RequiredErrorMessage));
+            }
+        }
         if ($this->request_id->Required) {
             if (!$this->request_id->IsDetailKey && EmptyValue($this->request_id->FormValue)) {
                 $this->request_id->addErrorMessage(str_replace("%s", $this->request_id->caption(), $this->request_id->RequiredErrorMessage));
@@ -2242,11 +2182,6 @@ class JdhTestReportsGrid extends JdhTestReports
         if ($this->report_findings->Required) {
             if (!$this->report_findings->IsDetailKey && EmptyValue($this->report_findings->FormValue)) {
                 $this->report_findings->addErrorMessage(str_replace("%s", $this->report_findings->caption(), $this->report_findings->RequiredErrorMessage));
-            }
-        }
-        if ($this->report_attachment->Required) {
-            if ($this->report_attachment->Upload->FileName == "" && !$this->report_attachment->Upload->KeepFile) {
-                $this->report_attachment->addErrorMessage(str_replace("%s", $this->report_attachment->caption(), $this->report_attachment->RequiredErrorMessage));
             }
         }
         if ($this->report_date->Required) {
@@ -2376,15 +2311,6 @@ class JdhTestReportsGrid extends JdhTestReports
         // report_findings
         $this->report_findings->setDbValueDef($rsnew, $this->report_findings->CurrentValue, "", $this->report_findings->ReadOnly);
 
-        // report_attachment
-        if ($this->report_attachment->Visible && !$this->report_attachment->ReadOnly && !$this->report_attachment->Upload->KeepFile) {
-            if ($this->report_attachment->Upload->Value === null) {
-                $rsnew['report_attachment'] = null;
-            } else {
-                $rsnew['report_attachment'] = $this->report_attachment->Upload->Value;
-            }
-        }
-
         // report_date
         $this->report_date->setDbValueDef($rsnew, UnFormatDateTime($this->report_date->CurrentValue, $this->report_date->formatPattern()), CurrentDate(), $this->report_date->ReadOnly);
 
@@ -2445,15 +2371,6 @@ class JdhTestReportsGrid extends JdhTestReports
 
         // report_findings
         $this->report_findings->setDbValueDef($rsnew, $this->report_findings->CurrentValue, "", false);
-
-        // report_attachment
-        if ($this->report_attachment->Visible && !$this->report_attachment->Upload->KeepFile) {
-            if ($this->report_attachment->Upload->Value === null) {
-                $rsnew['report_attachment'] = null;
-            } else {
-                $rsnew['report_attachment'] = $this->report_attachment->Upload->Value;
-            }
-        }
 
         // report_date
         $this->report_date->setDbValueDef($rsnew, UnFormatDateTime($this->report_date->CurrentValue, $this->report_date->formatPattern()), CurrentDate(), false);

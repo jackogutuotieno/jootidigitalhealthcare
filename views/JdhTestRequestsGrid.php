@@ -27,7 +27,7 @@ loadjs.ready(["wrapper", "head"], function () {
             ["request_title", [fields.request_title.visible && fields.request_title.required ? ew.Validators.required(fields.request_title.caption) : null], fields.request_title.isInvalid],
             ["request_service_id", [fields.request_service_id.visible && fields.request_service_id.required ? ew.Validators.required(fields.request_service_id.caption) : null], fields.request_service_id.isInvalid],
             ["request_description", [fields.request_description.visible && fields.request_description.required ? ew.Validators.required(fields.request_description.caption) : null], fields.request_description.isInvalid],
-            ["request_date", [fields.request_date.visible && fields.request_date.required ? ew.Validators.required(fields.request_date.caption) : null, ew.Validators.datetime(fields.request_date.clientFormatPattern)], fields.request_date.isInvalid],
+            ["request_date", [fields.request_date.visible && fields.request_date.required ? ew.Validators.required(fields.request_date.caption) : null], fields.request_date.isInvalid],
             ["status_id", [fields.status_id.visible && fields.status_id.required ? ew.Validators.required(fields.status_id.caption) : null], fields.status_id.isInvalid]
         ])
 
@@ -173,44 +173,11 @@ loadjs.ready("fjdh_test_requestsgrid", function() {
 <input type="hidden" data-table="jdh_test_requests" data-field="x_patient_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_patient_id" id="o<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->OldValue) ?>">
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<?php if ($Grid->patient_id->getSessionValue() != "") { ?>
-<span<?= $Grid->patient_id->viewAttributes() ?>>
-<span class="form-control-plaintext"><?= $Grid->patient_id->getDisplayValue($Grid->patient_id->ViewValue) ?></span></span>
-<input type="hidden" id="x<?= $Grid->RowIndex ?>_patient_id" name="x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->CurrentValue) ?>" data-hidden="1">
-<?php } else { ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_test_requests_patient_id" class="el_jdh_test_requests_patient_id">
-    <select
-        id="x<?= $Grid->RowIndex ?>_patient_id"
-        name="x<?= $Grid->RowIndex ?>_patient_id"
-        class="form-select ew-select<?= $Grid->patient_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_patient_id"
-        data-table="jdh_test_requests"
-        data-field="x_patient_id"
-        data-value-separator="<?= $Grid->patient_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->patient_id->getPlaceHolder()) ?>"
-        <?= $Grid->patient_id->editAttributes() ?>>
-        <?= $Grid->patient_id->selectOptionListHtml("x{$Grid->RowIndex}_patient_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Grid->patient_id->getErrorMessage() ?></div>
-<?= $Grid->patient_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_patient_id") ?>
-<script>
-loadjs.ready("fjdh_test_requestsgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_patient_id", selectId: "fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_patient_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_test_requestsgrid.lists.patient_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_patient_id", form: "fjdh_test_requestsgrid" };
-    } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_patient_id", form: "fjdh_test_requestsgrid", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumInputLength = ew.selectMinimumInputLength;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.patient_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<span<?= $Grid->patient_id->viewAttributes() ?>>
+<span class="form-control-plaintext"><?= $Grid->patient_id->getDisplayValue($Grid->patient_id->EditValue) ?></span></span>
+<input type="hidden" data-table="jdh_test_requests" data-field="x_patient_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_patient_id" id="x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->CurrentValue) ?>">
 </span>
-<?php } ?>
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_test_requests_patient_id" class="el_jdh_test_requests_patient_id">
@@ -235,8 +202,9 @@ loadjs.ready("fjdh_test_requestsgrid", function() {
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_title" class="el_jdh_test_requests_request_title">
-<input type="<?= $Grid->request_title->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_request_title" id="x<?= $Grid->RowIndex ?>_request_title" data-table="jdh_test_requests" data-field="x_request_title" value="<?= $Grid->request_title->EditValue ?>" size="30" maxlength="200" placeholder="<?= HtmlEncode($Grid->request_title->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->request_title->formatPattern()) ?>"<?= $Grid->request_title->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Grid->request_title->getErrorMessage() ?></div>
+<span<?= $Grid->request_title->viewAttributes() ?>>
+<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Grid->request_title->getDisplayValue($Grid->request_title->EditValue))) ?>"></span>
+<input type="hidden" data-table="jdh_test_requests" data-field="x_request_title" data-hidden="1" name="x<?= $Grid->RowIndex ?>_request_title" id="x<?= $Grid->RowIndex ?>_request_title" value="<?= HtmlEncode($Grid->request_title->CurrentValue) ?>">
 </span>
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
@@ -290,36 +258,9 @@ loadjs.ready("fjdh_test_requestsgrid", function() {
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_service_id" class="el_jdh_test_requests_request_service_id">
-    <select
-        id="x<?= $Grid->RowIndex ?>_request_service_id"
-        name="x<?= $Grid->RowIndex ?>_request_service_id"
-        class="form-select ew-select<?= $Grid->request_service_id->isInvalidClass() ?>"
-        data-select2-id="fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_service_id"
-        data-table="jdh_test_requests"
-        data-field="x_request_service_id"
-        data-value-separator="<?= $Grid->request_service_id->displayValueSeparatorAttribute() ?>"
-        data-placeholder="<?= HtmlEncode($Grid->request_service_id->getPlaceHolder()) ?>"
-        <?= $Grid->request_service_id->editAttributes() ?>>
-        <?= $Grid->request_service_id->selectOptionListHtml("x{$Grid->RowIndex}_request_service_id") ?>
-    </select>
-    <div class="invalid-feedback"><?= $Grid->request_service_id->getErrorMessage() ?></div>
-<?= $Grid->request_service_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_request_service_id") ?>
-<script>
-loadjs.ready("fjdh_test_requestsgrid", function() {
-    var options = { name: "x<?= $Grid->RowIndex ?>_request_service_id", selectId: "fjdh_test_requestsgrid_x<?= $Grid->RowIndex ?>_request_service_id" },
-        el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
-    options.closeOnSelect = !options.multiple;
-    options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
-    if (fjdh_test_requestsgrid.lists.request_service_id?.lookupOptions.length) {
-        options.data = { id: "x<?= $Grid->RowIndex ?>_request_service_id", form: "fjdh_test_requestsgrid" };
-    } else {
-        options.ajax = { id: "x<?= $Grid->RowIndex ?>_request_service_id", form: "fjdh_test_requestsgrid", limit: ew.LOOKUP_PAGE_SIZE };
-    }
-    options.minimumResultsForSearch = Infinity;
-    options = Object.assign({}, ew.selectOptions, options, ew.vars.tables.jdh_test_requests.fields.request_service_id.selectOptions);
-    ew.createSelect(options);
-});
-</script>
+<span<?= $Grid->request_service_id->viewAttributes() ?>>
+<span class="form-control-plaintext"><?= $Grid->request_service_id->getDisplayValue($Grid->request_service_id->EditValue) ?></span></span>
+<input type="hidden" data-table="jdh_test_requests" data-field="x_request_service_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_request_service_id" id="x<?= $Grid->RowIndex ?>_request_service_id" value="<?= HtmlEncode($Grid->request_service_id->CurrentValue) ?>">
 </span>
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
@@ -345,8 +286,9 @@ loadjs.ready("fjdh_test_requestsgrid", function() {
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_description" class="el_jdh_test_requests_request_description">
-<textarea data-table="jdh_test_requests" data-field="x_request_description" name="x<?= $Grid->RowIndex ?>_request_description" id="x<?= $Grid->RowIndex ?>_request_description" cols="35" rows="4" placeholder="<?= HtmlEncode($Grid->request_description->getPlaceHolder()) ?>"<?= $Grid->request_description->editAttributes() ?>><?= $Grid->request_description->EditValue ?></textarea>
-<div class="invalid-feedback"><?= $Grid->request_description->getErrorMessage() ?></div>
+<span<?= $Grid->request_description->viewAttributes() ?>>
+<?= $Grid->request_description->EditValue ?></span>
+<input type="hidden" data-table="jdh_test_requests" data-field="x_request_description" data-hidden="1" name="x<?= $Grid->RowIndex ?>_request_description" id="x<?= $Grid->RowIndex ?>_request_description" value="<?= HtmlEncode($Grid->request_description->CurrentValue) ?>">
 </span>
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
@@ -402,38 +344,9 @@ loadjs.ready(["fjdh_test_requestsgrid", "datetimepicker"], function () {
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
 <span id="el<?= $Grid->RowCount ?>_jdh_test_requests_request_date" class="el_jdh_test_requests_request_date">
-<input type="<?= $Grid->request_date->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_request_date" id="x<?= $Grid->RowIndex ?>_request_date" data-table="jdh_test_requests" data-field="x_request_date" value="<?= $Grid->request_date->EditValue ?>" placeholder="<?= HtmlEncode($Grid->request_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->request_date->formatPattern()) ?>"<?= $Grid->request_date->editAttributes() ?>>
-<div class="invalid-feedback"><?= $Grid->request_date->getErrorMessage() ?></div>
-<?php if (!$Grid->request_date->ReadOnly && !$Grid->request_date->Disabled && !isset($Grid->request_date->EditAttrs["readonly"]) && !isset($Grid->request_date->EditAttrs["disabled"])) { ?>
-<script>
-loadjs.ready(["fjdh_test_requestsgrid", "datetimepicker"], function () {
-    let format = "<?= DateFormat(11) ?>",
-        options = {
-            localization: {
-                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
-                ...ew.language.phrase("datetimepicker")
-            },
-            display: {
-                icons: {
-                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
-                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
-                },
-                components: {
-                    hours: !!format.match(/h/i),
-                    minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
-                },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
-            }
-        };
-    ew.createDateTimePicker("fjdh_test_requestsgrid", "x<?= $Grid->RowIndex ?>_request_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
-});
-</script>
-<?php } ?>
+<span<?= $Grid->request_date->viewAttributes() ?>>
+<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Grid->request_date->getDisplayValue($Grid->request_date->EditValue))) ?>"></span>
+<input type="hidden" data-table="jdh_test_requests" data-field="x_request_date" data-hidden="1" name="x<?= $Grid->RowIndex ?>_request_date" id="x<?= $Grid->RowIndex ?>_request_date" value="<?= HtmlEncode($Grid->request_date->CurrentValue) ?>">
 </span>
 <?php } ?>
 <?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>

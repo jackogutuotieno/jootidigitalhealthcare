@@ -369,6 +369,27 @@ loadjs.ready("fjdh_patientsadd", function() {
 <?php
     }
 ?>
+<?php
+    if (in_array("jdh_test_requests", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_requests->DetailAdd) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_test_requests") ?><?= $Page->DetailPages->activeClasses("jdh_test_requests") ?>" data-bs-target="#tab_jdh_test_requests" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_test_requests" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_test_requests")) ?>"><?= $Language->tablePhrase("jdh_test_requests", "TblCaption") ?></button></li>
+<?php
+    }
+?>
+<?php
+    if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailAdd) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_test_reports") ?><?= $Page->DetailPages->activeClasses("jdh_test_reports") ?>" data-bs-target="#tab_jdh_test_reports" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_test_reports" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_test_reports")) ?>"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?></button></li>
+<?php
+    }
+?>
+<?php
+    if (in_array("jdh_invoice", explode(",", $Page->getCurrentDetailTable())) && $jdh_invoice->DetailAdd) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_invoice") ?><?= $Page->DetailPages->activeClasses("jdh_invoice") ?>" data-bs-target="#tab_jdh_invoice" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_invoice" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_invoice")) ?>"><?= $Language->tablePhrase("jdh_invoice", "TblCaption") ?></button></li>
+<?php
+    }
+?>
     </ul><!-- /.nav -->
     <div class="<?= $Page->DetailPages->tabContentClasses() ?>"><!-- .tab-content -->
 <?php
@@ -425,6 +446,27 @@ loadjs.ready("fjdh_patientsadd", function() {
 ?>
         <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" id="tab_jdh_vitals" role="tabpanel"><!-- page* -->
 <?php include_once "JdhVitalsGrid.php" ?>
+        </div><!-- /page* -->
+<?php } ?>
+<?php
+    if (in_array("jdh_test_requests", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_requests->DetailAdd) {
+?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_test_requests") ?><?= $Page->DetailPages->activeClasses("jdh_test_requests") ?>" id="tab_jdh_test_requests" role="tabpanel"><!-- page* -->
+<?php include_once "JdhTestRequestsGrid.php" ?>
+        </div><!-- /page* -->
+<?php } ?>
+<?php
+    if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailAdd) {
+?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_test_reports") ?><?= $Page->DetailPages->activeClasses("jdh_test_reports") ?>" id="tab_jdh_test_reports" role="tabpanel"><!-- page* -->
+<?php include_once "JdhTestReportsGrid.php" ?>
+        </div><!-- /page* -->
+<?php } ?>
+<?php
+    if (in_array("jdh_invoice", explode(",", $Page->getCurrentDetailTable())) && $jdh_invoice->DetailAdd) {
+?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_invoice") ?><?= $Page->DetailPages->activeClasses("jdh_invoice") ?>" id="tab_jdh_invoice" role="tabpanel"><!-- page* -->
+<?php include_once "JdhInvoiceGrid.php" ?>
         </div><!-- /page* -->
 <?php } ?>
     </div><!-- /.tab-content -->

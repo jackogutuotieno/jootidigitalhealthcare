@@ -1782,10 +1782,6 @@ class JdhPatientVisitsList extends JdhPatientVisits
             $this->visit_date->ViewValue = $this->visit_date->CurrentValue;
             $this->visit_date->ViewValue = FormatDateTime($this->visit_date->ViewValue, $this->visit_date->formatPattern());
 
-            // subbmitted_by_user_id
-            $this->subbmitted_by_user_id->ViewValue = $this->subbmitted_by_user_id->CurrentValue;
-            $this->subbmitted_by_user_id->ViewValue = FormatNumber($this->subbmitted_by_user_id->ViewValue, $this->subbmitted_by_user_id->formatPattern());
-
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";

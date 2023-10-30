@@ -303,10 +303,10 @@ class JdhPatientCases extends DbTable
             'x_submission_date', // Variable name
             'submission_date', // Name
             '`submission_date`', // Expression
-            CastDateFieldForLike("`submission_date`", 1, "DB"), // Basic search expression
+            CastDateFieldForLike("`submission_date`", 11, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            1, // Date/Time format
+            11, // Date/Time format
             false, // Is upload field
             '`submission_date`', // Virtual expression
             false, // Is virtual
@@ -318,7 +318,7 @@ class JdhPatientCases extends DbTable
         $this->submission_date->InputTextType = "text";
         $this->submission_date->Nullable = false; // NOT NULL field
         $this->submission_date->Required = true; // Required field
-        $this->submission_date->DefaultErrorMessage = str_replace("%s", DateFormat(1), $Language->phrase("IncorrectDate"));
+        $this->submission_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->submission_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['submission_date'] = &$this->submission_date;
 

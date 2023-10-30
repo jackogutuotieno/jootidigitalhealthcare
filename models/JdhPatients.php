@@ -590,6 +590,14 @@ class JdhPatients extends DbTable
             $detailUrl = Container("jdh_vitals")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
             $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
         }
+        if ($this->getCurrentDetailTable() == "jdh_test_requests") {
+            $detailUrl = Container("jdh_test_requests")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
+            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
+        }
+        if ($this->getCurrentDetailTable() == "jdh_test_reports") {
+            $detailUrl = Container("jdh_test_reports")->getListUrl() . "?" . Config("TABLE_SHOW_MASTER") . "=" . $this->TableVar;
+            $detailUrl .= "&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue);
+        }
         if ($detailUrl == "") {
             $detailUrl = "jdhpatientslist";
         }
@@ -1814,14 +1822,9 @@ class JdhPatients extends DbTable
             if ($doc->Horizontal) { // Horizontal format, write header
                 $doc->beginExportRow();
                 if ($exportPageType == "view") {
-                    $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->patient_ip_number);
                     $doc->exportCaption($this->patient_name);
-                    $doc->exportCaption($this->patient_dob_year);
                     $doc->exportCaption($this->patient_age);
-                    $doc->exportCaption($this->patient_gender);
-                    $doc->exportCaption($this->time);
-                    $doc->exportCaption($this->is_inpatient);
                 } else {
                     $doc->exportCaption($this->patient_id);
                     $doc->exportCaption($this->patient_ip_number);
@@ -1866,14 +1869,9 @@ class JdhPatients extends DbTable
                 if (!$doc->ExportCustom) {
                     $doc->beginExportRow($rowCnt); // Allow CSS styles if enabled
                     if ($exportPageType == "view") {
-                        $doc->exportField($this->patient_id);
                         $doc->exportField($this->patient_ip_number);
                         $doc->exportField($this->patient_name);
-                        $doc->exportField($this->patient_dob_year);
                         $doc->exportField($this->patient_age);
-                        $doc->exportField($this->patient_gender);
-                        $doc->exportField($this->time);
-                        $doc->exportField($this->is_inpatient);
                     } else {
                         $doc->exportField($this->patient_id);
                         $doc->exportField($this->patient_ip_number);
@@ -2410,11 +2408,22 @@ class JdhPatients extends DbTable
     // Row Rendered event
     public function rowRendered()
     {
-        // To view properties of field class, use:
-        //var_dump($this-><FieldName>);
-        //$this->patient_name->ViewValue = "<a href=\"<URL>\">" . $this->patient_name->ViewValue . "</a>";
-
-        //$this->patient_name->ViewValue = "<a href='jdhpatientslist?showdetail=jdh_chief_complaints&patient_id=".$id."' >".$id= $this->patient_name->ViewValue."</a>";
+         $id = $this->patient_id->ViewValue;
+        if(CurrentUserLevel() == -1) {
+            $this->patient_name->ViewValue = "<a href='jdhpatientsview/".$id."?showdetail=jdh_patient_visits,jdh_chief_complaints,jdh_examination_findings,jdh_patient_cases,jdh_prescriptions,jdh_prescriptions_actions,jdh_appointments,jdh_vitals,jdh_invoice,jdh_invoice_items' >". $this->patient_name->ViewValue ."</a>";
+        } else if(CurrentUserLevel() == 1) {
+            $this->patient_name->ViewValue = "<a href='jdhpatientsview/".$id."?showdetail=jdh_patient_visits,jdh_appointments' >". $this->patient_name->ViewValue ."</a>";
+        } else if(CurrentUserLevel() == 9) {
+            $this->patient_name->ViewValue = "<a href='jdhpatientsview/".$id."?showdetail=jdh_chief_complaints,jdh_patient_cases,jdh_prescriptions,jdh_vitals' >". $this->patient_name->ViewValue ."</a>";
+        } else if(CurrentUserLevel() == 3) {
+            $this->patient_name->ViewValue = "<a href='jdhpatientsview/".$id."?showdetail=jdh_test_requests,jdh_test_reports' >". $this->patient_name->ViewValue ."</a>";
+        } else if(CurrentUserLevel() == 4) {
+            $this->patient_name->ViewValue = "<a href='jdhpatientsview/".$id."?showdetail=jdh_prescriptions,jdh_prescriptions_actions' >". $this->patient_name->ViewValue ."</a>";
+        }  else if(CurrentUserLevel() == 5) {
+            $this->patient_name->ViewValue = "<a href='jdhpatientsview/".$id."?showdetail=jdh_invoice,jdh_invoice_items' >". $this->patient_name->ViewValue ."</a>";
+        } else if(CurrentUserLevel() == 2) {
+            $this->patient_name->ViewValue = "<a href='jdhpatientsview/".$id."?showdetail=jdh_chief_complaints,jdh_examination_findings,jdh_patient_cases,jdh_prescriptions,jdh_prescriptions_actions,jdh_appointments,jdh_vitals,jdh_test_requests,jdh_test_reports' >". $this->patient_name->ViewValue ."</a>";
+        }
     }
 
     // User ID Filtering event

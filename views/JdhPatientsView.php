@@ -53,17 +53,6 @@ loadjs.ready(["wrapper", "head"], function () {
 <input type="hidden" name="t" value="jdh_patients">
 <input type="hidden" name="modal" value="<?= (int)$Page->IsModal ?>">
 <table class="<?= $Page->TableClass ?>">
-<?php if ($Page->patient_id->Visible) { // patient_id ?>
-    <tr id="r_patient_id"<?= $Page->patient_id->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_patient_id"><?= $Page->patient_id->caption() ?></span></td>
-        <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_id">
-<span<?= $Page->patient_id->viewAttributes() ?>>
-<?= $Page->patient_id->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
 <?php if ($Page->patient_ip_number->Visible) { // patient_ip_number ?>
     <tr id="r_patient_ip_number"<?= $Page->patient_ip_number->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_patient_ip_number"><?= $Page->patient_ip_number->caption() ?></span></td>
@@ -86,17 +75,6 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->patient_dob_year->Visible) { // patient_dob_year ?>
-    <tr id="r_patient_dob_year"<?= $Page->patient_dob_year->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_patient_dob_year"><?= $Page->patient_dob_year->caption() ?></span></td>
-        <td data-name="patient_dob_year"<?= $Page->patient_dob_year->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_dob_year">
-<span<?= $Page->patient_dob_year->viewAttributes() ?>>
-<?= $Page->patient_dob_year->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
 <?php if ($Page->patient_age->Visible) { // patient_age ?>
     <tr id="r_patient_age"<?= $Page->patient_age->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_patient_age"><?= $Page->patient_age->caption() ?></span></td>
@@ -104,39 +82,6 @@ loadjs.ready(["wrapper", "head"], function () {
 <span id="el_jdh_patients_patient_age">
 <span<?= $Page->patient_age->viewAttributes() ?>>
 <?= $Page->patient_age->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
-<?php if ($Page->patient_gender->Visible) { // patient_gender ?>
-    <tr id="r_patient_gender"<?= $Page->patient_gender->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_patient_gender"><?= $Page->patient_gender->caption() ?></span></td>
-        <td data-name="patient_gender"<?= $Page->patient_gender->cellAttributes() ?>>
-<span id="el_jdh_patients_patient_gender">
-<span<?= $Page->patient_gender->viewAttributes() ?>>
-<?= $Page->patient_gender->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
-<?php if ($Page->time->Visible) { // time ?>
-    <tr id="r_time"<?= $Page->time->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_time"><?= $Page->time->caption() ?></span></td>
-        <td data-name="time"<?= $Page->time->cellAttributes() ?>>
-<span id="el_jdh_patients_time">
-<span<?= $Page->time->viewAttributes() ?>>
-<?= $Page->time->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
-<?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
-    <tr id="r_is_inpatient"<?= $Page->is_inpatient->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_jdh_patients_is_inpatient"><?= $Page->is_inpatient->caption() ?></span></td>
-        <td data-name="is_inpatient"<?= $Page->is_inpatient->cellAttributes() ?>>
-<span id="el_jdh_patients_is_inpatient">
-<span<?= $Page->is_inpatient->viewAttributes() ?>>
-<?= $Page->is_inpatient->getViewValue() ?></span>
 </span>
 </td>
     </tr>
@@ -205,6 +150,20 @@ loadjs.ready(["wrapper", "head"], function () {
 <?php
     }
 ?>
+<?php
+    if (in_array("jdh_test_requests", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_requests->DetailView) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_test_requests") ?><?= $Page->DetailPages->activeClasses("jdh_test_requests") ?>" data-bs-target="#tab_jdh_test_requests" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_test_requests" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_test_requests")) ?>"><?= $Language->tablePhrase("jdh_test_requests", "TblCaption") ?></button></li>
+<?php
+    }
+?>
+<?php
+    if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailView) {
+?>
+        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_test_reports") ?><?= $Page->DetailPages->activeClasses("jdh_test_reports") ?>" data-bs-target="#tab_jdh_test_reports" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_test_reports" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_test_reports")) ?>"><?= $Language->tablePhrase("jdh_test_reports", "TblCaption") ?></button></li>
+<?php
+    }
+?>
     </ul><!-- /.nav -->
     <div class="<?= $Page->DetailPages->tabContentClasses() ?>"><!-- .tab-content -->
 <?php
@@ -261,6 +220,20 @@ loadjs.ready(["wrapper", "head"], function () {
 ?>
         <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_vitals") ?><?= $Page->DetailPages->activeClasses("jdh_vitals") ?>" id="tab_jdh_vitals" role="tabpanel"><!-- page* -->
 <?php include_once "JdhVitalsGrid.php" ?>
+        </div><!-- /page* -->
+<?php } ?>
+<?php
+    if (in_array("jdh_test_requests", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_requests->DetailView) {
+?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_test_requests") ?><?= $Page->DetailPages->activeClasses("jdh_test_requests") ?>" id="tab_jdh_test_requests" role="tabpanel"><!-- page* -->
+<?php include_once "JdhTestRequestsGrid.php" ?>
+        </div><!-- /page* -->
+<?php } ?>
+<?php
+    if (in_array("jdh_test_reports", explode(",", $Page->getCurrentDetailTable())) && $jdh_test_reports->DetailView) {
+?>
+        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_test_reports") ?><?= $Page->DetailPages->activeClasses("jdh_test_reports") ?>" id="tab_jdh_test_reports" role="tabpanel"><!-- page* -->
+<?php include_once "JdhTestReportsGrid.php" ?>
         </div><!-- /page* -->
 <?php } ?>
     </div><!-- /.tab-content -->

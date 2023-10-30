@@ -830,9 +830,9 @@
             'dev_requirement' => false,
         ),
         'symfony/validator' => array(
-            'pretty_version' => 'v6.3.6',
-            'version' => '6.3.6.0',
-            'reference' => '254290aa13d591883eb36327cbe80689cee38ffb',
+            'pretty_version' => 'v6.3.7',
+            'version' => '6.3.7.0',
+            'reference' => '9cc736663fa5839b9710ac2c303bb0b951014fc1',
             'type' => 'library',
             'install_path' => __DIR__ . '/../symfony/validator',
             'aliases' => array(),

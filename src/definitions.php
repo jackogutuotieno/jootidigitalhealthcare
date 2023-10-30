@@ -73,7 +73,6 @@ return [
     "Patient_Queues" => \DI\create(PatientQueues::class),
     "jdh_wards" => \DI\create(JdhWards::class),
     "jdh_branding" => \DI\create(JdhBranding::class),
-    "jdh_patients_insuarance" => \DI\create(JdhPatientsInsuarance::class),
     "subscriptions" => \DI\create(Subscriptions::class),
     "jdh_beds" => \DI\create(JdhBeds::class),
     "jdh_ipd_admission" => \DI\create(JdhIpdAdmission::class),

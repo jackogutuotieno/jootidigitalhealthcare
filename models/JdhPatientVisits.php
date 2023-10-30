@@ -306,6 +306,7 @@ class JdhPatientVisits extends DbTable
         $this->subbmitted_by_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
         $this->subbmitted_by_user_id->InputTextType = "text";
         $this->subbmitted_by_user_id->Nullable = false; // NOT NULL field
+        $this->subbmitted_by_user_id->Sortable = false; // Allow sort
         $this->subbmitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->subbmitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['subbmitted_by_user_id'] = &$this->subbmitted_by_user_id;
@@ -1555,7 +1556,6 @@ class JdhPatientVisits extends DbTable
                     $doc->exportCaption($this->user_id);
                     $doc->exportCaption($this->insurance_id);
                     $doc->exportCaption($this->visit_date);
-                    $doc->exportCaption($this->subbmitted_by_user_id);
                 }
                 $doc->endExportRow();
             }
@@ -1599,7 +1599,6 @@ class JdhPatientVisits extends DbTable
                         $doc->exportField($this->user_id);
                         $doc->exportField($this->insurance_id);
                         $doc->exportField($this->visit_date);
-                        $doc->exportField($this->subbmitted_by_user_id);
                     }
                     $doc->endExportRow($rowCnt);
                 }

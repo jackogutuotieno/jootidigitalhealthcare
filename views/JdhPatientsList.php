@@ -349,7 +349,14 @@ loadjs.ready("head", function() {
 </script>
 <script>
 loadjs.ready("load", function () {
+    // Startup script
     // Write your table-specific startup script here, no need to add script tags.
+    $(document).ready(function() {
+    // HIDE MASTER DETAIL ADD OR ANY ADD LINKS
+    	$('a.btn.btn-default.ew-detail-add-group.ew-detail-add').hide();
+    	$("th.ew-list-option-header.text-nowrap").hide();
+    	$("td.ew-list-option-body.text-nowrap").hide();
+    });
 });
 </script>
 <?php } ?>

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/10/29">
+<ew-language version="19.0.0" id="en-US" name="English (US)" desc="English (US)" author="e.World Technology Limited" date="2023/10/30">
   <!--
     IMPORTANT NOTES:
     1. Language ID must be RFC 4646 language tags (which use hyphen, not underscore), e.g. en-US, fr-CA, fr-FR,
@@ -1234,9 +1234,6 @@
     <menu id="11">
       <phrase id="menutext" value="Prescriptions" />
     </menu>
-    <menu id="288">
-      <phrase id="menutext" value="Patients Insurance" />
-    </menu>
     <menu id="291">
       <phrase id="menutext" value="Bed Management" />
     </menu>
@@ -1246,20 +1243,17 @@
     <menu id="149">
       <phrase id="menutext" value="Investigations" />
     </menu>
-    <menu id="37">
-      <phrase id="menutext" value="Laboratory" />
-    </menu>
     <menu id="3">
-      <phrase id="menutext" value="Test Categories" />
+      <phrase id="menutext" value="Categories" />
     </menu>
     <menu id="4">
-      <phrase id="menutext" value="Test Subcategories" />
+      <phrase id="menutext" value="Subcategories" />
     </menu>
     <menu id="17">
-      <phrase id="menutext" value="Test Requests" />
+      <phrase id="menutext" value="Requests" />
     </menu>
     <menu id="16">
-      <phrase id="menutext" value="Test Results" />
+      <phrase id="menutext" value="Results" />
     </menu>
     <menu id="68">
       <phrase id="menutext" value="Pharmacy" />
@@ -1283,7 +1277,7 @@
       <phrase id="menutext" value="Subcategory" />
     </menu>
     <menu id="14">
-      <phrase id="menutext" value="Services Costs" />
+      <phrase id="menutext" value="Prices" />
     </menu>
     <menu id="60">
       <phrase id="menutext" value="Financials" />
@@ -2261,9 +2255,6 @@
       <field id="footer_image">
         <phrase id="fldcaption" value="Print Footer Image" />
       </field>
-    </table>
-    <table id="jdh_patients_insuarance">
-      <phrase id="tblcaption" value="Patients Insurance" />
     </table>
     <table id="subscriptions">
       <phrase id="tblcaption" value="Notifications" />
