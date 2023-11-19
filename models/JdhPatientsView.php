@@ -678,6 +678,16 @@ class JdhPatientsView extends JdhPatients
         $options = &$this->OtherOptions;
         $option = $options["action"];
 
+        // Add
+        $item = &$option->add("add");
+        $addcaption = HtmlTitle($Language->phrase("ViewPageAddLink"));
+        if ($this->IsModal) {
+            $item->Body = "<a class=\"ew-action ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("ViewPageAddLink") . "</a>";
+        } else {
+            $item->Body = "<a class=\"ew-action ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("ViewPageAddLink") . "</a>";
+        }
+        $item->Visible = $this->AddUrl != "" && $Security->canAdd();
+
         // Edit
         $item = &$option->add("edit");
         $editcaption = HtmlTitle($Language->phrase("ViewPageEditLink"));

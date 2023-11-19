@@ -121,6 +121,7 @@ return function (App $app) {
 
     // jdh_patients
     $app->map(["GET","POST","OPTIONS"], '/jdhpatientslist[/{patient_id}]', JdhPatientsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdhpatientslist-jdh_patients-list'); // list
+    $app->map(["GET","POST","OPTIONS"], '/jdhpatientsadd[/{patient_id}]', JdhPatientsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdhpatientsadd-jdh_patients-add'); // add
     $app->map(["GET","POST","OPTIONS"], '/jdhpatientsview[/{patient_id}]', JdhPatientsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdhpatientsview-jdh_patients-view'); // view
     $app->map(["GET","POST","OPTIONS"], '/jdhpatientsedit[/{patient_id}]', JdhPatientsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdhpatientsedit-jdh_patients-edit'); // edit
     $app->map(["GET","POST","OPTIONS"], '/jdhpatientsdelete[/{patient_id}]', JdhPatientsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdhpatientsdelete-jdh_patients-delete'); // delete
@@ -128,6 +129,7 @@ return function (App $app) {
         '/jdh_patients',
         function (RouteCollectorProxy $group) {
             $group->map(["GET","POST","OPTIONS"], '/' . Config('LIST_ACTION') . '[/{patient_id}]', JdhPatientsController::class . ':list')->add(PermissionMiddleware::class)->setName('jdh_patients/list-jdh_patients-list-2'); // list
+            $group->map(["GET","POST","OPTIONS"], '/' . Config('ADD_ACTION') . '[/{patient_id}]', JdhPatientsController::class . ':add')->add(PermissionMiddleware::class)->setName('jdh_patients/add-jdh_patients-add-2'); // add
             $group->map(["GET","POST","OPTIONS"], '/' . Config('VIEW_ACTION') . '[/{patient_id}]', JdhPatientsController::class . ':view')->add(PermissionMiddleware::class)->setName('jdh_patients/view-jdh_patients-view-2'); // view
             $group->map(["GET","POST","OPTIONS"], '/' . Config('EDIT_ACTION') . '[/{patient_id}]', JdhPatientsController::class . ':edit')->add(PermissionMiddleware::class)->setName('jdh_patients/edit-jdh_patients-edit-2'); // edit
             $group->map(["GET","POST","OPTIONS"], '/' . Config('DELETE_ACTION') . '[/{patient_id}]', JdhPatientsController::class . ':delete')->add(PermissionMiddleware::class)->setName('jdh_patients/delete-jdh_patients-delete-2'); // delete

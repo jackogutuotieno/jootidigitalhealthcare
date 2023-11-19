@@ -1996,6 +1996,156 @@ class JdhPatientsList extends JdhPatients
     {
         global $Language, $Security;
         $options = &$this->OtherOptions;
+        $option = $options["addedit"];
+
+        // Add
+        $item = &$option->add("add");
+        $addcaption = HtmlTitle($Language->phrase("AddLink"));
+        if ($this->ModalAdd && !IsMobile()) {
+            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-table=\"jdh_patients\" data-caption=\"" . $addcaption . "\" data-ew-action=\"modal\" data-action=\"add\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\" data-btn=\"AddBtn\">" . $Language->phrase("AddLink") . "</a>";
+        } else {
+            $item->Body = "<a class=\"ew-add-edit ew-add\" title=\"" . $addcaption . "\" data-caption=\"" . $addcaption . "\" href=\"" . HtmlEncode(GetUrl($this->AddUrl)) . "\">" . $Language->phrase("AddLink") . "</a>";
+        }
+        $item->Visible = $this->AddUrl != "" && $Security->canAdd();
+        $option = $options["detail"];
+        $detailTableLink = "";
+                $item = &$option->add("detailadd_jdh_patient_visits");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_visits");
+                $detailPage = Container("JdhPatientVisitsGrid");
+                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
+                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
+                if ($item->Visible) {
+                    if ($detailTableLink != "") {
+                        $detailTableLink .= ",";
+                    }
+                    $detailTableLink .= "jdh_patient_visits";
+                }
+                $item = &$option->add("detailadd_jdh_chief_complaints");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_chief_complaints");
+                $detailPage = Container("JdhChiefComplaintsGrid");
+                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
+                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
+                if ($item->Visible) {
+                    if ($detailTableLink != "") {
+                        $detailTableLink .= ",";
+                    }
+                    $detailTableLink .= "jdh_chief_complaints";
+                }
+                $item = &$option->add("detailadd_jdh_examination_findings");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_examination_findings");
+                $detailPage = Container("JdhExaminationFindingsGrid");
+                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
+                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
+                if ($item->Visible) {
+                    if ($detailTableLink != "") {
+                        $detailTableLink .= ",";
+                    }
+                    $detailTableLink .= "jdh_examination_findings";
+                }
+                $item = &$option->add("detailadd_jdh_patient_cases");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_patient_cases");
+                $detailPage = Container("JdhPatientCasesGrid");
+                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
+                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
+                if ($item->Visible) {
+                    if ($detailTableLink != "") {
+                        $detailTableLink .= ",";
+                    }
+                    $detailTableLink .= "jdh_patient_cases";
+                }
+                $item = &$option->add("detailadd_jdh_prescriptions");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_prescriptions");
+                $detailPage = Container("JdhPrescriptionsGrid");
+                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
+                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
+                if ($item->Visible) {
+                    if ($detailTableLink != "") {
+                        $detailTableLink .= ",";
+                    }
+                    $detailTableLink .= "jdh_prescriptions";
+                }
+                $item = &$option->add("detailadd_jdh_prescriptions_actions");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_prescriptions_actions");
+                $detailPage = Container("JdhPrescriptionsActionsGrid");
+                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
+                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
+                if ($item->Visible) {
+                    if ($detailTableLink != "") {
+                        $detailTableLink .= ",";
+                    }
+                    $detailTableLink .= "jdh_prescriptions_actions";
+                }
+                $item = &$option->add("detailadd_jdh_appointments");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_appointments");
+                $detailPage = Container("JdhAppointmentsGrid");
+                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
+                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
+                if ($item->Visible) {
+                    if ($detailTableLink != "") {
+                        $detailTableLink .= ",";
+                    }
+                    $detailTableLink .= "jdh_appointments";
+                }
+                $item = &$option->add("detailadd_jdh_vitals");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_vitals");
+                $detailPage = Container("JdhVitalsGrid");
+                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
+                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
+                if ($item->Visible) {
+                    if ($detailTableLink != "") {
+                        $detailTableLink .= ",";
+                    }
+                    $detailTableLink .= "jdh_vitals";
+                }
+                $item = &$option->add("detailadd_jdh_test_requests");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_requests");
+                $detailPage = Container("JdhTestRequestsGrid");
+                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
+                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
+                if ($item->Visible) {
+                    if ($detailTableLink != "") {
+                        $detailTableLink .= ",";
+                    }
+                    $detailTableLink .= "jdh_test_requests";
+                }
+                $item = &$option->add("detailadd_jdh_test_reports");
+                $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=jdh_test_reports");
+                $detailPage = Container("JdhTestReportsGrid");
+                $caption = $Language->phrase("Add") . "&nbsp;" . $this->tableCaption() . "/" . $detailPage->tableCaption();
+                $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+                $item->Visible = ($detailPage->DetailAdd && $Security->allowAdd(CurrentProjectID() . 'jdh_patients') && $Security->canAdd());
+                if ($item->Visible) {
+                    if ($detailTableLink != "") {
+                        $detailTableLink .= ",";
+                    }
+                    $detailTableLink .= "jdh_test_reports";
+                }
+
+        // Add multiple details
+        if ($this->ShowMultipleDetails) {
+            $item = &$option->add("detailsadd");
+            $url = $this->getAddUrl(Config("TABLE_SHOW_DETAIL") . "=" . $detailTableLink);
+            $caption = $Language->phrase("AddMasterDetailLink");
+            $item->Body = "<a class=\"ew-detail-add-group ew-detail-add\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" href=\"" . HtmlEncode(GetUrl($url)) . "\">" . $caption . "</a>";
+            $item->Visible = $detailTableLink != "" && $Security->canAdd();
+            // Hide single master/detail items
+            $ar = explode(",", $detailTableLink);
+            $cnt = count($ar);
+            for ($i = 0; $i < $cnt; $i++) {
+                if ($item = $option["detailadd_" . $ar[$i]]) {
+                    $item->Visible = false;
+                }
+            }
+        }
         $option = $options["action"];
 
         // Add multi delete

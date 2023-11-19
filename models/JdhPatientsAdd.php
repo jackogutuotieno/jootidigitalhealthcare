@@ -1405,10 +1405,6 @@ class JdhPatientsAdd extends JdhPatients
         if (in_array("jdh_test_reports", $detailTblVar) && $detailPage->DetailAdd) {
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
-        $detailPage = Container("JdhInvoiceGrid");
-        if (in_array("jdh_invoice", $detailTblVar) && $detailPage->DetailAdd) {
-            $validateForm = $validateForm && $detailPage->validateGridForm();
-        }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -1619,16 +1615,6 @@ class JdhPatientsAdd extends JdhPatients
             if (in_array("jdh_test_reports", $detailTblVar) && $detailPage->DetailAdd) {
                 $detailPage->patient_id->setSessionValue($this->patient_id->CurrentValue); // Set master key
                 $Security->loadCurrentUserLevel($this->ProjectID . "jdh_test_reports"); // Load user level of detail table
-                $addRow = $detailPage->gridInsert();
-                $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                if (!$addRow) {
-                $detailPage->patient_id->setSessionValue(""); // Clear master key if insert failed
-                }
-            }
-            $detailPage = Container("JdhInvoiceGrid");
-            if (in_array("jdh_invoice", $detailTblVar) && $detailPage->DetailAdd) {
-                $detailPage->patient_id->setSessionValue($this->patient_id->CurrentValue); // Set master key
-                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_invoice"); // Load user level of detail table
                 $addRow = $detailPage->gridInsert();
                 $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
                 if (!$addRow) {
@@ -1878,25 +1864,6 @@ class JdhPatientsAdd extends JdhPatients
                     $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
                 }
             }
-            if (in_array("jdh_invoice", $detailTblVar)) {
-                $detailPageObj = Container("JdhInvoiceGrid");
-                if ($detailPageObj->DetailAdd) {
-                    $detailPageObj->EventCancelled = $this->EventCancelled;
-                    if ($this->CopyRecord) {
-                        $detailPageObj->CurrentMode = "copy";
-                    } else {
-                        $detailPageObj->CurrentMode = "add";
-                    }
-                    $detailPageObj->CurrentAction = "gridadd";
-
-                    // Save current master table to detail table
-                    $detailPageObj->setCurrentMasterTable($this->TableVar);
-                    $detailPageObj->setStartRecordNumber(1);
-                    $detailPageObj->patient_id->IsDetailKey = true;
-                    $detailPageObj->patient_id->CurrentValue = $this->patient_id->CurrentValue;
-                    $detailPageObj->patient_id->setSessionValue($detailPageObj->patient_id->CurrentValue);
-                }
-            }
         }
     }
 
@@ -1926,7 +1893,6 @@ class JdhPatientsAdd extends JdhPatients
         $pages->add('jdh_vitals');
         $pages->add('jdh_test_requests');
         $pages->add('jdh_test_reports');
-        $pages->add('jdh_invoice');
         $this->DetailPages = $pages;
     }
 

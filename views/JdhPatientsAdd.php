@@ -383,13 +383,6 @@ loadjs.ready("fjdh_patientsadd", function() {
 <?php
     }
 ?>
-<?php
-    if (in_array("jdh_invoice", explode(",", $Page->getCurrentDetailTable())) && $jdh_invoice->DetailAdd) {
-?>
-        <li class="nav-item"><button class="<?= $Page->DetailPages->navLinkClasses("jdh_invoice") ?><?= $Page->DetailPages->activeClasses("jdh_invoice") ?>" data-bs-target="#tab_jdh_invoice" data-bs-toggle="tab" type="button" role="tab" aria-controls="tab_jdh_invoice" aria-selected="<?= JsonEncode($Page->DetailPages->isActive("jdh_invoice")) ?>"><?= $Language->tablePhrase("jdh_invoice", "TblCaption") ?></button></li>
-<?php
-    }
-?>
     </ul><!-- /.nav -->
     <div class="<?= $Page->DetailPages->tabContentClasses() ?>"><!-- .tab-content -->
 <?php
@@ -460,13 +453,6 @@ loadjs.ready("fjdh_patientsadd", function() {
 ?>
         <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_test_reports") ?><?= $Page->DetailPages->activeClasses("jdh_test_reports") ?>" id="tab_jdh_test_reports" role="tabpanel"><!-- page* -->
 <?php include_once "JdhTestReportsGrid.php" ?>
-        </div><!-- /page* -->
-<?php } ?>
-<?php
-    if (in_array("jdh_invoice", explode(",", $Page->getCurrentDetailTable())) && $jdh_invoice->DetailAdd) {
-?>
-        <div class="<?= $Page->DetailPages->tabPaneClasses("jdh_invoice") ?><?= $Page->DetailPages->activeClasses("jdh_invoice") ?>" id="tab_jdh_invoice" role="tabpanel"><!-- page* -->
-<?php include_once "JdhInvoiceGrid.php" ?>
         </div><!-- /page* -->
 <?php } ?>
     </div><!-- /.tab-content -->
