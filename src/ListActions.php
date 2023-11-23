@@ -1,17 +1,16 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * List actions class
  */
-class ListActions implements \ArrayAccess
+class ListActions implements \ArrayAccess, \IteratorAggregate
 {
     public $Items = [];
 
     // Implements offsetSet
     #[\ReturnTypeWillChange]
-
     public function offsetSet($offset, $value)
     {
         if (is_null($offset)) {
@@ -23,7 +22,6 @@ class ListActions implements \ArrayAccess
 
     // Implements offsetExists
     #[\ReturnTypeWillChange]
-
     public function offsetExists($offset)
     {
         return isset($this->Items[$offset]);
@@ -31,7 +29,6 @@ class ListActions implements \ArrayAccess
 
     // Implements offsetUnset
     #[\ReturnTypeWillChange]
-
     public function offsetUnset($offset)
     {
         unset($this->Items[$offset]);
@@ -39,29 +36,45 @@ class ListActions implements \ArrayAccess
 
     // Implements offsetGet
     #[\ReturnTypeWillChange]
-
     public function &offsetGet($offset)
     {
         $item = $this->Items[$offset] ?? null;
         return $item;
     }
 
-    // Add and return a new option
-    public function &add($name, $action, $allow = true, $method = ACTION_POSTBACK, $select = ACTION_MULTIPLE, $confirmMsg = "", $icon = "", $success = "")
+    // Implements IteratorAggregate
+    public function getIterator(): \ArrayIterator
     {
-        if (is_string($action)) {
-            $item = new ListAction($name, $action, $allow, $method, $select, $confirmMsg, $icon, $success);
-        } elseif ($action instanceof ListAction) {
-            $item = $action;
-        }
-        $this->Items[$name] = $item;
-        return $item;
+        return new \ArrayIterator($this->Items);
     }
 
-    // Get item by name (same as offsetGet)
-    public function &getItem($name)
-    {
-        $item = $this->Items[$name] ?? null;
+    // Add and return a new action
+    public function &add(
+        string|array|ListAction $action, // Name
+        string $caption = "", // Caption
+        bool $allowed = true,
+        string $method = ACTION_POSTBACK,
+        string $select = ACTION_MULTIPLE,
+        string $confirmMessage = "",
+        string $icon = "fa-solid fa-star ew-icon",
+        string $success = "",
+        mixed $handler = null,
+        string $successMessage = "",
+        string $failureMessage = "",
+    ) {
+        if (is_array($action)) {
+            foreach ($action as $item) {
+                if ($item instanceof ListAction) {
+                    $this->Items[$item->Action] = $item;
+                }
+            }
+            return;
+        } elseif ($action instanceof ListAction) {
+            $this->Items[$action->Action] = $action;
+            return $action;
+        }
+        $item = new ListAction($action, $caption, $allowed, $method, $select, $confirmMessage, $icon, $success, $handler, $successMessage, $failureMessage);
+        $this->Items[$action] = $item;
         return $item;
     }
 }

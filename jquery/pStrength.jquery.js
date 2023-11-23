@@ -5,7 +5,7 @@
  * Released under the MIT License (Feel free to copy, modify or redistribute this plugin.)
  *
  */
- 
+
 (function($){
     var numbers_array = new Array(),
         upper_letters_array = new Array(),
@@ -15,7 +15,7 @@
         settings,
         methods = {
             init : function( options, callbacks) {
-            
+
                 settings = $.extend({
                     'bind': 'keyup change',
                     'changeBackground': true,
@@ -28,7 +28,7 @@
                     'onValidatePassword': function(percentage) { },
                     'onPasswordStrengthChanged': function(passwordStrength, percentage) { }
                 }, options);
-                         
+
                 for(var i = 48; i < 58; i++)
                     numbers_array.push(i);
                 for(i = 65; i < 91; i++)
@@ -43,42 +43,42 @@
                     special_chars_array.push(i);
                 for(i = 123; i < 127; i++)
                     special_chars_array.push(i);
-                
+
                 return this.each((function (idx, pStrengthElement) {
                     var $pStrengthElement = $(pStrengthElement);
                     pStrengthElementsDefaultStyle[$pStrengthElement] = {
                         'background': $pStrengthElement.css('background'),
                         'color': $pStrengthElement.css('color')
                     }
-                    
+
                     calculatePasswordStrength.call(pStrengthElement);
-                    
+
                     $pStrengthElement.data("pStrength", true).on(settings.bind, function(){
                         calculatePasswordStrength.call(this, pStrengthElement); //***
                     });
-                    
+
                 }).bind(this));
             },
-            
+
             changeBackground: function(pStrengthElement, passwordStrength) {
                 if (passwordStrength === undefined) {
                     passwordStrength = pStrengthElement;
                     pStrengthElement = $(this);
                 }
                 passwordStrength = passwordStrength > 12 ? 12 : passwordStrength;
-                
+
                 pStrengthElement.css({
                     'background-color': settings.backgrounds[passwordStrength][0],
                     'color': settings.backgrounds[passwordStrength][1]
                 });
             },
-            
+
             resetStyle: function(pStrengthElement) {
                 var $pStrengthElement = $(pStrengthElement);
                 $pStrengthElement.css(pStrengthElementsDefaultStyle[$pStrengthElement]);
             }
         };
-      
+
     var ord = function(string) {
         var str = string + '',
             code = str.charCodeAt(0);
@@ -90,13 +90,13 @@
             var low = str.charCodeAt(1);
             return ((hi - 0xD800) * 0x400) + (low - 0xDC00) + 0x10000;
         }
-        
+
         if (0xDC00 <= code && code <= 0xDFFF) {
             return code;
         }
           return code;
     }
-    
+
     var calculatePasswordStrength = function(){
         var passwordStrength    = 0,
             numbers_found       = 0,
@@ -105,9 +105,9 @@
             special_chars_found = 0,
             $this = $(this),
             text = $this.val().trim();
-                        
+
         passwordStrength += 2 * Math.floor(text.length / 8);
-        
+
         for(var i = 0; i < text.length; i++) {
             if($.inArray(ord(text.charAt(i)), numbers_array) != -1 && numbers_found < 2) {
                 passwordStrength++;
@@ -130,24 +130,24 @@
                 continue;
             }
         }
-        
+
         behaviour.call($this, passwordStrength);
-        
+
         return passwordStrength;
      }
-     
+
      var behaviour = function(passwordStrength) {
         var strengthPercentage = Math.ceil(passwordStrength * 100 / 12);
             strengthPercentage = strengthPercentage > 100 ? 100 : strengthPercentage;
-            
+
         settings.onPasswordStrengthChanged.call(this, passwordStrength, strengthPercentage);
         if (strengthPercentage >= settings.passwordValidFrom) {
             settings.onValidatePassword.call(this, strengthPercentage);
         }
-        
+
         if (settings.changeBackground) {
             methods.changeBackground.call(this, passwordStrength);
-        }     
+        }
     }
 
     $.fn.pStrength = function(method) {
@@ -156,7 +156,7 @@
         } else if ( typeof method === 'object' || ! method ) {
               return methods.init.apply( this, arguments );
         } else {
-              $.error( 'Method ' +  method + ' does not exists on jQuery.pStrength' );
+              $.error( 'Method ' +  method + ' does not exist on jQuery.pStrength' );
         }
       };
 })(jQuery);

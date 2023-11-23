@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -96,7 +102,7 @@ class ChangePassword extends JdhUsers
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -106,7 +112,7 @@ class ChangePassword extends JdhUsers
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
     }
 
@@ -125,15 +131,15 @@ class ChangePassword extends JdhUsers
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_users)
-        if (!isset($GLOBALS["jdh_users"]) || get_class($GLOBALS["jdh_users"]) == PROJECT_NAMESPACE . "jdh_users") {
+        if (!isset($GLOBALS["jdh_users"]) || $GLOBALS["jdh_users"]::class == PROJECT_NAMESPACE . "jdh_users") {
             $GLOBALS["jdh_users"] = &$this;
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -149,7 +155,7 @@ class ChangePassword extends JdhUsers
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -198,13 +204,11 @@ class ChangePassword extends JdhUsers
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -222,7 +226,7 @@ class ChangePassword extends JdhUsers
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -248,6 +252,7 @@ class ChangePassword extends JdhUsers
     public $OldPassword;
     public $NewPassword;
     public $ConfirmPassword;
+    public $OffsetColumnClass = ""; // Override user table
 
     /**
      * Page run
@@ -256,8 +261,7 @@ class ChangePassword extends JdhUsers
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $UserTable, $Breadcrumb, $SkipHeaderFooter;
-        $this->OffsetColumnClass = ""; // Override user table
+        global $ExportType, $Language, $Security, $CurrentForm, $UserTable, $Breadcrumb, $SkipHeaderFooter;
 
         // Create Password fields object (used by validation only)
         $this->OldPassword = new DbField(Container("usertable"), "opwd", "opwd", "opwd", "", 202, 255, -1, false, "", false, false, false);
@@ -282,10 +286,15 @@ class ChangePassword extends JdhUsers
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
         $this->CurrentAction = Param("action"); // Set up current action
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -296,8 +305,7 @@ class ChangePassword extends JdhUsers
         if ($this->IsModal) {
             $SkipHeaderFooter = true;
         }
-        $Breadcrumb = new Breadcrumb("index");
-        $Breadcrumb->add("change_password", "ChangePasswordPage", CurrentUrl(), "", "", true);
+        $Breadcrumb = Breadcrumb::create("index")->add("change_password", "ChangePasswordPage", CurrentUrl(), "", "", true);
         $this->Heading = $Language->phrase("ChangePasswordPage");
         $postBack = IsPost();
         $validate = true;
@@ -308,30 +316,25 @@ class ChangePassword extends JdhUsers
             $validate = $this->validateForm();
         }
         $pwdUpdated = false;
+        $user = null;
         if ($postBack && $validate) {
             // Setup variables
             $userName = $Security->currentUserName();
             if (IsPasswordReset()) {
                 $userName = Session(SESSION_USER_PROFILE_USER_NAME);
             }
-            $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), $userName);
 
-            // Set up filter (WHERE Clause)
-            $this->CurrentFilter = $filter;
-            $sql = $this->getCurrentSql();
-            if ($rsold = Conn($UserTable->Dbid)->fetchAssociative($sql)) {
-                if (IsPasswordReset() || ComparePassword(GetUserInfo(Config("LOGIN_PASSWORD_FIELD_NAME"), $rsold), $this->OldPassword->CurrentValue)) {
+            // Find user
+            $user = FindUserByUserName($userName);
+            if ($user) {
+                if (IsPasswordReset() || ComparePassword($user->get(Config("LOGIN_PASSWORD_FIELD_NAME")), $this->OldPassword->CurrentValue)) {
                     $validPwd = true;
                     if (!IsPasswordReset()) {
-                        $validPwd = $this->userChangePassword($rsold, $userName, $this->OldPassword->CurrentValue, $this->NewPassword->CurrentValue);
+                        $validPwd = $this->userChangePassword($user->toArray(), $userName, $this->OldPassword->CurrentValue, $this->NewPassword->CurrentValue);
                     }
                     if ($validPwd) {
-                        $rsnew = [Config("LOGIN_PASSWORD_FIELD_NAME") => $this->NewPassword->CurrentValue]; // Change Password
-                        $emailAddress = GetUserInfo(Config("USER_EMAIL_FIELD_NAME"), $rsold);
-                        $validPwd = $this->update($rsnew);
-                        if ($validPwd) {
-                            $pwdUpdated = true;
-                        }
+                        $user->set(Config("LOGIN_PASSWORD_FIELD_NAME"), $this->NewPassword->CurrentValue)->flush(); // Change Password
+                        $pwdUpdated = true;
                     } else {
                         $this->setFailureMessage($Language->phrase("InvalidNewPassword"));
                     }
@@ -341,14 +344,15 @@ class ChangePassword extends JdhUsers
             }
         }
         if ($pwdUpdated) {
-            if (@$emailAddress != "") {
+            $emailAddress = $user->get(Config("USER_EMAIL_FIELD_NAME"));
+            if ($emailAddress != "") {
                 // Load Email Content
                 $email = new Email();
-                $email->load(Config("EMAIL_CHANGE_PASSWORD_TEMPLATE"));
-                $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-                $email->replaceRecipient($emailAddress); // Replace Recipient
-                $args = [];
-                $args["rs"] = &$rsnew;
+                $email->load(Config("EMAIL_CHANGE_PASSWORD_TEMPLATE"), data: [
+                    "From" => Config("SENDER_EMAIL"), // Replace Sender
+                    "To" => $emailAddress // Replace Recipient
+                ]);
+                $args = ["rs" => $user->toArray()];
                 $emailSent = false;
                 if ($this->emailSending($email, $args)) {
                     $emailSent = $email->send();
@@ -379,7 +383,7 @@ class ChangePassword extends JdhUsers
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -453,7 +457,7 @@ class ChangePassword extends JdhUsers
     public function messageShowing(&$msg, $type)
     {
         // Example:
-        //if ($type == 'success') $msg = "your success message";
+        //if ($type == "success") $msg = "your success message";
     }
 
     // Page Render event
@@ -477,7 +481,7 @@ class ChangePassword extends JdhUsers
     }
 
     // Email Sending event
-    public function emailSending($email, &$args)
+    public function emailSending($email, $args)
     {
         //var_dump($email, $args); exit();
         return true;
@@ -491,7 +495,7 @@ class ChangePassword extends JdhUsers
     }
 
     // User ChangePassword event
-    public function userChangePassword(&$rs, $usr, $oldpwd, &$newpwd)
+    public function userChangePassword($rs, $usr, $oldpwd, &$newpwd)
     {
         // Return false to abort
         return true;

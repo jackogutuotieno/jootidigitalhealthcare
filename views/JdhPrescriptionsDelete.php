@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhPrescriptionsDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_prescriptionsdelete" id="fjdh_prescriptionsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_prescriptionsdelete" id="fjdh_prescriptionsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -80,16 +80,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -97,7 +97,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_patient_id" class="el_jdh_prescriptions_patient_id">
+<span id="">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
@@ -105,7 +105,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->prescription_title->Visible) { // prescription_title ?>
         <td<?= $Page->prescription_title->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_prescription_title" class="el_jdh_prescriptions_prescription_title">
+<span id="">
 <span<?= $Page->prescription_title->viewAttributes() ?>>
 <?= $Page->prescription_title->getViewValue() ?></span>
 </span>
@@ -113,7 +113,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->medicine_id->Visible) { // medicine_id ?>
         <td<?= $Page->medicine_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_medicine_id" class="el_jdh_prescriptions_medicine_id">
+<span id="">
 <span<?= $Page->medicine_id->viewAttributes() ?>>
 <?= $Page->medicine_id->getViewValue() ?></span>
 </span>
@@ -121,7 +121,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->tabs->Visible) { // tabs ?>
         <td<?= $Page->tabs->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_tabs" class="el_jdh_prescriptions_tabs">
+<span id="">
 <span<?= $Page->tabs->viewAttributes() ?>>
 <?= $Page->tabs->getViewValue() ?></span>
 </span>
@@ -129,7 +129,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->frequency->Visible) { // frequency ?>
         <td<?= $Page->frequency->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_frequency" class="el_jdh_prescriptions_frequency">
+<span id="">
 <span<?= $Page->frequency->viewAttributes() ?>>
 <?= $Page->frequency->getViewValue() ?></span>
 </span>
@@ -137,7 +137,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->prescription_days->Visible) { // prescription_days ?>
         <td<?= $Page->prescription_days->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_prescription_days" class="el_jdh_prescriptions_prescription_days">
+<span id="">
 <span<?= $Page->prescription_days->viewAttributes() ?>>
 <?= $Page->prescription_days->getViewValue() ?></span>
 </span>
@@ -145,7 +145,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->prescription_time->Visible) { // prescription_time ?>
         <td<?= $Page->prescription_time->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_prescription_time" class="el_jdh_prescriptions_prescription_time">
+<span id="">
 <span<?= $Page->prescription_time->viewAttributes() ?>>
 <?= $Page->prescription_time->getViewValue() ?></span>
 </span>
@@ -153,7 +153,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->prescription_date->Visible) { // prescription_date ?>
         <td<?= $Page->prescription_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_prescriptions_prescription_date" class="el_jdh_prescriptions_prescription_date">
+<span id="">
 <span<?= $Page->prescription_date->viewAttributes() ?>>
 <?= $Page->prescription_date->getViewValue() ?></span>
 </span>
@@ -161,9 +161,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

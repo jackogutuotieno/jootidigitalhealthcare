@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Pager class
@@ -12,7 +12,6 @@ class Pager
     public $PrevButton;
     public $LastButton;
     public $PageSize;
-    public $PageIndex;
     public $FromIndex;
     public $ToIndex;
     public $RecordCount;
@@ -48,7 +47,7 @@ class Pager
             $this->PageSize = $this->RecordCount > 0 ? $this->RecordCount : 10;
         }
         // Handle page size = -1 (ALL)
-        if ($this->PageSize == -1) {
+        if ($this->PageSize == -1 || $this->PageSize == $this->RecordCount) {
             $this->PageSizeAll = true;
             $this->PageSize = $this->RecordCount > 0 ? $this->RecordCount : 10;
         }
@@ -66,8 +65,8 @@ class Pager
     {
         global $Language;
         $html = "";
-        if ($this->Visible && $this->RecordCount > 0) {
-            $formatInteger = self::$FormatIntegerFunc;
+        $formatInteger = self::$FormatIntegerFunc;
+        if ($this->isVisible()) {
             // Do not show record numbers for View/Edit page
             if ($this->PagePhraseId !== "Record") {
                 $html .= <<<RECORD
@@ -78,7 +77,7 @@ class Pager
                             <div class="ew-pager-to me-1">{$Language->phrase("To")}</div>
                             <div class="ew-pager-end me-1">{$formatInteger($this->ToIndex)}</div>
                             <div class="ew-pager-of me-1">{$Language->phrase("Of")}</div>
-                            <div class="ew-pager-count me-1">{$formatInteger($this->RecordCount)}</div>
+                            <div class="ew-pager-count me-1" data-count="' . $this->RecordCount . '">{$formatInteger($this->RecordCount)}</div>
                         </div>
                     </div>
                     RECORD;

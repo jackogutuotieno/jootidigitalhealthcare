@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhServiceCategoryDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_service_categorydelete" id="fjdh_service_categorydelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_service_categorydelete" id="fjdh_service_categorydelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -62,16 +62,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -79,7 +79,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->category_id->Visible) { // category_id ?>
         <td<?= $Page->category_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_service_category_category_id" class="el_jdh_service_category_category_id">
+<span id="">
 <span<?= $Page->category_id->viewAttributes() ?>>
 <?= $Page->category_id->getViewValue() ?></span>
 </span>
@@ -87,7 +87,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->category_name->Visible) { // category_name ?>
         <td<?= $Page->category_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_service_category_category_name" class="el_jdh_service_category_category_name">
+<span id="">
 <span<?= $Page->category_name->viewAttributes() ?>>
 <?= $Page->category_name->getViewValue() ?></span>
 </span>
@@ -95,9 +95,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

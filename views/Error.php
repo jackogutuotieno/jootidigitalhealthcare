@@ -1,6 +1,8 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
+
+// Traces
 $trace = @$Error["error"]["trace"];
 if ($trace) {
     $card = preg_replace('/<button.+><\/button>/i', "", Config("DEBUG_MESSAGE_TEMPLATE"));

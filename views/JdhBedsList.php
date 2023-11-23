@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhBedsList = &$Page;
@@ -30,8 +30,8 @@ loadjs.ready(["wrapper", "head"], function () {
 </script>
 <script>
 window.Tabulator || loadjs([
-    ew.PATH_BASE + "js/tabulator.min.js?v=19.0.15",
-    ew.PATH_BASE + "css/<?= CssFile("tabulator_bootstrap5.css") ?>?v=19.0.15"
+    ew.PATH_BASE + "js/tabulator.min.js?v=24.4.0",
+    ew.PATH_BASE + "css/<?= CssFile("tabulator_bootstrap5.css", false) ?>?v=24.4.0"
 ], "import");
 </script>
 <script>
@@ -50,15 +50,20 @@ loadjs.ready("head", function () {
 <?php } ?>
 </div>
 <?php } ?>
+<?php if (!$Page->IsModal) { ?>
+<?php } ?>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="list<?= ($Page->TotalRecords == 0 && !$Page->isAdd()) ? " ew-no-record" : "" ?>">
+<div id="ew-header-options">
+<?php $Page->HeaderOptions?->render("body") ?>
+</div>
 <div id="ew-list">
 <?php if ($Page->TotalRecords > 0 || $Page->CurrentAction) { ?>
 <div class="card ew-card ew-grid<?= $Page->isAddOrEdit() ? " ew-grid-add-edit" : "" ?> <?= $Page->TableGridClass ?>">
-<form name="<?= $Page->FormName ?>" id="<?= $Page->FormName ?>" class="ew-form ew-list-form" action="<?= $Page->PageAction ?>" method="post" novalidate autocomplete="on">
+<form name="<?= $Page->FormName ?>" id="<?= $Page->FormName ?>" class="ew-form ew-list-form" action="<?= $Page->PageAction ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -74,7 +79,7 @@ $Page->showMessage();
     <tr class="ew-table-header">
 <?php
 // Header row
-$Page->RowType = ROWTYPE_HEADER;
+$Page->RowType = RowType::HEADER;
 
 // Render list options
 $Page->renderListOptions();
@@ -106,7 +111,15 @@ $Page->ListOptions->render("header", "right");
 <tbody data-page="<?= $Page->getPageNumber() ?>">
 <?php
 $Page->setupGrid();
-while ($Page->RecordCount < $Page->StopRecord) {
+while ($Page->RecordCount < $Page->StopRecord || $Page->RowIndex === '$rowindex$') {
+    if (
+        $Page->CurrentRow !== false &&
+        $Page->RowIndex !== '$rowindex$' &&
+        (!$Page->isGridAdd() || $Page->CurrentMode == "copy") &&
+        (!(($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0))
+    ) {
+        $Page->fetch();
+    }
     $Page->RecordCount++;
     if ($Page->RecordCount >= $Page->StartRecord) {
         $Page->setupRow();
@@ -118,7 +131,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
     <?php if ($Page->id->Visible) { // id ?>
         <td data-name="id"<?= $Page->id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_id" class="el_jdh_beds_id">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_beds_id" class="el_jdh_beds_id">
 <span<?= $Page->id->viewAttributes() ?>>
 <?= $Page->id->getViewValue() ?></span>
 </span>
@@ -126,7 +139,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->facility_id->Visible) { // facility_id ?>
         <td data-name="facility_id"<?= $Page->facility_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_facility_id" class="el_jdh_beds_facility_id">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_beds_facility_id" class="el_jdh_beds_facility_id">
 <span<?= $Page->facility_id->viewAttributes() ?>>
 <?= $Page->facility_id->getViewValue() ?></span>
 </span>
@@ -134,7 +147,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->ward_id->Visible) { // ward_id ?>
         <td data-name="ward_id"<?= $Page->ward_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_ward_id" class="el_jdh_beds_ward_id">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_beds_ward_id" class="el_jdh_beds_ward_id">
 <span<?= $Page->ward_id->viewAttributes() ?>>
 <?= $Page->ward_id->getViewValue() ?></span>
 </span>
@@ -142,7 +155,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->bed_number->Visible) { // bed_number ?>
         <td data-name="bed_number"<?= $Page->bed_number->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_bed_number" class="el_jdh_beds_bed_number">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_beds_bed_number" class="el_jdh_beds_bed_number">
 <span<?= $Page->bed_number->viewAttributes() ?>>
 <?= $Page->bed_number->getViewValue() ?></span>
 </span>
@@ -150,12 +163,10 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->assigned->Visible) { // assigned ?>
         <td data-name="assigned"<?= $Page->assigned->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_assigned" class="el_jdh_beds_assigned">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_beds_assigned" class="el_jdh_beds_assigned">
 <span<?= $Page->assigned->viewAttributes() ?>>
-<div class="form-check d-inline-block">
-    <input type="checkbox" id="x_assigned_<?= $Page->RowCount ?>" class="form-check-input" value="<?= $Page->assigned->getViewValue() ?>" disabled<?php if (ConvertToBool($Page->assigned->CurrentValue)) { ?> checked<?php } ?>>
-    <label class="form-check-label" for="x_assigned_<?= $Page->RowCount ?>"></label>
-</div></span>
+<i class="fa-regular fa-square<?php if (ConvertToBool($Page->assigned->CurrentValue)) { ?>-check<?php } ?> ew-icon ew-boolean"></i>
+</span>
 </span>
 </td>
     <?php } ?>
@@ -166,8 +177,14 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
     </tr>
 <?php
     }
-    if (!$Page->isGridAdd()) {
-        $Page->Recordset->moveNext();
+
+    // Reset for template row
+    if ($Page->RowIndex === '$rowindex$') {
+        $Page->RowIndex = 0;
+    }
+    // Reset inline add/copy row
+    if (($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0) {
+        $Page->RowIndex = 1;
     }
 }
 ?>
@@ -180,10 +197,8 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
 <?php } ?>
 </form><!-- /.ew-list-form -->
 <?php
-// Close recordset
-if ($Page->Recordset) {
-    $Page->Recordset->close();
-}
+// Close result set
+$Page->Recordset?->free();
 ?>
 <?php if (!$Page->isExport()) { ?>
 <div class="card-footer ew-grid-lower-panel">
@@ -201,6 +216,9 @@ if ($Page->Recordset) {
 <?php $Page->OtherOptions->render("body") ?>
 </div>
 <?php } ?>
+</div>
+<div id="ew-footer-options">
+<?php $Page->FooterOptions?->render("body") ?>
 </div>
 </main>
 <?php

@@ -1,6 +1,8 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
+
+use Symfony\Component\Finder\Finder;
 
 /**
  * SMS class
@@ -12,38 +14,32 @@ abstract class Sms
     public $SendErrDescription; // Send error description
 
     /**
-     * Load message from template
+     * Load message from template name
      *
-     * @param string $fn File name
+     * @param string $name Template name
      * @param string $langId Language ID
+     * @param array $data Data for template
      * @return void
      */
-    public function load($fn, $langId = "")
+     public function load($name, $langId = "", $data = [])
     {
         global $CurrentLanguage;
-        $langId = ($langId == "") ? $CurrentLanguage : $langId;
-        $pos = strrpos($fn, '.');
-        if ($pos !== false) {
-            $wrkname = substr($fn, 0, $pos); // Get file name
-            $wrkext = substr($fn, $pos + 1); // Get file extension
-            $wrkpath = PathCombine(AppRoot(true), Config("SMS_TEMPLATE_PATH"), true); // Get file path
-            $ar = ($langId != "") ? ["_" . $langId, "-" . $langId, ""] : [""];
-            $exist = false;
-            foreach ($ar as $suffix) {
-                $wrkfile = $wrkpath . $wrkname . $suffix . "." . $wrkext;
-                $exist = file_exists($wrkfile);
-                if ($exist) {
-                    break;
-                }
+        $langId = $langId ?: $CurrentLanguage;
+        $this->data = $data;
+        $parts = pathinfo($name);
+        $finder = Finder::create()->files()->in(Config("LANGUAGE_FOLDER"))->name($parts["filename"] . "." . $langId . "." . $parts["extension"]); // Template for the language ID
+        if (!$finder->hasResults()) {
+            $finder->files()->name($parts["filename"]  . ".en-US." . $parts["extension"]); // Fallback to en-US
+        }
+        if ($finder->hasResults()) {
+            $wrk = "";
+            $view = Container("sms.view");
+            foreach ($finder as $file) {
+                $wrk = $view->fetchTemplate($file->getFileName(), $data);
             }
-            if (!$exist) {
-                return;
-            }
-            $wrk = file_get_contents($wrkfile); // Load template file content
-            if (StartsString("\xEF\xBB\xBF", $wrk)) { // UTF-8 BOM
-                $wrk = substr($wrk, 3);
-            }
-            $this->Content = trim($wrk);
+            $this->Content = $wrk;
+        } else {
+            throw new \Exception("Failed to load sms template '$name' for language '$langId'");
         }
     }
 

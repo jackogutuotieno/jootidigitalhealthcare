@@ -1,7 +1,7 @@
-<?php namespace PHPMaker2023\jootidigitalhealthcare; ?>
+<?php namespace PHPMaker2024\jootidigitalhealthcare; ?>
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $PersonalData = &$Page;
@@ -50,7 +50,7 @@ loadjs.ready(["wrapper", "head"], function() {
     </div>
     <?php } ?>
     <div class="container-fluid">
-        <form name="fpersonal_data" class="ew-form ew-personaldata-form" id="fpersonal_data" method="post" novalidate autocomplete="on">
+        <form name="fpersonal_data" class="ew-form ew-personaldata-form" id="fpersonal_data" method="post" novalidate autocomplete="off">
             <input type="hidden" name="cmd" value="delete">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->

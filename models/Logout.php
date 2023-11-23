@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -99,17 +105,14 @@ class Logout
     {
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
 
-        // Table CSS class
-        $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-view-table";
-
         // Initialize
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -125,7 +128,7 @@ class Logout
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -174,13 +177,11 @@ class Logout
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -198,7 +199,7 @@ class Logout
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -222,7 +223,7 @@ class Logout
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm;
+        global $ExportType, $Language, $Security, $CurrentForm;
 
         // Use layout
         $this->UseLayout = $this->UseLayout && ConvertToBool(Param(Config("PAGE_LAYOUT"), true));
@@ -230,8 +231,13 @@ class Logout
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
+
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -251,14 +257,22 @@ class Logout
             return;
         } else {
             $params = $_GET;
-            $flash = Container("flash");
+            $flash = Container("app.flash");
 
-            // Write cookies
-            if (ReadCookie("AutoLogin") == "") { // Not autologin
-                WriteCookie("Username", ""); // Clear user name cookie
+            // Remove cookie
+            RemoveCookie("LastUrl"); // Clear last URL
+
+            // Clear jwt from AutoLogin Cookie
+            if ($jwt = ReadCookie("AutoLogin")) {
+                WriteCookie(
+                    "AutoLogin",
+                    CreateJwt(["username" => DecodeJwt($jwt)["username"] ?? ""], Config("REMEMBER_ME_EXPIRY_TIME")),
+                    time() + Config("REMEMBER_ME_EXPIRY_TIME")
+                ); // Write cookie without autologin
             }
-            WriteCookie("Password", ""); // Clear password cookie
-            WriteCookie("LastUrl", ""); // Clear last URL
+
+            // Password changed (after expired password)
+            $isPasswordChanged = Config("USE_TWO_FACTOR_AUTHENTICATION") && Session(SESSION_STATUS) == "passwordchanged";
             $this->writeAuditTrailOnLogout();
 
             // Call User LoggedOut event
@@ -267,21 +281,35 @@ class Logout
             // Clean upload temp folder
             CleanUploadTempPaths(session_id());
 
+            // Invalidate Laravel session first
+            LaravelSession()?->invalidate();
+
             // Unset all of the session variables
             $_SESSION = [];
+            if ($params["deleted"] ?? false) {
+                $flash->addMessage("heading", $Language->phrase("Notice"));
+                $flash->addMessage("success", $Language->phrase("PersonalDataDeleteSuccess"));
+                $isValidUser = true;
+            }
+
+            // If password changed, show login message
+            if ($isPasswordChanged) {
+                $flash->addMessage("heading", $Language->phrase("Notice"));
+                $flash->addMessage("failure", $Language->phrase("LoginAfterPasswordChanged"));
+            }
 
             // If session expired, show expired message
             if ($params["expired"] ?? false) {
                 $flash->addMessage("heading", $Language->phrase("Notice"));
                 $flash->addMessage("failure", $Language->phrase("SessionExpired"));
             }
-            if ($params["deleted"] ?? false) {
-                $flash->addMessage("success", $Language->phrase("PersonalDataDeleteSuccess"));
-            }
             session_write_close();
 
             // Delete the session cookie and kill the session
-            DeleteCookie(session_name());
+            RemoveCookie(session_name());
+
+            // Remove user and profile
+            Container(["app.user" => null, "user.profile" => null]);
 
             // Go to login page
             $this->terminate("login");
@@ -297,7 +325,7 @@ class Logout
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -315,7 +343,7 @@ class Logout
     protected function writeAuditTrailOnLogout()
     {
         global $Language;
-        WriteAuditLog(CurrentUser(), $Language->phrase("AuditTrailLogout"), CurrentUserIP(), "", "", "", "");
+        WriteAuditLog(CurrentUserIdentifier(), $Language->phrase("AuditTrailLogout"), CurrentUserIP());
     }
 
     // Page Load event
@@ -342,7 +370,7 @@ class Logout
     public function messageShowing(&$msg, $type)
     {
         // Example:
-        //if ($type == 'success') $msg = "your success message";
+        //if ($type == "success") $msg = "your success message";
     }
 
     // User Logging Out event

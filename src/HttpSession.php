@@ -1,13 +1,13 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Helper class
  *
  * This is a general-purpose class that allows to manage PHP built-in sessions
  * and the session variables passed via $_SESSION superglobal.
- * 
+ *
  * Based on: https://github.com/bryanjhv/slim-session/blob/master/src/SlimSession/Helper.php
  *
  * @package SlimSession
@@ -45,13 +45,17 @@ class HttpSession implements \ArrayAccess, \Countable, \IteratorAggregate
     /**
      * Merge values recursively.
      *
-     * @param string $key
+     * @param string|array $key
      * @param mixed  $value
      *
      * @return $this
      */
     public function merge($key, $value)
     {
+        if (is_array($key) && !$value) {
+            $_SESSION = array_merge_recursive($_SESSION, $key);
+            return $this;
+        }
         if (is_array($value) && is_array($old = $this->get($key))) {
             $value = array_merge_recursive($old, $value);
         }
@@ -194,7 +198,6 @@ class HttpSession implements \ArrayAccess, \Countable, \IteratorAggregate
      * @return int
      */
     #[\ReturnTypeWillChange]
-
     public function count()
     {
         return count($_SESSION ?? []);
@@ -206,7 +209,6 @@ class HttpSession implements \ArrayAccess, \Countable, \IteratorAggregate
      * @return \Traversable
      */
     #[\ReturnTypeWillChange]
-
     public function getIterator()
     {
         return new \ArrayIterator($_SESSION ?? []);
@@ -220,7 +222,6 @@ class HttpSession implements \ArrayAccess, \Countable, \IteratorAggregate
      * @return bool
      */
     #[\ReturnTypeWillChange]
-
     public function offsetExists($offset)
     {
         return $this->exists($offset);
@@ -234,7 +235,6 @@ class HttpSession implements \ArrayAccess, \Countable, \IteratorAggregate
      * @return mixed
      */
     #[\ReturnTypeWillChange]
-
     public function offsetGet($offset)
     {
         return $this->get($offset);
@@ -247,7 +247,6 @@ class HttpSession implements \ArrayAccess, \Countable, \IteratorAggregate
      * @param mixed $value
      */
     #[\ReturnTypeWillChange]
-
     public function offsetSet($offset, $value)
     {
         $this->set($offset, $value);
@@ -259,7 +258,6 @@ class HttpSession implements \ArrayAccess, \Countable, \IteratorAggregate
      * @param mixed $offset
      */
     #[\ReturnTypeWillChange]
-
     public function offsetUnset($offset)
     {
         $this->delete($offset);

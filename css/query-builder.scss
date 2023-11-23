@@ -1,39 +1,44 @@
 /*!
- * jQuery QueryBuilder 2.6.2
- * Copyright 2014-2022 Damien "Mistic" Sorel (http://www.strangeplanet.fr)
+ * jQuery QueryBuilder 2.7.0
+ * Copyright 2014-2023 Damien "Mistic" Sorel (http://www.strangeplanet.fr)
  * Licensed under MIT (https://opensource.org/licenses/MIT)
  */
 @import "bootstrap/functions"; //***
 @import "variables"; //***
+@import "bootstrap/variables-dark"; //***
+@import "bootstrap/mixins"; //***
+@import "adminlte/mixins"; //***
 
-$theme-name: default !default;
+// $theme-name: default !default;
+:root {
+  --qb-group-background-color: rgba(0, 0, 0, .015);
+  --qb-group-border-color: #{$border-color};
+  --qb-rule-background-color: rgba(0, 0, 0, .015);
+  --qb-rule-border-color: #{$border-color};
+  --qb-error-border-color: #{var(--#{$prefix}form-invalid-color)}; //***
+  --qb-error-background-color: transparent;
+  --qb-ticks-color: #CCC;
+}
 
 // common
 $item-vertical-spacing: 4px !default;
 $item-border-radius: 5px !default;
 
 // groups
-$group-background-color: rgba(0, 0, 0, .015) !default;
-$group-border-color: $border-color !default;
-$group-border: 1px solid $group-border-color !default;
+$group-border: 1px solid #{var(--qb-group-border-color)} !default;
 $group-padding: 10px !default;
 
 // rules
-$rule-background-color: rgba(0, 0, 0, .015) !default;
-$rule-border-color: $border-color !default;
-$rule-border: 1px solid $rule-border-color !default;
+$rule-border: 1px solid #{var(--qb-rule-border-color)} !default;
 $rule-padding: 5px !default;
 // scss-lint:disable ColorVariable
 $rule-value-separator: 1px solid #DDD !default;
 
 // errors
-$error-icon-color: $form-feedback-icon-invalid-color !default;
-$error-border-color: $form-feedback-invalid-color !default;
-$error-background-color: transparent !default;
+$error-icon-color: #{var(--#{$prefix}form-invalid-color)} !default; //***
 
 // ticks
 $ticks-width: 2px !default;
-$ticks-color: #CCC !default;
 $ticks-position: 5px, 10px !default;
 
 
@@ -44,7 +49,7 @@ $ticks-position: 5px, 10px !default;
   border-radius: $item-border-radius;
   padding: $rule-padding;
   border: $rule-border;
-  background: $rule-background-color;
+  background: var(--qb-rule-background-color);
 }
 
 %rule-component {
@@ -62,7 +67,7 @@ $ticks-position: 5px, 10px !default;
     padding: $group-padding;
     padding-bottom: #{$group-padding - $item-vertical-spacing};
     border: $group-border;
-    background: $group-background-color;
+    background: var(--qb-group-background-color);
   }
 
   .rules-group-header {
@@ -134,8 +139,8 @@ $ticks-position: 5px, 10px !default;
   }
 
   .has-error {
-    background-color: $error-background-color;
-    // border-color: $error-border-color;
+    background-color: var(--qb-error-background-color);
+    // border-color: var(--qb-error-border-color);
 
     .error-container {
       display: inline-block !important;
@@ -151,7 +156,7 @@ $ticks-position: 5px, 10px !default;
       left: #{-1 * nth($ticks-position, 2)};
       width: nth($ticks-position, 2);
       height: calc(50% + #{$item-vertical-spacing});
-      border-color: $ticks-color;
+      border-color: var(--qb-ticks-color);
       border-style: solid;
     }
 
@@ -180,76 +185,45 @@ $ticks-position: 5px, 10px !default;
   }
 }
 
-// import
-// endimport
-
-
-$error-tooltip-color: #F99;
-
-@if $theme-name == 'dark' {
-  $error-tooltip-color: #F22;
+// plugins/filter-description
+:root {
+  --qb-description-background-color: #D9EDF7;
+  --qb-description-border-color: #BCE8F1;
+  --qb-description-text-color: #31708F;
 }
 
-.query-builder .error-container + .tooltip .tooltip-inner {
-  color: $error-tooltip-color !important;
-}
-
-
-$description-background-color: #D9EDF7;
-$description-border-color: #BCE8F1;
-$description-text-color: #31708F;
-
-@if $theme-name == 'dark' {
-  $description-background-color: rgba(0, 170, 255, .2);
-  $description-text-color: #AAD1E4;
-  $description-border-color: #346F7B;
-}
-
-$description-border: 1px solid $description-border-color;
+$description-border: 1px solid #{var(--qb-description-border-color)};
 
 .query-builder p.filter-description {
   margin: $rule-padding 0 0 0;
-  background: $description-background-color;
+  background: var(--qb-description-background-color);
   border: $description-border;
-  color: $description-text-color;
+  color: var(--qb-description-text-color);
   border-radius: $item-border-radius;
-  padding: #{$rule-padding / 2} $rule-padding;
+  padding: #{$rule-padding * .5} $rule-padding;
   font-size: .8em;
 }
 
-
+// plugins/invert
 .query-builder {
   .rules-group-header [data-invert] {
     margin-left: 5px;
   }
 }
 
+// $theme-name: dark;
+@include dark-mode () {
+  :root {
+    --qb-group-background-color: rgba(50, 70, 80, .5);
+    --qb-group-border-color: #{$border-color-dark};
+    --qb-rule-background-color: rgba(40, 40, 40, .9);
+    --qb-rule-border-color: #{$border-color-dark};
+    --qb-error-border-color: #800;
+    --qb-error-background-color: #322;
+    --qb-ticks-color: #222;
 
-$placeholder-border-color: #BBB;
-$placeholder-border: 1px dashed $placeholder-border-color;
-
-.query-builder {
-  .drag-handle {
-    @extend %rule-component;
-    cursor: move;
-    vertical-align: middle;
-    margin-left: 5px;
-  }
-
-  .dragging {
-    position: fixed;
-    opacity: .5;
-    z-index: 100;
-
-    &::before,
-    &::after {
-      display: none;
-    }
-  }
-
-  .rule-placeholder {
-    @extend %base-container;
-    border: $placeholder-border;
-    opacity: .7;
+    --qb-description-background-color: rgba(0, 170, 255, .2);
+    --qb-description-text-color: #AAD1E4;
+    --qb-description-border-color: #346F7B;
   }
 }

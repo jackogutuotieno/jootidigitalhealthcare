@@ -1,17 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Form class
  */
 class HttpForm
 {
-    public $Index;
+    public $Index = -1;
     public $FormName = "";
 
-    // Constructor
-    public function __construct()
+    // Reset index to -1
+    public function resetIndex()
     {
         $this->Index = -1;
     }

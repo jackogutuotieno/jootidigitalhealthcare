@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -102,7 +108,7 @@ class Barcode
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -112,7 +118,7 @@ class Barcode
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
     }
 
@@ -121,17 +127,14 @@ class Barcode
     {
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
 
-        // Table CSS class
-        $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-view-table";
-
         // Initialize
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -147,7 +150,7 @@ class Barcode
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -196,13 +199,11 @@ class Barcode
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -220,7 +221,7 @@ class Barcode
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }

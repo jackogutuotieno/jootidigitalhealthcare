@@ -1,9 +1,10 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use DiDom\Document;
 use DiDom\Element;
+use Illuminate\Support\Collection;
 
 /**
  * Export to email
@@ -52,7 +53,7 @@ class ExportEmail extends AbstractExport
      * Add image to end of page
      *
      * @param string $imagefn Image file
-     * @param string $break Break type (before/after)
+     * @param string $break Break type (before/after/none)
      * @return void
      */
     public function addImage($imagefn, $break = false)
@@ -62,6 +63,8 @@ class ExportEmail extends AbstractExport
             $classes .= " break-before-page";
         } elseif (SameText($break, "after")) {
             $classes .= " break-after-page";
+        } elseif (SameText($break, "none")) {
+            $classes .= " break-after-avoid";
         }
         $html = '<div class="' . $classes . '">' . GetFileImgTag($imagefn) . "</div>";
         if (ContainsText($this->Text, "</body>")) {
@@ -81,7 +84,7 @@ class ExportEmail extends AbstractExport
     {
         global $TempImages;
         $folder = UploadTempPath(true);
-        $ext = ArrayFind(fn($ext) => file_exists($folder . $tmpimage . $ext), [".gif", ".jpg", ".png"]);
+        $ext = Collection::make([".gif", ".jpg", ".png"])->first(fn ($ext) => file_exists($folder . $tmpimage . $ext));
         if ($ext) {
             $tmpimage .= $ext; // Add file extension
             if (!in_array($tmpimage, $TempImages)) { // Add to TempImages
@@ -99,7 +102,7 @@ class ExportEmail extends AbstractExport
     public function getBase64Url($tmpimage)
     {
         $folder = UploadTempPath(true);
-        $ext = ArrayFind(fn($ext) => file_exists($folder . $tmpimage . $ext), [".gif", ".jpg", ".png"]);
+        $ext = Collection::make([".gif", ".jpg", ".png"])->first(fn ($ext) => file_exists($folder . $tmpimage . $ext));
         return $ext ? ImageFileToBase64Url($folder . $tmpimage . $ext) : $tmpimage;
     }
 
@@ -187,7 +190,7 @@ class ExportEmail extends AbstractExport
             return ["success" => true, "message" => $Language->phrase("SendEmailSuccess")];
         } else {
             // Sent email failure
-            return ["success" => false, "message" => $email->SendErrDescription];
+            return ["success" => false, "message" => !EmptyValue($email->SendErrDescription) ? $email->SendErrDescription : $Language->phrase("FailedToSendMail")];
         }
     }
 

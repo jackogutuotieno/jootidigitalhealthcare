@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -107,7 +113,7 @@ class JdhPatientsEdit extends JdhPatients
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -117,8 +123,28 @@ class JdhPatientsEdit extends JdhPatients
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->patient_id->setVisibility();
+        $this->photo->setVisibility();
+        $this->patient_ip_number->setVisibility();
+        $this->patient_name->Visible = false;
+        $this->patient_dob_year->setVisibility();
+        $this->patient_age->Visible = false;
+        $this->patient_gender->Visible = false;
+        $this->patient_phone->setVisibility();
+        $this->patient_kin_name->setVisibility();
+        $this->patient_kin_phone->setVisibility();
+        $this->service_id->Visible = false;
+        $this->patient_registration_date->Visible = false;
+        $this->time->Visible = false;
+        $this->is_inpatient->setVisibility();
+        $this->submitted_by_user_id->setVisibility();
     }
 
     // Constructor
@@ -136,10 +162,10 @@ class JdhPatientsEdit extends JdhPatients
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_patients)
-        if (!isset($GLOBALS["jdh_patients"]) || get_class($GLOBALS["jdh_patients"]) == PROJECT_NAMESPACE . "jdh_patients") {
+        if (!isset($GLOBALS["jdh_patients"]) || $GLOBALS["jdh_patients"]::class == PROJECT_NAMESPACE . "jdh_patients") {
             $GLOBALS["jdh_patients"] = &$this;
         }
 
@@ -149,7 +175,7 @@ class JdhPatientsEdit extends JdhPatients
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -165,7 +191,7 @@ class JdhPatientsEdit extends JdhPatients
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -214,13 +240,11 @@ class JdhPatientsEdit extends JdhPatients
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -238,7 +262,7 @@ class JdhPatientsEdit extends JdhPatients
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -250,17 +274,25 @@ class JdhPatientsEdit extends JdhPatients
                 ob_end_clean();
             }
 
-            // Handle modal response (Assume return to modal for simplicity)
+            // Handle modal response
             if ($this->IsModal) { // Show as modal
-                $result = ["url" => GetUrl($url), "modal" => "1"];
                 $pageName = GetPageName($url);
-                if ($pageName != $this->getListUrl()) { // Not List page => View page
-                    $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhpatientsview"; // If View page, no primary button
-                } else { // List page
-                    // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
-                    $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
-                    $this->clearFailureMessage();
+                $result = ["url" => GetUrl($url), "modal" => "1"];  // Assume return to modal for simplicity
+                if (
+                    SameString($pageName, GetPageName($this->getListUrl())) ||
+                    SameString($pageName, GetPageName($this->getViewUrl())) ||
+                    SameString($pageName, GetPageName(CurrentMasterTable()?->getViewUrl() ?? ""))
+                ) { // List / View / Master View page
+                    if (!SameString($pageName, GetPageName($this->getListUrl()))) { // Not List page
+                        $result["caption"] = $this->getModalCaption($pageName);
+                        $result["view"] = SameString($pageName, "jdhpatientsview"); // If View page, no primary button
+                    } else { // List page
+                        $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
+                        $this->clearFailureMessage();
+                    }
+                } else { // Other pages (add messages and then clear messages)
+                    $result = array_merge($this->getMessages(), ["modal" => "1"]);
+                    $this->clearMessages();
                 }
                 WriteJson($result);
             } else {
@@ -271,20 +303,19 @@ class JdhPatientsEdit extends JdhPatients
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -311,7 +342,7 @@ class JdhPatientsEdit extends JdhPatients
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -364,44 +395,47 @@ class JdhPatientsEdit extends JdhPatients
     }
 
     // Lookup data
-    public function lookup($ar = null)
+    public function lookup(array $req = [], bool $response = true)
     {
         global $Language, $Security;
 
         // Get lookup object
-        $fieldName = $ar["field"] ?? Post("field");
-        $lookup = $this->Fields[$fieldName]->Lookup;
-        $name = $ar["name"] ?? Post("name");
-        $isQuery = ContainsString($name, "query_builder_rule");
-        if ($isQuery) {
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
             $lookup->FilterFields = []; // Skip parent fields if any
         }
 
         // Get lookup parameters
-        $lookupType = $ar["ajax"] ?? Post("ajax", "unknown");
+        $lookupType = $req["ajax"] ?? "unknown";
         $pageSize = -1;
         $offset = -1;
         $searchValue = "";
         if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
-            $searchValue = $ar["q"] ?? Param("q") ?? $ar["sv"] ?? Post("sv", "");
-            $pageSize = $ar["n"] ?? Param("n") ?? $ar["recperpage"] ?? Post("recperpage", 10);
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
         } elseif (SameText($lookupType, "autosuggest")) {
-            $searchValue = $ar["q"] ?? Param("q", "");
-            $pageSize = $ar["n"] ?? Param("n", -1);
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
             $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
             if ($pageSize <= 0) {
                 $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
             }
         }
-        $start = $ar["start"] ?? Param("start", -1);
+        $start = $req["start"] ?? -1;
         $start = is_numeric($start) ? (int)$start : -1;
-        $page = $ar["page"] ?? Param("page", -1);
+        $page = $req["page"] ?? -1;
         $page = is_numeric($page) ? (int)$page : -1;
         $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
-        $userSelect = Decrypt($ar["s"] ?? Post("s", ""));
-        $userFilter = Decrypt($ar["f"] ?? Post("f", ""));
-        $userOrderBy = Decrypt($ar["o"] ?? Post("o", ""));
-        $keys = $ar["keys"] ?? Post("keys");
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
         $lookup->LookupType = $lookupType; // Lookup type
         $lookup->FilterValues = []; // Clear filter values first
         if ($keys !== null) { // Selected records from modal
@@ -412,11 +446,11 @@ class JdhPatientsEdit extends JdhPatients
             $lookup->FilterValues[] = $keys; // Lookup values
             $pageSize = -1; // Show all records
         } else { // Lookup values
-            $lookup->FilterValues[] = $ar["v0"] ?? $ar["lookupValue"] ?? Post("v0", Post("lookupValue", ""));
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
         }
         $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
         for ($i = 1; $i <= $cnt; $i++) {
-            $lookup->FilterValues[] = $ar["v" . $i] ?? Post("v" . $i, "");
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
         }
         $lookup->SearchValue = $searchValue;
         $lookup->PageSize = $pageSize;
@@ -430,7 +464,7 @@ class JdhPatientsEdit extends JdhPatients
         if ($userOrderBy != "") {
             $lookup->UserOrderBy = $userOrderBy;
         }
-        return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
 
     // Properties
@@ -455,7 +489,7 @@ class JdhPatientsEdit extends JdhPatients
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
+        global $ExportType, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
 
         // Is modal
         $this->IsModal = ConvertToBool(Param("modal"));
@@ -467,24 +501,15 @@ class JdhPatientsEdit extends JdhPatients
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
+
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->patient_id->setVisibility();
-        $this->photo->setVisibility();
-        $this->patient_ip_number->setVisibility();
-        $this->patient_name->Visible = false;
-        $this->patient_dob_year->setVisibility();
-        $this->patient_age->Visible = false;
-        $this->patient_gender->Visible = false;
-        $this->patient_phone->setVisibility();
-        $this->patient_kin_name->setVisibility();
-        $this->patient_kin_phone->setVisibility();
-        $this->service_id->Visible = false;
-        $this->patient_registration_date->Visible = false;
-        $this->time->Visible = false;
-        $this->is_inpatient->setVisibility();
-        $this->submitted_by_user_id->setVisibility();
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -495,7 +520,7 @@ class JdhPatientsEdit extends JdhPatients
         $this->setupDetailPages();
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -551,7 +576,7 @@ class JdhPatientsEdit extends JdhPatients
             $this->OldKey = $this->getKey(true); // Get from CurrentValue
             $postBack = true;
         } else {
-            if (Post("action") !== null) {
+            if (Post("action", "") !== "") {
                 $this->CurrentAction = Post("action"); // Get action code
                 if (!$this->isShow()) { // Not reload record, handle as postback
                     $postBack = true;
@@ -572,7 +597,7 @@ class JdhPatientsEdit extends JdhPatients
                 }
             }
 
-            // Load recordset
+            // Load result set
             if ($this->isShow()) {
                     // Load current record
                     $loaded = $this->loadRow();
@@ -626,19 +651,18 @@ class JdhPatientsEdit extends JdhPatients
                     $returnUrl = $this->addMasterUrl($returnUrl); // List page, return to List page with correct master key if necessary
                 }
                 $this->SendEmail = true; // Send email on update success
-                if ($this->editRow()) {
-                    // Do not return Json for UseAjaxActions
-                    if ($this->IsModal && $this->UseAjaxActions) {
-                        $this->IsModal = false;
+                if ($this->editRow()) { // Update record based on key
+                    if ($this->getSuccessMessage() == "") {
+                        $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Update success
                     }
 
                     // Handle UseAjaxActions with return page
-                    if ($this->UseAjaxActions && GetPageName($returnUrl) != "jdhpatientslist") {
-                        Container("flash")->addMessage("Return-Url", $returnUrl); // Save return URL
-                        $returnUrl = "jdhpatientslist"; // Return list page content
-                    }
-                    if ($this->getSuccessMessage() == "") {
-                        $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Update success
+                    if ($this->IsModal && $this->UseAjaxActions) {
+                        $this->IsModal = false;
+                        if (GetPageName($returnUrl) != "jdhpatientslist") {
+                            Container("app.flash")->addMessage("Return-Url", $returnUrl); // Save return URL
+                            $returnUrl = "jdhpatientslist"; // Return list page content
+                        }
                     }
                     if (IsJsonResponse()) {
                         $this->terminate(true);
@@ -650,8 +674,8 @@ class JdhPatientsEdit extends JdhPatients
                 } elseif (IsApi()) { // API request, return
                     $this->terminate();
                     return;
-                } elseif ($this->UseAjaxActions) { // Return JSON error message
-                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                } elseif ($this->IsModal && $this->UseAjaxActions) { // Return JSON error message
+                    WriteJson(["success" => false, "validation" => $this->getValidationErrors(), "error" => $this->getFailureMessage()]);
                     $this->clearFailureMessage();
                     $this->terminate();
                     return;
@@ -671,7 +695,7 @@ class JdhPatientsEdit extends JdhPatients
         $this->setupBreadcrumb();
 
         // Render the record
-        $this->RowType = ROWTYPE_EDIT; // Render as Edit
+        $this->RowType = RowType::EDIT; // Render as Edit
         $this->resetAttributes();
         $this->renderRow();
 
@@ -684,7 +708,7 @@ class JdhPatientsEdit extends JdhPatients
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -841,23 +865,14 @@ class JdhPatientsEdit extends JdhPatients
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -912,8 +927,8 @@ class JdhPatientsEdit extends JdhPatients
             $this->CurrentFilter = $this->getRecordFilter();
             $sql = $this->getCurrentSql();
             $conn = $this->getConnection();
-            $rs = LoadRecordset($sql, $conn);
-            if ($rs && ($row = $rs->fields)) {
+            $rs = ExecuteQuery($sql, $conn);
+            if ($row = $rs->fetch()) {
                 $this->loadRowValues($row); // Load row values
                 return $row;
             }
@@ -980,7 +995,7 @@ class JdhPatientsEdit extends JdhPatients
         $this->submitted_by_user_id->RowCssClass = "row";
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // patient_id
             $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
@@ -1030,12 +1045,12 @@ class JdhPatientsEdit extends JdhPatients
             if ($curVal != "") {
                 $this->service_id->ViewValue = $this->service_id->lookupCacheOption($curVal);
                 if ($this->service_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->service_id->Lookup->getTable()->Fields["service_id"]->searchExpression(), "=", $curVal, $this->service_id->Lookup->getTable()->Fields["service_id"]->searchDataType(), "");
                     $lookupFilter = $this->service_id->getSelectFilter($this); // PHP
                     $sqlWrk = $this->service_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
+                    $config->setResultCache($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
@@ -1114,7 +1129,7 @@ class JdhPatientsEdit extends JdhPatients
 
             // submitted_by_user_id
             $this->submitted_by_user_id->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_EDIT) {
+        } elseif ($this->RowType == RowType::EDIT) {
             // patient_id
             $this->patient_id->setupEditAttributes();
             $this->patient_id->EditValue = $this->patient_id->CurrentValue;
@@ -1145,7 +1160,7 @@ class JdhPatientsEdit extends JdhPatients
 
             // patient_dob_year
             $this->patient_dob_year->setupEditAttributes();
-            $this->patient_dob_year->EditValue = HtmlEncode($this->patient_dob_year->CurrentValue);
+            $this->patient_dob_year->EditValue = $this->patient_dob_year->CurrentValue;
             $this->patient_dob_year->PlaceHolder = RemoveHtml($this->patient_dob_year->caption());
             if (strval($this->patient_dob_year->EditValue) != "" && is_numeric($this->patient_dob_year->EditValue)) {
                 $this->patient_dob_year->EditValue = $this->patient_dob_year->EditValue;
@@ -1231,12 +1246,12 @@ class JdhPatientsEdit extends JdhPatients
             // submitted_by_user_id
             $this->submitted_by_user_id->HrefValue = "";
         }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+        if ($this->RowType == RowType::ADD || $this->RowType == RowType::EDIT || $this->RowType == RowType::SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -1251,95 +1266,105 @@ class JdhPatientsEdit extends JdhPatients
             return true;
         }
         $validateForm = true;
-        if ($this->patient_id->Required) {
-            if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
-                $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
+            if ($this->patient_id->Visible && $this->patient_id->Required) {
+                if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
+                    $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->photo->Required) {
-            if ($this->photo->Upload->FileName == "" && !$this->photo->Upload->KeepFile) {
-                $this->photo->addErrorMessage(str_replace("%s", $this->photo->caption(), $this->photo->RequiredErrorMessage));
+            if ($this->photo->Visible && $this->photo->Required) {
+                if ($this->photo->Upload->FileName == "" && !$this->photo->Upload->KeepFile) {
+                    $this->photo->addErrorMessage(str_replace("%s", $this->photo->caption(), $this->photo->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->patient_ip_number->Required) {
-            if (!$this->patient_ip_number->IsDetailKey && EmptyValue($this->patient_ip_number->FormValue)) {
-                $this->patient_ip_number->addErrorMessage(str_replace("%s", $this->patient_ip_number->caption(), $this->patient_ip_number->RequiredErrorMessage));
+            if ($this->patient_ip_number->Visible && $this->patient_ip_number->Required) {
+                if (!$this->patient_ip_number->IsDetailKey && EmptyValue($this->patient_ip_number->FormValue)) {
+                    $this->patient_ip_number->addErrorMessage(str_replace("%s", $this->patient_ip_number->caption(), $this->patient_ip_number->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->patient_dob_year->Required) {
-            if (!$this->patient_dob_year->IsDetailKey && EmptyValue($this->patient_dob_year->FormValue)) {
-                $this->patient_dob_year->addErrorMessage(str_replace("%s", $this->patient_dob_year->caption(), $this->patient_dob_year->RequiredErrorMessage));
+            if ($this->patient_dob_year->Visible && $this->patient_dob_year->Required) {
+                if (!$this->patient_dob_year->IsDetailKey && EmptyValue($this->patient_dob_year->FormValue)) {
+                    $this->patient_dob_year->addErrorMessage(str_replace("%s", $this->patient_dob_year->caption(), $this->patient_dob_year->RequiredErrorMessage));
+                }
             }
-        }
-        if (!CheckInteger($this->patient_dob_year->FormValue)) {
-            $this->patient_dob_year->addErrorMessage($this->patient_dob_year->getErrorMessage(false));
-        }
-        if ($this->patient_phone->Required) {
-            if (!$this->patient_phone->IsDetailKey && EmptyValue($this->patient_phone->FormValue)) {
-                $this->patient_phone->addErrorMessage(str_replace("%s", $this->patient_phone->caption(), $this->patient_phone->RequiredErrorMessage));
+            if (!CheckInteger($this->patient_dob_year->FormValue)) {
+                $this->patient_dob_year->addErrorMessage($this->patient_dob_year->getErrorMessage(false));
             }
-        }
-        if ($this->patient_kin_name->Required) {
-            if (!$this->patient_kin_name->IsDetailKey && EmptyValue($this->patient_kin_name->FormValue)) {
-                $this->patient_kin_name->addErrorMessage(str_replace("%s", $this->patient_kin_name->caption(), $this->patient_kin_name->RequiredErrorMessage));
+            if ($this->patient_phone->Visible && $this->patient_phone->Required) {
+                if (!$this->patient_phone->IsDetailKey && EmptyValue($this->patient_phone->FormValue)) {
+                    $this->patient_phone->addErrorMessage(str_replace("%s", $this->patient_phone->caption(), $this->patient_phone->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->patient_kin_phone->Required) {
-            if (!$this->patient_kin_phone->IsDetailKey && EmptyValue($this->patient_kin_phone->FormValue)) {
-                $this->patient_kin_phone->addErrorMessage(str_replace("%s", $this->patient_kin_phone->caption(), $this->patient_kin_phone->RequiredErrorMessage));
+            if ($this->patient_kin_name->Visible && $this->patient_kin_name->Required) {
+                if (!$this->patient_kin_name->IsDetailKey && EmptyValue($this->patient_kin_name->FormValue)) {
+                    $this->patient_kin_name->addErrorMessage(str_replace("%s", $this->patient_kin_name->caption(), $this->patient_kin_name->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->is_inpatient->Required) {
-            if (!$this->is_inpatient->IsDetailKey && EmptyValue($this->is_inpatient->FormValue)) {
-                $this->is_inpatient->addErrorMessage(str_replace("%s", $this->is_inpatient->caption(), $this->is_inpatient->RequiredErrorMessage));
+            if ($this->patient_kin_phone->Visible && $this->patient_kin_phone->Required) {
+                if (!$this->patient_kin_phone->IsDetailKey && EmptyValue($this->patient_kin_phone->FormValue)) {
+                    $this->patient_kin_phone->addErrorMessage(str_replace("%s", $this->patient_kin_phone->caption(), $this->patient_kin_phone->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->submitted_by_user_id->Required) {
-            if (!$this->submitted_by_user_id->IsDetailKey && EmptyValue($this->submitted_by_user_id->FormValue)) {
-                $this->submitted_by_user_id->addErrorMessage(str_replace("%s", $this->submitted_by_user_id->caption(), $this->submitted_by_user_id->RequiredErrorMessage));
+            if ($this->is_inpatient->Visible && $this->is_inpatient->Required) {
+                if (!$this->is_inpatient->IsDetailKey && EmptyValue($this->is_inpatient->FormValue)) {
+                    $this->is_inpatient->addErrorMessage(str_replace("%s", $this->is_inpatient->caption(), $this->is_inpatient->RequiredErrorMessage));
+                }
             }
-        }
+            if ($this->submitted_by_user_id->Visible && $this->submitted_by_user_id->Required) {
+                if (!$this->submitted_by_user_id->IsDetailKey && EmptyValue($this->submitted_by_user_id->FormValue)) {
+                    $this->submitted_by_user_id->addErrorMessage(str_replace("%s", $this->submitted_by_user_id->caption(), $this->submitted_by_user_id->RequiredErrorMessage));
+                }
+            }
 
         // Validate detail grid
-        $detailTblVar = explode(",", $this->getCurrentDetailTable() ?? "");
+        $detailTblVar = explode(",", $this->getCurrentDetailTable());
         $detailPage = Container("JdhPatientVisitsGrid");
         if (in_array("jdh_patient_visits", $detailTblVar) && $detailPage->DetailEdit) {
+            $detailPage->run();
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
         $detailPage = Container("JdhChiefComplaintsGrid");
         if (in_array("jdh_chief_complaints", $detailTblVar) && $detailPage->DetailEdit) {
+            $detailPage->run();
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
         $detailPage = Container("JdhExaminationFindingsGrid");
         if (in_array("jdh_examination_findings", $detailTblVar) && $detailPage->DetailEdit) {
+            $detailPage->run();
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
         $detailPage = Container("JdhPatientCasesGrid");
         if (in_array("jdh_patient_cases", $detailTblVar) && $detailPage->DetailEdit) {
+            $detailPage->run();
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
         $detailPage = Container("JdhPrescriptionsGrid");
         if (in_array("jdh_prescriptions", $detailTblVar) && $detailPage->DetailEdit) {
+            $detailPage->run();
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
         $detailPage = Container("JdhPrescriptionsActionsGrid");
         if (in_array("jdh_prescriptions_actions", $detailTblVar) && $detailPage->DetailEdit) {
+            $detailPage->run();
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
         $detailPage = Container("JdhAppointmentsGrid");
         if (in_array("jdh_appointments", $detailTblVar) && $detailPage->DetailEdit) {
+            $detailPage->run();
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
         $detailPage = Container("JdhVitalsGrid");
         if (in_array("jdh_vitals", $detailTblVar) && $detailPage->DetailEdit) {
+            $detailPage->run();
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
         $detailPage = Container("JdhTestRequestsGrid");
         if (in_array("jdh_test_requests", $detailTblVar) && $detailPage->DetailEdit) {
+            $detailPage->run();
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
         $detailPage = Container("JdhTestReportsGrid");
         if (in_array("jdh_test_reports", $detailTblVar) && $detailPage->DetailEdit) {
+            $detailPage->run();
             $validateForm = $validateForm && $detailPage->validateGridForm();
         }
 
@@ -1371,43 +1396,12 @@ class JdhPatientsEdit extends JdhPatients
             $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
             return false; // Update Failed
         } else {
-            // Save old values
+            // Load old values
             $this->loadDbValues($rsold);
         }
 
-        // Set new row
-        $rsnew = [];
-
-        // photo
-        if ($this->photo->Visible && !$this->photo->ReadOnly && !$this->photo->Upload->KeepFile) {
-            if ($this->photo->Upload->Value === null) {
-                $rsnew['photo'] = null;
-            } else {
-                $rsnew['photo'] = $this->photo->Upload->Value;
-            }
-        }
-
-        // patient_ip_number
-        $this->patient_ip_number->setDbValueDef($rsnew, $this->patient_ip_number->CurrentValue, null, $this->patient_ip_number->ReadOnly);
-
-        // patient_dob_year
-        $this->patient_dob_year->setDbValueDef($rsnew, $this->patient_dob_year->CurrentValue, 0, $this->patient_dob_year->ReadOnly);
-
-        // patient_phone
-        $this->patient_phone->setDbValueDef($rsnew, $this->patient_phone->CurrentValue, "", $this->patient_phone->ReadOnly);
-
-        // patient_kin_name
-        $this->patient_kin_name->setDbValueDef($rsnew, $this->patient_kin_name->CurrentValue, null, $this->patient_kin_name->ReadOnly);
-
-        // patient_kin_phone
-        $this->patient_kin_phone->setDbValueDef($rsnew, $this->patient_kin_phone->CurrentValue, null, $this->patient_kin_phone->ReadOnly);
-
-        // is_inpatient
-        $this->is_inpatient->setDbValueDef($rsnew, $this->is_inpatient->CurrentValue, 0, $this->is_inpatient->ReadOnly);
-
-        // submitted_by_user_id
-        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->getAutoUpdateValue(); // PHP
-        $this->submitted_by_user_id->setDbValueDef($rsnew, $this->submitted_by_user_id->CurrentValue, 0);
+        // Get new row
+        $rsnew = $this->getEditRow($rsold);
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -1469,86 +1463,66 @@ class JdhPatientsEdit extends JdhPatients
             }
 
             // Update detail records
-            $detailTblVar = explode(",", $this->getCurrentDetailTable() ?? "");
-            if ($editRow) {
-                $detailPage = Container("JdhPatientVisitsGrid");
-                if (in_array("jdh_patient_visits", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_patient_visits"); // Load user level of detail table
-                    $editRow = $detailPage->gridUpdate();
-                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                }
+            $detailTblVar = explode(",", $this->getCurrentDetailTable());
+            $detailPage = Container("JdhPatientVisitsGrid");
+            if (in_array("jdh_patient_visits", $detailTblVar) && $detailPage->DetailEdit && $editRow) {
+                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_patient_visits"); // Load user level of detail table
+                $editRow = $detailPage->gridUpdate();
+                $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
             }
-            if ($editRow) {
-                $detailPage = Container("JdhChiefComplaintsGrid");
-                if (in_array("jdh_chief_complaints", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_chief_complaints"); // Load user level of detail table
-                    $editRow = $detailPage->gridUpdate();
-                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                }
+            $detailPage = Container("JdhChiefComplaintsGrid");
+            if (in_array("jdh_chief_complaints", $detailTblVar) && $detailPage->DetailEdit && $editRow) {
+                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_chief_complaints"); // Load user level of detail table
+                $editRow = $detailPage->gridUpdate();
+                $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
             }
-            if ($editRow) {
-                $detailPage = Container("JdhExaminationFindingsGrid");
-                if (in_array("jdh_examination_findings", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_examination_findings"); // Load user level of detail table
-                    $editRow = $detailPage->gridUpdate();
-                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                }
+            $detailPage = Container("JdhExaminationFindingsGrid");
+            if (in_array("jdh_examination_findings", $detailTblVar) && $detailPage->DetailEdit && $editRow) {
+                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_examination_findings"); // Load user level of detail table
+                $editRow = $detailPage->gridUpdate();
+                $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
             }
-            if ($editRow) {
-                $detailPage = Container("JdhPatientCasesGrid");
-                if (in_array("jdh_patient_cases", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_patient_cases"); // Load user level of detail table
-                    $editRow = $detailPage->gridUpdate();
-                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                }
+            $detailPage = Container("JdhPatientCasesGrid");
+            if (in_array("jdh_patient_cases", $detailTblVar) && $detailPage->DetailEdit && $editRow) {
+                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_patient_cases"); // Load user level of detail table
+                $editRow = $detailPage->gridUpdate();
+                $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
             }
-            if ($editRow) {
-                $detailPage = Container("JdhPrescriptionsGrid");
-                if (in_array("jdh_prescriptions", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_prescriptions"); // Load user level of detail table
-                    $editRow = $detailPage->gridUpdate();
-                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                }
+            $detailPage = Container("JdhPrescriptionsGrid");
+            if (in_array("jdh_prescriptions", $detailTblVar) && $detailPage->DetailEdit && $editRow) {
+                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_prescriptions"); // Load user level of detail table
+                $editRow = $detailPage->gridUpdate();
+                $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
             }
-            if ($editRow) {
-                $detailPage = Container("JdhPrescriptionsActionsGrid");
-                if (in_array("jdh_prescriptions_actions", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_prescriptions_actions"); // Load user level of detail table
-                    $editRow = $detailPage->gridUpdate();
-                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                }
+            $detailPage = Container("JdhPrescriptionsActionsGrid");
+            if (in_array("jdh_prescriptions_actions", $detailTblVar) && $detailPage->DetailEdit && $editRow) {
+                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_prescriptions_actions"); // Load user level of detail table
+                $editRow = $detailPage->gridUpdate();
+                $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
             }
-            if ($editRow) {
-                $detailPage = Container("JdhAppointmentsGrid");
-                if (in_array("jdh_appointments", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_appointments"); // Load user level of detail table
-                    $editRow = $detailPage->gridUpdate();
-                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                }
+            $detailPage = Container("JdhAppointmentsGrid");
+            if (in_array("jdh_appointments", $detailTblVar) && $detailPage->DetailEdit && $editRow) {
+                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_appointments"); // Load user level of detail table
+                $editRow = $detailPage->gridUpdate();
+                $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
             }
-            if ($editRow) {
-                $detailPage = Container("JdhVitalsGrid");
-                if (in_array("jdh_vitals", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_vitals"); // Load user level of detail table
-                    $editRow = $detailPage->gridUpdate();
-                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                }
+            $detailPage = Container("JdhVitalsGrid");
+            if (in_array("jdh_vitals", $detailTblVar) && $detailPage->DetailEdit && $editRow) {
+                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_vitals"); // Load user level of detail table
+                $editRow = $detailPage->gridUpdate();
+                $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
             }
-            if ($editRow) {
-                $detailPage = Container("JdhTestRequestsGrid");
-                if (in_array("jdh_test_requests", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_test_requests"); // Load user level of detail table
-                    $editRow = $detailPage->gridUpdate();
-                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                }
+            $detailPage = Container("JdhTestRequestsGrid");
+            if (in_array("jdh_test_requests", $detailTblVar) && $detailPage->DetailEdit && $editRow) {
+                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_test_requests"); // Load user level of detail table
+                $editRow = $detailPage->gridUpdate();
+                $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
             }
-            if ($editRow) {
-                $detailPage = Container("JdhTestReportsGrid");
-                if (in_array("jdh_test_reports", $detailTblVar) && $detailPage->DetailEdit) {
-                    $Security->loadCurrentUserLevel($this->ProjectID . "jdh_test_reports"); // Load user level of detail table
-                    $editRow = $detailPage->gridUpdate();
-                    $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
-                }
+            $detailPage = Container("JdhTestReportsGrid");
+            if (in_array("jdh_test_reports", $detailTblVar) && $detailPage->DetailEdit && $editRow) {
+                $Security->loadCurrentUserLevel($this->ProjectID . "jdh_test_reports"); // Load user level of detail table
+                $editRow = $detailPage->gridUpdate();
+                $Security->loadCurrentUserLevel($this->ProjectID . $this->TableName); // Restore user level of master table
             }
 
             // Commit/Rollback transaction
@@ -1592,6 +1566,81 @@ class JdhPatientsEdit extends JdhPatients
             WriteJson(["success" => true, "action" => Config("API_EDIT_ACTION"), $table => $row]);
         }
         return $editRow;
+    }
+
+    /**
+     * Get edit row
+     *
+     * @return array
+     */
+    protected function getEditRow($rsold)
+    {
+        global $Security;
+        $rsnew = [];
+
+        // photo
+        if ($this->photo->Visible && !$this->photo->ReadOnly && !$this->photo->Upload->KeepFile) {
+            if ($this->photo->Upload->Value === null) {
+                $rsnew['photo'] = null;
+            } else {
+                $rsnew['photo'] = $this->photo->Upload->Value;
+            }
+        }
+
+        // patient_ip_number
+        $this->patient_ip_number->setDbValueDef($rsnew, $this->patient_ip_number->CurrentValue, $this->patient_ip_number->ReadOnly);
+
+        // patient_dob_year
+        $this->patient_dob_year->setDbValueDef($rsnew, $this->patient_dob_year->CurrentValue, $this->patient_dob_year->ReadOnly);
+
+        // patient_phone
+        $this->patient_phone->setDbValueDef($rsnew, $this->patient_phone->CurrentValue, $this->patient_phone->ReadOnly);
+
+        // patient_kin_name
+        $this->patient_kin_name->setDbValueDef($rsnew, $this->patient_kin_name->CurrentValue, $this->patient_kin_name->ReadOnly);
+
+        // patient_kin_phone
+        $this->patient_kin_phone->setDbValueDef($rsnew, $this->patient_kin_phone->CurrentValue, $this->patient_kin_phone->ReadOnly);
+
+        // is_inpatient
+        $this->is_inpatient->setDbValueDef($rsnew, $this->is_inpatient->CurrentValue, $this->is_inpatient->ReadOnly);
+
+        // submitted_by_user_id
+        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->getAutoUpdateValue(); // PHP
+        $this->submitted_by_user_id->setDbValueDef($rsnew, $this->submitted_by_user_id->CurrentValue);
+        return $rsnew;
+    }
+
+    /**
+     * Restore edit form from row
+     * @param array $row Row
+     */
+    protected function restoreEditFormFromRow($row)
+    {
+        if (isset($row['photo'])) { // photo
+            $this->photo->CurrentValue = $row['photo'];
+        }
+        if (isset($row['patient_ip_number'])) { // patient_ip_number
+            $this->patient_ip_number->CurrentValue = $row['patient_ip_number'];
+        }
+        if (isset($row['patient_dob_year'])) { // patient_dob_year
+            $this->patient_dob_year->CurrentValue = $row['patient_dob_year'];
+        }
+        if (isset($row['patient_phone'])) { // patient_phone
+            $this->patient_phone->CurrentValue = $row['patient_phone'];
+        }
+        if (isset($row['patient_kin_name'])) { // patient_kin_name
+            $this->patient_kin_name->CurrentValue = $row['patient_kin_name'];
+        }
+        if (isset($row['patient_kin_phone'])) { // patient_kin_phone
+            $this->patient_kin_phone->CurrentValue = $row['patient_kin_phone'];
+        }
+        if (isset($row['is_inpatient'])) { // is_inpatient
+            $this->is_inpatient->CurrentValue = $row['is_inpatient'];
+        }
+        if (isset($row['submitted_by_user_id'])) { // submitted_by_user_id
+            $this->submitted_by_user_id->CurrentValue = $row['submitted_by_user_id'];
+        }
     }
 
     // Show link optionally based on User ID
@@ -1785,6 +1834,9 @@ class JdhPatientsEdit extends JdhPatients
     {
         $pages = new SubPages();
         $pages->Style = "tabs";
+        if ($pages->isAccordion()) {
+            $pages->Parent = "#accordion_" . $this->PageObjName;
+        }
         $pages->add('jdh_patient_visits');
         $pages->add('jdh_chief_complaints');
         $pages->add('jdh_examination_findings');
@@ -1801,7 +1853,7 @@ class JdhPatientsEdit extends JdhPatients
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -1827,7 +1879,7 @@ class JdhPatientsEdit extends JdhPatients
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -1904,11 +1956,11 @@ class JdhPatientsEdit extends JdhPatients
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

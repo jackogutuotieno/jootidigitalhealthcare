@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Set up and run Grid object
 $Grid = Container("JdhInvoiceItemsGrid");
@@ -60,7 +60,10 @@ loadjs.ready(["wrapper", "head"], function () {
 });
 </script>
 <?php } ?>
-<main class="list<?= ($Grid->TotalRecords == 0 && !$Grid->isAdd()) ? " ew-no-record" : "" ?>">
+<main class="list">
+<div id="ew-header-options">
+<?php $Grid->HeaderOptions?->render("body") ?>
+</div>
 <div id="ew-list">
 <?php if ($Grid->TotalRecords > 0 || $Grid->CurrentAction) { ?>
 <div class="card ew-card ew-grid<?= $Grid->isAddOrEdit() ? " ew-grid-add-edit" : "" ?> <?= $Grid->TableGridClass ?>">
@@ -71,7 +74,7 @@ loadjs.ready(["wrapper", "head"], function () {
     <tr class="ew-table-header">
 <?php
 // Header row
-$Grid->RowType = ROWTYPE_HEADER;
+$Grid->RowType = RowType::HEADER;
 
 // Render list options
 $Grid->renderListOptions();
@@ -100,7 +103,15 @@ $Grid->ListOptions->render("header", "right");
 <tbody data-page="<?= $Grid->getPageNumber() ?>">
 <?php
 $Grid->setupGrid();
-while ($Grid->RecordCount < $Grid->StopRecord) {
+while ($Grid->RecordCount < $Grid->StopRecord || $Grid->RowIndex === '$rowindex$') {
+    if (
+        $Grid->CurrentRow !== false &&
+        $Grid->RowIndex !== '$rowindex$' &&
+        (!$Grid->isGridAdd() || $Grid->CurrentMode == "copy") &&
+        (!(($Grid->isCopy() || $Grid->isAdd()) && $Grid->RowIndex == 0))
+    ) {
+        $Grid->fetch();
+    }
     $Grid->RecordCount++;
     if ($Grid->RecordCount >= $Grid->StartRecord) {
         $Grid->setupRow();
@@ -120,19 +131,19 @@ $Grid->ListOptions->render("body", "left", $Grid->RowCount);
 ?>
     <?php if ($Grid->id->Visible) { // id ?>
         <td data-name="id"<?= $Grid->id->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_invoice_items_id" class="el_jdh_invoice_items_id"></span>
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_invoice_items_id" class="el_jdh_invoice_items_id"></span>
 <input type="hidden" data-table="jdh_invoice_items" data-field="x_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_id" id="o<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_invoice_items_id" class="el_jdh_invoice_items_id">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_invoice_items_id" class="el_jdh_invoice_items_id">
 <span<?= $Grid->id->viewAttributes() ?>>
 <input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Grid->id->getDisplayValue($Grid->id->EditValue))) ?>"></span>
 <input type="hidden" data-table="jdh_invoice_items" data-field="x_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_id" id="x<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->CurrentValue) ?>">
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_invoice_items_id" class="el_jdh_invoice_items_id">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_invoice_items_id" class="el_jdh_invoice_items_id">
 <span<?= $Grid->id->viewAttributes() ?>>
 <?= $Grid->id->getViewValue() ?></span>
 </span>
@@ -147,21 +158,21 @@ $Grid->ListOptions->render("body", "left", $Grid->RowCount);
     <?php } ?>
     <?php if ($Grid->invoice_item->Visible) { // invoice_item ?>
         <td data-name="invoice_item"<?= $Grid->invoice_item->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_invoice_items_invoice_item" class="el_jdh_invoice_items_invoice_item">
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_invoice_items_invoice_item" class="el_jdh_invoice_items_invoice_item">
 <input type="<?= $Grid->invoice_item->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_invoice_item" id="x<?= $Grid->RowIndex ?>_invoice_item" data-table="jdh_invoice_items" data-field="x_invoice_item" value="<?= $Grid->invoice_item->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Grid->invoice_item->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->invoice_item->formatPattern()) ?>"<?= $Grid->invoice_item->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->invoice_item->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_invoice_items" data-field="x_invoice_item" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_invoice_item" id="o<?= $Grid->RowIndex ?>_invoice_item" value="<?= HtmlEncode($Grid->invoice_item->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_invoice_items_invoice_item" class="el_jdh_invoice_items_invoice_item">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_invoice_items_invoice_item" class="el_jdh_invoice_items_invoice_item">
 <input type="<?= $Grid->invoice_item->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_invoice_item" id="x<?= $Grid->RowIndex ?>_invoice_item" data-table="jdh_invoice_items" data-field="x_invoice_item" value="<?= $Grid->invoice_item->EditValue ?>" size="30" maxlength="100" placeholder="<?= HtmlEncode($Grid->invoice_item->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->invoice_item->formatPattern()) ?>"<?= $Grid->invoice_item->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->invoice_item->getErrorMessage() ?></div>
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_invoice_items_invoice_item" class="el_jdh_invoice_items_invoice_item">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_invoice_items_invoice_item" class="el_jdh_invoice_items_invoice_item">
 <span<?= $Grid->invoice_item->viewAttributes() ?>>
 <?= $Grid->invoice_item->getViewValue() ?></span>
 </span>
@@ -174,21 +185,21 @@ $Grid->ListOptions->render("body", "left", $Grid->RowCount);
     <?php } ?>
     <?php if ($Grid->total_amount->Visible) { // total_amount ?>
         <td data-name="total_amount"<?= $Grid->total_amount->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_invoice_items_total_amount" class="el_jdh_invoice_items_total_amount">
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_invoice_items_total_amount" class="el_jdh_invoice_items_total_amount">
 <input type="<?= $Grid->total_amount->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_total_amount" id="x<?= $Grid->RowIndex ?>_total_amount" data-table="jdh_invoice_items" data-field="x_total_amount" value="<?= $Grid->total_amount->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->total_amount->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->total_amount->formatPattern()) ?>"<?= $Grid->total_amount->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->total_amount->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_invoice_items" data-field="x_total_amount" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_total_amount" id="o<?= $Grid->RowIndex ?>_total_amount" value="<?= HtmlEncode($Grid->total_amount->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_invoice_items_total_amount" class="el_jdh_invoice_items_total_amount">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_invoice_items_total_amount" class="el_jdh_invoice_items_total_amount">
 <input type="<?= $Grid->total_amount->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_total_amount" id="x<?= $Grid->RowIndex ?>_total_amount" data-table="jdh_invoice_items" data-field="x_total_amount" value="<?= $Grid->total_amount->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Grid->total_amount->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->total_amount->formatPattern()) ?>"<?= $Grid->total_amount->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->total_amount->getErrorMessage() ?></div>
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_invoice_items_total_amount" class="el_jdh_invoice_items_total_amount">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_invoice_items_total_amount" class="el_jdh_invoice_items_total_amount">
 <span<?= $Grid->total_amount->viewAttributes() ?>>
 <?= $Grid->total_amount->getViewValue() ?></span>
 </span>
@@ -201,8 +212,8 @@ $Grid->ListOptions->render("body", "left", $Grid->RowCount);
     <?php } ?>
     <?php if ($Grid->submission_date->Visible) { // submission_date ?>
         <td data-name="submission_date"<?= $Grid->submission_date->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_invoice_items_submission_date" class="el_jdh_invoice_items_submission_date">
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_invoice_items_submission_date" class="el_jdh_invoice_items_submission_date">
 <input type="<?= $Grid->submission_date->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_submission_date" id="x<?= $Grid->RowIndex ?>_submission_date" data-table="jdh_invoice_items" data-field="x_submission_date" value="<?= $Grid->submission_date->EditValue ?>" placeholder="<?= HtmlEncode($Grid->submission_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->submission_date->formatPattern()) ?>"<?= $Grid->submission_date->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->submission_date->getErrorMessage() ?></div>
 <?php if (!$Grid->submission_date->ReadOnly && !$Grid->submission_date->Disabled && !isset($Grid->submission_date->EditAttrs["readonly"]) && !isset($Grid->submission_date->EditAttrs["disabled"])) { ?>
@@ -212,6 +223,8 @@ loadjs.ready(["fjdh_invoice_itemsgrid", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -222,24 +235,20 @@ loadjs.ready(["fjdh_invoice_itemsgrid", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("fjdh_invoice_itemsgrid", "x<?= $Grid->RowIndex ?>_submission_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+    ew.createDateTimePicker("fjdh_invoice_itemsgrid", "x<?= $Grid->RowIndex ?>_submission_date", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
 });
 </script>
 <?php } ?>
 </span>
 <input type="hidden" data-table="jdh_invoice_items" data-field="x_submission_date" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_submission_date" id="o<?= $Grid->RowIndex ?>_submission_date" value="<?= HtmlEncode($Grid->submission_date->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_invoice_items_submission_date" class="el_jdh_invoice_items_submission_date">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_invoice_items_submission_date" class="el_jdh_invoice_items_submission_date">
 <input type="<?= $Grid->submission_date->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_submission_date" id="x<?= $Grid->RowIndex ?>_submission_date" data-table="jdh_invoice_items" data-field="x_submission_date" value="<?= $Grid->submission_date->EditValue ?>" placeholder="<?= HtmlEncode($Grid->submission_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->submission_date->formatPattern()) ?>"<?= $Grid->submission_date->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->submission_date->getErrorMessage() ?></div>
 <?php if (!$Grid->submission_date->ReadOnly && !$Grid->submission_date->Disabled && !isset($Grid->submission_date->EditAttrs["readonly"]) && !isset($Grid->submission_date->EditAttrs["disabled"])) { ?>
@@ -249,6 +258,8 @@ loadjs.ready(["fjdh_invoice_itemsgrid", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -259,23 +270,19 @@ loadjs.ready(["fjdh_invoice_itemsgrid", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("fjdh_invoice_itemsgrid", "x<?= $Grid->RowIndex ?>_submission_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+    ew.createDateTimePicker("fjdh_invoice_itemsgrid", "x<?= $Grid->RowIndex ?>_submission_date", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
 });
 </script>
 <?php } ?>
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_invoice_items_submission_date" class="el_jdh_invoice_items_submission_date">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_invoice_items_submission_date" class="el_jdh_invoice_items_submission_date">
 <span<?= $Grid->submission_date->viewAttributes() ?>>
 <?= $Grid->submission_date->getViewValue() ?></span>
 </span>
@@ -291,23 +298,15 @@ loadjs.ready(["fjdh_invoice_itemsgrid", "datetimepicker"], function () {
 $Grid->ListOptions->render("body", "right", $Grid->RowCount);
 ?>
     </tr>
-<?php if ($Grid->RowType == ROWTYPE_ADD || $Grid->RowType == ROWTYPE_EDIT) { ?>
+<?php if ($Grid->RowType == RowType::ADD || $Grid->RowType == RowType::EDIT) { ?>
 <script data-rowindex="<?= $Grid->RowIndex ?>">
-loadjs.ready(["fjdh_invoice_itemsgrid","load"], () => fjdh_invoice_itemsgrid.updateLists(<?= $Grid->RowIndex ?><?= $Grid->RowIndex === '$rowindex$' ? ", true" : "" ?>));
+loadjs.ready(["fjdh_invoice_itemsgrid","load"], () => fjdh_invoice_itemsgrid.updateLists(<?= $Grid->RowIndex ?><?= $Grid->isAdd() || $Grid->isEdit() || $Grid->isCopy() || $Grid->RowIndex === '$rowindex$' ? ", true" : "" ?>));
 </script>
 <?php } ?>
 <?php
     }
     } // End delete row checking
-    if (
-        $Grid->Recordset &&
-        !$Grid->Recordset->EOF &&
-        $Grid->RowIndex !== '$rowindex$' &&
-        (!$Grid->isGridAdd() || $Grid->CurrentMode == "copy") &&
-        (!(($Grid->isCopy() || $Grid->isAdd()) && $Grid->RowIndex == 0))
-    ) {
-        $Grid->Recordset->moveNext();
-    }
+
     // Reset for template row
     if ($Grid->RowIndex === '$rowindex$') {
         $Grid->RowIndex = 0;
@@ -321,7 +320,7 @@ loadjs.ready(["fjdh_invoice_itemsgrid","load"], () => fjdh_invoice_itemsgrid.upd
 </tbody>
 <?php
 // Render aggregate row
-$Grid->RowType = ROWTYPE_AGGREGATE;
+$Grid->RowType = RowType::AGGREGATE;
 $Grid->resetAttributes();
 $Grid->renderRow();
 ?>
@@ -376,10 +375,8 @@ $Grid->ListOptions->render("footer", "right");
 <input type="hidden" name="detailpage" value="fjdh_invoice_itemsgrid">
 </div><!-- /.ew-list-form -->
 <?php
-// Close recordset
-if ($Grid->Recordset) {
-    $Grid->Recordset->close();
-}
+// Close result set
+$Grid->Recordset?->free();
 ?>
 <?php if ($Grid->ShowOtherOptions) { ?>
 <div class="card-footer ew-grid-lower-panel">
@@ -392,6 +389,9 @@ if ($Grid->Recordset) {
 <?php $Grid->OtherOptions->render("body") ?>
 </div>
 <?php } ?>
+</div>
+<div id="ew-footer-options">
+<?php $Grid->FooterOptions?->render("body") ?>
 </div>
 </main>
 <?php if (!$Grid->isExport()) { ?>

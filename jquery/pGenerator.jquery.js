@@ -56,7 +56,7 @@
                 lower_letters_array.push(i);
             }
 
-            special_chars_array = [33, 35, 64, 42, 91, 93, 123, 125, 58, 59, 95, 45].concat(settings.additionalSpecialChars); //***
+            special_chars_array = [33, 35, 64, 42, 91, 93, 123, 125, 59, 95, 45].concat(settings.additionalSpecialChars); // 58 removed //***
 
             return this.each(function(){
 

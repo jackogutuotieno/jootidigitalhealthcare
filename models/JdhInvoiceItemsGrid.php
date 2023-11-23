@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -113,7 +119,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -123,8 +129,19 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->id->setVisibility();
+        $this->invoice_id->Visible = false;
+        $this->invoice_item->setVisibility();
+        $this->total_amount->setVisibility();
+        $this->submittedby_user_id->Visible = false;
+        $this->submission_date->setVisibility();
     }
 
     // Constructor
@@ -158,10 +175,10 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         $GLOBALS["Grid"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_invoice_items)
-        if (!isset($GLOBALS["jdh_invoice_items"]) || get_class($GLOBALS["jdh_invoice_items"]) == PROJECT_NAMESPACE . "jdh_invoice_items") {
+        if (!isset($GLOBALS["jdh_invoice_items"]) || $GLOBALS["jdh_invoice_items"]::class == PROJECT_NAMESPACE . "jdh_invoice_items") {
             $GLOBALS["jdh_invoice_items"] = &$this;
         }
         $this->AddUrl = "jdhinvoiceitemsadd";
@@ -172,7 +189,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -184,27 +201,25 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         $UserTable = Container("usertable");
 
         // List options
-        $this->ListOptions = new ListOptions(["Tag" => "td", "TableVar" => $this->TableVar]);
+        $this->ListOptions = new ListOptions(Tag: "td", TableVar: $this->TableVar);
 
         // Other options
-        if (!$this->OtherOptions) {
-            $this->OtherOptions = new ListOptionsArray();
-        }
+        $this->OtherOptions = new ListOptionsArray();
 
         // Grid-Add/Edit
-        $this->OtherOptions["addedit"] = new ListOptions([
-            "TagClassName" => "ew-add-edit-option",
-            "UseDropDownButton" => false,
-            "DropDownButtonPhrase" => $Language->phrase("ButtonAddEdit"),
-            "UseButtonGroup" => true
-        ]);
+        $this->OtherOptions["addedit"] = new ListOptions(
+            TagClassName: "ew-add-edit-option",
+            UseDropDownButton: false,
+            DropDownButtonPhrase: $Language->phrase("ButtonAddEdit"),
+            UseButtonGroup: true
+        );
     }
 
     // Get content from stream
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -270,7 +285,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -287,20 +302,19 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -327,7 +341,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -380,44 +394,47 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     }
 
     // Lookup data
-    public function lookup($ar = null)
+    public function lookup(array $req = [], bool $response = true)
     {
         global $Language, $Security;
 
         // Get lookup object
-        $fieldName = $ar["field"] ?? Post("field");
-        $lookup = $this->Fields[$fieldName]->Lookup;
-        $name = $ar["name"] ?? Post("name");
-        $isQuery = ContainsString($name, "query_builder_rule");
-        if ($isQuery) {
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
             $lookup->FilterFields = []; // Skip parent fields if any
         }
 
         // Get lookup parameters
-        $lookupType = $ar["ajax"] ?? Post("ajax", "unknown");
+        $lookupType = $req["ajax"] ?? "unknown";
         $pageSize = -1;
         $offset = -1;
         $searchValue = "";
         if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
-            $searchValue = $ar["q"] ?? Param("q") ?? $ar["sv"] ?? Post("sv", "");
-            $pageSize = $ar["n"] ?? Param("n") ?? $ar["recperpage"] ?? Post("recperpage", 10);
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
         } elseif (SameText($lookupType, "autosuggest")) {
-            $searchValue = $ar["q"] ?? Param("q", "");
-            $pageSize = $ar["n"] ?? Param("n", -1);
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
             $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
             if ($pageSize <= 0) {
                 $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
             }
         }
-        $start = $ar["start"] ?? Param("start", -1);
+        $start = $req["start"] ?? -1;
         $start = is_numeric($start) ? (int)$start : -1;
-        $page = $ar["page"] ?? Param("page", -1);
+        $page = $req["page"] ?? -1;
         $page = is_numeric($page) ? (int)$page : -1;
         $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
-        $userSelect = Decrypt($ar["s"] ?? Post("s", ""));
-        $userFilter = Decrypt($ar["f"] ?? Post("f", ""));
-        $userOrderBy = Decrypt($ar["o"] ?? Post("o", ""));
-        $keys = $ar["keys"] ?? Post("keys");
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
         $lookup->LookupType = $lookupType; // Lookup type
         $lookup->FilterValues = []; // Clear filter values first
         if ($keys !== null) { // Selected records from modal
@@ -428,11 +445,11 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             $lookup->FilterValues[] = $keys; // Lookup values
             $pageSize = -1; // Show all records
         } else { // Lookup values
-            $lookup->FilterValues[] = $ar["v0"] ?? $ar["lookupValue"] ?? Post("v0", Post("lookupValue", ""));
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
         }
         $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
         for ($i = 1; $i <= $cnt; $i++) {
-            $lookup->FilterValues[] = $ar["v" . $i] ?? Post("v" . $i, "");
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
         }
         $lookup->SearchValue = $searchValue;
         $lookup->PageSize = $pageSize;
@@ -446,7 +463,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         if ($userOrderBy != "") {
             $lookup->UserOrderBy = $userOrderBy;
         }
-        return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
 
     // Class variables
@@ -454,6 +471,8 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     public $ExportOptions; // Export options
     public $SearchOptions; // Search options
     public $OtherOptions; // Other options
+    public $HeaderOptions; // Header options
+    public $FooterOptions; // Footer options
     public $FilterOptions; // Filter options
     public $ImportOptions; // Import options
     public $ListActions; // List actions
@@ -474,7 +493,6 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     public $RecordCount = 0; // Record count
     public $InlineRowCount = 0;
     public $StartRowCount = 1;
-    public $RowCount = 0;
     public $Attrs = []; // Row attributes and cell attributes
     public $RowIndex = 0; // Row index
     public $KeyCount = 0; // Key count
@@ -498,7 +516,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     private $UseInfiniteScroll = false;
 
     /**
-     * Load recordset from filter
+     * Load result set from filter
      *
      * @return void
      */
@@ -510,7 +528,13 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         // Search options
         $this->setupSearchOptions();
 
-        // Load recordset
+        // Other options
+        $this->setupOtherOptions();
+
+        // Set visibility
+        $this->setVisibility();
+
+        // Load result set
         $this->TotalRecords = $this->loadRecordCount($filter);
         $this->StartRecord = 1;
         $this->StopRecord = $this->DisplayRecords;
@@ -528,16 +552,25 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $DashboardReport;
+        global $ExportType, $Language, $Security, $CurrentForm, $DashboardReport;
 
         // Multi column button position
         $this->MultiColumnListOptionsPosition = Config("MULTI_COLUMN_LIST_OPTIONS_POSITION");
+        $DashboardReport ??= Param(Config("PAGE_DASHBOARD"));
 
         // Use layout
         $this->UseLayout = $this->UseLayout && ConvertToBool(Param(Config("PAGE_LAYOUT"), true));
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
+        if (Param("export") !== null) {
+            $this->Export = Param("export");
+        }
 
         // Get grid add count
         $gridaddcnt = Get(Config("TABLE_GRID_ADD_ROW_COUNT"), "");
@@ -547,12 +580,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
 
         // Set up list options
         $this->setupListOptions();
-        $this->id->setVisibility();
-        $this->invoice_id->Visible = false;
-        $this->invoice_item->setVisibility();
-        $this->total_amount->setVisibility();
-        $this->submittedby_user_id->Visible = false;
-        $this->submission_date->setVisibility();
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -560,7 +588,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         }
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -599,8 +627,12 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         // Search filters
         $srchAdvanced = ""; // Advanced search filter
         $srchBasic = ""; // Basic search filter
-        $filter = ""; // Filter
         $query = ""; // Query builder
+
+        // Set up Dashboard Filter
+        if ($DashboardReport) {
+            AddFilter($this->Filter, $this->getDashboardFilter($DashboardReport, $this->TableVar));
+        }
 
         // Get command
         $this->Command = strtolower(Get("cmd", ""));
@@ -622,12 +654,17 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             $this->ListOptions->UseButtonGroup = false; // Disable button group
         }
 
+        // Hide other options
+        if ($this->isExport()) {
+            $this->OtherOptions->hideAllOptions();
+        }
+
         // Show grid delete link for grid add / grid edit
         if ($this->AllowAddDeleteRow) {
             if ($this->isGridAdd() || $this->isGridEdit()) {
                 $item = $this->ListOptions["griddelete"];
                 if ($item) {
-                    $item->Visible = $Security->canDelete();
+                    $item->Visible = $Security->allowDelete(CurrentProjectID() . $this->TableName);
                 }
             }
         }
@@ -644,16 +681,15 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         }
 
         // Build filter
-        $filter = "";
         if (!$Security->canList()) {
-            $filter = "(0=1)"; // Filter all records
+            $this->Filter = "(0=1)"; // Filter all records
         }
 
         // Restore master/detail filter from session
         $this->DbMasterFilter = $this->getMasterFilterFromSession(); // Restore master filter from session
         $this->DbDetailFilter = $this->getDetailFilterFromSession(); // Restore detail filter from session
-        AddFilter($filter, $this->DbDetailFilter);
-        AddFilter($filter, $this->SearchWhere);
+        AddFilter($this->Filter, $this->DbDetailFilter);
+        AddFilter($this->Filter, $this->SearchWhere);
 
         // Load master record
         if ($this->CurrentMode != "add" && $this->DbMasterFilter != "" && $this->getCurrentMasterTable() == "jdh_invoice") {
@@ -666,7 +702,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
                 return;
             } else {
                 $masterTbl->loadListRowValues($rsmaster);
-                $masterTbl->RowType = ROWTYPE_MASTER; // Master row
+                $masterTbl->RowType = RowType::MASTER; // Master row
                 $masterTbl->renderListRow();
             }
         }
@@ -674,12 +710,12 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         // Set up filter
         if ($this->Command == "json") {
             $this->UseSessionForListSql = false; // Do not use session for ListSQL
-            $this->CurrentFilter = $filter;
+            $this->CurrentFilter = $this->Filter;
         } else {
-            $this->setSessionWhere($filter);
+            $this->setSessionWhere($this->Filter);
             $this->CurrentFilter = "";
         }
-        $this->Filter = $filter;
+        $this->Filter = $this->applyUserIDFilters($this->Filter);
         if ($this->isGridAdd()) {
             if ($this->CurrentMode == "copy") {
                 $this->TotalRecords = $this->listRecordCount();
@@ -722,8 +758,13 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             if (Route(0) == Config("API_LIST_ACTION")) {
                 if (!$this->isExport()) {
                     $rows = $this->getRecordsFromRecordset($this->Recordset);
-                    $this->Recordset->close();
-                    WriteJson(["success" => true, "action" => Config("API_LIST_ACTION"), $this->TableVar => $rows, "totalRecordCount" => $this->TotalRecords]);
+                    $this->Recordset?->free();
+                    WriteJson([
+                        "success" => true,
+                        "action" => Config("API_LIST_ACTION"),
+                        $this->TableVar => $rows,
+                        "totalRecordCount" => $this->TotalRecords
+                    ]);
                     $this->terminate(true);
                 }
                 return;
@@ -742,7 +783,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         $this->Pager = new PrevNextPager($this, $this->StartRecord, $this->DisplayRecords, $this->TotalRecords, $this->PageSizes, $this->RecordRange, $this->AutoHidePager, $this->AutoHidePageSizeSelector);
 
         // Set ReturnUrl in header if necessary
-        if ($returnUrl = Container("flash")->getFirstMessage("Return-Url")) {
+        if ($returnUrl = Container("app.flash")->getFirstMessage("Return-Url")) {
             AddHeader("Return-Url", GetUrl($returnUrl));
         }
 
@@ -755,7 +796,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -804,7 +845,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         $_SESSION[SESSION_INLINE_MODE] = ""; // Clear inline mode
     }
 
-    // Switch to Grid Add mode
+    // Switch to grid add mode
     protected function gridAddMode()
     {
         $this->CurrentAction = "gridadd";
@@ -812,7 +853,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         $this->hideFieldsForAddEdit();
     }
 
-    // Switch to Grid Edit mode
+    // Switch to grid edit mode
     protected function gridEditMode()
     {
         $this->CurrentAction = "gridedit";
@@ -826,7 +867,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         global $Language, $CurrentForm;
         $gridUpdate = true;
 
-        // Get old recordset
+        // Get old result set
         $this->CurrentFilter = $this->buildKeyFilter();
         if ($this->CurrentFilter == "") {
             $this->CurrentFilter = "0=1";
@@ -850,7 +891,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         $key = "";
 
         // Update row index and get row key
-        $CurrentForm->Index = -1;
+        $CurrentForm->resetIndex();
         $rowcnt = strval($CurrentForm->getValue($this->FormKeyCountName));
         if ($rowcnt == "" || !is_numeric($rowcnt)) {
             $rowcnt = 0;
@@ -878,8 +919,6 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
                     if ($rowaction == "delete") {
                         $this->CurrentFilter = $this->getRecordFilter();
                         $gridUpdate = $this->deleteRows(); // Delete this row
-                    //} elseif (!$this->validateForm()) { // Already done in validateGridForm
-                    //    $gridUpdate = false; // Form error, reset action
                     } else {
                         if ($rowaction == "insert") {
                             $gridUpdate = $this->addRow(); // Insert this row
@@ -953,7 +992,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         return $wrkFilter;
     }
 
-    // Perform Grid Add
+    // Perform grid add
     public function gridInsert()
     {
         global $Language, $CurrentForm;
@@ -977,7 +1016,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         $key = "";
 
         // Get row count
-        $CurrentForm->Index = -1;
+        $CurrentForm->resetIndex();
         $rowcnt = strval($CurrentForm->getValue($this->FormKeyCountName));
         if ($rowcnt == "" || !is_numeric($rowcnt)) {
             $rowcnt = 0;
@@ -1057,8 +1096,9 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     public function validateGridForm()
     {
         global $CurrentForm;
+
         // Get row count
-        $CurrentForm->Index = -1;
+        $CurrentForm->resetIndex();
         $rowcnt = strval($CurrentForm->getValue($this->FormKeyCountName));
         if ($rowcnt == "" || !is_numeric($rowcnt)) {
             $rowcnt = 0;
@@ -1077,6 +1117,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
                 if ($rowaction == "insert" && $this->emptyRow()) {
                     // Ignore
                 } elseif (!$this->validateForm()) {
+                    $this->ValidationErrors[$rowindex] = $this->getValidationErrors();
                     $this->EventCancelled = true;
                     return false;
                 }
@@ -1090,7 +1131,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     {
         global $CurrentForm;
         // Get row count
-        $CurrentForm->Index = -1;
+        $CurrentForm->resetIndex();
         $rowcnt = strval($CurrentForm->getValue($this->FormKeyCountName));
         if ($rowcnt == "" || !is_numeric($rowcnt)) {
             $rowcnt = 0;
@@ -1135,10 +1176,9 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     // Reset form status
     public function resetFormError()
     {
-        $this->id->clearErrorMessage();
-        $this->invoice_item->clearErrorMessage();
-        $this->total_amount->clearErrorMessage();
-        $this->submission_date->clearErrorMessage();
+        foreach ($this->Fields as $field) {
+            $field->clearErrorMessage();
+        }
     }
 
     // Set up sort parameters
@@ -1222,6 +1262,12 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         $item->Visible = $Security->canEdit();
         $item->OnLeft = false;
 
+        // "delete"
+        $item = &$this->ListOptions->add("delete");
+        $item->CssClass = "text-nowrap";
+        $item->Visible = $Security->canDelete();
+        $item->OnLeft = false;
+
         // Drop down button for ListOptions
         $this->ListOptions->UseDropDownButton = false;
         $this->ListOptions->DropDownButtonPhrase = $Language->phrase("ButtonListOptions");
@@ -1253,7 +1299,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     // Render list options
     public function renderListOptions()
     {
-        global $Security, $Language, $CurrentForm, $UserProfile;
+        global $Security, $Language, $CurrentForm;
         $this->ListOptions->loadDefault();
 
         // Call ListOptions_Rendering event
@@ -1283,7 +1329,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
                 $options = &$this->ListOptions;
                 $options->UseButtonGroup = true; // Use button group for grid delete button
                 $opt = $options["griddelete"];
-                if (!$Security->canDelete() && is_numeric($this->RowIndex) && ($this->RowAction == "" || $this->RowAction == "edit")) { // Do not allow delete existing record
+                if (!$Security->allowDelete(CurrentProjectID() . $this->TableName) && is_numeric($this->RowIndex) && ($this->RowAction == "" || $this->RowAction == "edit")) { // Do not allow delete existing record
                     $opt->Body = "&nbsp;";
                 } else {
                     $opt->Body = "<a class=\"ew-grid-link ew-grid-delete\" title=\"" . HtmlTitle($Language->phrase("DeleteLink")) . "\" data-caption=\"" . HtmlTitle($Language->phrase("DeleteLink")) . "\" data-ew-action=\"delete-grid-row\" data-rowindex=\"" . $this->RowIndex . "\">" . $Language->phrase("DeleteLink") . "</a>";
@@ -1312,6 +1358,22 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-table=\"jdh_invoice_items\" data-caption=\"" . $editcaption . "\" data-ew-action=\"modal\" data-action=\"edit\" data-ajax=\"" . ($this->UseAjaxActions ? "true" : "false") . "\" data-url=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\" data-btn=\"SaveBtn\">" . $Language->phrase("EditLink") . "</a>";
                 } else {
                     $opt->Body = "<a class=\"ew-row-link ew-edit\" title=\"" . $editcaption . "\" data-caption=\"" . $editcaption . "\" href=\"" . HtmlEncode(GetUrl($this->EditUrl)) . "\">" . $Language->phrase("EditLink") . "</a>";
+                }
+            } else {
+                $opt->Body = "";
+            }
+
+            // "delete"
+            $opt = $this->ListOptions["delete"];
+            if ($Security->canDelete()) {
+                $deleteCaption = $Language->phrase("DeleteLink");
+                $deleteTitle = HtmlTitle($deleteCaption);
+                if ($this->UseAjaxActions) {
+                    $opt->Body = "<a class=\"ew-row-link ew-delete\" data-ew-action=\"inline\" data-action=\"delete\" title=\"" . $deleteTitle . "\" data-caption=\"" . $deleteTitle . "\" data-key= \"" . HtmlEncode($this->getKey(true)) . "\" data-url=\"" . HtmlEncode(GetUrl($this->DeleteUrl)) . "\">" . $deleteCaption . "</a>";
+                } else {
+                    $opt->Body = "<a class=\"ew-row-link ew-delete\"" .
+                        ($this->InlineDelete ? " data-ew-action=\"inline-delete\"" : "") .
+                        " title=\"" . $deleteTitle . "\" data-caption=\"" . $deleteTitle . "\" href=\"" . HtmlEncode(GetUrl($this->DeleteUrl)) . "\">" . $deleteCaption . "</a>";
                 }
             } else {
                 $opt->Body = "";
@@ -1353,19 +1415,28 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         }
     }
 
-    // Create new column option
-    public function createColumnOption($name)
+    // Active user filter
+    // - Get active users by SQL (SELECT COUNT(*) FROM UserTable WHERE ProfileField LIKE '%"SessionID":%')
+    protected function activeUserFilter()
     {
-        $field = $this->Fields[$name] ?? false;
-        if ($field && $field->Visible) {
-            $item = new ListOption($field->Name);
+        if (UserProfile::$FORCE_LOGOUT_USER) {
+            $userProfileField = $this->Fields[Config("USER_PROFILE_FIELD_NAME")];
+            return $userProfileField->Expression . " LIKE '%\"" . UserProfile::$SESSION_ID . "\":%'";
+        }
+        return "0=1"; // No active users
+    }
+
+    // Create new column option
+    protected function createColumnOption($option, $name)
+    {
+        $field = $this->Fields[$name] ?? null;
+        if ($field?->Visible) {
+            $item = $option->add($field->Name);
             $item->Body = '<button class="dropdown-item">' .
                 '<div class="form-check ew-dropdown-checkbox">' .
                 '<div class="form-check-input ew-dropdown-check-input" data-field="' . $field->Param . '"></div>' .
                 '<label class="form-check-label ew-dropdown-check-label">' . $field->caption() . '</label></div></button>';
-            return $item;
         }
-        return null;
     }
 
     // Render other options
@@ -1386,7 +1457,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             if ($this->CurrentMode == "view") { // Check view mode
                 $option = $options["addedit"];
                 $item = $option["add"];
-                $this->ShowOtherOptions = $item && $item->Visible;
+                $this->ShowOtherOptions = $item?->Visible ?? false;
             }
     }
 
@@ -1399,14 +1470,14 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
 
         // Restore number of post back records
         if ($CurrentForm && ($this->isConfirm() || $this->EventCancelled)) {
-            $CurrentForm->Index = -1;
+            $CurrentForm->resetIndex();
             if ($CurrentForm->hasValue($this->FormKeyCountName) && ($this->isGridAdd() || $this->isGridEdit() || $this->isConfirm())) {
                 $this->KeyCount = $CurrentForm->getValue($this->FormKeyCountName);
                 $this->StopRecord = $this->StartRecord + $this->KeyCount - 1;
             }
         }
         $this->RecordCount = $this->StartRecord - 1;
-        if ($this->Recordset && !$this->Recordset->EOF) {
+        if ($this->CurrentRow !== false) {
             // Nothing to do
         } elseif ($this->isGridAdd() && !$this->AllowAddDeleteRow && $this->StopRecord == 0) { // Grid-Add with no records
             $this->StopRecord = $this->GridAddRowCount;
@@ -1415,7 +1486,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         }
 
         // Initialize aggregate
-        $this->RowType = ROWTYPE_AGGREGATEINIT;
+        $this->RowType = RowType::AGGREGATEINIT;
         $this->resetAttributes();
         $this->renderRow();
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
@@ -1427,16 +1498,16 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     public function setupRow()
     {
         global $CurrentForm;
-        if (($this->isGridAdd() || $this->isGridEdit())) {
+        if ($this->isGridAdd() || $this->isGridEdit()) {
             if ($this->RowIndex === '$rowindex$') { // Render template row first
                 $this->loadRowValues();
 
                 // Set row properties
                 $this->resetAttributes();
-                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_invoice_items", "data-rowtype" => ROWTYPE_ADD]);
+                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_invoice_items", "data-rowtype" => RowType::ADD]);
                 $this->RowAttrs->appendClass("ew-template");
                 // Render row
-                $this->RowType = ROWTYPE_ADD;
+                $this->RowType = RowType::ADD;
                 $this->renderRow();
 
                 // Render list options
@@ -1467,20 +1538,20 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         $this->CssClass = "";
         if ($this->isGridAdd()) {
             if ($this->CurrentMode == "copy") {
-                $this->loadRowValues($this->Recordset); // Load row values
+                $this->loadRowValues($this->CurrentRow); // Load row values
                 $this->OldKey = $this->getKey(true); // Get from CurrentValue
             } else {
                 $this->loadRowValues(); // Load default values
                 $this->OldKey = "";
             }
         } else {
-            $this->loadRowValues($this->Recordset); // Load row values
+            $this->loadRowValues($this->CurrentRow); // Load row values
             $this->OldKey = $this->getKey(true); // Get from CurrentValue
         }
         $this->setKey($this->OldKey);
-        $this->RowType = ROWTYPE_VIEW; // Render view
+        $this->RowType = RowType::VIEW; // Render view
         if (($this->isAdd() || $this->isCopy()) && $this->InlineRowCount == 0 || $this->isGridAdd()) { // Add
-            $this->RowType = ROWTYPE_ADD; // Render add
+            $this->RowType = RowType::ADD; // Render add
         }
         if ($this->isGridAdd() && $this->EventCancelled && !$CurrentForm->hasValue($this->FormBlankRowName)) { // Insert failed
             $this->restoreCurrentRowFormValues($this->RowIndex); // Restore form values
@@ -1490,12 +1561,12 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
                 $this->restoreCurrentRowFormValues($this->RowIndex); // Restore form values
             }
             if ($this->RowAction == "insert") {
-                $this->RowType = ROWTYPE_ADD; // Render add
+                $this->RowType = RowType::ADD; // Render add
             } else {
-                $this->RowType = ROWTYPE_EDIT; // Render edit
+                $this->RowType = RowType::EDIT; // Render edit
             }
         }
-        if ($this->isGridEdit() && ($this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_ADD) && $this->EventCancelled) { // Update failed
+        if ($this->isGridEdit() && ($this->RowType == RowType::EDIT || $this->RowType == RowType::ADD) && $this->EventCancelled) { // Update failed
             $this->restoreCurrentRowFormValues($this->RowIndex); // Restore form values
         }
         if ($this->isConfirm()) { // Confirm row
@@ -1503,7 +1574,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         }
 
         // Inline Add/Copy row (row 0)
-        if ($this->RowType == ROWTYPE_ADD && ($this->isAdd() || $this->isCopy())) {
+        if ($this->RowType == RowType::ADD && ($this->isAdd() || $this->isCopy())) {
             $this->InlineRowCount++;
             $this->RecordCount--; // Reset record count for inline add/copy row
             if ($this->TotalRecords == 0) { // Reset stop record if no records
@@ -1511,7 +1582,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             }
         } else {
             // Inline Edit row
-            if ($this->RowType == ROWTYPE_EDIT && $this->isEdit()) {
+            if ($this->RowType == RowType::EDIT && $this->isEdit()) {
                 $this->InlineRowCount++;
             }
             $this->RowCount++; // Increment row count
@@ -1523,9 +1594,10 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             "data-key" => $this->getKey(true),
             "id" => "r" . $this->RowCount . "_jdh_invoice_items",
             "data-rowtype" => $this->RowType,
+            "data-inline" => ($this->isAdd() || $this->isCopy() || $this->isEdit()) ? "true" : "false", // Inline-Add/Copy/Edit
             "class" => ($this->RowCount % 2 != 1) ? "ew-table-alt-row" : "",
         ]);
-        if ($this->isAdd() && $this->RowType == ROWTYPE_ADD || $this->isEdit() && $this->RowType == ROWTYPE_EDIT) { // Inline-Add/Edit row
+        if ($this->isAdd() && $this->RowType == RowType::ADD || $this->isEdit() && $this->RowType == RowType::EDIT) { // Inline-Add/Edit row
             $this->RowAttrs->appendClass("table-active");
         }
 
@@ -1615,41 +1687,58 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         $this->submission_date->CurrentValue = UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern());
     }
 
-    // Load recordset
+    /**
+     * Load result set
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return Doctrine\DBAL\Result Result
+     */
     public function loadRecordset($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
-        $rs = new Recordset($result, $sql);
+        $result = $sql->executeQuery();
+        if (property_exists($this, "TotalRecords") && $rowcnt < 0) {
+            $this->TotalRecords = $result->rowCount();
+            if ($this->TotalRecords <= 0) { // Handle database drivers that does not return rowCount()
+                $this->TotalRecords = $this->getRecordCount($this->getListSql());
+            }
+        }
 
         // Call Recordset Selected event
-        $this->recordsetSelected($rs);
-        return $rs;
+        $this->recordsetSelected($result);
+        return $result;
     }
 
-    // Load records as associative array
+    /**
+     * Load records as associative array
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return void
+     */
     public function loadRows($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
+        $result = $sql->executeQuery();
         return $result->fetchAllAssociative();
     }
 
@@ -1680,23 +1769,14 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -1730,8 +1810,8 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             $this->CurrentFilter = $this->getRecordFilter();
             $sql = $this->getCurrentSql();
             $conn = $this->getConnection();
-            $rs = LoadRecordset($sql, $conn);
-            if ($rs && ($row = $rs->fields)) {
+            $rs = ExecuteQuery($sql, $conn);
+            if ($row = $rs->fetch()) {
                 $this->loadRowValues($row); // Load row values
                 return $row;
             }
@@ -1769,14 +1849,14 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         // submission_date
 
         // Accumulate aggregate value
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT && $this->RowType != ROWTYPE_AGGREGATE && $this->RowType != ROWTYPE_PREVIEW_FIELD) {
+        if ($this->RowType != RowType::AGGREGATEINIT && $this->RowType != RowType::AGGREGATE && $this->RowType != RowType::PREVIEWFIELD) {
             if (is_numeric($this->total_amount->CurrentValue)) {
                 $this->total_amount->Total += $this->total_amount->CurrentValue; // Accumulate total
             }
         }
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // id
             $this->id->ViewValue = $this->id->CurrentValue;
 
@@ -1810,7 +1890,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             // submission_date
             $this->submission_date->HrefValue = "";
             $this->submission_date->TooltipValue = "";
-        } elseif ($this->RowType == ROWTYPE_ADD) {
+        } elseif ($this->RowType == RowType::ADD) {
             // id
 
             // invoice_item
@@ -1823,7 +1903,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
 
             // total_amount
             $this->total_amount->setupEditAttributes();
-            $this->total_amount->EditValue = HtmlEncode($this->total_amount->CurrentValue);
+            $this->total_amount->EditValue = $this->total_amount->CurrentValue;
             $this->total_amount->PlaceHolder = RemoveHtml($this->total_amount->caption());
             if (strval($this->total_amount->EditValue) != "" && is_numeric($this->total_amount->EditValue)) {
                 $this->total_amount->EditValue = FormatNumber($this->total_amount->EditValue, null);
@@ -1847,7 +1927,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
 
             // submission_date
             $this->submission_date->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_EDIT) {
+        } elseif ($this->RowType == RowType::EDIT) {
             // id
             $this->id->setupEditAttributes();
             $this->id->EditValue = $this->id->CurrentValue;
@@ -1862,7 +1942,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
 
             // total_amount
             $this->total_amount->setupEditAttributes();
-            $this->total_amount->EditValue = HtmlEncode($this->total_amount->CurrentValue);
+            $this->total_amount->EditValue = $this->total_amount->CurrentValue;
             $this->total_amount->PlaceHolder = RemoveHtml($this->total_amount->caption());
             if (strval($this->total_amount->EditValue) != "" && is_numeric($this->total_amount->EditValue)) {
                 $this->total_amount->EditValue = FormatNumber($this->total_amount->EditValue, null);
@@ -1886,20 +1966,20 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
 
             // submission_date
             $this->submission_date->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_AGGREGATEINIT) { // Initialize aggregate row
+        } elseif ($this->RowType == RowType::AGGREGATEINIT) { // Initialize aggregate row
                     $this->total_amount->Total = 0; // Initialize total
-        } elseif ($this->RowType == ROWTYPE_AGGREGATE) { // Aggregate row
+        } elseif ($this->RowType == RowType::AGGREGATE) { // Aggregate row
             $this->total_amount->CurrentValue = $this->total_amount->Total;
             $this->total_amount->ViewValue = $this->total_amount->CurrentValue;
             $this->total_amount->ViewValue = FormatNumber($this->total_amount->ViewValue, $this->total_amount->formatPattern());
             $this->total_amount->HrefValue = ""; // Clear href value
         }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+        if ($this->RowType == RowType::ADD || $this->RowType == RowType::EDIT || $this->RowType == RowType::SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -1914,32 +1994,32 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             return true;
         }
         $validateForm = true;
-        if ($this->id->Required) {
-            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
-                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
+            if ($this->id->Visible && $this->id->Required) {
+                if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
+                    $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->invoice_item->Required) {
-            if (!$this->invoice_item->IsDetailKey && EmptyValue($this->invoice_item->FormValue)) {
-                $this->invoice_item->addErrorMessage(str_replace("%s", $this->invoice_item->caption(), $this->invoice_item->RequiredErrorMessage));
+            if ($this->invoice_item->Visible && $this->invoice_item->Required) {
+                if (!$this->invoice_item->IsDetailKey && EmptyValue($this->invoice_item->FormValue)) {
+                    $this->invoice_item->addErrorMessage(str_replace("%s", $this->invoice_item->caption(), $this->invoice_item->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->total_amount->Required) {
-            if (!$this->total_amount->IsDetailKey && EmptyValue($this->total_amount->FormValue)) {
-                $this->total_amount->addErrorMessage(str_replace("%s", $this->total_amount->caption(), $this->total_amount->RequiredErrorMessage));
+            if ($this->total_amount->Visible && $this->total_amount->Required) {
+                if (!$this->total_amount->IsDetailKey && EmptyValue($this->total_amount->FormValue)) {
+                    $this->total_amount->addErrorMessage(str_replace("%s", $this->total_amount->caption(), $this->total_amount->RequiredErrorMessage));
+                }
             }
-        }
-        if (!CheckInteger($this->total_amount->FormValue)) {
-            $this->total_amount->addErrorMessage($this->total_amount->getErrorMessage(false));
-        }
-        if ($this->submission_date->Required) {
-            if (!$this->submission_date->IsDetailKey && EmptyValue($this->submission_date->FormValue)) {
-                $this->submission_date->addErrorMessage(str_replace("%s", $this->submission_date->caption(), $this->submission_date->RequiredErrorMessage));
+            if (!CheckInteger($this->total_amount->FormValue)) {
+                $this->total_amount->addErrorMessage($this->total_amount->getErrorMessage(false));
             }
-        }
-        if (!CheckDate($this->submission_date->FormValue, $this->submission_date->formatPattern())) {
-            $this->submission_date->addErrorMessage($this->submission_date->getErrorMessage(false));
-        }
+            if ($this->submission_date->Visible && $this->submission_date->Required) {
+                if (!$this->submission_date->IsDetailKey && EmptyValue($this->submission_date->FormValue)) {
+                    $this->submission_date->addErrorMessage(str_replace("%s", $this->submission_date->caption(), $this->submission_date->RequiredErrorMessage));
+                }
+            }
+            if (!CheckDate($this->submission_date->FormValue, $this->submission_date->formatPattern())) {
+                $this->submission_date->addErrorMessage($this->submission_date->getErrorMessage(false));
+            }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -2037,21 +2117,12 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
             return false; // Update Failed
         } else {
-            // Save old values
+            // Load old values
             $this->loadDbValues($rsold);
         }
 
-        // Set new row
-        $rsnew = [];
-
-        // invoice_item
-        $this->invoice_item->setDbValueDef($rsnew, $this->invoice_item->CurrentValue, "", $this->invoice_item->ReadOnly);
-
-        // total_amount
-        $this->total_amount->setDbValueDef($rsnew, $this->total_amount->CurrentValue, 0, $this->total_amount->ReadOnly);
-
-        // submission_date
-        $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), $this->submission_date->ReadOnly);
+        // Get new row
+        $rsnew = $this->getEditRow($rsold);
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -2089,6 +2160,44 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         return $editRow;
     }
 
+    /**
+     * Get edit row
+     *
+     * @return array
+     */
+    protected function getEditRow($rsold)
+    {
+        global $Security;
+        $rsnew = [];
+
+        // invoice_item
+        $this->invoice_item->setDbValueDef($rsnew, $this->invoice_item->CurrentValue, $this->invoice_item->ReadOnly);
+
+        // total_amount
+        $this->total_amount->setDbValueDef($rsnew, $this->total_amount->CurrentValue, $this->total_amount->ReadOnly);
+
+        // submission_date
+        $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), $this->submission_date->ReadOnly);
+        return $rsnew;
+    }
+
+    /**
+     * Restore edit form from row
+     * @param array $row Row
+     */
+    protected function restoreEditFormFromRow($row)
+    {
+        if (isset($row['invoice_item'])) { // invoice_item
+            $this->invoice_item->CurrentValue = $row['invoice_item'];
+        }
+        if (isset($row['total_amount'])) { // total_amount
+            $this->total_amount->CurrentValue = $row['total_amount'];
+        }
+        if (isset($row['submission_date'])) { // submission_date
+            $this->submission_date->CurrentValue = $row['submission_date'];
+        }
+    }
+
     // Add record
     protected function addRow($rsold = null)
     {
@@ -2096,25 +2205,12 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
 
         // Set up foreign key field value from Session
         if ($this->getCurrentMasterTable() == "jdh_invoice") {
+            $this->invoice_id->Visible = true; // Need to insert foreign key
             $this->invoice_id->CurrentValue = $this->invoice_id->getSessionValue();
         }
 
-        // Set new row
-        $rsnew = [];
-
-        // invoice_item
-        $this->invoice_item->setDbValueDef($rsnew, $this->invoice_item->CurrentValue, "", false);
-
-        // total_amount
-        $this->total_amount->setDbValueDef($rsnew, $this->total_amount->CurrentValue, 0, false);
-
-        // submission_date
-        $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), CurrentDate(), false);
-
-        // invoice_id
-        if ($this->invoice_id->getSessionValue() != "") {
-            $rsnew['invoice_id'] = $this->invoice_id->getSessionValue();
-        }
+        // Get new row
+        $rsnew = $this->getAddRow();
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -2149,6 +2245,52 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
         return $addRow;
     }
 
+    /**
+     * Get add row
+     *
+     * @return array
+     */
+    protected function getAddRow()
+    {
+        global $Security;
+        $rsnew = [];
+
+        // invoice_item
+        $this->invoice_item->setDbValueDef($rsnew, $this->invoice_item->CurrentValue, false);
+
+        // total_amount
+        $this->total_amount->setDbValueDef($rsnew, $this->total_amount->CurrentValue, false);
+
+        // submission_date
+        $this->submission_date->setDbValueDef($rsnew, UnFormatDateTime($this->submission_date->CurrentValue, $this->submission_date->formatPattern()), false);
+
+        // invoice_id
+        if ($this->invoice_id->getSessionValue() != "") {
+            $rsnew['invoice_id'] = $this->invoice_id->getSessionValue();
+        }
+        return $rsnew;
+    }
+
+    /**
+     * Restore add form from row
+     * @param array $row Row
+     */
+    protected function restoreAddFormFromRow($row)
+    {
+        if (isset($row['invoice_item'])) { // invoice_item
+            $this->invoice_item->setFormValue($row['invoice_item']);
+        }
+        if (isset($row['total_amount'])) { // total_amount
+            $this->total_amount->setFormValue($row['total_amount']);
+        }
+        if (isset($row['submission_date'])) { // submission_date
+            $this->submission_date->setFormValue($row['submission_date']);
+        }
+        if (isset($row['invoice_id'])) { // invoice_id
+            $this->invoice_id->setFormValue($row['invoice_id']);
+        }
+    }
+
     // Set up master/detail based on QueryString
     protected function setupMasterParms()
     {
@@ -2168,7 +2310,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -2187,7 +2329,7 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -2230,11 +2372,11 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";
@@ -2280,10 +2422,10 @@ class JdhInvoiceItemsGrid extends JdhInvoiceItems
     public function listOptionsLoad()
     {
         // Example:
-        //$opt = &$this->ListOptions->Add("new");
+        //$opt = &$this->ListOptions->add("new");
         //$opt->Header = "xxx";
         //$opt->OnLeft = true; // Link on left
-        //$opt->MoveTo(0); // Move to first column
+        //$opt->moveTo(0); // Move to first column
     }
 
     // ListOptions Rendering event

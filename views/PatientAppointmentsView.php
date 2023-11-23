@@ -1,17 +1,10 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $PatientAppointmentsView = &$Page;
 ?>
-<?php if (!$Page->isExport()) { ?>
-<script>
-loadjs.ready("head", function () {
-    // Write your table-specific client script here, no need to add script tags.
-});
-</script>
-<?php } ?>
 <?php if (!$Page->isExport()) { ?>
 <div class="btn-toolbar ew-toolbar">
 <?php $Page->ExportOptions->render("body") ?>
@@ -23,7 +16,7 @@ loadjs.ready("head", function () {
 $Page->showMessage();
 ?>
 <main class="view">
-<form name="fPatient_Appointmentsview" id="fPatient_Appointmentsview" class="ew-form ew-view-form overlay-wrapper" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fPatient_Appointmentsview" id="fPatient_Appointmentsview" class="ew-form ew-view-form overlay-wrapper" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (!$Page->isExport()) { ?>
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
@@ -45,6 +38,11 @@ loadjs.ready(["wrapper", "head"], function () {
     loadjs.done(form.id);
 });
 </script>
+<script>
+loadjs.ready("head", function () {
+    // Write your table-specific client script here, no need to add script tags.
+});
+</script>
 <?php } ?>
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
@@ -60,17 +58,6 @@ loadjs.ready(["wrapper", "head"], function () {
 <span id="el_Patient_Appointments_appointment_id">
 <span<?= $Page->appointment_id->viewAttributes() ?>>
 <?= $Page->appointment_id->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
-<?php if ($Page->patient_id->Visible) { // patient_id ?>
-    <tr id="r_patient_id"<?= $Page->patient_id->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_Patient_Appointments_patient_id"><?= $Page->patient_id->caption() ?></span></td>
-        <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el_Patient_Appointments_patient_id">
-<span<?= $Page->patient_id->viewAttributes() ?>>
-<?= $Page->patient_id->getViewValue() ?></span>
 </span>
 </td>
     </tr>
@@ -119,27 +106,14 @@ loadjs.ready(["wrapper", "head"], function () {
 </td>
     </tr>
 <?php } ?>
-<?php if ($Page->subbmitted_by_user_id->Visible) { // subbmitted_by_user_id ?>
-    <tr id="r_subbmitted_by_user_id"<?= $Page->subbmitted_by_user_id->rowAttributes() ?>>
-        <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_Patient_Appointments_subbmitted_by_user_id"><?= $Page->subbmitted_by_user_id->caption() ?></span></td>
-        <td data-name="subbmitted_by_user_id"<?= $Page->subbmitted_by_user_id->cellAttributes() ?>>
-<span id="el_Patient_Appointments_subbmitted_by_user_id">
-<span<?= $Page->subbmitted_by_user_id->viewAttributes() ?>>
-<?= $Page->subbmitted_by_user_id->getViewValue() ?></span>
-</span>
-</td>
-    </tr>
-<?php } ?>
 <?php if ($Page->appointment_all_day->Visible) { // appointment_all_day ?>
     <tr id="r_appointment_all_day"<?= $Page->appointment_all_day->rowAttributes() ?>>
         <td class="<?= $Page->TableLeftColumnClass ?>"><span id="elh_Patient_Appointments_appointment_all_day"><?= $Page->appointment_all_day->caption() ?></span></td>
         <td data-name="appointment_all_day"<?= $Page->appointment_all_day->cellAttributes() ?>>
 <span id="el_Patient_Appointments_appointment_all_day">
 <span<?= $Page->appointment_all_day->viewAttributes() ?>>
-<div class="form-check d-inline-block">
-    <input type="checkbox" id="x_appointment_all_day_<?= $Page->RowCount ?>" class="form-check-input" value="<?= $Page->appointment_all_day->getViewValue() ?>" disabled<?php if (ConvertToBool($Page->appointment_all_day->CurrentValue)) { ?> checked<?php } ?>>
-    <label class="form-check-label" for="x_appointment_all_day_<?= $Page->RowCount ?>"></label>
-</div></span>
+<i class="fa-regular fa-square<?php if (ConvertToBool($Page->appointment_all_day->CurrentValue)) { ?>-check<?php } ?> ew-icon ew-boolean"></i>
+</span>
 </span>
 </td>
     </tr>

@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -96,7 +102,7 @@ class ResetPassword extends JdhUsers
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -106,7 +112,7 @@ class ResetPassword extends JdhUsers
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
     }
 
@@ -125,15 +131,15 @@ class ResetPassword extends JdhUsers
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_users)
-        if (!isset($GLOBALS["jdh_users"]) || get_class($GLOBALS["jdh_users"]) == PROJECT_NAMESPACE . "jdh_users") {
+        if (!isset($GLOBALS["jdh_users"]) || $GLOBALS["jdh_users"]::class == PROJECT_NAMESPACE . "jdh_users") {
             $GLOBALS["jdh_users"] = &$this;
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -149,7 +155,7 @@ class ResetPassword extends JdhUsers
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -198,13 +204,11 @@ class ResetPassword extends JdhUsers
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -222,7 +226,7 @@ class ResetPassword extends JdhUsers
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -246,6 +250,7 @@ class ResetPassword extends JdhUsers
     }
     public $Email;
     public $IsModal = false;
+    public $OffsetColumnClass = ""; // Override user table
 
     /**
      * Page run
@@ -254,8 +259,7 @@ class ResetPassword extends JdhUsers
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $UserTable, $Breadcrumb, $SkipHeaderFooter;
-        $this->OffsetColumnClass = ""; // Override user table
+        global $ExportType, $Language, $Security, $CurrentForm, $Breadcrumb, $SkipHeaderFooter;
 
         // Create Email field object (used by validation only)
         $this->Email = new DbField(Container("usertable"), "email", "email", "email", "", 202, 255, -1, false, "", false, false, false);
@@ -270,10 +274,15 @@ class ResetPassword extends JdhUsers
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
         $this->CurrentAction = Param("action"); // Set up current action
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -284,15 +293,14 @@ class ResetPassword extends JdhUsers
         if ($this->IsModal) {
             $SkipHeaderFooter = true;
         }
-        $Breadcrumb = new Breadcrumb("index");
-        $Breadcrumb->add("reset_password", "ResetPwd", CurrentUrl(), "", "", true);
+        $Breadcrumb = Breadcrumb::create("index")->add("reset_password", "ResetPwd", CurrentUrl(), "", "", true);
         $this->Heading = $Language->phrase("ResetPwd");
         $postBack = IsPost();
         $validEmail = false;
         $action = "";
         $userName = "";
         $activateCode = "";
-        $filter = "";
+        $filter = null;
         if ($postBack) {
             // Setup variables
             $this->Email->setFormValue(Post($this->Email->FieldVar));
@@ -301,12 +309,11 @@ class ResetPassword extends JdhUsers
                 $action = "reset"; // Prompt user to change password
             }
 
-            // Set up filter (WHERE Clause)
-            $emailFld = @$UserTable->Fields[Config("USER_EMAIL_FIELD_NAME")];
-            if ($emailFld && $emailFld->isEncrypt()) { // If encrypted, need to loop all records (to be improved)
-                $filter = "";
+            // Set up filter
+            if (Container("usertable")->Fields[Config("USER_EMAIL_FIELD_NAME")]?->isEncrypt()) { // If encrypted, need to loop through all records
+                $filter = null;
             } else {
-                $filter = GetUserFilter(Config("USER_EMAIL_FIELD_NAME"), $this->Email->CurrentValue);
+                $filter = [Config("USER_EMAIL_PROPERTY_NAME") => $this->Email->CurrentValue];
             }
 
         // Handle email activation
@@ -331,27 +338,24 @@ class ResetPassword extends JdhUsers
             if (SameText($action, "reset")) {
                 $action = "resetpassword";
             }
-            $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), $userName);
+            $filter = [Config("LOGIN_USERNAME_PROPERTY_NAME") => $userName];
         }
         if ($action != "") {
-            $emailSent = false;
-            $this->CurrentFilter = $filter;
-            $sql = $this->getCurrentSql();
-            if ($rsuser = Conn($UserTable->Dbid)->executeQuery($sql)) {
+            $users = $filter ? GetUserRepository()->findBy($filter) : GetUserRepository()->findAll();
+            if ($users) {
                 $validEmail = false;
-                $rows = $rsuser->fetchAllAssociative();
-                foreach ($rows as $rsold) {
+                foreach ($users as $user) {
                     if ($action == "resetpassword") { // Check username if email activation
-                        $validEmail = SameString($userName, GetUserInfo(Config("LOGIN_USERNAME_FIELD_NAME"), $rsold));
+                        $validEmail = SameString($userName, $user->get(Config("LOGIN_USERNAME_FIELD_NAME")));
                     } else {
-                        $validEmail = SameText($this->Email->CurrentValue, GetUserInfo(Config("USER_EMAIL_FIELD_NAME"), $rsold));
+                        $validEmail = SameText($this->Email->CurrentValue, $user->get(Config("USER_EMAIL_FIELD_NAME")));
                     }
                     if ($validEmail) {
                         // Call User Recover Password event
-                        $validEmail = $this->userRecoverPassword($rsold);
+                        $validEmail = $this->userRecoverPassword($user->toArray());
                         if ($validEmail) {
-                            $userName = GetUserInfo(Config("LOGIN_USERNAME_FIELD_NAME"), $rsold);
-                            $password = GetUserInfo(Config("LOGIN_PASSWORD_FIELD_NAME"), $rsold);
+                            $userName = $user->get(Config("LOGIN_USERNAME_FIELD_NAME"));
+                            $password = $user->get(Config("LOGIN_PASSWORD_FIELD_NAME"));
                         }
                     }
                     if ($validEmail) {
@@ -365,26 +369,25 @@ class ResetPassword extends JdhUsers
                         $this->terminate("changepassword");
                         return;
                     } else {
+                        $emailSent = false;
+                        $activateLink = FullUrl("", "resetpwd") . "?action=reset&user=" . rawurlencode($userName) .
+                            "&code=" . Encrypt($userName . "," . StdCurrentDateTime());
                         $email = new Email();
-                        $email->load(Config("EMAIL_RESET_PASSWORD_TEMPLATE"));
-                        $activateLink = FullUrl("", "resetpwd") . "?action=reset";
-                        $activateLink .= "&user=" . rawurlencode($userName);
-                        $code = $userName . "," . StdCurrentDateTime();
-                        $activateLink .= "&code=" . Encrypt($code);
-                        $email->replaceContent('<!--$ActivateLink-->', $activateLink);
-                        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-                        $email->replaceRecipient($this->Email->CurrentValue); // Replace Recipient
-                        $email->replaceContent('<!--$UserName-->', $userName);
-                        $args = [];
-                        $args["rs"] = &$rsold;
+                        $email->load(Config("EMAIL_RESET_PASSWORD_TEMPLATE"), data: [
+                            "From" => Config("SENDER_EMAIL"), // Replace Sender
+                            "To" => $this->Email->CurrentValue, // Replace Sender
+                            "ActivateLink" => $activateLink,
+                            "UserName" => $userName
+                        ]);
+                        $args = ["rs" => $user->toArray()];
                         if ($this->emailSending($email, $args)) {
                             $emailSent = $email->send();
                         }
+                        if (!$emailSent) {
+                            $this->setFailureMessage($email->SendErrDescription); // Set up error message
+                        }
                     }
                 }
-            }
-            if ($validEmail && !$emailSent) {
-                $this->setFailureMessage($email->SendErrDescription); // Set up error message
             }
             $this->setSuccessMessage($Language->phrase("ResetPasswordResponse")); // Set up success message
             $this->terminate("login"); // Return to login page
@@ -400,7 +403,7 @@ class ResetPassword extends JdhUsers
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -466,7 +469,7 @@ class ResetPassword extends JdhUsers
     public function messageShowing(&$msg, $type)
     {
         // Example:
-        //if ($type == 'success') $msg = "your success message";
+        //if ($type == "success") $msg = "your success message";
     }
 
     // Page Render event
@@ -490,7 +493,7 @@ class ResetPassword extends JdhUsers
     }
 
     // Email Sending event
-    public function emailSending($email, &$args)
+    public function emailSending($email, $args)
     {
         //var_dump($email, $args); exit();
         return true;
@@ -504,7 +507,7 @@ class ResetPassword extends JdhUsers
     }
 
     // User RecoverPassword event
-    public function userRecoverPassword(&$rs)
+    public function userRecoverPassword($rs)
     {
         // Return false to abort
         return true;

@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Table class for jdh_invoice_items
@@ -28,7 +34,7 @@ class JdhInvoiceItems extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
-    // Export
+    // Ajax / Modal
     public $UseAjaxActions = false;
     public $ModalSearch = false;
     public $ModalView = false;
@@ -58,7 +64,7 @@ class JdhInvoiceItems extends DbTable
         global $Language, $CurrentLanguage, $CurrentLocale;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
         $this->TableVar = "jdh_invoice_items";
         $this->TableName = 'jdh_invoice_items';
         $this->TableType = "TABLE";
@@ -66,7 +72,7 @@ class JdhInvoiceItems extends DbTable
         $this->UseTransaction = $this->supportsTransaction() && Config("USE_TRANSACTION");
 
         // Update Table
-        $this->UpdateTable = "`jdh_invoice_items`";
+        $this->UpdateTable = "jdh_invoice_items";
         $this->Dbid = 'DB';
         $this->ExportAll = true;
         $this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
@@ -93,7 +99,7 @@ class JdhInvoiceItems extends DbTable
         $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
         $this->BasicSearch = new BasicSearch($this);
 
-        // id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // id
         $this->id = new DbField(
             $this, // Table
             'x_id', // Variable name
@@ -112,13 +118,15 @@ class JdhInvoiceItems extends DbTable
             'NO' // Edit Tag
         );
         $this->id->InputTextType = "text";
+        $this->id->Raw = true;
         $this->id->IsAutoIncrement = true; // Autoincrement field
         $this->id->IsPrimaryKey = true; // Primary key field
+        $this->id->Nullable = false; // NOT NULL field
         $this->id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['id'] = &$this->id;
 
-        // invoice_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // invoice_id
         $this->invoice_id = new DbField(
             $this, // Table
             'x_invoice_id', // Variable name
@@ -137,6 +145,7 @@ class JdhInvoiceItems extends DbTable
             'TEXT' // Edit Tag
         );
         $this->invoice_id->InputTextType = "text";
+        $this->invoice_id->Raw = true;
         $this->invoice_id->IsForeignKey = true; // Foreign key field
         $this->invoice_id->Nullable = false; // NOT NULL field
         $this->invoice_id->Required = true; // Required field
@@ -144,7 +153,7 @@ class JdhInvoiceItems extends DbTable
         $this->invoice_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['invoice_id'] = &$this->invoice_id;
 
-        // invoice_item $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // invoice_item
         $this->invoice_item = new DbField(
             $this, // Table
             'x_invoice_item', // Variable name
@@ -168,7 +177,7 @@ class JdhInvoiceItems extends DbTable
         $this->invoice_item->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
         $this->Fields['invoice_item'] = &$this->invoice_item;
 
-        // total_amount $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // total_amount
         $this->total_amount = new DbField(
             $this, // Table
             'x_total_amount', // Variable name
@@ -187,13 +196,14 @@ class JdhInvoiceItems extends DbTable
             'TEXT' // Edit Tag
         );
         $this->total_amount->InputTextType = "text";
+        $this->total_amount->Raw = true;
         $this->total_amount->Nullable = false; // NOT NULL field
         $this->total_amount->Required = true; // Required field
         $this->total_amount->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->total_amount->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['total_amount'] = &$this->total_amount;
 
-        // submittedby_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // submittedby_user_id
         $this->submittedby_user_id = new DbField(
             $this, // Table
             'x_submittedby_user_id', // Variable name
@@ -212,6 +222,7 @@ class JdhInvoiceItems extends DbTable
             'TEXT' // Edit Tag
         );
         $this->submittedby_user_id->InputTextType = "text";
+        $this->submittedby_user_id->Raw = true;
         $this->submittedby_user_id->Nullable = false; // NOT NULL field
         $this->submittedby_user_id->Required = true; // Required field
         $this->submittedby_user_id->Sortable = false; // Allow sort
@@ -219,7 +230,7 @@ class JdhInvoiceItems extends DbTable
         $this->submittedby_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['submittedby_user_id'] = &$this->submittedby_user_id;
 
-        // submission_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // submission_date
         $this->submission_date = new DbField(
             $this, // Table
             'x_submission_date', // Variable name
@@ -238,6 +249,7 @@ class JdhInvoiceItems extends DbTable
             'TEXT' // Edit Tag
         );
         $this->submission_date->InputTextType = "text";
+        $this->submission_date->Raw = true;
         $this->submission_date->Nullable = false; // NOT NULL field
         $this->submission_date->Required = true; // Required field
         $this->submission_date->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
@@ -245,7 +257,7 @@ class JdhInvoiceItems extends DbTable
         $this->Fields['submission_date'] = &$this->submission_date;
 
         // Add Doctrine Cache
-        $this->Cache = new ArrayCache();
+        $this->Cache = new \Symfony\Component\Cache\Adapter\ArrayAdapter();
         $this->CacheProfile = new \Doctrine\DBAL\Cache\QueryCacheProfile(0, $this->TableVar);
 
         // Call Table Load event
@@ -390,38 +402,63 @@ class JdhInvoiceItems extends DbTable
         return $chartRow;
     }
 
-    // Table level SQL
-    public function getSqlFrom() // From
+    // Get FROM clause
+    public function getSqlFrom()
     {
-        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_invoice_items`";
+        return ($this->SqlFrom != "") ? $this->SqlFrom : "jdh_invoice_items";
     }
 
-    public function sqlFrom() // For backward compatibility
+    // Get FROM clause (for backward compatibility)
+    public function sqlFrom()
     {
         return $this->getSqlFrom();
     }
 
+    // Set FROM clause
     public function setSqlFrom($v)
     {
         $this->SqlFrom = $v;
     }
 
+    // Get SELECT clause
     public function getSqlSelect() // Select
     {
-        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*");
+        return $this->SqlSelect ?? $this->getQueryBuilder()->select($this->sqlSelectFields());
     }
 
-    public function sqlSelect() // For backward compatibility
+    // Get list of fields
+    private function sqlSelectFields()
+    {
+        $useFieldNames = false;
+        $fieldNames = [];
+        $platform = $this->getConnection()->getDatabasePlatform();
+        foreach ($this->Fields as $field) {
+            $expr = $field->Expression;
+            $customExpr = $field->CustomDataType?->convertToPHPValueSQL($expr, $platform) ?? $expr;
+            if ($customExpr != $expr) {
+                $fieldNames[] = $customExpr . " AS " . QuotedName($field->Name, $this->Dbid);
+                $useFieldNames = true;
+            } else {
+                $fieldNames[] = $expr;
+            }
+        }
+        return $useFieldNames ? implode(", ", $fieldNames) : "*";
+    }
+
+    // Get SELECT clause (for backward compatibility)
+    public function sqlSelect()
     {
         return $this->getSqlSelect();
     }
 
+    // Set SELECT clause
     public function setSqlSelect($v)
     {
         $this->SqlSelect = $v;
     }
 
-    public function getSqlWhere() // Where
+    // Get WHERE clause
+    public function getSqlWhere()
     {
         $where = ($this->SqlWhere != "") ? $this->SqlWhere : "";
         $this->DefaultFilter = "";
@@ -429,56 +466,67 @@ class JdhInvoiceItems extends DbTable
         return $where;
     }
 
-    public function sqlWhere() // For backward compatibility
+    // Get WHERE clause (for backward compatibility)
+    public function sqlWhere()
     {
         return $this->getSqlWhere();
     }
 
+    // Set WHERE clause
     public function setSqlWhere($v)
     {
         $this->SqlWhere = $v;
     }
 
-    public function getSqlGroupBy() // Group By
+    // Get GROUP BY clause
+    public function getSqlGroupBy()
     {
-        return ($this->SqlGroupBy != "") ? $this->SqlGroupBy : "";
+        return $this->SqlGroupBy != "" ? $this->SqlGroupBy : "";
     }
 
-    public function sqlGroupBy() // For backward compatibility
+    // Get GROUP BY clause (for backward compatibility)
+    public function sqlGroupBy()
     {
         return $this->getSqlGroupBy();
     }
 
+    // set GROUP BY clause
     public function setSqlGroupBy($v)
     {
         $this->SqlGroupBy = $v;
     }
 
+    // Get HAVING clause
     public function getSqlHaving() // Having
     {
         return ($this->SqlHaving != "") ? $this->SqlHaving : "";
     }
 
-    public function sqlHaving() // For backward compatibility
+    // Get HAVING clause (for backward compatibility)
+    public function sqlHaving()
     {
         return $this->getSqlHaving();
     }
 
+    // Set HAVING clause
     public function setSqlHaving($v)
     {
         $this->SqlHaving = $v;
     }
 
-    public function getSqlOrderBy() // Order By
+    // Get ORDER BY clause
+    public function getSqlOrderBy()
     {
         return ($this->SqlOrderBy != "") ? $this->SqlOrderBy : "";
     }
 
-    public function sqlOrderBy() // For backward compatibility
+    // Get ORDER BY clause (for backward compatibility)
+    public function sqlOrderBy()
     {
         return $this->getSqlOrderBy();
     }
 
+    // set ORDER BY clause
     public function setSqlOrderBy($v)
     {
         $this->SqlOrderBy = $v;
@@ -500,23 +548,23 @@ class JdhInvoiceItems extends DbTable
             case "gridadd":
             case "register":
             case "addopt":
-                return (($allow & 1) == 1);
+                return ($allow & Allow::ADD->value) == Allow::ADD->value;
             case "edit":
             case "gridedit":
             case "update":
             case "changepassword":
             case "resetpassword":
-                return (($allow & 4) == 4);
+                return ($allow & Allow::EDIT->value) == Allow::EDIT->value;
             case "delete":
-                return (($allow & 2) == 2);
+                return ($allow & Allow::DELETE->value) == Allow::DELETE->value;
             case "view":
-                return (($allow & 32) == 32);
+                return ($allow & Allow::VIEW->value) == Allow::VIEW->value;
             case "search":
-                return (($allow & 64) == 64);
+                return ($allow & Allow::SEARCH->value) == Allow::SEARCH->value;
             case "lookup":
-                return (($allow & 256) == 256);
+                return ($allow & Allow::LOOKUP->value) == Allow::LOOKUP->value;
             default:
-                return (($allow & 8) == 8);
+                return ($allow & Allow::LIST->value) == Allow::LIST->value;
         }
     }
 
@@ -530,32 +578,36 @@ class JdhInvoiceItems extends DbTable
     public function getRecordCount($sql, $c = null)
     {
         $cnt = -1;
-        $rs = null;
-        if ($sql instanceof QueryBuilder) { // Query builder
-            $sqlwrk = clone $sql;
-            $sqlwrk = $sqlwrk->resetQueryPart("orderBy")->getSQL();
-        } else {
-            $sqlwrk = $sql;
-        }
+        $sqlwrk = $sql instanceof QueryBuilder // Query builder
+            ? (clone $sql)->resetQueryPart("orderBy")->getSQL()
+            : $sql;
         $pattern = '/^SELECT\s([\s\S]+)\sFROM\s/i';
         // Skip Custom View / SubQuery / SELECT DISTINCT / ORDER BY
         if (
-            ($this->TableType == 'TABLE' || $this->TableType == 'VIEW' || $this->TableType == 'LINKTABLE') &&
-            preg_match($pattern, $sqlwrk) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
-            !preg_match('/^\s*select\s+distinct\s+/i', $sqlwrk) && !preg_match('/\s+order\s+by\s+/i', $sqlwrk)
+            in_array($this->TableType, ["TABLE", "VIEW", "LINKTABLE"]) &&
+            preg_match($pattern, $sqlwrk) &&
+            !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
+            !preg_match('/^\s*SELECT\s+DISTINCT\s+/i', $sqlwrk) &&
+            !preg_match('/\s+ORDER\s+BY\s+/i', $sqlwrk)
         ) {
-            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
+            $sqlcnt = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
         } else {
-            $sqlwrk = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
+            $sqlcnt = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
         }
         $conn = $c ?? $this->getConnection();
-        $cnt = $conn->fetchOne($sqlwrk);
+        $cnt = $conn->fetchOne($sqlcnt);
         if ($cnt !== false) {
             return (int)$cnt;
         }
-
         // Unable to get count by SELECT COUNT(*), execute the SQL to get record count directly
-        return ExecuteRecordCount($sql, $conn);
+        $result = $conn->executeQuery($sqlwrk);
+        $cnt = $result->rowCount();
+        if ($cnt == 0) { // Unable to get record count, count directly
+            while ($result->fetch()) {
+                $cnt++;
+            }
+        }
+        return $cnt;
     }
 
     // Get SQL
@@ -634,9 +686,10 @@ class JdhInvoiceItems extends DbTable
         $origFilter = $this->CurrentFilter;
         $this->CurrentFilter = $filter;
         $this->recordsetSelecting($this->CurrentFilter);
-        $select = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
-        $groupBy = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlGroupBy() : "";
-        $having = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlHaving() : "";
+        $isCustomView = $this->TableType == "CUSTOMVIEW";
+        $select = $isCustomView ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
+        $groupBy = $isCustomView ? $this->getSqlGroupBy() : "";
+        $having = $isCustomView ? $this->getSqlHaving() : "";
         $sql = $this->buildSelectSql($select, $this->getSqlFrom(), $this->getSqlWhere(), $groupBy, $having, "", $this->CurrentFilter, "");
         $cnt = $this->getRecordCount($sql);
         $this->CurrentFilter = $origFilter;
@@ -650,9 +703,10 @@ class JdhInvoiceItems extends DbTable
         AddFilter($filter, $this->CurrentFilter);
         $filter = $this->applyUserIDFilters($filter);
         $this->recordsetSelecting($filter);
-        $select = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
-        $groupBy = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlGroupBy() : "";
-        $having = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlHaving() : "";
+        $isCustomView = $this->TableType == "CUSTOMVIEW";
+        $select = $isCustomView ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
+        $groupBy = $isCustomView ? $this->getSqlGroupBy() : "";
+        $having = $isCustomView ? $this->getSqlHaving() : "";
         $sql = $this->buildSelectSql($select, $this->getSqlFrom(), $this->getSqlWhere(), $groupBy, $having, "", $filter, "");
         $cnt = $this->getRecordCount($sql);
         return $cnt;
@@ -668,12 +722,15 @@ class JdhInvoiceItems extends DbTable
     {
         $queryBuilder = $this->getQueryBuilder();
         $queryBuilder->insert($this->UpdateTable);
+        $platform = $this->getConnection()->getDatabasePlatform();
         foreach ($rs as $name => $value) {
             if (!isset($this->Fields[$name]) || $this->Fields[$name]->IsCustom) {
                 continue;
             }
-            $type = GetParameterType($this->Fields[$name], $value, $this->Dbid);
-            $queryBuilder->setValue($this->Fields[$name]->Expression, $queryBuilder->createPositionalParameter($value, $type));
+            $field = $this->Fields[$name];
+            $parm = $queryBuilder->createPositionalParameter($value, $field->getParameterType());
+            $parm = $field->CustomDataType?->convertToDatabaseValueSQL($parm, $platform) ?? $parm; // Convert database SQL
+            $queryBuilder->setValue($field->Expression, $parm);
         }
         return $queryBuilder;
     }
@@ -683,18 +740,18 @@ class JdhInvoiceItems extends DbTable
     {
         $conn = $this->getConnection();
         try {
-            $success = $this->insertSql($rs)->execute();
+            $queryBuilder = $this->insertSql($rs);
+            $result = $queryBuilder->executeStatement();
             $this->DbErrorMessage = "";
         } catch (\Exception $e) {
-            $success = false;
+            $result = false;
             $this->DbErrorMessage = $e->getMessage();
         }
-        if ($success) {
-            // Get insert id if necessary
+        if ($result) {
             $this->id->setDbValue($conn->lastInsertId());
             $rs['id'] = $this->id->DbValue;
         }
-        return $success;
+        return $result;
     }
 
     /**
@@ -709,14 +766,17 @@ class JdhInvoiceItems extends DbTable
     {
         $queryBuilder = $this->getQueryBuilder();
         $queryBuilder->update($this->UpdateTable);
+        $platform = $this->getConnection()->getDatabasePlatform();
         foreach ($rs as $name => $value) {
             if (!isset($this->Fields[$name]) || $this->Fields[$name]->IsCustom || $this->Fields[$name]->IsAutoIncrement) {
                 continue;
             }
-            $type = GetParameterType($this->Fields[$name], $value, $this->Dbid);
-            $queryBuilder->set($this->Fields[$name]->Expression, $queryBuilder->createPositionalParameter($value, $type));
+            $field = $this->Fields[$name];
+            $parm = $queryBuilder->createPositionalParameter($value, $field->getParameterType());
+            $parm = $field->CustomDataType?->convertToDatabaseValueSQL($parm, $platform) ?? $parm; // Convert database SQL
+            $queryBuilder->set($field->Expression, $parm);
         }
-        $filter = ($curfilter) ? $this->CurrentFilter : "";
+        $filter = $curfilter ? $this->CurrentFilter : "";
         if (is_array($where)) {
             $where = $this->arrayToFilter($where);
         }
@@ -732,8 +792,8 @@ class JdhInvoiceItems extends DbTable
     {
         // If no field is updated, execute may return 0. Treat as success
         try {
-            $success = $this->updateSql($rs, $where, $curfilter)->execute();
-            $success = ($success > 0) ? $success : true;
+            $success = $this->updateSql($rs, $where, $curfilter)->executeStatement();
+            $success = $success > 0 ? $success : true;
             $this->DbErrorMessage = "";
         } catch (\Exception $e) {
             $success = false;
@@ -769,7 +829,7 @@ class JdhInvoiceItems extends DbTable
                 AddFilter($where, QuotedName('id', $this->Dbid) . '=' . QuotedValue($rs['id'], $this->id->DataType, $this->Dbid));
             }
         }
-        $filter = ($curfilter) ? $this->CurrentFilter : "";
+        $filter = $curfilter ? $this->CurrentFilter : "";
         AddFilter($filter, $where);
         return $queryBuilder->where($filter != "" ? $filter : "0=1");
     }
@@ -780,7 +840,7 @@ class JdhInvoiceItems extends DbTable
         $success = true;
         if ($success) {
             try {
-                $success = $this->deleteSql($rs, $where, $curfilter)->execute();
+                $success = $this->deleteSql($rs, $where, $curfilter)->executeStatement();
                 $this->DbErrorMessage = "";
             } catch (\Exception $e) {
                 $success = false;
@@ -790,7 +850,7 @@ class JdhInvoiceItems extends DbTable
         return $success;
     }
 
-    // Load DbValue from recordset or array
+    // Load DbValue from result set or array
     protected function loadDbValues($row)
     {
         if (!is_array($row)) {
@@ -817,7 +877,7 @@ class JdhInvoiceItems extends DbTable
     }
 
     // Get Key
-    public function getKey($current = false)
+    public function getKey($current = false, $keySeparator = null)
     {
         $keys = [];
         $val = $current ? $this->id->CurrentValue : $this->id->OldValue;
@@ -826,14 +886,16 @@ class JdhInvoiceItems extends DbTable
         } else {
             $keys[] = $val;
         }
-        return implode(Config("COMPOSITE_KEY_SEPARATOR"), $keys);
+        $keySeparator ??= Config("COMPOSITE_KEY_SEPARATOR");
+        return implode($keySeparator, $keys);
     }
 
     // Set Key
-    public function setKey($key, $current = false)
+    public function setKey($key, $current = false, $keySeparator = null)
     {
+        $keySeparator ??= Config("COMPOSITE_KEY_SEPARATOR");
         $this->OldKey = strval($key);
-        $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
+        $keys = explode($keySeparator, $this->OldKey);
         if (count($keys) == 1) {
             if ($current) {
                 $this->id->CurrentValue = $keys[0];
@@ -886,33 +948,31 @@ class JdhInvoiceItems extends DbTable
     public function getModalCaption($pageName)
     {
         global $Language;
-        if ($pageName == "jdhinvoiceitemsview") {
-            return $Language->phrase("View");
-        } elseif ($pageName == "jdhinvoiceitemsedit") {
-            return $Language->phrase("Edit");
-        } elseif ($pageName == "jdhinvoiceitemsadd") {
-            return $Language->phrase("Add");
-        }
-        return "";
+        return match ($pageName) {
+            "jdhinvoiceitemsview" => $Language->phrase("View"),
+            "jdhinvoiceitemsedit" => $Language->phrase("Edit"),
+            "jdhinvoiceitemsadd" => $Language->phrase("Add"),
+            default => ""
+        };
+    }
+
+    // Default route URL
+    public function getDefaultRouteUrl()
+    {
+        return "jdhinvoiceitemslist";
     }
 
     // API page name
     public function getApiPageName($action)
     {
-        switch (strtolower($action)) {
-            case Config("API_VIEW_ACTION"):
-                return "JdhInvoiceItemsView";
-            case Config("API_ADD_ACTION"):
-                return "JdhInvoiceItemsAdd";
-            case Config("API_EDIT_ACTION"):
-                return "JdhInvoiceItemsEdit";
-            case Config("API_DELETE_ACTION"):
-                return "JdhInvoiceItemsDelete";
-            case Config("API_LIST_ACTION"):
-                return "JdhInvoiceItemsList";
-            default:
-                return "";
-        }
+        return match (strtolower($action)) {
+            Config("API_VIEW_ACTION") => "JdhInvoiceItemsView",
+            Config("API_ADD_ACTION") => "JdhInvoiceItemsAdd",
+            Config("API_EDIT_ACTION") => "JdhInvoiceItemsEdit",
+            Config("API_DELETE_ACTION") => "JdhInvoiceItemsDelete",
+            Config("API_LIST_ACTION") => "JdhInvoiceItemsList",
+            default => ""
+        };
     }
 
     // Current URL
@@ -984,12 +1044,12 @@ class JdhInvoiceItems extends DbTable
     }
 
     // Delete URL
-    public function getDeleteUrl()
+    public function getDeleteUrl($parm = "")
     {
         if ($this->UseAjaxActions && ConvertToBool(Param("infinitescroll")) && CurrentPageID() == "list") {
             return $this->keyUrl(GetApiUrl(Config("API_DELETE_ACTION") . "/" . $this->TableVar));
         } else {
-            return $this->keyUrl("jdhinvoiceitemsdelete");
+            return $this->keyUrl("jdhinvoiceitemsdelete", $parm);
         }
     }
 
@@ -1006,7 +1066,7 @@ class JdhInvoiceItems extends DbTable
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
-        $json .= "\"id\":" . JsonEncode($this->id->CurrentValue, "number");
+        $json .= "\"id\":" . VarToJson($this->id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -1031,10 +1091,10 @@ class JdhInvoiceItems extends DbTable
     // Render sort
     public function renderFieldHeader($fld)
     {
-        global $Security, $Language, $Page;
+        global $Security, $Language;
         $sortUrl = "";
         $attrs = "";
-        if ($fld->Sortable) {
+        if ($this->PageID != "grid" && $fld->Sortable) {
             $sortUrl = $this->sortUrl($fld);
             $attrs = ' role="button" data-ew-action="sort" data-ajax="' . ($this->UseAjaxActions ? "true" : "false") . '" data-sort-url="' . $sortUrl . '" data-sort-type="1"';
             if ($this->ContextClass) { // Add context
@@ -1045,9 +1105,11 @@ class JdhInvoiceItems extends DbTable
         if ($sortUrl) {
             $html .= '<div class="ew-table-header-sort">' . $fld->getSortIcon() . '</div>';
         }
-        if ($fld->UseFilter && $Security->canSearch()) {
+        if ($this->PageID != "grid" && !$this->isExport() && $fld->UseFilter && $Security->canSearch()) {
             $html .= '<div class="ew-filter-dropdown-btn" data-ew-action="filter" data-table="' . $fld->TableVar . '" data-field="' . $fld->FieldVar .
-                '"><div class="ew-table-header-filter" role="button" aria-haspopup="true">' . $Language->phrase("Filter") . '</div></div>';
+                '"><div class="ew-table-header-filter" role="button" aria-haspopup="true">' . $Language->phrase("Filter") .
+                (is_array($fld->EditValue) ? str_replace("%c", count($fld->EditValue), $Language->phrase("FilterCount")) : '') .
+                '</div></div>';
         }
         $html = '<div class="ew-table-header-btn">' . $html . '</div>';
         if ($this->UseCustomTemplate) {
@@ -1069,7 +1131,7 @@ class JdhInvoiceItems extends DbTable
         } elseif ($fld->Sortable) {
             $urlParm = "order=" . urlencode($fld->Name) . "&amp;ordertype=" . $fld->getNextSort();
             if ($DashboardReport) {
-                $urlParm .= "&amp;dashboard=true";
+                $urlParm .= "&amp;" . Config("PAGE_DASHBOARD") . "=" . $DashboardReport;
             }
             return $this->addMasterUrl($this->CurrentPageName . "?" . $urlParm);
         } else {
@@ -1086,15 +1148,19 @@ class JdhInvoiceItems extends DbTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
+            $isApi = IsApi();
+            $keyValues = $isApi
+                ? (Route(0) == "export"
+                    ? array_map(fn ($i) => Route($i + 3), range(0, 0))  // Export API
+                    : array_map(fn ($i) => Route($i + 2), range(0, 0))) // Other API
+                : []; // Non-API
             if (($keyValue = Param("id") ?? Route("id")) !== null) {
                 $arKeys[] = $keyValue;
-            } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
+            } elseif ($isApi && (($keyValue = Key(0) ?? $keyValues[0] ?? null) !== null)) {
                 $arKeys[] = $keyValue;
             } else {
                 $arKeys = null; // Do not setup
             }
-
-            //return $arKeys; // Do not return yet, so the values will also be checked by the following code
         }
         // Check keys
         $ar = [];
@@ -1141,10 +1207,10 @@ class JdhInvoiceItems extends DbTable
         return $keyFilter;
     }
 
-    // Load recordset based on filter
-    public function loadRs($filter)
+    // Load result set based on filter/sort
+    public function loadRs($filter, $sort = "")
     {
-        $sql = $this->getSql($filter); // Set up filter (WHERE Clause)
+        $sql = $this->getSql($filter, $sort); // Set up filter (WHERE Clause) / sort (ORDER BY Clause)
         $conn = $this->getConnection();
         return $conn->executeQuery($sql);
     }
@@ -1175,7 +1241,7 @@ class JdhInvoiceItems extends DbTable
         $listClass = PROJECT_NAMESPACE . $listPage;
         $page = new $listClass();
         $page->loadRecordsetFromFilter($filter);
-        $view = Container("view");
+        $view = Container("app.view");
         $template = $listPage . ".php"; // View
         $GLOBALS["Title"] ??= $page->Title; // Title
         try {
@@ -1340,9 +1406,9 @@ class JdhInvoiceItems extends DbTable
     }
 
     // Export data in HTML/CSV/Word/Excel/Email/PDF format
-    public function exportDocument($doc, $recordset, $startRec = 1, $stopRec = 1, $exportPageType = "")
+    public function exportDocument($doc, $result, $startRec = 1, $stopRec = 1, $exportPageType = "")
     {
-        if (!$recordset || !$doc) {
+        if (!$result || !$doc) {
             return;
         }
         if (!$doc->ExportCustom) {
@@ -1366,12 +1432,9 @@ class JdhInvoiceItems extends DbTable
                 $doc->endExportRow();
             }
         }
-
-        // Move to first record
         $recCnt = $startRec - 1;
-        $stopRec = ($stopRec > 0) ? $stopRec : PHP_INT_MAX;
-        while (!$recordset->EOF && $recCnt < $stopRec) {
-            $row = $recordset->fields;
+        $stopRec = $stopRec > 0 ? $stopRec : PHP_INT_MAX;
+        while (($row = $result->fetch()) && $recCnt < $stopRec) {
             $recCnt++;
             if ($recCnt >= $startRec) {
                 $rowCnt = $recCnt - $startRec + 1;
@@ -1386,7 +1449,7 @@ class JdhInvoiceItems extends DbTable
                 $this->aggregateListRowValues(); // Aggregate row values
 
                 // Render row
-                $this->RowType = ROWTYPE_VIEW; // Render view
+                $this->RowType = RowType::VIEW; // Render view
                 $this->resetAttributes();
                 $this->renderListRow();
                 if (!$doc->ExportCustom) {
@@ -1412,12 +1475,11 @@ class JdhInvoiceItems extends DbTable
             if ($doc->ExportCustom) {
                 $this->rowExport($doc, $row);
             }
-            $recordset->moveNext();
         }
 
         // Export aggregates (horizontal format only)
         if ($doc->Horizontal) {
-            $this->RowType = ROWTYPE_AGGREGATE;
+            $this->RowType = RowType::AGGREGATE;
             $this->resetAttributes();
             $this->aggregateListRow();
             if (!$doc->ExportCustom) {
@@ -1459,7 +1521,7 @@ class JdhInvoiceItems extends DbTable
     }
 
     // Recordset Selected event
-    public function recordsetSelected(&$rs)
+    public function recordsetSelected($rs)
     {
         //Log("Recordset Selected");
     }
@@ -1498,7 +1560,7 @@ class JdhInvoiceItems extends DbTable
     }
 
     // Row Inserted event
-    public function rowInserted($rsold, &$rsnew)
+    public function rowInserted($rsold, $rsnew)
     {
         //Log("Row Inserted");
     }
@@ -1512,7 +1574,7 @@ class JdhInvoiceItems extends DbTable
     }
 
     // Row Updated event
-    public function rowUpdated($rsold, &$rsnew)
+    public function rowUpdated($rsold, $rsnew)
     {
         //Log("Row Updated");
     }
@@ -1562,13 +1624,13 @@ class JdhInvoiceItems extends DbTable
     }
 
     // Row Deleted event
-    public function rowDeleted(&$rs)
+    public function rowDeleted($rs)
     {
         //Log("Row Deleted");
     }
 
     // Email Sending event
-    public function emailSending($email, &$args)
+    public function emailSending($email, $args)
     {
         //var_dump($email, $args); exit();
         return true;

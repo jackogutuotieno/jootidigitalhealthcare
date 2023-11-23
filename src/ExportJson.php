@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Export to JSON
@@ -101,7 +101,7 @@ class ExportJson extends AbstractExport
     // Export a field
     public function exportField($fld)
     {
-        if ($fld->Exportable && $fld->DataType != DATATYPE_BLOB) {
+        if ($fld->Exportable && $fld->DataType != DataType::BLOB) {
             if ($fld->UploadMultiple) {
                 $this->Item->{$fld->Name} = $fld->Upload->DbValue;
             } else {

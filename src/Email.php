@@ -1,12 +1,16 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
+
+use Symfony\Component\Finder\Finder;
 
 /**
  * Email class
  */
 class Email
 {
+    protected $data = [];
+    public $LanguageFolder;
     public $Sender = ""; // Sender
     public $Recipient = ""; // Recipient
     public $Cc = ""; // Cc
@@ -26,6 +30,7 @@ class Email
     {
         $this->Charset = Config("EMAIL_CHARSET");
         $this->SmtpSecure = Config("SMTP.SECURE_OPTION");
+        $this->LanguageFolder = Config("LANGUAGE_FOLDER");
     }
 
     // Set PHPMailer property
@@ -40,108 +45,96 @@ class Email
         $this->Members[$name] = $arguments;
     }
 
-    // Load email from template
-    public function load($fn, $langId = "")
+    /**
+     * Load message from template name
+     *
+     * @param string $name Template file name
+     * @param string $langId Language ID
+     * @param array $data Data for template
+     * @return void
+     */
+    public function load($name, $langId = "", $data = [])
     {
         global $CurrentLanguage;
-        $langId = ($langId == "") ? $CurrentLanguage : $langId;
-        $pos = strrpos($fn, '.');
-        if ($pos !== false) {
-            $wrkname = substr($fn, 0, $pos); // Get file name
-            $wrkext = substr($fn, $pos + 1); // Get file extension
-            $wrkpath = ServerMapPath(Config("EMAIL_TEMPLATE_PATH")); // Get file path
-            $ar = ($langId != "") ? ["_" . $langId, "-" . $langId, ""] : [""];
-            $exist = false;
-            foreach ($ar as $suffix) {
-                $wrkfile = $wrkpath . $wrkname . $suffix . "." . $wrkext;
-                $exist = file_exists($wrkfile);
-                if ($exist) {
-                    break;
+        $langId = $langId ?: $CurrentLanguage;
+        $this->data = $data;
+        $parts = pathinfo($name);
+        $finder = Finder::create()->files()->in($this->LanguageFolder)->name($parts["filename"] . "." . $langId . "." . $parts["extension"]); // Template for the language ID
+        if (!$finder->hasResults()) {
+            $finder->files()->name($parts["filename"]  . ".en-US." . $parts["extension"]); // Fallback to en-US
+        }
+        if ($finder->hasResults()) {
+            $wrk = "";
+            $view = Container("email.view");
+            foreach ($finder as $file) {
+                $wrk = $view->fetchTemplate($file->getFileName(), $data);
+            }
+            if ($wrk && preg_match('/\r\r|\n\n|\r\n\r\n/', $wrk, $m, PREG_OFFSET_CAPTURE)) { // Locate header and email content
+                $i = $m[0][1];
+                $header = trim(substr($wrk, 0, $i)) . "\r\n"; // Add last CrLf for matching
+                $this->Content = trim(substr($wrk, $i));
+                if (preg_match_all('/(Subject|From|To|Cc|Bcc|Format)\s*:\s*(.*?(?=((Subject|From|To|Cc|Bcc|Format)\s*:|\r|\n)))/m', $header ?: "", $m)) {
+                    $ar = array_combine($m[1], $m[2]);
+                    $this->Subject = trim($ar["Subject"] ?? "");
+                    $this->Sender = trim($ar["From"] ?? "");
+                    $this->Recipient = trim($ar["To"] ?? "");
+                    $this->Cc = trim($ar["Cc"] ?? "");
+                    $this->Bcc = trim($ar["Bcc"] ?? "");
+                    $this->Format = trim($ar["Format"] ?? "");
                 }
             }
-            if (!$exist) {
-                throw new \Exception("Email template '" . $wrkfile . "' not found");
-            }
-            $wrk = file_get_contents($wrkfile); // Load template file content
-            if (StartsString("\xEF\xBB\xBF", $wrk)) { // UTF-8 BOM
-                $wrk = substr($wrk, 3);
-            }
-            $wrkid = $wrkname . "_content";
-            if (ContainsString($wrk, $wrkid)) { // Replace content
-                $wrkfile = $wrkpath . $wrkid . "." . $wrkext;
-                if (file_exists($wrkfile)) {
-                    $content = file_get_contents($wrkfile);
-                    if (StartsString("\xEF\xBB\xBF", $content)) { // UTF-8 BOM
-                        $content = substr($content, 3);
-                    }
-                    $wrk = str_replace("<!--" . $wrkid . "-->", $content, $wrk);
-                }
-            }
+        } else {
+            throw new \Exception("Failed to load email template '$name' for language '$langId'");
         }
-        if ($wrk != "" && preg_match('/\n\n|\r\n\r\n/', $wrk, $m, PREG_OFFSET_CAPTURE)) { // Locate Header & Mail Content
-            $i = $m[0][1];
-            $header = trim(substr($wrk, 0, $i)) . "\r\n"; // Add last CrLf for matching
-            $this->Content = trim(substr($wrk, $i));
-            if (preg_match_all('/^\s*(Subject|From|To|Cc|Bcc|Format)\s*:([^\r\n]*)[\r\n]/m', $header ?: "", $m)) {
-                $ar = array_combine($m[1], $m[2]);
-                $this->Subject = trim(@$ar["Subject"]);
-                $this->Sender = trim(@$ar["From"]);
-                $this->Recipient = trim(@$ar["To"]);
-                $this->Cc = trim(@$ar["Cc"]);
-                $this->Bcc = trim(@$ar["Bcc"]);
-                $this->Format = trim(@$ar["Format"]);
-            }
-        }
+    }
+
+    // Get template data
+    public function getData()
+    {
+        return $this->data;
     }
 
     // Replace sender
-    public function replaceSender($sender, $senderName = '')
+    public function replaceSender($sender, $senderName = "")
     {
-        if ($senderName != '') {
-            $sender = $senderName . ' <' . $sender . '>';
+        if ($senderName != "") {
+            $sender = $senderName . " <" . $sender . ">";
         }
-        if (ContainsString($this->Sender, '<!--$From-->')) {
-            $this->Sender = str_replace('<!--$From-->', $sender, $this->Sender);
-        } else {
-            $this->Sender = $sender;
-        }
+        $this->Sender = $sender;
     }
 
     // Replace recipient
-    public function replaceRecipient($recipient, $recipientName = '')
+    public function replaceRecipient($recipient, $recipientName = "")
     {
-        if ($recipientName != '') {
-            $recipient = $recipientName . ' <' . $recipient . '>';
+        if ($recipientName != "") {
+            $recipient = $recipientName . " <" . $recipient . ">";
         }
-        if (ContainsString($this->Recipient, '<!--$To-->')) {
-            $this->Recipient = str_replace('<!--$To-->', $recipient, $this->Recipient);
-        } else {
-            $this->addRecipient($recipient);
-        }
+        $this->addRecipient($recipient);
     }
+
     // Add recipient
-    public function addRecipient($recipient, $recipientName = '')
+    public function addRecipient($recipient, $recipientName = "")
     {
-        if ($recipientName != '') {
-            $recipient = $recipientName . ' <' . $recipient . '>';
+        if ($recipientName != "") {
+            $recipient = $recipientName . " <" . $recipient . ">";
         }
         $this->Recipient = Concat($this->Recipient, $recipient, ";");
     }
 
     // Add cc email
-    public function addCc($cc, $ccName = '')
+    public function addCc($cc, $ccName = "")
     {
-        if ($ccName != '') {
-            $cc = $ccName . ' <' . $cc . '>';
+        if ($ccName != "") {
+            $cc = $ccName . " <" . $cc . ">";
         }
         $this->Cc = Concat($this->Cc, $cc, ";");
     }
 
     // Add bcc email
-    public function addBcc($bcc, $bccName = '')
+    public function addBcc($bcc, $bccName = "")
     {
-        if ($bccName != '') {
-            $bcc = $bccName . ' <' . $bcc . '>';
+        if ($bccName != "") {
+            $bcc = $bccName . " <" . $bcc . ">";
         }
         $this->Bcc = Concat($this->Bcc, $bcc, ";");
     }
@@ -149,11 +142,7 @@ class Email
     // Replace subject
     public function replaceSubject($subject)
     {
-        if (ContainsString($this->Subject, '<!--$Subject-->')) {
-            $this->Subject = str_replace('<!--$Subject-->', $subject, $this->Subject);
-        } else {
-            $this->Subject = $subject;
-        }
+        $this->Subject = $subject;
     }
 
     // Replace content

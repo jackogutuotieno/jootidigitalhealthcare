@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -107,7 +113,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -117,8 +123,19 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->id->setVisibility();
+        $this->patient_id->setVisibility();
+        $this->general_exams->setVisibility();
+        $this->systematic_exams->setVisibility();
+        $this->submitted_by_user_id->setVisibility();
+        $this->date_submitted->setVisibility();
     }
 
     // Constructor
@@ -136,10 +153,10 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_examination_findings)
-        if (!isset($GLOBALS["jdh_examination_findings"]) || get_class($GLOBALS["jdh_examination_findings"]) == PROJECT_NAMESPACE . "jdh_examination_findings") {
+        if (!isset($GLOBALS["jdh_examination_findings"]) || $GLOBALS["jdh_examination_findings"]::class == PROJECT_NAMESPACE . "jdh_examination_findings") {
             $GLOBALS["jdh_examination_findings"] = &$this;
         }
 
@@ -149,7 +166,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -165,7 +182,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -214,13 +231,11 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -238,7 +253,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -250,17 +265,25 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
                 ob_end_clean();
             }
 
-            // Handle modal response (Assume return to modal for simplicity)
+            // Handle modal response
             if ($this->IsModal) { // Show as modal
-                $result = ["url" => GetUrl($url), "modal" => "1"];
                 $pageName = GetPageName($url);
-                if ($pageName != $this->getListUrl()) { // Not List page => View page
-                    $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhexaminationfindingsview"; // If View page, no primary button
-                } else { // List page
-                    // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
-                    $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
-                    $this->clearFailureMessage();
+                $result = ["url" => GetUrl($url), "modal" => "1"];  // Assume return to modal for simplicity
+                if (
+                    SameString($pageName, GetPageName($this->getListUrl())) ||
+                    SameString($pageName, GetPageName($this->getViewUrl())) ||
+                    SameString($pageName, GetPageName(CurrentMasterTable()?->getViewUrl() ?? ""))
+                ) { // List / View / Master View page
+                    if (!SameString($pageName, GetPageName($this->getListUrl()))) { // Not List page
+                        $result["caption"] = $this->getModalCaption($pageName);
+                        $result["view"] = SameString($pageName, "jdhexaminationfindingsview"); // If View page, no primary button
+                    } else { // List page
+                        $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
+                        $this->clearFailureMessage();
+                    }
+                } else { // Other pages (add messages and then clear messages)
+                    $result = array_merge($this->getMessages(), ["modal" => "1"]);
+                    $this->clearMessages();
                 }
                 WriteJson($result);
             } else {
@@ -271,20 +294,19 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -311,7 +333,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -364,44 +386,47 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
     }
 
     // Lookup data
-    public function lookup($ar = null)
+    public function lookup(array $req = [], bool $response = true)
     {
         global $Language, $Security;
 
         // Get lookup object
-        $fieldName = $ar["field"] ?? Post("field");
-        $lookup = $this->Fields[$fieldName]->Lookup;
-        $name = $ar["name"] ?? Post("name");
-        $isQuery = ContainsString($name, "query_builder_rule");
-        if ($isQuery) {
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
             $lookup->FilterFields = []; // Skip parent fields if any
         }
 
         // Get lookup parameters
-        $lookupType = $ar["ajax"] ?? Post("ajax", "unknown");
+        $lookupType = $req["ajax"] ?? "unknown";
         $pageSize = -1;
         $offset = -1;
         $searchValue = "";
         if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
-            $searchValue = $ar["q"] ?? Param("q") ?? $ar["sv"] ?? Post("sv", "");
-            $pageSize = $ar["n"] ?? Param("n") ?? $ar["recperpage"] ?? Post("recperpage", 10);
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
         } elseif (SameText($lookupType, "autosuggest")) {
-            $searchValue = $ar["q"] ?? Param("q", "");
-            $pageSize = $ar["n"] ?? Param("n", -1);
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
             $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
             if ($pageSize <= 0) {
                 $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
             }
         }
-        $start = $ar["start"] ?? Param("start", -1);
+        $start = $req["start"] ?? -1;
         $start = is_numeric($start) ? (int)$start : -1;
-        $page = $ar["page"] ?? Param("page", -1);
+        $page = $req["page"] ?? -1;
         $page = is_numeric($page) ? (int)$page : -1;
         $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
-        $userSelect = Decrypt($ar["s"] ?? Post("s", ""));
-        $userFilter = Decrypt($ar["f"] ?? Post("f", ""));
-        $userOrderBy = Decrypt($ar["o"] ?? Post("o", ""));
-        $keys = $ar["keys"] ?? Post("keys");
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
         $lookup->LookupType = $lookupType; // Lookup type
         $lookup->FilterValues = []; // Clear filter values first
         if ($keys !== null) { // Selected records from modal
@@ -412,11 +437,11 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
             $lookup->FilterValues[] = $keys; // Lookup values
             $pageSize = -1; // Show all records
         } else { // Lookup values
-            $lookup->FilterValues[] = $ar["v0"] ?? $ar["lookupValue"] ?? Post("v0", Post("lookupValue", ""));
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
         }
         $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
         for ($i = 1; $i <= $cnt; $i++) {
-            $lookup->FilterValues[] = $ar["v" . $i] ?? Post("v" . $i, "");
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
         }
         $lookup->SearchValue = $searchValue;
         $lookup->PageSize = $pageSize;
@@ -430,7 +455,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         if ($userOrderBy != "") {
             $lookup->UserOrderBy = $userOrderBy;
         }
-        return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
     public $FormClassName = "ew-form ew-update-form";
     public $IsModal = false;
@@ -446,7 +471,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
+        global $ExportType, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
 
         // Is modal
         $this->IsModal = ConvertToBool(Param("modal"));
@@ -458,15 +483,15 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
+
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->id->Visible = false;
-        $this->patient_id->setVisibility();
-        $this->general_exams->setVisibility();
-        $this->systematic_exams->setVisibility();
-        $this->submitted_by_user_id->setVisibility();
-        $this->date_submitted->Visible = false;
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -474,7 +499,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         }
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -543,18 +568,23 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
             return;
         }
         if ($this->isUpdate()) {
-                if ($this->updateRows()) {
+                if ($this->updateRows()) { // Update Records based on key
+                    if ($this->getSuccessMessage() == "") {
+                        $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Set up update success message
+                    }
+
                     // Do not return Json for UseAjaxActions
                     if ($this->IsModal && $this->UseAjaxActions) {
                         $this->IsModal = false;
                     }
-                    if ($this->getSuccessMessage() == "") {
-                        $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Set up update success message
-                    }
                     $this->terminate($this->getReturnUrl()); // Return to caller
                     return;
-                } elseif ($this->UseAjaxActions) { // Return JSON error message
-                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                } elseif ($this->IsModal && $this->UseAjaxActions) { // Return JSON error message
+                    WriteJson([
+                        "success" => false,
+                        "validation" => $this->getValidationErrors(),
+                        "error" => $this->getFailureMessage()
+                    ]);
                     $this->clearFailureMessage();
                     $this->terminate();
                     return;
@@ -564,7 +594,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         }
 
         // Render row
-        $this->RowType = ROWTYPE_EDIT; // Render edit
+        $this->RowType = RowType::EDIT; // Render edit
         $this->resetAttributes();
         $this->renderRow();
 
@@ -577,7 +607,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -596,33 +626,40 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
     {
         $this->CurrentFilter = $this->getFilterFromRecordKeys();
 
-        // Load recordset
+        // Load result set
         if ($rs = $this->loadRecordset()) {
             $i = 1;
-            while (!$rs->EOF) {
+            while ($row = $rs->fetch()) {
                 if ($i == 1) {
-                    $this->patient_id->setDbValue($rs->fields['patient_id']);
-                    $this->general_exams->setDbValue($rs->fields['general_exams']);
-                    $this->systematic_exams->setDbValue($rs->fields['systematic_exams']);
-                    $this->submitted_by_user_id->setDbValue($rs->fields['submitted_by_user_id']);
+                    $this->id->setDbValue($row['id']);
+                    $this->patient_id->setDbValue($row['patient_id']);
+                    $this->general_exams->setDbValue($row['general_exams']);
+                    $this->systematic_exams->setDbValue($row['systematic_exams']);
+                    $this->submitted_by_user_id->setDbValue($row['submitted_by_user_id']);
+                    $this->date_submitted->setDbValue($row['date_submitted']);
                 } else {
-                    if (!CompareValue($this->patient_id->DbValue, $rs->fields['patient_id'])) {
+                    if (!CompareValue($this->id->DbValue, $row['id'])) {
+                        $this->id->CurrentValue = null;
+                    }
+                    if (!CompareValue($this->patient_id->DbValue, $row['patient_id'])) {
                         $this->patient_id->CurrentValue = null;
                     }
-                    if (!CompareValue($this->general_exams->DbValue, $rs->fields['general_exams'])) {
+                    if (!CompareValue($this->general_exams->DbValue, $row['general_exams'])) {
                         $this->general_exams->CurrentValue = null;
                     }
-                    if (!CompareValue($this->systematic_exams->DbValue, $rs->fields['systematic_exams'])) {
+                    if (!CompareValue($this->systematic_exams->DbValue, $row['systematic_exams'])) {
                         $this->systematic_exams->CurrentValue = null;
                     }
-                    if (!CompareValue($this->submitted_by_user_id->DbValue, $rs->fields['submitted_by_user_id'])) {
+                    if (!CompareValue($this->submitted_by_user_id->DbValue, $row['submitted_by_user_id'])) {
                         $this->submitted_by_user_id->CurrentValue = null;
+                    }
+                    if (!CompareValue($this->date_submitted->DbValue, $row['date_submitted'])) {
+                        $this->date_submitted->CurrentValue = null;
                     }
                 }
                 $i++;
-                $rs->moveNext();
             }
-            $rs->close();
+            $rs->free();
         }
     }
 
@@ -697,13 +734,14 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
             $subject = $table . " " . $Language->phrase("RecordUpdated");
             $action = $Language->phrase("ActionUpdatedMultiUpdate");
             $email = new Email();
-            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-            $email->replaceSubject($subject); // Replace Subject
-            $email->replaceContent('<!--table-->', $table);
-            $email->replaceContent('<!--key-->', implode(", ", $successKeys));
-            $email->replaceContent('<!--action-->', $action);
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"), data: [
+                "From" => Config("SENDER_EMAIL"), // Replace Sender
+                "To" => Config("RECIPIENT_EMAIL"), // Replace Recipient
+                "Subject" => $subject,  // Replace Subject
+                "Table" => $table,
+                "Key" => implode(", ", $successKeys),
+                "Action" => $action
+            ]);
             $args = ["rsold" => $rsold, "rsnew" => $rsnew];
             $emailSent = false;
             if ($this->emailSending($email, $args)) {
@@ -738,6 +776,12 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         // Load from form
         global $CurrentForm;
         $validate = !Config("SERVER_VALIDATE");
+
+        // Check field name 'id' first before field var 'x_id'
+        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
+        if (!$this->id->IsDetailKey) {
+            $this->id->setFormValue($val);
+        }
 
         // Check field name 'patient_id' first before field var 'x_patient_id'
         $val = $CurrentForm->hasValue("patient_id") ? $CurrentForm->getValue("patient_id") : $CurrentForm->getValue("x_patient_id");
@@ -783,11 +827,17 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         }
         $this->submitted_by_user_id->MultiUpdate = $CurrentForm->getValue("u_submitted_by_user_id");
 
-        // Check field name 'id' first before field var 'x_id'
-        $val = $CurrentForm->hasValue("id") ? $CurrentForm->getValue("id") : $CurrentForm->getValue("x_id");
-        if (!$this->id->IsDetailKey) {
-            $this->id->setFormValue($val);
+        // Check field name 'date_submitted' first before field var 'x_date_submitted'
+        $val = $CurrentForm->hasValue("date_submitted") ? $CurrentForm->getValue("date_submitted") : $CurrentForm->getValue("x_date_submitted");
+        if (!$this->date_submitted->IsDetailKey) {
+            if (IsApi() && $val === null) {
+                $this->date_submitted->Visible = false; // Disable update for API request
+            } else {
+                $this->date_submitted->setFormValue($val, true, $validate);
+            }
+            $this->date_submitted->CurrentValue = UnFormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern());
         }
+        $this->date_submitted->MultiUpdate = $CurrentForm->getValue("u_date_submitted");
     }
 
     // Restore form values
@@ -799,43 +849,62 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         $this->general_exams->CurrentValue = $this->general_exams->FormValue;
         $this->systematic_exams->CurrentValue = $this->systematic_exams->FormValue;
         $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->FormValue;
+        $this->date_submitted->CurrentValue = $this->date_submitted->FormValue;
+        $this->date_submitted->CurrentValue = UnFormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern());
     }
 
-    // Load recordset
+    /**
+     * Load result set
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return Doctrine\DBAL\Result Result
+     */
     public function loadRecordset($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
-        $rs = new Recordset($result, $sql);
+        $result = $sql->executeQuery();
+        if (property_exists($this, "TotalRecords") && $rowcnt < 0) {
+            $this->TotalRecords = $result->rowCount();
+            if ($this->TotalRecords <= 0) { // Handle database drivers that does not return rowCount()
+                $this->TotalRecords = $this->getRecordCount($this->getListSql());
+            }
+        }
 
         // Call Recordset Selected event
-        $this->recordsetSelected($rs);
-        return $rs;
+        $this->recordsetSelected($result);
+        return $result;
     }
 
-    // Load records as associative array
+    /**
+     * Load records as associative array
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return void
+     */
     public function loadRows($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
+        $result = $sql->executeQuery();
         return $result->fetchAllAssociative();
     }
 
@@ -866,23 +935,14 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -938,7 +998,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         $this->date_submitted->RowCssClass = "row";
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // id
             $this->id->ViewValue = $this->id->CurrentValue;
 
@@ -948,11 +1008,11 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
             if ($curVal != "") {
                 $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
                 if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchExpression(), "=", $curVal, $this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchDataType(), "");
                     $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
+                    $config->setResultCache($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
@@ -980,6 +1040,10 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
             $this->date_submitted->ViewValue = $this->date_submitted->CurrentValue;
             $this->date_submitted->ViewValue = FormatDateTime($this->date_submitted->ViewValue, $this->date_submitted->formatPattern());
 
+            // id
+            $this->id->HrefValue = "";
+            $this->id->TooltipValue = "";
+
             // patient_id
             $this->patient_id->HrefValue = "";
             $this->patient_id->TooltipValue = "";
@@ -995,7 +1059,15 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
             // submitted_by_user_id
             $this->submitted_by_user_id->HrefValue = "";
             $this->submitted_by_user_id->TooltipValue = "";
-        } elseif ($this->RowType == ROWTYPE_EDIT) {
+
+            // date_submitted
+            $this->date_submitted->HrefValue = "";
+            $this->date_submitted->TooltipValue = "";
+        } elseif ($this->RowType == RowType::EDIT) {
+            // id
+            $this->id->setupEditAttributes();
+            $this->id->EditValue = $this->id->CurrentValue;
+
             // patient_id
             $this->patient_id->setupEditAttributes();
             if ($this->patient_id->getSessionValue() != "") {
@@ -1005,11 +1077,11 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
                 if ($curVal != "") {
                     $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
                     if ($this->patient_id->ViewValue === null) { // Lookup from database
-                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $filterWrk = SearchFilter($this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchExpression(), "=", $curVal, $this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchDataType(), "");
                         $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                         $conn = Conn();
                         $config = $conn->getConfiguration();
-                        $config->setResultCacheImpl($this->Cache);
+                        $config->setResultCache($this->Cache);
                         $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                         $ari = count($rswrk);
                         if ($ari > 0) { // Lookup values found
@@ -1023,16 +1095,16 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
                     $this->patient_id->ViewValue = null;
                 }
             } else {
-                $this->patient_id->EditValue = HtmlEncode($this->patient_id->CurrentValue);
+                $this->patient_id->EditValue = $this->patient_id->CurrentValue;
                 $curVal = strval($this->patient_id->CurrentValue);
                 if ($curVal != "") {
                     $this->patient_id->EditValue = $this->patient_id->lookupCacheOption($curVal);
                     if ($this->patient_id->EditValue === null) { // Lookup from database
-                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $filterWrk = SearchFilter($this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchExpression(), "=", $curVal, $this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchDataType(), "");
                         $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                         $conn = Conn();
                         $config = $conn->getConfiguration();
-                        $config->setResultCacheImpl($this->Cache);
+                        $config->setResultCache($this->Cache);
                         $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                         $ari = count($rswrk);
                         if ($ari > 0) { // Lookup values found
@@ -1066,7 +1138,15 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
 
             // submitted_by_user_id
 
+            // date_submitted
+            $this->date_submitted->setupEditAttributes();
+            $this->date_submitted->EditValue = HtmlEncode(FormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern()));
+            $this->date_submitted->PlaceHolder = RemoveHtml($this->date_submitted->caption());
+
             // Edit refer script
+
+            // id
+            $this->id->HrefValue = "";
 
             // patient_id
             $this->patient_id->HrefValue = "";
@@ -1079,13 +1159,16 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
 
             // submitted_by_user_id
             $this->submitted_by_user_id->HrefValue = "";
+
+            // date_submitted
+            $this->date_submitted->HrefValue = "";
         }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+        if ($this->RowType == RowType::ADD || $this->RowType == RowType::EDIT || $this->RowType == RowType::SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -1095,6 +1178,9 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
     {
         global $Language, $Security;
         $updateCnt = 0;
+        if ($this->id->multiUpdateSelected()) {
+            $updateCnt++;
+        }
         if ($this->patient_id->multiUpdateSelected()) {
             $updateCnt++;
         }
@@ -1107,6 +1193,9 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         if ($this->submitted_by_user_id->multiUpdateSelected()) {
             $updateCnt++;
         }
+        if ($this->date_submitted->multiUpdateSelected()) {
+            $updateCnt++;
+        }
         if ($updateCnt == 0) {
             return false;
         }
@@ -1116,31 +1205,46 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
             return true;
         }
         $validateForm = true;
-        if ($this->patient_id->Required) {
-            if ($this->patient_id->MultiUpdate != "" && !$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
-                $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
+            if ($this->id->Visible && $this->id->Required) {
+                if ($this->id->MultiUpdate != "" && !$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
+                    $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->patient_id->MultiUpdate != "") {
-            if (!CheckInteger($this->patient_id->FormValue)) {
-                $this->patient_id->addErrorMessage($this->patient_id->getErrorMessage(false));
+            if ($this->patient_id->Visible && $this->patient_id->Required) {
+                if ($this->patient_id->MultiUpdate != "" && !$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
+                    $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->general_exams->Required) {
-            if ($this->general_exams->MultiUpdate != "" && !$this->general_exams->IsDetailKey && EmptyValue($this->general_exams->FormValue)) {
-                $this->general_exams->addErrorMessage(str_replace("%s", $this->general_exams->caption(), $this->general_exams->RequiredErrorMessage));
+            if ($this->patient_id->MultiUpdate != "") {
+                if (!CheckInteger($this->patient_id->FormValue)) {
+                    $this->patient_id->addErrorMessage($this->patient_id->getErrorMessage(false));
+                }
             }
-        }
-        if ($this->systematic_exams->Required) {
-            if ($this->systematic_exams->MultiUpdate != "" && !$this->systematic_exams->IsDetailKey && EmptyValue($this->systematic_exams->FormValue)) {
-                $this->systematic_exams->addErrorMessage(str_replace("%s", $this->systematic_exams->caption(), $this->systematic_exams->RequiredErrorMessage));
+            if ($this->general_exams->Visible && $this->general_exams->Required) {
+                if ($this->general_exams->MultiUpdate != "" && !$this->general_exams->IsDetailKey && EmptyValue($this->general_exams->FormValue)) {
+                    $this->general_exams->addErrorMessage(str_replace("%s", $this->general_exams->caption(), $this->general_exams->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->submitted_by_user_id->Required) {
-            if ($this->submitted_by_user_id->MultiUpdate != "" && !$this->submitted_by_user_id->IsDetailKey && EmptyValue($this->submitted_by_user_id->FormValue)) {
-                $this->submitted_by_user_id->addErrorMessage(str_replace("%s", $this->submitted_by_user_id->caption(), $this->submitted_by_user_id->RequiredErrorMessage));
+            if ($this->systematic_exams->Visible && $this->systematic_exams->Required) {
+                if ($this->systematic_exams->MultiUpdate != "" && !$this->systematic_exams->IsDetailKey && EmptyValue($this->systematic_exams->FormValue)) {
+                    $this->systematic_exams->addErrorMessage(str_replace("%s", $this->systematic_exams->caption(), $this->systematic_exams->RequiredErrorMessage));
+                }
             }
-        }
+            if ($this->submitted_by_user_id->Visible && $this->submitted_by_user_id->Required) {
+                if ($this->submitted_by_user_id->MultiUpdate != "" && !$this->submitted_by_user_id->IsDetailKey && EmptyValue($this->submitted_by_user_id->FormValue)) {
+                    $this->submitted_by_user_id->addErrorMessage(str_replace("%s", $this->submitted_by_user_id->caption(), $this->submitted_by_user_id->RequiredErrorMessage));
+                }
+            }
+            if ($this->date_submitted->Visible && $this->date_submitted->Required) {
+                if ($this->date_submitted->MultiUpdate != "" && !$this->date_submitted->IsDetailKey && EmptyValue($this->date_submitted->FormValue)) {
+                    $this->date_submitted->addErrorMessage(str_replace("%s", $this->date_submitted->caption(), $this->date_submitted->RequiredErrorMessage));
+                }
+            }
+            if ($this->date_submitted->MultiUpdate != "") {
+                if (!CheckDate($this->date_submitted->FormValue, $this->date_submitted->formatPattern())) {
+                    $this->date_submitted->addErrorMessage($this->date_submitted->getErrorMessage(false));
+                }
+            }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -1170,28 +1274,12 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
             $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
             return false; // Update Failed
         } else {
-            // Save old values
+            // Load old values
             $this->loadDbValues($rsold);
         }
 
-        // Set new row
-        $rsnew = [];
-
-        // patient_id
-        if ($this->patient_id->getSessionValue() != "") {
-            $this->patient_id->ReadOnly = true;
-        }
-        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, $this->patient_id->ReadOnly || $this->patient_id->MultiUpdate != "1");
-
-        // general_exams
-        $this->general_exams->setDbValueDef($rsnew, $this->general_exams->CurrentValue, "", $this->general_exams->ReadOnly || $this->general_exams->MultiUpdate != "1");
-
-        // systematic_exams
-        $this->systematic_exams->setDbValueDef($rsnew, $this->systematic_exams->CurrentValue, "", $this->systematic_exams->ReadOnly || $this->systematic_exams->MultiUpdate != "1");
-
-        // submitted_by_user_id
-        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->getAutoUpdateValue(); // PHP
-        $this->submitted_by_user_id->setDbValueDef($rsnew, $this->submitted_by_user_id->CurrentValue, 0);
+        // Get new row
+        $rsnew = $this->getEditRow($rsold);
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -1234,6 +1322,60 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
         return $editRow;
     }
 
+    /**
+     * Get edit row
+     *
+     * @return array
+     */
+    protected function getEditRow($rsold)
+    {
+        global $Security;
+        $rsnew = [];
+
+        // patient_id
+        if ($this->patient_id->getSessionValue() != "") {
+            $this->patient_id->ReadOnly = true;
+        }
+        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, $this->patient_id->ReadOnly || $this->patient_id->MultiUpdate != "1");
+
+        // general_exams
+        $this->general_exams->setDbValueDef($rsnew, $this->general_exams->CurrentValue, $this->general_exams->ReadOnly || $this->general_exams->MultiUpdate != "1");
+
+        // systematic_exams
+        $this->systematic_exams->setDbValueDef($rsnew, $this->systematic_exams->CurrentValue, $this->systematic_exams->ReadOnly || $this->systematic_exams->MultiUpdate != "1");
+
+        // submitted_by_user_id
+        $this->submitted_by_user_id->CurrentValue = $this->submitted_by_user_id->getAutoUpdateValue(); // PHP
+        $this->submitted_by_user_id->setDbValueDef($rsnew, $this->submitted_by_user_id->CurrentValue);
+
+        // date_submitted
+        $this->date_submitted->setDbValueDef($rsnew, UnFormatDateTime($this->date_submitted->CurrentValue, $this->date_submitted->formatPattern()), $this->date_submitted->ReadOnly || $this->date_submitted->MultiUpdate != "1");
+        return $rsnew;
+    }
+
+    /**
+     * Restore edit form from row
+     * @param array $row Row
+     */
+    protected function restoreEditFormFromRow($row)
+    {
+        if (isset($row['patient_id'])) { // patient_id
+            $this->patient_id->CurrentValue = $row['patient_id'];
+        }
+        if (isset($row['general_exams'])) { // general_exams
+            $this->general_exams->CurrentValue = $row['general_exams'];
+        }
+        if (isset($row['systematic_exams'])) { // systematic_exams
+            $this->systematic_exams->CurrentValue = $row['systematic_exams'];
+        }
+        if (isset($row['submitted_by_user_id'])) { // submitted_by_user_id
+            $this->submitted_by_user_id->CurrentValue = $row['submitted_by_user_id'];
+        }
+        if (isset($row['date_submitted'])) { // date_submitted
+            $this->date_submitted->CurrentValue = $row['date_submitted'];
+        }
+    }
+
     // Show link optionally based on User ID
     protected function showOptionLink($id = "")
     {
@@ -1258,7 +1400,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -1279,7 +1421,7 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -1322,11 +1464,11 @@ class JdhExaminationFindingsUpdate extends JdhExaminationFindings
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

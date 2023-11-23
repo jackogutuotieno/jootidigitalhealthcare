@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhChiefComplaintsAdd = &$Page;
@@ -56,7 +56,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_chief_complaintsadd" id="fjdh_chief_complaintsadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_chief_complaintsadd" id="fjdh_chief_complaintsadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -87,7 +87,9 @@ $Page->showMessage();
         id="x_patient_id"
         name="x_patient_id"
         class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
+        <?php if (!$Page->patient_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_chief_complaintsadd_x_patient_id"
+        <?php } ?>
         data-table="jdh_chief_complaints"
         data-field="x_patient_id"
         data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
@@ -98,10 +100,13 @@ $Page->showMessage();
     <?= $Page->patient_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
 <?= $Page->patient_id->Lookup->getParamTag($Page, "p_x_patient_id") ?>
+<?php if (!$Page->patient_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_chief_complaintsadd", function() {
     var options = { name: "x_patient_id", selectId: "fjdh_chief_complaintsadd_x_patient_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_chief_complaintsadd.lists.patient_id?.lookupOptions.length) {
@@ -114,6 +119,7 @@ loadjs.ready("fjdh_chief_complaintsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 <?php } ?>
 </div></div>

@@ -1,20 +1,15 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Class option values
  */
-class OptionValues
+class OptionValues implements \Stringable
 {
-    public $Values = [];
-
     // Constructor
-    public function __construct($ar = null)
+    public function __construct(public array $Values = [])
     {
-        if (is_array($ar)) {
-            $this->Values = $ar;
-        }
     }
 
     // Add value
@@ -24,7 +19,7 @@ class OptionValues
     }
 
     // Convert to HTML
-    public function toHtml(callable $fn = null)
+    public function toHtml(callable $fn = null): string
     {
         $fn ??= PROJECT_NAMESPACE . "OptionsHtml";
         if (is_callable($fn)) {
@@ -34,7 +29,7 @@ class OptionValues
     }
 
     // Convert to string (MUST return a string value)
-    public function __toString()
+    public function __toString(): string
     {
         return implode(Config("OPTION_SEPARATOR"), $this->Values);
     }

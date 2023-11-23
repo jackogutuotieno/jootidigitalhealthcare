@@ -1,18 +1,12 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Pager item class
  */
 class PagerItem
 {
-    public $PageSize;
-    public $Start;
-    public $Text;
-    public $Enabled;
-    public $ContextClass = "";
-
     /**
      * Constructor
      *
@@ -23,13 +17,13 @@ class PagerItem
      * @param bool $enabled Enabled
      * @return void
      */
-    public function __construct($contextClass, $pageSize, $start = 1, $text = "", $enabled = false)
-    {
-        $this->ContextClass = $contextClass;
-        $this->PageSize = $pageSize;
-        $this->Start = $start;
-        $this->Text = $text;
-        $this->Enabled = $enabled;
+    public function __construct(
+        public $ContextClass,
+        public $PageSize,
+        public $Start = 1,
+        public $Text = "",
+        public $Enabled = false
+    ) {
     }
 
     /**
@@ -54,7 +48,7 @@ class PagerItem
         global $DashboardReport;
         $qs = Config("TABLE_PAGE_NUMBER") . "=" . $this->getPageNumber();
         if ($DashboardReport) {
-            $qs .= "&" . Config("PAGE_DASHBOARD") . "=true";
+            $qs .= "&" . Config("PAGE_DASHBOARD") . "=" . $DashboardReport;
         }
         return $url ? UrlAddQuery($url, $qs) : $qs;
     }

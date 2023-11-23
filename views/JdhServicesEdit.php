@@ -1,21 +1,16 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhServicesEdit = &$Page;
 ?>
-<script>
-loadjs.ready("head", function () {
-    // Write your table-specific client script here, no need to add script tags.
-});
-</script>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="edit">
-<form name="fjdh_servicesedit" id="fjdh_servicesedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_servicesedit" id="fjdh_servicesedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
 ew.deepAssign(ew.vars, { tables: { jdh_services: currentTable } });
@@ -63,6 +58,11 @@ loadjs.ready(["wrapper", "head"], function () {
     loadjs.done(form.id);
 });
 </script>
+<script>
+loadjs.ready("head", function () {
+    // Write your table-specific client script here, no need to add script tags.
+});
+</script>
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -96,7 +96,9 @@ loadjs.ready(["wrapper", "head"], function () {
         id="x_category_id"
         name="x_category_id"
         class="form-select ew-select<?= $Page->category_id->isInvalidClass() ?>"
+        <?php if (!$Page->category_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_servicesedit_x_category_id"
+        <?php } ?>
         data-table="jdh_services"
         data-field="x_category_id"
         data-value-separator="<?= $Page->category_id->displayValueSeparatorAttribute() ?>"
@@ -108,10 +110,13 @@ loadjs.ready(["wrapper", "head"], function () {
     <?= $Page->category_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->category_id->getErrorMessage() ?></div>
 <?= $Page->category_id->Lookup->getParamTag($Page, "p_x_category_id") ?>
+<?php if (!$Page->category_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_servicesedit", function() {
     var options = { name: "x_category_id", selectId: "fjdh_servicesedit_x_category_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_servicesedit.lists.category_id?.lookupOptions.length) {
@@ -124,6 +129,7 @@ loadjs.ready("fjdh_servicesedit", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -137,7 +143,9 @@ loadjs.ready("fjdh_servicesedit", function() {
         id="x_subcategory_id"
         name="x_subcategory_id"
         class="form-select ew-select<?= $Page->subcategory_id->isInvalidClass() ?>"
+        <?php if (!$Page->subcategory_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_servicesedit_x_subcategory_id"
+        <?php } ?>
         data-table="jdh_services"
         data-field="x_subcategory_id"
         data-value-separator="<?= $Page->subcategory_id->displayValueSeparatorAttribute() ?>"
@@ -148,10 +156,13 @@ loadjs.ready("fjdh_servicesedit", function() {
     <?= $Page->subcategory_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->subcategory_id->getErrorMessage() ?></div>
 <?= $Page->subcategory_id->Lookup->getParamTag($Page, "p_x_subcategory_id") ?>
+<?php if (!$Page->subcategory_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_servicesedit", function() {
     var options = { name: "x_subcategory_id", selectId: "fjdh_servicesedit_x_subcategory_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_servicesedit.lists.subcategory_id?.lookupOptions.length) {
@@ -164,6 +175,7 @@ loadjs.ready("fjdh_servicesedit", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>

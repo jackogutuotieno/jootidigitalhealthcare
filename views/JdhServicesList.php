@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhServicesList = &$Page;
@@ -30,8 +30,8 @@ loadjs.ready(["wrapper", "head"], function () {
 </script>
 <script>
 window.Tabulator || loadjs([
-    ew.PATH_BASE + "js/tabulator.min.js?v=19.0.15",
-    ew.PATH_BASE + "css/<?= CssFile("tabulator_bootstrap5.css") ?>?v=19.0.15"
+    ew.PATH_BASE + "js/tabulator.min.js?v=24.4.0",
+    ew.PATH_BASE + "css/<?= CssFile("tabulator_bootstrap5.css", false) ?>?v=24.4.0"
 ], "import");
 </script>
 <script>
@@ -56,9 +56,8 @@ loadjs.ready("head", function () {
 <?php } ?>
 </div>
 <?php } ?>
-<?php if ($Security->canSearch()) { ?>
-<?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
-<form name="fjdh_servicessrch" id="fjdh_servicessrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="on">
+<?php if (!$Page->IsModal) { ?>
+<form name="fjdh_servicessrch" id="fjdh_servicessrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="off">
 <div id="fjdh_servicessrch_search_panel" class="mb-2 mb-sm-0 <?= $Page->SearchPanelClass ?>"><!-- .ew-search-panel -->
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
@@ -90,7 +89,8 @@ loadjs.ready(["wrapper", "head"], function () {
 });
 </script>
 <input type="hidden" name="cmd" value="search">
-<input type="hidden" name="t" value="jdh_services">
+<?php if ($Security->canSearch()) { ?>
+<?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
 <div class="ew-extended-search container-fluid ps-2">
 <!-- template for quick search in navbar -->
 <script id="navbar-basic-search" type="text/html" class="ew-js-template" data-name="search" data-seq="10" data-data="menu" data-target="#ew-navbar-end" data-method="prependTo">
@@ -122,19 +122,23 @@ loadjs.ready(["wrapper", "head"], function () {
     </li>
 </script>
 </div><!-- /.ew-extended-search -->
+<?php } ?>
+<?php } ?>
 </div><!-- /.ew-search-panel -->
 </form>
-<?php } ?>
 <?php } ?>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="list<?= ($Page->TotalRecords == 0 && !$Page->isAdd()) ? " ew-no-record" : "" ?>">
+<div id="ew-header-options">
+<?php $Page->HeaderOptions?->render("body") ?>
+</div>
 <div id="ew-list">
 <?php if ($Page->TotalRecords > 0 || $Page->CurrentAction) { ?>
 <div class="card ew-card ew-grid<?= $Page->isAddOrEdit() ? " ew-grid-add-edit" : "" ?> <?= $Page->TableGridClass ?>">
-<form name="<?= $Page->FormName ?>" id="<?= $Page->FormName ?>" class="ew-form ew-list-form" action="<?= $Page->PageAction ?>" method="post" novalidate autocomplete="on">
+<form name="<?= $Page->FormName ?>" id="<?= $Page->FormName ?>" class="ew-form ew-list-form" action="<?= $Page->PageAction ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -150,7 +154,7 @@ $Page->showMessage();
     <tr class="ew-table-header">
 <?php
 // Header row
-$Page->RowType = ROWTYPE_HEADER;
+$Page->RowType = RowType::HEADER;
 
 // Render list options
 $Page->renderListOptions();
@@ -185,7 +189,15 @@ $Page->ListOptions->render("header", "right");
 <tbody data-page="<?= $Page->getPageNumber() ?>">
 <?php
 $Page->setupGrid();
-while ($Page->RecordCount < $Page->StopRecord) {
+while ($Page->RecordCount < $Page->StopRecord || $Page->RowIndex === '$rowindex$') {
+    if (
+        $Page->CurrentRow !== false &&
+        $Page->RowIndex !== '$rowindex$' &&
+        (!$Page->isGridAdd() || $Page->CurrentMode == "copy") &&
+        (!(($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0))
+    ) {
+        $Page->fetch();
+    }
     $Page->RecordCount++;
     if ($Page->RecordCount >= $Page->StartRecord) {
         $Page->setupRow();
@@ -197,7 +209,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
     <?php if ($Page->category_id->Visible) { // category_id ?>
         <td data-name="category_id"<?= $Page->category_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_category_id" class="el_jdh_services_category_id">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_services_category_id" class="el_jdh_services_category_id">
 <span<?= $Page->category_id->viewAttributes() ?>>
 <?= $Page->category_id->getViewValue() ?></span>
 </span>
@@ -205,7 +217,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->subcategory_id->Visible) { // subcategory_id ?>
         <td data-name="subcategory_id"<?= $Page->subcategory_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_subcategory_id" class="el_jdh_services_subcategory_id">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_services_subcategory_id" class="el_jdh_services_subcategory_id">
 <span<?= $Page->subcategory_id->viewAttributes() ?>>
 <?= $Page->subcategory_id->getViewValue() ?></span>
 </span>
@@ -213,7 +225,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->service_name->Visible) { // service_name ?>
         <td data-name="service_name"<?= $Page->service_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_service_name" class="el_jdh_services_service_name">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_services_service_name" class="el_jdh_services_service_name">
 <span<?= $Page->service_name->viewAttributes() ?>>
 <?= $Page->service_name->getViewValue() ?></span>
 </span>
@@ -221,7 +233,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->service_cost->Visible) { // service_cost ?>
         <td data-name="service_cost"<?= $Page->service_cost->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_service_cost" class="el_jdh_services_service_cost">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_services_service_cost" class="el_jdh_services_service_cost">
 <span<?= $Page->service_cost->viewAttributes() ?>>
 <?= $Page->service_cost->getViewValue() ?></span>
 </span>
@@ -229,7 +241,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->date_created->Visible) { // date_created ?>
         <td data-name="date_created"<?= $Page->date_created->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_date_created" class="el_jdh_services_date_created">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_services_date_created" class="el_jdh_services_date_created">
 <span<?= $Page->date_created->viewAttributes() ?>>
 <?= $Page->date_created->getViewValue() ?></span>
 </span>
@@ -237,7 +249,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->date_updated->Visible) { // date_updated ?>
         <td data-name="date_updated"<?= $Page->date_updated->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_date_updated" class="el_jdh_services_date_updated">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_services_date_updated" class="el_jdh_services_date_updated">
 <span<?= $Page->date_updated->viewAttributes() ?>>
 <?= $Page->date_updated->getViewValue() ?></span>
 </span>
@@ -250,8 +262,14 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
     </tr>
 <?php
     }
-    if (!$Page->isGridAdd()) {
-        $Page->Recordset->moveNext();
+
+    // Reset for template row
+    if ($Page->RowIndex === '$rowindex$') {
+        $Page->RowIndex = 0;
+    }
+    // Reset inline add/copy row
+    if (($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0) {
+        $Page->RowIndex = 1;
     }
 }
 ?>
@@ -264,10 +282,8 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
 <?php } ?>
 </form><!-- /.ew-list-form -->
 <?php
-// Close recordset
-if ($Page->Recordset) {
-    $Page->Recordset->close();
-}
+// Close result set
+$Page->Recordset?->free();
 ?>
 <?php if (!$Page->isExport()) { ?>
 <div class="card-footer ew-grid-lower-panel">
@@ -285,6 +301,9 @@ if ($Page->Recordset) {
 <?php $Page->OtherOptions->render("body") ?>
 </div>
 <?php } ?>
+</div>
+<div id="ew-footer-options">
+<?php $Page->FooterOptions?->render("body") ?>
 </div>
 </main>
 <?php

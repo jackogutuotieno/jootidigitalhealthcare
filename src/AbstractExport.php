@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use DiDom\Document;
 use DiDom\Element;
@@ -85,7 +85,7 @@ abstract class AbstractExport extends AbstractExportBase
     // Get meta tag for charset
     protected function charsetMetaTag()
     {
-        return "<meta http-equiv=\"Content-Type\" content=\"text/html" . ((Config("PROJECT_CHARSET") != "") ? "; charset=" . Config("PROJECT_CHARSET") : "") . "\">\r\n";
+        return "<meta http-equiv=\"Content-Type\" content=\"text/html" . (PROJECT_CHARSET != "" ? "; charset=" . PROJECT_CHARSET : "") . "\">\r\n";
     }
 
     // Table header
@@ -218,6 +218,7 @@ abstract class AbstractExport extends AbstractExportBase
         // Find and process all elements to be exported
         $elements = $doc->first("body")->findInDocument(self::$Selectors);
         $break = $this->Table ? $this->Table->ExportPageBreaks : $this->ExportPageBreaks;
+        $avoid = false;
         for ($i = 0, $cnt = count($elements); $i < $cnt; $i++) {
             $element = $elements[$i];
             $classes = $element->classes();
@@ -235,28 +236,29 @@ abstract class AbstractExport extends AbstractExportBase
                 }
             } elseif ($i == $cnt - 1) { // Last, remove page break after content
                 if ($this->UseInlineStyles) {
-                    $break ? $style->setProperty("page-break-before", "always") : $style->removeProperty("page-break-before");
+                    $break && !$avoid ? $style->setProperty("page-break-before", "always") : $style->removeProperty("page-break-before");
                     $style->removeProperty("page-break-after");
                 } else {
-                    $break ? $classes->add("break-before-page") : $classes->remove("break-before-page");
+                    $break && !$avoid ? $classes->add("break-before-page") : $classes->remove("break-before-page");
                     $classes->remove("break-after-page");
                 }
             } else {
                 if ($this->UseInlineStyles) {
-                    $break ? $style->setProperty("page-break-before", "always") : $style->removeProperty("page-break-before");
+                    $break && !$avoid ? $style->setProperty("page-break-before", "always") : $style->removeProperty("page-break-before");
                     $style->removeProperty("page-break-after");
                 } else {
-                    $break ? $classes->add("break-before-page") : $classes->remove("break-before-page");
+                    $break && !$avoid ? $classes->add("break-before-page") : $classes->remove("break-before-page");
                     $classes->remove("break-after-page");
                 }
             }
+            $avoid = $classes->contains("break-after-avoid");
         }
     }
 
     // Get Document
     public function &getDocument($string = null)
     {
-        $doc = new Document(null, false, strtoupper(Config("PROJECT_CHARSET")));
+        $doc = new Document(null, false, strtoupper(PROJECT_CHARSET));
         $string ??= $this->Text;
         !$string || @$doc->load($string);
         return $doc;

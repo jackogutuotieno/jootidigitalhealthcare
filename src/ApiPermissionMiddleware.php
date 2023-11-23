@@ -1,72 +1,49 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Slim\Routing\RouteContext;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
-use Nyholm\Psr7\Factory\Psr17Factory;
+use Illuminate\Support\Collection;
 
 /**
  * Permission middleware
  */
 class ApiPermissionMiddleware
 {
-    // Handle slim request
+    // Invoke
     public function __invoke(Request $request, RequestHandler $handler): Response
     {
-        global $UserProfile, $Security, $Language, $ResponseFactory;
-
-        // Create Response
-        $response = $ResponseFactory->createResponse();
-        $routeContext = RouteContext::fromRequest($request);
-        $route = $routeContext->getRoute();
-        $args = $route->getArguments();
-        $name = $route->getName(); // (api/action)
-        $isCustom = $name == "custom";
-        $ar = explode("/", $name);
-        $action = @$ar[1];
-
-        // Validate CSRF
-        $checkTokenActions = [
-            Config("API_JQUERY_UPLOAD_ACTION"),
-            Config("API_SESSION_ACTION"),
-            Config("API_EXPORT_CHART_ACTION"),
-            Config("API_2FA_ACTION")
-        ];
-        if (Config("CHECK_TOKEN") && in_array($action, $checkTokenActions)) { // Check token
-            if (!ValidateCsrf($request)) {
-                return $response->withStatus(401); // Not authorized
-            }
-        }
-
-        // Get route data
-        $params = $args["params"] ?? ""; // Get route
-        if ($isCustom && !EmptyValue($params)) { // Other API actions
-            $ar = explode("/", $params);
-            $action = array_shift($ar);
-            $params = implode("/", $ar);
-        }
-
-        // Set up Route
-        $routeValues = $params == "" ? [] : explode("/", $params);
-        $GLOBALS["RouteValues"] = [$action, ...$routeValues];
-        $index = $action == Config("API_EXPORT_ACTION") ? 1 : 0;
-        $table = $isCustom ? "" : ($routeValues[$index] ?? Post(Config("API_OBJECT_NAME"))); // Get from route or Post
+        global $Security, $Language, $ResponseFactory;
 
         // Set up request
         $GLOBALS["Request"] = $request;
 
-        // Set up language
-        $Language = Container("language");
+        // Create Response
+        $response = $ResponseFactory->createResponse();
+        $action = Route(0);
+        $table = "";
+        $checkToken = match ($action) {
+            Config("API_SESSION_ACTION"), Config("API_EXPORT_CHART_ACTION"), Config("API_2FA_ACTION") => true,
+            Config("API_JQUERY_UPLOAD_ACTION") => $request->isPost(),
+            default => false,
+        };
 
-        // Load Security
-        $UserProfile = Container("profile");
-        $Security = Container("security");
-
-        // Default no permission
-        $authorised = false;
+        // Validate JWT
+        if ($checkToken) { // Check token
+            $jwt = $request->getAttribute("JWT"); // Try get JWT from request attribute
+            if ($jwt === null) {
+                $token = preg_replace('/^Bearer\s+/', "", $request->getHeaderLine(Config("JWT.AUTH_HEADER"))); // Get bearer token from HTTP header
+                if ($token) {
+                    $jwt = DecodeJwt($token);
+                }
+            }
+            if ((int)($jwt["userlevel"] ?? PHP_INT_MIN) < AdvancedSecurity::ANONYMOUS_USER_LEVEL_ID) { // Invalid JWT token
+                return $response->withStatus(401); // Not authorized
+            }
+        }
 
         // Actions for table
         $apiTableActions = [
@@ -78,16 +55,30 @@ class ApiPermissionMiddleware
             Config("API_DELETE_ACTION"),
             Config("API_FILE_ACTION")
         ];
+        if (in_array($action, $apiTableActions)) {
+            $table = Route("table") ?? Param(Config("API_OBJECT_NAME")); // Get from route or Get/Post
+        }
+
+        // Language
+        $Language = Container("app.language");
+
+        // Security
+        $Security = Container("app.security");
+
+        // Default no permission
+        $authorised = false;
 
         // Check permission
         if (
-            in_array($action, $checkTokenActions) || // Token checked
-            in_array($action, array_keys($GLOBALS["API_ACTIONS"])) || // Custom actions (deprecated)
-            $action == Config("API_REGISTER_ACTION") || // Register
-            $action == Config("API_PERMISSIONS_ACTION") && $request->getMethod() == "GET" || // Permissions (GET)
-            $action == Config("API_PERMISSIONS_ACTION") && $request->getMethod() == "POST" && $Security->isAdmin() || // Permissions (POST)
+            $checkToken || // Token checked
+            $action == Config("API_JQUERY_UPLOAD_ACTION") && $request->isGet() || // Get image during upload (GET)
+            $action == Config("API_PERMISSIONS_ACTION") && $request->isGet() || // Permissions (GET)
+            $action == Config("API_PERMISSIONS_ACTION") && $request->isPost() && $Security->isAdmin() || // Permissions (POST)
             $action == Config("API_UPLOAD_ACTION") && $Security->isLoggedIn() || // Upload
-            $action == Config("API_METADATA_ACTION") // Metadata
+            $action == Config("API_REGISTER_ACTION") || // Register
+            $action == Config("API_METADATA_ACTION") || // Metadata
+            $action == Config("API_CHAT_ACTION") || // Chat
+            in_array($action, array_keys($GLOBALS["API_ACTIONS"])) // Custom actions (deprecated)
         ) {
             $authorised = true;
         } elseif (in_array($action, $apiTableActions) && $table != "") { // Table actions
@@ -104,18 +95,15 @@ class ApiPermissionMiddleware
         } elseif ($action == Config("API_LOOKUP_ACTION")) { // Lookup
             $canLookup = function ($params) use ($Security) {
                 $object = $params[Config("API_LOOKUP_PAGE")]; // Get lookup page
-                $page = Container($object);
-                if ($page !== null) {
-                    $fieldName = $params[Config("API_FIELD_NAME")]; // Get field name
-                    $lookupField = $page->Fields[$fieldName] ?? null;
-                    if ($lookupField) {
-                        $lookup = $lookupField->Lookup;
-                        if ($lookup) {
-                            $tbl = $lookup->getTable();
-                            if ($tbl) {
-                                $Security->loadTablePermissions($tbl->TableVar);
-                                return $Security->canLookup();
-                            }
+                $fieldName = $params[Config("API_FIELD_NAME")]; // Get field name
+                $lookupField = Container($object)?->Fields[$fieldName] ?? null;
+                if ($lookupField) {
+                    $lookup = $lookupField->Lookup;
+                    if ($lookup) {
+                        $tbl = $lookup->getTable();
+                        if ($tbl) {
+                            $Security->loadTablePermissions($tbl->TableVar);
+                            return $Security->canLookup();
                         }
                     }
                 }
@@ -123,13 +111,13 @@ class ApiPermissionMiddleware
             if ($request->getContentType() == "application/json") { // Multiple lookup requests in JSON
                 $parsedBody = $request->getParsedBody();
                 if (is_array($parsedBody)) {
-                    $authorised = ArraySome($canLookup, $parsedBody);
+                    $authorised = Collection::make($parsedBody)->contains($canLookup);
                 }
             } else { // Single lookup request
                 $authorised = $canLookup($request->getParams());
             }
         } elseif ($action == Config("API_PUSH_NOTIFICATION_ACTION")) { // Push notification
-            $parm = count($routeValues) >= 1 ? $routeValues[0] : null;
+            $parm = Route("action");
             if ($parm == Config("API_PUSH_NOTIFICATION_SUBSCRIBE") || $parm == Config("API_PUSH_NOTIFICATION_DELETE")) {
                 $authorised = Config("PUSH_ANONYMOUS") || $Security->isLoggedIn();
             } elseif ($parm == Config("API_PUSH_NOTIFICATION_SEND")) {
@@ -137,13 +125,13 @@ class ApiPermissionMiddleware
                 $authorised = $Security->canPush();
             }
         } elseif ($action == Config("API_2FA_ACTION")) { // Two factor authentication
-            $parm = count($routeValues) >= 1 ? $routeValues[0] : null;
+            $parm = Route("action");
             if ($parm == Config("API_2FA_SHOW")) {
                 $authorized = true;
             } elseif ($action == Config("API_2FA_VERIFY")) {
                 $authorized = $Security->isLoggingIn2FA();
             } elseif ($action == Config("API_2FA_RESET")) {
-                $authorized = $Security->IsSysAdmin();
+                $authorized = $Security->isSysAdmin();
             } elseif ($action == Config("API_2FA_BACKUP_CODES") || $action == Config("API_2FA_NEW_BACKUP_CODES")) {
                 $authorized = $Security->isLoggedIn() && !$Security->isSysAdmin();
             } elseif ($action == Config("API_2FA_SEND_OTP")) {

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhPatientVisitsAdd = &$Page;
@@ -62,7 +62,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_patient_visitsadd" id="fjdh_patient_visitsadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_patient_visitsadd" id="fjdh_patient_visitsadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -93,7 +93,9 @@ $Page->showMessage();
         id="x_patient_id"
         name="x_patient_id"
         class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
+        <?php if (!$Page->patient_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_patient_visitsadd_x_patient_id"
+        <?php } ?>
         data-table="jdh_patient_visits"
         data-field="x_patient_id"
         data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
@@ -104,10 +106,13 @@ $Page->showMessage();
     <?= $Page->patient_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
 <?= $Page->patient_id->Lookup->getParamTag($Page, "p_x_patient_id") ?>
+<?php if (!$Page->patient_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_patient_visitsadd", function() {
     var options = { name: "x_patient_id", selectId: "fjdh_patient_visitsadd_x_patient_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_patient_visitsadd.lists.patient_id?.lookupOptions.length) {
@@ -120,6 +125,7 @@ loadjs.ready("fjdh_patient_visitsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 <?php } ?>
 </div></div>
@@ -134,7 +140,9 @@ loadjs.ready("fjdh_patient_visitsadd", function() {
         id="x_visit_type_id"
         name="x_visit_type_id"
         class="form-select ew-select<?= $Page->visit_type_id->isInvalidClass() ?>"
+        <?php if (!$Page->visit_type_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_patient_visitsadd_x_visit_type_id"
+        <?php } ?>
         data-table="jdh_patient_visits"
         data-field="x_visit_type_id"
         data-value-separator="<?= $Page->visit_type_id->displayValueSeparatorAttribute() ?>"
@@ -145,10 +153,13 @@ loadjs.ready("fjdh_patient_visitsadd", function() {
     <?= $Page->visit_type_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->visit_type_id->getErrorMessage() ?></div>
 <?= $Page->visit_type_id->Lookup->getParamTag($Page, "p_x_visit_type_id") ?>
+<?php if (!$Page->visit_type_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_patient_visitsadd", function() {
     var options = { name: "x_visit_type_id", selectId: "fjdh_patient_visitsadd_x_visit_type_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_patient_visitsadd.lists.visit_type_id?.lookupOptions.length) {
@@ -161,6 +172,7 @@ loadjs.ready("fjdh_patient_visitsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -174,7 +186,9 @@ loadjs.ready("fjdh_patient_visitsadd", function() {
         id="x_user_id"
         name="x_user_id"
         class="form-select ew-select<?= $Page->user_id->isInvalidClass() ?>"
+        <?php if (!$Page->user_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_patient_visitsadd_x_user_id"
+        <?php } ?>
         data-table="jdh_patient_visits"
         data-field="x_user_id"
         data-value-separator="<?= $Page->user_id->displayValueSeparatorAttribute() ?>"
@@ -185,10 +199,13 @@ loadjs.ready("fjdh_patient_visitsadd", function() {
     <?= $Page->user_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->user_id->getErrorMessage() ?></div>
 <?= $Page->user_id->Lookup->getParamTag($Page, "p_x_user_id") ?>
+<?php if (!$Page->user_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_patient_visitsadd", function() {
     var options = { name: "x_user_id", selectId: "fjdh_patient_visitsadd_x_user_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_patient_visitsadd.lists.user_id?.lookupOptions.length) {
@@ -201,6 +218,7 @@ loadjs.ready("fjdh_patient_visitsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -214,7 +232,9 @@ loadjs.ready("fjdh_patient_visitsadd", function() {
         id="x_insurance_id"
         name="x_insurance_id"
         class="form-select ew-select<?= $Page->insurance_id->isInvalidClass() ?>"
+        <?php if (!$Page->insurance_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_patient_visitsadd_x_insurance_id"
+        <?php } ?>
         data-table="jdh_patient_visits"
         data-field="x_insurance_id"
         data-value-separator="<?= $Page->insurance_id->displayValueSeparatorAttribute() ?>"
@@ -225,10 +245,13 @@ loadjs.ready("fjdh_patient_visitsadd", function() {
     <?= $Page->insurance_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->insurance_id->getErrorMessage() ?></div>
 <?= $Page->insurance_id->Lookup->getParamTag($Page, "p_x_insurance_id") ?>
+<?php if (!$Page->insurance_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_patient_visitsadd", function() {
     var options = { name: "x_insurance_id", selectId: "fjdh_patient_visitsadd_x_insurance_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_patient_visitsadd.lists.insurance_id?.lookupOptions.length) {
@@ -241,6 +264,7 @@ loadjs.ready("fjdh_patient_visitsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>

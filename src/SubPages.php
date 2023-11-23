@@ -1,26 +1,32 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Sub pages class
  */
-class SubPages implements \ArrayAccess
+class SubPages implements \ArrayAccess, \IteratorAggregate
 {
-    public $Justified = false;
-    public $Fill = false;
-    public $Vertical = false;
-    public $Align = ""; // "start" or "center" or "end"
-    public $Style = "tabs"; // "tabs" (nav nav-tabs) or "pills" (nav nav-pills) or "" (nav) or "accordion"
-    public $Classes = ""; // Other CSS classes
-    public $Parent = "false"; // For the data-bs-parent attribute on each .accordion-collapse
-    public $Items = [];
-    public $ValidKeys = null;
-    public $ActiveIndex = null;
+    public static $DEFAULT_STYLE = "tabs";
+
+    // Constructor
+    public function __construct(
+        public $Style = null, // "tabs" (nav nav-tabs) or "pills" (nav nav-pills) or "underline" (nav nav-underline) or "" (nav) or "accordion"
+        public $Justified = false,
+        public $Fill = false,
+        public $Vertical = false,
+        public $Align = "", // "start" or "center" or "end"
+        public $Classes = "", // Other CSS classes
+        public $Parent = "false", // For the data-bs-parent attribute on each .accordion-collapse
+        public $Items = [],
+        public $ValidKeys = null,
+        public $ActiveIndex = null
+    ) {
+        $this->Style ??= self::$DEFAULT_STYLE;
+    }
 
     // Implements offsetSet
     #[\ReturnTypeWillChange]
-
     public function offsetSet($offset, $value)
     {
         if (is_null($offset)) {
@@ -32,7 +38,6 @@ class SubPages implements \ArrayAccess
 
     // Implements offsetExists
     #[\ReturnTypeWillChange]
-
     public function offsetExists($offset)
     {
         return isset($this->Items[$offset]);
@@ -40,7 +45,6 @@ class SubPages implements \ArrayAccess
 
     // Implements offsetUnset
     #[\ReturnTypeWillChange]
-
     public function offsetUnset($offset)
     {
         unset($this->Items[$offset]);
@@ -48,18 +52,22 @@ class SubPages implements \ArrayAccess
 
     // Implements offsetGet
     #[\ReturnTypeWillChange]
-
-    public function &offsetGet($offset)
+    public function offsetGet($offset)
     {
-        $item = $this->Items[$offset] ?? null;
-        return $item;
+        return $this->Items[$offset] ?? null;
+    }
+
+    // Implements IteratorAggregate
+    public function getIterator(): \ArrayIterator
+    {
+        return new \ArrayIterator($this->Items);
     }
 
     // Get .nav classes
     public function navClasses()
     {
         $style = "nav";
-        if (!$this->Vertical) {
+        if (!$this->Vertical) { // Not vertical
             $style .= " nav-" . $this->Style;
             if ($this->Justified) {
                 $style .= " nav-justified";
@@ -70,8 +78,8 @@ class SubPages implements \ArrayAccess
             if (in_array($this->Align, ["start", "center", "end"])) {
                 $style .= " justify-content-" . $this->Align;
             }
-        } else {
-            if ($this->isPills()) { // Vertical does not support tabs
+        } else { // Vertical
+            if ($this->isPills() or $this->isUnderline()) { // Vertical does not support tabs
                 $style .= " nav-" . $this->Style;
             }
             $style .= " flex-column me-3";
@@ -89,7 +97,7 @@ class SubPages implements \ArrayAccess
         if ($this->isActive($k)) { // Active page
             $classes .= " active";
         } else {
-            $item = &$this->getItem($k);
+            $item = $this->getItem($k);
             if ($item) {
                 if (!$item->Visible) {
                     $classes .= " d-none ew-hidden";
@@ -113,22 +121,22 @@ class SubPages implements \ArrayAccess
         return $this->Style == "accordion";
     }
 
-    // Check if tabsn
+    // Check if tabs
     public function isTabs()
     {
         return $this->Style == "tabs";
     }
 
-    // Check if accordion
+    // Check if pills
     public function isPills()
     {
         return $this->Style == "pills";
     }
 
-    // Check if tabs or pills
-    public function isTabsOrPills()
+    // Check if underline
+    public function isUnderline()
     {
-        return $this->isTabs() || $this->isPills();
+        return $this->Style == "underline";
     }
 
     // Get container classes (for .nav.lex-column)
@@ -151,7 +159,7 @@ class SubPages implements \ArrayAccess
     public function activeClasses($k)
     {
         if ($this->isActive($k)) { // Active page
-            if ($this->isTabsOrPills()) { // Tabs/Pills
+            if ($this->isTabs() || $this->isPills() || $this->isUnderline()) { // Tabs/Pills/Underline
                 return " active";
             } elseif ($this->isAccordion()) { // Accordion
                 return " show";
@@ -190,10 +198,9 @@ class SubPages implements \ArrayAccess
     }
 
     // Get item by key
-    public function &getItem($k)
+    public function getItem($k)
     {
-        $item = $this->Items[$k] ?? null;
-        return $item;
+        return $this->Items[$k] ?? null;
     }
 
     // Active page index

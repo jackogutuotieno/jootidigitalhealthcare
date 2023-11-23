@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * PrevNext pager class
@@ -106,8 +106,8 @@ class PrevNextPager extends Pager
                     <span>&nbsp;{$Language->phrase("Of")}&nbsp;{$formatInteger($this->PageCount)}</span>
                 </div>
                 PAGER;
-            $html .= parent::render();
         }
+        $html .= parent::render();
         return $html;
     }
 }

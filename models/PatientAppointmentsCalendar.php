@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -41,6 +47,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
     public $EditUrl;
     public $DeleteUrl;
     public $ViewUrl;
+    public $CopyUrl;
 
     // Page headings
     public $Heading = "";
@@ -103,7 +110,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -113,7 +120,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
     }
 
@@ -125,14 +132,17 @@ class PatientAppointmentsCalendar extends PatientAppointments
         $this->TableVar = 'Patient_Appointments';
         $this->TableName = 'Patient Appointments';
 
+        // Calendar options
+        $this->CalendarOptions = new \Dflydev\DotAccessData\Data();
+
         // Initialize
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (Patient_Appointments)
-        if (!isset($GLOBALS["Patient_Appointments"]) || get_class($GLOBALS["Patient_Appointments"]) == PROJECT_NAMESPACE . "Patient_Appointments") {
+        if (!isset($GLOBALS["Patient_Appointments"]) || $GLOBALS["Patient_Appointments"]::class == PROJECT_NAMESPACE . "Patient_Appointments") {
             $GLOBALS["Patient_Appointments"] = &$this;
         }
 
@@ -142,7 +152,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -152,13 +162,16 @@ class PatientAppointmentsCalendar extends PatientAppointments
 
         // User table object
         $UserTable = Container("usertable");
+
+        // Filter options
+        $this->FilterOptions = new ListOptions(TagClassName: "ew-filter-option");
     }
 
     // Get content from stream
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -207,13 +220,11 @@ class PatientAppointmentsCalendar extends PatientAppointments
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -233,7 +244,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -249,6 +260,19 @@ class PatientAppointmentsCalendar extends PatientAppointments
         }
         return; // Return to controller
     }
+
+    // Options
+    public $SearchOptions; // Search options
+    public $FilterOptions; // Filter options
+    public $DefaultSearchWhere = ""; // Default search WHERE clause
+    public $SearchWhere = "";
+    public $SearchPanelClass = "ew-search-panel collapse show"; // Search Panel class
+    public $SearchColumnCount = 0; // For extended search
+    public $SearchFieldsPerRow = 1; // For extended search
+    public $SearchCommand = false;
+    public $Events;
+    public $DefaultOrderBy = "`appointment_start_date` ASC";
+    public $CalendarOptions; // Calendar options
 
     /**
      * Full calendar event object fields (see https://fullcalendar.io/docs/event-object)
@@ -288,17 +312,22 @@ class PatientAppointmentsCalendar extends PatientAppointments
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm;
+        global $ExportType, $Language, $Security, $CurrentForm;
 
         // Use layout
         $this->UseLayout = $this->UseLayout && ConvertToBool(Param(Config("PAGE_LAYOUT"), true));
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
         $this->CurrentAction = Param("action"); // Set up current action
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -312,7 +341,46 @@ class PatientAppointmentsCalendar extends PatientAppointments
         $this->ViewUrl = $Security->canView() ? "patientappointmentsview" : "";
         $this->AddUrl = $Security->canAdd() ? "patientappointmentsadd" : "";
         $this->EditUrl = $Security->canEdit() ? "patientappointmentsedit" : "";
+        $this->CopyUrl = $Security->canAdd() ? "patientappointmentsadd" : "";
         $this->DeleteUrl = $Security->canDelete() ? "patientappointmentsdelete" : "";
+
+        // Check if search command
+        $this->SearchCommand = Get("cmd") == "search";
+
+        // Load custom filters
+        $this->pageFilterLoad();
+
+        // Extended filter
+        $extendedFilter = "";
+
+        // Setup other options
+        $this->setupOtherOptions();
+
+        // No filter
+        $this->FilterOptions["savecurrentfilter"]->Visible = false;
+        $this->FilterOptions["deletefilter"]->Visible = false;
+
+        // Call Page Selecting event
+        $this->pageSelecting($this->SearchWhere);
+
+        // Set up search panel class
+        if ($this->SearchWhere != "") {
+            AppendClass($this->SearchPanelClass, "show");
+        }
+
+        // Update filter
+        AddFilter($this->Filter, $this->SearchWhere);
+        $sql = $this->buildSelectSql($this->getSqlSelect(), $this->getSqlFrom(), $this->getSqlWhere(), "", "", $this->DefaultOrderBy, $this->Filter, "");
+        $result = $sql->executeQuery();
+        $this->Events = $result->fetchAllAssociative();
+        if (count($this->Events) == 0) {
+            $this->setWarningMessage($Language->phrase("NoRecord"));
+        } elseif ($this->SearchWhere != "") { // Set initial date for first record
+            $this->CalendarOptions->set("initialDate", $this->Events[0]['appointment_start_date']);
+        }
+
+        // Search options
+        $this->setupSearchOptions();
 
         // Set LoginStatus / Page_Rendering / Page_Render
         if (!IsApi() && !$this->isTerminated()) {
@@ -323,7 +391,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -352,20 +420,28 @@ class PatientAppointmentsCalendar extends PatientAppointments
      */
     public function getEvents()
     {
-        // Call Page Selecting event
-        $this->pageSelecting($this->Filter);
-        $sql = $this->buildSelectSql($this->getSqlSelect(), $this->getSqlFrom(), $this->getSqlWhere(), "", "", "", $this->Filter, "");
-        $result = $sql->execute();
-        $events = $result->fetchAllAssociative();
+        global $CurrentLocale;
+        $locale = $CurrentLocale; // Backup current locale
+        $CurrentLocale = "en-US"; // Format dates as en-US
         $this->Fields['appointment_start_date']->FormatPattern = "yyyy-MM-dd'T'HH:mm:ss";
         $this->Fields['appointment_end_date']->FormatPattern = "yyyy-MM-dd'T'HH:mm:ss";
-        return array_map(function ($event) {
-            $this->loadRowValues($event);
-            $this->resetAttributes();
-            $this->RowType = ROWTYPE_VIEW;
-            $this->renderRow();
-            return $this->getEvent();
-        }, $events);
+        try {
+            return array_reduce($this->Events, function($ar, $event) {
+                $this->loadRowValues($event);
+                $this->resetAttributes();
+                $this->RowType = RowType::VIEW;
+                $this->renderRow();
+                $evt = $this->getEvent();
+                if ($this->eventAdding($evt)) {
+                    $ar[] = $evt;
+                }
+                return $ar;
+            }, []);
+        } catch (\Exception $e) {
+            throw $e;
+        } finally {
+            $CurrentLocale = $locale; // Restore current locale
+        }
     }
 
     /**
@@ -414,7 +490,8 @@ class PatientAppointmentsCalendar extends PatientAppointments
         // appointment_all_day
 
         // user_id
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::SEARCH) { // Search row
+        } elseif ($this->RowType == RowType::VIEW) {
             // appointment_id
             $this->appointment_id->ViewValue = $this->appointment_id->CurrentValue;
 
@@ -494,8 +571,13 @@ class PatientAppointmentsCalendar extends PatientAppointments
     {
         $eventListFields = ["appointment_id","patient_id","appointment_title","appointment_start_date","appointment_end_date","subbmitted_by_user_id","appointment_all_day","user_id"];
         $event = [];
+        // Default permissions for event
+        $event["_view"] = !EmptyValue($this->ViewUrl);
+        $event["_edit"] = !EmptyValue($this->EditUrl);
+        $event["_copy"] = !EmptyValue($this->CopyUrl);
+        $event["_delete"] = !EmptyValue($this->DeleteUrl);
         foreach ($this->Fields as $fld) {
-            if ($fld->DataType == DATATYPE_BLOB || !in_array($fld->Name, $eventListFields)) { // Skip blob fields / non list fields
+            if ($fld->DataType == DataType::BLOB || !in_array($fld->Name, $eventListFields)) { // Skip blob fields / non list fields
                 continue;
             }
             $name = array_search($fld->Name, $this->EventFields) ?: $fld->Name;
@@ -512,21 +594,78 @@ class PatientAppointmentsCalendar extends PatientAppointments
      *
      * @return string
      */
-    public function getCalendarOptions() {
-        return ArrayToJson([
-            "fullCalendarOptions" => [
+    public function getCalendarOptions()
+    {
+        global $CurrentLocale, $TIME_FORMAT;
+        $locale = $CurrentLocale; // Backup current locale
+        $CurrentLocale = "en-US"; // Format dates as en-US
+        try {
+            $this->CalendarOptions->import([
                 "selectable" => true,
                 "direction" => IsRTL() ? "rtl" : "ltr",
                 "locale" => CurrentLanguageID(),
                 "events" => $this->getEvents()
-            ],
-            "updateTable" => $this->UpdateTable,
-            "viewUrl" => $this->ViewUrl,
-            "editUrl" => $this->EditUrl,
-            "deleteUrl" => $this->DeleteUrl,
-            "addUrl" => $this->AddUrl,
-            "eventFields" => $this->EventFields
-        ]);
+            ]);
+            if ($this->CalendarOptions->has("initialDate")) {
+                $this->CalendarOptions->set("initialDate", FormatDateTime($this->CalendarOptions->get("initialDate"), "yyyy-MM-dd")); // yyyy-MM-dd format (e.g. 2024-09-30)
+            }
+            return ArrayToJson([
+                "fullCalendarOptions" => $this->CalendarOptions->export(),
+                "ajax" => $this->UseAjaxActions,
+                "updateTable" => $this->UpdateTable,
+                "viewUrl" => $this->ViewUrl,
+                "editUrl" => $this->EditUrl,
+                "deleteUrl" => $this->DeleteUrl,
+                "addUrl" => $this->AddUrl,
+                "copyUrl" => $this->CopyUrl,
+                "eventFields" => $this->EventFields
+            ]);
+        } catch (\Exception $e) {
+            throw $e;
+        } finally {
+            $CurrentLocale = $locale; // Restore current locale
+        }
+    }
+
+    // Set up search options
+    protected function setupSearchOptions()
+    {
+        global $Language, $Security;
+        $pageUrl = $this->pageUrl(false);
+        $this->SearchOptions = new ListOptions(TagClassName: "ew-search-option");
+
+        // Button group for search
+        $this->SearchOptions->UseDropDownButton = false;
+        $this->SearchOptions->UseButtonGroup = true;
+        $this->SearchOptions->DropDownButtonPhrase = $Language->phrase("ButtonSearch");
+
+        // Add group option item
+        $item = &$this->SearchOptions->addGroupOption();
+        $item->Body = "";
+        $item->Visible = false;
+
+        // Hide search options
+        if ($this->isExport() || $this->CurrentAction && $this->CurrentAction != "search") {
+            $this->SearchOptions->hideAllOptions();
+        }
+        if (!$Security->canSearch()) {
+            $this->SearchOptions->hideAllOptions();
+            $this->FilterOptions->hideAllOptions();
+        }
+    }
+
+    // Check if any search fields
+    public function hasSearchFields()
+    {
+        return false;
+    }
+
+    // Render search options
+    protected function renderSearchOptions()
+    {
+        if (!$this->hasSearchFields() && $this->SearchOptions["searchtoggle"]) {
+            $this->SearchOptions["searchtoggle"]->Visible = false;
+        }
     }
 
     // Set up Breadcrumb
@@ -535,14 +674,14 @@ class PatientAppointmentsCalendar extends PatientAppointments
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $url = preg_replace('/\?cmd=reset(all){0,1}$/i', '', $url); // Remove cmd=reset / cmd=resetall
+        $url = preg_replace('/\?cmd=reset(all){0,1}$/i', '', $url); // Remove cmd=reset(all)
         $Breadcrumb->add("calendar", $this->TableVar, $url, "", $this->TableVar, true);
     }
 
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -563,7 +702,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -665,7 +804,7 @@ class PatientAppointmentsCalendar extends PatientAppointments
             if (is_numeric($wrk)) {
                 $this->DisplayGroups = intval($wrk);
             } else {
-                if (strtoupper($wrk) == "ALL") { // Display all groups
+                if (SameText($wrk, "ALL")) { // Display all groups
                     $this->DisplayGroups = -1;
                 } else {
                     $this->DisplayGroups = 3; // Non-numeric, load default
@@ -750,11 +889,11 @@ class PatientAppointmentsCalendar extends PatientAppointments
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";
@@ -793,5 +932,56 @@ class PatientAppointmentsCalendar extends PatientAppointments
     public function pageSelecting(&$filter)
     {
         // Enter your code here
+    }
+
+    // Load Filters event
+    public function pageFilterLoad()
+    {
+        // Enter your code here
+        // Example: Register/Unregister Custom Extended Filter
+        //RegisterFilter($this-><Field>, 'StartsWithA', 'Starts With A', 'GetStartsWithAFilter'); // With function, or
+        //RegisterFilter($this-><Field>, 'StartsWithA', 'Starts With A'); // No function, use Page_Filtering event
+        //UnregisterFilter($this-><Field>, 'StartsWithA');
+    }
+
+    // Page Filter Validated event
+    public function pageFilterValidated()
+    {
+        // Example:
+        //$this->MyField1->AdvancedSearch->SearchValue = "your search criteria"; // Search value
+    }
+
+    // Page Filtering event
+    public function pageFiltering(&$fld, &$filter, $typ, $opr = "", $val = "", $cond = "", $opr2 = "", $val2 = "")
+    {
+        // Note: ALWAYS CHECK THE FILTER TYPE ($typ)! Example:
+        //if ($typ == "dropdown" && $fld->Name == "MyField") // Dropdown filter
+        //    $filter = "..."; // Modify the filter
+        //if ($typ == "extended" && $fld->Name == "MyField") // Extended filter
+        //    $filter = "..."; // Modify the filter
+        //if ($typ == "custom" && $opr == "..." && $fld->Name == "MyField") // Custom filter, $opr is the custom filter ID
+        //    $filter = "..."; // Modify the filter
+    }
+
+    // Form Custom Validate event
+    public function formCustomValidate(&$customError)
+    {
+        // Return error message in $customError
+        return true;
+    }
+
+    // Event Adding event (Calendar Report)
+    public function eventAdding(&$event)
+    {
+        // Example:
+        // var_dump($event);
+        // if (strtotime($event["start"]) < time()) { // Check past event
+        //     // $event["_view"] = false; // Disable view
+        //     $event["_edit"] = false; // Disable edit
+        //     $event["_copy"] = false; // Disable copy
+        //     $event["_delete"] = false; // Disable delete
+        //     // return false; // Return false to hide event
+        // }
+        return true;
     }
 }

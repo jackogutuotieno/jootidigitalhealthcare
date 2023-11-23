@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhPatientsDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_patientsdelete" id="fjdh_patientsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_patientsdelete" id="fjdh_patientsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -86,16 +86,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -103,7 +103,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_id" class="el_jdh_patients_patient_id">
+<span id="">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
@@ -111,7 +111,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->patient_ip_number->Visible) { // patient_ip_number ?>
         <td<?= $Page->patient_ip_number->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_ip_number" class="el_jdh_patients_patient_ip_number">
+<span id="">
 <span<?= $Page->patient_ip_number->viewAttributes() ?>>
 <?= $Page->patient_ip_number->getViewValue() ?></span>
 </span>
@@ -119,7 +119,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->patient_name->Visible) { // patient_name ?>
         <td<?= $Page->patient_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_name" class="el_jdh_patients_patient_name">
+<span id="">
 <span<?= $Page->patient_name->viewAttributes() ?>>
 <?= $Page->patient_name->getViewValue() ?></span>
 </span>
@@ -127,7 +127,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->patient_dob_year->Visible) { // patient_dob_year ?>
         <td<?= $Page->patient_dob_year->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_dob_year" class="el_jdh_patients_patient_dob_year">
+<span id="">
 <span<?= $Page->patient_dob_year->viewAttributes() ?>>
 <?= $Page->patient_dob_year->getViewValue() ?></span>
 </span>
@@ -135,7 +135,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->patient_age->Visible) { // patient_age ?>
         <td<?= $Page->patient_age->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_age" class="el_jdh_patients_patient_age">
+<span id="">
 <span<?= $Page->patient_age->viewAttributes() ?>>
 <?= $Page->patient_age->getViewValue() ?></span>
 </span>
@@ -143,7 +143,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->patient_gender->Visible) { // patient_gender ?>
         <td<?= $Page->patient_gender->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_gender" class="el_jdh_patients_patient_gender">
+<span id="">
 <span<?= $Page->patient_gender->viewAttributes() ?>>
 <?= $Page->patient_gender->getViewValue() ?></span>
 </span>
@@ -151,7 +151,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->patient_phone->Visible) { // patient_phone ?>
         <td<?= $Page->patient_phone->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_phone" class="el_jdh_patients_patient_phone">
+<span id="">
 <span<?= $Page->patient_phone->viewAttributes() ?>>
 <?php if (!EmptyString($Page->patient_phone->getViewValue()) && $Page->patient_phone->linkAttributes() != "") { ?>
 <a<?= $Page->patient_phone->linkAttributes() ?>><?= $Page->patient_phone->getViewValue() ?></a>
@@ -164,7 +164,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->patient_registration_date->Visible) { // patient_registration_date ?>
         <td<?= $Page->patient_registration_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_patient_registration_date" class="el_jdh_patients_patient_registration_date">
+<span id="">
 <span<?= $Page->patient_registration_date->viewAttributes() ?>>
 <?= $Page->patient_registration_date->getViewValue() ?></span>
 </span>
@@ -172,7 +172,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->time->Visible) { // time ?>
         <td<?= $Page->time->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_time" class="el_jdh_patients_time">
+<span id="">
 <span<?= $Page->time->viewAttributes() ?>>
 <?= $Page->time->getViewValue() ?></span>
 </span>
@@ -180,7 +180,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->is_inpatient->Visible) { // is_inpatient ?>
         <td<?= $Page->is_inpatient->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_patients_is_inpatient" class="el_jdh_patients_is_inpatient">
+<span id="">
 <span<?= $Page->is_inpatient->viewAttributes() ?>>
 <?= $Page->is_inpatient->getViewValue() ?></span>
 </span>
@@ -188,9 +188,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

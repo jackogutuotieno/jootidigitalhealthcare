@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhIpdAdmissionDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_ipd_admissiondelete" id="fjdh_ipd_admissiondelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_ipd_admissiondelete" id="fjdh_ipd_admissiondelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -77,16 +77,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -94,7 +94,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->id->Visible) { // id ?>
         <td<?= $Page->id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_ipd_admission_id" class="el_jdh_ipd_admission_id">
+<span id="">
 <span<?= $Page->id->viewAttributes() ?>>
 <?= $Page->id->getViewValue() ?></span>
 </span>
@@ -102,7 +102,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->unit_id->Visible) { // unit_id ?>
         <td<?= $Page->unit_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_ipd_admission_unit_id" class="el_jdh_ipd_admission_unit_id">
+<span id="">
 <span<?= $Page->unit_id->viewAttributes() ?>>
 <?= $Page->unit_id->getViewValue() ?></span>
 </span>
@@ -110,7 +110,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->ward_id->Visible) { // ward_id ?>
         <td<?= $Page->ward_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_ipd_admission_ward_id" class="el_jdh_ipd_admission_ward_id">
+<span id="">
 <span<?= $Page->ward_id->viewAttributes() ?>>
 <?= $Page->ward_id->getViewValue() ?></span>
 </span>
@@ -118,7 +118,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->bed_id->Visible) { // bed_id ?>
         <td<?= $Page->bed_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_ipd_admission_bed_id" class="el_jdh_ipd_admission_bed_id">
+<span id="">
 <span<?= $Page->bed_id->viewAttributes() ?>>
 <?= $Page->bed_id->getViewValue() ?></span>
 </span>
@@ -126,7 +126,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_ipd_admission_patient_id" class="el_jdh_ipd_admission_patient_id">
+<span id="">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
@@ -134,7 +134,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->date_added->Visible) { // date_added ?>
         <td<?= $Page->date_added->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_ipd_admission_date_added" class="el_jdh_ipd_admission_date_added">
+<span id="">
 <span<?= $Page->date_added->viewAttributes() ?>>
 <?= $Page->date_added->getViewValue() ?></span>
 </span>
@@ -142,7 +142,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->date_updated->Visible) { // date_updated ?>
         <td<?= $Page->date_updated->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_ipd_admission_date_updated" class="el_jdh_ipd_admission_date_updated">
+<span id="">
 <span<?= $Page->date_updated->viewAttributes() ?>>
 <?= $Page->date_updated->getViewValue() ?></span>
 </span>
@@ -150,9 +150,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

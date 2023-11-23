@@ -3392,7 +3392,7 @@ S2.define('select2/data/select',[
       for (var d = 0; d < currentData.length; d++) {
         var id = currentData[d].id;
 
-        if (id !== data.id && val.indexOf(id) === -1) {
+        if (id != data.id && val.indexOf(id) === -1) { //***
           val.push(id);
         }
       }

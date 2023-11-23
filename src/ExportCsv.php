@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Export to CSV
@@ -33,7 +33,7 @@ class ExportCsv extends AbstractExport
     // Export a value (caption, field value, or aggregate)
     protected function exportValueEx($fld, $val)
     {
-        if ($fld->DataType != DATATYPE_BLOB) {
+        if ($fld->DataType != DataType::BLOB) {
             if ($this->Line != "") {
                 $this->Line .= $this->Separator;
             }

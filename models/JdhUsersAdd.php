@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -99,7 +105,7 @@ class JdhUsersAdd extends JdhUsers
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -109,8 +115,25 @@ class JdhUsersAdd extends JdhUsers
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->user_id->Visible = false;
+        $this->photo->setVisibility();
+        $this->first_name->setVisibility();
+        $this->last_name->setVisibility();
+        $this->national_id->setVisibility();
+        $this->email_address->setVisibility();
+        $this->phone->setVisibility();
+        $this->department_id->setVisibility();
+        $this->_password->setVisibility();
+        $this->biography->setVisibility();
+        $this->registration_date->Visible = false;
+        $this->role_id->setVisibility();
     }
 
     // Constructor
@@ -128,10 +151,10 @@ class JdhUsersAdd extends JdhUsers
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_users)
-        if (!isset($GLOBALS["jdh_users"]) || get_class($GLOBALS["jdh_users"]) == PROJECT_NAMESPACE . "jdh_users") {
+        if (!isset($GLOBALS["jdh_users"]) || $GLOBALS["jdh_users"]::class == PROJECT_NAMESPACE . "jdh_users") {
             $GLOBALS["jdh_users"] = &$this;
         }
 
@@ -141,7 +164,7 @@ class JdhUsersAdd extends JdhUsers
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -157,7 +180,7 @@ class JdhUsersAdd extends JdhUsers
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -206,13 +229,11 @@ class JdhUsersAdd extends JdhUsers
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -230,7 +251,7 @@ class JdhUsersAdd extends JdhUsers
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -242,17 +263,25 @@ class JdhUsersAdd extends JdhUsers
                 ob_end_clean();
             }
 
-            // Handle modal response (Assume return to modal for simplicity)
+            // Handle modal response
             if ($this->IsModal) { // Show as modal
-                $result = ["url" => GetUrl($url), "modal" => "1"];
                 $pageName = GetPageName($url);
-                if ($pageName != $this->getListUrl()) { // Not List page => View page
-                    $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhusersview"; // If View page, no primary button
-                } else { // List page
-                    // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
-                    $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
-                    $this->clearFailureMessage();
+                $result = ["url" => GetUrl($url), "modal" => "1"];  // Assume return to modal for simplicity
+                if (
+                    SameString($pageName, GetPageName($this->getListUrl())) ||
+                    SameString($pageName, GetPageName($this->getViewUrl())) ||
+                    SameString($pageName, GetPageName(CurrentMasterTable()?->getViewUrl() ?? ""))
+                ) { // List / View / Master View page
+                    if (!SameString($pageName, GetPageName($this->getListUrl()))) { // Not List page
+                        $result["caption"] = $this->getModalCaption($pageName);
+                        $result["view"] = SameString($pageName, "jdhusersview"); // If View page, no primary button
+                    } else { // List page
+                        $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
+                        $this->clearFailureMessage();
+                    }
+                } else { // Other pages (add messages and then clear messages)
+                    $result = array_merge($this->getMessages(), ["modal" => "1"]);
+                    $this->clearMessages();
                 }
                 WriteJson($result);
             } else {
@@ -263,20 +292,19 @@ class JdhUsersAdd extends JdhUsers
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -303,7 +331,7 @@ class JdhUsersAdd extends JdhUsers
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -356,44 +384,47 @@ class JdhUsersAdd extends JdhUsers
     }
 
     // Lookup data
-    public function lookup($ar = null)
+    public function lookup(array $req = [], bool $response = true)
     {
         global $Language, $Security;
 
         // Get lookup object
-        $fieldName = $ar["field"] ?? Post("field");
-        $lookup = $this->Fields[$fieldName]->Lookup;
-        $name = $ar["name"] ?? Post("name");
-        $isQuery = ContainsString($name, "query_builder_rule");
-        if ($isQuery) {
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
             $lookup->FilterFields = []; // Skip parent fields if any
         }
 
         // Get lookup parameters
-        $lookupType = $ar["ajax"] ?? Post("ajax", "unknown");
+        $lookupType = $req["ajax"] ?? "unknown";
         $pageSize = -1;
         $offset = -1;
         $searchValue = "";
         if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
-            $searchValue = $ar["q"] ?? Param("q") ?? $ar["sv"] ?? Post("sv", "");
-            $pageSize = $ar["n"] ?? Param("n") ?? $ar["recperpage"] ?? Post("recperpage", 10);
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
         } elseif (SameText($lookupType, "autosuggest")) {
-            $searchValue = $ar["q"] ?? Param("q", "");
-            $pageSize = $ar["n"] ?? Param("n", -1);
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
             $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
             if ($pageSize <= 0) {
                 $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
             }
         }
-        $start = $ar["start"] ?? Param("start", -1);
+        $start = $req["start"] ?? -1;
         $start = is_numeric($start) ? (int)$start : -1;
-        $page = $ar["page"] ?? Param("page", -1);
+        $page = $req["page"] ?? -1;
         $page = is_numeric($page) ? (int)$page : -1;
         $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
-        $userSelect = Decrypt($ar["s"] ?? Post("s", ""));
-        $userFilter = Decrypt($ar["f"] ?? Post("f", ""));
-        $userOrderBy = Decrypt($ar["o"] ?? Post("o", ""));
-        $keys = $ar["keys"] ?? Post("keys");
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
         $lookup->LookupType = $lookupType; // Lookup type
         $lookup->FilterValues = []; // Clear filter values first
         if ($keys !== null) { // Selected records from modal
@@ -404,11 +435,11 @@ class JdhUsersAdd extends JdhUsers
             $lookup->FilterValues[] = $keys; // Lookup values
             $pageSize = -1; // Show all records
         } else { // Lookup values
-            $lookup->FilterValues[] = $ar["v0"] ?? $ar["lookupValue"] ?? Post("v0", Post("lookupValue", ""));
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
         }
         $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
         for ($i = 1; $i <= $cnt; $i++) {
-            $lookup->FilterValues[] = $ar["v" . $i] ?? Post("v" . $i, "");
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
         }
         $lookup->SearchValue = $searchValue;
         $lookup->PageSize = $pageSize;
@@ -422,7 +453,7 @@ class JdhUsersAdd extends JdhUsers
         if ($userOrderBy != "") {
             $lookup->UserOrderBy = $userOrderBy;
         }
-        return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
     public $FormClassName = "ew-form ew-add-form";
     public $IsModal = false;
@@ -440,7 +471,7 @@ class JdhUsersAdd extends JdhUsers
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
+        global $ExportType, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
 
         // Is modal
         $this->IsModal = ConvertToBool(Param("modal"));
@@ -452,21 +483,15 @@ class JdhUsersAdd extends JdhUsers
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
+
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->user_id->Visible = false;
-        $this->photo->setVisibility();
-        $this->first_name->setVisibility();
-        $this->last_name->setVisibility();
-        $this->national_id->setVisibility();
-        $this->email_address->setVisibility();
-        $this->phone->setVisibility();
-        $this->department_id->setVisibility();
-        $this->_password->setVisibility();
-        $this->biography->setVisibility();
-        $this->registration_date->Visible = false;
-        $this->role_id->setVisibility();
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -474,7 +499,7 @@ class JdhUsersAdd extends JdhUsers
         }
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -508,7 +533,7 @@ class JdhUsersAdd extends JdhUsers
         if (IsApi()) {
             $this->CurrentAction = "insert"; // Add record directly
             $postBack = true;
-        } elseif (Post("action") !== null) {
+        } elseif (Post("action", "") !== "") {
             $this->CurrentAction = Post("action"); // Get form action
             $this->setKey(Post($this->OldKeyName));
             $postBack = true;
@@ -521,6 +546,7 @@ class JdhUsersAdd extends JdhUsers
             $this->CopyRecord = !EmptyValue($this->OldKey);
             if ($this->CopyRecord) {
                 $this->CurrentAction = "copy"; // Copy record
+                $this->setKey($this->OldKey); // Set up record key
             } else {
                 $this->CurrentAction = "show"; // Display blank record
             }
@@ -561,11 +587,7 @@ class JdhUsersAdd extends JdhUsers
                 break;
             case "insert": // Add new record
                 $this->SendEmail = true; // Send email on add success
-                if ($this->addRow($rsold)) {
-                    // Do not return Json for UseAjaxActions
-                    if ($this->IsModal && $this->UseAjaxActions) {
-                        $this->IsModal = false;
-                    }
+                if ($this->addRow($rsold)) { // Add successful
                     if ($this->getSuccessMessage() == "" && Post("addopt") != "1") { // Skip success message for addopt (done in JavaScript)
                         $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up success message
                     }
@@ -576,10 +598,13 @@ class JdhUsersAdd extends JdhUsers
                         $returnUrl = $this->getViewUrl(); // View page, return to View page with keyurl directly
                     }
 
-                    // Handle UseAjaxActions with return page
-                    if ($this->UseAjaxActions && GetPageName($returnUrl) != "jdhuserslist") {
-                        Container("flash")->addMessage("Return-Url", $returnUrl); // Save return URL
-                        $returnUrl = "jdhuserslist"; // Return list page content
+                    // Handle UseAjaxActions
+                    if ($this->IsModal && $this->UseAjaxActions) {
+                        $this->IsModal = false;
+                        if (GetPageName($returnUrl) != "jdhuserslist") {
+                            Container("app.flash")->addMessage("Return-Url", $returnUrl); // Save return URL
+                            $returnUrl = "jdhuserslist"; // Return list page content
+                        }
                     }
                     if (IsJsonResponse()) { // Return to caller
                         $this->terminate(true);
@@ -591,8 +616,8 @@ class JdhUsersAdd extends JdhUsers
                 } elseif (IsApi()) { // API request, return
                     $this->terminate();
                     return;
-                } elseif ($this->UseAjaxActions) { // Return JSON error message
-                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                } elseif ($this->IsModal && $this->UseAjaxActions) { // Return JSON error message
+                    WriteJson(["success" => false, "validation" => $this->getValidationErrors(), "error" => $this->getFailureMessage()]);
                     $this->clearFailureMessage();
                     $this->terminate();
                     return;
@@ -606,7 +631,7 @@ class JdhUsersAdd extends JdhUsers
         $this->setupBreadcrumb();
 
         // Render row based on row type
-        $this->RowType = ROWTYPE_ADD; // Render add type
+        $this->RowType = RowType::ADD; // Render add type
 
         // Render row
         $this->resetAttributes();
@@ -621,7 +646,7 @@ class JdhUsersAdd extends JdhUsers
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -792,23 +817,14 @@ class JdhUsersAdd extends JdhUsers
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -857,8 +873,8 @@ class JdhUsersAdd extends JdhUsers
             $this->CurrentFilter = $this->getRecordFilter();
             $sql = $this->getCurrentSql();
             $conn = $this->getConnection();
-            $rs = LoadRecordset($sql, $conn);
-            if ($rs && ($row = $rs->fields)) {
+            $rs = ExecuteQuery($sql, $conn);
+            if ($row = $rs->fetch()) {
                 $this->loadRowValues($row); // Load row values
                 return $row;
             }
@@ -916,7 +932,7 @@ class JdhUsersAdd extends JdhUsers
         $this->role_id->RowCssClass = "row";
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // user_id
             $this->user_id->ViewValue = $this->user_id->CurrentValue;
 
@@ -952,11 +968,11 @@ class JdhUsersAdd extends JdhUsers
             if ($curVal != "") {
                 $this->department_id->ViewValue = $this->department_id->lookupCacheOption($curVal);
                 if ($this->department_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`department_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->department_id->Lookup->getTable()->Fields["department_id"]->searchExpression(), "=", $curVal, $this->department_id->Lookup->getTable()->Fields["department_id"]->searchDataType(), "");
                     $sqlWrk = $this->department_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
+                    $config->setResultCache($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
@@ -1048,7 +1064,7 @@ class JdhUsersAdd extends JdhUsers
 
             // role_id
             $this->role_id->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_ADD) {
+        } elseif ($this->RowType == RowType::ADD) {
             // photo
             $this->photo->setupEditAttributes();
             if (!EmptyValue($this->photo->Upload->DbValue)) {
@@ -1060,6 +1076,9 @@ class JdhUsersAdd extends JdhUsers
                 $this->photo->IsBlobImage = IsImageFile(ContentExtension($this->photo->Upload->DbValue));
             } else {
                 $this->photo->EditValue = "";
+            }
+            if (!Config("CREATE_UPLOAD_FILE_ON_COPY")) {
+                $this->photo->Upload->DbValue = null;
             }
             if ($this->isShow() || $this->isCopy()) {
                 RenderUploadField($this->photo);
@@ -1111,7 +1130,7 @@ class JdhUsersAdd extends JdhUsers
             if ($curVal != "") {
                 $this->department_id->ViewValue = $this->department_id->lookupCacheOption($curVal);
             } else {
-                $this->department_id->ViewValue = $this->department_id->Lookup !== null && is_array($this->department_id->lookupOptions()) ? $curVal : null;
+                $this->department_id->ViewValue = $this->department_id->Lookup !== null && is_array($this->department_id->lookupOptions()) && count($this->department_id->lookupOptions()) > 0 ? $curVal : null;
             }
             if ($this->department_id->ViewValue !== null) { // Load from cache
                 $this->department_id->EditValue = array_values($this->department_id->lookupOptions());
@@ -1119,12 +1138,12 @@ class JdhUsersAdd extends JdhUsers
                 if ($curVal == "") {
                     $filterWrk = "0=1";
                 } else {
-                    $filterWrk = SearchFilter("`department_id`", "=", $this->department_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->department_id->Lookup->getTable()->Fields["department_id"]->searchExpression(), "=", $this->department_id->CurrentValue, $this->department_id->Lookup->getTable()->Fields["department_id"]->searchDataType(), "");
                 }
                 $sqlWrk = $this->department_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
+                $config->setResultCache($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 $arwrk = $rswrk;
@@ -1214,12 +1233,12 @@ class JdhUsersAdd extends JdhUsers
             // role_id
             $this->role_id->HrefValue = "";
         }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+        if ($this->RowType == RowType::ADD || $this->RowType == RowType::EDIT || $this->RowType == RowType::SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -1234,65 +1253,65 @@ class JdhUsersAdd extends JdhUsers
             return true;
         }
         $validateForm = true;
-        if ($this->photo->Required) {
-            if ($this->photo->Upload->FileName == "" && !$this->photo->Upload->KeepFile) {
-                $this->photo->addErrorMessage(str_replace("%s", $this->photo->caption(), $this->photo->RequiredErrorMessage));
+            if ($this->photo->Visible && $this->photo->Required) {
+                if ($this->photo->Upload->FileName == "" && !$this->photo->Upload->KeepFile) {
+                    $this->photo->addErrorMessage(str_replace("%s", $this->photo->caption(), $this->photo->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->first_name->Required) {
-            if (!$this->first_name->IsDetailKey && EmptyValue($this->first_name->FormValue)) {
-                $this->first_name->addErrorMessage(str_replace("%s", $this->first_name->caption(), $this->first_name->RequiredErrorMessage));
+            if ($this->first_name->Visible && $this->first_name->Required) {
+                if (!$this->first_name->IsDetailKey && EmptyValue($this->first_name->FormValue)) {
+                    $this->first_name->addErrorMessage(str_replace("%s", $this->first_name->caption(), $this->first_name->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->last_name->Required) {
-            if (!$this->last_name->IsDetailKey && EmptyValue($this->last_name->FormValue)) {
-                $this->last_name->addErrorMessage(str_replace("%s", $this->last_name->caption(), $this->last_name->RequiredErrorMessage));
+            if ($this->last_name->Visible && $this->last_name->Required) {
+                if (!$this->last_name->IsDetailKey && EmptyValue($this->last_name->FormValue)) {
+                    $this->last_name->addErrorMessage(str_replace("%s", $this->last_name->caption(), $this->last_name->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->national_id->Required) {
-            if (!$this->national_id->IsDetailKey && EmptyValue($this->national_id->FormValue)) {
-                $this->national_id->addErrorMessage(str_replace("%s", $this->national_id->caption(), $this->national_id->RequiredErrorMessage));
+            if ($this->national_id->Visible && $this->national_id->Required) {
+                if (!$this->national_id->IsDetailKey && EmptyValue($this->national_id->FormValue)) {
+                    $this->national_id->addErrorMessage(str_replace("%s", $this->national_id->caption(), $this->national_id->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->email_address->Required) {
-            if (!$this->email_address->IsDetailKey && EmptyValue($this->email_address->FormValue)) {
-                $this->email_address->addErrorMessage(str_replace("%s", $this->email_address->caption(), $this->email_address->RequiredErrorMessage));
+            if ($this->email_address->Visible && $this->email_address->Required) {
+                if (!$this->email_address->IsDetailKey && EmptyValue($this->email_address->FormValue)) {
+                    $this->email_address->addErrorMessage(str_replace("%s", $this->email_address->caption(), $this->email_address->RequiredErrorMessage));
+                }
             }
-        }
-        if (!CheckEmail($this->email_address->FormValue)) {
-            $this->email_address->addErrorMessage($this->email_address->getErrorMessage(false));
-        }
-        if (!$this->email_address->Raw && Config("REMOVE_XSS") && CheckUsername($this->email_address->FormValue)) {
-            $this->email_address->addErrorMessage($Language->phrase("InvalidUsernameChars"));
-        }
-        if ($this->phone->Required) {
-            if (!$this->phone->IsDetailKey && EmptyValue($this->phone->FormValue)) {
-                $this->phone->addErrorMessage(str_replace("%s", $this->phone->caption(), $this->phone->RequiredErrorMessage));
+            if (!CheckEmail($this->email_address->FormValue)) {
+                $this->email_address->addErrorMessage($this->email_address->getErrorMessage(false));
             }
-        }
-        if ($this->department_id->Required) {
-            if (!$this->department_id->IsDetailKey && EmptyValue($this->department_id->FormValue)) {
-                $this->department_id->addErrorMessage(str_replace("%s", $this->department_id->caption(), $this->department_id->RequiredErrorMessage));
+            if (!$this->email_address->Raw && Config("REMOVE_XSS") && CheckUsername($this->email_address->FormValue)) {
+                $this->email_address->addErrorMessage($Language->phrase("InvalidUsernameChars"));
             }
-        }
-        if ($this->_password->Required) {
-            if (!$this->_password->IsDetailKey && EmptyValue($this->_password->FormValue)) {
-                $this->_password->addErrorMessage(str_replace("%s", $this->_password->caption(), $this->_password->RequiredErrorMessage));
+            if ($this->phone->Visible && $this->phone->Required) {
+                if (!$this->phone->IsDetailKey && EmptyValue($this->phone->FormValue)) {
+                    $this->phone->addErrorMessage(str_replace("%s", $this->phone->caption(), $this->phone->RequiredErrorMessage));
+                }
             }
-        }
-        if (!$this->_password->Raw && Config("REMOVE_XSS") && CheckPassword($this->_password->FormValue)) {
-            $this->_password->addErrorMessage($Language->phrase("InvalidPasswordChars"));
-        }
-        if ($this->biography->Required) {
-            if (!$this->biography->IsDetailKey && EmptyValue($this->biography->FormValue)) {
-                $this->biography->addErrorMessage(str_replace("%s", $this->biography->caption(), $this->biography->RequiredErrorMessage));
+            if ($this->department_id->Visible && $this->department_id->Required) {
+                if (!$this->department_id->IsDetailKey && EmptyValue($this->department_id->FormValue)) {
+                    $this->department_id->addErrorMessage(str_replace("%s", $this->department_id->caption(), $this->department_id->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->role_id->Required) {
-            if ($Security->canAdmin() && !$this->role_id->IsDetailKey && EmptyValue($this->role_id->FormValue)) {
-                $this->role_id->addErrorMessage(str_replace("%s", $this->role_id->caption(), $this->role_id->RequiredErrorMessage));
+            if ($this->_password->Visible && $this->_password->Required) {
+                if (!$this->_password->IsDetailKey && EmptyValue($this->_password->FormValue)) {
+                    $this->_password->addErrorMessage(str_replace("%s", $this->_password->caption(), $this->_password->RequiredErrorMessage));
+                }
             }
-        }
+            if (!$this->_password->Raw && Config("REMOVE_XSS") && CheckPassword($this->_password->FormValue)) {
+                $this->_password->addErrorMessage($Language->phrase("InvalidPasswordChars"));
+            }
+            if ($this->biography->Visible && $this->biography->Required) {
+                if (!$this->biography->IsDetailKey && EmptyValue($this->biography->FormValue)) {
+                    $this->biography->addErrorMessage(str_replace("%s", $this->biography->caption(), $this->biography->RequiredErrorMessage));
+                }
+            }
+            if ($this->role_id->Visible && $this->role_id->Required) {
+                if ($Security->canAdmin() && !$this->role_id->IsDetailKey && EmptyValue($this->role_id->FormValue)) {
+                    $this->role_id->addErrorMessage(str_replace("%s", $this->role_id->caption(), $this->role_id->RequiredErrorMessage));
+                }
+            }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -1311,46 +1330,8 @@ class JdhUsersAdd extends JdhUsers
     {
         global $Language, $Security;
 
-        // Set new row
-        $rsnew = [];
-
-        // photo
-        if ($this->photo->Visible && !$this->photo->Upload->KeepFile) {
-            if ($this->photo->Upload->Value === null) {
-                $rsnew['photo'] = null;
-            } else {
-                $rsnew['photo'] = $this->photo->Upload->Value;
-            }
-        }
-
-        // first_name
-        $this->first_name->setDbValueDef($rsnew, $this->first_name->CurrentValue, "", false);
-
-        // last_name
-        $this->last_name->setDbValueDef($rsnew, $this->last_name->CurrentValue, "", false);
-
-        // national_id
-        $this->national_id->setDbValueDef($rsnew, $this->national_id->CurrentValue, null, false);
-
-        // email_address
-        $this->email_address->setDbValueDef($rsnew, $this->email_address->CurrentValue, "", false);
-
-        // phone
-        $this->phone->setDbValueDef($rsnew, $this->phone->CurrentValue, "", false);
-
-        // department_id
-        $this->department_id->setDbValueDef($rsnew, $this->department_id->CurrentValue, 0, false);
-
-        // password
-        $this->_password->setDbValueDef($rsnew, $this->_password->CurrentValue, "", false);
-
-        // biography
-        $this->biography->setDbValueDef($rsnew, $this->biography->CurrentValue, "", false);
-
-        // role_id
-        if ($Security->canAdmin()) { // System admin
-            $this->role_id->setDbValueDef($rsnew, $this->role_id->CurrentValue, 0, false);
-        }
+        // Get new row
+        $rsnew = $this->getAddRow();
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -1392,6 +1373,94 @@ class JdhUsersAdd extends JdhUsers
         return $addRow;
     }
 
+    /**
+     * Get add row
+     *
+     * @return array
+     */
+    protected function getAddRow()
+    {
+        global $Security;
+        $rsnew = [];
+
+        // photo
+        if ($this->photo->Visible && !$this->photo->Upload->KeepFile) {
+            if ($this->photo->Upload->Value === null) {
+                $rsnew['photo'] = null;
+            } else {
+                $rsnew['photo'] = $this->photo->Upload->Value;
+            }
+        }
+
+        // first_name
+        $this->first_name->setDbValueDef($rsnew, $this->first_name->CurrentValue, false);
+
+        // last_name
+        $this->last_name->setDbValueDef($rsnew, $this->last_name->CurrentValue, false);
+
+        // national_id
+        $this->national_id->setDbValueDef($rsnew, $this->national_id->CurrentValue, false);
+
+        // email_address
+        $this->email_address->setDbValueDef($rsnew, $this->email_address->CurrentValue, false);
+
+        // phone
+        $this->phone->setDbValueDef($rsnew, $this->phone->CurrentValue, false);
+
+        // department_id
+        $this->department_id->setDbValueDef($rsnew, $this->department_id->CurrentValue, false);
+
+        // password
+        $this->_password->setDbValueDef($rsnew, $this->_password->CurrentValue, false);
+
+        // biography
+        $this->biography->setDbValueDef($rsnew, $this->biography->CurrentValue, false);
+
+        // role_id
+        if ($Security->canAdmin()) { // System admin
+            $this->role_id->setDbValueDef($rsnew, $this->role_id->CurrentValue, false);
+        }
+        return $rsnew;
+    }
+
+    /**
+     * Restore add form from row
+     * @param array $row Row
+     */
+    protected function restoreAddFormFromRow($row)
+    {
+        if (isset($row['photo'])) { // photo
+            $this->photo->setFormValue($row['photo']);
+        }
+        if (isset($row['first_name'])) { // first_name
+            $this->first_name->setFormValue($row['first_name']);
+        }
+        if (isset($row['last_name'])) { // last_name
+            $this->last_name->setFormValue($row['last_name']);
+        }
+        if (isset($row['national_id'])) { // national_id
+            $this->national_id->setFormValue($row['national_id']);
+        }
+        if (isset($row['email_address'])) { // email_address
+            $this->email_address->setFormValue($row['email_address']);
+        }
+        if (isset($row['phone'])) { // phone
+            $this->phone->setFormValue($row['phone']);
+        }
+        if (isset($row['department_id'])) { // department_id
+            $this->department_id->setFormValue($row['department_id']);
+        }
+        if (isset($row['password'])) { // password
+            $this->_password->setFormValue($row['password']);
+        }
+        if (isset($row['biography'])) { // biography
+            $this->biography->setFormValue($row['biography']);
+        }
+        if (isset($row['role_id'])) { // role_id
+            $this->role_id->setFormValue($row['role_id']);
+        }
+    }
+
     // Set up Breadcrumb
     protected function setupBreadcrumb()
     {
@@ -1406,7 +1475,7 @@ class JdhUsersAdd extends JdhUsers
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -1429,7 +1498,7 @@ class JdhUsersAdd extends JdhUsers
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -1472,11 +1541,11 @@ class JdhUsersAdd extends JdhUsers
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhBedsAdd = &$Page;
@@ -60,7 +60,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_bedsadd" id="fjdh_bedsadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_bedsadd" id="fjdh_bedsadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -82,7 +82,9 @@ $Page->showMessage();
         id="x_facility_id"
         name="x_facility_id"
         class="form-select ew-select<?= $Page->facility_id->isInvalidClass() ?>"
+        <?php if (!$Page->facility_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_bedsadd_x_facility_id"
+        <?php } ?>
         data-table="jdh_beds"
         data-field="x_facility_id"
         data-value-separator="<?= $Page->facility_id->displayValueSeparatorAttribute() ?>"
@@ -94,10 +96,13 @@ $Page->showMessage();
     <?= $Page->facility_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->facility_id->getErrorMessage() ?></div>
 <?= $Page->facility_id->Lookup->getParamTag($Page, "p_x_facility_id") ?>
+<?php if (!$Page->facility_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_bedsadd", function() {
     var options = { name: "x_facility_id", selectId: "fjdh_bedsadd_x_facility_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_bedsadd.lists.facility_id?.lookupOptions.length) {
@@ -110,6 +115,7 @@ loadjs.ready("fjdh_bedsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -123,7 +129,9 @@ loadjs.ready("fjdh_bedsadd", function() {
         id="x_ward_id"
         name="x_ward_id"
         class="form-select ew-select<?= $Page->ward_id->isInvalidClass() ?>"
+        <?php if (!$Page->ward_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_bedsadd_x_ward_id"
+        <?php } ?>
         data-table="jdh_beds"
         data-field="x_ward_id"
         data-value-separator="<?= $Page->ward_id->displayValueSeparatorAttribute() ?>"
@@ -134,10 +142,13 @@ loadjs.ready("fjdh_bedsadd", function() {
     <?= $Page->ward_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->ward_id->getErrorMessage() ?></div>
 <?= $Page->ward_id->Lookup->getParamTag($Page, "p_x_ward_id") ?>
+<?php if (!$Page->ward_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_bedsadd", function() {
     var options = { name: "x_ward_id", selectId: "fjdh_bedsadd_x_ward_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_bedsadd.lists.ward_id?.lookupOptions.length) {
@@ -150,6 +161,7 @@ loadjs.ready("fjdh_bedsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>

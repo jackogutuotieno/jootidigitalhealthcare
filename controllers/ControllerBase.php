@@ -1,8 +1,7 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use Slim\Exception\HttpNotFoundException;
@@ -10,24 +9,12 @@ use Slim\Exception\HttpNotFoundException;
 /**
  * Controller base class
  */
-class ControllerBase
+class ControllerBase extends AbstractController
 {
-    protected $container;
-
-    // Constructor
-    public function __construct(ContainerInterface $container)
-    {
-        $this->container = $container;
-    }
-
     // Run page
     protected function runPage(Request $request, Response $response, array $args, string $pageName, string $viewName = null, bool $useLayout = true): Response
     {
-        global $RouteValues;
-
-        // Route values
-        // Note: $RouteValues[0] set up in PermissionMiddleWare
-        $RouteValues = array_merge($RouteValues, $args, array_values($args));
+        $this->setup($request, $response);
 
         // Generate new CSRF token
         GenerateCsrf();
@@ -35,9 +22,6 @@ class ControllerBase
         // Create page
         $pageClass = PROJECT_NAMESPACE . $pageName;
         if (class_exists($pageClass)) {
-            // Set up response object
-            $GLOBALS["Response"] = &$response; // Note: global $Response does not work
-
             // Create page object
             $page = new $pageClass();
             $GLOBALS["Page"] = &$page;
@@ -51,7 +35,6 @@ class ControllerBase
 
             // Render page if not terminated
             if (!$page->isTerminated()) {
-                $view = $this->container->get("view");
                 if (
                     !$page->UseLayout || // No layout
                     property_exists($page, "IsModal") && $page->IsModal || // Modal
@@ -59,6 +42,10 @@ class ControllerBase
                 ) { // Partial view
                     $useLayout = false;
                 }
+                if ($request->getParam("export") !== null && $request->getParam("custom") !== null) { // Export custom template
+                    $useLayout = true; // Require scripts
+                }
+                $view = $this->container->get("app.view");
                 if ($useLayout) {
                     $view->setLayout("layout.php");
                 }
@@ -94,13 +81,7 @@ class ControllerBase
     // Run chart
     protected function runChart(Request $request, Response $response, array $args, string $pageName, string $chartVar): Response
     {
-        global $RouteValues;
-
-        // Route values
-        // Note:
-        // - $RouteValues[0] set up in PermissionMiddleWare
-        // - $chartVar in Route(1)
-        $RouteValues = array_merge($RouteValues, [$chartVar], $args, array_values($args));
+        $this->setup($request, $response);
 
         // Generate new CSRF token
         GenerateCsrf();
@@ -108,9 +89,6 @@ class ControllerBase
         // Create page
         $pageClass = PROJECT_NAMESPACE . $pageName;
         if (class_exists($pageClass)) {
-            // Set up response object
-            $GLOBALS["Response"] = &$response; // Note: global $Response does not work
-
             // Create page object
             $page = new $pageClass();
             $GLOBALS["Page"] = &$page;

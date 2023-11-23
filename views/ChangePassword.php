@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $ChangePassword = &$Page;
@@ -71,7 +71,7 @@ loadjs.ready(["wrapper", "head"], function() {
     loadjs.done(form.id);
 });
 </script>
-<form name="fchange_password" id="fchange_password" class="ew-form ew-change-pwd-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fchange_password" id="fchange_password" class="ew-form ew-change-pwd-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
     <?php if (Config("CHECK_TOKEN")) { ?>
     <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
     <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -93,8 +93,8 @@ loadjs.ready(["wrapper", "head"], function() {
             <button type="button" class="btn btn-default ew-toggle-password rounded-end" data-ew-action="password"><i class="fa-solid fa-eye"></i></button>
         </div>
         <div class="invalid-feedback"><?= $Page->NewPassword->getErrorMessage() ?></div>
-        <div class="progress ew-password-strength-bar form-text mt-1 d-none" id="pst_<?= $Page->NewPassword->FieldVar ?>">
-            <div class="progress-bar" role="progressbar"></div>
+        <div class="progress ew-password-strength-bar form-text mt-1 d-none" id="pst_<?= $Page->NewPassword->FieldVar ?>" role="progressbar">
+            <div class="progress-bar"></div>
         </div>
     </div>
     <div class="row gx-0">

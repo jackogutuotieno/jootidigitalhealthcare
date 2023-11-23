@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhVitalsList = &$Page;
@@ -30,8 +30,8 @@ loadjs.ready(["wrapper", "head"], function () {
 </script>
 <script>
 window.Tabulator || loadjs([
-    ew.PATH_BASE + "js/tabulator.min.js?v=19.0.15",
-    ew.PATH_BASE + "css/<?= CssFile("tabulator_bootstrap5.css") ?>?v=19.0.15"
+    ew.PATH_BASE + "js/tabulator.min.js?v=24.4.0",
+    ew.PATH_BASE + "css/<?= CssFile("tabulator_bootstrap5.css", false) ?>?v=24.4.0"
 ], "import");
 </script>
 <script>
@@ -65,9 +65,8 @@ if ($Page->DbMasterFilter != "" && $Page->getCurrentMasterTable() == "jdh_patien
 }
 ?>
 <?php } ?>
-<?php if ($Security->canSearch()) { ?>
-<?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
-<form name="fjdh_vitalssrch" id="fjdh_vitalssrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="on">
+<?php if (!$Page->IsModal) { ?>
+<form name="fjdh_vitalssrch" id="fjdh_vitalssrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="off">
 <div id="fjdh_vitalssrch_search_panel" class="mb-2 mb-sm-0 <?= $Page->SearchPanelClass ?>"><!-- .ew-search-panel -->
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
@@ -99,7 +98,8 @@ loadjs.ready(["wrapper", "head"], function () {
 });
 </script>
 <input type="hidden" name="cmd" value="search">
-<input type="hidden" name="t" value="jdh_vitals">
+<?php if ($Security->canSearch()) { ?>
+<?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
 <div class="ew-extended-search container-fluid ps-2">
 <!-- template for quick search in navbar -->
 <script id="navbar-basic-search" type="text/html" class="ew-js-template" data-name="search" data-seq="10" data-data="menu" data-target="#ew-navbar-end" data-method="prependTo">
@@ -131,19 +131,23 @@ loadjs.ready(["wrapper", "head"], function () {
     </li>
 </script>
 </div><!-- /.ew-extended-search -->
+<?php } ?>
+<?php } ?>
 </div><!-- /.ew-search-panel -->
 </form>
-<?php } ?>
 <?php } ?>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="list<?= ($Page->TotalRecords == 0 && !$Page->isAdd()) ? " ew-no-record" : "" ?>">
+<div id="ew-header-options">
+<?php $Page->HeaderOptions?->render("body") ?>
+</div>
 <div id="ew-list">
 <?php if ($Page->TotalRecords > 0 || $Page->CurrentAction) { ?>
 <div class="card ew-card ew-grid<?= $Page->isAddOrEdit() ? " ew-grid-add-edit" : "" ?> <?= $Page->TableGridClass ?>">
-<form name="<?= $Page->FormName ?>" id="<?= $Page->FormName ?>" class="ew-form ew-list-form" action="<?= $Page->PageAction ?>" method="post" novalidate autocomplete="on">
+<form name="<?= $Page->FormName ?>" id="<?= $Page->FormName ?>" class="ew-form ew-list-form" action="<?= $Page->PageAction ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -163,7 +167,7 @@ $Page->showMessage();
     <tr class="ew-table-header">
 <?php
 // Header row
-$Page->RowType = ROWTYPE_HEADER;
+$Page->RowType = RowType::HEADER;
 
 // Render list options
 $Page->renderListOptions();
@@ -216,7 +220,15 @@ $Page->ListOptions->render("header", "right");
 <tbody data-page="<?= $Page->getPageNumber() ?>">
 <?php
 $Page->setupGrid();
-while ($Page->RecordCount < $Page->StopRecord) {
+while ($Page->RecordCount < $Page->StopRecord || $Page->RowIndex === '$rowindex$') {
+    if (
+        $Page->CurrentRow !== false &&
+        $Page->RowIndex !== '$rowindex$' &&
+        (!$Page->isGridAdd() || $Page->CurrentMode == "copy") &&
+        (!(($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0))
+    ) {
+        $Page->fetch();
+    }
     $Page->RecordCount++;
     if ($Page->RecordCount >= $Page->StartRecord) {
         $Page->setupRow();
@@ -228,7 +240,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
     <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_patient_id" class="el_jdh_vitals_patient_id">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_vitals_patient_id" class="el_jdh_vitals_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
@@ -236,7 +248,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->pressure->Visible) { // pressure ?>
         <td data-name="pressure"<?= $Page->pressure->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_pressure" class="el_jdh_vitals_pressure">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_vitals_pressure" class="el_jdh_vitals_pressure">
 <span<?= $Page->pressure->viewAttributes() ?>>
 <?= $Page->pressure->getViewValue() ?></span>
 </span>
@@ -244,7 +256,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->height->Visible) { // height ?>
         <td data-name="height"<?= $Page->height->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_height" class="el_jdh_vitals_height">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_vitals_height" class="el_jdh_vitals_height">
 <span<?= $Page->height->viewAttributes() ?>>
 <?= $Page->height->getViewValue() ?></span>
 </span>
@@ -252,7 +264,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->weight->Visible) { // weight ?>
         <td data-name="weight"<?= $Page->weight->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_weight" class="el_jdh_vitals_weight">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_vitals_weight" class="el_jdh_vitals_weight">
 <span<?= $Page->weight->viewAttributes() ?>>
 <?= $Page->weight->getViewValue() ?></span>
 </span>
@@ -260,7 +272,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->body_mass_index->Visible) { // body_mass_index ?>
         <td data-name="body_mass_index"<?= $Page->body_mass_index->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_body_mass_index" class="el_jdh_vitals_body_mass_index">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_vitals_body_mass_index" class="el_jdh_vitals_body_mass_index">
 <span<?= $Page->body_mass_index->viewAttributes() ?>>
 <?= $Page->body_mass_index->getViewValue() ?></span>
 </span>
@@ -268,7 +280,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->pulse_rate->Visible) { // pulse_rate ?>
         <td data-name="pulse_rate"<?= $Page->pulse_rate->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_pulse_rate" class="el_jdh_vitals_pulse_rate">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_vitals_pulse_rate" class="el_jdh_vitals_pulse_rate">
 <span<?= $Page->pulse_rate->viewAttributes() ?>>
 <?= $Page->pulse_rate->getViewValue() ?></span>
 </span>
@@ -276,7 +288,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->respiratory_rate->Visible) { // respiratory_rate ?>
         <td data-name="respiratory_rate"<?= $Page->respiratory_rate->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_respiratory_rate" class="el_jdh_vitals_respiratory_rate">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_vitals_respiratory_rate" class="el_jdh_vitals_respiratory_rate">
 <span<?= $Page->respiratory_rate->viewAttributes() ?>>
 <?= $Page->respiratory_rate->getViewValue() ?></span>
 </span>
@@ -284,7 +296,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->temperature->Visible) { // temperature ?>
         <td data-name="temperature"<?= $Page->temperature->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_temperature" class="el_jdh_vitals_temperature">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_vitals_temperature" class="el_jdh_vitals_temperature">
 <span<?= $Page->temperature->viewAttributes() ?>>
 <?= $Page->temperature->getViewValue() ?></span>
 </span>
@@ -292,7 +304,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->random_blood_sugar->Visible) { // random_blood_sugar ?>
         <td data-name="random_blood_sugar"<?= $Page->random_blood_sugar->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_random_blood_sugar" class="el_jdh_vitals_random_blood_sugar">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_vitals_random_blood_sugar" class="el_jdh_vitals_random_blood_sugar">
 <span<?= $Page->random_blood_sugar->viewAttributes() ?>>
 <?= $Page->random_blood_sugar->getViewValue() ?></span>
 </span>
@@ -300,7 +312,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->spo_2->Visible) { // spo_2 ?>
         <td data-name="spo_2"<?= $Page->spo_2->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_spo_2" class="el_jdh_vitals_spo_2">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_vitals_spo_2" class="el_jdh_vitals_spo_2">
 <span<?= $Page->spo_2->viewAttributes() ?>>
 <?= $Page->spo_2->getViewValue() ?></span>
 </span>
@@ -308,7 +320,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <td data-name="submission_date"<?= $Page->submission_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_submission_date" class="el_jdh_vitals_submission_date">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_vitals_submission_date" class="el_jdh_vitals_submission_date">
 <span<?= $Page->submission_date->viewAttributes() ?>>
 <?= $Page->submission_date->getViewValue() ?></span>
 </span>
@@ -316,7 +328,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->patient_status->Visible) { // patient_status ?>
         <td data-name="patient_status"<?= $Page->patient_status->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_patient_status" class="el_jdh_vitals_patient_status">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_vitals_patient_status" class="el_jdh_vitals_patient_status">
 <span<?= $Page->patient_status->viewAttributes() ?>>
 <?= $Page->patient_status->getViewValue() ?></span>
 </span>
@@ -329,8 +341,14 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
     </tr>
 <?php
     }
-    if (!$Page->isGridAdd()) {
-        $Page->Recordset->moveNext();
+
+    // Reset for template row
+    if ($Page->RowIndex === '$rowindex$') {
+        $Page->RowIndex = 0;
+    }
+    // Reset inline add/copy row
+    if (($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0) {
+        $Page->RowIndex = 1;
     }
 }
 ?>
@@ -343,10 +361,8 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
 <?php } ?>
 </form><!-- /.ew-list-form -->
 <?php
-// Close recordset
-if ($Page->Recordset) {
-    $Page->Recordset->close();
-}
+// Close result set
+$Page->Recordset?->free();
 ?>
 <?php if (!$Page->isExport()) { ?>
 <div class="card-footer ew-grid-lower-panel">
@@ -364,6 +380,9 @@ if ($Page->Recordset) {
 <?php $Page->OtherOptions->render("body") ?>
 </div>
 <?php } ?>
+</div>
+<div id="ew-footer-options">
+<?php $Page->FooterOptions?->render("body") ?>
 </div>
 </main>
 <?php

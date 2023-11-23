@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -96,7 +102,7 @@ class Login extends JdhUsers
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -106,7 +112,7 @@ class Login extends JdhUsers
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
     }
 
@@ -125,15 +131,15 @@ class Login extends JdhUsers
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_users)
-        if (!isset($GLOBALS["jdh_users"]) || get_class($GLOBALS["jdh_users"]) == PROJECT_NAMESPACE . "jdh_users") {
+        if (!isset($GLOBALS["jdh_users"]) || $GLOBALS["jdh_users"]::class == PROJECT_NAMESPACE . "jdh_users") {
             $GLOBALS["jdh_users"] = &$this;
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -149,7 +155,7 @@ class Login extends JdhUsers
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -198,13 +204,11 @@ class Login extends JdhUsers
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -222,7 +226,7 @@ class Login extends JdhUsers
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -250,6 +254,7 @@ class Login extends JdhUsers
     public $Password;
     public $LoginType;
     public $IsModal = false;
+    public $OffsetColumnClass = ""; // Override user table
 
     /**
      * Page run
@@ -258,8 +263,7 @@ class Login extends JdhUsers
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $Breadcrumb, $SkipHeaderFooter;
-        $this->OffsetColumnClass = ""; // Override user table
+        global $ExportType, $Language, $Security, $CurrentForm, $Breadcrumb, $SkipHeaderFooter;
 
         // Create Username/Password field object (used by validation only)
         $this->Username = new DbField("jdh_users", "username", "username", "username", "", 202, 255, -1, false, "", false, false, false);
@@ -280,10 +284,15 @@ class Login extends JdhUsers
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
         $this->CurrentAction = Param("action"); // Set up current action
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -294,8 +303,7 @@ class Login extends JdhUsers
         if ($this->IsModal) {
             $SkipHeaderFooter = true;
         }
-        $Breadcrumb = new Breadcrumb("index");
-        $Breadcrumb->add("login", "LoginPage", CurrentUrl(), "", "", true);
+        $Breadcrumb = Breadcrumb::create("index")->add("login", "LoginPage", CurrentUrl(), "", "", true);
         $this->Heading = $Language->phrase("LoginPage");
         $this->Username->setFormValue(""); // Initialize
         $this->Password->setFormValue("");
@@ -306,7 +314,7 @@ class Login extends JdhUsers
         }
 
         // Show messages
-        $flash = Container("flash");
+        $flash = Container("app.flash");
         if ($heading = $flash->getFirstMessage("heading")) {
             $this->setMessageHeading($heading);
         }
@@ -321,27 +329,29 @@ class Login extends JdhUsers
         }
 
         // Login
+        $provider = trim(RemoveXss(Get("provider") ?? Route("provider") ?? "")); // Get provider
         if (IsLoggingIn()) { // After changing password or authorized by 2FA
             $this->Username->setFormValue(Session(SESSION_USER_PROFILE_USER_NAME));
             $this->Password->setFormValue(Session(SESSION_USER_PROFILE_PASSWORD));
             $this->LoginType->setFormValue(Session(SESSION_USER_PROFILE_LOGIN_TYPE));
-            $validPwd = $Security->validateUser($this->Username->CurrentValue, $this->Password->CurrentValue, false);
+            $validPwd = $Security->validateUser($this->Username->CurrentValue, $this->Password->CurrentValue);
             if ($validPwd) {
                 $_SESSION[SESSION_USER_PROFILE_USER_NAME] = "";
                 $_SESSION[SESSION_USER_PROFILE_PASSWORD] = "";
                 $_SESSION[SESSION_USER_PROFILE_LOGIN_TYPE] = "";
                 $this->terminate($lastUrl); // Redirect to last page
+                RemoveCookie("LastUrl");
                 return;
             }
         } elseif (Config("USE_TWO_FACTOR_AUTHENTICATION") && IsLoggingIn2FA()) { // Logging in via 2FA, redirect
             $this->terminate("login2fa");
             return;
-        } elseif ($provider = trim(Get("provider") ?? Route("provider") ?? "")) { // OAuth provider
+        } elseif (!EmptyValue($provider)) { // External provider
             $provider = ucfirst(strtolower($provider)); // e.g. Google, Facebook
-            $validate = $Security->validateUser($this->Username->CurrentValue, $this->Password->CurrentValue, false, $provider); // Authenticate by provider
+            $validate = $Security->validateUser($this->Username->CurrentValue, $this->Password->CurrentValue, provider: $provider); // Authenticate by provider
             $validPwd = $validate;
             if ($validate) {
-                $this->Username->setFormValue($UserProfile->get("email") ?? $UserProfile->get("emailaddress"));
+                $this->Username->setFormValue(Profile()->email ?? "");
                 if (Config("DEBUG") && !$Security->isLoggedIn()) {
                     $validPwd = false;
                     $this->setFailureMessage(str_replace("%u", $this->Username->CurrentValue ?? "", $Language->phrase("UserNotFound"))); // Show debug message
@@ -356,12 +366,8 @@ class Login extends JdhUsers
             $Security->loadUserLevel(); // Load user level
             if ($Security->isLoggedIn()) {
                 $this->terminate($lastUrl); // Redirect to last page
+                RemoveCookie("LastUrl");
                 return;
-                if ($this->getFailureMessage() != "") { // Throw error
-                    $error = new \ErrorException($this->getFailureMessage(), 0, E_USER_WARNING);
-                    $this->clearFailureMessage();
-                    throw $error;
-                }
             }
             $validate = false;
             if (Post($this->Username->FieldVar) !== null) {
@@ -375,10 +381,8 @@ class Login extends JdhUsers
                 $this->LoginType->setQueryStringValue(strtolower(Get($this->LoginType->FieldVar, "")));
                 $validate = $this->validateForm();
             } else { // Restore settings
-                if (ReadCookie("Checksum") == strval(crc32(md5(Config("RANDOM_KEY"))))) {
-                    $this->Username->setFormValue(Decrypt(ReadCookie("Username")));
-                }
-                if (ReadCookie("AutoLogin") == "autologin") {
+                if ($jwt = ReadCookie("AutoLogin")) {
+                    $this->Username->setFormValue(DecodeJwt($jwt)["username"] ?? "");
                     $this->LoginType->setFormValue("a");
                 } else { // Restore settings
                     $this->LoginType->setFormValue("");
@@ -390,9 +394,10 @@ class Login extends JdhUsers
                 $_SESSION[SESSION_USER_PROFILE_LOGIN_TYPE] = $this->LoginType->CurrentValue; // Save login type
 
                 // Max login attempt checking
-                if ($UserProfile->exceedLoginRetry($this->Username->CurrentValue)) {
+                Profile()->setUserName($this->Username->CurrentValue)->loadFromStorage();
+                if (Profile()->exceedLoginRetry()) {
                     $validate = false;
-                    $this->setFailureMessage(str_replace("%t", Config("USER_PROFILE_RETRY_LOCKOUT"), $Language->phrase("ExceedMaxRetry")));
+                    $this->setFailureMessage(str_replace("%t", UserProfile::$RETRY_LOCKOUT, $Language->phrase("ExceedMaxRetry")));
                 }
             }
             $validPwd = false;
@@ -400,23 +405,44 @@ class Login extends JdhUsers
                 // Call Logging In event
                 $validate = $this->userLoggingIn($this->Username->CurrentValue, $this->Password->CurrentValue);
                 if ($validate) {
-                    $validPwd = $Security->validateUser($this->Username->CurrentValue, $this->Password->CurrentValue, false); // Manual login
+                    $validPwd = $Security->validateUser($this->Username->CurrentValue, $this->Password->CurrentValue); // Manual login
                     if (!$validPwd) {
                         $this->Username->setFormValue(""); // Clear login name
                         $this->Username->addErrorMessage($Language->phrase("InvalidUidPwd")); // Invalid user name or password
                         $this->Password->addErrorMessage($Language->phrase("InvalidUidPwd")); // Invalid user name or password
+                    }
+                    $profile = Profile();
 
                     // Two factor authentication enabled (go to 2fa page)
-                    } elseif (!IsSysAdmin() && Config("USE_TWO_FACTOR_AUTHENTICATION") && (Config("FORCE_TWO_FACTOR_AUTHENTICATION") || $UserProfile->hasUserSecret($this->Username->CurrentValue, true))) {
-                        $_SESSION[SESSION_STATUS] = "loggingin2fa";
-                        $_SESSION[SESSION_USER_PROFILE_USER_NAME] = $this->Username->CurrentValue;
-                        $_SESSION[SESSION_USER_PROFILE_PASSWORD] = $this->Password->CurrentValue;
-                        $_SESSION[SESSION_USER_PROFILE_LOGIN_TYPE] = $this->LoginType->CurrentValue;
-                        $this->IsModal = false; // Redirect
-                        if (in_array(strtolower(Config("TWO_FACTOR_AUTHENTICATION_TYPE")), ["email", "sms"]) && $UserProfile->hasUserSecret($this->Username->CurrentValue, true)) { // Send one time password if verified
-                            TwoFactorAuthenticationClass()::sendOneTimePassword($this->Username->CurrentValue);
+                    $sendOtp = in_array(strtolower(Config("TWO_FACTOR_AUTHENTICATION_TYPE")), ["email", "sms"]);
+                    if (
+                        $validPwd &&
+                        (!IsSysAdmin() || Config("OTP_ONLY") && $sendOtp && !EmptyValue(Config("ADMIN_OTP_ACCOUNT"))) && // Non-Admin or Admin + Disable password checking + send OTP
+                        Config("USE_TWO_FACTOR_AUTHENTICATION") &&
+                        (Config("FORCE_TWO_FACTOR_AUTHENTICATION") || $profile->hasUserSecret(true))
+                    ) {
+                        if ($sendOtp) { // Send one time password
+                            $_SESSION[SESSION_USER_PROFILE_RECORD] = IsSysAdmin() // System admin, use session for profile field
+                                ? (strtolower(Config("TWO_FACTOR_AUTHENTICATION_TYPE")) == "email"
+                                    ? [SYS_ADMIN_EMAIL_ADDRESS => Config("ADMIN_OTP_ACCOUNT")]
+                                    : [SYS_ADMIN_PHONE_NUMBER => Config("ADMIN_OTP_ACCOUNT")])
+                                : "";
+                            $res = TwoFactorAuthenticationClass()::sendOneTimePassword($this->Username->CurrentValue);
+                        } else {
+                            $res = true;
                         }
-                        $this->terminate("login2fa?" . Config("PAGE_LAYOUT") . "=false");
+                        if ($res === true) { // Go to 2FA page
+                            $_SESSION[SESSION_STATUS] = "loggingin2fa";
+                            $_SESSION[SESSION_USER_PROFILE_USER_NAME] = $this->Username->CurrentValue;
+                            $_SESSION[SESSION_USER_PROFILE_PASSWORD] = $this->Password->CurrentValue;
+                            $_SESSION[SESSION_USER_PROFILE_LOGIN_TYPE] = $this->LoginType->CurrentValue;
+                            $this->IsModal = false; // Redirect
+                            $this->terminate("login2fa?" . Config("PAGE_LAYOUT") . "=false");
+                        } else {
+                            $this->setFailureMessage($res); // Show error message
+                            $Security->logoutUser(); // Logout user
+                            $validPwd = false; // Handle as invalid password
+                        }
                     }
                 } else {
                     if ($this->getFailureMessage() == "") {
@@ -428,25 +454,29 @@ class Login extends JdhUsers
 
         // After login
         if ($validPwd) {
-            // Write cookies
             if ($this->LoginType->CurrentValue == "a") { // Auto login
-                WriteCookie("AutoLogin", "autologin"); // Set autologin cookie
-                WriteCookie("Username", Encrypt($this->Username->CurrentValue)); // Set user name cookie
-                WriteCookie("Password", Encrypt($this->Password->CurrentValue)); // Set password cookie
-                WriteCookie('Checksum', crc32(md5(Config("RANDOM_KEY"))));
+                WriteCookie(
+                    "AutoLogin",
+                    CreateJwt(["username" => $this->Username->CurrentValue, "autologin" => true], Config("REMEMBER_ME_EXPIRY_TIME")),
+                    time() + Config("REMEMBER_ME_EXPIRY_TIME")
+                ); // Write cookie
             } else {
-                WriteCookie("AutoLogin", ""); // Clear auto login cookie
+                RemoveCookie("AutoLogin"); // Clear cookie
             }
             $this->writeAuditTrailOnLogin();
 
             // Call loggedin event
             $this->userLoggedIn($this->Username->CurrentValue);
 
+            // External provider, just redirect
+            if (!EmptyValue($provider)) {
+                $this->IsModal = false;
             // Two factor authentication enabled (login directly), return JSON
-            if (Config("USE_TWO_FACTOR_AUTHENTICATION")) {
+            } elseif (Config("USE_TWO_FACTOR_AUTHENTICATION")) {
                 $this->IsModal = true;
             }
             $this->terminate($lastUrl); // Return to last accessed URL
+            RemoveCookie("LastUrl");
             return;
         } elseif (!EmptyValue($this->Username->CurrentValue) && !EmptyValue($this->Password->CurrentValue)) {
             // Call user login error event
@@ -470,7 +500,7 @@ class Login extends JdhUsers
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -498,7 +528,7 @@ class Login extends JdhUsers
             $this->Username->addErrorMessage($Language->phrase("EnterUserName"));
             $validateForm = false;
         }
-        if (EmptyValue($this->Password->CurrentValue)) {
+        if (EmptyValue($this->Password->CurrentValue) && !CONFIG("OTP_ONLY")) { // Ignore if password checking disabled
             $this->Password->addErrorMessage($Language->phrase("EnterPassword"));
             $validateForm = false;
         }
@@ -516,8 +546,8 @@ class Login extends JdhUsers
     protected function writeAuditTrailOnLogin()
     {
         global $Language;
-        $usr = CurrentUser();
-        WriteAuditLog($usr, $Language->phrase("AuditTrailLogin"), CurrentUserIP(), "", "", "", "");
+        $usr = CurrentUserIdentifier();
+        WriteAuditLog($usr, $Language->phrase("AuditTrailLogin"), CurrentUserIP());
     }
 
     // Page Load event
@@ -544,7 +574,7 @@ class Login extends JdhUsers
     public function messageShowing(&$msg, $type)
     {
         // Example:
-        //if ($type == 'success') $msg = "your success message";
+        //if ($type == "success") $msg = "your success message";
     }
 
     // Page Render event

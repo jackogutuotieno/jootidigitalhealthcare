@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\Query\QueryBuilder;
 
@@ -9,6 +9,8 @@ use Doctrine\DBAL\Query\QueryBuilder;
  */
 class Lookup
 {
+    public static $ModalLookupSearchType = "AND"; // "AND" or "OR" or "=" or ""
+    public static $ModalLookupSearchOperator = "LIKE"; // "LIKE" or "STARTS WITH" or "ENDS WITH"
     public $LookupType = "";
     public $Options = null;
     public $Template = "";
@@ -27,7 +29,7 @@ class Lookup
     public $RenderViewFunc = "renderListRow";
     public $RenderEditFunc = "renderEditRow";
     public $LinkTable = "";
-    public $Name = "";
+    public $Field = null;
     public $Distinct = false;
     public $LinkField = "";
     public $DisplayFields = [];
@@ -38,6 +40,7 @@ class Lookup
     public $FilterFieldVars = [];
     public $AutoFillSourceFields = [];
     public $AutoFillTargetFields = [];
+    public $IsAutoFillTargetField = false;
     public $Table = null;
     public $FormatAutoFill = false;
     public $UseParentFilter = false;
@@ -45,12 +48,11 @@ class Lookup
     private $rendering = false;
     private $cache; // Doctrine cache
     private $cacheProfile; // Doctrine cache profile
-    public static $ModalLookupSearchType = "AND";
 
     /**
      * Constructor for the Lookup class
      *
-     * @param string $name
+     * @param object $field
      * @param string $linkTable
      * @param bool $distinct
      * @param string $linkField
@@ -67,7 +69,7 @@ class Lookup
      * @param string $template
      */
     public function __construct(
-        $name,
+        $field,
         $linkTable,
         $distinct,
         $linkField,
@@ -80,11 +82,12 @@ class Lookup
         $filterFieldVars = [],
         $autoFillSourceFields = [],
         $autoFillTargetFields = [],
+        $isAutoFillTargetField = false,
         $orderBy = "",
         $template = "",
         $searchExpression = ""
     ) {
-        $this->Name = $name;
+        $this->Field = $field;
         $this->LinkTable = $linkTable;
         $this->Distinct = $distinct;
         $this->LinkField = $linkField;
@@ -99,11 +102,12 @@ class Lookup
         $this->FilterFieldVars = $filterFieldVars;
         $this->AutoFillSourceFields = $autoFillSourceFields;
         $this->AutoFillTargetFields = $autoFillTargetFields;
+        $this->IsAutoFillTargetField = $isAutoFillTargetField;
         $this->UserOrderBy = $orderBy;
         $this->Template = $template;
         $this->SearchExpression = $searchExpression;
-        $this->cache = new ArrayCache();
-        $this->cacheProfile = new \Doctrine\DBAL\Cache\QueryCacheProfile(0, $name);
+        $this->cache = new \Symfony\Component\Cache\Adapter\ArrayAdapter();
+        $this->cacheProfile = new \Doctrine\DBAL\Cache\QueryCacheProfile(0, $this->Field->Name);
         $this->LookupAllDisplayFields = Config("LOOKUP_ALL_DISPLAY_FIELDS");
     }
 
@@ -125,16 +129,14 @@ class Lookup
         if ($clearUserFilter) {
             $this->UserFilter = "";
         }
-        if ($page !== null) {
-            $filter = $this->getUserFilter($useParentFilter);
-            $newFilter = $filter;
-            $fld = $page->Fields[$this->Name] ?? null;
-            if ($fld && method_exists($page, "lookupSelecting")) {
-                $page->lookupSelecting($fld, $newFilter); // Call Lookup Selecting
-            }
-            if ($filter != $newFilter) { // Filter changed
-                AddFilter($this->UserFilter, $newFilter);
-            }
+        $filter = $this->getWhere($useParentFilter);
+        $newFilter = $filter;
+        $fld = $page?->Fields[$this->Field->Name] ?? null;
+        if ($fld != null && method_exists($page, "lookupSelecting")) {
+            $page->lookupSelecting($fld, $newFilter); // Call Lookup Selecting
+        }
+        if ($filter != $newFilter) { // Filter changed
+            AddFilter($this->UserFilter, $newFilter);
         }
         if ($lookupFilter != "") { // Add lookup filter as part of user filter
             AddFilter($this->UserFilter, $lookupFilter);
@@ -211,7 +213,7 @@ class Lookup
     {
         return [
             "page" => $page->PageObjName,
-            "field" => $this->Name,
+            "field" => $this->Field->Name,
             "linkField" => $this->LinkField,
             "displayFields" => $this->DisplayFields,
             "groupByField" => $this->GroupByField,
@@ -239,8 +241,10 @@ class Lookup
         // Get table object
         $tbl = $this->getTable();
 
-        // Check if lookup to report source table
-        $isReport = $page->TableType == "REPORT" && property_exists($page, "ReportSourceTable") && in_array($tbl->TableVar, [$page->ReportSourceTable, $page->TableVar]);
+        // Check if dashboard report / lookup to report source table
+        $isReport = $page->TableReportType == "dashboard"
+            ? ($tbl->TableType == "REPORT")
+            : ($page->TableType == "REPORT" && property_exists($page, "ReportSourceTable") && in_array($tbl->TableVar, [$page->ReportSourceTable, $page->TableVar]));
         $renderer = $isReport ? $page : $tbl;
 
         // Update expression for grouping fields (reports)
@@ -302,7 +306,7 @@ class Lookup
                 }
                 if (SameText($this->LookupType, "autofill")) {
                     if ($this->FormatAutoFill) { // Format auto fill
-                        $renderer->RowType = ROWTYPE_EDIT;
+                        $renderer->RowType = RowType::EDIT;
                         $fn = $this->RenderEditFunc;
                         $render = method_exists($renderer, $fn);
                         if ($render) {
@@ -370,10 +374,10 @@ class Lookup
             return $row;
         }
 
-        // Use table as renderer if not defined
+        // Use table as renderer if not defined / renderer is dashboard
         $sameTable = false;
         $tbl = $this->getTable();
-        if ($renderer == null) {
+        if ($renderer == null || $renderer->PageID == "dashboard") {
             $renderer = $tbl;
         } elseif ($renderer->TableName == $tbl->TableName) {
             $sameTable = true; // Lookup table same as renderer table
@@ -387,7 +391,7 @@ class Lookup
         }
         $this->rendering = true;
 
-        // Set up DbValue / CurrentValue
+        // Set up DbValue/CurrentValue
         foreach ($this->DisplayFields as $index => $name) {
             $displayField = $renderer->Fields[$name] ?? null;
             if ($displayField) {
@@ -398,7 +402,7 @@ class Lookup
 
         // Render data
         $rowType = $renderer->RowType; // Save RowType
-        $renderer->RowType = ROWTYPE_VIEW;
+        $renderer->RowType = RowType::VIEW;
         $renderer->$fn();
         $renderer->RowType = $rowType; // Restore RowType
 
@@ -408,7 +412,8 @@ class Lookup
             if ($displayField) {
                 $sfx = $index > 0 ? $index + 1 : "";
                 $viewValue = $displayField->getViewValue();
-                if (!EmptyString($viewValue) && !($sameTable && $name == $this->Name && !in_array($displayField->DataType, [DATATYPE_DATE, DATATYPE_TIME]))) { // Make sure that ViewValue is not empty and not self lookup field (except Date/Time)
+                // Make sure that ViewValue is not empty and not self lookup field (except Date/Time) and not field with user values
+                if (!EmptyString($viewValue) && !($sameTable && $name == $this->Field->Name && !in_array($displayField->DataType, [DataType::DATE, DataType::TIME]) && $displayField->OptionCount == 0)) {
                     $row["df" . $sfx] = $viewValue;
                 }
             }
@@ -427,10 +432,15 @@ class Lookup
         if ($this->LinkTable == "") {
             return null;
         }
-        $this->Table = $this->Table ?? Container($this->LinkTable);
+        $this->Table ??= Container($this->LinkTable);
         return $this->Table;
     }
 
+    /**
+     * Has parent table
+     *
+     * @return bool
+     */
     public function hasParentTable()
     {
         if (is_array($this->ParentFields)) {
@@ -542,7 +552,7 @@ class Lookup
         if ($lookupCnt == 0) {
             return "";
         }
-        $queryBuilder->from($tbl->getSqlFrom());
+        $queryBuilder->resetQueryPart("from")->from($tbl->getSqlFrom());
 
         // User SELECT
         $select = "";
@@ -560,15 +570,19 @@ class Lookup
 
         // Set up current filter
         $cnt = count($this->FilterValues);
-        if ($cnt > 0) {
+        if ($cnt > 0 && !(SameText($this->LookupType, "updateoption") && $this->IsAutoFillTargetField)) { // Load all records if IsAutoFillTargetField
             $val = $this->FilterValues[0];
             if ($val != "") {
                 $val = strval($val);
-                AddFilter($where, $this->getFilter($linkField, "=", $val, $tbl->Dbid));
+                if ($linkField->DataType == DataType::GUID && !CheckGuid($val)) {
+                    AddFilter($where, "1=0"); // Disallow
+                } else {
+                    AddFilter($where, $this->getFilter($linkField, "=", $val, $tbl->Dbid));
+                }
             }
 
             // Set up parent filters
-            if (is_array($this->FilterFields) && $useParentFilter) {
+            if (is_array($this->FilterFields) && $useParentFilter && !($isUser && preg_match('/\{v(\d)\}/i', $this->UserFilter))) { // UserFilter does not contain ({v<n>})
                 $i = 1;
                 foreach ($this->FilterFields as $filterField => $filterOpr) {
                     if ($filterField != "") {
@@ -592,7 +606,7 @@ class Lookup
         if ($this->SearchValue != "") {
             // Normal autosuggest
             if (SameText($this->LookupType, "autosuggest") && !$this->LookupAllDisplayFields) {
-                AddFilter($where, $this->getAutoSuggestFilter($this->SearchValue));
+                AddFilter($where, $this->getAutoSuggestFilter($this->SearchValue, $tbl->Dbid));
             } else { // Use quick search logic
                 AddFilter($where, $this->getModalSearchFilter($this->SearchValue, $tbl->Dbid));
             }
@@ -605,7 +619,7 @@ class Lookup
 
         // User Filter
         if ($this->UserFilter != "" && $isUser) {
-            AddFilter($where, $this->UserFilter);
+            AddFilter($where, $this->getUserFilter());
         }
 
         // Set up ORDER BY
@@ -657,20 +671,43 @@ class Lookup
     }
 
     /**
+     * Get user filter
+     *
+     * @return string
+     */
+    protected function getUserFilter()
+    {
+        $filter = $this->UserFilter;
+        if (preg_match_all('/\{v(\d)\}/i', $filter, $matches, PREG_SET_ORDER)) { // Match {v<n>} to FilterValues
+            foreach ($matches as $match) {
+                $index = intval($match[1]);
+                $value = $this->FilterValues[$index] ?? null;
+                if (!EmptyValue($value)) { // Replace {v<n>}
+                    $filter = str_replace($match[0], AdjustSql($value, $this->getTable()->Dbid), $filter);
+                } else { // No filter value found, ignore filter
+                    Log("Value for {$match[0]} not found.");
+                    return "";
+                }
+            }
+        }
+        return $filter;
+    }
+
+    /**
      * Get filter
      *
      * @param DbField $fld Field Object
      * @param string $opr Search Operator
      * @param string $val Search Value
-     * @param string $dbid Database Id
+     * @param string $dbid Database ID
      * @return string Search Filter (SQL WHERE part)
      */
     protected function getFilter($fld, $opr, $val, $dbid)
     {
         $valid = $val != "";
         $where = "";
-        $ar = explode(Config("MULTIPLE_OPTION_SEPARATOR"), $val);
-        if ($fld->DataType == DATATYPE_NUMBER) { // Validate numeric fields
+        $ar = $this->Field->isMultiSelect() ? explode(Config("MULTIPLE_OPTION_SEPARATOR"), $val) : [$val];
+        if ($fld->DataType == DataType::NUMBER) { // Validate numeric fields
             foreach ($ar as $val) {
                 if (!is_numeric($val)) {
                     $valid = false;
@@ -680,7 +717,7 @@ class Lookup
         if ($valid) {
             if ($opr == "=") { // Use the IN operator
                 foreach ($ar as &$val) {
-                    $val = QuotedValue($val, $fld->DataType, $dbid);
+                    $val = QuotedValue($val, $fld, $dbid);
                 }
                 $where = $fld->Expression . " IN (" . implode(", ", $ar) . ")";
             } else { // Custom operator
@@ -688,28 +725,13 @@ class Lookup
                 foreach ($ar as $val) {
                     if (in_array($opr, ["LIKE", "NOT LIKE", "STARTS WITH", "ENDS WITH"])) {
                         $fldOpr = ($opr == "NOT LIKE") ? "NOT LIKE" : "LIKE";
-                        if (Config("REMOVE_XSS")) {
-                            $val = RemoveXss($val);
-                        }
-                        $val = AdjustSqlForLike($val, $dbid);
-                        if ($opr == "STARTS WITH") {
-                            $val .= "%";
-                        } elseif ($opr == "ENDS WITH") {
-                            $val = "%" . $val;
-                        } else {
-                            $val = "%" . $val . "%";
-                        }
-                        $val = ($dbtype == "MSSQL" ? "N'" : "'") . $val . "'";
-                        $where = LikeOrNotLike($fldOpr, $val, $dbid);
+                        $filter = LikeOrNotLike($fldOpr, QuotedValue(Wildcard($val, $opr), $fld, $dbid), $dbid);
                     } else {
                         $fldOpr = $opr;
-                        $val = QuotedValue($val, $fld->DataType, $dbid);
+                        $val = QuotedValue($val, $fld, $dbid);
                         $filter = $fld->Expression . $fldOpr . $val;
                     }
-                    if ($where != "") {
-                        $where .= " OR ";
-                    }
-                    $where .= $filter;
+                    AddFilter($where, $filter, "OR");
                 }
             }
         } else {
@@ -719,11 +741,11 @@ class Lookup
     }
 
     /**
-     * Get user filter
+     * Get Where part
      *
      * @return string
      */
-    protected function getUserFilter($useParentFilter = false)
+    protected function getWhere($useParentFilter = false)
     {
         return $this->getSqlPart("where", false, $useParentFilter);
     }
@@ -735,7 +757,7 @@ class Lookup
      * @param string $orderBy ORDER BY clause
      * @param int $pageSize
      * @param int $offset
-     * @return ResultStatement
+     * @return Result
      */
     protected function executeQuery($sql, $orderBy, $pageSize, $offset)
     {
@@ -754,7 +776,7 @@ class Lookup
         }
         $conn = $tbl->getConnection();
         $config = $conn->getConfiguration();
-        $config->setResultCacheImpl($this->cache);
+        $config->setResultCache($this->cache);
         return $conn->executeCacheQuery($sql, [], [], $this->cacheProfile);
     }
 
@@ -781,9 +803,9 @@ class Lookup
      * @param string $sv Search value
      * @return string
      */
-    protected function getAutoSuggestFilter($sv)
+    protected function getAutoSuggestFilter($sv, $dbid)
     {
-        return $this->getSearchExpression() . Like("'" . AdjustSqlForLike($sv, $this->Table->Dbid) . "%'");
+        return $this->getSearchExpression() . Like(QuotedValue(Wildcard($sv, "STARTS WITH"), DataType::STRING, $dbid), $dbid);
     }
 
     /**
@@ -804,7 +826,7 @@ class Lookup
         $filter = "";
         foreach ($ar as $keyword) {
             if ($keyword != "") {
-                $thisFilter = $this->getSearchExpression() . Like("'%" . AdjustSqlForLike($keyword, $dbid) . "%'");
+                $thisFilter = $this->getSearchExpression() . Like(QuotedValue(Wildcard($keyword, self::$ModalLookupSearchOperator), DataType::STRING, $dbid), $dbid);
                 AddFilter($filter, $thisFilter, $searchType);
             }
         }

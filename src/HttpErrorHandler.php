@@ -1,9 +1,9 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Slim\Routing\RouteContext;
-use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ResponseInterface as Response;
 use Slim\Exception\HttpBadRequestException;
 use Slim\Exception\HttpException;
 use Slim\Exception\HttpForbiddenException;
@@ -18,21 +18,60 @@ use Throwable;
 class HttpErrorHandler extends ErrorHandler
 {
     protected $error;
-    public $ShowSourceCode = false;
-    public $LayoutTemplate = "";
-    public $ErrorTemplate = "";
+    protected $layoutTemplate = "";
+    protected $errorTemplate = "";
+    protected $showSourceCode = false;
+
+    // Get layout template
+    public function getLayoutTemplate()
+    {
+        return $this->layoutTemplate;
+    }
+
+    // Set layout template
+    public function setLayoutTemplate($template)
+    {
+        $this->layoutTemplate = $template;
+        return $this;
+    }
+
+    // Get error template
+    public function getErrorTemplate()
+    {
+        return $this->errorTemplate;
+    }
+
+    // Set error template
+    public function setErrorTemplate($template)
+    {
+        $this->errorTemplate = $template;
+        return $this;
+    }
+
+    // Get show source code
+    public function getShowSourceCode()
+    {
+        return $this->showSourceCode;
+    }
+
+    // Set show source code
+    public function setShowSourceCode($value)
+    {
+        $this->showSourceCode = $value;
+        return $this;
+    }
 
     // Log error
     protected function logError(string $err): void
     {
-        Log($err);
+        LogError($err);
     }
 
     // Set error
     protected function setError($exception)
     {
         global $Language;
-        $Language = Container("language");
+        $Language = Container("app.language");
         $this->error = [
             "statusCode" => 200,
             "error" => [
@@ -50,7 +89,8 @@ class HttpErrorHandler extends ErrorHandler
                 $exception instanceof HttpForbiddenException || // 403
                 $exception instanceof HttpBadRequestException || // 400
                 $exception instanceof HttpInternalServerErrorException || // 500
-                $exception instanceof HttpNotImplementedException // 501
+                $exception instanceof HttpNotImplementedException || // 501
+                $exception instanceof HttpServiceUnavailableException // 503
             ) {
                 $statusCode = $exception->getCode();
                 $type = $Language->phrase($statusCode);
@@ -65,30 +105,35 @@ class HttpErrorHandler extends ErrorHandler
                 ];
             }
         }
-        if (!($exception instanceof HttpException) && ($exception instanceof Exception || $exception instanceof Throwable)) {
-            if ($exception instanceof \ErrorException) {
-                $severity = $exception->getSeverity();
-                $this->error["error"]["class"] = "text-warning";
-                if ($severity === E_WARNING) {
-                    $this->error["error"]["type"] = $Language->phrase("Warning");
-                } elseif ($severity === E_NOTICE) {
-                    $this->error["error"]["type"] = $Language->phrase("Notice");
+        if (IsDebug() || IsDevelopment()) {
+            if (!($exception instanceof HttpException) && ($exception instanceof Exception || $exception instanceof Throwable)) {
+                if ($exception instanceof \ErrorException) {
+                    $severity = $exception->getSeverity();
+                    $this->error["error"]["class"] = "text-warning";
+                    if ($severity === E_WARNING) {
+                        $this->error["error"]["type"] = $Language->phrase("Warning");
+                    } elseif ($severity === E_NOTICE) {
+                        $this->error["error"]["type"] = $Language->phrase("Notice");
+                    }
                 }
+                $description = $exception->getFile() . "(" . $exception->getLine() . "): " . $exception->getMessage();
+                $this->error["error"]["description"] = $description;
             }
-            $description = $exception->getFile() . "(" . $exception->getLine() . "): " . $exception->getMessage();
-            $this->error["error"]["description"] = $description;
-        }
-        if ($this->displayErrorDetails) {
-            $this->error["error"]["trace"] = $exception->getTraceAsString();
+            if ($this->displayErrorDetails) {
+                $this->error["error"]["trace"] = $exception->getTraceAsString();
+            }
+        } else {
+            $this->error["error"]["class"] = "text-danger";
+            $this->error["error"]["description"] = $Language->phrase("ServerError");
         }
     }
 
     // Respond
-    protected function respond(): ResponseInterface
+    protected function respond(): Response
     {
         global $Language, $Error, $Title;
         $exception = $this->exception;
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Set error message
         $this->setError($exception);
@@ -97,10 +142,10 @@ class HttpErrorHandler extends ErrorHandler
         $response = $this->responseFactory->createResponse();
 
         // Show error as JSON
-        $routeName = RouteName();
+        $routeName = RouteName() ?? "";
         if (
             IsApi() || // API request
-            $routeName && preg_match('/\-preview(\-2)?$/', $routeName) || // Preview page
+            preg_match('/\bpreview$/', $routeName) || // Preview page
             $this->request->getParam("modal") == "1" || // Modal request
             $this->request->getParam("d") == "1" // Drilldown request
         ) {
@@ -108,7 +153,7 @@ class HttpErrorHandler extends ErrorHandler
         }
         if ($this->contentType == "text/html") { // HTML
             $Title = $Language->phrase("Error");
-            if ($this->ShowSourceCode && $this->displayErrorDetails && !IsProduction()) { // Only show code if is debug and not production
+            if ($this->showSourceCode && $this->displayErrorDetails && !IsProduction()) { // Only show code if is debug and not production
                 $handler = new \Whoops\Handler\PrettyPageHandler;
                 $handler->setPageTitle($Title);
                 $whoops = new \Whoops\Run;
@@ -117,31 +162,30 @@ class HttpErrorHandler extends ErrorHandler
                 $whoops->pushHandler($handler);
                 $html = $whoops->handleException($exception);
             } else {
-                $view = Container("view");
+                $view = Container("app.view");
                 $Error = $this->error;
                 try { // Render with layout
-                    $view->setLayout($this->LayoutTemplate);
-                    $html = $view->fetch($this->ErrorTemplate, $GLOBALS, true); // Use layout
+                    $view->setLayout($this->layoutTemplate);
+                    $html = $view->fetch($this->errorTemplate, $GLOBALS, true); // Use layout
                 } catch (Throwable $e) { // Error with layout
                     $this->setError($e);
                     $Error = $this->error;
-                    $html = sprintf(
-                        '<html>' .
-                        '   <head>' .
-                        '       <meta charset="utf-8">' .
-                        '       <meta name="viewport" content="width=device-width, initial-scale=1">' .
-                        '       <title>%s</title>' .
-                        '       <link rel="stylesheet" href="adminlte3/css/' . CssFile("adminlte.css") . '">' .
-                        '       <link rel="stylesheet" href="plugins/fontawesome-free/css/all.min.css">' .
-                        '       <link rel="stylesheet" href="' . CssFile(Config("PROJECT_STYLESHEET_FILENAME")) . '">' .
-                        '   </head>' .
-                        '   <body class="container-fluid">' .
-                        '       <div>%s</div>' .
-                        '   </body>' .
-                        '</html>',
-                        $Title,
-                        $view->fetch($this->ErrorTemplate, $GLOBALS)
-                    );
+                    $basePath = BasePath(true);
+                    $html = '<html>
+    <head>
+       <meta charset="utf-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1">
+       <title>' . $Title . '</title>
+       <link rel="stylesheet" href="' . $basePath . 'adminlte3/css/' . CssFile("adminlte.css") . '">
+       <link rel="stylesheet" href="' . $basePath . 'plugins/fontawesome-free/css/all.min.css">
+       <link rel="stylesheet" href="' . $basePath . CssFile(Config("PROJECT_STYLESHEET_FILENAME")) . '">
+    </head>
+    <body class="container-fluid">
+        <div>
+            ' . $view->fetch($this->errorTemplate, $GLOBALS) . '
+        </div>
+    </body>
+</html>';
                 }
             }
             $response->getBody()->write($html);

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhMedicinesList = &$Page;
@@ -58,8 +58,8 @@ loadjs.ready(["wrapper", "head"], function () {
 </script>
 <script>
 window.Tabulator || loadjs([
-    ew.PATH_BASE + "js/tabulator.min.js?v=19.0.15",
-    ew.PATH_BASE + "css/<?= CssFile("tabulator_bootstrap5.css") ?>?v=19.0.15"
+    ew.PATH_BASE + "js/tabulator.min.js?v=24.4.0",
+    ew.PATH_BASE + "css/<?= CssFile("tabulator_bootstrap5.css", false) ?>?v=24.4.0"
 ], "import");
 </script>
 <script>
@@ -84,9 +84,8 @@ loadjs.ready("head", function () {
 <?php } ?>
 </div>
 <?php } ?>
-<?php if ($Security->canSearch()) { ?>
-<?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
-<form name="fjdh_medicinessrch" id="fjdh_medicinessrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="on">
+<?php if (!$Page->IsModal) { ?>
+<form name="fjdh_medicinessrch" id="fjdh_medicinessrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="off">
 <div id="fjdh_medicinessrch_search_panel" class="mb-2 mb-sm-0 <?= $Page->SearchPanelClass ?>"><!-- .ew-search-panel -->
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
@@ -118,7 +117,8 @@ loadjs.ready(["wrapper", "head"], function () {
 });
 </script>
 <input type="hidden" name="cmd" value="search">
-<input type="hidden" name="t" value="jdh_medicines">
+<?php if ($Security->canSearch()) { ?>
+<?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
 <div class="ew-extended-search container-fluid ps-2">
 <!-- template for quick search in navbar -->
 <script id="navbar-basic-search" type="text/html" class="ew-js-template" data-name="search" data-seq="10" data-data="menu" data-target="#ew-navbar-end" data-method="prependTo">
@@ -150,19 +150,23 @@ loadjs.ready(["wrapper", "head"], function () {
     </li>
 </script>
 </div><!-- /.ew-extended-search -->
+<?php } ?>
+<?php } ?>
 </div><!-- /.ew-search-panel -->
 </form>
-<?php } ?>
 <?php } ?>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="list<?= ($Page->TotalRecords == 0 && !$Page->isAdd()) ? " ew-no-record" : "" ?>">
+<div id="ew-header-options">
+<?php $Page->HeaderOptions?->render("body") ?>
+</div>
 <div id="ew-list">
 <?php if ($Page->TotalRecords > 0 || $Page->CurrentAction) { ?>
 <div class="card ew-card ew-grid<?= $Page->isAddOrEdit() ? " ew-grid-add-edit" : "" ?> <?= $Page->TableGridClass ?>">
-<form name="<?= $Page->FormName ?>" id="<?= $Page->FormName ?>" class="ew-form ew-list-form" action="<?= $Page->PageAction ?>" method="post" novalidate autocomplete="on">
+<form name="<?= $Page->FormName ?>" id="<?= $Page->FormName ?>" class="ew-form ew-list-form" action="<?= $Page->PageAction ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -178,7 +182,7 @@ $Page->showMessage();
     <tr class="ew-table-header">
 <?php
 // Header row
-$Page->RowType = ROWTYPE_HEADER;
+$Page->RowType = RowType::HEADER;
 
 // Render list options
 $Page->renderListOptions();
@@ -219,7 +223,15 @@ $Page->ListOptions->render("header", "right");
 <tbody data-page="<?= $Page->getPageNumber() ?>">
 <?php
 $Page->setupGrid();
-while ($Page->RecordCount < $Page->StopRecord) {
+while ($Page->RecordCount < $Page->StopRecord || $Page->RowIndex === '$rowindex$') {
+    if (
+        $Page->CurrentRow !== false &&
+        $Page->RowIndex !== '$rowindex$' &&
+        (!$Page->isGridAdd() || $Page->CurrentMode == "copy") &&
+        (!(($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0))
+    ) {
+        $Page->fetch();
+    }
     $Page->RecordCount++;
     if ($Page->RecordCount >= $Page->StartRecord) {
         $Page->setupRow();
@@ -231,12 +243,12 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
     <?php if ($Page->id->Visible) { // id ?>
         <td data-name="id"<?= $Page->id->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_id" class="el_jdh_medicines_id"></span>
+<?php if ($Page->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_id" class="el_jdh_medicines_id"></span>
 <input type="hidden" data-table="jdh_medicines" data-field="x_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_id" id="o<?= $Page->RowIndex ?>_id" value="<?= HtmlEncode($Page->id->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_id" class="el_jdh_medicines_id">
+<?php if ($Page->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_id" class="el_jdh_medicines_id">
 <span<?= $Page->id->viewAttributes() ?>>
 <?= $Page->id->getViewValue() ?></span>
 </span>
@@ -245,13 +257,15 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->category_id->Visible) { // category_id ?>
         <td data-name="category_id"<?= $Page->category_id->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_category_id" class="el_jdh_medicines_category_id">
+<?php if ($Page->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_category_id" class="el_jdh_medicines_category_id">
     <select
         id="x<?= $Page->RowIndex ?>_category_id"
         name="x<?= $Page->RowIndex ?>_category_id"
         class="form-select ew-select<?= $Page->category_id->isInvalidClass() ?>"
+        <?php if (!$Page->category_id->IsNativeSelect) { ?>
         data-select2-id="<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_category_id"
+        <?php } ?>
         data-table="jdh_medicines"
         data-field="x_category_id"
         data-value-separator="<?= $Page->category_id->displayValueSeparatorAttribute() ?>"
@@ -261,10 +275,13 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     </select>
     <div class="invalid-feedback"><?= $Page->category_id->getErrorMessage() ?></div>
 <?= $Page->category_id->Lookup->getParamTag($Page, "p_x" . $Page->RowIndex . "_category_id") ?>
+<?php if (!$Page->category_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("<?= $Page->FormName ?>", function() {
     var options = { name: "x<?= $Page->RowIndex ?>_category_id", selectId: "<?= $Page->FormName ?>_x<?= $Page->RowIndex ?>_category_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (<?= $Page->FormName ?>.lists.category_id?.lookupOptions.length) {
@@ -277,11 +294,12 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 <input type="hidden" data-table="jdh_medicines" data-field="x_category_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_category_id" id="o<?= $Page->RowIndex ?>_category_id" value="<?= HtmlEncode($Page->category_id->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_category_id" class="el_jdh_medicines_category_id">
+<?php if ($Page->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_category_id" class="el_jdh_medicines_category_id">
 <span<?= $Page->category_id->viewAttributes() ?>>
 <?= $Page->category_id->getViewValue() ?></span>
 </span>
@@ -290,15 +308,15 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
     <?php } ?>
     <?php if ($Page->name->Visible) { // name ?>
         <td data-name="name"<?= $Page->name->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_name" class="el_jdh_medicines_name">
+<?php if ($Page->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_name" class="el_jdh_medicines_name">
 <input type="<?= $Page->name->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_name" id="x<?= $Page->RowIndex ?>_name" data-table="jdh_medicines" data-field="x_name" value="<?= $Page->name->EditValue ?>" size="30" maxlength="191" placeholder="<?= HtmlEncode($Page->name->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->name->formatPattern()) ?>"<?= $Page->name->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Page->name->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_medicines" data-field="x_name" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_name" id="o<?= $Page->RowIndex ?>_name" value="<?= HtmlEncode($Page->name->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_name" class="el_jdh_medicines_name">
+<?php if ($Page->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_name" class="el_jdh_medicines_name">
 <span<?= $Page->name->viewAttributes() ?>>
 <?= $Page->name->getViewValue() ?></span>
 </span>
@@ -307,15 +325,15 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
     <?php } ?>
     <?php if ($Page->selling_price->Visible) { // selling_price ?>
         <td data-name="selling_price"<?= $Page->selling_price->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_selling_price" class="el_jdh_medicines_selling_price">
+<?php if ($Page->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_selling_price" class="el_jdh_medicines_selling_price">
 <input type="<?= $Page->selling_price->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_selling_price" id="x<?= $Page->RowIndex ?>_selling_price" data-table="jdh_medicines" data-field="x_selling_price" value="<?= $Page->selling_price->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->selling_price->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->selling_price->formatPattern()) ?>"<?= $Page->selling_price->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Page->selling_price->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_medicines" data-field="x_selling_price" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_selling_price" id="o<?= $Page->RowIndex ?>_selling_price" value="<?= HtmlEncode($Page->selling_price->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_selling_price" class="el_jdh_medicines_selling_price">
+<?php if ($Page->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_selling_price" class="el_jdh_medicines_selling_price">
 <span<?= $Page->selling_price->viewAttributes() ?>>
 <?= $Page->selling_price->getViewValue() ?></span>
 </span>
@@ -324,15 +342,15 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
     <?php } ?>
     <?php if ($Page->buying_price->Visible) { // buying_price ?>
         <td data-name="buying_price"<?= $Page->buying_price->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_buying_price" class="el_jdh_medicines_buying_price">
+<?php if ($Page->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_buying_price" class="el_jdh_medicines_buying_price">
 <input type="<?= $Page->buying_price->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_buying_price" id="x<?= $Page->RowIndex ?>_buying_price" data-table="jdh_medicines" data-field="x_buying_price" value="<?= $Page->buying_price->EditValue ?>" size="30" placeholder="<?= HtmlEncode($Page->buying_price->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->buying_price->formatPattern()) ?>"<?= $Page->buying_price->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Page->buying_price->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_medicines" data-field="x_buying_price" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_buying_price" id="o<?= $Page->RowIndex ?>_buying_price" value="<?= HtmlEncode($Page->buying_price->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_buying_price" class="el_jdh_medicines_buying_price">
+<?php if ($Page->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_buying_price" class="el_jdh_medicines_buying_price">
 <span<?= $Page->buying_price->viewAttributes() ?>>
 <?= $Page->buying_price->getViewValue() ?></span>
 </span>
@@ -341,8 +359,8 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
     <?php } ?>
     <?php if ($Page->expiry->Visible) { // expiry ?>
         <td data-name="expiry"<?= $Page->expiry->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_expiry" class="el_jdh_medicines_expiry">
+<?php if ($Page->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_expiry" class="el_jdh_medicines_expiry">
 <input type="<?= $Page->expiry->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_expiry" id="x<?= $Page->RowIndex ?>_expiry" data-table="jdh_medicines" data-field="x_expiry" value="<?= $Page->expiry->EditValue ?>" placeholder="<?= HtmlEncode($Page->expiry->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->expiry->formatPattern()) ?>"<?= $Page->expiry->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Page->expiry->getErrorMessage() ?></div>
 <?php if (!$Page->expiry->ReadOnly && !$Page->expiry->Disabled && !isset($Page->expiry->EditAttrs["readonly"]) && !isset($Page->expiry->EditAttrs["disabled"])) { ?>
@@ -352,6 +370,8 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -362,24 +382,20 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_expiry", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_expiry", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
 });
 </script>
 <?php } ?>
 </span>
 <input type="hidden" data-table="jdh_medicines" data-field="x_expiry" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_expiry" id="o<?= $Page->RowIndex ?>_expiry" value="<?= HtmlEncode($Page->expiry->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_expiry" class="el_jdh_medicines_expiry">
+<?php if ($Page->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_expiry" class="el_jdh_medicines_expiry">
 <span<?= $Page->expiry->viewAttributes() ?>>
 <?= $Page->expiry->getViewValue() ?></span>
 </span>
@@ -388,8 +404,8 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
     <?php } ?>
     <?php if ($Page->date_created->Visible) { // date_created ?>
         <td data-name="date_created"<?= $Page->date_created->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_date_created" class="el_jdh_medicines_date_created">
+<?php if ($Page->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_date_created" class="el_jdh_medicines_date_created">
 <input type="<?= $Page->date_created->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_date_created" id="x<?= $Page->RowIndex ?>_date_created" data-table="jdh_medicines" data-field="x_date_created" value="<?= $Page->date_created->EditValue ?>" placeholder="<?= HtmlEncode($Page->date_created->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->date_created->formatPattern()) ?>"<?= $Page->date_created->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Page->date_created->getErrorMessage() ?></div>
 <?php if (!$Page->date_created->ReadOnly && !$Page->date_created->Disabled && !isset($Page->date_created->EditAttrs["readonly"]) && !isset($Page->date_created->EditAttrs["disabled"])) { ?>
@@ -399,6 +415,8 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -409,24 +427,20 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_date_created", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_date_created", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
 });
 </script>
 <?php } ?>
 </span>
 <input type="hidden" data-table="jdh_medicines" data-field="x_date_created" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_date_created" id="o<?= $Page->RowIndex ?>_date_created" value="<?= HtmlEncode($Page->date_created->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_date_created" class="el_jdh_medicines_date_created">
+<?php if ($Page->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_date_created" class="el_jdh_medicines_date_created">
 <span<?= $Page->date_created->viewAttributes() ?>>
 <?= $Page->date_created->getViewValue() ?></span>
 </span>
@@ -435,8 +449,8 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
     <?php } ?>
     <?php if ($Page->date_updated->Visible) { // date_updated ?>
         <td data-name="date_updated"<?= $Page->date_updated->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_date_updated" class="el_jdh_medicines_date_updated">
+<?php if ($Page->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_date_updated" class="el_jdh_medicines_date_updated">
 <input type="<?= $Page->date_updated->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_date_updated" id="x<?= $Page->RowIndex ?>_date_updated" data-table="jdh_medicines" data-field="x_date_updated" value="<?= $Page->date_updated->EditValue ?>" placeholder="<?= HtmlEncode($Page->date_updated->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->date_updated->formatPattern()) ?>"<?= $Page->date_updated->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Page->date_updated->getErrorMessage() ?></div>
 <?php if (!$Page->date_updated->ReadOnly && !$Page->date_updated->Disabled && !isset($Page->date_updated->EditAttrs["readonly"]) && !isset($Page->date_updated->EditAttrs["disabled"])) { ?>
@@ -446,6 +460,8 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -456,24 +472,20 @@ loadjs.ready(["<?= $Page->FormName ?>", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_date_updated", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+    ew.createDateTimePicker("<?= $Page->FormName ?>", "x<?= $Page->RowIndex ?>_date_updated", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
 });
 </script>
 <?php } ?>
 </span>
 <input type="hidden" data-table="jdh_medicines" data-field="x_date_updated" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_date_updated" id="o<?= $Page->RowIndex ?>_date_updated" value="<?= HtmlEncode($Page->date_updated->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_medicines_date_updated" class="el_jdh_medicines_date_updated">
+<?php if ($Page->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_medicines_date_updated" class="el_jdh_medicines_date_updated">
 <span<?= $Page->date_updated->viewAttributes() ?>>
 <?= $Page->date_updated->getViewValue() ?></span>
 </span>
@@ -487,8 +499,14 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
     </tr>
 <?php
     }
-    if (!$Page->isGridAdd()) {
-        $Page->Recordset->moveNext();
+
+    // Reset for template row
+    if ($Page->RowIndex === '$rowindex$') {
+        $Page->RowIndex = 0;
+    }
+    // Reset inline add/copy row
+    if (($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0) {
+        $Page->RowIndex = 1;
     }
 }
 ?>
@@ -505,10 +523,8 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
 <?php } ?>
 </form><!-- /.ew-list-form -->
 <?php
-// Close recordset
-if ($Page->Recordset) {
-    $Page->Recordset->close();
-}
+// Close result set
+$Page->Recordset?->free();
 ?>
 <?php if (!$Page->isExport()) { ?>
 <div class="card-footer ew-grid-lower-panel">
@@ -526,6 +542,9 @@ if ($Page->Recordset) {
 <?php $Page->OtherOptions->render("body") ?>
 </div>
 <?php } ?>
+</div>
+<div id="ew-footer-options">
+<?php $Page->FooterOptions?->render("body") ?>
 </div>
 </main>
 <?php

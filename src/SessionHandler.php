@@ -1,19 +1,19 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Session handler
  */
 class SessionHandler
 {
-    // Get session value
-    public function getSession()
+
+    public function __invoke()
     {
         if (ob_get_length()) {
             ob_end_clean();
         }
-        $csrf = Container("csrf");
+        $csrf = Container("app.csrf");
         $token = $csrf->generateToken();
         WriteJson([
             $csrf->getTokenNameKey() => $csrf->getTokenName(),

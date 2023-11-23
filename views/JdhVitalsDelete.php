@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhVitalsDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_vitalsdelete" id="fjdh_vitalsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_vitalsdelete" id="fjdh_vitalsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -92,16 +92,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -109,7 +109,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_patient_id" class="el_jdh_vitals_patient_id">
+<span id="">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
@@ -117,7 +117,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->pressure->Visible) { // pressure ?>
         <td<?= $Page->pressure->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_pressure" class="el_jdh_vitals_pressure">
+<span id="">
 <span<?= $Page->pressure->viewAttributes() ?>>
 <?= $Page->pressure->getViewValue() ?></span>
 </span>
@@ -125,7 +125,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->height->Visible) { // height ?>
         <td<?= $Page->height->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_height" class="el_jdh_vitals_height">
+<span id="">
 <span<?= $Page->height->viewAttributes() ?>>
 <?= $Page->height->getViewValue() ?></span>
 </span>
@@ -133,7 +133,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->weight->Visible) { // weight ?>
         <td<?= $Page->weight->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_weight" class="el_jdh_vitals_weight">
+<span id="">
 <span<?= $Page->weight->viewAttributes() ?>>
 <?= $Page->weight->getViewValue() ?></span>
 </span>
@@ -141,7 +141,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->body_mass_index->Visible) { // body_mass_index ?>
         <td<?= $Page->body_mass_index->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_body_mass_index" class="el_jdh_vitals_body_mass_index">
+<span id="">
 <span<?= $Page->body_mass_index->viewAttributes() ?>>
 <?= $Page->body_mass_index->getViewValue() ?></span>
 </span>
@@ -149,7 +149,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->pulse_rate->Visible) { // pulse_rate ?>
         <td<?= $Page->pulse_rate->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_pulse_rate" class="el_jdh_vitals_pulse_rate">
+<span id="">
 <span<?= $Page->pulse_rate->viewAttributes() ?>>
 <?= $Page->pulse_rate->getViewValue() ?></span>
 </span>
@@ -157,7 +157,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->respiratory_rate->Visible) { // respiratory_rate ?>
         <td<?= $Page->respiratory_rate->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_respiratory_rate" class="el_jdh_vitals_respiratory_rate">
+<span id="">
 <span<?= $Page->respiratory_rate->viewAttributes() ?>>
 <?= $Page->respiratory_rate->getViewValue() ?></span>
 </span>
@@ -165,7 +165,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->temperature->Visible) { // temperature ?>
         <td<?= $Page->temperature->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_temperature" class="el_jdh_vitals_temperature">
+<span id="">
 <span<?= $Page->temperature->viewAttributes() ?>>
 <?= $Page->temperature->getViewValue() ?></span>
 </span>
@@ -173,7 +173,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->random_blood_sugar->Visible) { // random_blood_sugar ?>
         <td<?= $Page->random_blood_sugar->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_random_blood_sugar" class="el_jdh_vitals_random_blood_sugar">
+<span id="">
 <span<?= $Page->random_blood_sugar->viewAttributes() ?>>
 <?= $Page->random_blood_sugar->getViewValue() ?></span>
 </span>
@@ -181,7 +181,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->spo_2->Visible) { // spo_2 ?>
         <td<?= $Page->spo_2->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_spo_2" class="el_jdh_vitals_spo_2">
+<span id="">
 <span<?= $Page->spo_2->viewAttributes() ?>>
 <?= $Page->spo_2->getViewValue() ?></span>
 </span>
@@ -189,7 +189,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <td<?= $Page->submission_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_submission_date" class="el_jdh_vitals_submission_date">
+<span id="">
 <span<?= $Page->submission_date->viewAttributes() ?>>
 <?= $Page->submission_date->getViewValue() ?></span>
 </span>
@@ -197,7 +197,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->patient_status->Visible) { // patient_status ?>
         <td<?= $Page->patient_status->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_vitals_patient_status" class="el_jdh_vitals_patient_status">
+<span id="">
 <span<?= $Page->patient_status->viewAttributes() ?>>
 <?= $Page->patient_status->getViewValue() ?></span>
 </span>
@@ -205,9 +205,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

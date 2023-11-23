@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhBrandingAdd = &$Page;
@@ -55,7 +55,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_brandingadd" id="fjdh_brandingadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_brandingadd" id="fjdh_brandingadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -83,7 +83,7 @@ $Page->showMessage();
         lang="<?= CurrentLanguageID() ?>"
         data-table="jdh_branding"
         data-field="x_header_image"
-        data-size="0"
+        data-size="16777215"
         data-accept-file-types="<?= $Page->header_image->acceptFileTypes() ?>"
         data-max-file-size="<?= $Page->header_image->UploadMaxFileSize ?>"
         data-max-number-of-files="null"
@@ -92,10 +92,10 @@ $Page->showMessage();
         <?= ($Page->header_image->ReadOnly || $Page->header_image->Disabled) ? " disabled" : "" ?>
         <?= $Page->header_image->editAttributes() ?>
     >
-    <div class="text-muted ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <div class="text-body-secondary ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <?= $Page->header_image->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->header_image->getErrorMessage() ?></div>
 </div>
-<?= $Page->header_image->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->header_image->getErrorMessage() ?></div>
 <input type="hidden" name="fn_x_header_image" id= "fn_x_header_image" value="<?= $Page->header_image->Upload->FileName ?>">
 <input type="hidden" name="fa_x_header_image" id= "fa_x_header_image" value="0">
 <table id="ft_x_header_image" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>
@@ -118,7 +118,7 @@ $Page->showMessage();
         lang="<?= CurrentLanguageID() ?>"
         data-table="jdh_branding"
         data-field="x_footer_image"
-        data-size="0"
+        data-size="16777215"
         data-accept-file-types="<?= $Page->footer_image->acceptFileTypes() ?>"
         data-max-file-size="<?= $Page->footer_image->UploadMaxFileSize ?>"
         data-max-number-of-files="null"
@@ -127,10 +127,10 @@ $Page->showMessage();
         <?= ($Page->footer_image->ReadOnly || $Page->footer_image->Disabled) ? " disabled" : "" ?>
         <?= $Page->footer_image->editAttributes() ?>
     >
-    <div class="text-muted ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <div class="text-body-secondary ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <?= $Page->footer_image->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->footer_image->getErrorMessage() ?></div>
 </div>
-<?= $Page->footer_image->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->footer_image->getErrorMessage() ?></div>
 <input type="hidden" name="fn_x_footer_image" id= "fn_x_footer_image" value="<?= $Page->footer_image->Upload->FileName ?>">
 <input type="hidden" name="fa_x_footer_image" id= "fa_x_footer_image" value="0">
 <table id="ft_x_footer_image" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>

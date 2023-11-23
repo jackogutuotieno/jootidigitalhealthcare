@@ -1,21 +1,16 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhInvoiceEdit = &$Page;
 ?>
-<script>
-loadjs.ready("head", function () {
-    // Write your table-specific client script here, no need to add script tags.
-});
-</script>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="edit">
-<form name="fjdh_invoiceedit" id="fjdh_invoiceedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_invoiceedit" id="fjdh_invoiceedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
 ew.deepAssign(ew.vars, { tables: { jdh_invoice: currentTable } });
@@ -60,6 +55,11 @@ loadjs.ready(["wrapper", "head"], function () {
     loadjs.done(form.id);
 });
 </script>
+<script>
+loadjs.ready("head", function () {
+    // Write your table-specific client script here, no need to add script tags.
+});
+</script>
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -93,7 +93,9 @@ loadjs.ready(["wrapper", "head"], function () {
         id="x_patient_id"
         name="x_patient_id"
         class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
+        <?php if (!$Page->patient_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_invoiceedit_x_patient_id"
+        <?php } ?>
         data-table="jdh_invoice"
         data-field="x_patient_id"
         data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
@@ -104,10 +106,13 @@ loadjs.ready(["wrapper", "head"], function () {
     <?= $Page->patient_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
 <?= $Page->patient_id->Lookup->getParamTag($Page, "p_x_patient_id") ?>
+<?php if (!$Page->patient_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_invoiceedit", function() {
     var options = { name: "x_patient_id", selectId: "fjdh_invoiceedit_x_patient_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_invoiceedit.lists.patient_id?.lookupOptions.length) {
@@ -120,6 +125,7 @@ loadjs.ready("fjdh_invoiceedit", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>

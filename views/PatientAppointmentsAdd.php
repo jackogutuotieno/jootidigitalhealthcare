@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $PatientAppointmentsAdd = &$Page;
@@ -22,11 +22,10 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Add fields
         .setFields([
-            ["appointment_id", [fields.appointment_id.visible && fields.appointment_id.required ? ew.Validators.required(fields.appointment_id.caption) : null], fields.appointment_id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null, ew.Validators.integer], fields.patient_id.isInvalid],
             ["appointment_title", [fields.appointment_title.visible && fields.appointment_title.required ? ew.Validators.required(fields.appointment_title.caption) : null], fields.appointment_title.isInvalid],
             ["appointment_start_date", [fields.appointment_start_date.visible && fields.appointment_start_date.required ? ew.Validators.required(fields.appointment_start_date.caption) : null, ew.Validators.datetime(fields.appointment_start_date.clientFormatPattern)], fields.appointment_start_date.isInvalid],
-            ["appointment_end_date", [fields.appointment_end_date.visible && fields.appointment_end_date.required ? ew.Validators.required(fields.appointment_end_date.caption) : null, ew.Validators.datetime(fields.appointment_end_date.clientFormatPattern), ew.Validators.minDate(() => fPatient_Appointmentsadd.getFieldElement("appointment_start_date"))], fields.appointment_end_date.isInvalid],
+            ["appointment_end_date", [fields.appointment_end_date.visible && fields.appointment_end_date.required ? ew.Validators.required(fields.appointment_end_date.caption) : null, ew.Validators.datetime(fields.appointment_end_date.clientFormatPattern), ew.Validators.minDate(() => fPatient_Appointmentsadd.getFieldElements("appointment_start_date"))], fields.appointment_end_date.isInvalid],
             ["appointment_description", [fields.appointment_description.visible && fields.appointment_description.required ? ew.Validators.required(fields.appointment_description.caption) : null], fields.appointment_description.isInvalid],
             ["subbmitted_by_user_id", [fields.subbmitted_by_user_id.visible && fields.subbmitted_by_user_id.required ? ew.Validators.required(fields.subbmitted_by_user_id.caption) : null], fields.subbmitted_by_user_id.isInvalid],
             ["appointment_all_day", [fields.appointment_all_day.visible && fields.appointment_all_day.required ? ew.Validators.required(fields.appointment_all_day.caption) : null], fields.appointment_all_day.isInvalid],
@@ -63,7 +62,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fPatient_Appointmentsadd" id="fPatient_Appointmentsadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fPatient_Appointmentsadd" id="fPatient_Appointmentsadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -76,12 +75,6 @@ $Page->showMessage();
 <?php } ?>
 <input type="hidden" name="<?= $Page->OldKeyName ?>" value="<?= $Page->OldKey ?>">
 <div class="ew-add-div"><!-- page* -->
-<?php if ($Page->appointment_id->Visible) { // appointment_id ?>
-    <div id="r_appointment_id"<?= $Page->appointment_id->rowAttributes() ?>>
-        <label id="elh_Patient_Appointments_appointment_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->appointment_id->caption() ?><?= $Page->appointment_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
-        <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->appointment_id->cellAttributes() ?>></div></div>
-    </div>
-<?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
     <div id="r_patient_id"<?= $Page->patient_id->rowAttributes() ?>>
         <label id="elh_Patient_Appointments_patient_id" for="x_patient_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->patient_id->caption() ?><?= $Page->patient_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
@@ -121,6 +114,8 @@ loadjs.ready(["fPatient_Appointmentsadd", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -131,16 +126,12 @@ loadjs.ready(["fPatient_Appointmentsadd", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("fPatient_Appointmentsadd", "x_appointment_start_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":true}}, options));
+    ew.createDateTimePicker("fPatient_Appointmentsadd", "x_appointment_start_date", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":true}}, options));
 });
 </script>
 <?php } ?>
@@ -163,6 +154,8 @@ loadjs.ready(["fPatient_Appointmentsadd", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -173,16 +166,12 @@ loadjs.ready(["fPatient_Appointmentsadd", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("fPatient_Appointmentsadd", "x_appointment_end_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":true}}, options));
+    ew.createDateTimePicker("fPatient_Appointmentsadd", "x_appointment_end_date", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":true}}, options));
 });
 </script>
 <?php } ?>

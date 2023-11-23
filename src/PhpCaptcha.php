@@ -1,6 +1,10 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
+
+use Spatie\Color\Hex;
+use Spatie\Color\Rgb;
+use Spatie\Color\Hsl;
 
 /**
  * CAPTCHA class
@@ -10,14 +14,19 @@ class PhpCaptcha extends CaptchaBase
     public static $BackgroundColor = "FFFFFF"; // Hex string
     public static $TextColor = "003359"; // Hex string
     public static $NoiseColor = "64A0C8"; // Hex string
+    public static $DarkTextColor = ""; // Hex string
+    public static $DarkBackgroundColor = "212529"; // Hex string
+    public static $DarkNoiseColor = ""; // Hex string
+    public static $DefaultAdjust = 30;
     public static $Width = 250;
     public static $Height = 50;
     public static $Characters = 6;
     public static $FontSize = 0;
-    public static $ImageType = IMG_PNG;
     public static $Font = "FrederickatheGreat-Regular";
     public $Response = "";
     public $ResponseField = "captcha";
+    public $Image;
+    public $DarkImage;
 
     /**
      * Constructor
@@ -53,16 +62,31 @@ class PhpCaptcha extends CaptchaBase
      * Convert hex to RGB
      *
      * @param string $hexstr Hex string
-     * @return array Array of RGB
+     * @return Rgba Color
      */
-    protected function hexToRGB($hexstr)
+    protected function hexToRgb($hexstr)
     {
-        $int = hexdec($hexstr);
-        return [
-            "R" => 0xFF & ($int >> 0x10),
-            "G" => 0xFF & ($int >> 0x8),
-            "B" => 0xFF & $int
-        ];
+        if (!str_starts_with($hexstr, "#")) {
+            $hexstr = "#" . $hexstr;
+        }
+        return Hex::fromString($hexstr)->toRgb();
+    }
+
+    /**
+     * Adjust lightness (Darken/Lighten) a HSL value
+     *
+     * @param Hsl $hsl Hsl value
+     * @param ?int $amount
+     * @return Hsl
+     */
+    private function adjustLightness(Hsl $hsl, ?int $amount = null): Hsl
+    {
+        $amount ??= self::$DefaultAdjust;
+        $lightness = $hsl->lightness();
+        $lightness = $lightness + $amount;
+        $lightness = ($lightness < 0) ? 0 : $lightness;
+        $lightness = ($lightness > 100) ? 100 : $lightness;
+        return new Hsl($hsl->hue(), $hsl->saturation(), $lightness);
     }
 
     /**
@@ -83,24 +107,46 @@ class PhpCaptcha extends CaptchaBase
             }
         }
         $code = trim($code);
+        $width = $this->getWidth();
+        $height = $this->getHeight();
         try {
-            $image = imagecreate($this->getWidth(), $this->getHeight());
+            $image = imagecreatetruecolor($width, $height * 2);
         } catch (\Exception $e) {
             throw new \Exception("PhpCaptcha: Cannot initialize new GD image stream - " . $e->getMessage());
         }
-        $rgb = $this->hexToRGB(self::$BackgroundColor);
-        $backgroundColor = imagecolorallocate($image, $rgb["R"], $rgb["G"], $rgb["B"]);
-        $rgb = $this->hexToRGB(self::$TextColor);
-        $textColor = imagecolorallocate($image, $rgb["R"], $rgb["G"], $rgb["B"]);
-        $rgb = $this->hexToRGB(self::$NoiseColor);
-        $noiseColor = imagecolorallocate($image, $rgb["R"], $rgb["G"], $rgb["B"]);
+        $rgb = $this->hexToRgb(self::$BackgroundColor);
+        $backgroundColor = imagecolorallocate($image, $rgb->red(), $rgb->green(), $rgb->blue());
+        imagefill($image, 0, 0, $backgroundColor);
+        $rgb = $this->hexToRgb(self::$DarkBackgroundColor);
+        $backgroundColor = imagecolorallocate($image, $rgb->red(), $rgb->green(), $rgb->blue());
+        imagefilledrectangle($image, 0, $height, $width, $height * 2, $backgroundColor);
+        $rgb = $this->hexToRgb(self::$TextColor);
+        $textColor = imagecolorallocate($image, $rgb->red(), $rgb->green(), $rgb->blue());
+        $rgb = self::$DarkTextColor
+            ? $this->hexToRgb(self::$DarkTextColor)
+            : $this->adjustLightness($rgb->toHsl(), self::$DefaultAdjust)->toRgb(); // Increase lightness for dark mode
+        $darkTextColor = imagecolorallocate($image, $rgb->red(), $rgb->green(), $rgb->blue());
+        $rgb = $this->hexToRgb(self::$NoiseColor);
+        $noiseColor = imagecolorallocate($image, $rgb->red(), $rgb->green(), $rgb->blue());
+        $rgb = self::$DarkNoiseColor
+            ? $this->hexToRgb(self::$DarkNoiseColor)
+            : $this->adjustLightness($rgb->toHsl(), self::$DefaultAdjust * -1)->toRgb(); // Decrease lightness for dark mode
+        $darkNoiseColor = imagecolorallocate($image, $rgb->red(), $rgb->green(), $rgb->blue());
         // Generate random dots in background
-        for ($i = 0; $i < ($this->getWidth() * $this->getHeight()) / 3; $i++) {
-            imagefilledellipse($image, mt_rand(0, $this->getWidth()), mt_rand(0, $this->getHeight()), 1, 1, $noiseColor);
+        for ($i = 0; $i < ($width * $height) / 3; $i++) {
+            $centerX = mt_rand(0, $width);
+            $centerY = mt_rand(0, $height);
+            imagefilledellipse($image, $centerX, $centerY, 1, 1, $noiseColor);
+            imagefilledellipse($image, $centerX, $centerY + $height, 1, 1, $darkNoiseColor);
         }
         // Generate random lines in background
-        for ($i = 0; $i < ($this->getWidth() * $this->getHeight()) / 150; $i++) {
-            imageline($image, mt_rand(0, $this->getWidth()), mt_rand(0, $this->getHeight()), mt_rand(0, $this->getWidth()), mt_rand(0, $this->getHeight()), $noiseColor);
+        for ($i = 0; $i < ($width * $height) / 150; $i++) {
+            $x1 = mt_rand(0, $width);
+            $y1 = mt_rand(0, $height);
+            $x2 = mt_rand(0, $width);
+            $y2 = mt_rand(0, $height);
+            imageline($image, $x1, $y1, $x2, $y2, $noiseColor);
+            imageline($image, $x1, $y1 + $height, $x2, $y2 + $height, $darkNoiseColor);
         }
         $fontFile = self::$Font;
         // Always use full path
@@ -114,10 +160,11 @@ class PhpCaptcha extends CaptchaBase
         } catch (\Exception $e) {
             throw new \Exception("PhpCaptcha: Error in imagettfbbox function - " . $e->getMessage());
         }
-        $x = ($this->getWidth() - $textBox[4]) / 2;
-        $y = ($this->getHeight() - ($textBox[5] - $textBox[3])) / 2;
+        $x = ($width - $textBox[4]) / 2;
+        $y = ($height - ($textBox[5] - $textBox[3])) / 2;
         try {
             imagettftext($image, self::$FontSize, 0, intval($x), intval($y), $textColor, $fontFile, $code);
+            imagettftext($image, self::$FontSize, 0, intval($x), intval($y + $height), $darkTextColor, $fontFile, $code);
         } catch (\Exception $e) {
             throw new \Exception("PhpCaptcha: Error in imagettfbbox function - " . $e->getMessage());
         }
@@ -126,20 +173,8 @@ class PhpCaptcha extends CaptchaBase
             ob_end_clean();
         }
         ob_start();
-        switch (self::$ImageType) {
-            case IMG_JPG:
-                AddHeader("Content-Type", "image/jpeg");
-                imagejpeg($image, null, 90);
-                break;
-            case IMG_GIF:
-                AddHeader("Content-Type", "image/gif");
-                imagegif($image);
-                break;
-            default: // PNG
-                AddHeader("Content-Type", "image/png");
-                imagepng($image);
-                break;
-        }
+        AddHeader("Content-Type", "image/png");
+        imagepng($image);
         $data = ob_get_contents();
         ob_end_clean();
         Write($data);
@@ -163,17 +198,23 @@ class PhpCaptcha extends CaptchaBase
     public function getHtml()
     {
         global $Language, $Page;
-        $classAttr = ($Page->OffsetColumnClass) ? ' class="' . $Page->OffsetColumnClass . '"' : "";
+        $classAttr = $Page->OffsetColumnClass ? ' class="' . $Page->OffsetColumnClass . '"' : "";
         $class = $this->getFailureMessage() != "" ? " is-invalid" : "";
         $url = GetUrl("captcha/" . $Page->PageID);
+        $width = $this->getWidth();
+        $height = $this->getHeight() - 1; // Make sure the clipped area does not contain the other part
         return <<<EOT
             <div class="row ew-captcha">
                 <div{$classAttr}>
-                    <p><img src="{$url}" alt="" class="ew-captcha-image" style="width: {$this->getWidth()}; height: {$this->getHeight()};"></p>
+                    <p><img src="{$url}" alt="" class="ew-captcha-image"></p>
                     <input type="text" name="{$this->getElementName()}" id="{$this->getElementId()}" class="form-control ew-form-control{$class}" size="30" placeholder="{$Language->phrase("EnterValidateCode")}">
                     <div class="invalid-feedback">{$this->getFailureMessage()}</div>
                 </div>
             </div>
+            <style>
+            .ew-captcha-image { width: {$width}px; height: {$height}px; object-fit: cover; object-position: top; }
+            [data-bs-theme="dark"] .ew-captcha-image { object-position: bottom; }
+            </style>
             EOT;
     }
 

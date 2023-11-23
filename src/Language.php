@@ -1,12 +1,23 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
+
+use Dflydev\DotAccessData\Data;
+use Illuminate\Support\Collection;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\VarExporter\VarExporter;
 
 /**
  * Langauge class
  */
 class Language
 {
+    public static bool $SortByName = false;
+    public static bool $SortByCaseInsensitiveName = false;
+    public static bool $SortBySize = false;
+    public static bool $ReverseSorting = false;
+    public static bool $UseCache = false;
+    public static string $CACHE_FILE = "LanguageCache.*.php"; // Language file under CACHE_FOLDER
     public $Data = null;
     public $LanguageId;
     public $LanguageFolder;
@@ -18,34 +29,28 @@ class Language
     // Constructor
     public function __construct()
     {
-        global $CurrentLanguage;
+        $this->setLanguage(Param("language"));
+    }
+
+    // Set language
+    public function setLanguage($langId)
+    {
+        global $CurrentLanguage, $EventDispatcher;
         $this->LanguageFolder = Config("LANGUAGE_FOLDER");
-        $this->loadFileList(); // Set up file list
-        if (Param("language", "") != "" && !EmptyValue($this->getFileName(Param("language")))) {
-            $this->LanguageId = Param("language");
+        if ($langId) {
+            $this->LanguageId = $langId;
             $_SESSION[SESSION_LANGUAGE_ID] = $this->LanguageId;
         } elseif (Session(SESSION_LANGUAGE_ID) != "") {
             $this->LanguageId = Session(SESSION_LANGUAGE_ID);
         } else {
-            $this->LanguageId = Config("LANGUAGE_DEFAULT_ID");
+            $this->LanguageId = Config("DEFAULT_LANGUAGE_ID");
         }
         $CurrentLanguage = $this->LanguageId;
         $this->loadLanguage($this->LanguageId);
 
-        // Call Language Load event
-        $this->languageLoad();
+        // Dispatch event
+        DispatchEvent(new LanguageLoadEvent($this), LanguageLoadEvent::NAME);
         SetClientVar("languages", ["languages" => $this->getLanguages()]);
-    }
-
-    // Load language file list
-    protected function loadFileList()
-    {
-        global $LANGUAGES;
-        if (is_array($LANGUAGES)) {
-            foreach ($LANGUAGES as &$lang) {
-                $lang[1] = $this->loadFileDesc($this->LanguageFolder . $lang[2]);
-            }
-        }
     }
 
     // Parse XML
@@ -56,21 +61,26 @@ class Language
         xml_parser_set_option($parser, XML_OPTION_CASE_FOLDING, 0);
         xml_parser_set_option($parser, XML_OPTION_SKIP_WHITE, 1);
         xml_parse_into_struct($parser, $xml, $values);
+        $errorCode = xml_get_error_code($parser);
+        if ($errorCode > 0) {
+            throw new \Exception(xml_error_string($errorCode));
+        }
         xml_parser_free($parser);
     }
 
-    // Load language file description
-    protected function loadFileDesc($file)
-    {
-        $xml = substr(file_get_contents($file), 0, 512); // Just parse the first part
-        $this->parseXml(trim($xml), $values);
-        return $values[0]["attributes"]["desc"] ?? "";
-    }
-
-    // Load XML
+    /**
+     * Load XML
+     * <ew-language> // level 1
+     *     <global> // level 2
+     *         <phrase/> // level 3
+     *         <extension> // level 3
+     *             <phrase/> // level 4
+     * @param string $xml XML
+     * @return void
+     */
     protected function loadXml($xml)
     {
-        $data = new \Dflydev\DotAccessData\Data();
+        $data = new Data();
         $xml = trim($xml);
         if (!$xml) {
             return $data;
@@ -81,17 +91,20 @@ class Language
         }
         $tags = [];
         foreach ($xmlValues as $xmlValue) {
-            $attributes = null; // Reset attributesfirst
+            $attributes = null; // Reset attributes first
             extract($xmlValue); // Extract as $tag (string), $type (string), $level (int) and $attributes (array)
             if ($level == 1) {
                 continue; // Skip root tag
             }
             if ($type == "open" || $type == "complete") { // Open tag like '<tag ...>' or complete tag like '<tag/>'
                 if ($attributes["id"] ?? false) { // Has "id" attribute
+                    $convert = fn ($id) => ($tags[2] ?? "") == "global" && $level > 3 // Extension phrases
+                        ? $id // Keep the id as camel case as JavaScript
+                        : strtolower($id);
                     if ($type == "open") {
-                        $tag .= "." . $attributes["id"];
+                        $tag .= "." . $convert($attributes["id"]); // Convert id to lowercase
                     } elseif ($type == "complete") { // <phrase/>
-                        $tag = $attributes["id"];
+                        $tag = $convert($attributes["id"]); // Convert id to lowercase
                     }
                     unset($attributes["id"]);
                 }
@@ -104,21 +117,56 @@ class Language
         return $data;
     }
 
-    // Load language file
+    // Get cache folder
+    protected static function getCacheFolder()
+    {
+        return __DIR__ . "/../" . Config("CACHE_FOLDER") . "/";
+    }
+
+    // Load language file(s)
     protected function loadLanguage($id)
     {
         global $CURRENCY_CODE, $CURRENCY_SYMBOL, $DECIMAL_SEPARATOR, $GROUPING_SEPARATOR,
             $NUMBER_FORMAT, $CURRENCY_FORMAT, $PERCENT_SYMBOL, $PERCENT_FORMAT, $NUMBERING_SYSTEM,
             $DATE_FORMAT, $TIME_FORMAT, $DATE_SEPARATOR, $TIME_SEPARATOR, $TIME_ZONE;
-        $fileName = $this->getFileName($id) ?: $this->getFileName(Config("LANGUAGE_DEFAULT_ID"));
-        if ($fileName == "") {
-            return;
-        }
-        $phrases = Session(PROJECT_NAME . "_" . $fileName);
-        if (is_array($phrases)) {
-            $this->Data = new \Dflydev\DotAccessData\Data($phrases);
+        $cacheFile = str_replace("*", $id, self::getCacheFolder() . self::$CACHE_FILE);
+        if (self::$UseCache && !IsRemote($cacheFile) && file_exists($cacheFile)) {
+            $this->Data = new Data(require $cacheFile);
         } else {
-            $this->Data = $this->loadXml(file_get_contents($fileName));
+            $this->Data = new Data();
+            $finder = new Finder();
+            $finder->files()->in($this->LanguageFolder)->name("*.$id.xml"); // Find all *.$id.xml
+            if (!$finder->hasResults()) {
+                LogError("Missing language files for language ID '$id'");
+                $finder->files()->in($this->LanguageFolder)->name("*.en-US.xml"); // Fallback to en-US
+            }
+            if (self::$SortBySize && method_exists($finder, "sortBySize")) {
+                $finder->sortBySize();
+            }
+            if (self::$SortByName) {
+                $finder->sortByName();
+            }
+            if (self::$SortByCaseInsensitiveName) {
+                if (method_exists($finder, "sortByCaseInsensitiveName")) {
+                    $finder->sortByCaseInsensitiveName();
+                } else {
+                    $finder->sortByName();
+                }
+            }
+            if (self::$ReverseSorting) {
+                $finder->reverseSorting();
+            }
+            foreach ($finder as $file) {
+                try {
+                    $this->Data->importData($this->loadXml($file->getContents()));
+                } catch (\Exception $e) {
+                    $_SESSION[SESSION_LANGUAGE_ID] = ""; // Clear the saved language ID from session
+                    throw new \Exception("Error occurred when parsing " . $file->getFilename() . ": " . $e->getMessage() . ". Make sure it is well-formed.");
+                }
+            }
+            if (self::$UseCache && CreateFolder(self::getCacheFolder())) {
+                file_put_contents($cacheFile, "<?php return " . VarExporter::export($this->Data->export()) . ";");
+            }
         }
 
         // Set up locale for the language
@@ -142,26 +190,40 @@ class Language
         if (!empty($TIME_ZONE)) {
             date_default_timezone_set($TIME_ZONE);
         }
+
+        // Save to Laravel session
+        LaravelSession(["Language" => $this->LanguageId, "TimeZone" => $TIME_ZONE]);
     }
 
-    // Get language file name
-    protected function getFileName($id)
+    // Get value only
+    protected function getValue($data)
     {
-        global $LANGUAGES;
-        if (is_array($LANGUAGES)) {
-            foreach ($LANGUAGES as $lang) {
-                if ($lang[0] == $id) {
-                    return $this->LanguageFolder . $lang[2];
-                }
+        $collect = Collection::make($data);
+        if ($collect->count() > 0) {
+            if ($collect->every(fn ($v) => is_array($v))) { // Array of array
+                return $collect->map(fn ($v) => $this->getValue($v))->all();
             }
+            return $collect->get("value") ?? "";
         }
         return "";
     }
 
-    // Compact value (return value only)
-    protected function compact($value)
+    // Has data
+    public function hasData($id)
     {
-        return $value["value"] ?? (is_array($value) ? array_map(fn($v) => $this->compact($v), $value) : $value);
+        return $this->Data->has(strtolower($id ?? ""));
+    }
+
+    // Set data
+    public function setData($id, $value)
+    {
+        $this->Data->set(strtolower($id ?? ""), $value);
+    }
+
+    // Get data
+    public function getData($id)
+    {
+        return $this->Data->get(strtolower($id ?? ""), "");
     }
 
     /**
@@ -169,32 +231,32 @@ class Language
      *
      * @param string $id Phrase ID
      * @param mixed $useText (true => text only, false => icon only, null => both)
-     * @return string
+     * @return string|array
      */
     public function phrase($id, $useText = false)
     {
-        $className = $this->Data->get("global." . strtolower($id) . ".class", "");
-        if ($this->Data->has("global." . strtolower($id))) {
-            $value = $this->Data->get("global." . strtolower($id), "");
-            $text = $this->compact($value);
+        $className = $this->getData("global." . $id . ".class");
+        if ($this->hasData("global." . $id)) {
+            $data = $this->getData("global." . $id);
+            $value = $this->getValue($data);
         } else {
-            $text = $id;
+            $value = $id;
         }
-        $res = $text;
-        if (is_string($res) && $useText !== true && $className != "") {
-            if ($useText === null && $text !== "") { // Use both icon and text
+        if (is_string($value) && $useText !== true && $className != "") {
+            if ($useText === null && $value !== "") { // Use both icon and text
                 AppendClass($className, "me-2");
             }
             if (preg_match('/\bspinner\b/', $className)) { // Spinner
-                $res = '<div class="' . $className . '" role="status"><span class="visually-hidden">' . $text . '</span></div>';
+                $res = '<div class="' . $className . '" role="status"><span class="visually-hidden">' . $value . '</span></div>';
             } else { // Icon
-                $res = '<i data-phrase="' . $id . '" class="' . $className . '"><span class="visually-hidden">' . $text . '</span></i>';
+                $res = '<i data-phrase="' . $id . '" class="' . $className . '"><span class="visually-hidden">' . $value . '</span></i>';
             }
-            if ($useText === null && $text !== "") { // Use both icon and text
-                $res .= $text;
+            if ($useText === null && $value !== "") { // Use both icon and text
+                $res .= $value;
             }
+            return $res;
         }
-        return $res;
+        return $value;
     }
 
     // Set phrase
@@ -206,79 +268,79 @@ class Language
     // Get project phrase
     public function projectPhrase($id)
     {
-        return $this->Data->get("project." . strtolower($id) . ".value", "");
+        return $this->getData("project." . $id . ".value");
     }
 
     // Set project phrase
     public function setProjectPhrase($id, $value)
     {
-        $this->Data->set("project." . strtolower($id) . ".value", $value);
+        $this->setData("project." . $id . ".value", $value);
     }
 
     // Get menu phrase
     public function menuPhrase($menuId, $id)
     {
-        return $this->Data->get("project.menu." . $menuId . "." . strtolower($id) . ".value", "");
+        return $this->getData("project.menu." . $menuId . "." . $id . ".value");
     }
 
     // Set menu phrase
     public function setMenuPhrase($menuId, $id, $value)
     {
-        $this->Data->set("project.menu." . $menuId . "." . strtolower($id) . ".value", $value);
+        $this->setData("project.menu." . $menuId . "." . $id . ".value", $value);
     }
 
     // Get table phrase
     public function tablePhrase($tblVar, $id)
     {
-        return $this->Data->get("project.table." . strtolower($tblVar) .  "." . strtolower($id) . ".value", "");
+        return $this->getData("project.table." . $tblVar .  "." . $id . ".value");
     }
 
     // Set table phrase
     public function setTablePhrase($tblVar, $id, $value)
     {
-        $this->Data->set("project.table." . strtolower($tblVar) .  "." . strtolower($id) . ".value", $value);
+        $this->setData("project.table." . $tblVar .  "." . $id . ".value", $value);
     }
 
     // Get chart phrase
     public function chartPhrase($tblVar, $chtVar, $id)
     {
-        return $this->Data->get("project.table." . strtolower($tblVar) .  ".chart." . strtolower($chtVar) . "." . strtolower($id) . ".value", "");
+        return $this->getData("project.table." . $tblVar .  ".chart." . $chtVar . "." . $id . ".value");
     }
 
     // Set chart phrase
     public function setChartPhrase($tblVar, $chtVar, $id, $value)
     {
-        $this->Data->set("project.table." . strtolower($tblVar) .  ".chart." . strtolower($chtVar) . "." . strtolower($id) . ".value", $value);
+        $this->setData("project.table." . $tblVar .  ".chart." . $chtVar . "." . $id . ".value", $value);
     }
 
     // Get field phrase
     public function fieldPhrase($tblVar, $fldVar, $id)
     {
-        return $this->Data->get("project.table." . strtolower($tblVar) .  ".field." . strtolower($fldVar) . "." . strtolower($id) . ".value", "");
+        return $this->getData("project.table." . $tblVar .  ".field." . $fldVar . "." . $id . ".value");
     }
 
     // Set field phrase
     public function setFieldPhrase($tblVar, $fldVar, $id, $value)
     {
-        $this->Data->set("project.table." . strtolower($tblVar) .  ".field." . strtolower($fldVar) . "." . strtolower($id) . ".value", $value);
+        $this->setData("project.table." . $tblVar .  ".field." . $fldVar . "." . $id . ".value", $value);
     }
 
     // Get phrase attribute
     protected function phraseAttr($id, $name)
     {
-        return $this->Data->get("global." . strtolower($id) . "." . strtolower($name), "");
+        return $this->getData("global." . $id . "." . $name);
     }
 
     // Set phrase attribute
     protected function setPhraseAttr($id, $name, $value)
     {
-        $this->Data->set("global." . strtolower($id) . "." . strtolower($name), $value);
+        $this->setData("global." . $id . "." . $name, $value);
     }
 
     // Get phrase class
     public function phraseClass($id)
     {
-        return $this->PhraseAttr($id, "class");
+        return $this->phraseAttr($id, "class");
     }
 
     // Set phrase attribute
@@ -308,16 +370,25 @@ class Language
         global $LANGUAGES, $CurrentLanguage;
         $ar = [];
         if (is_array($LANGUAGES) && count($LANGUAGES) > 1) {
-            $ar = array_map(function ($lang) use ($CurrentLanguage) {
-                $langId = $lang[0];
-                $phrase = $this->phrase($langId);
-                if ($phrase == $langId && $lang[1]) {
-                    $phrase = $lang[1];
+            $finder = new Finder();
+            $finder->files()->in($this->LanguageFolder)->name(Config("LANGUAGES_FILE")); // Find languages.xml
+            foreach ($finder as $file) {
+                $data = $this->loadXml($file->getContents());
+                foreach ($LANGUAGES as $langId) {
+                    $lang = array_merge([ "id" => $langId ], $data->has("global." . strtolower($langId)) ? $data->get("global." . strtolower($langId)) : [ "desc" => $this->phrase($langId) ]);
+                    $lang["selected"] = $langId == $CurrentLanguage;
+                    $ar[] = $lang;
                 }
-                return ["id" => $langId, "desc" => $phrase, "selected" => $langId == $CurrentLanguage];
-            }, $LANGUAGES);
+                break; // Only one file
+            }
         }
         return $ar;
+    }
+
+    // Set template
+    public function setTemplate($value)
+    {
+        $this->Template = $value;
     }
 
     // Get template
@@ -331,17 +402,9 @@ class Language
             } elseif (SameText($this->Type, "SELECT")) { // SELECT template (NOT for used with top Navbar)
                 return '<div class="ew-language-option"><select class="form-select" id="ew-language" name="ew-language" data-ew-action="language">{{for languages}}<option value="{{:id}}"{{if selected}} selected{{/if}}>{{:desc}}</option>{{/for}}</select></div>';
             } elseif (SameText($this->Type, "RADIO")) { // RADIO template (NOT for used with top Navbar)
-                return '<div class="ew-language-option"><div class="btn-group" data-bs-toggle="buttons">{{for languages}}<input type="radio" name="ew-language" id="ew-Language-{{:id}}" data-ew-action="language"{{if selected}} checked{{/if}}" value="{{:id}}"><label class="btn btn-default ew-tooltip" for="ew-language-{{:id}}" data-container="body" data-bs-placement="bottom" title="{{>desc}}">{{:id}}</label>{{/for}}</div></div>';
+                return '<div class="ew-language-option"><div class="btn-group" data-bs-toggle="buttons">{{for languages}}<input type="radio" name="ew-language" id="ew-Language-{{:id}}" data-ew-action="language"{{if selected}} checked{{/if}} value="{{:id}}"><label class="btn btn-default ew-tooltip" for="ew-language-{{:id}}" data-container="body" data-bs-placement="bottom" title="{{>desc}}">{{:id}}</label>{{/for}}</div></div>';
             }
         }
         return $this->Template;
-    }
-
-    // Language Load event
-    public function languageLoad()
-    {
-        // Example:
-        //$this->setPhrase("MyID", "MyValue"); // Refer to language file for the actual phrase id
-        //$this->setPhraseClass("MyID", "fa-solid fa-xxx ew-icon"); // Refer to https://fontawesome.com/icons?d=gallery&m=free [^] for icon name
     }
 }

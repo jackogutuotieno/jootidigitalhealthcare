@@ -1,62 +1,54 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Attributes class
  */
 class Attributes implements \ArrayAccess, \IteratorAggregate
 {
-    private $container;
-
     // Constructor
-    public function __construct(array $attrs = [])
+    public function __construct(private array $attrs = [])
     {
-        $this->container = $attrs;
     }
 
     // offsetSet
     #[\ReturnTypeWillChange]
-
     public function offsetSet($offset, $value)
     {
         if (is_null($offset)) {
-            $this->container[] = $value;
+            $this->attrs[] = $value;
         } else {
-            $this->container[$offset] = $value;
+            $this->attrs[$offset] = $value;
         }
     }
 
     // offsetExists
     #[\ReturnTypeWillChange]
-
     public function offsetExists($offset)
     {
-        return isset($this->container[$offset]);
+        return isset($this->attrs[$offset]);
     }
 
     // offsetUnset
     #[\ReturnTypeWillChange]
-
     public function offsetUnset($offset)
     {
-        unset($this->container[$offset]);
+        unset($this->attrs[$offset]);
     }
 
     // offsetGet
     #[\ReturnTypeWillChange]
-
     public function offsetGet($offset)
     {
-        return $this->container[$offset] ?? ""; // No undefined index
+        return $this->attrs[$offset] ?? ""; // No undefined index
     }
 
     // getIterator
     #[\ReturnTypeWillChange]
-
     public function getIterator()
     {
-        return new \ArrayIterator($this->container);
+        return new \ArrayIterator($this->attrs);
     }
 
     // Append class
@@ -64,8 +56,8 @@ class Attributes implements \ArrayAccess, \IteratorAggregate
     {
         $cls = $this->offsetGet("class");
         AppendClass($cls, $value);
-        $this->container["class"] = trim($cls);
-        return $this->container["class"];
+        $this->attrs["class"] = trim($cls);
+        return $this->attrs["class"];
     }
 
     // Prepend class
@@ -73,8 +65,8 @@ class Attributes implements \ArrayAccess, \IteratorAggregate
     {
         $cls = $this->offsetGet("class");
         PrependClass($cls, $value);
-        $this->container["class"] = trim($cls);
-        return $this->container["class"];
+        $this->attrs["class"] = trim($cls);
+        return $this->attrs["class"];
     }
 
     // Remove class
@@ -82,8 +74,8 @@ class Attributes implements \ArrayAccess, \IteratorAggregate
     {
         $cls = $this->offsetGet("class");
         RemoveClass($cls, $value);
-        $this->container["class"] = trim($cls);
-        return $this->container["class"];
+        $this->attrs["class"] = trim($cls);
+        return $this->attrs["class"];
     }
 
     // Append
@@ -93,8 +85,8 @@ class Attributes implements \ArrayAccess, \IteratorAggregate
             return $this->appendClass($value);
         }
         $ar = array_filter([$this->offsetGet($offset), $value], fn($v) => !EmptyString($v));
-        $this->container[$offset] = implode($sep, $ar);
-        return $this->container[$offset];
+        $this->attrs[$offset] = implode($sep, $ar);
+        return $this->attrs[$offset];
     }
 
     // Prepend
@@ -104,8 +96,8 @@ class Attributes implements \ArrayAccess, \IteratorAggregate
             return $this->prependClass($value);
         }
         $ar = array_filter([$value, $this->offsetGet($offset)], fn($v) => !EmptyString($v));
-        $this->container[$offset] = implode($sep, $ar);
-        return $this->container[$offset];
+        $this->attrs[$offset] = implode($sep, $ar);
+        return $this->attrs[$offset];
     }
 
     // Merge attributes
@@ -119,18 +111,18 @@ class Attributes implements \ArrayAccess, \IteratorAggregate
                 $this->appendClass($attrs["class"]);
                 unset($attrs["class"]);
             }
-            $this->container = array_merge_recursive($this->container, $attrs);
+            $this->attrs = array_merge_recursive($this->attrs, $attrs);
         }
     }
 
     // Check attributes for hyperlink
     public function checkLinkAttributes()
     {
-        $onclick = $this->container["onclick"] ?? "";
-        $href = $this->container["href"] ?? "";
+        $onclick = $this->attrs["onclick"] ?? "";
+        $href = $this->attrs["href"] ?? "";
         if ($onclick) {
             if (!$href) {
-                $this->container["href"] = "#";
+                $this->attrs["href"] = "#";
             }
             if (!StartsString("return ", $onclick) && !EndsString("return false;", $onclick)) {
                 $this->append("onclick", "return false;", ";");
@@ -141,7 +133,7 @@ class Attributes implements \ArrayAccess, \IteratorAggregate
     // To array
     public function toArray()
     {
-        return $this->container;
+        return array_filter($this->attrs, fn($v) => $v !== null);
     }
 
     /**
@@ -153,10 +145,14 @@ class Attributes implements \ArrayAccess, \IteratorAggregate
     public function toString($exclude = [])
     {
         $att = "";
-        foreach ($this->container as $k => $v) {
+        foreach ($this->attrs as $k => $v) {
             $key = trim($k);
             if (in_array($key, $exclude)) {
                 continue;
+            }
+            $v = $v instanceof \UnitEnum ? $v->value : $v; // Convert enum to string
+            if (is_array($v)) {
+                $v = ArrayToJsonAttribute($v); // Convert array to JSON
             }
             $value = trim($v ?? "");
             if (IsBooleanAttribute($key) && $value !== false) { // Allow boolean attributes, e.g. "disabled"

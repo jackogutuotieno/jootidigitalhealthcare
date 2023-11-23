@@ -1,32 +1,33 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
+use Doctrine\DBAL\ParameterType;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Query\QueryBuilder;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Container\ContainerInterface;
-use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
-use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Query\QueryBuilder;
-use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 // Filter for 'Last Month' (example)
-function GetLastMonthFilter($FldExpression, $dbid = 0)
+function GetLastMonthFilter($FldExpression, $dbid = "")
 {
     $today = getdate();
     $lastmonth = mktime(0, 0, 0, $today['mon'] - 1, 1, $today['year']);
     $val = date("Y|m", $lastmonth);
     $wrk = $FldExpression . " BETWEEN " .
-        QuotedValue(DateValue("month", $val, 1, $dbid), DATATYPE_DATE, $dbid) .
+        QuotedValue(DateValue("month", $val, 1, $dbid), DataType::DATE, $dbid) .
         " AND " .
-        QuotedValue(DateValue("month", $val, 2, $dbid), DATATYPE_DATE, $dbid);
+        QuotedValue(DateValue("month", $val, 2, $dbid), DataType::DATE, $dbid);
     return $wrk;
 }
 
 // Filter for 'Starts With A' (example)
-function GetStartsWithAFilter($FldExpression, $dbid = 0)
+function GetStartsWithAFilter($FldExpression, $dbid = "")
 {
     return $FldExpression . Like("'A%'", $dbid);
 }
@@ -41,12 +42,12 @@ function Database_Connecting(&$info)
     //if ($info["id"] == "DB" && IsLocal()) { // Testing on local PC
     //    $info["host"] = "locahost";
     //    $info["user"] = "root";
-    //    $info["pass"] = "";
+    //    $info["password"] = "";
     //}
 }
 
 // Database Connected event
-function Database_Connected(&$conn)
+function Database_Connected($conn)
 {
     // Example:
     //if ($conn->info["id"] == "DB") {
@@ -54,19 +55,26 @@ function Database_Connected(&$conn)
     //}
 }
 
+// Language Load event
+function Language_Load()
+{
+    // Example:
+    //$this->setPhrase("MyID", "MyValue"); // Refer to language file for the actual phrase id
+    //$this->setPhraseClass("MyID", "fa-solid fa-xxx ew-icon"); // Refer to https://fontawesome.com/icons?d=gallery&m=free [^] for icon name
+}
+
 function MenuItem_Adding($item)
 {
     //var_dump($item);
-    // Return false if menu item not allowed
-    return true;
+    //$item->Allowed = false; // Set to false if menu item not allowed
 }
 
-function Menu_Rendering($menu)
+function Menu_Rendering()
 {
     // Change menu items here
 }
 
-function Menu_Rendered($menu)
+function Menu_Rendered()
 {
     // Clean up here
 }
@@ -75,6 +83,7 @@ function Menu_Rendered($menu)
 function Page_Loading()
 {
     //Log("Page Loading");
+    Language()->SetPhrase("AddBtn", "Send SMS/Whatever");
 }
 
 // Page Rendering event
@@ -97,7 +106,7 @@ function AuditTrail_Inserting(&$rsnew)
 }
 
 // Personal Data Downloading event
-function PersonalData_Downloading(&$row)
+function PersonalData_Downloading($row)
 {
     //Log("PersonalData Downloading");
 }
@@ -112,8 +121,8 @@ function PersonalData_Deleted($row)
 function Otp_Sending($usr, $client)
 {
     // Example:
-    // var_dump($usr, $client); // View user and client (Email or Sms object)
-    // if (SameText(Config("TWO_FACTOR_AUTHENTICATION_TYPE"), "email")) { // Possible values, email or sms
+    // var_dump($usr, $client); // View user and client (Email or SMS object)
+    // if (SameText(Config("TWO_FACTOR_AUTHENTICATION_TYPE"), "email")) { // Possible values, email or SMS
     //     $client->Content = ...; // Change content
     //     $client->Recipient = ...; // Change recipient
     //     // return false; // Return false to cancel
@@ -160,3 +169,30 @@ function Container_Build($builder)
     //    }
     // ]);
 }
+
+// Add listeners
+AddListener(DatabaseConnectingEvent::NAME, fn(DatabaseConnectingEvent $event) => Database_Connecting($event));
+AddListener(DatabaseConnectedEvent::NAME, fn(DatabaseConnectedEvent $event) => Database_Connected($event->getConnection()));
+AddListener(LanguageLoadEvent::NAME, fn(LanguageLoadEvent $event) => Closure::fromCallable(PROJECT_NAMESPACE . "Language_Load")->bindTo($event->getLanguage())());
+AddListener(MenuItemAddingEvent::NAME, fn(MenuItemAddingEvent $event) => Closure::fromCallable(PROJECT_NAMESPACE . "MenuItem_Adding")->bindTo($event->getMenu())($event->getMenuItem()));
+AddListener(MenuRenderingEvent::NAME, fn(MenuRenderingEvent $event) => Closure::fromCallable(PROJECT_NAMESPACE . "Menu_Rendering")->bindTo($event->getMenu())($event->getMenu()));
+AddListener(MenuRenderedEvent::NAME, fn(MenuRenderedEvent $event) => Closure::fromCallable(PROJECT_NAMESPACE . "Menu_Rendered")->bindTo($event->getMenu())($event->getMenu()));
+AddListener(PageLoadingEvent::NAME, fn(PageLoadingEvent $event) => Closure::fromCallable(PROJECT_NAMESPACE . "Page_Loading")->bindTo($event->getPage())());
+AddListener(PageRenderingEvent::NAME, fn(PageRenderingEvent $event) => Closure::fromCallable(PROJECT_NAMESPACE . "Page_Rendering")->bindTo($event->getPage())());
+AddListener(PageUnloadedEvent::NAME, fn(PageUnloadedEvent $event) => Closure::fromCallable(PROJECT_NAMESPACE . "Page_Unloaded")->bindTo($event->getPage())());
+AddListener(RouteActionEvent::NAME, fn(RouteActionEvent $event) => Route_Action($event->getApp()));
+AddListener(ApiActionEvent::NAME, fn(ApiActionEvent $event) => Api_Action($event->getApp()));
+AddListener(ContainerBuildEvent::NAME, fn(ContainerBuildEvent $event) => Container_Build($event->getBuilder()));
+
+// Dompdf
+AddListener(ConfigurationEvent::NAME, function (ConfigurationEvent $event) {
+    $event->import([
+        "PDF_BACKEND" => "CPDF",
+        "PDF_STYLESHEET_FILENAME" => "css/ewpdf.css", // Export PDF CSS styles
+        "PDF_MEMORY_LIMIT" => "512M", // Memory limit
+        "PDF_TIME_LIMIT" => 120, // Time limit
+        "PDF_MAX_IMAGE_WIDTH" => 650, // Make sure image width not larger than page width or "infinite table loop" error
+        "PDF_MAX_IMAGE_HEIGHT" => 900, // Make sure image height not larger than page height or "infinite table loop" error
+        "PDF_IMAGE_SCALE_FACTOR" => 1.53, // Scale factor
+    ]);
+});

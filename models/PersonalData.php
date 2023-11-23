@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -102,7 +108,7 @@ class PersonalData
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -112,7 +118,7 @@ class PersonalData
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
     }
 
@@ -121,17 +127,14 @@ class PersonalData
     {
         global $Language, $DashboardReport, $DebugTimer, $UserTable;
 
-        // Table CSS class
-        $this->TableClass = "table table-striped table-bordered table-hover table-sm ew-view-table";
-
         // Initialize
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -147,7 +150,7 @@ class PersonalData
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -195,9 +198,7 @@ class PersonalData
 
         // Page is terminated
         $this->terminated = true;
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
 
         // Close connection
         CloseConnections();
@@ -212,7 +213,7 @@ class PersonalData
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -239,7 +240,7 @@ class PersonalData
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $Breadcrumb;
+        global $ExportType, $Language, $Security, $CurrentForm, $Breadcrumb;
 
         // Create Password field object (used by validation only)
         $this->Password = new DbField(Container("usertable"), "password", "password", "password", "", 202, 255, -1, false, "", false, false, false);
@@ -251,10 +252,14 @@ class PersonalData
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
+
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
-        $Breadcrumb = new Breadcrumb("index");
-        $Breadcrumb->add("personal_data", "PersonalDataTitle", CurrentUrl(), "ew-personal-data", "", true);
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
+        $Breadcrumb = Breadcrumb::create("index")->add("personal_data", "PersonalDataTitle", CurrentUrl(), "ew-personal-data", "", true);
         $this->Heading = $Language->phrase("PersonalDataTitle");
         $cmd = Param("cmd");
         if (SameText($cmd, "Download")) {
@@ -278,7 +283,7 @@ class PersonalData
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -299,24 +304,16 @@ class PersonalData
      */
     protected function personalDataResult()
     {
-        global $UserTable;
-        $result = [];
         $fldNames = [];
-        $UserTable = Container("usertable");
-        $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), CurrentUserName());
-        $sql = $UserTable->getSql($filter);
-        if ($row = Conn($UserTable->Dbid)->fetchAssociative($sql)) {
-            foreach ($fldNames as $fldName) {
-                if (array_key_exists($fldName, $row)) {
-                    $result[$fldName] = GetUserInfo($fldName, $row);
-                }
-            }
+        $user = FindUserByUserName(CurrentUserName());
+        if ($user) {
+            $row = $user->toArray();
 
             // Call PersonalData_Downloading event
-            PersonalData_Downloading($result);
+            PersonalData_Downloading($row);
             $personalDataFileName = Get("_personaldatafilename", "personaldata.json");
             AddHeader("Content-Disposition", "attachment; filename=\"" . $personalDataFileName . "\"");
-            WriteJson($result);
+            WriteJson($row);
             return true;
         } else {
             $this->setFailureMessage($Language->phrase("NoRecord")); // No record found
@@ -331,22 +328,27 @@ class PersonalData
      */
     protected function deletePersonalData()
     {
-        global $UserTable, $Language;
-        $UserTable = Container("usertable");
-        $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), CurrentUserName());
-        $sql = $UserTable->getSql($filter);
+        global $Language, $UserTable;
         $pwd = Post($this->Password->FieldVar, "");
-        if ($row = Conn($UserTable->Dbid)->fetchAssociative($sql)) {
-            if (ComparePassword(GetUserInfo(Config("LOGIN_PASSWORD_FIELD_NAME"), $row), $pwd)) {
-                if (Config("DELETE_UPLOADED_FILES")) // Delete old files
+        $user = FindUserByUserName(CurrentUserName());
+        if ($user) {
+            if (ComparePassword($user->get(Config("LOGIN_PASSWORD_FIELD_NAME")), $pwd)) {
+                $row = $user->toArray();
+                if (Config("DELETE_UPLOADED_FILES")) { // Delete old files
                     $UserTable->deleteUploadedFiles($row);
-                if ($UserTable->delete($row)) {
+                }
+                try {
+                    $em = GetUserEntityManager();
+                    $em->remove($user);
+                    $em->flush();
+
                     // Call PersonalData_Deleted event
                     PersonalData_Deleted($row);
                     return true;
+                } catch (\Exception $e) {
+                    $this->setFailureMessage($Language->phrase("PersonalDataDeleteFailure") . ": " . $e->getMessage());
+                    return false;
                 }
-                $this->setFailureMessage($Language->phrase("PersonalDataDeleteFailure"));
-                return false;
             } else {
                 $this->Password->addErrorMessage($Language->phrase("InvalidPassword"));
                 return false;

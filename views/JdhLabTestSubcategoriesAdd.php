@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhLabTestSubcategoriesAdd = &$Page;
@@ -57,7 +57,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_lab_test_subcategoriesadd" id="fjdh_lab_test_subcategoriesadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_lab_test_subcategoriesadd" id="fjdh_lab_test_subcategoriesadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -79,7 +79,9 @@ $Page->showMessage();
         id="x_test_category_id"
         name="x_test_category_id"
         class="form-select ew-select<?= $Page->test_category_id->isInvalidClass() ?>"
+        <?php if (!$Page->test_category_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_lab_test_subcategoriesadd_x_test_category_id"
+        <?php } ?>
         data-table="jdh_lab_test_subcategories"
         data-field="x_test_category_id"
         data-value-separator="<?= $Page->test_category_id->displayValueSeparatorAttribute() ?>"
@@ -90,10 +92,13 @@ $Page->showMessage();
     <?= $Page->test_category_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->test_category_id->getErrorMessage() ?></div>
 <?= $Page->test_category_id->Lookup->getParamTag($Page, "p_x_test_category_id") ?>
+<?php if (!$Page->test_category_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_lab_test_subcategoriesadd", function() {
     var options = { name: "x_test_category_id", selectId: "fjdh_lab_test_subcategoriesadd_x_test_category_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_lab_test_subcategoriesadd.lists.test_category_id?.lookupOptions.length) {
@@ -106,6 +111,7 @@ loadjs.ready("fjdh_lab_test_subcategoriesadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>

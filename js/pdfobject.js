@@ -1,8 +1,8 @@
 /**
- *  PDFObject v2.2.5
+ *  PDFObject v2.2.12
  *  https://github.com/pipwerks/PDFObject
  *  @license
- *  Copyright (c) 2008-2021 Philip Hutchison
+ *  Copyright (c) 2008-2023 Philip Hutchison
  *  MIT-style license: http://pipwerks.mit-license.org/
  *  UMD module pattern from https://github.com/umdjs/umd/blob/master/templates/returnExports.js
  */
@@ -35,7 +35,7 @@
             return false;
     }
 
-    let pdfobjectversion = "2.2.3";
+    let pdfobjectversion = "2.2.12";
     let nav = window.navigator;
     let ua = window.navigator.userAgent;
 
@@ -184,76 +184,64 @@
 
     };
 
-    let generatePDFJSMarkup = function (targetNode, url, pdfOpenFragment, PDFJS_URL, id, omitInlineStyles){
+    let generatePDFObjectMarkup = function (embedType, targetNode, url, pdfOpenFragment, width, height, id, title, omitInlineStyles, customAttribute, PDFJS_URL){
 
         //Ensure target element is empty first
         emptyNodeContents(targetNode);
 
-        let fullURL = PDFJS_URL + "?file=" + encodeURIComponent(url) + pdfOpenFragment;
-        let div = document.createElement("div");
-        let iframe = document.createElement("iframe");
-        
-        iframe.src = fullURL;
-        iframe.className = "pdfobject";
-        iframe.type = "application/pdf";
-        iframe.frameborder = "0";
-        iframe.allow = "fullscreen";
-        
-        if(id){
-            iframe.id = id;
+        let source = url;
+
+        if(embedType === "pdfjs"){ 
+            //If PDFJS_URL already contains a ?, assume querystring is in place, and use an ampersand to append PDFJS's file parameter
+            let connector = (PDFJS_URL.indexOf("?") !== -1) ? "&" : "?"; 
+            source = PDFJS_URL + connector + "file=" + encodeURIComponent(url) + pdfOpenFragment;
+        } else {
+            source += pdfOpenFragment;
         }
 
-        if(!omitInlineStyles){
-            div.style.cssText = "position: absolute; top: 0; right: 0; bottom: 0; left: 0;";
-            iframe.style.cssText = "border: none; width: 100%; height: 100%;";
-            targetNode.style.position = "relative";
-            targetNode.style.overflow = "auto";        
-        }
+        let el_type = (embedType === "pdfjs" || embedType === "iframe") ? "iframe" : "embed";
+        let el = document.createElement(el_type);
 
-        div.appendChild(iframe);
-        targetNode.appendChild(div);
-        targetNode.classList.add("pdfobject-container");
-        
-        return targetNode.getElementsByTagName("iframe")[0];
-
-    };
-
-    let generatePDFObjectMarkup = function (embedType, targetNode, targetSelector, url, pdfOpenFragment, width, height, id, omitInlineStyles){
-
-        //Ensure target element is empty first
-        emptyNodeContents(targetNode);
-
-        let embed = document.createElement(embedType);
-        embed.src = url + pdfOpenFragment;
-        embed.className = "pdfobject";
-        embed.type = "application/pdf";
+        el.className = "pdfobject";
+        el.type = "application/pdf";
+        el.title = title;
+        el.src = source;
 
         if(id){
-            embed.id = id;
+            el.id = id;
         }
 
-        if(embedType === "iframe"){
-            embed.allow = "fullscreen";
+        if(el_type === "iframe"){
+            el.allow = "fullscreen";
+            el.frameborder = "0";
         }
 
         if(!omitInlineStyles){
 
-            let style = (embedType === "embed") ? "overflow: auto;" : "border: none;";
+            let style = (el_type === "embed") ? "overflow: auto;" : "border: none;";
 
-            if(targetSelector && targetSelector !== document.body){
+            if(targetNode !== document.body){
+                //assign width and height to target node
                 style += "width: " + width + "; height: " + height + ";";
             } else {
+                //this is a full-page embed, use CSS to fill the viewport
                 style += "position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%;";
             }
 
-            embed.style.cssText = style; 
+            el.style.cssText = style; 
 
         }
 
-        targetNode.classList.add("pdfobject-container");
-        targetNode.appendChild(embed);
+        //Allow developer to insert custom attribute on embed/iframe element, but ensure it does not conflict with attributes used by PDFObject
+        let reservedTokens = ["className", "type", "title", "src", "style", "id", "allow", "frameborder"];
+        if(customAttribute && customAttribute.key && reservedTokens.indexOf(customAttribute.key) === -1){
+            el.setAttribute(customAttribute.key, (typeof customAttribute.value !== "undefined") ? customAttribute.value : "");
+        }
 
-        return targetNode.getElementsByTagName(embedType)[0];
+        targetNode.classList.add("pdfobject-container");
+        targetNode.appendChild(el);
+
+        return targetNode.getElementsByTagName(el_type)[0];
 
     };
 
@@ -269,9 +257,10 @@
         let id = (typeof opt.id === "string") ? opt.id : "";
         let page = opt.page || false;
         let pdfOpenParams = opt.pdfOpenParams || {};
-        let fallbackLink = opt.fallbackLink || true;
+        let fallbackLink = (typeof opt.fallbackLink === "string" || typeof opt.fallbackLink === "boolean") ? opt.fallbackLink : true;
         let width = opt.width || "100%";
         let height = opt.height || "100%";
+        let title = opt.title || "Embedded PDF";
         let assumptionMode = (typeof opt.assumptionMode === "boolean") ? opt.assumptionMode : true;
         let forcePDFJS = (typeof opt.forcePDFJS === "boolean") ? opt.forcePDFJS : false;
         let supportRedirect = (typeof opt.supportRedirect === "boolean") ? opt.supportRedirect : false;
@@ -282,6 +271,7 @@
         let targetNode = getTargetElement(selector);
         let fallbackHTML = "";
         let pdfOpenFragment = "";
+        let customAttribute = opt.customAttribute || {};
         let fallbackHTML_default = "<p>This browser does not support inline PDFs. Please download the PDF to view it: <a href='[url]'>Download PDF</a></p>";
 
         //Ensure URL is available. If not, exit now.
@@ -301,7 +291,7 @@
 
         //If the forcePDFJS option is invoked, skip everything else and embed as directed
         if(forcePDFJS && PDFJS_URL){
-            return generatePDFJSMarkup(targetNode, url, pdfOpenFragment, PDFJS_URL, id, omitInlineStyles);
+            return generatePDFObjectMarkup("pdfjs", targetNode, url, pdfOpenFragment, width, height, id, title, omitInlineStyles, customAttribute, PDFJS_URL);
         }
  
         // --== Embed attempt #2 ==--
@@ -314,9 +304,10 @@
             //Allow developer to force <iframe>, if desired
             //There is an edge case where Safari does not respect 302 redirect requests for PDF files when using <embed> element.
             //Redirect appears to work fine when using <iframe> instead of <embed> (Addresses issue #210)
-            let embedtype = (forceIframe || (supportRedirect && isSafariDesktop)) ? "iframe" : "embed";
+            //Forcing Safari desktop to use iframe due to freezing bug in macOS 11 (Big Sur)
+            let embedtype = (forceIframe || supportRedirect || isSafariDesktop) ? "iframe" : "embed";
             
-            return generatePDFObjectMarkup(embedtype, targetNode, targetSelector, url, pdfOpenFragment, width, height, id, omitInlineStyles);
+            return generatePDFObjectMarkup(embedtype, targetNode, url, pdfOpenFragment, width, height, id, title, omitInlineStyles, customAttribute);
 
         }
         
@@ -324,7 +315,7 @@
         
         //If everything else has failed and a PDFJS fallback is provided, try to use it
         if(PDFJS_URL){
-            return generatePDFJSMarkup(targetNode, url, pdfOpenFragment, PDFJS_URL, id, omitInlineStyles);
+            return generatePDFObjectMarkup("pdfjs", targetNode, url, pdfOpenFragment, width, height, id, title, omitInlineStyles, customAttribute, PDFJS_URL);
         }
         
         // --== PDF embed not supported! Use fallback ==-- 

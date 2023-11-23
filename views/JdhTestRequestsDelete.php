@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhTestRequestsDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_test_requestsdelete" id="fjdh_test_requestsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_test_requestsdelete" id="fjdh_test_requestsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -74,16 +74,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -91,7 +91,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_patient_id" class="el_jdh_test_requests_patient_id">
+<span id="">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
@@ -99,7 +99,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->request_title->Visible) { // request_title ?>
         <td<?= $Page->request_title->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_title" class="el_jdh_test_requests_request_title">
+<span id="">
 <span<?= $Page->request_title->viewAttributes() ?>>
 <?= $Page->request_title->getViewValue() ?></span>
 </span>
@@ -107,7 +107,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->request_service_id->Visible) { // request_service_id ?>
         <td<?= $Page->request_service_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_service_id" class="el_jdh_test_requests_request_service_id">
+<span id="">
 <span<?= $Page->request_service_id->viewAttributes() ?>>
 <?= $Page->request_service_id->getViewValue() ?></span>
 </span>
@@ -115,7 +115,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->request_description->Visible) { // request_description ?>
         <td<?= $Page->request_description->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_description" class="el_jdh_test_requests_request_description">
+<span id="">
 <span<?= $Page->request_description->viewAttributes() ?>>
 <?= $Page->request_description->getViewValue() ?></span>
 </span>
@@ -123,7 +123,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->request_date->Visible) { // request_date ?>
         <td<?= $Page->request_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_request_date" class="el_jdh_test_requests_request_date">
+<span id="">
 <span<?= $Page->request_date->viewAttributes() ?>>
 <?= $Page->request_date->getViewValue() ?></span>
 </span>
@@ -131,7 +131,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->status_id->Visible) { // status_id ?>
         <td<?= $Page->status_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_requests_status_id" class="el_jdh_test_requests_status_id">
+<span id="">
 <span<?= $Page->status_id->viewAttributes() ?>>
 <?= $Page->status_id->getViewValue() ?></span>
 </span>
@@ -139,9 +139,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

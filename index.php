@@ -1,8 +1,8 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
-use PHPMaker2023\jootidigitalhealthcare\{UserProfile, Language, AdvancedSecurity, Timer, HttpErrorHandler};
+use PHPMaker2024\jootidigitalhealthcare\{UserProfile, Language, AdvancedSecurity, Timer, HttpErrorHandler, RouteAttributes};
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Container\ContainerInterface;
@@ -14,19 +14,24 @@ use Selective\SameSiteCookie\SameSiteSessionMiddleware;
 use Slim\Factory\AppFactory;
 use Slim\Factory\ServerRequestCreatorFactory;
 use Slim\Exception\HttpInternalServerErrorException;
-use Nyholm\Psr7\Factory\Psr17Factory;
-use Nyholm\Psr7Server\ServerRequestCreator;
 use Middlewares\Whoops;
+use Dflydev\DotAccessData\Data;
 
 // Relative path
 $RELATIVE_PATH = "";
 
-// Require files
+// Autoload
 require_once "vendor/autoload.php";
+
+// Require files
 require_once "src/constants.php";
 require_once "src/config.php";
 require_once "src/phpfn.php";
+$ConfigData = new Data($CONFIG); // Ensure that $ConfigData is accessible by Global Codes
 require_once "src/userfn.php";
+
+// Dispatch configuration event
+DispatchEvent(new ConfigurationEvent($ConfigData), ConfigurationEvent::NAME);
 
 // Check PHP extensions
 $exts = array_filter(Config("PHP_EXTENSIONS"), fn($ext) => !extension_loaded($ext), ARRAY_FILTER_USE_KEY);
@@ -53,10 +58,11 @@ if ($isDebug && Config("REPORT_ALL_ERRORS")) {
 
 // Instantiate PHP-DI container builder
 $containerBuilder = new ContainerBuilder();
+$containerBuilder->useAttributes(true);
 
 // Enable container compilation
 if ($isProduction && Config("COMPILE_CONTAINER") && !IsRemote(Config("UPLOAD_DEST_PATH"))) {
-    $cacheFolder = UploadPath(false) . "cache";
+    $cacheFolder = Config("CACHE_FOLDER");
     if (CreateFolder($cacheFolder)) {
         $containerBuilder->enableCompilation($cacheFolder);
     }
@@ -65,10 +71,8 @@ if ($isProduction && Config("COMPILE_CONTAINER") && !IsRemote(Config("UPLOAD_DES
 // Add definitions
 $containerBuilder->addDefinitions("src/definitions.php");
 
-// Call Container Build event
-if (function_exists(PROJECT_NAMESPACE . "Container_Build")) {
-    Container_Build($containerBuilder);
-}
+// Dispatch container build event
+DispatchEvent(new ContainerBuildEvent($containerBuilder), ContainerBuildEvent::NAME);
 
 // Build PHP-DI container instance
 $container = $containerBuilder->build();
@@ -90,12 +94,14 @@ $Request = $serverRequestCreator->createServerRequestFromGlobals();
 
 // Create error handler
 $ResponseFactory = $app->getResponseFactory();
-$errorHandler = new HttpErrorHandler($callableResolver, $ResponseFactory);
-$errorHandler->LayoutTemplate = "layout.php";
-$errorHandler->ErrorTemplate = "Error.php";
+$errorHandler = (new HttpErrorHandler($callableResolver, $ResponseFactory))
+    ->setLayoutTemplate("layout.php")
+    ->setErrorTemplate("Error.php")
+    ->setShowSourceCode(false);
 
 // Set base path
-$app->setBasePath(BasePath());
+$basePath = BasePath();
+$app->setBasePath($basePath);
 
 // Add body parsing middleware
 $app->addBodyParsingMiddleware();
@@ -107,28 +113,38 @@ $app->add(new CorsMiddleware()); // Use default
 $app->addRoutingMiddleware();
 
 // Set route cache file
-if ($isProduction && Config("USE_ROUTE_CACHE") && !IsRemote(Config("UPLOAD_DEST_PATH"))) {
+if (Config("USE_ROUTE_CACHE") && !IsRemote(Config("LOG_PATH"))) {
     $routeCollector = $app->getRouteCollector();
-    $cacheFolder = UploadPath(false) . "cache";
+    $cacheFolder = Config("CACHE_FOLDER");
     if (CreateFolder($cacheFolder)) {
-        $routeCollector->setCacheFile($cacheFolder . "/RouteCache.php");
+        $routeCollector->setCacheFile($cacheFolder . "/" . Config("ROUTE_CACHE_FILE"));
     }
 }
 
 // Register routes (Add permission middleware)
+RouteAttributes::registerRoutes($app);
 (require_once "src/routes.php")($app);
 
+// Laravel session
+$app->add(new LaravelSessionMiddleware());
+
 // Add SameSite cookie/session middleware
-$cookieConfiguration = new SameSiteCookieConfiguration();
-$cookieConfiguration->sameSite = Config("COOKIE_SAMESITE");
-$cookieConfiguration->httpOnly = Config("COOKIE_HTTP_ONLY");
-$cookieConfiguration->secure = Config("COOKIE_SECURE");
+$cookieConfiguration = new SameSiteCookieConfiguration([
+    "same_site" => Config("COOKIE_SAMESITE"),
+    "http_only" => Config("COOKIE_HTTP_ONLY"),
+    "secure" => Config("COOKIE_SECURE")
+]);
 $app->add(new SameSiteCookieMiddleware($cookieConfiguration));
-$app->add(new SameSiteSessionMiddleware());
+$app->add(new SameSiteSessionMiddleware(configuration: $cookieConfiguration));
 
 // Add error handling middlewares
 $errorMiddleware = $app->addErrorMiddleware($displayErrorDetails, $logErrors, $logErrorDetails);
 $errorMiddleware->setDefaultErrorHandler($errorHandler);
+if (Config("MAINTENANCE_MODE")) {
+    $app->add((new MaintenanceMiddleware($ResponseFactory))
+        ->setRetryAfter(Config("MAINTENANCE_RETRY_AFTER"))
+        ->setTemplate(Config("MAINTENANCE_TEMPLATE")));
+}
 
 // Run app
 $app->run();

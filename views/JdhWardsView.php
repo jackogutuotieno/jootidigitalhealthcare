@@ -1,17 +1,10 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhWardsView = &$Page;
 ?>
-<?php if (!$Page->isExport()) { ?>
-<script>
-loadjs.ready("head", function () {
-    // Write your table-specific client script here, no need to add script tags.
-});
-</script>
-<?php } ?>
 <?php if (!$Page->isExport()) { ?>
 <div class="btn-toolbar ew-toolbar">
 <?php $Page->ExportOptions->render("body") ?>
@@ -23,7 +16,7 @@ loadjs.ready("head", function () {
 $Page->showMessage();
 ?>
 <main class="view">
-<form name="fjdh_wardsview" id="fjdh_wardsview" class="ew-form ew-view-form overlay-wrapper" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_wardsview" id="fjdh_wardsview" class="ew-form ew-view-form overlay-wrapper" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (!$Page->isExport()) { ?>
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
@@ -43,6 +36,11 @@ loadjs.ready(["wrapper", "head"], function () {
     window[form.id] = form;
     currentForm = form;
     loadjs.done(form.id);
+});
+</script>
+<script>
+loadjs.ready("head", function () {
+    // Write your table-specific client script here, no need to add script tags.
 });
 </script>
 <?php } ?>

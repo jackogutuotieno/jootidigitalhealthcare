@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Two Factor Authentication class (Email Authentication only)
@@ -14,7 +14,7 @@ class EmailTwoFactorAuthentication extends AbstractTwoFactorAuthentication imple
      */
     public static function sendOneTimePassword($usr, $account = null)
     {
-        global $UserProfile, $Language;
+        global $Language;
 
         // Get email address
         $oldAccount = self::getAccount($usr);
@@ -24,19 +24,22 @@ class EmailTwoFactorAuthentication extends AbstractTwoFactorAuthentication imple
         }
 
         // Create OTP and save in user profile
-        $secret = $UserProfile->getUserSecret($usr); // Get user secret
+        $profile = Profile();
+        $profile->setUserName(CurrentUserName())->loadFromStorage();
+        $secret = $profile->getUserSecret(); // Get user secret
         $code = Random(Config("TWO_FACTOR_AUTHENTICATION_PASS_CODE_LENGTH")); // Generate OTP
         $encryptedCode = Encrypt($code, $secret); // Encrypt OTP
         $otpAccount = $oldAccount == $emailAddress ? "" : $emailAddress; // Save email address if changed
-        $UserProfile->setOneTimePassword($usr, $otpAccount, $encryptedCode);
+        $profile->setOneTimePassword($otpAccount, $encryptedCode);
 
         // Send OTP email
         $email = new Email();
-        $email->load(Config("EMAIL_ONE_TIME_PASSWORD_TEMPLATE"));
-        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-        $email->replaceRecipient($emailAddress); // Replace Recipient
-        $email->replaceContent("<!--code-->", $code);
-        $email->replaceContent("<!--account-->", PartialHideValue($usr));
+        $email->load(Config("EMAIL_ONE_TIME_PASSWORD_TEMPLATE"), data: [
+            "From" => Config("SENDER_EMAIL"), // Replace Sender
+            "To" => $emailAddress, // Replace Recipient
+            "Code" => $code,
+            "Account" => PartialHideValue($usr)
+        ]);
 
         // Call Otp_Sending event
         if (Otp_Sending($usr, $email)) {
@@ -54,11 +57,15 @@ class EmailTwoFactorAuthentication extends AbstractTwoFactorAuthentication imple
      */
     public static function getAccount($usr): string
     {
-        global $UserTable;
-
         // Check if empty user
         if (EmptyValue($usr)) {
             return "";
+        }
+
+        // Load from session for system admin / register
+        if (is_array(Session(SESSION_USER_PROFILE_RECORD))) {
+            $row = Session(SESSION_USER_PROFILE_RECORD);
+            return (IsSysAdmin() ? $row[SYS_ADMIN_EMAIL_ADDRESS] : $row[Config("USER_EMAIL_FIELD_NAME")]) ?? "";
         }
 
         // Check email field name not defined
@@ -67,13 +74,7 @@ class EmailTwoFactorAuthentication extends AbstractTwoFactorAuthentication imple
         }
 
         // Load email address
-        $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), $usr);
-        $sql = "SELECT " . QuotedName(Config("USER_EMAIL_FIELD_NAME"), Config("USER_TABLE_DBID")) . " FROM " . Config("USER_TABLE") . " WHERE " . $filter;
-        $row = $UserTable->getConnection()->fetchAssociative($sql);
-        if ($row !== false) {
-            return strval(GetUserInfo(Config("USER_EMAIL_FIELD_NAME"), $row));
-        }
-        return "";
+        return FindUserByUserName($usr)?->get(Config("USER_EMAIL_FIELD_NAME")) ?? "";
     }
 
     /**
@@ -103,8 +104,9 @@ class EmailTwoFactorAuthentication extends AbstractTwoFactorAuthentication imple
     public function show()
     {
         $user = CurrentUserName(); // Must be current user
-        $profile = Container("profile");
+        $profile = Container("user.profile");
+        $profile->setUserName($user)->loadFromStorage();
         $emailAddress = self::getAccount($user); // Get email address
-        WriteJson(["account" => $emailAddress, "success" => true, "verified" => $profile->hasUserSecret($user, true)]);
+        WriteJson(["account" => $emailAddress, "success" => true, "verified" => $profile->hasUserSecret(true)]);
     }
 }

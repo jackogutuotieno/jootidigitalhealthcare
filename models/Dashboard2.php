@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -97,7 +103,7 @@ class Dashboard2 extends ReportTable
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -107,9 +113,12 @@ class Dashboard2 extends ReportTable
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
     }
+
+    // Search Fields
+    public $ModalSearch = false;
 
     // Constructor
     public function __construct()
@@ -123,11 +132,11 @@ class Dashboard2 extends ReportTable
         $this->TableReportType = 'dashboard';
 
         // Is dashboard report
-        $DashboardReport = true;
+        $DashboardReport = $this->TableVar;
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table name (for backward compatibility only)
         if (!defined(PROJECT_NAMESPACE . "TABLE_NAME")) {
@@ -135,7 +144,7 @@ class Dashboard2 extends ReportTable
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -163,14 +172,18 @@ class Dashboard2 extends ReportTable
         $this->ExportWordColumnWidth = null; // Cell width (PHPWord only)
 
         // Export options
-        $this->ExportOptions = new ListOptions(["TagClassName" => "ew-export-option"]);
+        $this->ExportOptions = new ListOptions(TagClassName: "ew-export-option");
+
+        // Add Doctrine Cache
+        $this->Cache = new \Symfony\Component\Cache\Adapter\ArrayAdapter();
+        $this->CacheProfile = new \Doctrine\DBAL\Cache\QueryCacheProfile(0, $this->TableVar);
     }
 
     // Get content from stream
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -219,13 +232,11 @@ class Dashboard2 extends ReportTable
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -243,7 +254,7 @@ class Dashboard2 extends ReportTable
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -258,6 +269,83 @@ class Dashboard2 extends ReportTable
             Redirect(GetUrl($url));
         }
         return; // Return to controller
+    }
+
+    // Lookup data
+    public function lookup(array $req = [], bool $response = true)
+    {
+        global $Language, $Security;
+
+        // Get lookup object
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
+            $lookup->FilterFields = []; // Skip parent fields if any
+        }
+        if ($fld instanceof ReportField) {
+            $lookup->RenderViewFunc = "renderLookup"; // Set up view renderer
+        }
+        $lookup->RenderEditFunc = ""; // Set up edit renderer
+
+        // Get lookup parameters
+        $lookupType = $req["ajax"] ?? "unknown";
+        $pageSize = -1;
+        $offset = -1;
+        $searchValue = "";
+        if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
+        } elseif (SameText($lookupType, "autosuggest")) {
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
+            $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
+            if ($pageSize <= 0) {
+                $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
+            }
+        }
+        $start = $req["start"] ?? -1;
+        $start = is_numeric($start) ? (int)$start : -1;
+        $page = $req["page"] ?? -1;
+        $page = is_numeric($page) ? (int)$page : -1;
+        $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
+        $lookup->LookupType = $lookupType; // Lookup type
+        $lookup->FilterValues = []; // Clear filter values first
+        if ($keys !== null) { // Selected records from modal
+            if (is_array($keys)) {
+                $keys = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $keys);
+            }
+            $lookup->FilterFields = []; // Skip parent fields if any
+            $lookup->FilterValues[] = $keys; // Lookup values
+            $pageSize = -1; // Show all records
+        } else { // Lookup values
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
+        }
+        $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
+        for ($i = 1; $i <= $cnt; $i++) {
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
+        }
+        $lookup->SearchValue = $searchValue;
+        $lookup->PageSize = $pageSize;
+        $lookup->Offset = $offset;
+        if ($userSelect != "") {
+            $lookup->UserSelect = $userSelect;
+        }
+        if ($userFilter != "") {
+            $lookup->UserFilter = $userFilter;
+        }
+        if ($userOrderBy != "") {
+            $lookup->UserOrderBy = $userOrderBy;
+        }
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
 
     // Dashboard type
@@ -275,6 +363,13 @@ class Dashboard2 extends ReportTable
     public $CanMaximize = true;
     public $CanCollapse = true;
 
+    // Search options
+    public $SearchOptions;
+    public $UseAjaxActions = true;
+    public $FormClassName = "ew-form ew-search-form ew-dashboard-search-form";
+    public $OffsetColumnClass = "col-sm-10 offset-sm-2";
+    public $IsModal;
+
     /**
      * Page run
      *
@@ -282,13 +377,18 @@ class Dashboard2 extends ReportTable
      */
     public function run()
     {
-        global $ExportType, $Language, $Security, $UserProfile;
+        global $ExportType, $Language, $Security;
 
         // Use layout
         $this->UseLayout = $this->UseLayout && ConvertToBool(Param(Config("PAGE_LAYOUT"), true));
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
 
         // Get export parameters
         $custom = "";
@@ -306,7 +406,7 @@ class Dashboard2 extends ReportTable
         $this->setupExportOptions();
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -315,6 +415,9 @@ class Dashboard2 extends ReportTable
 
         // Set up Breadcrumb
         $this->setupBreadcrumb();
+
+        // Search options
+        $this->setupSearchOptions();
 
         // Hide export options if export
         if ($this->isExport()) {
@@ -336,7 +439,7 @@ class Dashboard2 extends ReportTable
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -348,6 +451,25 @@ class Dashboard2 extends ReportTable
                 $this->renderSearchOptions();
             }
         }
+    }
+
+    /**
+     * Render row
+     *
+     * @return void
+     */
+    public function renderRow()
+    {
+        global $Security, $Language;
+        $conn = $this->getConnection();
+
+        // Call Row_Rendering event
+        //$this->rowRendering(); // NOT USED
+        if ($this->RowType == RowType::SEARCH) { // Search row
+        }
+
+        // Call Row_Rendered event
+        //$this->rowRendered(); // NOT USED
     }
 
     /**
@@ -410,7 +532,7 @@ class Dashboard2 extends ReportTable
         } elseif (SameText($type, "pdf")) {
             return '<button type="button" class="btn btn-default ew-export-link ew-pdf" title="' . HtmlEncode($Language->phrase("ExportToPdf", true)) . '" data-caption="' . HtmlEncode($Language->phrase("ExportToPdf", true)) . '" data-ew-action="export" data-export="pdf" data-custom="true" data-export-selected="false" data-url="' . $exportUrl . '">' . $Language->phrase("ExportToPdf") . '</button>';
         } elseif (SameText($type, "html")) {
-            return '<button type="button" class="btn btn-default ew-export-link ew-pdf" title="' . HtmlEncode($Language->phrase("ExportToHtml", true)) . '" data-caption="' . HtmlEncode($Language->phrase("ExportToHtml", true)) . '" data-ew-action="export" data-export="html" data-custom="true" data-export-selected="false" data-url="' . $exportUrl . '">' . $Language->phrase("ExportToHtml") . '</button>';
+            return '<button type="button" class="btn btn-default ew-export-link ew-html" title="' . HtmlEncode($Language->phrase("ExportToHtml", true)) . '" data-caption="' . HtmlEncode($Language->phrase("ExportToHtml", true)) . '" data-ew-action="export" data-export="html" data-custom="true" data-export-selected="false" data-url="' . $exportUrl . '">' . $Language->phrase("ExportToHtml") . '</button>';
         } elseif (SameText($type, "email")) {
             return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . HtmlEncode($Language->phrase("ExportToEmail", true)) . '" data-caption="' . HtmlEncode($Language->phrase("ExportToEmail", true)) . '" data-ew-action="email" data-custom="true" data-export-selected="false" data-hdr="' . HtmlEncode($Language->phrase("ExportToEmail", true)) . '" data-url="' . $exportUrl . '">' . $Language->phrase("ExportToEmail") . '</button>';
         } elseif (SameText($type, "print")) {
@@ -470,20 +592,60 @@ class Dashboard2 extends ReportTable
         }
     }
 
+    // Set up search options
+    protected function setupSearchOptions()
+    {
+        global $Language, $Security;
+        $pageUrl = $this->pageUrl(false);
+        $this->SearchOptions = new ListOptions(TagClassName: "ew-search-option");
+
+        // Button group for search
+        $this->SearchOptions->UseDropDownButton = false;
+        $this->SearchOptions->UseButtonGroup = true;
+        $this->SearchOptions->DropDownButtonPhrase = $Language->phrase("ButtonSearch");
+
+        // Add group option item
+        $item = &$this->SearchOptions->addGroupOption();
+        $item->Body = "";
+        $item->Visible = false;
+
+        // Hide search options
+        if ($this->isExport() || $this->CurrentAction && $this->CurrentAction != "search") {
+            $this->SearchOptions->hideAllOptions();
+        }
+        if (!$Security->canSearch()) {
+            $this->SearchOptions->hideAllOptions();
+        }
+    }
+
+    // Check if any search fields
+    public function hasSearchFields()
+    {
+        return false;
+    }
+
+    // Render search options
+    protected function renderSearchOptions()
+    {
+        if (!$this->hasSearchFields() && $this->SearchOptions["searchtoggle"]) {
+            $this->SearchOptions["searchtoggle"]->Visible = false;
+        }
+    }
+
     // Set up Breadcrumb
     protected function setupBreadcrumb()
     {
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $url = preg_replace('/\?cmd=reset(all){0,1}$/i', '', $url); // Remove cmd=reset / cmd=resetall
+        $url = preg_replace('/\?cmd=reset(all){0,1}$/i', '', $url); // Remove cmd=reset(all)
         $Breadcrumb->add("dashboard", $this->TableVar, $url, "", $this->TableVar, true);
     }
 
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -502,7 +664,7 @@ class Dashboard2 extends ReportTable
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -522,106 +684,99 @@ class Dashboard2 extends ReportTable
         }
     }
 
-    // Set up other options
-    protected function setupOtherOptions()
-    {
-        global $Language, $Security;
-
-        // Filter button
-        $item = &$this->FilterOptions->add("savecurrentfilter");
-        $item->Body = "<a class=\"ew-save-filter\" data-form=\"fDashboard2srch\" data-ew-action=\"none\">" . $Language->phrase("SaveCurrentFilter") . "</a>";
-        $item->Visible = false;
-        $item = &$this->FilterOptions->add("deletefilter");
-        $item->Body = "<a class=\"ew-delete-filter\" data-form=\"fDashboard2srch\" data-ew-action=\"none\">" . $Language->phrase("DeleteFilter") . "</a>";
-        $item->Visible = false;
-        $this->FilterOptions->UseDropDownButton = true;
-        $this->FilterOptions->UseButtonGroup = !$this->FilterOptions->UseDropDownButton;
-        $this->FilterOptions->DropDownButtonPhrase = $Language->phrase("Filters");
-
-        // Add group option item
-        $item = &$this->FilterOptions->addGroupOption();
-        $item->Body = "";
-        $item->Visible = false;
-    }
-
-    // Set up starting group
-    protected function setupStartGroup()
-    {
-        // Exit if no groups
-        if ($this->DisplayGroups == 0) {
-            return;
+    // Parse query builder rule
+    protected function parseRules($group, $fieldName = "", $itemName = "") {
+        $group["condition"] ??= "AND";
+        if (!in_array($group["condition"], ["AND", "OR"])) {
+            throw new \Exception("Unable to build SQL query with condition '" . $group["condition"] . "'");
         }
-        $startGrp = Param(Config("TABLE_START_GROUP"));
-        $pageNo = Param(Config("TABLE_PAGE_NUMBER"));
-
-        // Check for a 'start' parameter
-        if ($startGrp !== null) {
-            $this->StartGroup = $startGrp;
-            $this->setStartGroup($this->StartGroup);
-        } elseif ($pageNo !== null) {
-            $pageNo = ParseInteger($pageNo);
-            if (is_numeric($pageNo)) {
-                $this->StartGroup = ($pageNo - 1) * $this->DisplayGroups + 1;
-                if ($this->StartGroup <= 0) {
-                    $this->StartGroup = 1;
-                } elseif ($this->StartGroup >= intval(($this->TotalGroups - 1) / $this->DisplayGroups) * $this->DisplayGroups + 1) {
-                    $this->StartGroup = intval(($this->TotalGroups - 1) / $this->DisplayGroups) * $this->DisplayGroups + 1;
+        if (!is_array($group["rules"] ?? null)) {
+            return "";
+        }
+        $parts = [];
+        foreach ($group["rules"] as $rule) {
+            if (is_array($rule["rules"] ?? null) && count($rule["rules"]) > 0) {
+                $part = $this->parseRules($rule, $fieldName, $itemName);
+                if ($part) {
+                    $parts[] = "(" . " " . $part . " " . ")" . " ";
                 }
-                $this->setStartGroup($this->StartGroup);
             } else {
-                $this->StartGroup = $this->getStartGroup();
-            }
-        } else {
-            $this->StartGroup = $this->getStartGroup();
-        }
-
-        // Check if correct start group counter
-        if (!is_numeric($this->StartGroup) || intval($this->StartGroup) <= 0) { // Avoid invalid start group counter
-            $this->StartGroup = 1; // Reset start group counter
-            $this->setStartGroup($this->StartGroup);
-        } elseif (intval($this->StartGroup) > intval($this->TotalGroups)) { // Avoid starting group > total groups
-            $this->StartGroup = intval(($this->TotalGroups - 1) / $this->DisplayGroups) * $this->DisplayGroups + 1; // Point to last page first group
-            $this->setStartGroup($this->StartGroup);
-        } elseif (($this->StartGroup - 1) % $this->DisplayGroups != 0) {
-            $this->StartGroup = intval(($this->StartGroup - 1) / $this->DisplayGroups) * $this->DisplayGroups + 1; // Point to page boundary
-            $this->setStartGroup($this->StartGroup);
-        }
-    }
-
-    // Reset pager
-    protected function resetPager()
-    {
-        // Reset start position (reset command)
-        $this->StartGroup = 1;
-        $this->setStartGroup($this->StartGroup);
-    }
-
-    // Set up number of groups displayed per page
-    protected function setupDisplayGroups()
-    {
-        if (Param(Config("TABLE_GROUP_PER_PAGE")) !== null) {
-            $wrk = Param(Config("TABLE_GROUP_PER_PAGE"));
-            if (is_numeric($wrk)) {
-                $this->DisplayGroups = intval($wrk);
-            } else {
-                if (strtoupper($wrk) == "ALL") { // Display all groups
-                    $this->DisplayGroups = -1;
-                } else {
-                    $this->DisplayGroups = 3; // Non-numeric, load default
+                $field = $rule["field"];
+                $fld = $this->fieldByParam($field);
+                $dbid = $this->Dbid;
+                if ($fld instanceof ReportField && is_array($fld->DashboardSearchSourceFields)) {
+                    $item = $fld->DashboardSearchSourceFields[$itemName] ?? null;
+                    if ($item) {
+                        $tbl = Container($item["table"]);
+                        $dbid = $tbl->Dbid;
+                        $fld = $tbl->Fields[$item["field"]];
+                    } else {
+                        $fld = null;
+                    }
+                }
+                if ($fld && ($fieldName == "" || $fld->Name == $fieldName)) { // Field name not specified or matched field name
+                    $fldOpr = array_search($rule["operator"], Config("CLIENT_SEARCH_OPERATORS"));
+                    $ope = Config("QUERY_BUILDER_OPERATORS")[$rule["operator"]] ?? null;
+                    if (!$ope || !$fldOpr) {
+                        throw new \Exception("Unknown SQL operation for operator '" . $rule["operator"] . "'");
+                    }
+                    if ($ope["nb_inputs"] > 0 && ($rule["value"] ?? false) || IsNullOrEmptyOperator($fldOpr)) {
+                        $fldVal = $rule["value"];
+                        if (is_array($fldVal)) {
+                            $fldVal = $fld->isMultiSelect() ? implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal) : $fldVal[0];
+                        }
+                        $useFilter = $fld->UseFilter; // Query builder does not use filter
+                        try {
+                            if ($fld instanceof ReportField) { // Search report fields
+                                if ($fld->SearchType == "dropdown") {
+                                    if (is_array($fldVal)) {
+                                        $sql = "";
+                                        foreach ($fldVal as $val) {
+                                            AddFilter($sql, DropDownFilter($fld, $val, $fldOpr, $dbid), "OR");
+                                        }
+                                        $parts[] = $sql;
+                                    } else {
+                                        $parts[] = DropDownFilter($fld, $fldVal, $fldOpr, $dbid);
+                                    }
+                                } else {
+                                    $fld->AdvancedSearch->SearchOperator = $fldOpr;
+                                    $fld->AdvancedSearch->SearchValue = $fldVal;
+                                    $parts[] = GetReportFilter($fld, false, $dbid);
+                                }
+                            } else { // Search normal fields
+                                if ($fld->isMultiSelect()) {
+                                    $parts[] = $fldVal != "" ? GetMultiSearchSql($fld, $fldOpr, ConvertSearchValue($fldVal, $fldOpr, $fld), $this->Dbid) : "";
+                                } else {
+                                    $fldVal2 = ContainsString($fldOpr, "BETWEEN") ? $rule["value"][1] : ""; // BETWEEN
+                                    if (is_array($fldVal2)) {
+                                        $fldVal2 = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal2);
+                                    }
+                                    $parts[] = GetSearchSql(
+                                        $fld,
+                                        ConvertSearchValue($fldVal, $fldOpr, $fld), // $fldVal
+                                        $fldOpr,
+                                        "", // $fldCond not used
+                                        ConvertSearchValue($fldVal2, $fldOpr, $fld), // $fldVal2
+                                        "", // $fldOpr2 not used
+                                        $this->Dbid
+                                    );
+                                }
+                            }
+                        } finally {
+                            $fld->UseFilter = $useFilter;
+                        }
+                    }
                 }
             }
-            $this->setGroupPerPage($this->DisplayGroups); // Save to session
-
-            // Reset start position (reset command)
-            $this->StartGroup = 1;
-            $this->setStartGroup($this->StartGroup);
-        } else {
-            if ($this->getGroupPerPage() != "") {
-                $this->DisplayGroups = $this->getGroupPerPage(); // Restore from session
-            } else {
-                $this->DisplayGroups = 3; // Load default
-            }
         }
+        $where = "";
+        foreach ($parts as $part) {
+            AddFilter($where, $part, $group["condition"]);
+        }
+        if ($where && ($group["not"] ?? false)) {
+            $where = "NOT (" . $where . ")";
+        }
+        return $where;
     }
 
     // Get sort parameters based on sort links clicked
@@ -673,11 +828,11 @@ class Dashboard2 extends ReportTable
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

@@ -13,43 +13,39 @@
 /*BEGIN_SYSTEM_STYLES*/
 @import "bootstrap/functions";
 @import "variables"; // Bootstrap + AdminLTE variables in temp folder
+@import "bootstrap/variables-dark";
 @import "adminlte/variables-alt";
+@import "bootstrap/maps";
 @import "bootstrap/mixins";
+@import "bootstrap/close";
 @import "adminlte/mixins";
-@mixin table-color($color, $bgcolor) {
-    @if (type-of($bgcolor) != color) {
-        background-color: transparent;
-    } @else {
+@function is-color($value) {
+    @return type-of($value) == color;
+}
+@function is-variable($value) {
+    @return type-of($value) == string and str-index($value, "var(") == 1 and str-index($value, ")") == str-length($value);
+}
+@function is-color-or-variable($value) {
+    @return is-color($value) or is-variable($value);
+}
+@mixin export-table-color($color, $bgcolor) {
+    @if is-color($bgcolor) {
         background-color: $bgcolor;
+    } @else {
+        background-color: $body-bg;
     }
-    @if (type-of($color) == color) {
+    @if is-color($color) {
         color: $color;
     } @else {
-        color: #{color-contrast(opaque($body-bg, $bgcolor))};
+        color: $body-color;
     }
 }
 @mixin table-cell-color($color, $bgcolor) {
-    @if (type-of($bgcolor) == color) {
-        --#{$prefix}table-accent-bg: #{$bgcolor};
-    } @else {
-        --#{$prefix}table-accent-bg: var(--#{$prefix}table-bg);
+    @if is-color-or-variable($bgcolor) {
+        --#{$prefix}table-bg-state: #{$bgcolor};
     }
-    @if (type-of($color) == color) {
-        color: $color;
-    } @else {
-        color: var(--#{$prefix}table-color);
-    }
-}
-@mixin table-header-color($color, $bgcolor) {
-    @if (type-of($bgcolor) == color) {
-        --#{$prefix}table-accent-bg: #{$bgcolor};
-    } @else {
-        --#{$prefix}table-accent-bg: var(--#{$prefix}table-bg);
-    }
-    @if (type-of($color) == color) {
-        color: $color;
-    } @else {
-        color: #{color-contrast($ThemeTableHeaderBackgroundColor)};
+    @if is-color-or-variable($color) {
+        --#{$prefix}table-color-state: $color;
     }
 }
 $ThemePaceColor: #0A97B4;
@@ -288,8 +284,21 @@ body {
 h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     font-family: $ThemeBaseFontFamily, 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
+.tippy-box {
+    font-size: $tooltip-font-size;
+    background-color: $tooltip-bg;
+    color: $tooltip-color;
+    border-radius: $tooltip-border-radius;
+    opacity: $tooltip-opacity;
+    .tippy-arrow {
+        color: $tooltip-bg;
+    }
+    .tippy-content {
+        padding: $tooltip-padding-y $tooltip-padding-x;
+    }
+}
 .content-wrapper  {
-    background-color: $ThemeBodyBg; // Override AdminLTE
+    background-color: var(--#{$prefix}body-bg); // Override AdminLTE
 }
 a:not(.btn) {
     .icon-view,
@@ -311,7 +320,7 @@ a:not(.btn) {
     color: $body-color;
 }
 .ew-single-map {
-    margin-bottom: 1rem;
+    margin-bottom: $spacer;
     max-width: 100%;
     height: auto;
 }
@@ -321,6 +330,7 @@ a:not(.btn) {
 .ew-icon {
     font-size: $ew-icon-size;
     width: $ew-icon-size;
+    height: $ew-icon-size;
     text-align: center;
 }
 .input-group, .ew-dropdown-clear {
@@ -330,8 +340,11 @@ a:not(.btn) {
         text-align: center;
     }
 }
-.dropdown-menu > li > a > .fa {
-    margin-right: 0; // Override AdminLTE
+.dropdown-menu > li > a {
+    &> .fa-solid,
+    &> .fa-regular {
+        margin-right: 0; // Override AdminLTE
+    }
 }
 
 // Dropdown header // Override AdminLTE
@@ -342,7 +355,7 @@ label.form-check-label {
     font-weight: 400 !important; // Override AdminLTE
 }
 [id^=el_] > .form-check {
-    margin-top: 0.5rem;
+    margin-top: $spacer * .5;
 }
 .ew-grid-add-edit .input-group .custom-select {
     width: auto; // Override AdminLTE
@@ -355,12 +368,12 @@ label.form-check-label {
     max-width: none; // Override .img-thumbnail
 }
 .ew-images > * {
-    margin-right: 0.25rem;
+    margin-right: $spacer * .25;
 }
 .ew-toolbar {
     .ew-export-option, .ew-import-option, .ew-search-option, .ew-action-option, .ew-detail-option, .ew-filter-option {
-        margin-bottom: 1rem;
-        margin-right: 0.5rem;
+        margin-bottom: $spacer;
+        margin-right: $spacer * .5;
     }
     .ew-filter-option {
         display: none; // Init
@@ -368,7 +381,7 @@ label.form-check-label {
 }
 .ew-list-other-options {
     .ew-add-edit-option, .ew-acton-option {
-        margin-right: 0.5rem;
+        margin-right: $spacer * .5;
     }
 }
 .ew-user-priv-form .ew-grid {
@@ -376,15 +389,15 @@ label.form-check-label {
 }
 .ew-view-form, .ew-delete-form {
     display: block;
-    margin-bottom: 1rem;
+    margin-bottom: $spacer;
 }
 .ew-edit-form {
-    margin-bottom: 1rem;
+    margin-bottom: $spacer;
 }
 .ew-desktop {
     .ew-desktop-buttons {
         text-align: center;
-        margin-bottom: 1rem;
+        margin-bottom: $spacer;
     }
     .ew-desktop-table {
         min-width: 300px;
@@ -433,7 +446,7 @@ label.form-check-label {
 .ew-grid {
     padding: 0;
     border: $ThemeGridBorderWidth solid;
-    margin-bottom: 1rem;
+    margin-bottom: $spacer;
     display: table;
     .ew-table {
         &.table-bordered > thead > tr:first-child { // First row in thead
@@ -446,7 +459,19 @@ label.form-check-label {
         margin-bottom: 0;
     }
 }
-body:not(.dark-mode) {
+.rounded-top-left {
+    border-top-left-radius: var(--bs-border-radius) !important;
+}
+.rounded-top-right {
+    border-top-right-radius: var(--bs-border-radius) !important;
+}
+.rounded-bottom-left {
+    border-bottom-left-radius: var(--bs-border-radius) !important;
+}
+.rounded-bottom-right {
+    border-bottom-right-radius: var(--bs-border-radius) !important;
+}
+@include color-mode(light) {
     .ew-grid {
         border-color: $ThemeGridBorderColor;
         &.ew-loading {
@@ -488,11 +513,14 @@ body:not(.dark-mode) {
         width: 100%;
     }
 }
+.ew-actions.dropdown-toggle::after {
+    display: none;
+}
 
 // Pager
 .ew-pager {
-    padding-right: 1rem;
-    margin-bottom: 1rem;
+    padding-right: $spacer;
+    margin-bottom: $spacer;
     display: inline-flex;
     width: auto;
     align-items: center;
@@ -602,12 +630,6 @@ a.ew-btn {
         }
     }
 
-    // Main table active
-    .table-active {
-        --#{$prefix}table-bg: null;
-        --#{$prefix}table-accent-bg: null;
-    }
-
     // Main table first column cell
     > thead > tr > td:first-child,
     > thead > tr > th:first-child,
@@ -627,8 +649,33 @@ a.ew-btn {
 }
 
 // Main table
-body:not(.dark-mode) {
+@include color-mode(light) {
     .ew-grid .ew-table {
+        @if is-color-or-variable($ThemeTableBodyBackgroundColor) {
+            --#{$prefix}table-bg: #{$ThemeTableBodyBackgroundColor};
+        }
+        @if is-color-or-variable($ThemeTableBodyColor) {
+            --#{$prefix}table-color: #{$ThemeTableBodyColor}
+        }
+        @if is-color-or-variable($ThemeTableBodyHoverBackgroundColor) {
+            --#{$prefix}table-hover-bg: #{$ThemeTableBodyHoverBackgroundColor};
+        }
+        @if is-color-or-variable($ThemeTableBodyHoverColor) {
+            --#{$prefix}table-hover-color: #{$ThemeTableBodyHoverColor};
+        }
+        @if is-color-or-variable($ThemeTableBodyStripedBackgroundColor) {
+            --#{$prefix}table-striped-bg: #{$ThemeTableBodyStripedBackgroundColor};
+        }
+        @if is-color-or-variable($ThemeTableBodyStripedColor) {
+            --#{$prefix}table-striped-color: #{$ThemeTableBodyStripedColor};
+        }
+        @if is-color-or-variable($ThemeTableBodyActiveBackgroundColor) {
+            --#{$prefix}table-active-bg: #{$ThemeTableBodyActiveBackgroundColor};
+        }
+        @if is-color-or-variable($ThemeTableBodyActiveColor) {
+            --#{$prefix}table-active-color: #{$ThemeTableBodyActiveColor};
+        }
+
         // Main table last row cell with border-bottom
         > tbody:last-child > tr:last-child > td.ew-table-border-bottom,
         > tfoot > tr:last-child > td.ew-table-border-bottom,
@@ -636,65 +683,51 @@ body:not(.dark-mode) {
         .ew-table-border-bottom {
             border-color: $table-border-color; // Border color
         }
+
+        // Main table header
         > thead > tr > th,
         > thead > tr > td {
-            @if (type-of($ThemeTableHeaderBackgroundColor) == color) {
+            @if is-color($ThemeTableHeaderBackgroundColor) and $ThemeTableHeaderBackgroundColor != transparent {
                 font-weight: normal;
             }
-            @if (type-of($ThemeTableHeaderBorderColor) == color) {
+            @if is-color($ThemeTableHeaderBorderColor) {
                 border-color: $ThemeTableHeaderBorderColor;
             }
         }
-
-        // Main table header
-        .ew-table-header, .ew-rpt-col-summary, .ew-rpt-col-header {
-            //*** $background: get-bg-color($ThemeTableHeaderBackgroundColor);
-            // background-color: $background;
-            // color: get-text-color($ThemeTableHeaderColor, $background);
-            @include table-header-color($ThemeTableHeaderColor, $ThemeTableHeaderBackgroundColor);
+        @if is-color($ThemeTableHeaderBackgroundColor) {
+            .ew-table-header > th,
+            .ew-table-header > td,
+            .ew-rpt-col-summary,
+            .ew-rpt-col-header {
+                --#{$prefix}table-bg: #{$ThemeTableHeaderBackgroundColor};
+                --#{$prefix}table-color-state: #{color-contrast($ThemeTableHeaderBackgroundColor)};
+            }
         }
 
         // Main table footer
-        .ew-table-footer {
-            //*** $background: get-bg-color($ThemeTableFooterBackgroundColor);
-            // background-color: $background;
-            // color: get-text-color($ThemeTableHeaderColor, $background);
-            @include table-cell-color($ThemeTableFooterColor, $ThemeTableFooterBackgroundColor);
-        }
-
-        // Main table active
-        .table-active {
-            //*** $background: get-bg-color($ThemeTableBodyActiveBackgroundColor);
-            // background-color: $background !important;
-            // color: get-text-color($ThemeTableBodyActiveColor, $background) !important;
-            @include table-cell-color($ThemeTableBodyActiveColor, $ThemeTableBodyActiveBackgroundColor);
-        }
-
-        // Table row
-        tr:not([class^=ew-]):not(.table-active) {
-            //*** $background: get-bg-color($ThemeTableBodyBackgroundColor);
-            // background-color: $background;
-            // color: get-text-color($ThemeTableBodyColor, $background);
-            @include table-cell-color($ThemeTableBodyColor, $ThemeTableBodyBackgroundColor);
+        .ew-table-footer > td {
+            @if is-color($ThemeTableFooterBackgroundColor) {
+                --#{$prefix}table-bg: #{$ThemeTableFooterBackgroundColor};
+            }
+            @if is-color($ThemeTableFooterColor) {
+                --#{$prefix}table-color-state: #{$ThemeTableFooterColor};
+            }
         }
 
         // Striped table row
         @if ($ThemeTableStriped) {
-            .ew-table-alt-row:not(.table-active) {
-                //*** $background: get-bg-color($ThemeTableBodyStripedBackgroundColor);
-                // --#{$prefix}table-accent-bg: #{$background};
-                // color: get-text-color($ThemeTableBodyStripedColor, $background);
-                @include table-cell-color($ThemeTableBodyStripedColor, $ThemeTableBodyStripedBackgroundColor);
+            > tbody > .ew-table-alt-row > *,
+            > tbody > * > .ew-table-alt-row {
+                --#{$prefix}table-color-type: var(--#{$prefix}table-striped-color);
+                --#{$prefix}table-bg-type: var(--#{$prefix}table-striped-bg);
             }
         }
 
         // Hover
         &.table-hover {
-            > tbody > tr:not(.expandable-body):hover {
-                //*** $background: get-bg-color($ThemeTableBodyHoverBackgroundColor);
-                // --#{$prefix}table-accent-bg: #{$background};
-                // color: get-text-color($ThemeTableBodyHoverColor, $background);
-                @include table-cell-color($ThemeTableBodyHoverColor, $ThemeTableBodyHoverBackgroundColor);
+            > tbody > tr:not(.expandable-body):hover > * {
+                --#{$prefix}table-color-state: var(--#{$prefix}table-hover-color);
+                --#{$prefix}table-bg-state: var(--#{$prefix}table-hover-bg);
             }
         }
     }
@@ -720,7 +753,7 @@ body:not(.dark-mode) {
 }
 .ew-multi-column-form {
     > .ew-multi-column-row {
-        margin-bottom: 1rem;
+        margin-bottom: $spacer;
         position: relative; // For overlay
         .card .ew-table-header-btn {
             display: inline-flex;
@@ -745,7 +778,7 @@ body:not(.dark-mode) {
                 float: none; // Override AdminLTE
             }
             .card-subtitle {
-                color: $text-muted;
+                color: $body-secondary-color;
             }
             .card-title, .card-subtitle {
                 margin-bottom: $spacer * 0.5;
@@ -815,22 +848,9 @@ body:not(.dark-mode) {
         //text-align: right;
     }
 }
-body:not(.dark-mode) {
+@include color-mode(light) {
     .ew-view-table, .ew-desktop-table {
         background-color: $body-bg;
-    }
-}
-
-// Preview lower panel
-.ew-preview-lower-panel {
-    display: flex;
-    .ew-detail-count, .ew-preview-other-options {
-        float: left;
-    }
-    .ew-detail-count {
-        margin-bottom: 1rem;
-        padding-right: 10px;
-        /*rtl:ignore*/ direction: ltr;
     }
 }
 .icon-expand, .icon-collapse, .ew-group-toggle {
@@ -860,20 +880,20 @@ body:not(.dark-mode) {
         border-color: $table-border-color; // Border color
     }
     .ew-table-header, .ew-rpt-col-summary, .ew-rpt-col-header, .ew-export-table-header td {
-        @include table-color($ThemeTableHeaderColor, $ThemeTableHeaderBackgroundColor);
+        @include export-table-color($ThemeTableHeaderColor, $ThemeTableHeaderBackgroundColor);
     }
     .ew-export-table-row > td {
-        @include table-color($ThemeTableBodyColor, $ThemeTableBodyBackgroundColor);
+        @include export-table-color($ThemeTableBodyColor, $ThemeTableBodyBackgroundColor);
     }
     .ew-export-table-alt-row > td {
-        @include table-color($ThemeTableBodyStripedColor, $ThemeTableBodyStripedBackgroundColor);
+        @include export-table-color($ThemeTableBodyStripedColor, $ThemeTableBodyStripedBackgroundColor);
     }
     .ew-export-table-footer {
-        @include table-color($ThemeTableFooterColor, $ThemeTableFooterBackgroundColor);
+        @include export-table-color($ThemeTableFooterColor, $ThemeTableFooterBackgroundColor);
     }
 }
 .ew-list-export-options, .ew-view-export-options, .ew-view-other-options {
-    margin-bottom: 1rem;
+    margin-bottom: $spacer;
 }
 .ew-extended-search {
     [class^="col-"], [class*=" col-"] {
@@ -934,45 +954,28 @@ body:not(.dark-mode) {
 #ew-email-form #message {
     max-width: 100%;
 }
-
-// Groups
-.ew-rpt-grp-header {
-    border-bottom: $table-border-width solid; // Header border width
-    border-right: $table-border-width solid; // Header border width
-    font-weight: bold;
-    a:link, a:active, a:visited {
-        color: inherit;
-        text-decoration: none;
-    }
-}
-
-// Groups
-body:not(.dark-mode) {
-    .ew-rpt-grp-header {
-        border-color: $ThemeTableHeaderBorderColor; // Header border color
-    }
-}
 @mixin ew-rpt-grp($i, $color, $bgcolor, $summary-color, $summary-bgcolor) {
     .ew-rpt-grp-hide-#{$i} {
         display: none !important;
     }
-    body:not(.dark-mode) {
-        //*** .ew-rpt-grp-header-#{$i} {
-        //     // $background: get-bg-color($bgcolor);
-        //     // background-color: $background !important;
-        //     // color: get-text-color($color, $background) !important;
-        //     @include table-cell-color($color, $bgcolor);
-        //     @extend .ew-rpt-grp-header;
-        // }
+    @include color-mode(light) {
         .ew-rpt-grp-field-#{$i} {
-            //*** background-color: get-bg-color($bgcolor) !important;
             @include table-cell-color($color, $bgcolor);
         }
         .ew-rpt-grp-summary-#{$i} {
-            //*** $background: get-bg-color($summary-bgcolor);
-            // background-color: $background !important;
-            // color: get-text-color($summary-color, $background) !important;
             @include table-cell-color($summary-color, $summary-bgcolor);
+        }
+    }
+    @include dark-mode () {
+        $color: color-contrast(opaque($body-bg, $dark));
+        $rpt-grp-base-bg-factor: .055 !default;
+        $rpt-grp-bg-factor: .005 !default;
+        $bg-color: mix($color, $dark, percentage($rpt-grp-base-bg-factor + $rpt-grp-bg-factor * $i));
+        .ew-rpt-grp-field-#{$i} {
+            --#{$prefix}table-bg: #{$bg-color};
+        }
+        .ew-rpt-grp-summary-#{$i} {
+            --#{$prefix}table-bg: #{$bg-color};
         }
     }
 }
@@ -989,6 +992,9 @@ tr[data-group] {
     td[class^=ew-rpt-grp-field-]:empty {
         border-bottom: 0 !important;
     }
+}
+tr.ew-table-header,
+tr[data-group] {
     .ew-group-toggle {
         transition: transform $transition-speed linear; // $lte-transition-speed
         &.ew-rpt-grp-hide {
@@ -1002,15 +1008,13 @@ tr[data-group] {
 .ew-rpt-grp-aggregate {
     font-weight: bold;
 }
-.ew-rpt-page-summary {
-    //*** color: $ThemeReportPageSummaryColor; // Page summary text color
-    // background-color: $ThemeReportPageSummaryBackgroundColor; // Page total background color
-    @include table-cell-color($ThemeReportPageSummaryColor, $ThemeReportPageSummaryBackgroundColor);
-}
-.ew-rpt-grand-summary {
-    //*** color: $ThemeReportGrandSummaryColor; // Grand summary text color
-    // background-color: $ThemeReportGrandSummaryBackgroundColor; // Grand summary background color
-    @include table-cell-color($ThemeReportGrandSummaryColor, $ThemeReportGrandSummaryBackgroundColor);
+@include color-mode(light) {
+    .ew-rpt-page-summary > td {
+        @include table-cell-color($ThemeReportPageSummaryColor, $ThemeReportPageSummaryBackgroundColor);
+    }
+    .ew-rpt-grand-summary > td {
+        @include table-cell-color($ThemeReportGrandSummaryColor, $ThemeReportGrandSummaryBackgroundColor);
+    }
 }
 
 // Crosstab report
@@ -1077,7 +1081,7 @@ tr[data-group] {
 .ew-upload-table {
     margin-bottom: 0;
     &.ew-has-rows {
-        margin-top: .75rem;
+        margin-top: $spacer * .75;
     }
     .progress {
         min-width: 75px;
@@ -1095,19 +1099,6 @@ input.cke_dialog_ui_input_text {
     min-height: 1.5rem;
 }
 
-// Time picker
-li.ui-timepicker-selected,
-.ui-timepicker-list li:hover,
-.ui-timepicker-list .ui-timepicker-selected:hover {
-    background: $primary;
-}
-
-// Date/time picker
-.tempus-dominus-widget {
-    z-index: $zindex-popover;
-    color: $body-color;
-}
-
 // Map
 .ew-map label {
     width: auto;
@@ -1115,8 +1106,10 @@ li.ui-timepicker-selected,
 }
 
 // Spacing under tab
-.nav-tabs, .nav-pills {
-    margin-bottom: 1rem;
+.nav-tabs,
+.nav-pills,
+.nav-underline {
+    margin-bottom: $spacer;
 }
 
 // AutoSuggest (twitter typeahead)
@@ -1146,20 +1139,35 @@ li.ui-timepicker-selected,
     }
 }
 .ew-detail-pages {
-    margin-bottom: 1rem;
+    margin-bottom: $spacer;
 }
 .ew-custom-template, .ew-custom-template-page, .ew-custom-template-search {
-    margin-bottom: 1rem;
+    margin-bottom: $spacer;
 }
 .ew-grid .ew-custom-template {
     margin-bottom: 0;
 }
 .ew-debug {
-    margin-bottom: 1rem;
+    margin-bottom: $spacer;
+}
+.ew-page-header,
+.ew-page-footer {
+    margin-bottom: $spacer;
+}
+.ew-chart-top {
+    margin-bottom: $spacer;
+}
+.ew-middle {
+    .ew-chart-top {
+        margin-right: $spacer;
+    }
+    .ew-chart-bottom {
+        margin-left: $spacer;
+    }
 }
 .ew-chart-top, .ew-chart-bottom {
     &~ .ew-debug {
-        margin-top: 1rem;
+        margin-top: $spacer;
     }
 }
 
@@ -1243,7 +1251,7 @@ li.ui-timepicker-selected,
     .ew-search-operator .form-control-plaintext {
         width: auto;
     }
-    input[type=text]:not([size]):not(.ew-page-number):not(.cke_dialog_ui_input_text):not(.form-control-plaintext),
+    input[type=text]:not([size]):not(.ew-page-number):not(.cke_dialog_ui_input_text):not(.tox-textfield):not(.form-control-plaintext),
     input[type=password]:not([size]) {
         min-width: 250px;
     }
@@ -1440,7 +1448,7 @@ li.ui-timepicker-selected,
     display: inline-block;
 }
 .breadcrumb-item .ew-icon {
-    margin-top: 0.4rem;
+    margin-top: $spacer * .4;
 }
 
 // Hidden element
@@ -1564,7 +1572,7 @@ body > .dropdown-menu {
 
 // Accordion
 .ew-accordion {
-    margin-bottom: 1rem;
+    margin-bottom: $spacer;
 }
 
 // Sidebar
@@ -1596,15 +1604,6 @@ body > .dropdown-menu {
 .ew-toast {
     min-width: 350px;
     z-index: 1070; // Higher than swal backdrop
-    @each $color, $value in $theme-colors {
-        &.bg-#{$color} {
-            @if color-contrast($value) == $white {
-                .btn-close {
-                    filter: $btn-close-white-filter;
-                }
-            }
-        }
-    }
 }
 
 // RTL (Bootstrap)
@@ -1638,28 +1637,34 @@ body.ew-layout-top-nav {
     }
 }
 
-// Fixed table head
-.table.ew-table {
-    &.table-head-fixed {
-        thead tr:nth-child(1) th {
-            background-color: $ThemeTableHeaderBackgroundColor; // Header bgcolor
-            color: $ThemeTableHeaderColor; // Header font color
-            box-shadow: none;
-            outline: $table-border-width solid $ThemeTableHeaderBorderColor;
-	        outline-offset: $table-border-width * -1;
+// Main sidebar border
+@if not $enable-shadows {
+    [class*="sidebar-light-"] {
+        border-right: var(--#{$prefix}border-width) var(--#{$prefix}border-style) var(--#{$prefix}border-color);
+    }
+    @include dark-mode () {
+        [class*="sidebar-dark-"] {
+            border-right: var(--#{$prefix}border-width) var(--#{$prefix}border-style) var(--#{$prefix}border-color);
         }
-        &.table-dark {
-            thead tr {
-                &:nth-child(1) th {
-                    background-color: $ThemeTableHeaderBackgroundColor; // Header bgcolor
-                    color: $ThemeTableHeaderColor; // Header font color
-                    box-shadow: none;
-                    outline: $table-border-width solid $ThemeTableHeaderBorderColor;
-	                outline-offset: $table-border-width * -1;
-                }
+    }
+}
+
+// Fixed table head
+@include color-mode(light) {
+    .table.ew-table {
+        &.table-head-fixed {
+            thead tr:nth-child(1) th {
+                background-color: $ThemeTableHeaderBackgroundColor; // Header bgcolor
+                color: $ThemeTableHeaderColor; // Header font color
+                box-shadow: none;
+                outline: $table-border-width solid $ThemeTableHeaderBorderColor;
+                outline-offset: $border-width * -1;
             }
         }
     }
+}
+.overflow-y-auto > .table.ew-table.table-head-fixed {
+    position: relative;
 }
 
 // Error page
@@ -1794,110 +1799,73 @@ body.ew-layout-top-nav {
     font-size: $font-size-base;
 }
 
-// AdminLTE colors
-$adminlte-colors: (
-    "lightblue": $lightblue-alt,
-    "navy": $navy-alt,
-    "olive": $olive-alt,
-    "lime": $lime-alt,
-    "fuchsia": $fuchsia-alt,
-    "maroon": $maroon-alt
-) !default;
-
 // Named colors
-$named-colors: () !default;
 $named-colors: map-merge($colors, $theme-colors);
-$named-colors: map-merge($named-colors, $adminlte-colors);
-
-// Button outline
-@each $color, $value in $adminlte-colors {
-    .btn-outline-#{$color} {
-        @include button-outline-variant($value);
-    }
-}
 
 // Border and popover colors
 @each $name, $color in $named-colors {
-    .border-#{$name} {
-        border-color: $color;
-    }
     .popover-#{$name} {
         --#{$prefix}popover-border-color: #{$color};
         --#{$prefix}popover-arrow-border: #{$color};
-        --#{$prefix}popover-arrow-width: #{$popover-arrow-width};
-        --#{$prefix}popover-arrow-height: #{$popover-arrow-height};
-        &.bs-popover-start,
-        &.bs-popover-auto[data-popper-placement^=start],
-        &.bs-popover-end,
-        &.bs-popover-auto[data-popper-placement^=end] {
-            .popover-arrow::before {
-                border-left-color: var(--#{$prefix}popover-arrow-border);
-                border-right-color: var(--#{$prefix}popover-arrow-border);
+        --#{$prefix}popover-header-bg: #{$color};
+        $header-color: color-contrast($color);
+        --#{$prefix}popover-header-color: #{$header-color};
+        @if ($header-color == $color-contrast-light) {
+            .btn-close {
+              @include btn-close-white();
+            }
+        } @else {
+            .btn-close {
+                filter: none;
             }
         }
-        &.bs-popover-top,
-        &.bs-popover-auto[data-popper-placement^=top] {
-            .popover-arrow::before {
-                border-top-color: var(--#{$prefix}popover-arrow-border);
-            }
-        }
-        &.bs-popover-bottom,
-        &.bs-popover-auto[data-popper-placement^=bottom] {
-            .popover-arrow::before {
-                border-bottom-color: var(--#{$prefix}popover-arrow-border);
-            }
-            .popover-arrow::after {
-                border-bottom-color: var(--#{$prefix}popover-arrow-border);
-            }
-            .popover-header::before {
-                border-bottom-color: var(--#{$prefix}popover-arrow-border);
-            }
-        }
-        .popover-header {
-            --#{$prefix}popover-header-bg: #{$color};
-            border-bottom-color: var(--#{$prefix}popover-header-bg);
-            --#{$prefix}popover-header-color: #{color-contrast($color)};
-        }
+    }
+}
+
+// Table cell
+@each $name, $color in $named-colors {
+    .table-bg-#{$name} {
+        --#{$prefix}table-bg: #{$color};
+        $text-color: color-contrast($color);
+        --#{$prefix}table-color-state: #{$text-color};
+        --#{$prefix}table-hover-color: #{$text-color};
     }
 }
 
 // Full calender default popover
 .popover-default {
-    --#{$prefix}popover-arrow-width: #{$popover-arrow-width};
-    --#{$prefix}popover-arrow-height: #{$popover-arrow-height};
-    --#{$prefix}popover-arrow-border: #{var(--fc-event-border-color, #3788d8)};
-    border-color: #{var(--fc-event-border-color, #3788d8)}; // Use FullCalendar color
-    &.bs-popover-start,
-    &.bs-popover-auto[data-popper-placement^=start],
-    &.bs-popover-end,
-    &.bs-popover-auto[data-popper-placement^=end] {
-        .popover-arrow::before {
-            border-left-color: #{var(--fc-event-border-color, #3788d8)};
-            border-right-color: #{var(--fc-event-border-color, #3788d8)};
-        }
+    $color: #{var(--fc-event-border-color, #3788d8)}; // Use FullCalendar color
+    --#{$prefix}popover-arrow-border: #{$color};
+    --#{$prefix}popover-border-color:  #{$color};
+    --#{$prefix}popover-header-bg: #{$color};
+    --#{$prefix}popover-header-color: #{var(--fc-event-text-color, #fff)};
+    .btn-close {
+        @include btn-close-white();
     }
-    &.bs-popover-top,
-    &.bs-popover-auto[data-popper-placement^=top] {
-        .popover-arrow::before {
-            border-top-color: #{var(--fc-event-border-color, #3788d8)};
-        }
-    }
-    &.bs-popover-bottom,
-    &.bs-popover-auto[data-popper-placement^=bottom] {
-        .popover-arrow::before {
-            border-bottom-color: #{var(--fc-event-border-color, #3788d8)};
-        }
-        .popover-arrow::after {
-            border-bottom-color: #{var(--fc-event-border-color, #3788d8)};
-        }
-        .popover-header::before {
-            border-bottom-color: #{var(--fc-event-border-color, #3788d8)};
-        }
-    }
-    .popover-header {
-        background-color: #{var(--fc-event-border-color, #3788d8)};
-        border-bottom-color: #{var(--fc-event-border-color, #3788d8)};
-        color: #{var(--fc-event-text-color, #fff)};
+}
+
+// Utilities
+$ew-utilities: () !default;
+$ew-utilities: map-merge(
+    (
+        "overflow-x": (
+            responsive: true,
+            property: overflow-x,
+            values: auto hidden visible scroll,
+        ),
+        "overflow-y": (
+            responsive: true,
+            property: overflow-y,
+            values: auto hidden visible scroll,
+        )
+    ),
+    $ew-utilities
+);
+
+// Loop over each utility property
+@each $key, $utility in $ew-utilities {
+    @if type-of($utility) == "map" {
+        @include generate-utility($utility, "");
     }
 }
 
@@ -1927,7 +1895,7 @@ $named-colors: map-merge($named-colors, $adminlte-colors);
     }
     .select2-selection {
         color: $input-color;
-        padding: $input-padding-y ($input-padding-x + 1.5rem) $input-padding-y $input-padding-x;
+        border-radius: $border-radius;
     }
     .select2-results__group { // Use Bootstrap dropdown header styles
         --#{$prefix}dropdown-header-color: #{$dropdown-header-color};
@@ -1974,8 +1942,8 @@ $named-colors: map-merge($named-colors, $adminlte-colors);
                     .select2-selection__choice__display {
                         display: inline-block;
                         cursor: default;
-                        padding-left: 0.5rem;
-                        padding-right: 1.5rem;
+                        padding-left: $spacer * .5;
+                        padding-right: $spacer * 1.5;
                     }
                     .select2-selection__choice__remove {
                         background-color: transparent;
@@ -2011,7 +1979,7 @@ $named-colors: map-merge($named-colors, $adminlte-colors);
                     }
                 }
                 .select2-selection__choice {
-                    margin-top: .4rem;
+                    margin-top: $spacer * .4;
                 }
             }
         }
@@ -2056,7 +2024,7 @@ $named-colors: map-merge($named-colors, $adminlte-colors);
         }
         .ew-dropdown-check-input {
             display: inline-block;
-            margin-right: 0.5rem;
+            margin-right: $spacer * .5;
             background-color: $form-check-input-bg;
             border: $form-check-input-border;
             @include border-radius($form-check-input-border-radius);
@@ -2076,6 +2044,8 @@ $named-colors: map-merge($named-colors, $adminlte-colors);
 
     // Table header filter
     .ew-filter-dropdown {
+        --#{$prefix}dropdown-divider-bg: #{$dropdown-divider-bg};
+        --#{$prefix}dropdown-divider-margin-y: #{$dropdown-divider-margin-y};
         border-bottom-right-radius: $border-radius !important;
         border-bottom-left-radius: $border-radius !important;
         .select2-search--dropdown {
@@ -2118,8 +2088,8 @@ $named-colors: map-merge($named-colors, $adminlte-colors);
 // Column Visibility
 .ew-column-dropdown {
     .dropdown-item {
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding-left: $spacer;
+        padding-right: $spacer;
     }
     .dropdown-item.active, .dropdown-item:active {
         color: $dropdown-link-hover-color;
@@ -2163,7 +2133,7 @@ $named-colors: map-merge($named-colors, $adminlte-colors);
 .template-download .error,
 .template-upload .error {
     font-size: $form-feedback-font-size;
-    color: $form-feedback-invalid-color
+    color: var(--#{$prefix}form-invalid-color);
 }
 
 // Search field invalid feedback
@@ -2181,7 +2151,7 @@ $named-colors: map-merge($named-colors, $adminlte-colors);
 
 // Single extended search button
 .ew-col-break + .col-auto {
-    margin-bottom: 1rem;
+    margin-bottom: $spacer;
 }
 
 // Search highlight
@@ -2239,7 +2209,7 @@ mark.ew-mark:not(.mark) {
     -moz-user-select: none;
     user-select: none;
     $pace-color: $primary;
-    @if (type-of($ThemePaceColor) == color) {
+    @if is-color($ThemePaceColor) {
         $pace-color: $ThemePaceColor;
     }
     .pace-progress {
@@ -2291,7 +2261,7 @@ mark.ew-mark:not(.mark) {
     // width: 30rem;
     vertical-align: middle;
     text-align: center;
-    margin-bottom: 0.5rem;
+    margin-bottom: $spacer * .5;
     @include border-radius($input-border-radius, 0);
     .ew-file-text {
         line-height: 4;
@@ -2411,13 +2381,48 @@ div[id^=dsl_] .ew-loading {
     min-width: 150px;
 }
 
+// Calendar (dark mode)
+@include dark-mode () {
+    --fc-page-bg-color: var(--#{$prefix}body-bg);
+    $color: color-contrast(opaque($body-bg, $dark));
+    $hover-bg: mix($color, $dark, percentage($table-hover-bg-factor));
+    $active-bg: mix($color, $dark, percentage($table-active-bg-factor));
+    $table-border-color: mix($color, $dark, percentage($table-border-factor * 2.5));
+    .fc-theme-bootstrap5 {
+        & .fc-list,
+        & .fc-scrollgrid,
+        & td,
+        & th {
+            border-color: $table-border-color;
+        }
+    }
+    .fc-theme-bootstrap5-shaded {
+        background-color: $active-bg;
+        color: color-contrast($active-bg);
+        a:not(.btn):hover {
+            background-color: $hover-bg;
+            color: color-contrast($hover-bg);
+        }
+    }
+    .fc-daygrid-more-link {
+        &:hover {
+            background-color: $hover-bg;
+            color: color-contrast($hover-bg) !important;
+        }
+    }
+    .fc-list-event:hover td {
+        background-color: $hover-bg;
+        color: color-contrast($hover-bg);
+    }
+}
+
 // Query builder
 .ew-view-rules {
     max-height: 300px;
 }
 
 // Navbar dropdown
-@if $enable-dark-mode == false {
+@if not $enable-dark-mode {
     .main-header {
         .dropdown-item {
             color: $dropdown-link-color !important;
@@ -2440,11 +2445,54 @@ div[id^=dsl_] .ew-loading {
     }
 }
 
+// Chat button
+.chat-wrapper {
+    // z-index: 1040; /* optional, higher than navbar, but dropdown menus from navbar will be behind chat card  */
+    .chat-btn {
+        position: absolute;
+        right: 14px;
+        bottom: 20px;
+        cursor: pointer;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 50px;
+        font-size: 22px;
+        border: none;
+        opacity: 0;
+        --#{$prefix}bg-opacity: .8;
+        &.show {
+            opacity: 1;
+            transition: opacity 2s;
+        }
+        .close {
+            display: none;
+        }
+    }
+    .card {
+        position: absolute;
+        right: 80px;
+        bottom: 10px;
+        transition: all 0.4s;
+        display: none;
+    }
+    .card-body iframe {
+        min-width: 400px;
+        min-height: 500px;
+    }
+}
+
 // Dark mode
 @include dark-mode () {
     $background: $dark;
     $color: color-contrast(opaque($body-bg, $background));
-    $bordercolor: $gray-600; // Use AdminLTE, not Bootstrap, setting
+    // $table-border-color: mix($color, $background, percentage($table-border-factor)); // Bootstrap setting
+    $table-border-color: $gray-600; // Use AdminLTE setting instead of Bootstrap setting
+    .content-wrapper  {
+        background-color: var(--#{$prefix}body-bg); // Override AdminLTE
+    }
 
     // siderbar
     [class*="sidebar-dark-"] {
@@ -2471,55 +2519,56 @@ div[id^=dsl_] .ew-loading {
         }
     }
     .ew-search-operator, .ew-search-operator2 {
-        color: $color;
+        color: #{color-contrast(opaque($body-bg, $background))};
     }
 
     // Grid
     .ew-grid {
-        border-color: $bordercolor;
+        border-color: $table-border-color;
         &.ew-loading {
-            border-color: rgba($bordercolor, 0.25);
+            // border-color: rgba($table-border-color, 0.25); // No need to change in dark mode
         }
         .ew-grid-upper-panel {
-            border-bottom-color: $bordercolor;
+            border-bottom-color: $table-border-color;
         }
         .ew-grid-lower-panel {
-            border-top-color: $bordercolor;
+            border-top-color: $table-border-color;
         }
     }
 
     // Table
     .table {
-        // From Bootstrap (begin)
+         // From Bootstrap (begin)
         $hover-bg: mix($color, $background, percentage($table-hover-bg-factor));
         $striped-bg: mix($color, $background, percentage($table-striped-bg-factor));
         $active-bg: mix($color, $background, percentage($table-active-bg-factor));
+        $table-footer-bg-factor: .09 !default;
+        $footer-bg: mix($color, $background, percentage($table-footer-bg-factor));
+        --#{$prefix}table-color: #{$color};
         --#{$prefix}table-bg: #{$background};
+        --#{$prefix}table-border-color: #{$table-border-color};
         --#{$prefix}table-striped-bg: #{$striped-bg};
         --#{$prefix}table-striped-color: #{color-contrast($striped-bg)};
         --#{$prefix}table-active-bg: #{$active-bg};
         --#{$prefix}table-active-color: #{color-contrast($active-bg)};
         --#{$prefix}table-hover-bg: #{$hover-bg};
         --#{$prefix}table-hover-color: #{color-contrast($hover-bg)};
-        color: $color;
         // From Bootstrap (end)
-        border-color: $bordercolor;
+        color: var(--#{$prefix}table-color);
+        border-color: var(--#{$prefix}table-border-color);
         tbody,
         tfoot,
         :not(thead) > tr,
         td,
         th {
-            border-color: $bordercolor; // Override Bootstrap reboot
+            border-color: var(--#{$prefix}table-border-color); // Override Bootstrap reboot
         }
         > thead > *,
         > thead > * > * {
-            border-bottom-color: $bordercolor !important;
+            border-bottom-color: var(--#{$prefix}table-border-color) !important;
         }
         > :not(:last-child):not(thead) > :last-child > * {
-            border-bottom-color: $bordercolor;
-        }
-        .ew-rpt-grp-header {
-            border-color: $bordercolor; // Header border color
+            border-bottom-color: var(--#{$prefix}table-border-color);
         }
 
         // Main table last row cell with border-bottom
@@ -2527,70 +2576,70 @@ div[id^=dsl_] .ew-loading {
         > tfoot > tr:last-child > td.ew-table-border-bottom,
         td.ew-table-last-row.ew-table-border-bottom,
         .ew-table-border-bottom {
-            border-color: $bordercolor; // Border color
+            border-color: var(--#{$prefix}table-border-color); // Border color
         }
         > thead > tr > th,
         > thead > tr > td {
-            font-weight: normal;
-            border-color: $bordercolor;
+            // font-weight: normal;
+            border-color: var(--#{$prefix}table-border-color);
         }
 
         // Main table header
-        .ew-table-header, .ew-rpt-col-summary, .ew-rpt-col-header {
-            --#{$prefix}table-accent-bg: var(--#{$prefix}table-bg);
-            color: var(--#{$prefix}table-active-color);
+        .ew-table-header > th,
+        .ew-table-header > td,
+        .ew-rpt-col-summary,
+        .ew-rpt-col-header {
+            font-weight: bold;
         }
 
         // Main table footer
-        .ew-table-footer {
-            --#{$prefix}table-accent-bg: var(--#{$prefix}table-bg);
-            color: var(--#{$prefix}table-active-color);
+        .ew-table-footer > td {
+            --#{$prefix}table-bg: #{$footer-bg};
         }
 
         // Main table active
-        .table-active {
-            --#{$prefix}table-accent-bg: var(--#{$prefix}table-active-bg);
-            color: var(--#{$prefix}table-active-color);
-        }
-
-        // Table row
-        tr:not([class^=ew-]):not(.table-active) {
-            background-color: $background;
-            color: $color;
-        }
+        // .table-active {
+        //     --#{$prefix}table-color-state: var(--#{$prefix}table-active-color) !important; // Override
+        //     --#{$prefix}table-bg-state: var(--#{$prefix}table-active-bg) !important;
+        // }
 
         // Striped table row
         @if ($ThemeTableStriped) {
-            .ew-table-alt-row:not(.table-active) {
-                --#{$prefix}table-accent-bg: #{$striped-bg};
+            > tbody > .ew-table-alt-row > *,
+            > tbody > * > .ew-table-alt-row {
+                --#{$prefix}table-color-state: var(--#{$prefix}table-striped-color);
+                --#{$prefix}table-bg-state: var(--#{$prefix}table-striped-bg);
             }
         }
 
         // Hover
         &.table-hover {
-            > tbody > tr:not(.expandable-body):hover {
-                --#{$prefix}table-accent-bg: #{$hover-bg};
-                color: var(--#{$prefix}table-hover-color);
+            > tbody > tr:not(.expandable-body):hover > * {
+                --#{$prefix}table-color-state: var(--#{$prefix}table-hover-color);
+                --#{$prefix}table-bg-state: var(--#{$prefix}table-hover-bg);
             }
         }
-        .ew-rpt-page-summary,
-        .ew-rpt-grand-summary {
-            --#{$prefix}table-accent-bg: var(--#{$prefix}table-bg);
-            color: var(--#{$prefix}table-active-color);
+        .ew-rpt-page-summary > td,
+        .ew-rpt-grand-summary > td {
+            --#{$prefix}table-bg: #{$footer-bg};
         }
     }
 
     // Select2
     .select2-container--bootstrap5 .select2-selection--single {
-        background-image: escape-svg($form-select-dark-indicator);
+        background-image: escape-svg($form-select-indicator-dark);
     }
     select.is-valid~.select2-container--bootstrap5 .select2-selection--single,
     form.was-validated select:valid~.select2-container--bootstrap5 .select2-selection--single {
-        background-image: escape-svg($form-select-dark-indicator), escape-svg($form-feedback-icon-valid);
+        background-image: escape-svg($form-select-indicator-dark), escape-svg($form-feedback-icon-valid);
     }
     select.is-invalid~.select2-container--bootstrap5 .select2-selection--single,
     form.was-validated select:invalid~.select2-container--bootstrap5 .select2-selection--single {
-        background-image: escape-svg($form-select-dark-indicator), escape-svg($form-feedback-icon-invalid);
+        background-image: escape-svg($form-select-indicator-dark), escape-svg($form-feedback-icon-invalid);
+    }
+    .select2-container--bootstrap5.select2-container--disabled .select2-selection,
+    .select2-container--bootstrap5.select2-container--disabled .select2-search__field {
+        background-color: rgba(#e9ecef, .2);
     }
 
     // Dark dropdowns (Copied from Bootstrap .dropdown-menu-dark)
@@ -2634,8 +2683,140 @@ div[id^=dsl_] .ew-loading {
     .dropdown-divider {
         border-color: var(--#{$prefix}dropdown-divider-bg) !important;
     }
-    a.nav-link:not(.btn):hover { // Override AdminLTE
+
+    // Override AdminLTE
+    a.nav-link:not(.btn):hover {
         color: var(--bs-nav-link-hover-color) !important;
+    }
+
+    // Overlays for Card, InfoBox & SmallBox
+    .card,
+    .overlay-wrapper,
+    .info-box,
+    .small-box {
+        .overlay {
+            background-color: rgba($white, .1);
+            > .fa-solid,
+            > .fa-regular,
+            > .fa-light,
+            > .fa-thin,
+            > .fa-duotone,
+            > .fa-brands,
+            > .svg-inline--fa {
+                color: $gray-400;
+            }
+        }
+    }
+
+    // Box overlay for LOADING STATE effect on Tab Panels
+    .tab-pane {
+        > .overlay-wrapper {
+            color: $white;
+        }
+    }
+
+     // Dark popovers
+    .popover {
+        --#{$prefix}popover-bg: #{$dropdown-dark-bg} !important;
+        --#{$prefix}popover-body-color: #{$dropdown-dark-color} !important;
+        @if (color-contrast($dropdown-dark-bg) == $color-contrast-light) {
+            .btn-close {
+                @include btn-close-white();
+            }
+        }
+    }
+    $named-colors: map-merge($colors-alt, $theme-colors-alt);
+    @each $name, $color in $named-colors {
+        .popover-#{$name} {
+            --#{$prefix}popover-border-color: #{$color};
+            --#{$prefix}popover-arrow-border: #{$color};
+            --#{$prefix}popover-header-bg: #{$color};
+            $header-color: color-contrast($color, $min-contrast-ratio: $adminlte-min-contrast-ratio);
+            --#{$prefix}popover-header-color: #{$header-color};
+            @if ($header-color == $color-contrast-light) {
+                .btn-close {
+                  @include btn-close-white();
+                }
+            } @else {
+                .btn-close {
+                    filter: none;
+                }
+            }
+        }
+    }
+
+    // Table cell
+    @each $name, $color in $named-colors {
+        .table-bg-#{$name} {
+            $text-color: color-contrast($color);
+            --#{$prefix}table-color-state: #{$text-color} !important;
+            --#{$prefix}table-bg-state: #{$color} !important;
+            &> * {
+                $text-color: color-contrast($color);
+                --#{$prefix}table-color-state: #{$text-color} !important;
+                --#{$prefix}table-bg-state: #{$color} !important;
+            }
+        }
+    }
+
+    // Required field indicator
+    .ew-required {
+        color: $danger-alt;
+    }
+
+    // AutoSuggest
+    .is-invalid .tt-input {
+        border-color: $form-invalid-color-dark;
+        &:focus {
+            border-color: $form-invalid-color-dark;
+            box-shadow: 0 0 0 $input-focus-width rgba($form-invalid-color-dark, .25);
+        }
+    }
+
+    // Dark modal
+    .modal {
+        // Text colors
+        @each $color in map-keys($theme-colors-text-dark) {
+            .text-#{$color} {
+                color: var(--#{$prefix}#{$color}-text-emphasis) !important;
+            }
+        }
+    }
+
+    // Tooltip
+    #ew-import-dialog {
+        .tooltip-inner {
+            background-color: $danger-alt;
+            color: color-contrast($danger-alt, $min-contrast-ratio: $adminlte-min-contrast-ratio);
+        }
+        .tooltip-arrow {
+            &::before {
+              border-bottom-color: $danger-alt;
+            }
+        }
+    }
+
+    // Google Gantt chart
+    .ew-gantt svg {
+        // Horizontal Labels
+        g:nth-child(3) {
+            text {
+                fill: $white;
+            }
+        }
+
+        // Tooltips
+        g:nth-child(10) {
+            rect {
+                fill: $dropdown-dark-bg;
+            }
+            text {
+                fill: $white;
+            }
+            text:nth-child(2) { // Title
+                font-weight: 500;
+            }
+        }
     }
 }
 /*END_SYSTEM_STYLES*/
@@ -2723,7 +2904,6 @@ div[id^=dsl_] .ew-loading {
 	border-bottom: 1px solid #fff;
 }
 body {
-	background-image: url("../images/jootidigitalhealthcare-bg.jpg");
 	font-family: montserrat;
 }
 .nav-sidebar .nav-item>.nav-link {
@@ -2817,8 +2997,14 @@ body {
     font-size: .7rem;
 }
 .content-wrapper {
-	background-color: rgba(255,255,255,.7);
 	padding-bottom: 10px;
 }
 
 /*END_USER_STYLES*/
+
+// Barcode
+@include dark-mode () {
+    .ew-barcode {
+        filter: invert(1);
+    }
+}

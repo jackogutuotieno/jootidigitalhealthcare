@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Captcha base class
@@ -31,9 +31,8 @@ class CaptchaBase implements CaptchaInterface
     // Get Session Name
     public function getSessionName()
     {
-        global $RouteValues;
         $name = SESSION_CAPTCHA_CODE;
-        $pageId = $RouteValues["page"] ?? CurrentPageID();
+        $pageId = Route("page") ?? CurrentPageID();
         if ($pageId != "") {
             $name .= "_" . $pageId;
         }

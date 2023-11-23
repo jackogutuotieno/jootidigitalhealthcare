@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -28,11 +28,11 @@ class ExportHandler
         $Response = $response;
 
         // Get parameters
-        $exportType = strtolower(Get(Config("API_EXPORT_NAME"), Route(1)) ?? "");
-        $table = Get(Config("API_OBJECT_NAME"), Route(2));
+        $exportType = strtolower(Get(Config("API_EXPORT_NAME"), Route("param")) ?? "");
+        $table = Get(Config("API_OBJECT_NAME"), Route("table"));
         $recordKey = Get(Config("API_KEY_NAME"));
         if ($table === null) {
-            if (Route(1) === Config("EXPORT_LOG_SEARCH")) {
+            if (Route("param") === Config("EXPORT_LOG_SEARCH")) { // Search
                 $output = ConvertToBool(Get(Config("API_EXPORT_OUTPUT"), true)); // Output by default unless output=0
                 $this->searchExportLog($output);
             } else {
@@ -50,7 +50,7 @@ class ExportHandler
     protected function searchExportLog($output)
     {
         global $Security, $Language;
-        $Language = Container("language");
+        $Language = Container("app.language");
         $zipNames = [];
         $zipNames[] = Config("EXPORT_LOG_ARCHIVE_PREFIX");
         $exportLogTable = Config("EXPORT_LOG_TABLE_VAR");
@@ -101,7 +101,7 @@ class ExportHandler
         }
         $dt = $fld->AdvancedSearch->SearchValue;
         if (!CheckDate($dt)) {
-            WriteJson([ "success" => false, "error" => str_replace("%s", $dt, $Language->phrase("IncorrectDate")) . ": " . Config("EXPORT_LOG_FIELD_NAME_DATETIME_ALIAS") ]);
+            WriteJson(["success" => false, "error" => str_replace("%s", $dt, $Language->phrase("IncorrectDate")) . ": " . Config("EXPORT_LOG_FIELD_NAME_DATETIME_ALIAS")]);
             return;
         }
         if (!EmptyValue($dt)) {
@@ -118,7 +118,7 @@ class ExportHandler
         // Validate limit
         $limit = Get(Config("EXPORT_LOG_LIMIT"), 0);
         if ($limit && (!is_numeric($limit) || ParseInteger($limit) <= 0)) {
-            WriteJson([ "success" => false, "error" => $Language->phrase("IncorrectInteger") . ": " . Config("EXPORT_LOG_LIMIT") ]);
+            WriteJson(["success" => false, "error" => $Language->phrase("IncorrectInteger") . ": " . Config("EXPORT_LOG_LIMIT")]);
             return;
         }
         // Handle limit
@@ -167,7 +167,7 @@ class ExportHandler
                 }
             }
         }
-        WriteJson([ "success" => true, Config("EXPORT_LOG_FIELD_NAME_FILE_ID") => $fileIds ]);
+        WriteJson(["success" => true, Config("EXPORT_LOG_FIELD_NAME_FILE_ID") => $fileIds]);
     }
 
     // Write export file
@@ -205,7 +205,7 @@ class ExportHandler
         }
         $tbl = Container($exportLogTable);
         $fileIdField = $tbl->Fields[Config("EXPORT_LOG_FIELD_NAME_FILE_ID")];
-        $filter = $fileIdField->Expression . " = " . QuotedValue($guid, DATATYPE_GUID, Config("EXPORT_LOG_DBID"));
+        $filter = $fileIdField->Expression . " = " . QuotedValue($guid, DataType::GUID, Config("EXPORT_LOG_DBID"));
         $row = $tbl->loadRs($filter)->fetchAssociative();
         if ($row !== false) {
             $fileName ??= $row[Config("EXPORT_LOG_FIELD_NAME_FILENAME")]; // Get file name
@@ -225,7 +225,7 @@ class ExportHandler
     }
 
     // Export data
-    protected function exportData($exportType, $table, $recordKey, $output, $save)
+    protected function exportData($exportType, $table, $key, $output, $save)
     {
         global $Security, $Response, $ResponseFactory, $Language, $ExportId;
 
@@ -238,6 +238,22 @@ class ExportHandler
             WriteJson(["success" => false, "error" => $Language->phrase("InvalidParameter") . ": table=" . $table]);
             return;
         }
+
+        // Get record key from query string or form data
+        $isList = EmptyValue($key);
+        if ($tbl->TableType != "REPORT") { // Skip reports
+            if ($isList) { // List/View page
+                $recordKeys = $tbl->getRecordKeys();
+                $recordKey = count($recordKeys) > 0
+                    ? (is_array($recordKeys[0]) ? $recordKeys[0] : [$recordKeys[0]])
+                    : [];
+                $isList = count($recordKey) == 0 || Param("key_m") !== null; // No key or selected keys
+            } else { // View page
+                $recordKey = explode(",", $key);
+            }
+        }
+
+        // Check permission
         $Security->loadTablePermissions($table);
         if (!$Security->canExport()) {
             SetStatus(401);
@@ -255,9 +271,9 @@ class ExportHandler
 
         // Export data
         $doc = null;
-        $emptyKey = EmptyValue($recordKey);
-        $fileName = Get(Config("API_EXPORT_FILE_NAME"), $tbl->TableVar . ($emptyKey ? "" : "_" . $recordKey));
-        $pageName = $tbl->getApiPageName($emptyKey ? Config("API_LIST_ACTION") : Config("API_VIEW_ACTION"));
+        $keyValue = $isList ? "" : implode("_", $recordKey);
+        $fileName = Get(Config("API_EXPORT_FILE_NAME"), $tbl->TableVar . ($isList ? "" : "_" . $keyValue));
+        $pageName = $tbl->getApiPageName($isList ? Config("API_LIST_ACTION") : Config("API_VIEW_ACTION"));
         $pageClass = PROJECT_NAMESPACE . $pageName;
         $isReport = $tbl->TableType == "REPORT";
         $custom = $isReport;
@@ -269,7 +285,7 @@ class ExportHandler
             // Create export object
             $doc = new $exportClass($page);
             if (!$isReport) {
-                $doc->setHorizontal($emptyKey);
+                $doc->setHorizontal($isList);
             }
 
             // File ID
@@ -301,7 +317,7 @@ class ExportHandler
                         $GLOBALS["Title"] ??= $page->Title; // Title
                         $page->RenderingView = true;
                         try {
-                            $view = Container("view");
+                            $view = Container("app.view");
                             $Response = $view->render($Response, $template, $GLOBALS); // Render view with $GLOBALS
                             $html = $this->replaceCharts($page->getContents(), $files, $exportType);
                             $doc->loadHtml($html);
@@ -312,24 +328,25 @@ class ExportHandler
                         }
                     }
                 } else { // Table export
-                    // Add top/left charts
-                    if ($emptyKey) {
+                    if ($isList) { // List page
+                        // Add top/left charts
                         foreach ($files as $id => $file) {
                             $chart = $tbl->Charts[$id] ?? null;
                             if ($chart && $chart->Position <= 2) {
                                 $doc->addImage($file, "after");
                             }
                         }
-                    }
-                    $page->exportData($doc, $files);
-                    // Add right/bottom charts
-                    if ($emptyKey) {
+                        // Export
+                        $page->exportData($doc);
+                        // Add right/bottom charts
                         foreach ($files as $id => $file) {
                             $chart = $tbl->Charts[$id] ?? null;
                             if ($chart && $chart->Position > 2) {
                                 $doc->addImage($file, "before");
                             }
                         }
+                    } else { // View page
+                        $page->exportData($doc, $recordKey);
                     }
                 }
             }
@@ -342,7 +359,7 @@ class ExportHandler
                 // Get file ID
                 $fileId = $doc->getFileId();
                 // Write export log for saved file
-                WriteExportLog($fileId, DbCurrentDateTime(), CurrentUser(), $exportType, $table, $recordKey, $fileName, ServerVar("REQUEST_URI"));
+                WriteExportLog($fileId, DbCurrentDateTime(), CurrentUserIdentifier(), $exportType, $table, $keyValue, $fileName, ServerVar("REQUEST_URI"));
                 // Return file ID if export file not returned
                 if (!$output) {
                     WriteJson(["success" => true, "fileId" => $fileId]);
@@ -354,15 +371,7 @@ class ExportHandler
 
         // Clean up export files
         if (Config("EXPORT_FILES_EXPIRY_TIME") > 0) {
-            CleanPath(ExportPath(true), false, function ($file) {
-                if (file_exists($file)) {
-                    $lastmdtime = filemtime($file);
-                    if ((time() - $lastmdtime) / 86400 > Config("EXPORT_FILES_EXPIRY_TIME")) {
-                        unlink($file);
-                        Log("export file '" . $file . "' deleted");
-                    }
-                }
-            });
+            CleanPath(ExportPath(true), false, "< now - " . Config("EXPORT_FILES_EXPIRY_TIME") . " minutes");
         }
 
         // Delete temp images
@@ -456,7 +465,7 @@ class ExportHandler
     // Replace charts in custom template
     public function replaceCharts($text, $files, $exportType)
     {
-        $doc = new Document(null, false, strtoupper(Config("PROJECT_CHARSET"))); // Note: This will add <body> tag
+        $doc = new Document(null, false, strtoupper(PROJECT_CHARSET)); // Note: This will add <body> tag
         @$doc->load($text);
         $charts = $doc->find(".ew-chart");
         foreach ($charts as $chart) {

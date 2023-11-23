@@ -1,21 +1,16 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhTestReportsEdit = &$Page;
 ?>
-<script>
-loadjs.ready("head", function () {
-    // Write your table-specific client script here, no need to add script tags.
-});
-</script>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="edit">
-<form name="fjdh_test_reportsedit" id="fjdh_test_reportsedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_test_reportsedit" id="fjdh_test_reportsedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
 ew.deepAssign(ew.vars, { tables: { jdh_test_reports: currentTable } });
@@ -61,6 +56,11 @@ loadjs.ready(["wrapper", "head"], function () {
     loadjs.done(form.id);
 });
 </script>
+<script>
+loadjs.ready("head", function () {
+    // Write your table-specific client script here, no need to add script tags.
+});
+</script>
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -82,8 +82,7 @@ loadjs.ready(["wrapper", "head"], function () {
         <label id="elh_jdh_test_reports_report_id" class="<?= $Page->LeftColumnClass ?>"><?= $Page->report_id->caption() ?><?= $Page->report_id->Required ? $Language->phrase("FieldRequiredIndicator") : "" ?></label>
         <div class="<?= $Page->RightColumnClass ?>"><div<?= $Page->report_id->cellAttributes() ?>>
 <span id="el_jdh_test_reports_report_id">
-<span<?= $Page->report_id->viewAttributes() ?>>
-<input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->report_id->getDisplayValue($Page->report_id->EditValue))) ?>"></span>
+<span<?= $Page->report_id->viewAttributes() ?>><?= PhpBarcode::barcode('')->show('', '', 60) ?></span>
 <input type="hidden" data-table="jdh_test_reports" data-field="x_report_id" data-hidden="1" name="x_report_id" id="x_report_id" value="<?= HtmlEncode($Page->report_id->CurrentValue) ?>">
 </span>
 </div></div>
@@ -115,7 +114,9 @@ loadjs.ready(["wrapper", "head"], function () {
         id="x_patient_id"
         name="x_patient_id"
         class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
+        <?php if (!$Page->patient_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_test_reportsedit_x_patient_id"
+        <?php } ?>
         data-table="jdh_test_reports"
         data-field="x_patient_id"
         data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
@@ -126,10 +127,13 @@ loadjs.ready(["wrapper", "head"], function () {
     <?= $Page->patient_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
 <?= $Page->patient_id->Lookup->getParamTag($Page, "p_x_patient_id") ?>
+<?php if (!$Page->patient_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_test_reportsedit", function() {
     var options = { name: "x_patient_id", selectId: "fjdh_test_reportsedit_x_patient_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_test_reportsedit.lists.patient_id?.lookupOptions.length) {
@@ -142,6 +146,7 @@ loadjs.ready("fjdh_test_reportsedit", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 <?php } ?>
 </div></div>
@@ -174,7 +179,7 @@ loadjs.ready("fjdh_test_reportsedit", function() {
         lang="<?= CurrentLanguageID() ?>"
         data-table="jdh_test_reports"
         data-field="x_report_attachment"
-        data-size="0"
+        data-size="16777215"
         data-accept-file-types="<?= $Page->report_attachment->acceptFileTypes() ?>"
         data-max-file-size="<?= $Page->report_attachment->UploadMaxFileSize ?>"
         data-max-number-of-files="null"
@@ -183,10 +188,10 @@ loadjs.ready("fjdh_test_reportsedit", function() {
         <?= ($Page->report_attachment->ReadOnly || $Page->report_attachment->Disabled) ? " disabled" : "" ?>
         <?= $Page->report_attachment->editAttributes() ?>
     >
-    <div class="text-muted ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <div class="text-body-secondary ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <?= $Page->report_attachment->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->report_attachment->getErrorMessage() ?></div>
 </div>
-<?= $Page->report_attachment->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->report_attachment->getErrorMessage() ?></div>
 <input type="hidden" name="fn_x_report_attachment" id= "fn_x_report_attachment" value="<?= $Page->report_attachment->Upload->FileName ?>">
 <input type="hidden" name="fa_x_report_attachment" id= "fa_x_report_attachment" value="<?= (Post("fa_x_report_attachment") == "0") ? "0" : "1" ?>">
 <table id="ft_x_report_attachment" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>

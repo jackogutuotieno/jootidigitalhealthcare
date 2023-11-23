@@ -1,14 +1,19 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
+
+use Doctrine\DBAL\ParameterType;
+use Doctrine\DBAL\Types\Type;
+use Closure;
 
 /**
  * Field class
  */
 class DbField
 {
-    private $Table; // Table object
-    private $Methods = []; // Methods
+    protected $Methods = []; // Methods
+    protected $ParameterType; // Doctrine DBAL parameter or custom type name
+    public $Table; // Table object
     public $TableName; // Table name
     public $TableVar; // Table variable name
     public $SourceTableVar = ""; // Source Table variable name (for Report only)
@@ -34,6 +39,7 @@ class DbField
     public $Type; // Field type
     public $Size; // Field size
     public $DataType; // PHPMaker Field type
+    public ?Type $CustomDataType = null; // Custom type (e.g. Geometry) overriding ParameterType
     public $BlobType; // For Oracle only
     public $InputTextType = "text"; // Field input text type
     public $ViewTag; // View Tag
@@ -75,8 +81,8 @@ class DbField
     public $ViewCustomAttributes; // View custom attributes
     public $Count; // Count
     public $Total; // Total
-    public $TrueValue = '1';
-    public $FalseValue = '0';
+    public $TrueValue = "1";
+    public $FalseValue = "0";
     public $Visible = true; // Visible
     public $Disabled; // Disabled
     public $ReadOnly = false; // Read only
@@ -121,6 +127,7 @@ class DbField
     public $PleaseSelectText = "";
     public $Exportable = true;
     public $ExportOriginalValue;
+    public $ExportFieldCaption;
     public $ExportFieldImage;
     public $Options;
     public $UseFilter = false; // Use table header filter
@@ -141,7 +148,7 @@ class DbField
         $this->BasicSearchExpression = $fldbsexp;
         $this->Type = $fldtype;
         $this->Size = $fldsize;
-        $this->DataType = FieldDataType($fldtype);
+        $this->setDataType(FieldDataType($fldtype));
         $this->DateTimeFormat = $flddtfmt;
         $this->Upload = $upload ? new HttpUpload($this) : null;
         $this->VirtualExpression = $fldvirtualexp;
@@ -156,7 +163,6 @@ class DbField
             $this->Table = $tbl;
             $this->TableVar = $tbl->TableVar;
             $this->TableName = $tbl->TableName;
-            $this->Raw = $tbl->Raw;
             $this->UploadPath = $tbl->UploadPath;
             $this->OldUploadPath = $tbl->OldUploadPath;
             $this->HrefPath = $tbl->HrefPath;
@@ -191,7 +197,7 @@ class DbField
         if (!is_callable($methodCallable)) {
             throw new \Exception("DbField::addMethod: " . $methodName . " must be callable"); // PHP
         }
-        $this->Methods[$methodName] = \Closure::bind($methodCallable, $this->Table, get_class($this->Table));
+        $this->Methods[$methodName] = Closure::bind($methodCallable, $this->Table, $this->Table::class);
     }
 
     // Has method
@@ -215,9 +221,9 @@ class DbField
         global $DATE_FORMAT, $TIME_FORMAT;
         $fmt = $this->FormatPattern;
         if (!$fmt) {
-            if ($this->DataType == DATATYPE_DATE) {
+            if ($this->DataType == DataType::DATE) {
                 $fmt = DateFormat($this->DateTimeFormat) ?: $DATE_FORMAT;
-            } elseif ($this->DataType == DATATYPE_TIME) {
+            } elseif ($this->DataType == DataType::TIME) {
                 $fmt = DateFormat($this->DateTimeFormat) ?: $TIME_FORMAT;
             }
         }
@@ -227,13 +233,13 @@ class DbField
     // Get client side date/time format pattern
     public function clientFormatPattern()
     {
-        return in_array($this->DataType, [DATATYPE_DATE, DATATYPE_TIME]) ? $this->formatPattern() : "";
+        return in_array($this->DataType, [DataType::DATE, DataType::TIME]) ? $this->formatPattern() : "";
     }
 
     // Is boolean field
     public function isBoolean()
     {
-        return $this->DataType == DATATYPE_BOOLEAN || $this->DataType == DATATYPE_BIT && $this->Size == 1;
+        return $this->DataType == DataType::BOOLEAN || $this->DataType == DataType::BIT && $this->Size == 1;
     }
 
     // Is selected for multiple update
@@ -245,20 +251,7 @@ class DbField
     // Field encryption/decryption required
     public function isEncrypt()
     {
-        $encrypt = $this->IsEncrypt && ($this->DataType == DATATYPE_STRING || $this->DataType == DATATYPE_MEMO) &&
-            !$this->IsPrimaryKey && !$this->IsAutoIncrement && !$this->IsForeignKey;
-        // Do not encrypt username/password/userid/parent userid/userlevel/profile/activate fields in user table
-        if (
-            $encrypt &&
-            $this->TableName == Config("USER_TABLE_NAME") &&
-            in_array($this->Name, [Config("LOGIN_USERNAME_FIELD_NAME"),
-                Config("LOGIN_PASSWORD_FIELD_NAME"), Config("USER_ID_FIELD_NAME"),
-                Config("PARENT_USER_ID_FIELD_NAME"), Config("USER_LEVEL_FIELD_NAME"),
-                Config("USER_PROFILE_FIELD_NAME"), Config("REGISTER_ACTIVATE_FIELD_NAME")])
-        ) {
-            $encrypt = false;
-        }
-        return $encrypt;
+        return $this->IsEncrypt;
     }
 
     // Get Custom Message (help text)
@@ -287,10 +280,52 @@ class DbField
         return ($this->ReadOnly || $this->EditAttrs->offsetExists("readonly")) ? "" : $this->PlaceHolder;
     }
 
-    // Set field caption
-    public function setCaption($v)
+    // Search expression
+    public function searchExpression()
     {
-        $this->Caption = $v;
+        return $this->Expression;
+    }
+
+    // Search data type
+    public function searchDataType()
+    {
+        return $this->DataType;
+    }
+
+    // Get data type
+    public function getDataType()
+    {
+        return $this->DataType;
+    }
+
+    // Set data type
+    public function setDataType($value)
+    {
+        $this->DataType = $value;
+        $dbtype = $this->Table?->getDbType();
+        $this->ParameterType = match ($value) {
+            DataType::NUMBER => in_array($this->Type, [2, 3, 16, 17, 18]) ? ParameterType::INTEGER : ParameterType::STRING,
+            DataType::BLOB => ($dbtype == "MYSQL" || $dbtype == "POSTGRESQL")
+                ? ParameterType::BINARY
+                : ParameterType::LARGE_OBJECT,
+            DataType::BOOLEAN => ($dbtype == "MYSQL" || $dbtype == "POSTGRESQL")
+                ? ParameterType::STRING // 'Y'|'N' or 'y'|'n' or '1'|'0' or 't'|'f'
+                : ParameterType::BOOLEAN,
+            DataType::BIT => ParameterType::INTEGER, // $dbtype == "MYSQL" || $dbtype == "POSTGRESQL"
+            default => ParameterType::STRING
+        };
+    }
+
+    // Get parameter type
+    public function getParameterType()
+    {
+        return $this->ParameterType;
+    }
+
+    // Set field caption
+    public function setParameterType($v)
+    {
+        $this->ParameterType = $v;
     }
 
     // Field caption
@@ -314,7 +349,7 @@ class DbField
     public function alt()
     {
         global $Language;
-        return $Language->FieldPhrase($this->TableVar, $this->Param, "FldAlt");
+        return $Language->fieldPhrase($this->TableVar, $this->Param, "FldAlt");
     }
 
     // Clear error message
@@ -337,7 +372,7 @@ class DbField
         global $Language;
         $err = $this->ErrorMessage;
         if ($err == "") {
-            $err = $Language->FieldPhrase($this->TableVar, $this->Param, "FldErrMsg");
+            $err = $Language->fieldPhrase($this->TableVar, $this->Param, "FldErrMsg");
             if ($err == "" && !EmptyString($this->DefaultErrorMessage)) {
                 $err = $this->DefaultErrorMessage . " - " . $this->caption();
             }
@@ -377,7 +412,26 @@ class DbField
     // Check if multiple selection
     public function isMultiSelect()
     {
-        return $this->HtmlTag == "SELECT" && $this->SelectMultiple || $this->HtmlTag == "CHECKBOX" && !$this->isBoolean() && $this->DataType == DATATYPE_STRING;
+        return $this->HtmlTag == "SELECT" && $this->SelectMultiple || $this->HtmlTag == "CHECKBOX" && !$this->isBoolean() && $this->DataType == DataType::STRING;
+    }
+
+    // Set native select
+    public function setNativeSelect(bool $value)
+    {
+        if ($value && $this->HtmlTag == "SELECT" && !$this->SelectMultiple) { // Select one
+            $this->IsNativeSelect = true;
+        } else {
+            $this->IsNativeSelect = false;
+        }
+    }
+
+    // Set select multiple
+    public function setSelectMultiple(bool $value)
+    {
+        $this->SelectMultiple = $value;
+        if (!$this->SelectMultiple && Config("USE_NATIVE_SELECT_ONE")) { // Select one
+            $this->setNativeSelect(true);
+        }
     }
 
     // Field lookup cache option
@@ -393,7 +447,7 @@ class DbField
         $res = null;
         if ($this->isMultiSelect()) { // Multiple options
             $res = new OptionValues();
-            $arwrk = explode(",", $val);
+            $arwrk = explode(Config("MULTIPLE_OPTION_SEPARATOR"), $val);
             foreach ($arwrk as $wrk) {
                 $wrk = trim($wrk);
                 if (array_key_exists($wrk, $this->Lookup->Options)) { // Lookup data found in cache
@@ -427,7 +481,7 @@ class DbField
     // Field lookup options
     public function lookupOptions()
     {
-        if ($this->Lookup !== null && is_array($this->Lookup->Options)) {
+        if (is_array($this->Lookup?->Options)) {
             return array_values($this->Lookup->Options);
         }
         return [];
@@ -505,11 +559,11 @@ class DbField
     {
         global $Language;
         $empty = true;
-        $curValue = (CurrentPage()->RowType == ROWTYPE_SEARCH) ? (StartsString("y", $name) ? $this->AdvancedSearch->SearchValue2 : $this->AdvancedSearch->SearchValue) : $this->CurrentValue;
+        $curValue = (CurrentPage()->RowType == RowType::SEARCH) ? (StartsString("y", $name) ? $this->AdvancedSearch->SearchValue2 : $this->AdvancedSearch->SearchValue) : $this->CurrentValue;
         $str = "";
         $multiple ??= $this->isMultiSelect();
         if ($multiple) {
-            $armulti = (strval($curValue) != "") ? explode(",", strval($curValue)) : [];
+            $armulti = (strval($curValue) != "") ? explode(Config("MULTIPLE_OPTION_SEPARATOR"), strval($curValue)) : [];
             $cnt = count($armulti);
         }
         if (is_array($this->EditValue) && !$this->UseFilter) { // Skip checking for filter fields
@@ -592,13 +646,12 @@ class DbField
     /**
      * Get display value (for lookup field)
      *
-     * @param array|Recordset $rs Record to be displayed
+     * @param array $row Record to be displayed
      * @return string
      */
-    public function displayValue($rs)
+    public function displayValue($row)
     {
-        $ar = is_array($rs) ? $rs : $rs->fields;
-        $ar = array_values($ar);
+        $ar = array_values($row);
         $val = strval(@$ar[1]); // Display field 1
         for ($i = 2; $i <= 4; $i++) { // Display field 2 to 4
             $sep = $this->getDisplayValueSeparator($i - 1);
@@ -700,7 +753,7 @@ class DbField
         if ($this->Disabled) {
             $editattrs["disabled"] = true;
         }
-        if ($this->IsInvalid) {
+        if ($this->IsInvalid && !($this->Table && property_exists($this->Table, "RowIndex") && $this->Table->RowIndex == '$rowindex$')) {
             $editattrs->appendClass("is-invalid");
         }
         if ($this->ReadOnly) {
@@ -822,16 +875,11 @@ class DbField
      */
     public function setupEditAttributes(array $attrs = [])
     {
-        switch ($this->InputTextType) {
-            case "color":
-                $classnames = "form-control form-control-color";
-                break;
-            case "range":
-                $classnames = "form-range";
-                break;
-            default:
-                $classnames = "form-control";
-        }
+        $classnames = match ($this->InputTextType) {
+            "color" => "form-control form-control-color",
+            "range" => "form-range",
+            default => "form-control"
+        };
         $this->EditAttrs->appendClass($classnames);
         $this->EditAttrs->merge($attrs);
     }
@@ -905,7 +953,7 @@ class DbField
     public function getTempImage()
     {
         $tmpimages = [];
-        if ($this->DataType == DATATYPE_BLOB) {
+        if ($this->DataType == DataType::BLOB) {
             $wrkdata = $this->Upload->DbValue;
             if (is_resource($wrkdata) && get_resource_type($wrkdata) == "stream") { // Byte array
                 $wrkdata = stream_get_contents($wrkdata);
@@ -987,10 +1035,10 @@ class DbField
     // Form value
     public function setFormValue($v, $current = true, $validate = true)
     {
-        if ($this->Table && $this->Table->UseAjaxActions || Post("addopt") == "1") {
+        if ($this->Table?->UseAjaxActions || Post("addopt") == "1") {
             $v = ConvertFromUtf8($v);
         }
-        if (!$this->Raw && $this->DataType != DATATYPE_XML) {
+        if (!$this->Raw && $this->DataType != DataType::XML) {
             $v = RemoveXss($v);
         }
         $this->setRawFormValue($v, $current, $validate);
@@ -1002,7 +1050,7 @@ class DbField
         if (is_array($v)) {
             $v = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $v);
         }
-        if ($validate && $this->DataType == DATATYPE_NUMBER && !IsNumeric($v) && !EmptyValue($v)) { // Check data type if server validation disabled
+        if ($validate && $this->DataType == DataType::NUMBER && !IsNumeric($v) && !EmptyValue($v)) { // Check data type if server validation disabled
             $this->FormValue = null;
         } else {
             $this->FormValue = $v;
@@ -1018,7 +1066,7 @@ class DbField
         if (is_array($v)) {
             $v = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $v);
         }
-        if ($this->DataType == DATATYPE_NUMBER && !IsNumeric($v) && !EmptyValue($v)) { // Check data type
+        if ($this->DataType == DataType::NUMBER && !IsNumeric($v) && !EmptyValue($v)) { // Check data type
             $this->OldValue = null;
         } else {
             $this->OldValue = $v;
@@ -1040,7 +1088,7 @@ class DbField
         if (is_array($v)) {
             $v = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $v);
         }
-        if ($this->DataType == DATATYPE_NUMBER && !IsNumeric($v) && !EmptyValue($v)) { // Check data type
+        if ($this->DataType == DataType::NUMBER && !IsNumeric($v) && !EmptyValue($v)) { // Check data type
             $this->QueryStringValue = null;
         } else {
             $this->QueryStringValue = $v;
@@ -1053,21 +1101,44 @@ class DbField
     // Database value
     public function setDbValue($v)
     {
+        $v = $this->CustomDataType?->convertToPHPValue($v, $this->Table->getConnection()->getDatabasePlatform()) ?? $v; // Convert to PHP value for custom data type
         if (IsFloatType($this->Type) && $v !== null) {
             $v = (float)$v;
         }
         $this->DbValue = $v;
         if ($this->isEncrypt() && $v != null) {
-            try {
-                $v = PhpDecrypt($v);
-            } catch (\Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException $e) {
-            }
+            $v = PhpDecrypt($v);
         }
         $this->CurrentValue = $v;
     }
 
+    // Default value for NOT NULL field
+    public function dbNotNullValue()
+    {
+        switch ($this->DataType) {
+            case DataType::NUMBER:
+            case DataType::BIT:
+                return 0;
+            case DataType::DATE:
+                return CurrentDate();
+            case DataType::STRING:
+            case DataType::MEMO:
+            case DataType::XML:
+            case DataType::BLOB:
+                return "";
+            case DataType::BOOLEAN:
+                return $this->FalseValue;
+            case DataType::TIME:
+                return CurrentTime();
+            case DataType::GUID:
+                return "{00000000-0000-0000-0000-000000000000}";
+            default:
+                return null; // Unknown
+        }
+    }
+
     // Set database value with error default
-    public function setDbValueDef(&$row, $value, $default, $skip = false)
+    public function setDbValueDef(&$row, $value, $skip = false)
     {
         if ($skip || !$this->Visible || $this->Disabled) {
             if (array_key_exists($this->Name, $row)) {
@@ -1075,6 +1146,8 @@ class DbField
             }
             return;
         }
+        $value = $this->CustomDataType?->convertToDatabaseValue($value, $this->Table->getConnection()->getDatabasePlatform()) ?? $value; // Convert to database value for custom data type
+        $default = $this->Nullable ? null : $this->dbNotNullValue();
         switch ($this->Type) {
             case 2:
             case 3:
@@ -1111,7 +1184,7 @@ class DbField
             case 7:
             case 133:
             case 135: // Date
-            case 146: // DateTiemOffset
+            case 146: // DateTimeOffset
             case 141: // XML
             case 134: // Time
             case 145:

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhMedicineStockDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_medicine_stockdelete" id="fjdh_medicine_stockdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_medicine_stockdelete" id="fjdh_medicine_stockdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -74,16 +74,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -91,7 +91,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->id->Visible) { // id ?>
         <td<?= $Page->id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_medicine_stock_id" class="el_jdh_medicine_stock_id">
+<span id="">
 <span<?= $Page->id->viewAttributes() ?>>
 <?= $Page->id->getViewValue() ?></span>
 </span>
@@ -99,7 +99,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->medicine_id->Visible) { // medicine_id ?>
         <td<?= $Page->medicine_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_medicine_stock_medicine_id" class="el_jdh_medicine_stock_medicine_id">
+<span id="">
 <span<?= $Page->medicine_id->viewAttributes() ?>>
 <?= $Page->medicine_id->getViewValue() ?></span>
 </span>
@@ -107,7 +107,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->units_available->Visible) { // units_available ?>
         <td<?= $Page->units_available->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_medicine_stock_units_available" class="el_jdh_medicine_stock_units_available">
+<span id="">
 <span<?= $Page->units_available->viewAttributes() ?>>
 <?= $Page->units_available->getViewValue() ?></span>
 </span>
@@ -115,7 +115,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->expiry_date->Visible) { // expiry_date ?>
         <td<?= $Page->expiry_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_medicine_stock_expiry_date" class="el_jdh_medicine_stock_expiry_date">
+<span id="">
 <span<?= $Page->expiry_date->viewAttributes() ?>>
 <?= $Page->expiry_date->getViewValue() ?></span>
 </span>
@@ -123,7 +123,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->date_created->Visible) { // date_created ?>
         <td<?= $Page->date_created->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_medicine_stock_date_created" class="el_jdh_medicine_stock_date_created">
+<span id="">
 <span<?= $Page->date_created->viewAttributes() ?>>
 <?= $Page->date_created->getViewValue() ?></span>
 </span>
@@ -131,7 +131,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->date_updated->Visible) { // date_updated ?>
         <td<?= $Page->date_updated->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_medicine_stock_date_updated" class="el_jdh_medicine_stock_date_updated">
+<span id="">
 <span<?= $Page->date_updated->viewAttributes() ?>>
 <?= $Page->date_updated->getViewValue() ?></span>
 </span>
@@ -139,9 +139,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

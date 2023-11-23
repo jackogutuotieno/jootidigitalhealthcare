@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhPrescriptionsAdd = &$Page;
@@ -63,7 +63,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_prescriptionsadd" id="fjdh_prescriptionsadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_prescriptionsadd" id="fjdh_prescriptionsadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -94,7 +94,9 @@ $Page->showMessage();
         id="x_patient_id"
         name="x_patient_id"
         class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
+        <?php if (!$Page->patient_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_prescriptionsadd_x_patient_id"
+        <?php } ?>
         data-table="jdh_prescriptions"
         data-field="x_patient_id"
         data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
@@ -105,10 +107,13 @@ $Page->showMessage();
     <?= $Page->patient_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
 <?= $Page->patient_id->Lookup->getParamTag($Page, "p_x_patient_id") ?>
+<?php if (!$Page->patient_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_prescriptionsadd", function() {
     var options = { name: "x_patient_id", selectId: "fjdh_prescriptionsadd_x_patient_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_prescriptionsadd.lists.patient_id?.lookupOptions.length) {
@@ -121,6 +126,7 @@ loadjs.ready("fjdh_prescriptionsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 <?php } ?>
 </div></div>
@@ -147,7 +153,9 @@ loadjs.ready("fjdh_prescriptionsadd", function() {
         id="x_medicine_id"
         name="x_medicine_id"
         class="form-select ew-select<?= $Page->medicine_id->isInvalidClass() ?>"
+        <?php if (!$Page->medicine_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_prescriptionsadd_x_medicine_id"
+        <?php } ?>
         data-table="jdh_prescriptions"
         data-field="x_medicine_id"
         data-value-separator="<?= $Page->medicine_id->displayValueSeparatorAttribute() ?>"
@@ -158,10 +166,13 @@ loadjs.ready("fjdh_prescriptionsadd", function() {
     <?= $Page->medicine_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->medicine_id->getErrorMessage() ?></div>
 <?= $Page->medicine_id->Lookup->getParamTag($Page, "p_x_medicine_id") ?>
+<?php if (!$Page->medicine_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_prescriptionsadd", function() {
     var options = { name: "x_medicine_id", selectId: "fjdh_prescriptionsadd_x_medicine_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_prescriptionsadd.lists.medicine_id?.lookupOptions.length) {
@@ -174,6 +185,7 @@ loadjs.ready("fjdh_prescriptionsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -223,7 +235,9 @@ loadjs.ready("fjdh_prescriptionsadd", function() {
         id="x_prescription_time"
         name="x_prescription_time"
         class="form-select ew-select<?= $Page->prescription_time->isInvalidClass() ?>"
+        <?php if (!$Page->prescription_time->IsNativeSelect) { ?>
         data-select2-id="fjdh_prescriptionsadd_x_prescription_time"
+        <?php } ?>
         data-table="jdh_prescriptions"
         data-field="x_prescription_time"
         data-value-separator="<?= $Page->prescription_time->displayValueSeparatorAttribute() ?>"
@@ -233,10 +247,13 @@ loadjs.ready("fjdh_prescriptionsadd", function() {
     </select>
     <?= $Page->prescription_time->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->prescription_time->getErrorMessage() ?></div>
+<?php if (!$Page->prescription_time->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_prescriptionsadd", function() {
     var options = { name: "x_prescription_time", selectId: "fjdh_prescriptionsadd_x_prescription_time" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_prescriptionsadd.lists.prescription_time?.lookupOptions.length) {
@@ -249,6 +266,7 @@ loadjs.ready("fjdh_prescriptionsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>

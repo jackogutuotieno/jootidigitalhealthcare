@@ -1,13 +1,12 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Advanced Search class
  */
 class AdvancedSearch
 {
-    public $Field;
     public $SearchValue; // Search value
     public $ViewValue = ""; // View value
     public $SearchOperator; // Search operator
@@ -26,10 +25,9 @@ class AdvancedSearch
     protected $HasValue = false;
 
     // Constructor
-    public function __construct($fld)
+    public function __construct(public $Field)
     {
-        $this->Field = $fld;
-        $this->Prefix = PROJECT_NAME . "_" . $fld->TableVar . "_" . Config("TABLE_ADVANCED_SEARCH") . "_";
+        $this->Prefix = PROJECT_NAME . "_" . $this->Field->TableVar . "_" . Config("TABLE_ADVANCED_SEARCH") . "_";
         $this->Suffix = "_" . $this->Field->Param;
         $this->Raw = !Config("REMOVE_XSS");
     }
@@ -60,7 +58,7 @@ class AdvancedSearch
     // Set SearchValue2
     public function setSearchValue2($v)
     {
-        $this->SearchValue2 = Config("REMOVE_XSS") ? RemoveXss($v) : $v;
+        $this->SearchValue2 = $this->Raw ? $v : RemoveXss($v);
         $this->HasValue = true;
     }
 
@@ -98,7 +96,7 @@ class AdvancedSearch
             $this->setSearchValue($ar["x_" . $parm]);
         } elseif (array_key_exists($parm, $ar)) { // Support SearchValue without "x_"
             $v = $ar[$parm];
-            if (!in_array($this->Field->DataType, [DATATYPE_STRING, DATATYPE_MEMO]) && !$this->Field->IsVirtual && !is_array($v)) {
+            if (!in_array($this->Field->DataType, [DataType::STRING, DataType::MEMO]) && !$this->Field->IsVirtual && !is_array($v)) {
                 $this->parseSearchValue($v); // Support search format field=<opr><value><cond><value2> (e.g. Field=greater_or_equal1)
             } else {
                 $this->setSearchValue($v);

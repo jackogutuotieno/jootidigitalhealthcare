@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use \Intervention\Image\ImageManagerStatic;
 
@@ -53,9 +53,14 @@ class PhpBarcode
     public static $Padding = [0, 0, 0, 0];
 
     /**
+     * Foreground color
+     */
+    public static $ForegroundColor = "#000000"; // Black
+
+    /**
      * Background color
      */
-    public static $BackgroundColor = "white";
+    public static $BackgroundColor = "#FFFFFF"; // White
 
     /**
      * Width (use absolute or negative value as multiplication factor)
@@ -100,10 +105,9 @@ class PhpBarcode
      * @param string $code Barcode content
      * @param string $type Barcode type
      * @param int $height Barcode height excluding padding. A negative value indicates the multiplication factor for each row.
-     * @param string $color Foreground color in web notation (color name, or hexadecimal code, or CSS syntax)
      * @return string Barcode as PNG data
      */
-    public function getData($code, $type, $height = 0, $color = "#000000")
+    public function getData($code, $type, $height = 0)
     {
         if ($code == "") {
             throw new \Exception("Missing barcode content");
@@ -133,7 +137,7 @@ class PhpBarcode
             $code, // Data string to encode
             $width, // Bar width (use absolute or negative value as multiplication factor)
             $height, // Bar height (use absolute or negative value as multiplication factor)
-            $color, // Foreground color
+            self::$ForegroundColor, // Foreground color
             self::$Padding // Padding (use absolute or negative values as multiplication factors)
         )->setBackgroundColor(self::$BackgroundColor) // Background color
         ->getPngData();
@@ -142,16 +146,16 @@ class PhpBarcode
             $width = $img->width();
             $height = $img->height();
             $newHeight = $height + self::$TextFont["size"] + self::$TextPadding; // Increase height for text
-            $img->resizeCanvas($width, $newHeight, "top");
-            $img->text($code, intdiv($width, 2), $newHeight, function ($font) use ($color) {
-                $font->color($color);
+            $img->resizeCanvas($width, $newHeight, "top", false, self::$BackgroundColor);
+            $img->text($code, intdiv($width, 2), $newHeight, function ($font) {
+                $font->color(self::$ForegroundColor);
                 foreach (self::$TextFont as $prop => $value) {
                     if (method_exists($font, $prop)) {
                         $font->$prop($value);
                     }
                 }
             });
-            $img = (string)$img->encode("png", 100);
+            $img = (string) $img->encode("png", 100);
         }
         return $img;
     }
@@ -162,18 +166,17 @@ class PhpBarcode
      * @param string $code Barcode data
      * @param string $type Barcode type
      * @param int $height Barcode height
-     * @param string $color Barcode color
      * @return void
      */
-    public function write($code, $type, $height = 0, $color = "#000000")
+    public function write($code, $type, $height = 0)
     {
         try {
-            $data = $this->getData($code, $type, $height, $color);
+            $data = $this->getData($code, $type, $height);
             WriteHeader(false);
             AddHeader("Content-Type", "image/png");
             Write($data);
         } catch (\Throwable $e) {
-            Log("Failed to generate '" . $type . "' barcode for '" . $code . "'");
+            LogError("Failed to generate '" . $type . "' barcode for '" . $code . "'");
             if (Config("DEBUG")) {
                 throw $e;
             }
@@ -186,10 +189,9 @@ class PhpBarcode
      * @param string $code Barcode data
      * @param string $type Barcode type
      * @param int $height Barcode height
-     * @param string $color Barcode color
      * @return string HTML tag or href value
      */
-    public function show($code, $type, $height = 0, $color = "#000000")
+    public function show($code, $type, $height = 0)
     {
         global $ExportType;
         if (EmptyString($code)) {
@@ -200,9 +202,6 @@ class PhpBarcode
             if ($height > 0) {
                 $url .= "&amp;height=" . urlencode($height);
             }
-            if ($color != "") {
-                $url .= "&amp;color=" . urlencode($color);
-            }
             if ($this->ShowText) {
                 $url .= "&amp;text=1";
             }
@@ -212,9 +211,9 @@ class PhpBarcode
                 return "<img class=\"ew-barcode\" src=\"" . $this->Path . "?" . $url . "\" alt=\"\">";
             }
         } elseif ($ExportType == "pdf" || $ExportType == "email") {
-            return "<img class=\"ew-barcode\" src=\"" . $this->getHrefValue($code, $type, $height, $color, $ExportType) . "\">";
+            return "<img class=\"ew-barcode\" src=\"" . $this->getHrefValue($code, $type, $height, $ExportType) . "\">";
         } elseif ($ExportType == "excel" && $this->UsePhpExcel || $ExportType == "word" && $this->UsePhpWord) {
-            return $this->getHrefValue($code, $type, $height, $color, $ExportType);
+            return $this->getHrefValue($code, $type, $height, $ExportType);
         }
         return $code;
     }
@@ -225,17 +224,16 @@ class PhpBarcode
      * @param string $code Barcode data
      * @param string $type Barcode type
      * @param int $height Barcode height
-     * @param string $color Barcode color
      * @param string $export Export format
      * @return string Href value
      */
-    public function getHrefValue($code, $type, $height = 0, $color = "#000000", $export = "")
+    public function getHrefValue($code, $type, $height = 0, $export = "")
     {
         if (EmptyString($code)) {
             return "";
         }
         try {
-            $data = $this->getData($code, $type, $height, $color);
+            $data = $this->getData($code, $type, $height);
             return TempImage($data);
         } catch (\Throwable $e) {
             Log("Failed to generate '" . $type . "' barcode for '" . $code . "'");

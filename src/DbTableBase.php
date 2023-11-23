@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\Query\QueryBuilder;
 
@@ -20,7 +20,8 @@ class DbTableBase
     public $Rows = []; // Data for Custom Template
     public $OldKey = ""; // Old key (for edit/copy)
     public $OldKeyName = ""; // Old key name (for edit/copy)
-    public $Recordset = null; // Recordset
+    public $Recordset; // Result set
+    public $CurrentRow; // Current row // PHP
     public $UseCustomTemplate = false; // Use custom template
     public $Export; // Export
     public $ExportAll;
@@ -68,6 +69,7 @@ class DbTableBase
     public $RouteCompositeKeySeparator = "/"; // Composite key separator for routing
     public $UseTransaction = false;
     public $RowAction = ""; // Row action
+    public $ValidationErrors = []; // Server side validation errors for Grid-Add/Edit and Multi-Edit
     protected $Cache; // Doctrine cache
     protected $CacheProfile; // Doctrine cache profile
 
@@ -91,7 +93,6 @@ class DbTableBase
     public $ShowCurrentFilter;
 
     // Default field properties
-    public $Raw;
     public $UploadPath;
     public $OldUploadPath;
     public $HrefPath;
@@ -124,7 +125,6 @@ class DbTableBase
         $this->ShowCurrentFilter = Config("SHOW_CURRENT_FILTER");
 
         // Default field properties
-        $this->Raw = !Config("REMOVE_XSS");
         $this->UploadPath = Config("UPLOAD_DEST_PATH");
         $this->OldUploadPath = Config("UPLOAD_DEST_PATH");
         $this->HrefPath = Config("UPLOAD_HREF_PATH");
@@ -145,18 +145,23 @@ class DbTableBase
         $this->PageBreakHtml = Config("PAGE_BREAK_HTML");
     }
 
+    // Get database type
+    public function getDbType()
+    {
+        return GetConnectionType($this->Dbid);
+    }
+
     // Get Connection
     public function getConnection()
     {
-        $conn = Conn($this->Dbid);
-        return $conn;
+        return Conn($this->Dbid);
     }
 
     // Check if transaction supported
     public function supportsTransaction(): bool
     {
         $support = true;
-        $dbtype = GetConnectionType($this->Dbid);
+        $dbtype = $this->getDbType();
         if ($dbtype == "MYSQL" && $this->TableName != "") {
             $support = $_SESSION[SESSION_MYSQL_ENGINES][$this->Dbid][$this->TableName] ?? null;
             if ($support === null) {
@@ -172,11 +177,30 @@ class DbTableBase
         return $support;
     }
 
-    // Get query builder
-    public function getQueryBuilder()
+    /**
+     * Get query builder
+     *
+     * @param string $type Type of query builder: 'insert'|'update'|'delete'|'qb'
+     * @return \Doctrine\DBAL\Query\QueryBuilder
+     */
+    public function getQueryBuilder($type = "")
     {
         $conn = $this->getConnection();
-        return $conn->createQueryBuilder();
+        $qb = $conn->createQueryBuilder();
+        return $this->UpdateTable
+            ? match ($type) {
+                "insert" => $qb->insert($this->UpdateTable),
+                "update" => $qb->update($this->UpdateTable),
+                "delete" => $qb->delete($this->UpdateTable),
+                default => $qb->from($this->UpdateTable) // SELECT statement by default
+            }
+            : $qb;
+    }
+
+    // Get entity manager
+    public function getEntityManager()
+    {
+        return EntityManager($this->Dbid);
     }
 
     // Find field by param
@@ -184,6 +208,15 @@ class DbTableBase
     {
         $ar = array_filter($this->Fields, fn($fld) => $fld->Param == $param);
         return array_shift($ar);
+    }
+
+    // Fetch current row
+    public function fetch($cnt = 1)
+    {
+        for ($i = 0; $i < $cnt; $i++) {
+            $this->CurrentRow = $this->Recordset->fetchAssociative();
+        }
+        return $this->CurrentRow;
     }
 
     // Check if fixed header table
@@ -206,10 +239,12 @@ class DbTableBase
             $height ??= Config("FIXED_HEADER_TABLE_HEIGHT");
             if ($height) {
                 AppendClass($this->TableContainerClass, $height);
+                AppendClass($this->TableContainerClass, "overflow-y-auto");
             }
         } else {
             RemoveClass($this->TableClass, Config("FIXED_HEADER_TABLE_CLASS"));
             AppendClass($this->TableContainerClass, "h-auto"); // Override height class
+            RemoveClass($this->TableContainerClass, "overflow-y-auto");
         }
     }
 
@@ -229,13 +264,12 @@ class DbTableBase
     public function buildSelectSql($select, $from, $where, $groupBy, $having, $orderBy, $filter, $sort)
     {
         if (is_string($select)) {
-            $queryBuilder = $this->getQueryBuilder();
-            $queryBuilder->select($select);
+            $queryBuilder = $this->getQueryBuilder()->select($select);;
         } elseif ($select instanceof QueryBuilder) {
             $queryBuilder = $select;
         }
         if ($from != "") {
-            $queryBuilder->from($from);
+            $queryBuilder->resetQueryPart("from")->from($from);
         }
         if ($where != "") {
             $queryBuilder->where($where);
@@ -290,6 +324,8 @@ class DbTableBase
         foreach ($this->Fields as $fld) {
             if (property_exists($fld, $name)) {
                 $fld->$name = $value;
+            } elseif (method_exists($fld, $name)) {
+                $fld->$name($value);
             }
         }
     }
@@ -298,7 +334,7 @@ class DbTableBase
     public function setCurrentValues(array $row)
     {
         foreach ($row as $name => $value) {
-            if (isset($this->Fields[$name]) && in_array($this->Fields[$name]->DataType, [DATATYPE_NUMBER, DATATYPE_DATE, DATATYPE_TIME])) {
+            if (isset($this->Fields[$name]) && in_array($this->Fields[$name]->DataType, [DataType::NUMBER, DataType::DATE, DataType::TIME])) {
                 $this->Fields[$name]->CurrentValue = $value;
             }
         }
@@ -323,6 +359,12 @@ class DbTableBase
             $values[$fldname] = $fld->$propertyname;
         }
         return $values;
+    }
+
+    // Get parameter types
+    public function getParameterTypes()
+    {
+        return $this->getFieldValues("ParameterType");
     }
 
     // Get field cell attributes
@@ -362,7 +404,7 @@ class DbTableBase
     {
         global $Language;
         if ($this->TableCaption == "") {
-            $this->TableCaption = $Language->TablePhrase($this->TableVar, "TblCaption");
+            $this->TableCaption = $Language->tablePhrase($this->TableVar, "TblCaption");
         }
         return $this->TableCaption;
     }
@@ -447,7 +489,7 @@ class DbTableBase
         return $cnt;
     }
 
-    // Export
+    // Is export
     public function isExport($format = ""): bool
     {
         if ($format) {
@@ -530,6 +572,44 @@ class DbTableBase
     public function raw($str)
     {
         return $str;
+    }
+
+    // Get validation errors
+    public function getValidationErrors()
+    {
+        // Check if validation required
+        if (!Config("SERVER_VALIDATE")) {
+            return null;
+        }
+        $errors = [];
+        foreach ($this->Fields as $field) {
+            if ($field->IsInvalid) {
+                $errors[$field->Param] = $field->getErrorMessage();
+            }
+        }
+        return count($errors) > 0  ? $errors : null;
+    }
+
+    // Session Rule (QueryBuilder)
+    public function getSessionRules()
+    {
+        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RULES"));
+    }
+
+    public function setSessionRules($v)
+    {
+        $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RULES")] = $v;
+    }
+
+    // Dashboard Filter
+    public function getDashboardFilter($dashboardVar, $tableVar)
+    {
+        return Session(PROJECT_NAME . "_" . $dashboardVar . "_" . $tableVar . "_" . Config("DASHBOARD_FILTER"));
+    }
+
+    public function setDashboardFilter($dashboardVar, $tableVar, $v)
+    {
+        $_SESSION[PROJECT_NAME . "_" . $dashboardVar . "_" . $tableVar . "_" . Config("DASHBOARD_FILTER")] = $v;
     }
 
     // For obsolete properties only

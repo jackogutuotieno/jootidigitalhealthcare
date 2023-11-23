@@ -5,7 +5,7 @@
  * Copyright (c) e.World Technology Limited. All rights reserved.
  */
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Hybridauth\Exception\Exception;
 use Hybridauth\User;
@@ -17,7 +17,6 @@ use LightSaml\Binding\BindingFactory;
 use LightSaml\Context\Profile\MessageContext;
 use LightSaml\Model\Assertion\Issuer;
 use LightSaml\Model\Assertion\NameID;
-use LightSaml\Model\Metadata\EntityDescriptor;
 use LightSaml\Model\Metadata\IdpSsoDescriptor;
 use LightSaml\Model\Metadata\SingleSignOnService;
 use LightSaml\Model\Metadata\SingleLogoutService;
@@ -36,9 +35,21 @@ use LightSaml\Error\LightSamlAuthenticationException;
 use LightSaml\Credential\X509Certificate;
 use LightSaml\Credential\KeyHelper;
 use Symfony\Component\HttpFoundation\Request;
+use Illuminate\Support\Collection;
+use ReflectionClass;
+use ReflectionProperty;
 
 class Saml2 extends AbstractAdapter implements AdapterInterface
 {
+    /**
+     * Attribute map
+     */
+    public static array $attributeMap = [
+        'givenname' => 'firstName',
+        'surname' => 'lastName',
+        'emailaddress' => 'email',
+    ];
+
     /**
      * Entity ID
      */
@@ -111,7 +122,7 @@ class Saml2 extends AbstractAdapter implements AdapterInterface
      */
     public function authenticate()
     {
-        $this->logger->info(sprintf('%s::authenticate()', get_class($this)));
+        $this->logger->info(sprintf('%s::authenticate()', $this::class));
 
         // if ($this->isConnected()) { // Note: Always check the SAML response
         //     return true;
@@ -206,7 +217,9 @@ class Saml2 extends AbstractAdapter implements AdapterInterface
     {
         $authUrl = $this->getAuthorizeUrl();
         if (self::$singleSignOnBinding == SamlConstants::BINDING_SAML2_HTTP_REDIRECT) { // Redirect
-            $this->logger->debug(sprintf('%s::authenticateBegin(), redirecting user to:', get_class($this)), [$authUrl]);
+            if ($this->config->get('debug_mode')) {
+                $this->logger->debug(sprintf('%s::authenticateBegin(), redirecting user to:', $this::class), [$authUrl]);
+            }
             HttpClient\Util::redirect($authUrl);
         } else { // Post ($authUrl is HTML)
             echo $authUrl;
@@ -219,10 +232,12 @@ class Saml2 extends AbstractAdapter implements AdapterInterface
      */
     protected function authenticateFinish()
     {
-        $this->logger->debug(
-            sprintf('%s::authenticateFinish(), callback url:', get_class($this)),
-            [HttpClient\Util::getCurrentUrl(true)]
-        );
+        if ($this->config->get('debug_mode')) {
+            $this->logger->debug(
+                sprintf('%s::authenticateFinish(), callback url:', $this::class),
+                [HttpClient\Util::getCurrentUrl(true)]
+            );
+        }
 
         // Get assertions
         $assertions = $this->response->getAllAssertions();
@@ -259,14 +274,18 @@ class Saml2 extends AbstractAdapter implements AdapterInterface
         $binding = $bindingFactory->create(self::$singleSignOnBinding);
         $messageContext = new MessageContext();
         $messageContext->setMessage($authnRequest);
-        if ($wantAuthnRequestsSigned) {
+        if ($wantAuthnRequestsSigned && $this->certificate && $this->privateKey) {
             $certificate = X509Certificate::fromFile(ServerMapPath($this->certificate, true));
             $privateKey = KeyHelper::createPrivateKey(ServerMapPath($this->privateKey, true), '', true); // Private key is file
             $signature = new SignatureWriter($certificate, $privateKey);
             $authnRequest->setSignature($signature);
-            $this->logger->debug(sprintf('Message signed with fingerprint "%s"', $signature->getCertificate()->getFingerprint()));
+            if ($this->config->get('debug_mode')) {
+                $this->logger->debug(sprintf('Message signed with fingerprint "%s"', $signature->getCertificate()->getFingerprint()));
+            }
         } else {
-            $this->logger->debug('Signing disabled');
+            if ($this->config->get('debug_mode')) {
+                $this->logger->debug('Signing disabled');
+            }
         }
         $httpResponse = $binding->send($messageContext);
         if (self::$singleSignOnBinding == SamlConstants::BINDING_SAML2_HTTP_REDIRECT) { // Redirect
@@ -342,12 +361,27 @@ class Saml2 extends AbstractAdapter implements AdapterInterface
             foreach ($assertions as $assertion) {
                 foreach ($assertion->getAllAttributeStatements() as $attributeStatement) {
                     foreach ($attributeStatement->getAllAttributes() as $attribute) {
-                        $attributes[$attribute->getName()] = $attribute->getFirstAttributeValue();
+                        $name = $attribute->getName();
+                        if (StartsString('http://', $name)) {
+                            $parts = explode('/', $name);
+                            $name = array_pop($parts);
+                        }
+                        $attributes[$name] = $attribute->getFirstAttributeValue();
                     }
                 }
             }
+            $reflect = new ReflectionClass($userProfile);
+            $props = Collection::make(array_column($reflect->getProperties(ReflectionProperty::IS_PUBLIC), 'name'));
+            foreach ($attributes as $key => $value) {
+                $key = self::$attributeMap[$key] ?? $key;
+                $prop = $props->first(fn ($v, $k) => SameText($v, $key));
+                if ($prop) {
+                    $userProfile->$prop = $value;
+                } else {
+                    $userProfile->data[$key] = $value;
+                }
+            }
         }
-        $userProfile->data = $attributes;
         return $userProfile;
     }
 }

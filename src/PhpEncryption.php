@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Class for encryption/decryption with php-encryption
@@ -21,14 +21,14 @@ class PhpEncryption
     }
 
     // Create random password protected key
-    public static function CreateRandomPasswordProtectedKey($password)
+    public static function createRandomPasswordProtectedKey($password)
     {
         $protectedKey = \Defuse\Crypto\KeyProtectedByPassword::createRandomPasswordProtectedKey($password);
         return $protectedKey->saveToAsciiSafeString();
     }
 
     // Create new random key without password
-    public static function CreateNewRandomKey()
+    public static function createNewRandomKey()
     {
         $key = \Defuse\Crypto\Key::createNewRandomKey();
         return $key->saveToAsciiSafeString();

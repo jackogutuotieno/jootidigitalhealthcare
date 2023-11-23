@@ -1,11 +1,11 @@
 {
     "name": "jootidigitalhealthcare",
-    "version": "19.0.2",
+    "version": "24.4.0",
     "description": "jootidigitalhealthcare",
     "license": "SEE LICENSE IN LICENSE.md",
     "private": true,
     "dependencies": {},
     "engines": {
-        "node": ">=16"
+        "node": ">=18"
     }
 }

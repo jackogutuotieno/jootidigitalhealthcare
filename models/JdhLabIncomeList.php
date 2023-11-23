@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -123,7 +129,7 @@ class JdhLabIncomeList extends JdhLabIncome
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -133,8 +139,19 @@ class JdhLabIncomeList extends JdhLabIncome
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->patient_id->setVisibility();
+        $this->patient_name->setVisibility();
+        $this->service_name->setVisibility();
+        $this->service_cost->setVisibility();
+        $this->request_date->setVisibility();
+        $this->patient_dob_year->Visible = false;
     }
 
     // Constructor
@@ -164,10 +181,10 @@ class JdhLabIncomeList extends JdhLabIncome
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_lab_income)
-        if (!isset($GLOBALS["jdh_lab_income"]) || get_class($GLOBALS["jdh_lab_income"]) == PROJECT_NAMESPACE . "jdh_lab_income") {
+        if (!isset($GLOBALS["jdh_lab_income"]) || $GLOBALS["jdh_lab_income"]::class == PROJECT_NAMESPACE . "jdh_lab_income") {
             $GLOBALS["jdh_lab_income"] = &$this;
         }
 
@@ -189,7 +206,7 @@ class JdhLabIncomeList extends JdhLabIncome
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -201,45 +218,43 @@ class JdhLabIncomeList extends JdhLabIncome
         $UserTable = Container("usertable");
 
         // List options
-        $this->ListOptions = new ListOptions(["Tag" => "td", "TableVar" => $this->TableVar]);
+        $this->ListOptions = new ListOptions(Tag: "td", TableVar: $this->TableVar);
 
         // Export options
-        $this->ExportOptions = new ListOptions(["TagClassName" => "ew-export-option"]);
+        $this->ExportOptions = new ListOptions(TagClassName: "ew-export-option");
 
         // Import options
-        $this->ImportOptions = new ListOptions(["TagClassName" => "ew-import-option"]);
+        $this->ImportOptions = new ListOptions(TagClassName: "ew-import-option");
 
         // Other options
-        if (!$this->OtherOptions) {
-            $this->OtherOptions = new ListOptionsArray();
-        }
+        $this->OtherOptions = new ListOptionsArray();
 
         // Grid-Add/Edit
-        $this->OtherOptions["addedit"] = new ListOptions([
-            "TagClassName" => "ew-add-edit-option",
-            "UseDropDownButton" => false,
-            "DropDownButtonPhrase" => $Language->phrase("ButtonAddEdit"),
-            "UseButtonGroup" => true
-        ]);
+        $this->OtherOptions["addedit"] = new ListOptions(
+            TagClassName: "ew-add-edit-option",
+            UseDropDownButton: false,
+            DropDownButtonPhrase: $Language->phrase("ButtonAddEdit"),
+            UseButtonGroup: true
+        );
 
         // Detail tables
-        $this->OtherOptions["detail"] = new ListOptions(["TagClassName" => "ew-detail-option"]);
+        $this->OtherOptions["detail"] = new ListOptions(TagClassName: "ew-detail-option");
         // Actions
-        $this->OtherOptions["action"] = new ListOptions(["TagClassName" => "ew-action-option"]);
+        $this->OtherOptions["action"] = new ListOptions(TagClassName: "ew-action-option");
 
         // Column visibility
-        $this->OtherOptions["column"] = new ListOptions([
-            "TableVar" => $this->TableVar,
-            "TagClassName" => "ew-column-option",
-            "ButtonGroupClass" => "ew-column-dropdown",
-            "UseDropDownButton" => true,
-            "DropDownButtonPhrase" => $Language->phrase("Columns"),
-            "DropDownAutoClose" => "outside",
-            "UseButtonGroup" => false
-        ]);
+        $this->OtherOptions["column"] = new ListOptions(
+            TableVar: $this->TableVar,
+            TagClassName: "ew-column-option",
+            ButtonGroupClass: "ew-column-dropdown",
+            UseDropDownButton: true,
+            DropDownButtonPhrase: $Language->phrase("Columns"),
+            DropDownAutoClose: "outside",
+            UseButtonGroup: false
+        );
 
         // Filter options
-        $this->FilterOptions = new ListOptions(["TagClassName" => "ew-filter-option"]);
+        $this->FilterOptions = new ListOptions(TagClassName: "ew-filter-option");
 
         // List actions
         $this->ListActions = new ListActions();
@@ -249,7 +264,7 @@ class JdhLabIncomeList extends JdhLabIncome
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -298,13 +313,11 @@ class JdhLabIncomeList extends JdhLabIncome
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -322,7 +335,7 @@ class JdhLabIncomeList extends JdhLabIncome
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -334,15 +347,14 @@ class JdhLabIncomeList extends JdhLabIncome
                 ob_end_clean();
             }
 
-            // Handle modal response (Assume return to modal for simplicity)
+            // Handle modal response
             if ($this->IsModal) { // Show as modal
-                $result = ["url" => GetUrl($url), "modal" => "1"];
                 $pageName = GetPageName($url);
-                if ($pageName != $this->getListUrl()) { // Not List page => View page
+                $result = ["url" => GetUrl($url), "modal" => "1"];  // Assume return to modal for simplicity
+                if (!SameString($pageName, GetPageName($this->getListUrl()))) { // Not List page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhlabincomeview"; // If View page, no primary button
+                    $result["view"] = SameString($pageName, "jdhlabincomeview"); // If View page, no primary button
                 } else { // List page
-                    // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
                     $this->clearFailureMessage();
                 }
@@ -355,20 +367,19 @@ class JdhLabIncomeList extends JdhLabIncome
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -395,7 +406,7 @@ class JdhLabIncomeList extends JdhLabIncome
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -417,7 +428,7 @@ class JdhLabIncomeList extends JdhLabIncome
                             }
                         }
                     } else {
-                        if ($fld->DataType == DATATYPE_MEMO && $fld->MemoMaxLength > 0) {
+                        if ($fld->DataType == DataType::MEMO && $fld->MemoMaxLength > 0) {
                             $val = TruncateMemo($val, $fld->MemoMaxLength, $fld->TruncateMemoRemoveHtml);
                         }
                         $row[$fldname] = $val;
@@ -447,44 +458,47 @@ class JdhLabIncomeList extends JdhLabIncome
     }
 
     // Lookup data
-    public function lookup($ar = null)
+    public function lookup(array $req = [], bool $response = true)
     {
         global $Language, $Security;
 
         // Get lookup object
-        $fieldName = $ar["field"] ?? Post("field");
-        $lookup = $this->Fields[$fieldName]->Lookup;
-        $name = $ar["name"] ?? Post("name");
-        $isQuery = ContainsString($name, "query_builder_rule");
-        if ($isQuery) {
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
             $lookup->FilterFields = []; // Skip parent fields if any
         }
 
         // Get lookup parameters
-        $lookupType = $ar["ajax"] ?? Post("ajax", "unknown");
+        $lookupType = $req["ajax"] ?? "unknown";
         $pageSize = -1;
         $offset = -1;
         $searchValue = "";
         if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
-            $searchValue = $ar["q"] ?? Param("q") ?? $ar["sv"] ?? Post("sv", "");
-            $pageSize = $ar["n"] ?? Param("n") ?? $ar["recperpage"] ?? Post("recperpage", 10);
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
         } elseif (SameText($lookupType, "autosuggest")) {
-            $searchValue = $ar["q"] ?? Param("q", "");
-            $pageSize = $ar["n"] ?? Param("n", -1);
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
             $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
             if ($pageSize <= 0) {
                 $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
             }
         }
-        $start = $ar["start"] ?? Param("start", -1);
+        $start = $req["start"] ?? -1;
         $start = is_numeric($start) ? (int)$start : -1;
-        $page = $ar["page"] ?? Param("page", -1);
+        $page = $req["page"] ?? -1;
         $page = is_numeric($page) ? (int)$page : -1;
         $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
-        $userSelect = Decrypt($ar["s"] ?? Post("s", ""));
-        $userFilter = Decrypt($ar["f"] ?? Post("f", ""));
-        $userOrderBy = Decrypt($ar["o"] ?? Post("o", ""));
-        $keys = $ar["keys"] ?? Post("keys");
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
         $lookup->LookupType = $lookupType; // Lookup type
         $lookup->FilterValues = []; // Clear filter values first
         if ($keys !== null) { // Selected records from modal
@@ -495,11 +509,11 @@ class JdhLabIncomeList extends JdhLabIncome
             $lookup->FilterValues[] = $keys; // Lookup values
             $pageSize = -1; // Show all records
         } else { // Lookup values
-            $lookup->FilterValues[] = $ar["v0"] ?? $ar["lookupValue"] ?? Post("v0", Post("lookupValue", ""));
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
         }
         $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
         for ($i = 1; $i <= $cnt; $i++) {
-            $lookup->FilterValues[] = $ar["v" . $i] ?? Post("v" . $i, "");
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
         }
         $lookup->SearchValue = $searchValue;
         $lookup->PageSize = $pageSize;
@@ -513,7 +527,7 @@ class JdhLabIncomeList extends JdhLabIncome
         if ($userOrderBy != "") {
             $lookup->UserOrderBy = $userOrderBy;
         }
-        return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
 
     // Class variables
@@ -521,6 +535,8 @@ class JdhLabIncomeList extends JdhLabIncome
     public $ExportOptions; // Export options
     public $SearchOptions; // Search options
     public $OtherOptions; // Other options
+    public $HeaderOptions; // Header options
+    public $FooterOptions; // Footer options
     public $FilterOptions; // Filter options
     public $ImportOptions; // Import options
     public $ListActions; // List actions
@@ -540,7 +556,6 @@ class JdhLabIncomeList extends JdhLabIncome
     public $RecordCount = 0; // Record count
     public $InlineRowCount = 0;
     public $StartRowCount = 1;
-    public $RowCount = 0;
     public $Attrs = []; // Row attributes and cell attributes
     public $RowIndex = 0; // Row index
     public $KeyCount = 0; // Key count
@@ -567,7 +582,7 @@ class JdhLabIncomeList extends JdhLabIncome
     private $UseInfiniteScroll = false;
 
     /**
-     * Load recordset from filter
+     * Load result set from filter
      *
      * @return void
      */
@@ -579,7 +594,13 @@ class JdhLabIncomeList extends JdhLabIncome
         // Search options
         $this->setupSearchOptions();
 
-        // Load recordset
+        // Other options
+        $this->setupOtherOptions();
+
+        // Set visibility
+        $this->setVisibility();
+
+        // Load result set
         $this->TotalRecords = $this->loadRecordCount($filter);
         $this->StartRecord = 1;
         $this->StopRecord = $this->DisplayRecords;
@@ -597,10 +618,11 @@ class JdhLabIncomeList extends JdhLabIncome
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $DashboardReport;
+        global $ExportType, $Language, $Security, $CurrentForm, $DashboardReport;
 
         // Multi column button position
         $this->MultiColumnListOptionsPosition = Config("MULTI_COLUMN_LIST_OPTIONS_POSITION");
+        $DashboardReport ??= Param(Config("PAGE_DASHBOARD"));
 
         // Is modal
         $this->IsModal = ConvertToBool(Param("modal"));
@@ -610,6 +632,11 @@ class JdhLabIncomeList extends JdhLabIncome
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
 
         // Get export parameters
         $custom = "";
@@ -637,12 +664,7 @@ class JdhLabIncomeList extends JdhLabIncome
 
         // Setup export options
         $this->setupExportOptions();
-        $this->patient_id->setVisibility();
-        $this->patient_name->setVisibility();
-        $this->service_name->setVisibility();
-        $this->service_cost->setVisibility();
-        $this->request_date->setVisibility();
-        $this->patient_dob_year->Visible = false;
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -650,7 +672,7 @@ class JdhLabIncomeList extends JdhLabIncome
         }
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -669,11 +691,6 @@ class JdhLabIncomeList extends JdhLabIncome
         // Setup other options
         $this->setupOtherOptions();
 
-        // Set up custom action (compatible with old version)
-        foreach ($this->CustomActions as $name => $action) {
-            $this->ListActions->add($name, $action);
-        }
-
         // Update form name to avoid conflict
         if ($this->IsModal) {
             $this->FormName = "fjdh_lab_incomegrid";
@@ -688,8 +705,12 @@ class JdhLabIncomeList extends JdhLabIncome
         // Search filters
         $srchAdvanced = ""; // Advanced search filter
         $srchBasic = ""; // Basic search filter
-        $filter = ""; // Filter
         $query = ""; // Query builder
+
+        // Set up Dashboard Filter
+        if ($DashboardReport) {
+            AddFilter($this->Filter, $this->getDashboardFilter($DashboardReport, $this->TableVar));
+        }
 
         // Get command
         $this->Command = strtolower(Get("cmd", ""));
@@ -771,11 +792,11 @@ class JdhLabIncomeList extends JdhLabIncome
         }
 
         // Load search default if no existing search criteria
-        if (!$this->checkSearchParms()) {
+        if (!$this->checkSearchParms() && !$query) {
             // Load basic search from default
             $this->BasicSearch->loadDefault();
             if ($this->BasicSearch->Keyword != "") {
-                $srchBasic = $this->basicSearchWhere();
+                $srchBasic = $this->basicSearchWhere(); // Save to session
             }
         }
 
@@ -800,22 +821,21 @@ class JdhLabIncomeList extends JdhLabIncome
         }
 
         // Build filter
-        $filter = "";
         if (!$Security->canList()) {
-            $filter = "(0=1)"; // Filter all records
+            $this->Filter = "(0=1)"; // Filter all records
         }
-        AddFilter($filter, $this->DbDetailFilter);
-        AddFilter($filter, $this->SearchWhere);
+        AddFilter($this->Filter, $this->DbDetailFilter);
+        AddFilter($this->Filter, $this->SearchWhere);
 
         // Set up filter
         if ($this->Command == "json") {
             $this->UseSessionForListSql = false; // Do not use session for ListSQL
-            $this->CurrentFilter = $filter;
+            $this->CurrentFilter = $this->Filter;
         } else {
-            $this->setSessionWhere($filter);
+            $this->setSessionWhere($this->Filter);
             $this->CurrentFilter = "";
         }
-        $this->Filter = $filter;
+        $this->Filter = $this->applyUserIDFilters($this->Filter);
         if ($this->isGridAdd()) {
             $this->CurrentFilter = "0=1";
             $this->StartRecord = 1;
@@ -864,11 +884,11 @@ class JdhLabIncomeList extends JdhLabIncome
         }
 
         // Set up list action columns
-        foreach ($this->ListActions->Items as $listaction) {
-            if ($listaction->Allow) {
-                if ($listaction->Select == ACTION_MULTIPLE) { // Show checkbox column if multiple action
+        foreach ($this->ListActions as $listAction) {
+            if ($listAction->Allowed) {
+                if ($listAction->Select == ACTION_MULTIPLE) { // Show checkbox column if multiple action
                     $this->ListOptions["checkbox"]->Visible = true;
-                } elseif ($listaction->Select == ACTION_SINGLE) { // Show list action column
+                } elseif ($listAction->Select == ACTION_SINGLE) { // Show list action column
                         $this->ListOptions["listactions"]->Visible = true; // Set visible if any list action is allowed
                 }
             }
@@ -891,8 +911,13 @@ class JdhLabIncomeList extends JdhLabIncome
             if (Route(0) == Config("API_LIST_ACTION")) {
                 if (!$this->isExport()) {
                     $rows = $this->getRecordsFromRecordset($this->Recordset);
-                    $this->Recordset->close();
-                    WriteJson(["success" => true, "action" => Config("API_LIST_ACTION"), $this->TableVar => $rows, "totalRecordCount" => $this->TotalRecords]);
+                    $this->Recordset?->free();
+                    WriteJson([
+                        "success" => true,
+                        "action" => Config("API_LIST_ACTION"),
+                        $this->TableVar => $rows,
+                        "totalRecordCount" => $this->TotalRecords
+                    ]);
                     $this->terminate(true);
                 }
                 return;
@@ -911,7 +936,7 @@ class JdhLabIncomeList extends JdhLabIncome
         $this->Pager = new PrevNextPager($this, $this->StartRecord, $this->DisplayRecords, $this->TotalRecords, $this->PageSizes, $this->RecordRange, $this->AutoHidePager, $this->AutoHidePageSizeSelector);
 
         // Set ReturnUrl in header if necessary
-        if ($returnUrl = Container("flash")->getFirstMessage("Return-Url")) {
+        if ($returnUrl = Container("app.flash")->getFirstMessage("Return-Url")) {
             AddHeader("Return-Url", GetUrl($returnUrl));
         }
 
@@ -924,7 +949,7 @@ class JdhLabIncomeList extends JdhLabIncome
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -999,15 +1024,13 @@ class JdhLabIncomeList extends JdhLabIncome
     // Get list of filters
     public function getFilterList()
     {
-        global $UserProfile;
-
         // Initialize
         $filterList = "";
         $savedFilterList = "";
 
         // Load server side filters
-        if (Config("SEARCH_FILTER_OPTION") == "Server" && isset($UserProfile)) {
-            $savedFilterList = $UserProfile->getSearchFilters(CurrentUserName(), "fjdh_lab_incomesrch");
+        if (Config("SEARCH_FILTER_OPTION") == "Server") {
+            $savedFilterList = Profile()->getSearchFilters("fjdh_lab_incomesrch");
         }
         $filterList = Concat($filterList, $this->patient_id->AdvancedSearch->toJson(), ","); // Field patient_id
         $filterList = Concat($filterList, $this->patient_name->AdvancedSearch->toJson(), ","); // Field patient_name
@@ -1033,10 +1056,9 @@ class JdhLabIncomeList extends JdhLabIncome
     // Process filter list
     protected function processFilterList()
     {
-        global $UserProfile;
         if (Post("ajax") == "savefilters") { // Save filter request (Ajax)
             $filters = Post("filters");
-            $UserProfile->setSearchFilters(CurrentUserName(), "fjdh_lab_incomesrch", $filters);
+            Profile()->setSearchFilters("fjdh_lab_incomesrch", $filters);
             WriteJson([["success" => true]]); // Success
             return true;
         } elseif (Post("cmd") == "resetfilter") {
@@ -1326,7 +1348,7 @@ class JdhLabIncomeList extends JdhLabIncome
     // Render list options
     public function renderListOptions()
     {
-        global $Security, $Language, $CurrentForm, $UserProfile;
+        global $Security, $Language, $CurrentForm;
         $this->ListOptions->loadDefault();
 
         // Call ListOptions_Rendering event
@@ -1340,17 +1362,23 @@ class JdhLabIncomeList extends JdhLabIncome
         if ($opt && !$this->isExport() && !$this->CurrentAction) {
             $body = "";
             $links = [];
-            foreach ($this->ListActions->Items as $listaction) {
-                $action = $listaction->Action;
-                $allowed = $listaction->Allow;
-                if ($listaction->Select == ACTION_SINGLE && $allowed) {
-                    $caption = $listaction->Caption;
-                    $icon = ($listaction->Icon != "") ? "<i class=\"" . HtmlEncode(str_replace(" ew-icon", "", $listaction->Icon)) . "\" data-caption=\"" . HtmlTitle($caption) . "\"></i> " : "";
-                    $link = "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_lab_incomelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button></li>";
-                    if ($link != "") {
+            foreach ($this->ListActions as $listAction) {
+                $action = $listAction->Action;
+                $allowed = $listAction->Allowed;
+                $disabled = false;
+                if ($listAction->Select == ACTION_SINGLE && $allowed) {
+                    $caption = $listAction->Caption;
+                    $title = HtmlTitle($caption);
+                    if ($action != "") {
+                        $icon = ($listAction->Icon != "") ? "<i class=\"" . HtmlEncode(str_replace(" ew-icon", "", $listAction->Icon)) . "\" data-caption=\"" . $title . "\"></i> " : "";
+                        $link = $disabled
+                            ? "<li><div class=\"alert alert-light\">" . $icon . " " . $caption . "</div></li>"
+                            : "<li><button type=\"button\" class=\"dropdown-item ew-action ew-list-action\" data-caption=\"" . $title . "\" data-ew-action=\"submit\" form=\"fjdh_lab_incomelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listAction->toDataAttrs() . ">" . $icon . " " . $caption . "</button></li>";
                         $links[] = $link;
                         if ($body == "") { // Setup first button
-                            $body = "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . HtmlTitle($caption) . "\" data-caption=\"" . HtmlTitle($caption) . "\" data-ew-action=\"submit\" form=\"fjdh_lab_incomelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listaction->toDataAttrs() . ">" . $icon . " " . $listaction->Caption . "</button>";
+                            $body = $disabled
+                            ? "<div class=\"alert alert-light\">" . $icon . " " . $caption . "</div>"
+                            : "<button type=\"button\" class=\"btn btn-default ew-action ew-list-action\" title=\"" . $title . "\" data-caption=\"" . $title . "\" data-ew-action=\"submit\" form=\"fjdh_lab_incomelist\" data-key=\"" . $this->keyToJson(true) . "\"" . $listAction->toDataAttrs() . ">" . $icon . " " . $caption . "</button>";
                         }
                     }
                 }
@@ -1397,11 +1425,16 @@ class JdhLabIncomeList extends JdhLabIncome
             $item = &$option->addGroupOption();
             $item->Body = "";
             $item->Visible = $this->UseColumnVisibility;
-            $option->add("patient_id", $this->createColumnOption("patient_id"));
-            $option->add("patient_name", $this->createColumnOption("patient_name"));
-            $option->add("service_name", $this->createColumnOption("service_name"));
-            $option->add("service_cost", $this->createColumnOption("service_cost"));
-            $option->add("request_date", $this->createColumnOption("request_date"));
+            $this->createColumnOption($option, "patient_id");
+            $this->createColumnOption($option, "patient_name");
+            $this->createColumnOption($option, "service_name");
+            $this->createColumnOption($option, "service_cost");
+            $this->createColumnOption($option, "request_date");
+        }
+
+        // Set up custom actions
+        foreach ($this->CustomActions as $name => $action) {
+            $this->ListActions[$name] = $action;
         }
 
         // Set up options default
@@ -1434,21 +1467,42 @@ class JdhLabIncomeList extends JdhLabIncome
         $item = &$this->FilterOptions->addGroupOption();
         $item->Body = "";
         $item->Visible = false;
+
+        // Page header/footer options
+        $this->HeaderOptions = new ListOptions(TagClassName: "ew-header-option", UseDropDownButton: false, UseButtonGroup: false);
+        $item = &$this->HeaderOptions->addGroupOption();
+        $item->Body = "";
+        $item->Visible = false;
+        $this->FooterOptions = new ListOptions(TagClassName: "ew-footer-option", UseDropDownButton: false, UseButtonGroup: false);
+        $item = &$this->FooterOptions->addGroupOption();
+        $item->Body = "";
+        $item->Visible = false;
+
+        // Show active user count from SQL
+    }
+
+    // Active user filter
+    // - Get active users by SQL (SELECT COUNT(*) FROM UserTable WHERE ProfileField LIKE '%"SessionID":%')
+    protected function activeUserFilter()
+    {
+        if (UserProfile::$FORCE_LOGOUT_USER) {
+            $userProfileField = $this->Fields[Config("USER_PROFILE_FIELD_NAME")];
+            return $userProfileField->Expression . " LIKE '%\"" . UserProfile::$SESSION_ID . "\":%'";
+        }
+        return "0=1"; // No active users
     }
 
     // Create new column option
-    public function createColumnOption($name)
+    protected function createColumnOption($option, $name)
     {
-        $field = $this->Fields[$name] ?? false;
-        if ($field && $field->Visible) {
-            $item = new ListOption($field->Name);
+        $field = $this->Fields[$name] ?? null;
+        if ($field?->Visible) {
+            $item = $option->add($field->Name);
             $item->Body = '<button class="dropdown-item">' .
                 '<div class="form-check ew-dropdown-checkbox">' .
                 '<div class="form-check-input ew-dropdown-check-input" data-field="' . $field->Param . '"></div>' .
                 '<label class="form-check-label ew-dropdown-check-label">' . $field->caption() . '</label></div></button>';
-            return $item;
         }
-        return null;
     }
 
     // Render other options
@@ -1458,13 +1512,13 @@ class JdhLabIncomeList extends JdhLabIncome
         $options = &$this->OtherOptions;
         $option = $options["action"];
         // Set up list action buttons
-        foreach ($this->ListActions->Items as $listaction) {
-            if ($listaction->Select == ACTION_MULTIPLE) {
-                $item = &$option->add("custom_" . $listaction->Action);
-                $caption = $listaction->Caption;
-                $icon = ($listaction->Icon != "") ? '<i class="' . HtmlEncode($listaction->Icon) . '" data-caption="' . HtmlEncode($caption) . '"></i>' . $caption : $caption;
-                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_lab_incomelist"' . $listaction->toDataAttrs() . '>' . $icon . '</button>';
-                $item->Visible = $listaction->Allow;
+        foreach ($this->ListActions as $listAction) {
+            if ($listAction->Select == ACTION_MULTIPLE) {
+                $item = &$option->add("custom_" . $listAction->Action);
+                $caption = $listAction->Caption;
+                $icon = ($listAction->Icon != "") ? '<i class="' . HtmlEncode($listAction->Icon) . '" data-caption="' . HtmlEncode($caption) . '"></i>' . $caption : $caption;
+                $item->Body = '<button type="button" class="btn btn-default ew-action ew-list-action" title="' . HtmlEncode($caption) . '" data-caption="' . HtmlEncode($caption) . '" data-ew-action="submit" form="fjdh_lab_incomelist"' . $listAction->toDataAttrs() . '>' . $icon . '</button>';
+                $item->Visible = $listAction->Allowed;
             }
         }
 
@@ -1484,19 +1538,21 @@ class JdhLabIncomeList extends JdhLabIncome
     protected function processListAction()
     {
         global $Language, $Security, $Response;
-        $userlist = "";
+        $users = [];
         $user = "";
         $filter = $this->getFilterFromRecordKeys();
         $userAction = Post("action", "");
         if ($filter != "" && $userAction != "") {
+            $conn = $this->getConnection();
+            // Clear current action
+            $this->CurrentAction = "";
             // Check permission first
             $actionCaption = $userAction;
-            if (array_key_exists($userAction, $this->ListActions->Items)) {
-                if (array_key_exists($userAction, $this->CustomActions)) {
-                    $this->UserAction = $userAction;
-                }
-                $actionCaption = $this->ListActions[$userAction]->Caption;
-                if (!$this->ListActions[$userAction]->Allow) {
+            $listAction = $this->ListActions[$userAction] ?? null;
+            if ($listAction) {
+                $this->UserAction = $userAction;
+                $actionCaption = $listAction->Caption ?: $listAction->Action;
+                if (!$listAction->Allowed) {
                     $errmsg = str_replace('%s', $actionCaption, $Language->phrase("CustomActionNotAllowed"));
                     if (Post("ajax") == $userAction) { // Ajax
                         echo "<p class=\"text-danger\">" . $errmsg . "</p>";
@@ -1506,39 +1562,53 @@ class JdhLabIncomeList extends JdhLabIncome
                         return false;
                     }
                 }
+            } else {
+                $errmsg = str_replace('%s', $userAction, $Language->phrase("CustomActionNotFound"));
+                if (Post("ajax") == $userAction) { // Ajax
+                    echo "<p class=\"text-danger\">" . $errmsg . "</p>";
+                    return true;
+                } else {
+                    $this->setFailureMessage($errmsg);
+                    return false;
+                }
             }
-            $this->CurrentFilter = $filter;
-            $sql = $this->getCurrentSql();
-            $conn = $this->getConnection();
-            $rs = LoadRecordset($sql, $conn);
+            $rows = $this->loadRs($filter)->fetchAllAssociative();
+            $this->SelectedCount = count($rows);
             $this->ActionValue = Post("actionvalue");
 
             // Call row action event
-            if ($rs) {
+            if ($this->SelectedCount > 0) {
                 if ($this->UseTransaction) {
                     $conn->beginTransaction();
                 }
-                $this->SelectedCount = $rs->recordCount();
                 $this->SelectedIndex = 0;
-                while (!$rs->EOF) {
+                foreach ($rows as $row) {
                     $this->SelectedIndex++;
-                    $row = $rs->fields;
+                    $processed = $listAction->handle($row, $this);
+                    if (!$processed) {
+                        break;
+                    }
                     $processed = $this->rowCustomAction($userAction, $row);
                     if (!$processed) {
                         break;
                     }
-                    $rs->moveNext();
                 }
                 if ($processed) {
                     if ($this->UseTransaction) { // Commit transaction
                         $conn->commit();
                     }
-                    if ($this->getSuccessMessage() == "" && !ob_get_length() && !$Response->getBody()->getSize()) { // No output
-                        $this->setSuccessMessage(str_replace('%s', $actionCaption, $Language->phrase("CustomActionCompleted"))); // Set up success message
+                    if ($this->getSuccessMessage() == "") {
+                        $this->setSuccessMessage($listAction->SuccessMessage);
+                    }
+                    if ($this->getSuccessMessage() == "") {
+                        $this->setSuccessMessage(str_replace("%s", $actionCaption, $Language->phrase("CustomActionCompleted"))); // Set up success message
                     }
                 } else {
                     if ($this->UseTransaction) { // Rollback transaction
                         $conn->rollback();
+                    }
+                    if ($this->getFailureMessage() == "") {
+                        $this->setFailureMessage($listAction->FailureMessage);
                     }
 
                     // Set up error message
@@ -1552,17 +1622,19 @@ class JdhLabIncomeList extends JdhLabIncome
                     }
                 }
             }
-            if ($rs) {
-                $rs->close();
-            }
             if (Post("ajax") == $userAction) { // Ajax
-                if ($this->getSuccessMessage() != "") {
-                    echo "<p class=\"text-success\">" . $this->getSuccessMessage() . "</p>";
-                    $this->clearSuccessMessage(); // Clear message
-                }
-                if ($this->getFailureMessage() != "") {
-                    echo "<p class=\"text-danger\">" . $this->getFailureMessage() . "</p>";
-                    $this->clearFailureMessage(); // Clear message
+                if (WithJsonResponse()) { // List action returns JSON
+                    $this->clearSuccessMessage(); // Clear success message
+                    $this->clearFailureMessage(); // Clear failure message
+                } else {
+                    if ($this->getSuccessMessage() != "") {
+                        echo "<p class=\"text-success\">" . $this->getSuccessMessage() . "</p>";
+                        $this->clearSuccessMessage(); // Clear success message
+                    }
+                    if ($this->getFailureMessage() != "") {
+                        echo "<p class=\"text-danger\">" . $this->getFailureMessage() . "</p>";
+                        $this->clearFailureMessage(); // Clear failure message
+                    }
                 }
                 return true;
             }
@@ -1585,7 +1657,7 @@ class JdhLabIncomeList extends JdhLabIncome
             }
         }
         $this->RecordCount = $this->StartRecord - 1;
-        if ($this->Recordset && !$this->Recordset->EOF) {
+        if ($this->CurrentRow !== false) {
             // Nothing to do
         } elseif ($this->isGridAdd() && !$this->AllowAddDeleteRow && $this->StopRecord == 0) { // Grid-Add with no records
             $this->StopRecord = $this->GridAddRowCount;
@@ -1594,7 +1666,7 @@ class JdhLabIncomeList extends JdhLabIncome
         }
 
         // Initialize aggregate
-        $this->RowType = ROWTYPE_AGGREGATEINIT;
+        $this->RowType = RowType::AGGREGATEINIT;
         $this->resetAttributes();
         $this->renderRow();
         if (($this->isGridAdd() || $this->isGridEdit())) { // Render template row first
@@ -1606,16 +1678,16 @@ class JdhLabIncomeList extends JdhLabIncome
     public function setupRow()
     {
         global $CurrentForm;
-        if (($this->isGridAdd() || $this->isGridEdit())) {
+        if ($this->isGridAdd() || $this->isGridEdit()) {
             if ($this->RowIndex === '$rowindex$') { // Render template row first
                 $this->loadRowValues();
 
                 // Set row properties
                 $this->resetAttributes();
-                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_lab_income", "data-rowtype" => ROWTYPE_ADD]);
+                $this->RowAttrs->merge(["data-rowindex" => $this->RowIndex, "id" => "r0_jdh_lab_income", "data-rowtype" => RowType::ADD]);
                 $this->RowAttrs->appendClass("ew-template");
                 // Render row
-                $this->RowType = ROWTYPE_ADD;
+                $this->RowType = RowType::ADD;
                 $this->renderRow();
 
                 // Render list options
@@ -1643,19 +1715,19 @@ class JdhLabIncomeList extends JdhLabIncome
         } elseif ($this->isInlineInserted() && $this->UseInfiniteScroll) {
             // Nothing to do, just use current values
         } elseif (!($this->isCopy() && $this->InlineRowCount == 0)) {
-            $this->loadRowValues($this->Recordset); // Load row values
+            $this->loadRowValues($this->CurrentRow); // Load row values
             if ($this->isGridEdit() || $this->isMultiEdit()) {
                 $this->OldKey = $this->getKey(true); // Get from CurrentValue
                 $this->setKey($this->OldKey);
             }
         }
-        $this->RowType = ROWTYPE_VIEW; // Render view
+        $this->RowType = RowType::VIEW; // Render view
         if (($this->isAdd() || $this->isCopy()) && $this->InlineRowCount == 0 || $this->isGridAdd()) { // Add
-            $this->RowType = ROWTYPE_ADD; // Render add
+            $this->RowType = RowType::ADD; // Render add
         }
 
         // Inline Add/Copy row (row 0)
-        if ($this->RowType == ROWTYPE_ADD && ($this->isAdd() || $this->isCopy())) {
+        if ($this->RowType == RowType::ADD && ($this->isAdd() || $this->isCopy())) {
             $this->InlineRowCount++;
             $this->RecordCount--; // Reset record count for inline add/copy row
             if ($this->TotalRecords == 0) { // Reset stop record if no records
@@ -1663,7 +1735,7 @@ class JdhLabIncomeList extends JdhLabIncome
             }
         } else {
             // Inline Edit row
-            if ($this->RowType == ROWTYPE_EDIT && $this->isEdit()) {
+            if ($this->RowType == RowType::EDIT && $this->isEdit()) {
                 $this->InlineRowCount++;
             }
             $this->RowCount++; // Increment row count
@@ -1675,9 +1747,10 @@ class JdhLabIncomeList extends JdhLabIncome
             "data-key" => $this->getKey(true),
             "id" => "r" . $this->RowCount . "_jdh_lab_income",
             "data-rowtype" => $this->RowType,
+            "data-inline" => ($this->isAdd() || $this->isCopy() || $this->isEdit()) ? "true" : "false", // Inline-Add/Copy/Edit
             "class" => ($this->RowCount % 2 != 1) ? "ew-table-alt-row" : "",
         ]);
-        if ($this->isAdd() && $this->RowType == ROWTYPE_ADD || $this->isEdit() && $this->RowType == ROWTYPE_EDIT) { // Inline-Add/Edit row
+        if ($this->isAdd() && $this->RowType == RowType::ADD || $this->isEdit() && $this->RowType == RowType::EDIT) { // Inline-Add/Edit row
             $this->RowAttrs->appendClass("table-active");
         }
 
@@ -1698,41 +1771,58 @@ class JdhLabIncomeList extends JdhLabIncome
         $this->BasicSearch->setType(Get(Config("TABLE_BASIC_SEARCH_TYPE"), ""), false);
     }
 
-    // Load recordset
+    /**
+     * Load result set
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return Doctrine\DBAL\Result Result
+     */
     public function loadRecordset($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
-        $rs = new Recordset($result, $sql);
+        $result = $sql->executeQuery();
+        if (property_exists($this, "TotalRecords") && $rowcnt < 0) {
+            $this->TotalRecords = $result->rowCount();
+            if ($this->TotalRecords <= 0) { // Handle database drivers that does not return rowCount()
+                $this->TotalRecords = $this->getRecordCount($this->getListSql());
+            }
+        }
 
         // Call Recordset Selected event
-        $this->recordsetSelected($rs);
-        return $rs;
+        $this->recordsetSelected($result);
+        return $result;
     }
 
-    // Load records as associative array
+    /**
+     * Load records as associative array
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return void
+     */
     public function loadRows($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
+        $result = $sql->executeQuery();
         return $result->fetchAllAssociative();
     }
 
@@ -1763,23 +1853,14 @@ class JdhLabIncomeList extends JdhLabIncome
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -1842,14 +1923,14 @@ class JdhLabIncomeList extends JdhLabIncome
         // patient_dob_year
 
         // Accumulate aggregate value
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT && $this->RowType != ROWTYPE_AGGREGATE && $this->RowType != ROWTYPE_PREVIEW_FIELD) {
+        if ($this->RowType != RowType::AGGREGATEINIT && $this->RowType != RowType::AGGREGATE && $this->RowType != RowType::PREVIEWFIELD) {
             if (is_numeric($this->service_cost->CurrentValue)) {
                 $this->service_cost->Total += $this->service_cost->CurrentValue; // Accumulate total
             }
         }
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // patient_id
             $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
             $this->patient_id->ViewValue = FormatNumber($this->patient_id->ViewValue, $this->patient_id->formatPattern());
@@ -1891,9 +1972,9 @@ class JdhLabIncomeList extends JdhLabIncome
             // request_date
             $this->request_date->HrefValue = "";
             $this->request_date->TooltipValue = "";
-        } elseif ($this->RowType == ROWTYPE_AGGREGATEINIT) { // Initialize aggregate row
+        } elseif ($this->RowType == RowType::AGGREGATEINIT) { // Initialize aggregate row
                     $this->service_cost->Total = 0; // Initialize total
-        } elseif ($this->RowType == ROWTYPE_AGGREGATE) { // Aggregate row
+        } elseif ($this->RowType == RowType::AGGREGATE) { // Aggregate row
             $this->service_cost->CurrentValue = $this->service_cost->Total;
             $this->service_cost->ViewValue = $this->service_cost->CurrentValue;
             $this->service_cost->ViewValue = FormatNumber($this->service_cost->ViewValue, $this->service_cost->formatPattern());
@@ -1901,7 +1982,7 @@ class JdhLabIncomeList extends JdhLabIncome
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -2015,7 +2096,7 @@ class JdhLabIncomeList extends JdhLabIncome
     {
         global $Language, $Security;
         $pageUrl = $this->pageUrl(false);
-        $this->SearchOptions = new ListOptions(["TagClassName" => "ew-search-option"]);
+        $this->SearchOptions = new ListOptions(TagClassName: "ew-search-option");
 
         // Show all button
         $item = &$this->SearchOptions->add("showall");
@@ -2069,11 +2150,8 @@ class JdhLabIncomeList extends JdhLabIncome
     public function exportData($doc)
     {
         global $Language;
-        $utf8 = SameText(Config("PROJECT_CHARSET"), "utf-8");
-
-        // Load recordset
+        $rs = null;
         $this->TotalRecords = $this->listRecordCount();
-        $this->StartRecord = 1;
 
         // Export all
         if ($this->ExportAll) {
@@ -2109,9 +2187,7 @@ class JdhLabIncomeList extends JdhLabIncome
         $this->pageDataRendering($header);
         $doc->Text .= $header;
         $this->exportDocument($doc, $rs, $this->StartRecord, $this->StopRecord, "");
-
-        // Close recordset
-        $rs->close();
+        $rs->free();
 
         // Page footer
         $footer = $this->PageFooter;
@@ -2131,14 +2207,14 @@ class JdhLabIncomeList extends JdhLabIncome
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $url = preg_replace('/\?cmd=reset(all){0,1}$/i', '', $url); // Remove cmd=reset / cmd=resetall
+        $url = preg_replace('/\?cmd=reset(all){0,1}$/i', '', $url); // Remove cmd=reset(all)
         $Breadcrumb->add("list", $this->TableVar, $url, "", $this->TableVar, true);
     }
 
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -2157,7 +2233,7 @@ class JdhLabIncomeList extends JdhLabIncome
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -2220,6 +2296,101 @@ class JdhLabIncomeList extends JdhLabIncome
         return ceil($this->TotalRecords / $this->DisplayRecords);
     }
 
+    // Parse query builder rule
+    protected function parseRules($group, $fieldName = "", $itemName = "") {
+        $group["condition"] ??= "AND";
+        if (!in_array($group["condition"], ["AND", "OR"])) {
+            throw new \Exception("Unable to build SQL query with condition '" . $group["condition"] . "'");
+        }
+        if (!is_array($group["rules"] ?? null)) {
+            return "";
+        }
+        $parts = [];
+        foreach ($group["rules"] as $rule) {
+            if (is_array($rule["rules"] ?? null) && count($rule["rules"]) > 0) {
+                $part = $this->parseRules($rule, $fieldName, $itemName);
+                if ($part) {
+                    $parts[] = "(" . " " . $part . " " . ")" . " ";
+                }
+            } else {
+                $field = $rule["field"];
+                $fld = $this->fieldByParam($field);
+                $dbid = $this->Dbid;
+                if ($fld instanceof ReportField && is_array($fld->DashboardSearchSourceFields)) {
+                    $item = $fld->DashboardSearchSourceFields[$itemName] ?? null;
+                    if ($item) {
+                        $tbl = Container($item["table"]);
+                        $dbid = $tbl->Dbid;
+                        $fld = $tbl->Fields[$item["field"]];
+                    } else {
+                        $fld = null;
+                    }
+                }
+                if ($fld && ($fieldName == "" || $fld->Name == $fieldName)) { // Field name not specified or matched field name
+                    $fldOpr = array_search($rule["operator"], Config("CLIENT_SEARCH_OPERATORS"));
+                    $ope = Config("QUERY_BUILDER_OPERATORS")[$rule["operator"]] ?? null;
+                    if (!$ope || !$fldOpr) {
+                        throw new \Exception("Unknown SQL operation for operator '" . $rule["operator"] . "'");
+                    }
+                    if ($ope["nb_inputs"] > 0 && ($rule["value"] ?? false) || IsNullOrEmptyOperator($fldOpr)) {
+                        $fldVal = $rule["value"];
+                        if (is_array($fldVal)) {
+                            $fldVal = $fld->isMultiSelect() ? implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal) : $fldVal[0];
+                        }
+                        $useFilter = $fld->UseFilter; // Query builder does not use filter
+                        try {
+                            if ($fld instanceof ReportField) { // Search report fields
+                                if ($fld->SearchType == "dropdown") {
+                                    if (is_array($fldVal)) {
+                                        $sql = "";
+                                        foreach ($fldVal as $val) {
+                                            AddFilter($sql, DropDownFilter($fld, $val, $fldOpr, $dbid), "OR");
+                                        }
+                                        $parts[] = $sql;
+                                    } else {
+                                        $parts[] = DropDownFilter($fld, $fldVal, $fldOpr, $dbid);
+                                    }
+                                } else {
+                                    $fld->AdvancedSearch->SearchOperator = $fldOpr;
+                                    $fld->AdvancedSearch->SearchValue = $fldVal;
+                                    $parts[] = GetReportFilter($fld, false, $dbid);
+                                }
+                            } else { // Search normal fields
+                                if ($fld->isMultiSelect()) {
+                                    $parts[] = $fldVal != "" ? GetMultiSearchSql($fld, $fldOpr, ConvertSearchValue($fldVal, $fldOpr, $fld), $this->Dbid) : "";
+                                } else {
+                                    $fldVal2 = ContainsString($fldOpr, "BETWEEN") ? $rule["value"][1] : ""; // BETWEEN
+                                    if (is_array($fldVal2)) {
+                                        $fldVal2 = implode(Config("MULTIPLE_OPTION_SEPARATOR"), $fldVal2);
+                                    }
+                                    $parts[] = GetSearchSql(
+                                        $fld,
+                                        ConvertSearchValue($fldVal, $fldOpr, $fld), // $fldVal
+                                        $fldOpr,
+                                        "", // $fldCond not used
+                                        ConvertSearchValue($fldVal2, $fldOpr, $fld), // $fldVal2
+                                        "", // $fldOpr2 not used
+                                        $this->Dbid
+                                    );
+                                }
+                            }
+                        } finally {
+                            $fld->UseFilter = $useFilter;
+                        }
+                    }
+                }
+            }
+        }
+        $where = "";
+        foreach ($parts as $part) {
+            AddFilter($where, $part, $group["condition"]);
+        }
+        if ($where && ($group["not"] ?? false)) {
+            $where = "NOT (" . $where . ")";
+        }
+        return $where;
+    }
+
     // Page Load event
     public function pageLoad()
     {
@@ -2243,11 +2414,11 @@ class JdhLabIncomeList extends JdhLabIncome
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";
@@ -2293,10 +2464,10 @@ class JdhLabIncomeList extends JdhLabIncome
     public function listOptionsLoad()
     {
         // Example:
-        //$opt = &$this->ListOptions->Add("new");
+        //$opt = &$this->ListOptions->add("new");
         //$opt->Header = "xxx";
         //$opt->OnLeft = true; // Link on left
-        //$opt->MoveTo(0); // Move to first column
+        //$opt->moveTo(0); // Move to first column
     }
 
     // ListOptions Rendering event

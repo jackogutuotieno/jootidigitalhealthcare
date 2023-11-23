@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use DiDom\Document;
 use DiDom\Element;
@@ -19,7 +19,7 @@ class ExportExcel extends AbstractExport
     // Export a value (caption, field value, or aggregate)
     protected function exportValueEx($fld, $val)
     {
-        if (in_array($fld->DataType, [DATATYPE_STRING, DATATYPE_MEMO]) && is_numeric($val)) {
+        if (in_array($fld->DataType, [DataType::STRING, DataType::MEMO]) && is_numeric($val)) {
             $val = "=\"" . strval($val) . "\"";
         }
         $this->Text .= parent::exportValueEx($fld, $val);

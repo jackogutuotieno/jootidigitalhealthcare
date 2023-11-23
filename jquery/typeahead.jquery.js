@@ -223,7 +223,7 @@
                 input: {
                     position: "relative",
                     verticalAlign: "top",
-                    backgroundColor: "transparent"
+                    backgroundColor: "var(--bs-body-bg)" //***
                 },
                 inputWithNoHint: {
                     position: "relative",

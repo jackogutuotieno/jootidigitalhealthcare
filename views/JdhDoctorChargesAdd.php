@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhDoctorChargesAdd = &$Page;
@@ -58,7 +58,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_doctor_chargesadd" id="fjdh_doctor_chargesadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_doctor_chargesadd" id="fjdh_doctor_chargesadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -80,7 +80,9 @@ $Page->showMessage();
         id="x_user_id"
         name="x_user_id"
         class="form-select ew-select<?= $Page->user_id->isInvalidClass() ?>"
+        <?php if (!$Page->user_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_doctor_chargesadd_x_user_id"
+        <?php } ?>
         data-table="jdh_doctor_charges"
         data-field="x_user_id"
         data-value-separator="<?= $Page->user_id->displayValueSeparatorAttribute() ?>"
@@ -91,10 +93,13 @@ $Page->showMessage();
     <?= $Page->user_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->user_id->getErrorMessage() ?></div>
 <?= $Page->user_id->Lookup->getParamTag($Page, "p_x_user_id") ?>
+<?php if (!$Page->user_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_doctor_chargesadd", function() {
     var options = { name: "x_user_id", selectId: "fjdh_doctor_chargesadd_x_user_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_doctor_chargesadd.lists.user_id?.lookupOptions.length) {
@@ -107,6 +112,7 @@ loadjs.ready("fjdh_doctor_chargesadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -120,7 +126,9 @@ loadjs.ready("fjdh_doctor_chargesadd", function() {
         id="x_service_id"
         name="x_service_id"
         class="form-select ew-select<?= $Page->service_id->isInvalidClass() ?>"
+        <?php if (!$Page->service_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_doctor_chargesadd_x_service_id"
+        <?php } ?>
         data-table="jdh_doctor_charges"
         data-field="x_service_id"
         data-value-separator="<?= $Page->service_id->displayValueSeparatorAttribute() ?>"
@@ -131,10 +139,13 @@ loadjs.ready("fjdh_doctor_chargesadd", function() {
     <?= $Page->service_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->service_id->getErrorMessage() ?></div>
 <?= $Page->service_id->Lookup->getParamTag($Page, "p_x_service_id") ?>
+<?php if (!$Page->service_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_doctor_chargesadd", function() {
     var options = { name: "x_service_id", selectId: "fjdh_doctor_chargesadd_x_service_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_doctor_chargesadd.lists.service_id?.lookupOptions.length) {
@@ -147,6 +158,7 @@ loadjs.ready("fjdh_doctor_chargesadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>

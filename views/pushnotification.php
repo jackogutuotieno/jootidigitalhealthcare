@@ -1,4 +1,4 @@
-<?php namespace PHPMaker2023\jootidigitalhealthcare; ?>
+<?php namespace PHPMaker2024\jootidigitalhealthcare; ?>
 <!-- push notification dialog -->
 <div id="ew-push-notification-dialog" class="modal" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-fullscreen-sm-down">
@@ -7,7 +7,7 @@
                 <h5 class="modal-title"></h5>
             </div>
             <div class="modal-body">
-                <form id="ew-push-notification-form" class="ew-form"  novalidate autocomplete="on">
+                <form id="ew-push-notification-form" class="ew-form"  novalidate autocomplete="off">
                     <?php if (Config("CHECK_TOKEN")) { ?>
                     <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
                     <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->

@@ -1,21 +1,16 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhTestRequestsEdit = &$Page;
 ?>
-<script>
-loadjs.ready("head", function () {
-    // Write your table-specific client script here, no need to add script tags.
-});
-</script>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="edit">
-<form name="fjdh_test_requestsedit" id="fjdh_test_requestsedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_test_requestsedit" id="fjdh_test_requestsedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
 ew.deepAssign(ew.vars, { tables: { jdh_test_requests: currentTable } });
@@ -61,6 +56,11 @@ loadjs.ready(["wrapper", "head"], function () {
     window[form.id] = form;
     currentForm = form;
     loadjs.done(form.id);
+});
+</script>
+<script>
+loadjs.ready("head", function () {
+    // Write your table-specific client script here, no need to add script tags.
 });
 </script>
 <?php if (Config("CHECK_TOKEN")) { ?>
@@ -148,7 +148,9 @@ loadjs.ready(["wrapper", "head"], function () {
         id="x_status_id"
         name="x_status_id"
         class="form-select ew-select<?= $Page->status_id->isInvalidClass() ?>"
+        <?php if (!$Page->status_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_test_requestsedit_x_status_id"
+        <?php } ?>
         data-table="jdh_test_requests"
         data-field="x_status_id"
         data-value-separator="<?= $Page->status_id->displayValueSeparatorAttribute() ?>"
@@ -158,10 +160,13 @@ loadjs.ready(["wrapper", "head"], function () {
     </select>
     <?= $Page->status_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->status_id->getErrorMessage() ?></div>
+<?php if (!$Page->status_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_test_requestsedit", function() {
     var options = { name: "x_status_id", selectId: "fjdh_test_requestsedit_x_status_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_test_requestsedit.lists.status_id?.lookupOptions.length) {
@@ -174,6 +179,7 @@ loadjs.ready("fjdh_test_requestsedit", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>

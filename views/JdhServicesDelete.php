@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhServicesDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_servicesdelete" id="fjdh_servicesdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_servicesdelete" id="fjdh_servicesdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -74,16 +74,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -91,7 +91,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->category_id->Visible) { // category_id ?>
         <td<?= $Page->category_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_category_id" class="el_jdh_services_category_id">
+<span id="">
 <span<?= $Page->category_id->viewAttributes() ?>>
 <?= $Page->category_id->getViewValue() ?></span>
 </span>
@@ -99,7 +99,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->subcategory_id->Visible) { // subcategory_id ?>
         <td<?= $Page->subcategory_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_subcategory_id" class="el_jdh_services_subcategory_id">
+<span id="">
 <span<?= $Page->subcategory_id->viewAttributes() ?>>
 <?= $Page->subcategory_id->getViewValue() ?></span>
 </span>
@@ -107,7 +107,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->service_name->Visible) { // service_name ?>
         <td<?= $Page->service_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_service_name" class="el_jdh_services_service_name">
+<span id="">
 <span<?= $Page->service_name->viewAttributes() ?>>
 <?= $Page->service_name->getViewValue() ?></span>
 </span>
@@ -115,7 +115,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->service_cost->Visible) { // service_cost ?>
         <td<?= $Page->service_cost->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_service_cost" class="el_jdh_services_service_cost">
+<span id="">
 <span<?= $Page->service_cost->viewAttributes() ?>>
 <?= $Page->service_cost->getViewValue() ?></span>
 </span>
@@ -123,7 +123,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->date_created->Visible) { // date_created ?>
         <td<?= $Page->date_created->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_date_created" class="el_jdh_services_date_created">
+<span id="">
 <span<?= $Page->date_created->viewAttributes() ?>>
 <?= $Page->date_created->getViewValue() ?></span>
 </span>
@@ -131,7 +131,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->date_updated->Visible) { // date_updated ?>
         <td<?= $Page->date_updated->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_services_date_updated" class="el_jdh_services_date_updated">
+<span id="">
 <span<?= $Page->date_updated->viewAttributes() ?>>
 <?= $Page->date_updated->getViewValue() ?></span>
 </span>
@@ -139,9 +139,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

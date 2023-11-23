@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhTestReportsDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_test_reportsdelete" id="fjdh_test_reportsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_test_reportsdelete" id="fjdh_test_reportsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -71,16 +71,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -88,14 +88,14 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->report_id->Visible) { // report_id ?>
         <td<?= $Page->report_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_reports_report_id" class="el_jdh_test_reports_report_id">
+<span id="">
 <span<?= $Page->report_id->viewAttributes() ?>><?= PhpBarcode::barcode('')->show('', '', 60) ?></span>
 </span>
 </td>
 <?php } ?>
 <?php if ($Page->request_id->Visible) { // request_id ?>
         <td<?= $Page->request_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_reports_request_id" class="el_jdh_test_reports_request_id">
+<span id="">
 <span<?= $Page->request_id->viewAttributes() ?>>
 <?= $Page->request_id->getViewValue() ?></span>
 </span>
@@ -103,7 +103,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_reports_patient_id" class="el_jdh_test_reports_patient_id">
+<span id="">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
@@ -111,7 +111,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->report_findings->Visible) { // report_findings ?>
         <td<?= $Page->report_findings->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_reports_report_findings" class="el_jdh_test_reports_report_findings">
+<span id="">
 <span<?= $Page->report_findings->viewAttributes() ?>>
 <?= $Page->report_findings->getViewValue() ?></span>
 </span>
@@ -119,7 +119,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->report_date->Visible) { // report_date ?>
         <td<?= $Page->report_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_test_reports_report_date" class="el_jdh_test_reports_report_date">
+<span id="">
 <span<?= $Page->report_date->viewAttributes() ?>>
 <?= $Page->report_date->getViewValue() ?></span>
 </span>
@@ -127,9 +127,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

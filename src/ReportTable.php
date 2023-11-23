@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\Query\QueryBuilder;
 
@@ -10,8 +10,8 @@ use Doctrine\DBAL\Query\QueryBuilder;
 class ReportTable extends DbTableBase
 {
     public $ReportSourceTable;
-    public $RowTotalType; // Row total type
-    public $RowTotalSubType; // Row total subtype
+    public $RowTotalType; // Row summary type
+    public $RowTotalSubType; // Row total type
     public $RowGroupLevel; // Row group level
     public $ShowReport = true;
 
@@ -92,13 +92,12 @@ class ReportTable extends DbTableBase
     public function buildReportSql($select, $from, $where, $groupBy, $having, $orderBy, $filter, $sort)
     {
         if (is_string($select)) {
-            $queryBuilder = $this->getQueryBuilder();
-            $queryBuilder->select($select);
+            $queryBuilder = $this->getQueryBuilder()->select($select);
         } elseif ($select instanceof QueryBuilder) {
             $queryBuilder = $select;
         }
         if ($from != "") {
-            $queryBuilder->from($from);
+            $queryBuilder->resetQueryPart("from")->from($from);
         }
         if ($where != "") {
             $queryBuilder->where($where);
@@ -119,5 +118,44 @@ class ReportTable extends DbTableBase
             }
         }
         return $queryBuilder;
+    }
+
+    /**
+     * Report row attributes
+     *
+     * @return string Row Attributes
+     */
+    public function rowAttributes()
+    {
+        $level = $this->hideGroupLevel();
+        $hide = $level > 0;
+        if ($hide && $this->RowGroupLevel == $level && $this->RowType == RowType::TOTAL && $this->RowTotalSubType == RowTotal::HEADER) { // Do not hide current grouping header
+            $hide = false;
+        }
+        if ($hide) {
+            $this->RowAttrs->appendClass("ew-rpt-grp-hide-" . $level);
+        }
+        $attrs = parent::rowAttributes();
+        if ($hide) {
+            $this->RowAttrs->removeClass("ew-rpt-grp-hide-" . $level);
+        }
+        return $attrs;
+    }
+
+    /**
+     * Hide group level
+     *
+     * @return int Hide group level
+     */
+    public function hideGroupLevel()
+    {
+        $fields = array_filter($this->Fields, fn($fld) => $fld->GroupingFieldId > 0); // Get all grouping fields
+        usort($fields, fn($f1, $f2) => $f1->GroupingFieldId - $f2->GroupingFieldId); // Sort by GroupingFieldId
+        foreach ($fields as $fld) {
+            if (!$fld->Expanded && $fld->GroupingFieldId <= $this->RowGroupLevel) {
+                return $fld->GroupingFieldId;
+            }
+        }
+        return 0;
     }
 }

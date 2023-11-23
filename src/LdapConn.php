@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use LdapRecord\Container;
 use LdapRecord\Connection;
@@ -13,7 +13,6 @@ use LdapRecord\Query\Builder;
 class LdapConn
 {
     public Connection $Conn;
-    public array $Config;
     private bool $Auth = false;
 
     /**
@@ -22,9 +21,9 @@ class LdapConn
      * @param array $config Configuration (see https://ldaprecord.com/docs/core/v2/configuration)
      * @return void
      */
-    public function __construct(array $config)
+    public function __construct(public array $Config)
     {
-        $this->Config = $config;
+        $config = $this->Config;
         $config["username"] = null;
         $config["password"] = null;
         $this->Conn = new Connection($config); // Connect Anonymously first
@@ -48,8 +47,8 @@ class LdapConn
             $this->Auth = $this->ldapValidated($user, $password);
         } catch (BindException $e) {
             $error = $e->getDetailedError();
-            Log($error->getErrorCode() . ": " . $error->getErrorMessage());
-            if (IsDebug()) {
+            LogError($error->getErrorCode() . ": " . $error->getErrorMessage());
+            if (Config("DEBUG")) {
                 Log($error->getDiagnosticMessage());
             }
         }

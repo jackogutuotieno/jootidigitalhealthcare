@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -99,7 +105,7 @@ class JdhBrandingDelete extends JdhBranding
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -109,8 +115,16 @@ class JdhBrandingDelete extends JdhBranding
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->id->setVisibility();
+        $this->header_image->setVisibility();
+        $this->footer_image->setVisibility();
     }
 
     // Constructor
@@ -128,10 +142,10 @@ class JdhBrandingDelete extends JdhBranding
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_branding)
-        if (!isset($GLOBALS["jdh_branding"]) || get_class($GLOBALS["jdh_branding"]) == PROJECT_NAMESPACE . "jdh_branding") {
+        if (!isset($GLOBALS["jdh_branding"]) || $GLOBALS["jdh_branding"]::class == PROJECT_NAMESPACE . "jdh_branding") {
             $GLOBALS["jdh_branding"] = &$this;
         }
 
@@ -141,7 +155,7 @@ class JdhBrandingDelete extends JdhBranding
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -157,7 +171,7 @@ class JdhBrandingDelete extends JdhBranding
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -206,13 +220,11 @@ class JdhBrandingDelete extends JdhBranding
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -230,7 +242,7 @@ class JdhBrandingDelete extends JdhBranding
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -247,20 +259,19 @@ class JdhBrandingDelete extends JdhBranding
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -287,7 +298,7 @@ class JdhBrandingDelete extends JdhBranding
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -345,7 +356,6 @@ class JdhBrandingDelete extends JdhBranding
     public $RecordCount;
     public $RecKeys = [];
     public $StartRowCount = 1;
-    public $RowCount = 0;
 
     /**
      * Page run
@@ -354,17 +364,20 @@ class JdhBrandingDelete extends JdhBranding
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm;
+        global $ExportType, $Language, $Security, $CurrentForm;
 
         // Use layout
         $this->UseLayout = $this->UseLayout && ConvertToBool(Param(Config("PAGE_LAYOUT"), true));
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->id->setVisibility();
-        $this->header_image->setVisibility();
-        $this->footer_image->setVisibility();
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -372,7 +385,7 @@ class JdhBrandingDelete extends JdhBranding
         }
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -432,10 +445,10 @@ class JdhBrandingDelete extends JdhBranding
                 }
                 // Return JSON error message if UseAjaxActions
                 if ($this->UseAjaxActions) {
-                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                    WriteJson(["success" => false, "error" => $this->getFailureMessage()]);
                     $this->clearFailureMessage();
                     $this->terminate();
-                    return;                    
+                    return;
                 }
                 if ($this->InlineDelete) {
                     $this->terminate($this->getReturnUrl()); // Return to caller
@@ -446,13 +459,9 @@ class JdhBrandingDelete extends JdhBranding
             }
         }
         if ($this->isShow()) { // Load records for display
-            if ($this->Recordset = $this->loadRecordset()) {
-                $this->TotalRecords = $this->Recordset->recordCount(); // Get record count
-            }
+            $this->Recordset = $this->loadRecordset();
             if ($this->TotalRecords <= 0) { // No record found, exit
-                if ($this->Recordset) {
-                    $this->Recordset->close();
-                }
+                $this->Recordset?->free();
                 $this->terminate("jdhbrandinglist"); // Return to list
                 return;
             }
@@ -467,7 +476,7 @@ class JdhBrandingDelete extends JdhBranding
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -481,41 +490,58 @@ class JdhBrandingDelete extends JdhBranding
         }
     }
 
-    // Load recordset
+    /**
+     * Load result set
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return Doctrine\DBAL\Result Result
+     */
     public function loadRecordset($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
-        $rs = new Recordset($result, $sql);
+        $result = $sql->executeQuery();
+        if (property_exists($this, "TotalRecords") && $rowcnt < 0) {
+            $this->TotalRecords = $result->rowCount();
+            if ($this->TotalRecords <= 0) { // Handle database drivers that does not return rowCount()
+                $this->TotalRecords = $this->getRecordCount($this->getListSql());
+            }
+        }
 
         // Call Recordset Selected event
-        $this->recordsetSelected($rs);
-        return $rs;
+        $this->recordsetSelected($result);
+        return $result;
     }
 
-    // Load records as associative array
+    /**
+     * Load records as associative array
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return void
+     */
     public function loadRows($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
+        $result = $sql->executeQuery();
         return $result->fetchAllAssociative();
     }
 
@@ -546,23 +572,14 @@ class JdhBrandingDelete extends JdhBranding
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -606,7 +623,7 @@ class JdhBrandingDelete extends JdhBranding
         // footer_image
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // id
             $this->id->ViewValue = $this->id->CurrentValue;
 
@@ -657,7 +674,7 @@ class JdhBrandingDelete extends JdhBranding
                 if (EmptyValue($this->header_image->TooltipValue)) {
                     $this->header_image->LinkAttrs["title"] = $Language->phrase("ViewImageGallery");
                 }
-                $this->header_image->LinkAttrs["data-rel"] = "jdh_branding_x_header_image";
+                $this->header_image->LinkAttrs["data-rel"] = "jdh_branding_x" . $this->RowCount . "_header_image";
                 $this->header_image->LinkAttrs->appendClass("ew-lightbox");
             }
 
@@ -680,13 +697,13 @@ class JdhBrandingDelete extends JdhBranding
                 if (EmptyValue($this->footer_image->TooltipValue)) {
                     $this->footer_image->LinkAttrs["title"] = $Language->phrase("ViewImageGallery");
                 }
-                $this->footer_image->LinkAttrs["data-rel"] = "jdh_branding_x_footer_image";
+                $this->footer_image->LinkAttrs["data-rel"] = "jdh_branding_x" . $this->RowCount . "_footer_image";
                 $this->footer_image->LinkAttrs->appendClass("ew-lightbox");
             }
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -778,7 +795,7 @@ class JdhBrandingDelete extends JdhBranding
         if ((IsJsonResponse() || ConvertToBool(Param("infinitescroll"))) && $deleteRows) {
             $rows = $this->getRecordsFromRecordset($rsold);
             $table = $this->TableVar;
-            if (Route(2) !== null) { // Single delete
+            if (Param("key_m") === null) { // Single delete
                 $rows = $rows[0]; // Return object
             }
             WriteJson(["success" => true, "action" => Config("API_DELETE_ACTION"), $table => $rows]);
@@ -800,7 +817,7 @@ class JdhBrandingDelete extends JdhBranding
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -819,7 +836,7 @@ class JdhBrandingDelete extends JdhBranding
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -862,11 +879,11 @@ class JdhBrandingDelete extends JdhBranding
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Abstract base class for export
@@ -31,7 +31,7 @@ abstract class AbstractExportBase
         $this->ContentType = Get(Config("API_EXPORT_CONTENT_TYPE"), $this->ContentType);
         $this->StyleSheet = Config("PROJECT_STYLESHEET_FILENAME");
         if (!$this->ContentType && $this->FileExtension) {
-            $this->ContentType = Config("MIME_TYPES." . $this->FileExtension);
+            $this->ContentType = MimeTypes()->getMimeTypes($this->FileExtension)[0];
         }
     }
 
@@ -63,8 +63,7 @@ abstract class AbstractExportBase
      */
     public function getFileId()
     {
-        $this->FileId ??= NewGuid();
-        return $this->FileId;
+        return $this->FileId ??= NewGuid();
     }
 
     /**
@@ -86,7 +85,7 @@ abstract class AbstractExportBase
     {
         $header = $this->ContentType;
         if ($this->UseCharset) {
-            $charset = Config("PROJECT_CHARSET");
+            $charset = PROJECT_CHARSET;
             $header .= $charset != "" ? "; charset=" . $charset : "";
         }
         return "Content-Type: " . $header;
@@ -124,7 +123,7 @@ abstract class AbstractExportBase
      */
     public function writeBom()
     {
-        if ($this->UseBom && SameText(Config("PROJECT_CHARSET"), "utf-8")) {
+        if (IS_UTF8 && $this->UseBom) {
             echo "\xEF\xBB\xBF";
         }
     }

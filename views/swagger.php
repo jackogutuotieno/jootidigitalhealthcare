@@ -270,7 +270,7 @@ paths:
       responses:
         '200':
           description: Success
-  '/api/export/{type}/{table}':
+  '/api/export/{type}/{table}/{key}':
     get:
       tags:
         - Export
@@ -287,7 +287,7 @@ paths:
           schema:
             type: string
         - name: key
-          in: query
+          in: path
           required: false
           schema:
             type: string

@@ -1,21 +1,16 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhAudittrailEdit = &$Page;
 ?>
-<script>
-loadjs.ready("head", function () {
-    // Write your table-specific client script here, no need to add script tags.
-});
-</script>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="edit">
-<form name="fjdh_audittrailedit" id="fjdh_audittrailedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_audittrailedit" id="fjdh_audittrailedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
 ew.deepAssign(ew.vars, { tables: { jdh_audittrail: currentTable } });
@@ -65,6 +60,11 @@ loadjs.ready(["wrapper", "head"], function () {
     loadjs.done(form.id);
 });
 </script>
+<script>
+loadjs.ready("head", function () {
+    // Write your table-specific client script here, no need to add script tags.
+});
+</script>
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -104,6 +104,8 @@ loadjs.ready(["fjdh_audittrailedit", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -114,16 +116,12 @@ loadjs.ready(["fjdh_audittrailedit", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("fjdh_audittrailedit", "x_DateTime", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+    ew.createDateTimePicker("fjdh_audittrailedit", "x_DateTime", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
 });
 </script>
 <?php } ?>

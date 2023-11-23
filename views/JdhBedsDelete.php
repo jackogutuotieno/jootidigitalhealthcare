@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhBedsDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_bedsdelete" id="fjdh_bedsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_bedsdelete" id="fjdh_bedsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -71,16 +71,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -88,7 +88,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->id->Visible) { // id ?>
         <td<?= $Page->id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_id" class="el_jdh_beds_id">
+<span id="">
 <span<?= $Page->id->viewAttributes() ?>>
 <?= $Page->id->getViewValue() ?></span>
 </span>
@@ -96,7 +96,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->facility_id->Visible) { // facility_id ?>
         <td<?= $Page->facility_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_facility_id" class="el_jdh_beds_facility_id">
+<span id="">
 <span<?= $Page->facility_id->viewAttributes() ?>>
 <?= $Page->facility_id->getViewValue() ?></span>
 </span>
@@ -104,7 +104,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->ward_id->Visible) { // ward_id ?>
         <td<?= $Page->ward_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_ward_id" class="el_jdh_beds_ward_id">
+<span id="">
 <span<?= $Page->ward_id->viewAttributes() ?>>
 <?= $Page->ward_id->getViewValue() ?></span>
 </span>
@@ -112,7 +112,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->bed_number->Visible) { // bed_number ?>
         <td<?= $Page->bed_number->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_bed_number" class="el_jdh_beds_bed_number">
+<span id="">
 <span<?= $Page->bed_number->viewAttributes() ?>>
 <?= $Page->bed_number->getViewValue() ?></span>
 </span>
@@ -120,20 +120,17 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->assigned->Visible) { // assigned ?>
         <td<?= $Page->assigned->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_beds_assigned" class="el_jdh_beds_assigned">
+<span id="">
 <span<?= $Page->assigned->viewAttributes() ?>>
-<div class="form-check d-inline-block">
-    <input type="checkbox" id="x_assigned_<?= $Page->RowCount ?>" class="form-check-input" value="<?= $Page->assigned->getViewValue() ?>" disabled<?php if (ConvertToBool($Page->assigned->CurrentValue)) { ?> checked<?php } ?>>
-    <label class="form-check-label" for="x_assigned_<?= $Page->RowCount ?>"></label>
-</div></span>
+<i class="fa-regular fa-square<?php if (ConvertToBool($Page->assigned->CurrentValue)) { ?>-check<?php } ?> ew-icon ew-boolean"></i>
+</span>
 </span>
 </td>
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

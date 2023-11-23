@@ -14,27 +14,209 @@
     const shadowRootMap = new WeakMap();
     const validationAnchorMap = new WeakMap();
     const documentFragmentMap = new WeakMap();
-    const onSubmitMap = new WeakMap();
+    const connectedCallbackMap = new WeakMap();
+    const validityUpgradeMap = new WeakMap();
 
-    const observerConfig$1 = { attributes: true, attributeFilter: ['disabled'] };
-    const observer = new MutationObserver((mutationsList) => {
+    const aom = {
+        ariaAtomic: 'aria-atomic',
+        ariaAutoComplete: 'aria-autocomplete',
+        ariaBusy: 'aria-busy',
+        ariaChecked: 'aria-checked',
+        ariaColCount: 'aria-colcount',
+        ariaColIndex: 'aria-colindex',
+        ariaColIndexText: 'aria-colindextext',
+        ariaColSpan: 'aria-colspan',
+        ariaCurrent: 'aria-current',
+        ariaDisabled: 'aria-disabled',
+        ariaExpanded: 'aria-expanded',
+        ariaHasPopup: 'aria-haspopup',
+        ariaHidden: 'aria-hidden',
+        ariaInvalid: 'aria-invalid',
+        ariaKeyShortcuts: 'aria-keyshortcuts',
+        ariaLabel: 'aria-label',
+        ariaLevel: 'aria-level',
+        ariaLive: 'aria-live',
+        ariaModal: 'aria-modal',
+        ariaMultiLine: 'aria-multiline',
+        ariaMultiSelectable: 'aria-multiselectable',
+        ariaOrientation: 'aria-orientation',
+        ariaPlaceholder: 'aria-placeholder',
+        ariaPosInSet: 'aria-posinset',
+        ariaPressed: 'aria-pressed',
+        ariaReadOnly: 'aria-readonly',
+        ariaRelevant: 'aria-relevant',
+        ariaRequired: 'aria-required',
+        ariaRoleDescription: 'aria-roledescription',
+        ariaRowCount: 'aria-rowcount',
+        ariaRowIndex: 'aria-rowindex',
+        ariaRowIndexText: 'aria-rowindextext',
+        ariaRowSpan: 'aria-rowspan',
+        ariaSelected: 'aria-selected',
+        ariaSetSize: 'aria-setsize',
+        ariaSort: 'aria-sort',
+        ariaValueMax: 'aria-valuemax',
+        ariaValueMin: 'aria-valuemin',
+        ariaValueNow: 'aria-valuenow',
+        ariaValueText: 'aria-valuetext',
+        role: 'role'
+    };
+    const initAom = (ref, internals) => {
+        for (let key in aom) {
+            internals[key] = null;
+            let closureValue = null;
+            const attributeName = aom[key];
+            Object.defineProperty(internals, key, {
+                get() {
+                    return closureValue;
+                },
+                set(value) {
+                    closureValue = value;
+                    if (ref.isConnected) {
+                        ref.setAttribute(attributeName, value);
+                    }
+                    else {
+                        upgradeMap.set(ref, internals);
+                    }
+                }
+            });
+        }
+    };
+
+    function initNode(node) {
+        const internals = internalsMap.get(node);
+        const { form } = internals;
+        initForm(node, form, internals);
+        initLabels(node, internals.labels);
+    }
+    const walkFieldset = (node, firstRender = false) => {
+        const walker = document.createTreeWalker(node, NodeFilter.SHOW_ELEMENT, {
+            acceptNode(node) {
+                return internalsMap.has(node) ?
+                    NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+            }
+        });
+        let current = walker.nextNode();
+        const isCallNecessary = (!firstRender || node.disabled);
+        while (current) {
+            if (current.formDisabledCallback && isCallNecessary) {
+                setDisabled(current, node.disabled);
+            }
+            current = walker.nextNode();
+        }
+    };
+    const disabledOrNameObserverConfig = { attributes: true, attributeFilter: ['disabled', 'name'] };
+    const disabledOrNameObserver = mutationObserverExists() ? new MutationObserver((mutationsList) => {
         for (const mutation of mutationsList) {
             const target = mutation.target;
-            if (target.constructor['formAssociated']) {
-                const isDisabled = target.hasAttribute('disabled');
-                target.toggleAttribute('internals-disabled', isDisabled);
-                if (isDisabled) {
-                    target.setAttribute('aria-disabled', 'true');
+            if (mutation.attributeName === 'disabled') {
+                if (target.constructor['formAssociated']) {
+                    setDisabled(target, target.hasAttribute('disabled'));
                 }
-                else {
-                    target.removeAttribute('aria-disabled');
+                else if (target.localName === 'fieldset') {
+                    walkFieldset(target);
                 }
-                if (target.formDisabledCallback) {
-                    target.formDisabledCallback.apply(target, [isDisabled]);
+            }
+            if (mutation.attributeName === 'name') {
+                if (target.constructor['formAssociated']) {
+                    const internals = internalsMap.get(target);
+                    const value = refValueMap.get(target);
+                    internals.setFormValue(value);
                 }
             }
         }
-    });
+    }) : {};
+    function observerCallback(mutationList) {
+        mutationList.forEach(mutationRecord => {
+            const { addedNodes, removedNodes } = mutationRecord;
+            const added = Array.from(addedNodes);
+            const removed = Array.from(removedNodes);
+            added.forEach(node => {
+                if (internalsMap.has(node) && node.constructor['formAssociated']) {
+                    initNode(node);
+                }
+                if (upgradeMap.has(node)) {
+                    const internals = upgradeMap.get(node);
+                    const aomKeys = Object.keys(aom);
+                    aomKeys
+                        .filter(key => internals[key] !== null)
+                        .forEach(key => {
+                        node.setAttribute(aom[key], internals[key]);
+                    });
+                    upgradeMap.delete(node);
+                }
+                if (validityUpgradeMap.has(node)) {
+                    const internals = validityUpgradeMap.get(node);
+                    node.setAttribute('internals-valid', internals.validity.valid.toString());
+                    node.setAttribute('internals-invalid', (!internals.validity.valid).toString());
+                    node.setAttribute('aria-invalid', (!internals.validity.valid).toString());
+                    validityUpgradeMap.delete(node);
+                }
+                if (node.localName === 'form') {
+                    const formElements = formElementsMap.get(node);
+                    const walker = document.createTreeWalker(node, NodeFilter.SHOW_ELEMENT, {
+                        acceptNode(node) {
+                            return internalsMap.has(node) && !(formElements && formElements.has(node)) ?
+                                NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
+                        }
+                    });
+                    let current = walker.nextNode();
+                    while (current) {
+                        initNode(current);
+                        current = walker.nextNode();
+                    }
+                }
+                if (node.localName === 'fieldset') {
+                    disabledOrNameObserver.observe?.(node, disabledOrNameObserverConfig);
+                    walkFieldset(node, true);
+                }
+            });
+            removed.forEach(node => {
+                const internals = internalsMap.get(node);
+                if (internals && hiddenInputMap.get(internals)) {
+                    removeHiddenInputs(internals);
+                }
+                if (shadowHostsMap.has(node)) {
+                    const observer = shadowHostsMap.get(node);
+                    observer.disconnect();
+                }
+            });
+        });
+    }
+    function fragmentObserverCallback(mutationList) {
+        mutationList.forEach(mutation => {
+            const { removedNodes } = mutation;
+            removedNodes.forEach(node => {
+                const observer = documentFragmentMap.get(mutation.target);
+                if (internalsMap.has(node)) {
+                    upgradeInternals(node);
+                }
+                observer.disconnect();
+            });
+        });
+    }
+    const deferUpgrade = (fragment) => {
+        const observer = new MutationObserver(fragmentObserverCallback);
+        observer.observe?.(fragment, { childList: true });
+        documentFragmentMap.set(fragment, observer);
+    };
+    mutationObserverExists() ? new MutationObserver(observerCallback) : {};
+    const observerConfig = {
+        childList: true,
+        subtree: true
+    };
+
+    const setDisabled = (ref, disabled) => {
+        ref.toggleAttribute('internals-disabled', disabled);
+        if (disabled) {
+            ref.setAttribute('aria-disabled', 'true');
+        }
+        else {
+            ref.removeAttribute('aria-disabled');
+        }
+        if (ref.formDisabledCallback) {
+            ref.formDisabledCallback.apply(ref, [disabled]);
+        }
+    };
     const removeHiddenInputs = (internals) => {
         const hiddenInputs = hiddenInputMap.get(internals);
         hiddenInputs.forEach(hiddenInput => {
@@ -52,13 +234,11 @@
     };
     const initRef = (ref, internals) => {
         hiddenInputMap.set(internals, []);
-        const isDisabled = ref.hasAttribute('disabled');
-        ref.toggleAttribute('internals-disabled', isDisabled);
-        observer.observe(ref, observerConfig$1);
+        disabledOrNameObserver.observe?.(ref, disabledOrNameObserverConfig);
     };
     const initLabels = (ref, labels) => {
         if (labels.length) {
-            Array.from(labels).forEach(label => label.addEventListener('click', ref.focus.bind(ref)));
+            Array.from(labels).forEach(label => label.addEventListener('click', ref.click.bind(ref)));
             let firstLabelId = labels[0].id;
             if (!labels[0].id) {
                 firstLabelId = `${labels[0].htmlFor}_Label`;
@@ -69,7 +249,7 @@
     };
     const setFormValidity = (form) => {
         const nativeControlValidity = Array.from(form.elements)
-            .filter((element) => element.validity)
+            .filter((element) => !element.tagName.includes('-') && element.validity)
             .map((element) => element.validity.valid);
         const polyfilledElements = formElementsMap.get(form) || [];
         const polyfilledValidity = Array.from(polyfilledElements)
@@ -85,33 +265,32 @@
     const formChangeCallback = (event) => {
         setFormValidity(findParentForm(event.target));
     };
-    const formSubmitCallback = (event) => {
-        const form = event.target;
-        const elements = formElementsMap.get(form);
-        if (form.noValidate) {
-            return;
-        }
-        if (elements.size) {
-            const nodes = Array.from(elements);
-            const validityList = nodes
-                .reverse()
-                .map(node => {
-                const internals = internalsMap.get(node);
-                return internals.reportValidity();
-            });
-            if (validityList.includes(false)) {
-                event.stopImmediatePropagation();
-                event.stopPropagation();
-                event.preventDefault();
-            }
-            else if (onSubmitMap.get(form)) {
-                const callback = onSubmitMap.get(form);
-                const canceled = callback.call(form, event);
-                if (canceled === false) {
-                    event.preventDefault();
+    const wireSubmitLogic = (form) => {
+        const submitButtonSelector = ['button[type=submit]', 'input[type=submit]', 'button:not([type])']
+            .map(sel => `${sel}:not([disabled])`)
+            .map(sel => `${sel}:not([form])${form.id ? `,${sel}[form='${form.id}']` : ''}`)
+            .join(',');
+        form.addEventListener('click', event => {
+            const target = event.target;
+            if (target.closest(submitButtonSelector)) {
+                const elements = formElementsMap.get(form);
+                if (form.noValidate) {
+                    return;
+                }
+                if (elements.size) {
+                    const nodes = Array.from(elements);
+                    const validityList = nodes
+                        .reverse()
+                        .map(node => {
+                        const internals = internalsMap.get(node);
+                        return internals.reportValidity();
+                    });
+                    if (validityList.includes(false)) {
+                        event.preventDefault();
+                    }
                 }
             }
-        }
+        });
     };
     const formResetCallback = (event) => {
         const elements = formElementsMap.get(event.target);
@@ -125,10 +304,6 @@
     };
     const initForm = (ref, form, internals) => {
         if (form) {
-            if (form.onsubmit) {
-                onSubmitMap.set(form, form.onsubmit.bind(form));
-                form.onsubmit = null;
-            }
             const formElements = formElementsMap.get(form);
             if (formElements) {
                 formElements.add(ref);
@@ -137,7 +312,7 @@
                 const initSet = new Set();
                 initSet.add(ref);
                 formElementsMap.set(form, initSet);
-                form.addEventListener('submit', formSubmitCallback);
+                wireSubmitLogic(form);
                 form.addEventListener('reset', formResetCallback);
                 form.addEventListener('input', formInputCallback);
                 form.addEventListener('change', formChangeCallback);
@@ -184,68 +359,9 @@
             initForm(ref, form, internals);
         }
     };
-
-    const aom = {
-        ariaAtomic: 'aria-atomic',
-        ariaAutoComplete: 'aria-autocomplete',
-        ariaBusy: 'aria-busy',
-        ariaChecked: 'aria-checked',
-        ariaColCount: 'aria-colcount',
-        ariaColIndex: 'aria-colindex',
-        ariaColSpan: 'aria-colspan',
-        ariaCurrent: 'aria-current',
-        ariaDisabled: 'aria-disabled',
-        ariaExpanded: 'aria-expanded',
-        ariaHasPopup: 'aria-haspopup',
-        ariaHidden: 'aria-hidden',
-        ariaKeyShortcuts: 'aria-keyshortcuts',
-        ariaLabel: 'aria-label',
-        ariaLevel: 'aria-level',
-        ariaLive: 'aria-live',
-        ariaModal: 'aria-modal',
-        ariaMultiLine: 'aria-multiline',
-        ariaMultiSelectable: 'aria-multiselectable',
-        ariaOrientation: 'aria-orientation',
-        ariaPlaceholder: 'aria-placeholder',
-        ariaPosInSet: 'aria-posinset',
-        ariaPressed: 'aria-pressed',
-        ariaReadOnly: 'aria-readonly',
-        ariaRelevant: 'aria-relevant',
-        ariaRequired: 'aria-required',
-        ariaRoleDescription: 'aria-roledescription',
-        ariaRowCount: 'aria-rowcount',
-        ariaRowIndex: 'aria-rowindex',
-        ariaRowSpan: 'aria-rowspan',
-        ariaSelected: 'aria-selected',
-        ariaSetSize: 'aria-setsize',
-        ariaSort: 'aria-sort',
-        ariaValueMax: 'aria-valuemax',
-        ariaValueMin: 'aria-valuemin',
-        ariaValueNow: 'aria-valuenow',
-        ariaValueText: 'aria-valuetext',
-        role: 'role'
-    };
-    const initAom = (ref, internals) => {
-        for (let key in aom) {
-            internals[key] = null;
-            let closureValue = null;
-            const attributeName = aom[key];
-            Object.defineProperty(internals, key, {
-                get() {
-                    return closureValue;
-                },
-                set(value) {
-                    closureValue = value;
-                    if (ref.isConnected) {
-                        ref.setAttribute(attributeName, value);
-                    }
-                    else {
-                        upgradeMap.set(ref, internals);
-                    }
-                }
-            });
-        }
-    };
+    function mutationObserverExists() {
+        return typeof MutationObserver !== 'undefined';
+    }
 
     class ValidityState {
         constructor() {
@@ -295,82 +411,13 @@
         return valid;
     };
 
-    function initNode(node) {
-        const internals = internalsMap.get(node);
-        const { form } = internals;
-        initForm(node, form, internals);
-        initLabels(node, internals.labels);
-    }
-    function observerCallback(mutationList) {
-        mutationList.forEach(mutationRecord => {
-            const { addedNodes, removedNodes } = mutationRecord;
-            const added = Array.from(addedNodes);
-            const removed = Array.from(removedNodes);
-            added.forEach(node => {
-                if (internalsMap.has(node) && node.constructor['formAssociated']) {
-                    initNode(node);
-                }
-                if (upgradeMap.has(node)) {
-                    const internals = upgradeMap.get(node);
-                    const aomKeys = Object.keys(aom);
-                    aomKeys
-                        .filter(key => internals[key] !== null)
-                        .forEach(key => {
-                        node.setAttribute(aom[key], internals[key]);
-                    });
-                    upgradeMap.delete(node);
-                }
-                if (node.localName === 'form') {
-                    const formElements = formElementsMap.get(node);
-                    const walker = document.createTreeWalker(node, NodeFilter.SHOW_ELEMENT, {
-                        acceptNode(node) {
-                            return internalsMap.has(node) && !formElements && !formElements.has(node) ?
-                                NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP;
-                        }
-                    });
-                    let current = walker.nextNode();
-                    while (current) {
-                        initNode(current);
-                        current = walker.nextNode();
-                    }
-                }
-            });
-            removed.forEach(node => {
-                const internals = internalsMap.get(node);
-                if (internals && hiddenInputMap.get(internals)) {
-                    removeHiddenInputs(internals);
-                }
-                if (shadowHostsMap.has(node)) {
-                    const observer = shadowHostsMap.get(node);
-                    observer.disconnect();
-                }
-            });
-        });
-    }
-    function fragmentObserverCallback(mutationList) {
-        mutationList.forEach(mutation => {
-            const { removedNodes } = mutation;
-            removedNodes.forEach(node => {
-                const observer = documentFragmentMap.get(mutation.target);
-                if (internalsMap.has(node)) {
-                    upgradeInternals(node);
-                }
-                observer.disconnect();
-            });
-        });
-    }
-    const deferUpgrade = (fragment) => {
-        const observer = new MutationObserver(fragmentObserverCallback);
-        observer.observe(fragment, { childList: true });
-        documentFragmentMap.set(fragment, observer);
-    };
-    new MutationObserver(observerCallback);
-    const observerConfig = {
-        childList: true,
-        subtree: true
-    };
-
     const customStateMap = new WeakMap();
+    function addState(ref, stateName) {
+        ref.toggleAttribute(stateName, true);
+        if (ref.part) {
+            ref.part.add(stateName);
+        }
+    }
     class CustomStateSet extends Set {
         static get isPolyfilled() {
             return true;
@@ -388,9 +435,14 @@
             }
             const result = super.add(state);
             const ref = customStateMap.get(this);
-            ref.toggleAttribute(`state${state}`, true);
-            if (ref.part) {
-                ref.part.add(`state${state}`);
+            const stateName = `state${state}`;
+            if (ref.isConnected) {
+                addState(ref, stateName);
+            }
+            else {
+                setTimeout(() => {
+                    addState(ref, stateName);
+                });
             }
             return result;
         }
@@ -403,15 +455,100 @@
         delete(state) {
             const result = super.delete(state);
             const ref = customStateMap.get(this);
-            ref.toggleAttribute(`state${state}`, false);
-            if (ref.part) {
-                ref.part.remove(`state${state}`);
+            if (ref.isConnected) {
+                ref.toggleAttribute(`state${state}`, false);
+                if (ref.part) {
+                    ref.part.remove(`state${state}`);
+                }
+            }
+            else {
+                setTimeout(() => {
+                    ref.toggleAttribute(`state${state}`, false);
+                    if (ref.part) {
+                        ref.part.remove(`state${state}`);
+                    }
+                });
             }
             return result;
         }
     }
 
+    function __classPrivateFieldGet(receiver, state, kind, f) {
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a getter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot read private member from an object whose class did not declare it");
+        return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+    }
+    function __classPrivateFieldSet(receiver, state, value, kind, f) {
+        if (kind === "m") throw new TypeError("Private method is not writable");
+        if (kind === "a" && !f) throw new TypeError("Private accessor was defined without a setter");
+        if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver)) throw new TypeError("Cannot write private member to an object whose class did not declare it");
+        return (kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value)), value;
+    }
+
+    var _HTMLFormControlsCollection_elements;
+    class HTMLFormControlsCollection {
+        constructor(elements) {
+            _HTMLFormControlsCollection_elements.set(this, void 0);
+            __classPrivateFieldSet(this, _HTMLFormControlsCollection_elements, elements, "f");
+            for (let i = 0; i < elements.length; i++) {
+                let element = elements[i];
+                this[i] = element;
+                if (element.hasAttribute('name')) {
+                    this[element.getAttribute('name')] = element;
+                }
+            }
+            Object.freeze(this);
+        }
+        get length() {
+            return __classPrivateFieldGet(this, _HTMLFormControlsCollection_elements, "f").length;
+        }
+        [(_HTMLFormControlsCollection_elements = new WeakMap(), Symbol.iterator)]() {
+            return __classPrivateFieldGet(this, _HTMLFormControlsCollection_elements, "f")[Symbol.iterator]();
+        }
+        item(i) {
+            return this[i] == null ? null : this[i];
+        }
+        namedItem(name) {
+            return this[name] == null ? null : this[name];
+        }
+    }
+
+    function patchFormPrototype() {
+        const checkValidity = HTMLFormElement.prototype.checkValidity;
+        HTMLFormElement.prototype.checkValidity = checkValidityOverride;
+        const reportValidity = HTMLFormElement.prototype.reportValidity;
+        HTMLFormElement.prototype.reportValidity = reportValidityOverride;
+        function checkValidityOverride(...args) {
+            let returnValue = checkValidity.apply(this, args);
+            return overrideFormMethod(this, returnValue, 'checkValidity');
+        }
+        function reportValidityOverride(...args) {
+            let returnValue = reportValidity.apply(this, args);
+            return overrideFormMethod(this, returnValue, 'reportValidity');
+        }
+        const { get } = Object.getOwnPropertyDescriptor(HTMLFormElement.prototype, 'elements');
+        Object.defineProperty(HTMLFormElement.prototype, 'elements', {
+            get(...args) {
+                const elements = get.call(this, ...args);
+                const polyfilledElements = Array.from(formElementsMap.get(this) || []);
+                if (polyfilledElements.length === 0) {
+                    return elements;
+                }
+                const orderedElements = Array.from(elements).concat(polyfilledElements).sort((a, b) => {
+                    if (a.compareDocumentPosition) {
+                        return a.compareDocumentPosition(b) & 2 ? 1 : -1;
+                    }
+                    return 0;
+                });
+                return new HTMLFormControlsCollection(orderedElements);
+            },
+        });
+    }
+
     class ElementInternals {
+        static get isPolyfilled() {
+            return true;
+        }
         constructor(ref) {
             if (!ref || !ref.tagName || ref.tagName.indexOf('-') === -1) {
                 throw new TypeError('Illegal constructor');
@@ -425,13 +562,9 @@
             initAom(ref, this);
             initRef(ref, this);
             Object.seal(this);
-            upgradeInternals(ref);
             if (rootNode instanceof DocumentFragment) {
                 deferUpgrade(rootNode);
             }
-        }
-        static get isPolyfilled() {
-            return true;
         }
         checkValidity() {
             const ref = refMap.get(this);
@@ -529,9 +662,14 @@
                 throw new DOMException(`Failed to execute 'setValidity' on 'ElementInternals': The second argument should not be empty if one or more flags in the first argument are true.`);
             }
             validationMessageMap.set(this, valid ? '' : validationMessage);
-            ref.toggleAttribute('internals-invalid', !valid);
-            ref.toggleAttribute('internals-valid', valid);
-            ref.setAttribute('aria-invalid', `${!valid}`);
+            if (ref.isConnected) {
+                ref.toggleAttribute('internals-invalid', !valid);
+                ref.toggleAttribute('internals-valid', valid);
+                ref.setAttribute('aria-invalid', `${!valid}`);
+            }
+            else {
+                validityUpgradeMap.set(ref, this);
+            }
         }
         get shadowRoot() {
             const ref = refMap.get(this);
@@ -563,7 +701,7 @@
         }
     }
     function isElementInternalsSupported() {
-        if (!window.ElementInternals) {
+        if (typeof window === 'undefined' || !window.ElementInternals || !HTMLElement.prototype.attachInternals) {
             return false;
         }
         class ElementInternalsFeatureDetection extends HTMLElement {
@@ -589,50 +727,75 @@
         ].every(prop => prop in featureDetectionElement.internals);
     }
     if (!isElementInternalsSupported()) {
-        window.ElementInternals = ElementInternals;
-        function attachShadowObserver(...args) {
-            const shadowRoot = attachShadow.apply(this, args);
-            const observer = new MutationObserver(observerCallback);
-            shadowRootMap.set(this, shadowRoot);
-            if (window.ShadyDOM) {
-                observer.observe(this, observerConfig);
-            }
-            else {
-                observer.observe(shadowRoot, observerConfig);
-            }
-            shadowHostsMap.set(this, observer);
-            return shadowRoot;
+        if (typeof window !== 'undefined') {
+            window.ElementInternals = ElementInternals;
         }
-        function checkValidityOverride(...args) {
-            let returnValue = checkValidity.apply(this, args);
-            return overrideFormMethod(this, returnValue, 'checkValidity');
+        if (typeof CustomElementRegistry !== 'undefined') {
+            const define = CustomElementRegistry.prototype.define;
+            CustomElementRegistry.prototype.define = function (name, constructor, options) {
+                if (constructor.formAssociated) {
+                    const connectedCallback = constructor.prototype.connectedCallback;
+                    constructor.prototype.connectedCallback = function () {
+                        if (!connectedCallbackMap.has(this)) {
+                            connectedCallbackMap.set(this, true);
+                            if (this.hasAttribute('disabled')) {
+                                setDisabled(this, true);
+                            }
+                        }
+                        if (connectedCallback != null) {
+                            connectedCallback.apply(this);
+                        }
+                        upgradeInternals(this);
+                    };
+                }
+                define.call(this, name, constructor, options);
+            };
         }
-        function reportValidityOverride(...args) {
-            let returnValue = reportValidity.apply(this, args);
-            return overrideFormMethod(this, returnValue, 'reportValidity');
+        if (typeof HTMLElement !== 'undefined') {
+            HTMLElement.prototype.attachInternals = function () {
+                if (!this.tagName) {
+                    return {};
+                }
+                else if (this.tagName.indexOf('-') === -1) {
+                    throw new Error(`Failed to execute 'attachInternals' on 'HTMLElement': Unable to attach ElementInternals to non-custom elements.`);
+                }
+                if (internalsMap.has(this)) {
+                    throw new DOMException(`DOMException: Failed to execute 'attachInternals' on 'HTMLElement': ElementInternals for the specified element was already attached.`);
+                }
+                return new ElementInternals(this);
+            };
         }
-        HTMLElement.prototype.attachInternals = function () {
-            if (this.tagName.indexOf('-') === -1) {
-                throw new Error(`Failed to execute 'attachInternals' on 'HTMLElement': Unable to attach ElementInternals to non-custom elements.`);
+        if (typeof Element !== 'undefined') {
+            function attachShadowObserver(...args) {
+                const shadowRoot = attachShadow.apply(this, args);
+                shadowRootMap.set(this, shadowRoot);
+                if (mutationObserverExists()) {
+                    const observer = new MutationObserver(observerCallback);
+                    if (window.ShadyDOM) {
+                        observer.observe(this, observerConfig);
+                    }
+                    else {
+                        observer.observe(shadowRoot, observerConfig);
+                    }
+                    shadowHostsMap.set(this, observer);
+                }
+                return shadowRoot;
             }
-            if (internalsMap.has(this)) {
-                throw new DOMException(`DOMException: Failed to execute 'attachInternals' on 'HTMLElement': ElementInternals for the specified element was already attached.`);
-            }
-            return new ElementInternals(this);
-        };
-        const attachShadow = Element.prototype.attachShadow;
-        Element.prototype.attachShadow = attachShadowObserver;
-        const documentObserver = new MutationObserver(observerCallback);
-        documentObserver.observe(document.documentElement, observerConfig);
-        const checkValidity = HTMLFormElement.prototype.checkValidity;
-        HTMLFormElement.prototype.checkValidity = checkValidityOverride;
-        const reportValidity = HTMLFormElement.prototype.reportValidity;
-        HTMLFormElement.prototype.reportValidity = reportValidityOverride;
-        if (!window.CustomStateSet) {
+            const attachShadow = Element.prototype.attachShadow;
+            Element.prototype.attachShadow = attachShadowObserver;
+        }
+        if (mutationObserverExists()) {
+            const documentObserver = new MutationObserver(observerCallback);
+            documentObserver.observe(document.documentElement, observerConfig);
+        }
+        if (typeof HTMLFormElement !== 'undefined') {
+            patchFormPrototype();
+        }
+        if (typeof window !== 'undefined' && !window.CustomStateSet) {
             window.CustomStateSet = CustomStateSet;
         }
     }
-    else if (!window.CustomStateSet) {
+    else if (typeof window !== 'undefined' && !window.CustomStateSet) {
         window.CustomStateSet = CustomStateSet;
         const attachInternals = HTMLElement.prototype.attachInternals;
         HTMLElement.prototype.attachInternals = function (...args) {
@@ -642,4 +805,4 @@
         };
     }
 
-}());
+})();

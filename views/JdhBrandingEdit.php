@@ -1,21 +1,16 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhBrandingEdit = &$Page;
 ?>
-<script>
-loadjs.ready("head", function () {
-    // Write your table-specific client script here, no need to add script tags.
-});
-</script>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="edit">
-<form name="fjdh_brandingedit" id="fjdh_brandingedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_brandingedit" id="fjdh_brandingedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
 ew.deepAssign(ew.vars, { tables: { jdh_branding: currentTable } });
@@ -58,6 +53,11 @@ loadjs.ready(["wrapper", "head"], function () {
     loadjs.done(form.id);
 });
 </script>
+<script>
+loadjs.ready("head", function () {
+    // Write your table-specific client script here, no need to add script tags.
+});
+</script>
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -97,7 +97,7 @@ loadjs.ready(["wrapper", "head"], function () {
         lang="<?= CurrentLanguageID() ?>"
         data-table="jdh_branding"
         data-field="x_header_image"
-        data-size="0"
+        data-size="16777215"
         data-accept-file-types="<?= $Page->header_image->acceptFileTypes() ?>"
         data-max-file-size="<?= $Page->header_image->UploadMaxFileSize ?>"
         data-max-number-of-files="null"
@@ -106,10 +106,10 @@ loadjs.ready(["wrapper", "head"], function () {
         <?= ($Page->header_image->ReadOnly || $Page->header_image->Disabled) ? " disabled" : "" ?>
         <?= $Page->header_image->editAttributes() ?>
     >
-    <div class="text-muted ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <div class="text-body-secondary ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <?= $Page->header_image->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->header_image->getErrorMessage() ?></div>
 </div>
-<?= $Page->header_image->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->header_image->getErrorMessage() ?></div>
 <input type="hidden" name="fn_x_header_image" id= "fn_x_header_image" value="<?= $Page->header_image->Upload->FileName ?>">
 <input type="hidden" name="fa_x_header_image" id= "fa_x_header_image" value="<?= (Post("fa_x_header_image") == "0") ? "0" : "1" ?>">
 <table id="ft_x_header_image" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>
@@ -132,7 +132,7 @@ loadjs.ready(["wrapper", "head"], function () {
         lang="<?= CurrentLanguageID() ?>"
         data-table="jdh_branding"
         data-field="x_footer_image"
-        data-size="0"
+        data-size="16777215"
         data-accept-file-types="<?= $Page->footer_image->acceptFileTypes() ?>"
         data-max-file-size="<?= $Page->footer_image->UploadMaxFileSize ?>"
         data-max-number-of-files="null"
@@ -141,10 +141,10 @@ loadjs.ready(["wrapper", "head"], function () {
         <?= ($Page->footer_image->ReadOnly || $Page->footer_image->Disabled) ? " disabled" : "" ?>
         <?= $Page->footer_image->editAttributes() ?>
     >
-    <div class="text-muted ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <div class="text-body-secondary ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <?= $Page->footer_image->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->footer_image->getErrorMessage() ?></div>
 </div>
-<?= $Page->footer_image->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->footer_image->getErrorMessage() ?></div>
 <input type="hidden" name="fn_x_footer_image" id= "fn_x_footer_image" value="<?= $Page->footer_image->Upload->FileName ?>">
 <input type="hidden" name="fa_x_footer_image" id= "fa_x_footer_image" value="<?= (Post("fa_x_footer_image") == "0") ? "0" : "1" ?>">
 <table id="ft_x_footer_image" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>

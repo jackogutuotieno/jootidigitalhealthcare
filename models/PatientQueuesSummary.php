@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -97,7 +103,7 @@ class PatientQueuesSummary extends PatientQueues
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -107,7 +113,7 @@ class PatientQueuesSummary extends PatientQueues
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
     }
 
@@ -132,10 +138,10 @@ class PatientQueuesSummary extends PatientQueues
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (Patient_Queues)
-        if (!isset($GLOBALS["Patient_Queues"]) || get_class($GLOBALS["Patient_Queues"]) == PROJECT_NAMESPACE . "Patient_Queues") {
+        if (!isset($GLOBALS["Patient_Queues"]) || $GLOBALS["Patient_Queues"]::class == PROJECT_NAMESPACE . "Patient_Queues") {
             $GLOBALS["Patient_Queues"] = &$this;
         }
 
@@ -150,7 +156,7 @@ class PatientQueuesSummary extends PatientQueues
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -162,17 +168,17 @@ class PatientQueuesSummary extends PatientQueues
         $UserTable = Container("usertable");
 
         // Export options
-        $this->ExportOptions = new ListOptions(["TagClassName" => "ew-export-option"]);
+        $this->ExportOptions = new ListOptions(TagClassName: "ew-export-option");
 
         // Filter options
-        $this->FilterOptions = new ListOptions(["TagClassName" => "ew-filter-option"]);
+        $this->FilterOptions = new ListOptions(TagClassName: "ew-filter-option");
     }
 
     // Get content from stream
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -221,13 +227,11 @@ class PatientQueuesSummary extends PatientQueues
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -247,7 +251,7 @@ class PatientQueuesSummary extends PatientQueues
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -265,48 +269,51 @@ class PatientQueuesSummary extends PatientQueues
     }
 
     // Lookup data
-    public function lookup($ar = null)
+    public function lookup(array $req = [], bool $response = true)
     {
         global $Language, $Security;
 
         // Get lookup object
-        $fieldName = $ar["field"] ?? Post("field");
-        $lookup = $this->Fields[$fieldName]->Lookup;
-        $name = $ar["name"] ?? Post("name");
-        $isQuery = ContainsString($name, "query_builder_rule");
-        if ($isQuery) {
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
             $lookup->FilterFields = []; // Skip parent fields if any
         }
-        if ($lookup->LinkTable == $this->TableVar || property_exists($this, "ReportSourceTable") && $lookup->LinkTable == $this->ReportSourceTable) {
+        if ($fld instanceof ReportField) {
             $lookup->RenderViewFunc = "renderLookup"; // Set up view renderer
         }
         $lookup->RenderEditFunc = ""; // Set up edit renderer
 
         // Get lookup parameters
-        $lookupType = $ar["ajax"] ?? Post("ajax", "unknown");
+        $lookupType = $req["ajax"] ?? "unknown";
         $pageSize = -1;
         $offset = -1;
         $searchValue = "";
         if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
-            $searchValue = $ar["q"] ?? Param("q") ?? $ar["sv"] ?? Post("sv", "");
-            $pageSize = $ar["n"] ?? Param("n") ?? $ar["recperpage"] ?? Post("recperpage", 10);
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
         } elseif (SameText($lookupType, "autosuggest")) {
-            $searchValue = $ar["q"] ?? Param("q", "");
-            $pageSize = $ar["n"] ?? Param("n", -1);
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
             $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
             if ($pageSize <= 0) {
                 $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
             }
         }
-        $start = $ar["start"] ?? Param("start", -1);
+        $start = $req["start"] ?? -1;
         $start = is_numeric($start) ? (int)$start : -1;
-        $page = $ar["page"] ?? Param("page", -1);
+        $page = $req["page"] ?? -1;
         $page = is_numeric($page) ? (int)$page : -1;
         $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
-        $userSelect = Decrypt($ar["s"] ?? Post("s", ""));
-        $userFilter = Decrypt($ar["f"] ?? Post("f", ""));
-        $userOrderBy = Decrypt($ar["o"] ?? Post("o", ""));
-        $keys = $ar["keys"] ?? Post("keys");
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
         $lookup->LookupType = $lookupType; // Lookup type
         $lookup->FilterValues = []; // Clear filter values first
         if ($keys !== null) { // Selected records from modal
@@ -317,11 +324,11 @@ class PatientQueuesSummary extends PatientQueues
             $lookup->FilterValues[] = $keys; // Lookup values
             $pageSize = -1; // Show all records
         } else { // Lookup values
-            $lookup->FilterValues[] = $ar["v0"] ?? $ar["lookupValue"] ?? Post("v0", Post("lookupValue", ""));
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
         }
         $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
         for ($i = 1; $i <= $cnt; $i++) {
-            $lookup->FilterValues[] = $ar["v" . $i] ?? Post("v" . $i, "");
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
         }
         $lookup->SearchValue = $searchValue;
         $lookup->PageSize = $pageSize;
@@ -335,7 +342,7 @@ class PatientQueuesSummary extends PatientQueues
         if ($userOrderBy != "") {
             $lookup->UserOrderBy = $userOrderBy;
         }
-        return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
 
     // Options
@@ -388,14 +395,13 @@ class PatientQueuesSummary extends PatientQueues
      */
     public function run()
     {
-        global $ExportType, $Language, $Security, $UserProfile,
-            $Security, $DrillDownInPanel, $Breadcrumb,
-            $DashboardReport;
+        global $ExportType, $Language, $Security, $DrillDownInPanel, $Breadcrumb, $DashboardReport;
 
         // Set up dashboard report
-        $DashboardReport = $DashboardReport || ConvertToBool(Param(Config("PAGE_DASHBOARD"), false));
+        $DashboardReport ??= Param(Config("PAGE_DASHBOARD"));
         if ($DashboardReport) {
             $this->UseAjaxActions = true;
+            AddFilter($this->Filter, $this->getDashboardFilter($DashboardReport, $this->TableVar)); // Set up Dashboard Filter
         }
 
         // Use layout
@@ -403,6 +409,11 @@ class PatientQueuesSummary extends PatientQueues
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
 
         // Get export parameters
         $custom = "";
@@ -421,7 +432,7 @@ class PatientQueuesSummary extends PatientQueues
         $this->setupExportOptions();
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -527,7 +538,7 @@ class PatientQueuesSummary extends PatientQueues
         // Get current page records
         if ($this->TotalGroups > 0) {
             $sql = $this->buildReportSql($this->getSqlSelect(), $this->getSqlFrom(), $this->getSqlWhere(), $this->getSqlGroupBy(), $this->getSqlHaving(), "", $this->Filter, $this->Sort);
-            $rs = $sql->setFirstResult(max($this->StartGroup - 1, 0))->setMaxResults($this->DisplayGroups)->execute();
+            $rs = $sql->setFirstResult(max($this->StartGroup - 1, 0))->setMaxResults($this->DisplayGroups)->executeQuery();
             $this->DetailRecords = $rs->fetchAll(); // Get records
             $this->GroupCount = 1;
         }
@@ -565,7 +576,7 @@ class PatientQueuesSummary extends PatientQueues
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -599,10 +610,10 @@ class PatientQueuesSummary extends PatientQueues
     {
         global $Security, $Language, $Language;
         $conn = $this->getConnection();
-        if ($this->RowType == ROWTYPE_TOTAL && $this->RowTotalSubType == ROWTOTAL_FOOTER && $this->RowTotalType == ROWTOTAL_PAGE) { // Get Page total
+        if ($this->RowType == RowType::TOTAL && $this->RowTotalSubType == RowTotal::FOOTER && $this->RowTotalType == RowSummary::PAGE) { // Get Page total
             $records = &$this->DetailRecords;
             $this->PageTotalCount = count($records);
-        } elseif ($this->RowType == ROWTYPE_TOTAL && $this->RowTotalSubType == ROWTOTAL_FOOTER && $this->RowTotalType == ROWTOTAL_GRAND) { // Get Grand total
+        } elseif ($this->RowType == RowType::TOTAL && $this->RowTotalSubType == RowTotal::FOOTER && $this->RowTotalType == RowSummary::GRAND) { // Get Grand total
             $hasCount = false;
             $hasSummary = false;
 
@@ -620,8 +631,8 @@ class PatientQueuesSummary extends PatientQueues
             // Accumulate grand summary from detail records
             if (!$hasCount || !$hasSummary) {
                 $sql = $this->buildReportSql($this->getSqlSelect(), $this->getSqlFrom(), $this->getSqlWhere(), $this->getSqlGroupBy(), $this->getSqlHaving(), "", $this->Filter, "");
-                $rs = $sql->execute();
-                $this->DetailRecords = $rs ? $rs->fetchAll() : [];
+                $rs = $sql->executeQuery();
+                $this->DetailRecords = $rs?->fetchAll() ?? [];
             }
         }
 
@@ -635,9 +646,9 @@ class PatientQueuesSummary extends PatientQueues
         // visit_type
 
         // visit_date
-        if ($this->RowType == ROWTYPE_SEARCH) { // Search row
-        } elseif ($this->RowType == ROWTYPE_TOTAL && !($this->RowTotalType == ROWTOTAL_GROUP && $this->RowTotalSubType == ROWTOTAL_HEADER)) { // Summary row
-            $this->RowAttrs->prependClass(($this->RowTotalType == ROWTOTAL_PAGE || $this->RowTotalType == ROWTOTAL_GRAND) ? "ew-rpt-grp-aggregate" : ""); // Set up row class
+        if ($this->RowType == RowType::SEARCH) { // Search row
+        } elseif ($this->RowType == RowType::TOTAL && !($this->RowTotalType == RowSummary::GROUP && $this->RowTotalSubType == RowTotal::HEADER)) { // Summary row
+            $this->RowAttrs->prependClass(($this->RowTotalType == RowSummary::PAGE || $this->RowTotalType == RowSummary::GRAND) ? "ew-rpt-grp-aggregate" : ""); // Set up row class
 
             // visit_id
             $this->visit_id->HrefValue = "";
@@ -651,8 +662,13 @@ class PatientQueuesSummary extends PatientQueues
             // visit_date
             $this->visit_date->HrefValue = "";
         } else {
-            if ($this->RowTotalType == ROWTOTAL_GROUP && $this->RowTotalSubType == ROWTOTAL_HEADER) {
+            if ($this->RowTotalType == RowSummary::GROUP && $this->RowTotalSubType == RowTotal::HEADER) {
             } else {
+            }
+
+            // Increment RowCount
+            if ($this->RowType == RowType::DETAIL) {
+                $this->RowCount++;
             }
 
             // visit_id
@@ -691,7 +707,7 @@ class PatientQueuesSummary extends PatientQueues
         }
 
         // Call Cell_Rendered event
-        if ($this->RowType == ROWTYPE_TOTAL) { // Summary row
+        if ($this->RowType == RowType::TOTAL) { // Summary row
         } else {
             // visit_id
             $currentValue = $this->visit_id->CurrentValue;
@@ -811,7 +827,7 @@ class PatientQueuesSummary extends PatientQueues
         } elseif (SameText($type, "pdf")) {
             return '<button type="button" class="btn btn-default ew-export-link ew-pdf" title="' . HtmlEncode($Language->phrase("ExportToPdf", true)) . '" data-caption="' . HtmlEncode($Language->phrase("ExportToPdf", true)) . '" data-ew-action="export" data-export="pdf" data-custom="false" data-export-selected="false" data-url="' . $exportUrl . '">' . $Language->phrase("ExportToPdf") . '</button>';
         } elseif (SameText($type, "html")) {
-            return '<button type="button" class="btn btn-default ew-export-link ew-pdf" title="' . HtmlEncode($Language->phrase("ExportToHtml", true)) . '" data-caption="' . HtmlEncode($Language->phrase("ExportToHtml", true)) . '" data-ew-action="export" data-export="html" data-custom="false" data-export-selected="false" data-url="' . $exportUrl . '">' . $Language->phrase("ExportToHtml") . '</button>';
+            return '<button type="button" class="btn btn-default ew-export-link ew-html" title="' . HtmlEncode($Language->phrase("ExportToHtml", true)) . '" data-caption="' . HtmlEncode($Language->phrase("ExportToHtml", true)) . '" data-ew-action="export" data-export="html" data-custom="false" data-export-selected="false" data-url="' . $exportUrl . '">' . $Language->phrase("ExportToHtml") . '</button>';
         } elseif (SameText($type, "email")) {
             return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . HtmlEncode($Language->phrase("ExportToEmail", true)) . '" data-caption="' . HtmlEncode($Language->phrase("ExportToEmail", true)) . '" data-ew-action="email" data-custom="false" data-export-selected="false" data-hdr="' . HtmlEncode($Language->phrase("ExportToEmail", true)) . '" data-url="' . $exportUrl . '">' . $Language->phrase("ExportToEmail") . '</button>';
         } elseif (SameText($type, "print")) {
@@ -881,7 +897,7 @@ class PatientQueuesSummary extends PatientQueues
     {
         global $Language, $Security;
         $pageUrl = $this->pageUrl(false);
-        $this->SearchOptions = new ListOptions(["TagClassName" => "ew-search-option"]);
+        $this->SearchOptions = new ListOptions(TagClassName: "ew-search-option");
 
         // Button group for search
         $this->SearchOptions->UseDropDownButton = false;
@@ -923,14 +939,14 @@ class PatientQueuesSummary extends PatientQueues
         global $Breadcrumb, $Language;
         $Breadcrumb = new Breadcrumb("index");
         $url = CurrentUrl();
-        $url = preg_replace('/\?cmd=reset(all){0,1}$/i', '', $url); // Remove cmd=reset / cmd=resetall
+        $url = preg_replace('/\?cmd=reset(all){0,1}$/i', '', $url); // Remove cmd=reset(all)
         $Breadcrumb->add("summary", $this->TableVar, $url, "", $this->TableVar, true);
     }
 
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -949,7 +965,7 @@ class PatientQueuesSummary extends PatientQueues
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -1051,7 +1067,7 @@ class PatientQueuesSummary extends PatientQueues
             if (is_numeric($wrk)) {
                 $this->DisplayGroups = intval($wrk);
             } else {
-                if (strtoupper($wrk) == "ALL") { // Display all groups
+                if (SameText($wrk, "ALL")) { // Display all groups
                     $this->DisplayGroups = -1;
                 } else {
                     $this->DisplayGroups = 3; // Non-numeric, load default
@@ -1075,7 +1091,7 @@ class PatientQueuesSummary extends PatientQueues
     protected function getSort()
     {
         if ($this->DrillDown) {
-            return "`visit_date` ASC";
+            return "visit_date ASC";
         }
         $resetSort = Param("cmd") === "resetsort";
         $orderBy = Param("order", "");
@@ -1106,12 +1122,8 @@ class PatientQueuesSummary extends PatientQueues
         // Set up default sort
         if ($this->getOrderBy() == "") {
             $useDefaultSort = true;
-            if ($this->visit_date->getSort() != "") {
-                $useDefaultSort = false;
-            }
             if ($useDefaultSort) {
-                $this->visit_date->setSort("ASC");
-                $this->setOrderBy("`visit_date` ASC");
+                $this->setOrderBy("visit_date ASC");
             }
         }
         return $this->getOrderBy();
@@ -1140,11 +1152,11 @@ class PatientQueuesSummary extends PatientQueues
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

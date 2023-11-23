@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Chart exporter class
@@ -8,7 +8,7 @@ namespace PHPMaker2023\jootidigitalhealthcare;
 class ChartExporter
 {
     // Export
-    public function export()
+    public function __invoke()
     {
         global $Language;
         $json = Post("charts", "[]");

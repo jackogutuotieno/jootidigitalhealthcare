@@ -108,18 +108,6 @@ body {
 
 // Groups
 @mixin ew-rpt-grp($i, $color, $bgcolor, $summary-color, $summary-bgcolor) {
-    // Group #{$i}
-    .ew-rpt-grp-header-#{$i} {
-        color: $color;
-        background-color: $bgcolor;
-        font-weight: bold;
-    }
-    .ew-rpt-grp-header-#{$i} {
-        a:link, a:active, a:visited {
-            color: inherit;
-            text-decoration: none;
-        }
-    }
     .ew-rpt-grp-field-#{$i} {
         background-color: $bgcolor;
     }

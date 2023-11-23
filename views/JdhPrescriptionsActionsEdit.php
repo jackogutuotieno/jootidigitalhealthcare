@@ -1,21 +1,16 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhPrescriptionsActionsEdit = &$Page;
 ?>
-<script>
-loadjs.ready("head", function () {
-    // Write your table-specific client script here, no need to add script tags.
-});
-</script>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="edit">
-<form name="fjdh_prescriptions_actionsedit" id="fjdh_prescriptions_actionsedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_prescriptions_actionsedit" id="fjdh_prescriptions_actionsedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
 ew.deepAssign(ew.vars, { tables: { jdh_prescriptions_actions: currentTable } });
@@ -61,6 +56,11 @@ loadjs.ready(["wrapper", "head"], function () {
     loadjs.done(form.id);
 });
 </script>
+<script>
+loadjs.ready("head", function () {
+    // Write your table-specific client script here, no need to add script tags.
+});
+</script>
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -98,7 +98,9 @@ loadjs.ready(["wrapper", "head"], function () {
         id="x_medicine_id"
         name="x_medicine_id"
         class="form-select ew-select<?= $Page->medicine_id->isInvalidClass() ?>"
+        <?php if (!$Page->medicine_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_prescriptions_actionsedit_x_medicine_id"
+        <?php } ?>
         data-table="jdh_prescriptions_actions"
         data-field="x_medicine_id"
         data-value-separator="<?= $Page->medicine_id->displayValueSeparatorAttribute() ?>"
@@ -109,10 +111,13 @@ loadjs.ready(["wrapper", "head"], function () {
     <?= $Page->medicine_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->medicine_id->getErrorMessage() ?></div>
 <?= $Page->medicine_id->Lookup->getParamTag($Page, "p_x_medicine_id") ?>
+<?php if (!$Page->medicine_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_prescriptions_actionsedit", function() {
     var options = { name: "x_medicine_id", selectId: "fjdh_prescriptions_actionsedit_x_medicine_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_prescriptions_actionsedit.lists.medicine_id?.lookupOptions.length) {
@@ -125,6 +130,7 @@ loadjs.ready("fjdh_prescriptions_actionsedit", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -143,7 +149,9 @@ loadjs.ready("fjdh_prescriptions_actionsedit", function() {
         id="x_patient_id"
         name="x_patient_id"
         class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
+        <?php if (!$Page->patient_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_prescriptions_actionsedit_x_patient_id"
+        <?php } ?>
         data-table="jdh_prescriptions_actions"
         data-field="x_patient_id"
         data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
@@ -154,10 +162,13 @@ loadjs.ready("fjdh_prescriptions_actionsedit", function() {
     <?= $Page->patient_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
 <?= $Page->patient_id->Lookup->getParamTag($Page, "p_x_patient_id") ?>
+<?php if (!$Page->patient_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_prescriptions_actionsedit", function() {
     var options = { name: "x_patient_id", selectId: "fjdh_prescriptions_actionsedit_x_patient_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_prescriptions_actionsedit.lists.patient_id?.lookupOptions.length) {
@@ -170,6 +181,7 @@ loadjs.ready("fjdh_prescriptions_actionsedit", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 <?php } ?>
 </div></div>

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use DiDom\Document;
 use DiDom\Element;
@@ -8,41 +8,33 @@ use DiDom\Element;
 /**
  * List option collection class
  */
-class ListOptions implements \ArrayAccess
+class ListOptions implements \ArrayAccess, \IteratorAggregate
 {
     public $Items = [];
     public $CustomItem = "";
-    public $Tag = "div";
-    public $TagClassName = null;
-    public $TableVar = "";
     public $RowCnt = "";
     public $TemplateType = "block";
     public $TemplateId = "";
     public $TemplateClassName = "";
     public $RowSpan = 1;
-    public $UseDropDownButton = false;
-    public $UseButtonGroup = false;
     public $ButtonClass = "";
-    public $ButtonGroupClass = "";
     public $GroupOptionName = "button";
-    public $DropDownButtonPhrase = "";
-    public $DropDownAutoClose = "true"; // true/inside/outside/false (see https://getbootstrap.com/docs/5.2/components/dropdowns/#auto-close-behavior)
 
     // Constructor
-    public function __construct($args = null)
-    {
-        if (is_string($args)) { // Tag
-            $this->Tag = $args;
-        } elseif (is_array($args)) { // Properties
-            foreach ($args as $property => $arg) {
-                $this->$property = $arg;
-            }
-        }
+    public function __construct(
+        public $Tag = "div",
+        public $TagClassName = null,
+        public $TableVar = "",
+        public $UseDropDownButton = false,
+        public $UseButtonGroup = false,
+        public $DropDownButtonPhrase = "",
+        public $ButtonGroupClass = "",
+        public $DropDownAutoClose = "true", // true/inside/outside/false (see https://getbootstrap.com/docs/5.3/components/dropdowns/#auto-close-behavior)
+    ) {
     }
 
     // Implements offsetSet
     #[\ReturnTypeWillChange]
-
     public function offsetSet($offset, $value)
     {
         if (is_null($offset)) {
@@ -54,7 +46,6 @@ class ListOptions implements \ArrayAccess
 
     // Implements offsetExists
     #[\ReturnTypeWillChange]
-
     public function offsetExists($offset)
     {
         return isset($this->Items[$offset]);
@@ -62,7 +53,6 @@ class ListOptions implements \ArrayAccess
 
     // Implements offsetUnset
     #[\ReturnTypeWillChange]
-
     public function offsetUnset($offset)
     {
         unset($this->Items[$offset]);
@@ -70,11 +60,15 @@ class ListOptions implements \ArrayAccess
 
     // Implements offsetGet
     #[\ReturnTypeWillChange]
-
-    public function &offsetGet($offset)
+    public function offsetGet($offset)
     {
-        $item = $this->Items[$offset] ?? null;
-        return $item;
+        return $this->Items[$offset] ?? null;
+    }
+
+    // Implements IteratorAggregate
+    public function getIterator(): \ArrayIterator
+    {
+        return new \ArrayIterator($this->Items);
     }
 
     // Check visible
@@ -108,25 +102,11 @@ class ListOptions implements \ArrayAccess
     }
 
     // Add and return the new option
-    public function &add($name, $option = null)
+    public function &add(string $name)
     {
-        $numargs = func_num_args();
-        $item = null;
-        if ($numargs == 1) {
-            if (is_string($name)) {
-                $item = new ListOption($name);
-            }
-        } elseif ($numargs == 2) {
-            if ($option instanceof ListOption) {
-                $item = $option;
-            } elseif (is_array($option)) {
-                $item = new ListOption($name, $option);
-            }
-        }
-        if ($item != null) {
-            $item->Parent = &$this;
-            $this->Items[$name] = $item;
-        }
+        $item = new ListOption($name);
+        $item->Parent = &$this;
+        $this->Items[$name] = $item;
         return $item;
     }
 
@@ -170,10 +150,9 @@ class ListOptions implements \ArrayAccess
      * @param string $name Predefined names: view/edit/copy/delete/detail_<DetailTable>/userpermission/checkbox
      * @return void
      */
-    public function &getItem($name)
+    public function getItem($name)
     {
-        $item = $this->Items[$name] ?? null;
-        return $item;
+        return $this->Items[$name] ?? null;
     }
 
     // Get item position
@@ -216,7 +195,7 @@ class ListOptions implements \ArrayAccess
         if ($pos >= $cnt) {
             $pos = $cnt - 1;
         }
-        $item = &$this->getItem($name);
+        $item = $this->getItem($name);
         if ($item) {
             unset($this->Items[$name]);
             $this->Items = array_merge(
@@ -230,7 +209,7 @@ class ListOptions implements \ArrayAccess
     // Render list options
     public function render($part, $pos = "", $rowCnt = "", $templateType = "block", $templateId = "", $templateClassName = "", $output = true)
     {
-        if ($this->CustomItem == "" && $groupitem = &$this->getItem($this->GroupOptionName) && $this->showPos($groupitem->OnLeft, $pos)) {
+        if ($this->CustomItem == "" && ($groupitem = $this->getItem($this->GroupOptionName)) && $this->showPos($groupitem->OnLeft, $pos)) {
             $useDropDownButton = $this->UseDropDownButton;
             $useButtonGroup = $this->UseButtonGroup;
             if ($useDropDownButton) { // Render dropdown
@@ -395,10 +374,11 @@ class ListOptions implements \ArrayAccess
     {
         $show = $item->Visible && $this->showPos($item->OnLeft, $pos);
         if ($show) {
-            if ($this->UseDropDownButton) {
-                $show = ($item->Name == $this->GroupOptionName || !$item->ShowInDropDown);
-            } elseif ($this->UseButtonGroup) {
-                $show = ($item->Name == $this->GroupOptionName || !$item->ShowInButtonGroup);
+            $groupItemVisible = $this->getItem($this->GroupOptionName)->Visible;
+            if ($this->UseDropDownButton) { // Group item / Item not in dropdown / Item in dropdown + Group item not visible
+                $show = $item->Name == $this->GroupOptionName && $groupItemVisible || !$item->ShowInDropDown || $item->ShowInDropDown && !$groupItemVisible;
+            } elseif ($this->UseButtonGroup) { // Group item / Item not in button group / Item in button group + Group item not visible
+                $show = $item->Name == $this->GroupOptionName && $groupItemVisible || !$item->ShowInButtonGroup || $item->ShowInButtonGroup && !$groupItemVisible;
             }
         }
         return $show;
@@ -459,7 +439,7 @@ class ListOptions implements \ArrayAccess
         if (EmptyValue($body)) {
             return $body;
         }
-        $doc = new Document(null, false, strtoupper(Config('PROJECT_CHARSET')));
+        $doc = new Document(null, false, strtoupper(PROJECT_CHARSET));
         @$doc->load($body);
 
         // Get and remove <input type="hidden"> and <div class="btn-group">
@@ -475,14 +455,16 @@ class ListOptions implements \ArrayAccess
             if ($button->tagName() == 'a') {
                 $attrs = $button->attributes();
                 $attrs['type'] = 'button';
-                if ($attrs['href'] ?? false) {
+                $action = $attrs['data-ew-action'] ?? '';
+                $href = $attrs['href'] ?? '';
+                if (EmptyValue($action) && !EmptyValue($href)) {
                     $attrs['data-ew-action'] = 'redirect';
                     $attrs['data-url'] = $attrs['href'];
                     unset($attrs['href']);
+                    $element = new Element('button', '', $attrs); // Change links to button
+                    $element->appendChild($button->children());
+                    $button = $element;
                 }
-                $element = new Element('button', '', $attrs); // Change links to button
-                $element->appendChild($button->children());
-                $button = $element;
             }
             $class = $button->getAttribute('class');
             PrependClass($class, 'btn btn-xs btn-link');
@@ -498,7 +480,7 @@ class ListOptions implements \ArrayAccess
         if (EmptyValue($body)) {
             return $body;
         }
-        $doc = new Document(null, false, strtoupper(Config('PROJECT_CHARSET')));
+        $doc = new Document(null, false, strtoupper(PROJECT_CHARSET));
         @$doc->load($body);
 
         // Get and remove <input type="hidden"> and <div class="btn-group">
@@ -527,7 +509,7 @@ class ListOptions implements \ArrayAccess
         if (EmptyValue($body)) {
             return $body;
         }
-        $doc = new Document(null, false, strtoupper(Config('PROJECT_CHARSET')));
+        $doc = new Document(null, false, strtoupper(PROJECT_CHARSET));
         @$doc->load($body);
 
         // Get and remove <div class="d-none"> and <input type="hidden">
@@ -545,8 +527,8 @@ class ListOptions implements \ArrayAccess
         $submenulinks = '';
         foreach ($buttons as $button) {
             $action = $button->getAttribute('data-action');
-            $classes = $button->getAttribute('class');
-            if (!preg_match('/\bdropdown-item\b/', $classes)) { // Skip if already dropdown-item
+            $classes = $button->getAttribute('class') ?? "";
+            if (!preg_match('/\bdropdown-item\b/', $classes ?: "")) { // Skip if already dropdown-item
                 $classes = preg_replace('/btn[\S]*\s+/i', '', $classes); // Remove btn classes
                 $button->removeAttribute('title'); // Remove title
                 $caption = $button->text();

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use DiDom\Document;
 use DiDom\Element;
@@ -114,7 +114,7 @@ class ExportPdf extends AbstractExport
      * Append image
      *
      * @param string $imagefn Image file
-     * @param string $break Break type (before/after)
+     * @param string $break Break type (before/after/none)
      * @return void
      */
     public function addImage($imagefn, $break = false)
@@ -124,6 +124,8 @@ class ExportPdf extends AbstractExport
             $classes .= " break-before-page";
         } elseif (SameText($break, "after")) {
             $classes .= " break-after-page";
+        } elseif (SameText($break, "none")) {
+            $classes .= " break-after-avoid";
         }
         $html = '<div class="' . $classes . '">' . GetFileImgTag($imagefn) . "</div>";
         if (ContainsText($this->Text, "</body>")) {
@@ -206,6 +208,7 @@ class ExportPdf extends AbstractExport
         $options->set("pdfBackend", $this->PdfBackend);
         $options->set("isRemoteEnabled", true); // Support remote images such as S3
         $chroot = $options->getChroot();
+        $chroot[] = UploadTempPathRoot();
         $chroot[] = UploadTempPath();
         $chroot[] = dirname(CssFile(Config("PDF_STYLESHEET_FILENAME"), false));
         $options->setChroot($chroot);

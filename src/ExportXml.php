@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Export to XML
@@ -90,7 +90,7 @@ class ExportXml extends AbstractExport
     // Export a field
     public function exportField($fld)
     {
-        if ($fld->Exportable && $fld->DataType != DATATYPE_BLOB) {
+        if ($fld->Exportable && $fld->DataType != DataType::BLOB) {
             if ($fld->UploadMultiple) {
                 $exportValue = $fld->Upload->DbValue;
             } else {

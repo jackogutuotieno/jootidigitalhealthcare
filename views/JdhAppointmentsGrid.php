@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Set up and run Grid object
 $Grid = Container("JdhAppointmentsGrid");
@@ -66,7 +66,10 @@ loadjs.ready(["wrapper", "head"], function () {
 });
 </script>
 <?php } ?>
-<main class="list<?= ($Grid->TotalRecords == 0 && !$Grid->isAdd()) ? " ew-no-record" : "" ?>">
+<main class="list">
+<div id="ew-header-options">
+<?php $Grid->HeaderOptions?->render("body") ?>
+</div>
 <div id="ew-list">
 <?php if ($Grid->TotalRecords > 0 || $Grid->CurrentAction) { ?>
 <div class="card ew-card ew-grid<?= $Grid->isAddOrEdit() ? " ew-grid-add-edit" : "" ?> <?= $Grid->TableGridClass ?>">
@@ -77,7 +80,7 @@ loadjs.ready(["wrapper", "head"], function () {
     <tr class="ew-table-header">
 <?php
 // Header row
-$Grid->RowType = ROWTYPE_HEADER;
+$Grid->RowType = RowType::HEADER;
 
 // Render list options
 $Grid->renderListOptions();
@@ -115,7 +118,15 @@ $Grid->ListOptions->render("header", "right");
 <tbody data-page="<?= $Grid->getPageNumber() ?>">
 <?php
 $Grid->setupGrid();
-while ($Grid->RecordCount < $Grid->StopRecord) {
+while ($Grid->RecordCount < $Grid->StopRecord || $Grid->RowIndex === '$rowindex$') {
+    if (
+        $Grid->CurrentRow !== false &&
+        $Grid->RowIndex !== '$rowindex$' &&
+        (!$Grid->isGridAdd() || $Grid->CurrentMode == "copy") &&
+        (!(($Grid->isCopy() || $Grid->isAdd()) && $Grid->RowIndex == 0))
+    ) {
+        $Grid->fetch();
+    }
     $Grid->RecordCount++;
     if ($Grid->RecordCount >= $Grid->StartRecord) {
         $Grid->setupRow();
@@ -135,18 +146,20 @@ $Grid->ListOptions->render("body", "left", $Grid->RowCount);
 ?>
     <?php if ($Grid->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Grid->patient_id->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
 <?php if ($Grid->patient_id->getSessionValue() != "") { ?>
 <span<?= $Grid->patient_id->viewAttributes() ?>>
 <span class="form-control-plaintext"><?= $Grid->patient_id->getDisplayValue($Grid->patient_id->ViewValue) ?></span></span>
 <input type="hidden" id="x<?= $Grid->RowIndex ?>_patient_id" name="x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->CurrentValue) ?>" data-hidden="1">
 <?php } else { ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">
     <select
         id="x<?= $Grid->RowIndex ?>_patient_id"
         name="x<?= $Grid->RowIndex ?>_patient_id"
         class="form-select ew-select<?= $Grid->patient_id->isInvalidClass() ?>"
+        <?php if (!$Grid->patient_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_appointmentsgrid_x<?= $Grid->RowIndex ?>_patient_id"
+        <?php } ?>
         data-table="jdh_appointments"
         data-field="x_patient_id"
         data-value-separator="<?= $Grid->patient_id->displayValueSeparatorAttribute() ?>"
@@ -156,10 +169,13 @@ $Grid->ListOptions->render("body", "left", $Grid->RowCount);
     </select>
     <div class="invalid-feedback"><?= $Grid->patient_id->getErrorMessage() ?></div>
 <?= $Grid->patient_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_patient_id") ?>
+<?php if (!$Grid->patient_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_appointmentsgrid", function() {
     var options = { name: "x<?= $Grid->RowIndex ?>_patient_id", selectId: "fjdh_appointmentsgrid_x<?= $Grid->RowIndex ?>_patient_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_appointmentsgrid.lists.patient_id?.lookupOptions.length) {
@@ -172,22 +188,25 @@ loadjs.ready("fjdh_appointmentsgrid", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 <?php } ?>
 <input type="hidden" data-table="jdh_appointments" data-field="x_patient_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_patient_id" id="o<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
 <?php if ($Grid->patient_id->getSessionValue() != "") { ?>
 <span<?= $Grid->patient_id->viewAttributes() ?>>
 <span class="form-control-plaintext"><?= $Grid->patient_id->getDisplayValue($Grid->patient_id->ViewValue) ?></span></span>
 <input type="hidden" id="x<?= $Grid->RowIndex ?>_patient_id" name="x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->CurrentValue) ?>" data-hidden="1">
 <?php } else { ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">
     <select
         id="x<?= $Grid->RowIndex ?>_patient_id"
         name="x<?= $Grid->RowIndex ?>_patient_id"
         class="form-select ew-select<?= $Grid->patient_id->isInvalidClass() ?>"
+        <?php if (!$Grid->patient_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_appointmentsgrid_x<?= $Grid->RowIndex ?>_patient_id"
+        <?php } ?>
         data-table="jdh_appointments"
         data-field="x_patient_id"
         data-value-separator="<?= $Grid->patient_id->displayValueSeparatorAttribute() ?>"
@@ -197,10 +216,13 @@ loadjs.ready("fjdh_appointmentsgrid", function() {
     </select>
     <div class="invalid-feedback"><?= $Grid->patient_id->getErrorMessage() ?></div>
 <?= $Grid->patient_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_patient_id") ?>
+<?php if (!$Grid->patient_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_appointmentsgrid", function() {
     var options = { name: "x<?= $Grid->RowIndex ?>_patient_id", selectId: "fjdh_appointmentsgrid_x<?= $Grid->RowIndex ?>_patient_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_appointmentsgrid.lists.patient_id?.lookupOptions.length) {
@@ -213,11 +235,12 @@ loadjs.ready("fjdh_appointmentsgrid", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 <?php } ?>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">
 <span<?= $Grid->patient_id->viewAttributes() ?>>
 <?= $Grid->patient_id->getViewValue() ?></span>
 </span>
@@ -230,13 +253,15 @@ loadjs.ready("fjdh_appointmentsgrid", function() {
     <?php } ?>
     <?php if ($Grid->user_id->Visible) { // user_id ?>
         <td data-name="user_id"<?= $Grid->user_id->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_user_id" class="el_jdh_appointments_user_id">
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_user_id" class="el_jdh_appointments_user_id">
     <select
         id="x<?= $Grid->RowIndex ?>_user_id"
         name="x<?= $Grid->RowIndex ?>_user_id"
         class="form-select ew-select<?= $Grid->user_id->isInvalidClass() ?>"
+        <?php if (!$Grid->user_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_appointmentsgrid_x<?= $Grid->RowIndex ?>_user_id"
+        <?php } ?>
         data-table="jdh_appointments"
         data-field="x_user_id"
         data-value-separator="<?= $Grid->user_id->displayValueSeparatorAttribute() ?>"
@@ -246,10 +271,13 @@ loadjs.ready("fjdh_appointmentsgrid", function() {
     </select>
     <div class="invalid-feedback"><?= $Grid->user_id->getErrorMessage() ?></div>
 <?= $Grid->user_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_user_id") ?>
+<?php if (!$Grid->user_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_appointmentsgrid", function() {
     var options = { name: "x<?= $Grid->RowIndex ?>_user_id", selectId: "fjdh_appointmentsgrid_x<?= $Grid->RowIndex ?>_user_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_appointmentsgrid.lists.user_id?.lookupOptions.length) {
@@ -262,16 +290,19 @@ loadjs.ready("fjdh_appointmentsgrid", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 <input type="hidden" data-table="jdh_appointments" data-field="x_user_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_user_id" id="o<?= $Grid->RowIndex ?>_user_id" value="<?= HtmlEncode($Grid->user_id->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_user_id" class="el_jdh_appointments_user_id">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_user_id" class="el_jdh_appointments_user_id">
     <select
         id="x<?= $Grid->RowIndex ?>_user_id"
         name="x<?= $Grid->RowIndex ?>_user_id"
         class="form-select ew-select<?= $Grid->user_id->isInvalidClass() ?>"
+        <?php if (!$Grid->user_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_appointmentsgrid_x<?= $Grid->RowIndex ?>_user_id"
+        <?php } ?>
         data-table="jdh_appointments"
         data-field="x_user_id"
         data-value-separator="<?= $Grid->user_id->displayValueSeparatorAttribute() ?>"
@@ -281,10 +312,13 @@ loadjs.ready("fjdh_appointmentsgrid", function() {
     </select>
     <div class="invalid-feedback"><?= $Grid->user_id->getErrorMessage() ?></div>
 <?= $Grid->user_id->Lookup->getParamTag($Grid, "p_x" . $Grid->RowIndex . "_user_id") ?>
+<?php if (!$Grid->user_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_appointmentsgrid", function() {
     var options = { name: "x<?= $Grid->RowIndex ?>_user_id", selectId: "fjdh_appointmentsgrid_x<?= $Grid->RowIndex ?>_user_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_appointmentsgrid.lists.user_id?.lookupOptions.length) {
@@ -297,10 +331,11 @@ loadjs.ready("fjdh_appointmentsgrid", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_user_id" class="el_jdh_appointments_user_id">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_user_id" class="el_jdh_appointments_user_id">
 <span<?= $Grid->user_id->viewAttributes() ?>>
 <?= $Grid->user_id->getViewValue() ?></span>
 </span>
@@ -313,21 +348,21 @@ loadjs.ready("fjdh_appointmentsgrid", function() {
     <?php } ?>
     <?php if ($Grid->appointment_title->Visible) { // appointment_title ?>
         <td data-name="appointment_title"<?= $Grid->appointment_title->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_title" class="el_jdh_appointments_appointment_title">
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_appointment_title" class="el_jdh_appointments_appointment_title">
 <input type="<?= $Grid->appointment_title->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_appointment_title" id="x<?= $Grid->RowIndex ?>_appointment_title" data-table="jdh_appointments" data-field="x_appointment_title" value="<?= $Grid->appointment_title->EditValue ?>" size="30" maxlength="200" placeholder="<?= HtmlEncode($Grid->appointment_title->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->appointment_title->formatPattern()) ?>"<?= $Grid->appointment_title->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->appointment_title->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_appointments" data-field="x_appointment_title" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_appointment_title" id="o<?= $Grid->RowIndex ?>_appointment_title" value="<?= HtmlEncode($Grid->appointment_title->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_title" class="el_jdh_appointments_appointment_title">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_appointment_title" class="el_jdh_appointments_appointment_title">
 <input type="<?= $Grid->appointment_title->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_appointment_title" id="x<?= $Grid->RowIndex ?>_appointment_title" data-table="jdh_appointments" data-field="x_appointment_title" value="<?= $Grid->appointment_title->EditValue ?>" size="30" maxlength="200" placeholder="<?= HtmlEncode($Grid->appointment_title->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->appointment_title->formatPattern()) ?>"<?= $Grid->appointment_title->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->appointment_title->getErrorMessage() ?></div>
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_title" class="el_jdh_appointments_appointment_title">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_appointment_title" class="el_jdh_appointments_appointment_title">
 <span<?= $Grid->appointment_title->viewAttributes() ?>>
 <?= $Grid->appointment_title->getViewValue() ?></span>
 </span>
@@ -340,8 +375,8 @@ loadjs.ready("fjdh_appointmentsgrid", function() {
     <?php } ?>
     <?php if ($Grid->appointment_start_date->Visible) { // appointment_start_date ?>
         <td data-name="appointment_start_date"<?= $Grid->appointment_start_date->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_start_date" class="el_jdh_appointments_appointment_start_date">
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_appointment_start_date" class="el_jdh_appointments_appointment_start_date">
 <input type="<?= $Grid->appointment_start_date->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_appointment_start_date" id="x<?= $Grid->RowIndex ?>_appointment_start_date" data-table="jdh_appointments" data-field="x_appointment_start_date" value="<?= $Grid->appointment_start_date->EditValue ?>" placeholder="<?= HtmlEncode($Grid->appointment_start_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->appointment_start_date->formatPattern()) ?>"<?= $Grid->appointment_start_date->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->appointment_start_date->getErrorMessage() ?></div>
 <?php if (!$Grid->appointment_start_date->ReadOnly && !$Grid->appointment_start_date->Disabled && !isset($Grid->appointment_start_date->EditAttrs["readonly"]) && !isset($Grid->appointment_start_date->EditAttrs["disabled"])) { ?>
@@ -351,6 +386,8 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -361,24 +398,20 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("fjdh_appointmentsgrid", "x<?= $Grid->RowIndex ?>_appointment_start_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+    ew.createDateTimePicker("fjdh_appointmentsgrid", "x<?= $Grid->RowIndex ?>_appointment_start_date", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
 });
 </script>
 <?php } ?>
 </span>
 <input type="hidden" data-table="jdh_appointments" data-field="x_appointment_start_date" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_appointment_start_date" id="o<?= $Grid->RowIndex ?>_appointment_start_date" value="<?= HtmlEncode($Grid->appointment_start_date->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_start_date" class="el_jdh_appointments_appointment_start_date">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_appointment_start_date" class="el_jdh_appointments_appointment_start_date">
 <input type="<?= $Grid->appointment_start_date->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_appointment_start_date" id="x<?= $Grid->RowIndex ?>_appointment_start_date" data-table="jdh_appointments" data-field="x_appointment_start_date" value="<?= $Grid->appointment_start_date->EditValue ?>" placeholder="<?= HtmlEncode($Grid->appointment_start_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->appointment_start_date->formatPattern()) ?>"<?= $Grid->appointment_start_date->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->appointment_start_date->getErrorMessage() ?></div>
 <?php if (!$Grid->appointment_start_date->ReadOnly && !$Grid->appointment_start_date->Disabled && !isset($Grid->appointment_start_date->EditAttrs["readonly"]) && !isset($Grid->appointment_start_date->EditAttrs["disabled"])) { ?>
@@ -388,6 +421,8 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -398,23 +433,19 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("fjdh_appointmentsgrid", "x<?= $Grid->RowIndex ?>_appointment_start_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+    ew.createDateTimePicker("fjdh_appointmentsgrid", "x<?= $Grid->RowIndex ?>_appointment_start_date", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
 });
 </script>
 <?php } ?>
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_start_date" class="el_jdh_appointments_appointment_start_date">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_appointment_start_date" class="el_jdh_appointments_appointment_start_date">
 <span<?= $Grid->appointment_start_date->viewAttributes() ?>>
 <?= $Grid->appointment_start_date->getViewValue() ?></span>
 </span>
@@ -427,8 +458,8 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
     <?php } ?>
     <?php if ($Grid->appointment_end_date->Visible) { // appointment_end_date ?>
         <td data-name="appointment_end_date"<?= $Grid->appointment_end_date->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_end_date" class="el_jdh_appointments_appointment_end_date">
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_appointment_end_date" class="el_jdh_appointments_appointment_end_date">
 <input type="<?= $Grid->appointment_end_date->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_appointment_end_date" id="x<?= $Grid->RowIndex ?>_appointment_end_date" data-table="jdh_appointments" data-field="x_appointment_end_date" value="<?= $Grid->appointment_end_date->EditValue ?>" placeholder="<?= HtmlEncode($Grid->appointment_end_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->appointment_end_date->formatPattern()) ?>"<?= $Grid->appointment_end_date->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->appointment_end_date->getErrorMessage() ?></div>
 <?php if (!$Grid->appointment_end_date->ReadOnly && !$Grid->appointment_end_date->Disabled && !isset($Grid->appointment_end_date->EditAttrs["readonly"]) && !isset($Grid->appointment_end_date->EditAttrs["disabled"])) { ?>
@@ -438,6 +469,8 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -448,24 +481,20 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("fjdh_appointmentsgrid", "x<?= $Grid->RowIndex ?>_appointment_end_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+    ew.createDateTimePicker("fjdh_appointmentsgrid", "x<?= $Grid->RowIndex ?>_appointment_end_date", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
 });
 </script>
 <?php } ?>
 </span>
 <input type="hidden" data-table="jdh_appointments" data-field="x_appointment_end_date" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_appointment_end_date" id="o<?= $Grid->RowIndex ?>_appointment_end_date" value="<?= HtmlEncode($Grid->appointment_end_date->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_end_date" class="el_jdh_appointments_appointment_end_date">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_appointment_end_date" class="el_jdh_appointments_appointment_end_date">
 <input type="<?= $Grid->appointment_end_date->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_appointment_end_date" id="x<?= $Grid->RowIndex ?>_appointment_end_date" data-table="jdh_appointments" data-field="x_appointment_end_date" value="<?= $Grid->appointment_end_date->EditValue ?>" placeholder="<?= HtmlEncode($Grid->appointment_end_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->appointment_end_date->formatPattern()) ?>"<?= $Grid->appointment_end_date->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->appointment_end_date->getErrorMessage() ?></div>
 <?php if (!$Grid->appointment_end_date->ReadOnly && !$Grid->appointment_end_date->Disabled && !isset($Grid->appointment_end_date->EditAttrs["readonly"]) && !isset($Grid->appointment_end_date->EditAttrs["disabled"])) { ?>
@@ -475,6 +504,8 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -485,23 +516,19 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("fjdh_appointmentsgrid", "x<?= $Grid->RowIndex ?>_appointment_end_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+    ew.createDateTimePicker("fjdh_appointmentsgrid", "x<?= $Grid->RowIndex ?>_appointment_end_date", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
 });
 </script>
 <?php } ?>
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_end_date" class="el_jdh_appointments_appointment_end_date">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_appointment_end_date" class="el_jdh_appointments_appointment_end_date">
 <span<?= $Grid->appointment_end_date->viewAttributes() ?>>
 <?= $Grid->appointment_end_date->getViewValue() ?></span>
 </span>
@@ -514,8 +541,8 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
     <?php } ?>
     <?php if ($Grid->appointment_all_day->Visible) { // appointment_all_day ?>
         <td data-name="appointment_all_day"<?= $Grid->appointment_all_day->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
 <div class="form-check d-inline-block">
     <input type="checkbox" class="form-check-input<?= $Grid->appointment_all_day->isInvalidClass() ?>" data-table="jdh_appointments" data-field="x_appointment_all_day" data-boolean name="x<?= $Grid->RowIndex ?>_appointment_all_day" id="x<?= $Grid->RowIndex ?>_appointment_all_day" value="1"<?= ConvertToBool($Grid->appointment_all_day->CurrentValue) ? " checked" : "" ?><?= $Grid->appointment_all_day->editAttributes() ?>>
     <div class="invalid-feedback"><?= $Grid->appointment_all_day->getErrorMessage() ?></div>
@@ -523,21 +550,19 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
 </span>
 <input type="hidden" data-table="jdh_appointments" data-field="x_appointment_all_day" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_appointment_all_day" id="o<?= $Grid->RowIndex ?>_appointment_all_day" value="<?= HtmlEncode($Grid->appointment_all_day->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
 <div class="form-check d-inline-block">
     <input type="checkbox" class="form-check-input<?= $Grid->appointment_all_day->isInvalidClass() ?>" data-table="jdh_appointments" data-field="x_appointment_all_day" data-boolean name="x<?= $Grid->RowIndex ?>_appointment_all_day" id="x<?= $Grid->RowIndex ?>_appointment_all_day" value="1"<?= ConvertToBool($Grid->appointment_all_day->CurrentValue) ? " checked" : "" ?><?= $Grid->appointment_all_day->editAttributes() ?>>
     <div class="invalid-feedback"><?= $Grid->appointment_all_day->getErrorMessage() ?></div>
 </div>
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
 <span<?= $Grid->appointment_all_day->viewAttributes() ?>>
-<div class="form-check d-inline-block">
-    <input type="checkbox" id="x_appointment_all_day_<?= $Grid->RowCount ?>" class="form-check-input" value="<?= $Grid->appointment_all_day->getViewValue() ?>" disabled<?php if (ConvertToBool($Grid->appointment_all_day->CurrentValue)) { ?> checked<?php } ?>>
-    <label class="form-check-label" for="x_appointment_all_day_<?= $Grid->RowCount ?>"></label>
-</div></span>
+<i class="fa-regular fa-square<?php if (ConvertToBool($Grid->appointment_all_day->CurrentValue)) { ?>-check<?php } ?> ew-icon ew-boolean"></i>
+</span>
 </span>
 <?php if ($Grid->isConfirm()) { ?>
 <input type="hidden" data-table="jdh_appointments" data-field="x_appointment_all_day" data-hidden="1" name="fjdh_appointmentsgrid$x<?= $Grid->RowIndex ?>_appointment_all_day" id="fjdh_appointmentsgrid$x<?= $Grid->RowIndex ?>_appointment_all_day" value="<?= HtmlEncode($Grid->appointment_all_day->FormValue) ?>">
@@ -548,8 +573,8 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
     <?php } ?>
     <?php if ($Grid->submission_date->Visible) { // submission_date ?>
         <td data-name="submission_date"<?= $Grid->submission_date->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_submission_date" class="el_jdh_appointments_submission_date">
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_submission_date" class="el_jdh_appointments_submission_date">
 <input type="<?= $Grid->submission_date->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_submission_date" id="x<?= $Grid->RowIndex ?>_submission_date" data-table="jdh_appointments" data-field="x_submission_date" value="<?= $Grid->submission_date->EditValue ?>" placeholder="<?= HtmlEncode($Grid->submission_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->submission_date->formatPattern()) ?>"<?= $Grid->submission_date->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->submission_date->getErrorMessage() ?></div>
 <?php if (!$Grid->submission_date->ReadOnly && !$Grid->submission_date->Disabled && !isset($Grid->submission_date->EditAttrs["readonly"]) && !isset($Grid->submission_date->EditAttrs["disabled"])) { ?>
@@ -559,6 +584,8 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -569,24 +596,20 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("fjdh_appointmentsgrid", "x<?= $Grid->RowIndex ?>_submission_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+    ew.createDateTimePicker("fjdh_appointmentsgrid", "x<?= $Grid->RowIndex ?>_submission_date", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
 });
 </script>
 <?php } ?>
 </span>
 <input type="hidden" data-table="jdh_appointments" data-field="x_submission_date" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_submission_date" id="o<?= $Grid->RowIndex ?>_submission_date" value="<?= HtmlEncode($Grid->submission_date->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_submission_date" class="el_jdh_appointments_submission_date">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_submission_date" class="el_jdh_appointments_submission_date">
 <input type="<?= $Grid->submission_date->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_submission_date" id="x<?= $Grid->RowIndex ?>_submission_date" data-table="jdh_appointments" data-field="x_submission_date" value="<?= $Grid->submission_date->EditValue ?>" placeholder="<?= HtmlEncode($Grid->submission_date->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->submission_date->formatPattern()) ?>"<?= $Grid->submission_date->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->submission_date->getErrorMessage() ?></div>
 <?php if (!$Grid->submission_date->ReadOnly && !$Grid->submission_date->Disabled && !isset($Grid->submission_date->EditAttrs["readonly"]) && !isset($Grid->submission_date->EditAttrs["disabled"])) { ?>
@@ -596,6 +619,8 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
         options = {
             localization: {
                 locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                hourCycle: format.match(/H/) ? "h24" : "h12",
+                format,
                 ...ew.language.phrase("datetimepicker")
             },
             display: {
@@ -606,23 +631,19 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
                 components: {
                     hours: !!format.match(/h/i),
                     minutes: !!format.match(/m/),
-                    seconds: !!format.match(/s/i),
-                    useTwentyfourHour: !!format.match(/H/)
+                    seconds: !!format.match(/s/i)
                 },
-                theme: ew.isDark() ? "dark" : "auto"
-            },
-            meta: {
-                format
+                theme: ew.getPreferredTheme()
             }
         };
-    ew.createDateTimePicker("fjdh_appointmentsgrid", "x<?= $Grid->RowIndex ?>_submission_date", jQuery.extend(true, {"useCurrent":false,"display":{"sideBySide":false}}, options));
+    ew.createDateTimePicker("fjdh_appointmentsgrid", "x<?= $Grid->RowIndex ?>_submission_date", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
 });
 </script>
 <?php } ?>
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_appointments_submission_date" class="el_jdh_appointments_submission_date">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_appointments_submission_date" class="el_jdh_appointments_submission_date">
 <span<?= $Grid->submission_date->viewAttributes() ?>>
 <?= $Grid->submission_date->getViewValue() ?></span>
 </span>
@@ -638,23 +659,15 @@ loadjs.ready(["fjdh_appointmentsgrid", "datetimepicker"], function () {
 $Grid->ListOptions->render("body", "right", $Grid->RowCount);
 ?>
     </tr>
-<?php if ($Grid->RowType == ROWTYPE_ADD || $Grid->RowType == ROWTYPE_EDIT) { ?>
+<?php if ($Grid->RowType == RowType::ADD || $Grid->RowType == RowType::EDIT) { ?>
 <script data-rowindex="<?= $Grid->RowIndex ?>">
-loadjs.ready(["fjdh_appointmentsgrid","load"], () => fjdh_appointmentsgrid.updateLists(<?= $Grid->RowIndex ?><?= $Grid->RowIndex === '$rowindex$' ? ", true" : "" ?>));
+loadjs.ready(["fjdh_appointmentsgrid","load"], () => fjdh_appointmentsgrid.updateLists(<?= $Grid->RowIndex ?><?= $Grid->isAdd() || $Grid->isEdit() || $Grid->isCopy() || $Grid->RowIndex === '$rowindex$' ? ", true" : "" ?>));
 </script>
 <?php } ?>
 <?php
     }
     } // End delete row checking
-    if (
-        $Grid->Recordset &&
-        !$Grid->Recordset->EOF &&
-        $Grid->RowIndex !== '$rowindex$' &&
-        (!$Grid->isGridAdd() || $Grid->CurrentMode == "copy") &&
-        (!(($Grid->isCopy() || $Grid->isAdd()) && $Grid->RowIndex == 0))
-    ) {
-        $Grid->Recordset->moveNext();
-    }
+
     // Reset for template row
     if ($Grid->RowIndex === '$rowindex$') {
         $Grid->RowIndex = 0;
@@ -682,10 +695,8 @@ loadjs.ready(["fjdh_appointmentsgrid","load"], () => fjdh_appointmentsgrid.updat
 <input type="hidden" name="detailpage" value="fjdh_appointmentsgrid">
 </div><!-- /.ew-list-form -->
 <?php
-// Close recordset
-if ($Grid->Recordset) {
-    $Grid->Recordset->close();
-}
+// Close result set
+$Grid->Recordset?->free();
 ?>
 <?php if ($Grid->ShowOtherOptions) { ?>
 <div class="card-footer ew-grid-lower-panel">
@@ -698,6 +709,9 @@ if ($Grid->Recordset) {
 <?php $Grid->OtherOptions->render("body") ?>
 </div>
 <?php } ?>
+</div>
+<div id="ew-footer-options">
+<?php $Grid->FooterOptions?->render("body") ?>
 </div>
 </main>
 <?php if (!$Grid->isExport()) { ?>

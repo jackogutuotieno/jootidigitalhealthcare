@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -107,7 +113,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -117,8 +123,21 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->id->setVisibility();
+        $this->medicine_id->setVisibility();
+        $this->units_available->setVisibility();
+        $this->expiry_date->setVisibility();
+        $this->status->setVisibility();
+        $this->submittedby_user_id->Visible = false;
+        $this->date_created->Visible = false;
+        $this->date_updated->Visible = false;
     }
 
     // Constructor
@@ -136,10 +155,10 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_medicine_stock)
-        if (!isset($GLOBALS["jdh_medicine_stock"]) || get_class($GLOBALS["jdh_medicine_stock"]) == PROJECT_NAMESPACE . "jdh_medicine_stock") {
+        if (!isset($GLOBALS["jdh_medicine_stock"]) || $GLOBALS["jdh_medicine_stock"]::class == PROJECT_NAMESPACE . "jdh_medicine_stock") {
             $GLOBALS["jdh_medicine_stock"] = &$this;
         }
 
@@ -149,7 +168,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -165,7 +184,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -214,13 +233,11 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -238,7 +255,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -250,17 +267,25 @@ class JdhMedicineStockEdit extends JdhMedicineStock
                 ob_end_clean();
             }
 
-            // Handle modal response (Assume return to modal for simplicity)
+            // Handle modal response
             if ($this->IsModal) { // Show as modal
-                $result = ["url" => GetUrl($url), "modal" => "1"];
                 $pageName = GetPageName($url);
-                if ($pageName != $this->getListUrl()) { // Not List page => View page
-                    $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhmedicinestockview"; // If View page, no primary button
-                } else { // List page
-                    // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
-                    $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
-                    $this->clearFailureMessage();
+                $result = ["url" => GetUrl($url), "modal" => "1"];  // Assume return to modal for simplicity
+                if (
+                    SameString($pageName, GetPageName($this->getListUrl())) ||
+                    SameString($pageName, GetPageName($this->getViewUrl())) ||
+                    SameString($pageName, GetPageName(CurrentMasterTable()?->getViewUrl() ?? ""))
+                ) { // List / View / Master View page
+                    if (!SameString($pageName, GetPageName($this->getListUrl()))) { // Not List page
+                        $result["caption"] = $this->getModalCaption($pageName);
+                        $result["view"] = SameString($pageName, "jdhmedicinestockview"); // If View page, no primary button
+                    } else { // List page
+                        $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
+                        $this->clearFailureMessage();
+                    }
+                } else { // Other pages (add messages and then clear messages)
+                    $result = array_merge($this->getMessages(), ["modal" => "1"]);
+                    $this->clearMessages();
                 }
                 WriteJson($result);
             } else {
@@ -271,20 +296,19 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -311,7 +335,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -364,44 +388,47 @@ class JdhMedicineStockEdit extends JdhMedicineStock
     }
 
     // Lookup data
-    public function lookup($ar = null)
+    public function lookup(array $req = [], bool $response = true)
     {
         global $Language, $Security;
 
         // Get lookup object
-        $fieldName = $ar["field"] ?? Post("field");
-        $lookup = $this->Fields[$fieldName]->Lookup;
-        $name = $ar["name"] ?? Post("name");
-        $isQuery = ContainsString($name, "query_builder_rule");
-        if ($isQuery) {
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
             $lookup->FilterFields = []; // Skip parent fields if any
         }
 
         // Get lookup parameters
-        $lookupType = $ar["ajax"] ?? Post("ajax", "unknown");
+        $lookupType = $req["ajax"] ?? "unknown";
         $pageSize = -1;
         $offset = -1;
         $searchValue = "";
         if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
-            $searchValue = $ar["q"] ?? Param("q") ?? $ar["sv"] ?? Post("sv", "");
-            $pageSize = $ar["n"] ?? Param("n") ?? $ar["recperpage"] ?? Post("recperpage", 10);
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
         } elseif (SameText($lookupType, "autosuggest")) {
-            $searchValue = $ar["q"] ?? Param("q", "");
-            $pageSize = $ar["n"] ?? Param("n", -1);
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
             $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
             if ($pageSize <= 0) {
                 $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
             }
         }
-        $start = $ar["start"] ?? Param("start", -1);
+        $start = $req["start"] ?? -1;
         $start = is_numeric($start) ? (int)$start : -1;
-        $page = $ar["page"] ?? Param("page", -1);
+        $page = $req["page"] ?? -1;
         $page = is_numeric($page) ? (int)$page : -1;
         $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
-        $userSelect = Decrypt($ar["s"] ?? Post("s", ""));
-        $userFilter = Decrypt($ar["f"] ?? Post("f", ""));
-        $userOrderBy = Decrypt($ar["o"] ?? Post("o", ""));
-        $keys = $ar["keys"] ?? Post("keys");
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
         $lookup->LookupType = $lookupType; // Lookup type
         $lookup->FilterValues = []; // Clear filter values first
         if ($keys !== null) { // Selected records from modal
@@ -412,11 +439,11 @@ class JdhMedicineStockEdit extends JdhMedicineStock
             $lookup->FilterValues[] = $keys; // Lookup values
             $pageSize = -1; // Show all records
         } else { // Lookup values
-            $lookup->FilterValues[] = $ar["v0"] ?? $ar["lookupValue"] ?? Post("v0", Post("lookupValue", ""));
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
         }
         $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
         for ($i = 1; $i <= $cnt; $i++) {
-            $lookup->FilterValues[] = $ar["v" . $i] ?? Post("v" . $i, "");
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
         }
         $lookup->SearchValue = $searchValue;
         $lookup->PageSize = $pageSize;
@@ -430,7 +457,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         if ($userOrderBy != "") {
             $lookup->UserOrderBy = $userOrderBy;
         }
-        return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
 
     // Properties
@@ -454,7 +481,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
+        global $ExportType, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
 
         // Is modal
         $this->IsModal = ConvertToBool(Param("modal"));
@@ -466,17 +493,15 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
+
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->id->setVisibility();
-        $this->medicine_id->setVisibility();
-        $this->units_available->setVisibility();
-        $this->expiry_date->setVisibility();
-        $this->status->setVisibility();
-        $this->submittedby_user_id->Visible = false;
-        $this->date_created->Visible = false;
-        $this->date_updated->Visible = false;
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -484,7 +509,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         }
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -538,7 +563,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
             $this->OldKey = $this->getKey(true); // Get from CurrentValue
             $postBack = true;
         } else {
-            if (Post("action") !== null) {
+            if (Post("action", "") !== "") {
                 $this->CurrentAction = Post("action"); // Get action code
                 if (!$this->isShow()) { // Not reload record, handle as postback
                     $postBack = true;
@@ -559,7 +584,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
                 }
             }
 
-            // Load recordset
+            // Load result set
             if ($this->isShow()) {
                     // Load current record
                     $loaded = $this->loadRow();
@@ -603,19 +628,18 @@ class JdhMedicineStockEdit extends JdhMedicineStock
                     $returnUrl = $this->addMasterUrl($returnUrl); // List page, return to List page with correct master key if necessary
                 }
                 $this->SendEmail = true; // Send email on update success
-                if ($this->editRow()) {
-                    // Do not return Json for UseAjaxActions
-                    if ($this->IsModal && $this->UseAjaxActions) {
-                        $this->IsModal = false;
+                if ($this->editRow()) { // Update record based on key
+                    if ($this->getSuccessMessage() == "") {
+                        $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Update success
                     }
 
                     // Handle UseAjaxActions with return page
-                    if ($this->UseAjaxActions && GetPageName($returnUrl) != "jdhmedicinestocklist") {
-                        Container("flash")->addMessage("Return-Url", $returnUrl); // Save return URL
-                        $returnUrl = "jdhmedicinestocklist"; // Return list page content
-                    }
-                    if ($this->getSuccessMessage() == "") {
-                        $this->setSuccessMessage($Language->phrase("UpdateSuccess")); // Update success
+                    if ($this->IsModal && $this->UseAjaxActions) {
+                        $this->IsModal = false;
+                        if (GetPageName($returnUrl) != "jdhmedicinestocklist") {
+                            Container("app.flash")->addMessage("Return-Url", $returnUrl); // Save return URL
+                            $returnUrl = "jdhmedicinestocklist"; // Return list page content
+                        }
                     }
                     if (IsJsonResponse()) {
                         $this->terminate(true);
@@ -627,8 +651,8 @@ class JdhMedicineStockEdit extends JdhMedicineStock
                 } elseif (IsApi()) { // API request, return
                     $this->terminate();
                     return;
-                } elseif ($this->UseAjaxActions) { // Return JSON error message
-                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                } elseif ($this->IsModal && $this->UseAjaxActions) { // Return JSON error message
+                    WriteJson(["success" => false, "validation" => $this->getValidationErrors(), "error" => $this->getFailureMessage()]);
                     $this->clearFailureMessage();
                     $this->terminate();
                     return;
@@ -645,7 +669,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         $this->setupBreadcrumb();
 
         // Render the record
-        $this->RowType = ROWTYPE_EDIT; // Render as Edit
+        $this->RowType = RowType::EDIT; // Render as Edit
         $this->resetAttributes();
         $this->renderRow();
 
@@ -658,7 +682,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -781,23 +805,14 @@ class JdhMedicineStockEdit extends JdhMedicineStock
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -835,8 +850,8 @@ class JdhMedicineStockEdit extends JdhMedicineStock
             $this->CurrentFilter = $this->getRecordFilter();
             $sql = $this->getCurrentSql();
             $conn = $this->getConnection();
-            $rs = LoadRecordset($sql, $conn);
-            if ($rs && ($row = $rs->fields)) {
+            $rs = ExecuteQuery($sql, $conn);
+            if ($row = $rs->fetch()) {
                 $this->loadRowValues($row); // Load row values
                 return $row;
             }
@@ -882,7 +897,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         $this->date_updated->RowCssClass = "row";
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // id
             $this->id->ViewValue = $this->id->CurrentValue;
 
@@ -891,11 +906,11 @@ class JdhMedicineStockEdit extends JdhMedicineStock
             if ($curVal != "") {
                 $this->medicine_id->ViewValue = $this->medicine_id->lookupCacheOption($curVal);
                 if ($this->medicine_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->medicine_id->Lookup->getTable()->Fields["id"]->searchExpression(), "=", $curVal, $this->medicine_id->Lookup->getTable()->Fields["id"]->searchDataType(), "");
                     $sqlWrk = $this->medicine_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
+                    $config->setResultCache($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
@@ -946,7 +961,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
 
             // status
             $this->status->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_EDIT) {
+        } elseif ($this->RowType == RowType::EDIT) {
             // id
             $this->id->setupEditAttributes();
             $this->id->EditValue = $this->id->CurrentValue;
@@ -957,7 +972,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
             if ($curVal != "") {
                 $this->medicine_id->ViewValue = $this->medicine_id->lookupCacheOption($curVal);
             } else {
-                $this->medicine_id->ViewValue = $this->medicine_id->Lookup !== null && is_array($this->medicine_id->lookupOptions()) ? $curVal : null;
+                $this->medicine_id->ViewValue = $this->medicine_id->Lookup !== null && is_array($this->medicine_id->lookupOptions()) && count($this->medicine_id->lookupOptions()) > 0 ? $curVal : null;
             }
             if ($this->medicine_id->ViewValue !== null) { // Load from cache
                 $this->medicine_id->EditValue = array_values($this->medicine_id->lookupOptions());
@@ -965,12 +980,12 @@ class JdhMedicineStockEdit extends JdhMedicineStock
                 if ($curVal == "") {
                     $filterWrk = "0=1";
                 } else {
-                    $filterWrk = SearchFilter("`id`", "=", $this->medicine_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->medicine_id->Lookup->getTable()->Fields["id"]->searchExpression(), "=", $this->medicine_id->CurrentValue, $this->medicine_id->Lookup->getTable()->Fields["id"]->searchDataType(), "");
                 }
                 $sqlWrk = $this->medicine_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
+                $config->setResultCache($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 $arwrk = $rswrk;
@@ -980,7 +995,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
 
             // units_available
             $this->units_available->setupEditAttributes();
-            $this->units_available->EditValue = HtmlEncode($this->units_available->CurrentValue);
+            $this->units_available->EditValue = $this->units_available->CurrentValue;
             $this->units_available->PlaceHolder = RemoveHtml($this->units_available->caption());
             if (strval($this->units_available->EditValue) != "" && is_numeric($this->units_available->EditValue)) {
                 $this->units_available->EditValue = FormatNumber($this->units_available->EditValue, null);
@@ -1013,12 +1028,12 @@ class JdhMedicineStockEdit extends JdhMedicineStock
             // status
             $this->status->HrefValue = "";
         }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+        if ($this->RowType == RowType::ADD || $this->RowType == RowType::EDIT || $this->RowType == RowType::SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -1033,37 +1048,37 @@ class JdhMedicineStockEdit extends JdhMedicineStock
             return true;
         }
         $validateForm = true;
-        if ($this->id->Required) {
-            if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
-                $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
+            if ($this->id->Visible && $this->id->Required) {
+                if (!$this->id->IsDetailKey && EmptyValue($this->id->FormValue)) {
+                    $this->id->addErrorMessage(str_replace("%s", $this->id->caption(), $this->id->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->medicine_id->Required) {
-            if (!$this->medicine_id->IsDetailKey && EmptyValue($this->medicine_id->FormValue)) {
-                $this->medicine_id->addErrorMessage(str_replace("%s", $this->medicine_id->caption(), $this->medicine_id->RequiredErrorMessage));
+            if ($this->medicine_id->Visible && $this->medicine_id->Required) {
+                if (!$this->medicine_id->IsDetailKey && EmptyValue($this->medicine_id->FormValue)) {
+                    $this->medicine_id->addErrorMessage(str_replace("%s", $this->medicine_id->caption(), $this->medicine_id->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->units_available->Required) {
-            if (!$this->units_available->IsDetailKey && EmptyValue($this->units_available->FormValue)) {
-                $this->units_available->addErrorMessage(str_replace("%s", $this->units_available->caption(), $this->units_available->RequiredErrorMessage));
+            if ($this->units_available->Visible && $this->units_available->Required) {
+                if (!$this->units_available->IsDetailKey && EmptyValue($this->units_available->FormValue)) {
+                    $this->units_available->addErrorMessage(str_replace("%s", $this->units_available->caption(), $this->units_available->RequiredErrorMessage));
+                }
             }
-        }
-        if (!CheckInteger($this->units_available->FormValue)) {
-            $this->units_available->addErrorMessage($this->units_available->getErrorMessage(false));
-        }
-        if ($this->expiry_date->Required) {
-            if (!$this->expiry_date->IsDetailKey && EmptyValue($this->expiry_date->FormValue)) {
-                $this->expiry_date->addErrorMessage(str_replace("%s", $this->expiry_date->caption(), $this->expiry_date->RequiredErrorMessage));
+            if (!CheckInteger($this->units_available->FormValue)) {
+                $this->units_available->addErrorMessage($this->units_available->getErrorMessage(false));
             }
-        }
-        if (!CheckDate($this->expiry_date->FormValue, $this->expiry_date->formatPattern())) {
-            $this->expiry_date->addErrorMessage($this->expiry_date->getErrorMessage(false));
-        }
-        if ($this->status->Required) {
-            if (!$this->status->IsDetailKey && EmptyValue($this->status->FormValue)) {
-                $this->status->addErrorMessage(str_replace("%s", $this->status->caption(), $this->status->RequiredErrorMessage));
+            if ($this->expiry_date->Visible && $this->expiry_date->Required) {
+                if (!$this->expiry_date->IsDetailKey && EmptyValue($this->expiry_date->FormValue)) {
+                    $this->expiry_date->addErrorMessage(str_replace("%s", $this->expiry_date->caption(), $this->expiry_date->RequiredErrorMessage));
+                }
             }
-        }
+            if (!CheckDate($this->expiry_date->FormValue, $this->expiry_date->formatPattern())) {
+                $this->expiry_date->addErrorMessage($this->expiry_date->getErrorMessage(false));
+            }
+            if ($this->status->Visible && $this->status->Required) {
+                if (!$this->status->IsDetailKey && EmptyValue($this->status->FormValue)) {
+                    $this->status->addErrorMessage(str_replace("%s", $this->status->caption(), $this->status->RequiredErrorMessage));
+                }
+            }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -1093,24 +1108,12 @@ class JdhMedicineStockEdit extends JdhMedicineStock
             $this->setFailureMessage($Language->phrase("NoRecord")); // Set no record message
             return false; // Update Failed
         } else {
-            // Save old values
+            // Load old values
             $this->loadDbValues($rsold);
         }
 
-        // Set new row
-        $rsnew = [];
-
-        // medicine_id
-        $this->medicine_id->setDbValueDef($rsnew, $this->medicine_id->CurrentValue, 0, $this->medicine_id->ReadOnly);
-
-        // units_available
-        $this->units_available->setDbValueDef($rsnew, $this->units_available->CurrentValue, 0, $this->units_available->ReadOnly);
-
-        // expiry_date
-        $this->expiry_date->setDbValueDef($rsnew, UnFormatDateTime($this->expiry_date->CurrentValue, $this->expiry_date->formatPattern()), CurrentDate(), $this->expiry_date->ReadOnly);
-
-        // status
-        $this->status->setDbValueDef($rsnew, $this->status->CurrentValue, "", $this->status->ReadOnly);
+        // Get new row
+        $rsnew = $this->getEditRow($rsold);
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -1160,6 +1163,50 @@ class JdhMedicineStockEdit extends JdhMedicineStock
         return $editRow;
     }
 
+    /**
+     * Get edit row
+     *
+     * @return array
+     */
+    protected function getEditRow($rsold)
+    {
+        global $Security;
+        $rsnew = [];
+
+        // medicine_id
+        $this->medicine_id->setDbValueDef($rsnew, $this->medicine_id->CurrentValue, $this->medicine_id->ReadOnly);
+
+        // units_available
+        $this->units_available->setDbValueDef($rsnew, $this->units_available->CurrentValue, $this->units_available->ReadOnly);
+
+        // expiry_date
+        $this->expiry_date->setDbValueDef($rsnew, UnFormatDateTime($this->expiry_date->CurrentValue, $this->expiry_date->formatPattern()), $this->expiry_date->ReadOnly);
+
+        // status
+        $this->status->setDbValueDef($rsnew, $this->status->CurrentValue, $this->status->ReadOnly);
+        return $rsnew;
+    }
+
+    /**
+     * Restore edit form from row
+     * @param array $row Row
+     */
+    protected function restoreEditFormFromRow($row)
+    {
+        if (isset($row['medicine_id'])) { // medicine_id
+            $this->medicine_id->CurrentValue = $row['medicine_id'];
+        }
+        if (isset($row['units_available'])) { // units_available
+            $this->units_available->CurrentValue = $row['units_available'];
+        }
+        if (isset($row['expiry_date'])) { // expiry_date
+            $this->expiry_date->CurrentValue = $row['expiry_date'];
+        }
+        if (isset($row['status'])) { // status
+            $this->status->CurrentValue = $row['status'];
+        }
+    }
+
     // Show link optionally based on User ID
     protected function showOptionLink($id = "")
     {
@@ -1184,7 +1231,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -1205,7 +1252,7 @@ class JdhMedicineStockEdit extends JdhMedicineStock
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -1282,11 +1329,11 @@ class JdhMedicineStockEdit extends JdhMedicineStock
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

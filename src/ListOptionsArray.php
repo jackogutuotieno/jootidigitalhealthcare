@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * ListOptionsArray class (Array of ListOptions)
@@ -27,5 +27,16 @@ class ListOptionsArray extends \ArrayObject
         foreach ($this as $options) {
             $options->hideAllOptions();
         }
+    }
+
+    // Visible
+    public function visible()
+    {
+        foreach ($this as $options) {
+            if ($options->visible()) {
+                return true;
+            }
+        }
+        return false;
     }
 }

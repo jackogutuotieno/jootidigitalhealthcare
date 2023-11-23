@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhServiceSubcategoryAdd = &$Page;
@@ -57,7 +57,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_service_subcategoryadd" id="fjdh_service_subcategoryadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_service_subcategoryadd" id="fjdh_service_subcategoryadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -79,7 +79,9 @@ $Page->showMessage();
         id="x_category_id"
         name="x_category_id"
         class="form-select ew-select<?= $Page->category_id->isInvalidClass() ?>"
+        <?php if (!$Page->category_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_service_subcategoryadd_x_category_id"
+        <?php } ?>
         data-table="jdh_service_subcategory"
         data-field="x_category_id"
         data-value-separator="<?= $Page->category_id->displayValueSeparatorAttribute() ?>"
@@ -90,10 +92,13 @@ $Page->showMessage();
     <?= $Page->category_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->category_id->getErrorMessage() ?></div>
 <?= $Page->category_id->Lookup->getParamTag($Page, "p_x_category_id") ?>
+<?php if (!$Page->category_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_service_subcategoryadd", function() {
     var options = { name: "x_category_id", selectId: "fjdh_service_subcategoryadd_x_category_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_service_subcategoryadd.lists.category_id?.lookupOptions.length) {
@@ -106,6 +111,7 @@ loadjs.ready("fjdh_service_subcategoryadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhInsuranceDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_insurancedelete" id="fjdh_insurancedelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_insurancedelete" id="fjdh_insurancedelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -77,16 +77,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -94,7 +94,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->insurance_id->Visible) { // insurance_id ?>
         <td<?= $Page->insurance_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_insurance_id" class="el_jdh_insurance_insurance_id">
+<span id="">
 <span<?= $Page->insurance_id->viewAttributes() ?>>
 <?= $Page->insurance_id->getViewValue() ?></span>
 </span>
@@ -102,7 +102,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->insurance_name->Visible) { // insurance_name ?>
         <td<?= $Page->insurance_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_insurance_name" class="el_jdh_insurance_insurance_name">
+<span id="">
 <span<?= $Page->insurance_name->viewAttributes() ?>>
 <?= $Page->insurance_name->getViewValue() ?></span>
 </span>
@@ -110,7 +110,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->insurance_contact_person->Visible) { // insurance_contact_person ?>
         <td<?= $Page->insurance_contact_person->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_insurance_contact_person" class="el_jdh_insurance_insurance_contact_person">
+<span id="">
 <span<?= $Page->insurance_contact_person->viewAttributes() ?>>
 <?= $Page->insurance_contact_person->getViewValue() ?></span>
 </span>
@@ -118,7 +118,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->insurance_contact_person_phone->Visible) { // insurance_contact_person_phone ?>
         <td<?= $Page->insurance_contact_person_phone->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_insurance_contact_person_phone" class="el_jdh_insurance_insurance_contact_person_phone">
+<span id="">
 <span<?= $Page->insurance_contact_person_phone->viewAttributes() ?>>
 <?php if (!EmptyString($Page->insurance_contact_person_phone->getViewValue()) && $Page->insurance_contact_person_phone->linkAttributes() != "") { ?>
 <a<?= $Page->insurance_contact_person_phone->linkAttributes() ?>><?= $Page->insurance_contact_person_phone->getViewValue() ?></a>
@@ -131,7 +131,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->insurance_contact_person_email->Visible) { // insurance_contact_person_email ?>
         <td<?= $Page->insurance_contact_person_email->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_insurance_contact_person_email" class="el_jdh_insurance_insurance_contact_person_email">
+<span id="">
 <span<?= $Page->insurance_contact_person_email->viewAttributes() ?>>
 <?php if (!EmptyString($Page->insurance_contact_person_email->getViewValue()) && $Page->insurance_contact_person_email->linkAttributes() != "") { ?>
 <a<?= $Page->insurance_contact_person_email->linkAttributes() ?>><?= $Page->insurance_contact_person_email->getViewValue() ?></a>
@@ -144,7 +144,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <td<?= $Page->submission_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_submission_date" class="el_jdh_insurance_submission_date">
+<span id="">
 <span<?= $Page->submission_date->viewAttributes() ?>>
 <?= $Page->submission_date->getViewValue() ?></span>
 </span>
@@ -152,7 +152,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->date_updated->Visible) { // date_updated ?>
         <td<?= $Page->date_updated->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_date_updated" class="el_jdh_insurance_date_updated">
+<span id="">
 <span<?= $Page->date_updated->viewAttributes() ?>>
 <?= $Page->date_updated->getViewValue() ?></span>
 </span>
@@ -160,9 +160,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

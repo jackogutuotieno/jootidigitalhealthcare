@@ -1,12 +1,15 @@
+@use 'sass:color';
+
 @import 'bootstrap/functions'; //***
 @import 'variables';
 
 //***
-$td-light: #fff !default;
+$td-light: $dropdown-bg !default; //***
 $td-widget-background: $td-light !default;
-$td-font-color: #000 !default;
+$td-font-color: $dropdown-color !default; //***
 $td-timepicker-font-size: 1.2em !default;
 $td-active-bg: #0d6efd !default;
+$td-range-bg: color.scale($td-active-bg, $lightness: -40%);
 $td-active-color: $td-light !default;
 $td-active-border-color: $td-light;
 $td-border-radius: 999px !default;
@@ -19,10 +22,11 @@ $td-primary-border-color: $td-light !default;
 $td-text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25) !default;
 $td-dow-color: rgba(0, 0, 0, .50);
 
-$td-dark: #1b1b1b !default;
+$td-dark: $dropdown-dark-bg !default; //***
 $td-dark-widget-background: $td-dark !default;
-$td-dark-font-color: #e3e3e3;
+$td-dark-font-color: $dropdown-dark-color !default; //***
 $td-dark-active-bg: #4db2ff !default;
+$td-dark-range-bg: color.scale($td-dark-active-bg, $lightness: -40%);
 $td-dark-active-color: #fff !default;
 $td-dark-active-border-color: $td-dark;
 $td-dark-btn-hover-bg: rgb(35, 38, 39) !default;
@@ -56,7 +60,8 @@ $td-dark-dow-color: rgba(232, 230, 227, .50);
   background-color: $td-widget-background;
   border: 1px solid $popover-border-color; //***
   z-index: 9999;
-  //*** box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 4px 5px 0 rgba(0, 0, 0, 0.14),
+    0 1px 10px 0 rgba(0, 0, 0, 0.12);
 
   &.calendarWeeks {
     width: 21rem;
@@ -81,7 +86,7 @@ $td-dark-dow-color: rgba(232, 230, 227, .50);
       cursor: not-allowed;
     }
   }
-  
+
   //popper
   .arrow {
     display: none;
@@ -91,6 +96,13 @@ $td-dark-dow-color: rgba(232, 230, 227, .50);
 
   &.show {
     display: block;
+    &.date-container {
+      min-height: 315px;
+    }
+
+    &.time-container {
+      min-height: 217px;
+    }
   }
 
   .td-collapse {
@@ -190,6 +202,24 @@ $td-dark-dow-color: rgba(232, 230, 227, .50);
     grid-template-areas: 'a a a a a a a';
     grid-auto-rows: 40px;
     grid-auto-columns: calc(100% / 7);
+
+    .range-in {
+      @extend .active;
+      background-color: $td-range-bg !important;
+      border: none;
+      border-radius: 0 !important;
+      box-shadow: -5px 0 0 $td-range-bg, 5px 0 0 $td-range-bg;
+    }
+
+    .range-end {
+      @extend .active;
+      border-radius: 0 50px 50px 0 !important;
+    }
+
+    .range-start {
+      @extend .active;
+      border-radius: 50px 0 0 50px !important;
+    }
 
     & .dow {
       align-items: center;
@@ -409,7 +439,7 @@ $td-dark-dow-color: rgba(232, 230, 227, .50);
   &.dark {
     color: $td-dark-font-color;
     background-color: $td-dark-widget-background;
-    
+
     [data-action] {
       &.disabled,
       &.disabled:hover {
@@ -429,7 +459,12 @@ $td-dark-dow-color: rgba(232, 230, 227, .50);
       & .dow {
         color: $td-dark-dow-color;
       }
-      
+
+      .range-in {
+        background-color: $td-dark-range-bg !important;
+        box-shadow: -5px 0 0 $td-dark-range-bg, 5px 0 0 $td-dark-range-bg;
+      }
+
       & .cw {
         color: $td-dark-alternate-color;
       }

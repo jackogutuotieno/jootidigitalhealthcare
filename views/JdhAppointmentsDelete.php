@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhAppointmentsDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_appointmentsdelete" id="fjdh_appointmentsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_appointmentsdelete" id="fjdh_appointmentsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -77,16 +77,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -94,7 +94,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td<?= $Page->patient_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_patient_id" class="el_jdh_appointments_patient_id">
+<span id="">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
@@ -102,7 +102,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->user_id->Visible) { // user_id ?>
         <td<?= $Page->user_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_user_id" class="el_jdh_appointments_user_id">
+<span id="">
 <span<?= $Page->user_id->viewAttributes() ?>>
 <?= $Page->user_id->getViewValue() ?></span>
 </span>
@@ -110,7 +110,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->appointment_title->Visible) { // appointment_title ?>
         <td<?= $Page->appointment_title->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_title" class="el_jdh_appointments_appointment_title">
+<span id="">
 <span<?= $Page->appointment_title->viewAttributes() ?>>
 <?= $Page->appointment_title->getViewValue() ?></span>
 </span>
@@ -118,7 +118,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->appointment_start_date->Visible) { // appointment_start_date ?>
         <td<?= $Page->appointment_start_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_start_date" class="el_jdh_appointments_appointment_start_date">
+<span id="">
 <span<?= $Page->appointment_start_date->viewAttributes() ?>>
 <?= $Page->appointment_start_date->getViewValue() ?></span>
 </span>
@@ -126,7 +126,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->appointment_end_date->Visible) { // appointment_end_date ?>
         <td<?= $Page->appointment_end_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_end_date" class="el_jdh_appointments_appointment_end_date">
+<span id="">
 <span<?= $Page->appointment_end_date->viewAttributes() ?>>
 <?= $Page->appointment_end_date->getViewValue() ?></span>
 </span>
@@ -134,18 +134,16 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->appointment_all_day->Visible) { // appointment_all_day ?>
         <td<?= $Page->appointment_all_day->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_appointment_all_day" class="el_jdh_appointments_appointment_all_day">
+<span id="">
 <span<?= $Page->appointment_all_day->viewAttributes() ?>>
-<div class="form-check d-inline-block">
-    <input type="checkbox" id="x_appointment_all_day_<?= $Page->RowCount ?>" class="form-check-input" value="<?= $Page->appointment_all_day->getViewValue() ?>" disabled<?php if (ConvertToBool($Page->appointment_all_day->CurrentValue)) { ?> checked<?php } ?>>
-    <label class="form-check-label" for="x_appointment_all_day_<?= $Page->RowCount ?>"></label>
-</div></span>
+<i class="fa-regular fa-square<?php if (ConvertToBool($Page->appointment_all_day->CurrentValue)) { ?>-check<?php } ?> ew-icon ew-boolean"></i>
+</span>
 </span>
 </td>
 <?php } ?>
 <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <td<?= $Page->submission_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_appointments_submission_date" class="el_jdh_appointments_submission_date">
+<span id="">
 <span<?= $Page->submission_date->viewAttributes() ?>>
 <?= $Page->submission_date->getViewValue() ?></span>
 </span>
@@ -153,9 +151,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

@@ -1,51 +1,62 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Menu class
  */
 class Menu
 {
-    public $Id;
-    public $IsRoot;
-    public $IsNavbar;
     public $Accordion = true; // For sidebar menu only
     public $Compact = false; // For sidebar menu only
     public $UseSubmenu = false;
     public $Items = [];
     public $Level = 0;
-    protected $NullItem = null;
 
     // Constructor
-    public function __construct($id, $isRoot = false, $isNavbar = false)
-    {
-        $this->Id = $id;
-        $this->IsRoot = $isRoot;
-        $this->IsNavbar = $isNavbar;
-        if ($isNavbar) {
+    public function __construct(
+        public $Id,
+        public $IsRoot = false,
+        public $IsNavbar = false
+    ) {
+        if ($this->IsNavbar) {
             $this->UseSubmenu = true;
             $this->Accordion = false;
         }
     }
 
     // Add a menu item ($src for backward compatibility only)
-    public function addMenuItem($id, $name, $text, $url, $parentId = -1, $src = "", $allowed = true, $isHeader = false, $isCustomUrl = false, $icon = "", $label = "", $isNavbarItem = false, $isSidebarItem = false)
-    {
+    public function addMenuItem(
+        $id,
+        $name,
+        $text,
+        $url,
+        $parentId = -1,
+        $src = "",
+        $allowed = true,
+        $isHeader = false,
+        $isCustomUrl = false,
+        $icon = "",
+        $label = "",
+        $isNavbarItem = false,
+        $isSidebarItem = false
+    ) {
+        global $Language;
         $item = new MenuItem($id, $name, $text, $url, $parentId, $allowed, $isHeader, $isCustomUrl, $icon, $label, $isNavbarItem, $isSidebarItem);
 
         // MenuItem_Adding event
-        if (function_exists(PROJECT_NAMESPACE . "MenuItem_Adding") && !MenuItem_Adding($item)) {
+        DispatchEvent(new MenuItemAddingEvent($item, $this), MenuItemAddingEvent::NAME);
+        if (!$item->Allowed) {
             return;
         }
         if ($item->ParentId < 0) {
             $this->addItem($item);
-        } elseif ($parentMenu = &$this->findItem($item->ParentId)) {
+        } elseif ($parentMenu = $this->findItem($item->ParentId)) {
             $parentMenu->addItem($item);
         }
 
         // Set item active
-        if (!$item->IsCustomUrl && CurrentPageName() == GetPageName($item->Url) || $item->IsCustomUrl && CurrentUrl() == GetUrl($item->Url)) { // Active
+        if (!$item->IsCustomUrl && CurrentPageName() == GetPageName($item->Url) || $item->IsCustomUrl && $item->Url != "" && CurrentUrl() == GetUrl($item->Url)) { // Active
             $item->Active = true;
         }
     }
@@ -64,39 +75,29 @@ class Menu
     }
 
     // Find item
-    public function &findItem($id)
+    public function findItem($id)
     {
-        $cnt = count($this->Items);
-        for ($i = 0; $i < $cnt; $i++) {
-            $item = &$this->Items[$i];
+        foreach ($this->Items as $item) {
             if ($item->Id == $id) {
                 return $item;
-            } elseif ($item->SubMenu != null) {
-                if ($subitem = &$item->SubMenu->findItem($id)) {
-                    return $subitem;
-                }
+            } elseif ($subitem = $item->SubMenu?->findItem($id)) {
+                return $subitem;
             }
         }
-        $nullItem = $this->NullItem;
-        return $nullItem;
+        return null;
     }
 
     // Find item by menu text
-    public function &findItemByText($txt)
+    public function findItemByText($txt)
     {
-        $cnt = count($this->Items);
-        for ($i = 0; $i < $cnt; $i++) {
-            $item = &$this->Items[$i];
+        foreach ($this->Items as $item) {
             if ($item->Text == $txt) {
                 return $item;
-            } elseif ($item->SubMenu != null) {
-                if ($subitem = &$item->SubMenu->findItemByText($txt)) {
-                    return $subitem;
-                }
+            } elseif ($subitem = $item->SubMenu?->findItemByText($txt)) {
+                return $subitem;
             }
         }
-        $nullItem = $this->NullItem;
-        return $nullItem;
+        return null;
     }
 
     // Get menu item count
@@ -183,8 +184,8 @@ class Menu
     // Render the menu as array of object
     public function render()
     {
-        if ($this->IsRoot && function_exists(PROJECT_NAMESPACE . "Menu_Rendering")) {
-            Menu_Rendering($this);
+        if ($this->IsRoot) {
+            DispatchEvent(new MenuRenderingEvent($this), MenuRenderingEvent::NAME);
         }
         if (!$this->renderMenu()) {
             return;
@@ -218,8 +219,8 @@ class Menu
                 }
             }
         }
-        if ($this->IsRoot && function_exists(PROJECT_NAMESPACE . "Menu_Rendered")) {
-            Menu_Rendered($this);
+        if ($this->IsRoot) {
+            DispatchEvent(new MenuRenderedEvent($this), MenuRenderedEvent::NAME);
         }
         return count($menu) ? $menu : null;
     }

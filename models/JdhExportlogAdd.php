@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -99,7 +105,7 @@ class JdhExportlogAdd extends JdhExportlog
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -109,8 +115,21 @@ class JdhExportlogAdd extends JdhExportlog
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->FileId->setVisibility();
+        $this->DateTime->setVisibility();
+        $this->User->setVisibility();
+        $this->_ExportType->setVisibility();
+        $this->_Table->setVisibility();
+        $this->KeyValue->setVisibility();
+        $this->Filename->setVisibility();
+        $this->__Request->setVisibility();
     }
 
     // Constructor
@@ -128,10 +147,10 @@ class JdhExportlogAdd extends JdhExportlog
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_exportlog)
-        if (!isset($GLOBALS["jdh_exportlog"]) || get_class($GLOBALS["jdh_exportlog"]) == PROJECT_NAMESPACE . "jdh_exportlog") {
+        if (!isset($GLOBALS["jdh_exportlog"]) || $GLOBALS["jdh_exportlog"]::class == PROJECT_NAMESPACE . "jdh_exportlog") {
             $GLOBALS["jdh_exportlog"] = &$this;
         }
 
@@ -141,7 +160,7 @@ class JdhExportlogAdd extends JdhExportlog
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -157,7 +176,7 @@ class JdhExportlogAdd extends JdhExportlog
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -206,13 +225,11 @@ class JdhExportlogAdd extends JdhExportlog
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -230,7 +247,7 @@ class JdhExportlogAdd extends JdhExportlog
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -242,17 +259,25 @@ class JdhExportlogAdd extends JdhExportlog
                 ob_end_clean();
             }
 
-            // Handle modal response (Assume return to modal for simplicity)
+            // Handle modal response
             if ($this->IsModal) { // Show as modal
-                $result = ["url" => GetUrl($url), "modal" => "1"];
                 $pageName = GetPageName($url);
-                if ($pageName != $this->getListUrl()) { // Not List page => View page
-                    $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhexportlogview"; // If View page, no primary button
-                } else { // List page
-                    // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
-                    $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
-                    $this->clearFailureMessage();
+                $result = ["url" => GetUrl($url), "modal" => "1"];  // Assume return to modal for simplicity
+                if (
+                    SameString($pageName, GetPageName($this->getListUrl())) ||
+                    SameString($pageName, GetPageName($this->getViewUrl())) ||
+                    SameString($pageName, GetPageName(CurrentMasterTable()?->getViewUrl() ?? ""))
+                ) { // List / View / Master View page
+                    if (!SameString($pageName, GetPageName($this->getListUrl()))) { // Not List page
+                        $result["caption"] = $this->getModalCaption($pageName);
+                        $result["view"] = SameString($pageName, "jdhexportlogview"); // If View page, no primary button
+                    } else { // List page
+                        $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
+                        $this->clearFailureMessage();
+                    }
+                } else { // Other pages (add messages and then clear messages)
+                    $result = array_merge($this->getMessages(), ["modal" => "1"]);
+                    $this->clearMessages();
                 }
                 WriteJson($result);
             } else {
@@ -263,20 +288,19 @@ class JdhExportlogAdd extends JdhExportlog
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -303,7 +327,7 @@ class JdhExportlogAdd extends JdhExportlog
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -353,44 +377,47 @@ class JdhExportlogAdd extends JdhExportlog
     }
 
     // Lookup data
-    public function lookup($ar = null)
+    public function lookup(array $req = [], bool $response = true)
     {
         global $Language, $Security;
 
         // Get lookup object
-        $fieldName = $ar["field"] ?? Post("field");
-        $lookup = $this->Fields[$fieldName]->Lookup;
-        $name = $ar["name"] ?? Post("name");
-        $isQuery = ContainsString($name, "query_builder_rule");
-        if ($isQuery) {
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
             $lookup->FilterFields = []; // Skip parent fields if any
         }
 
         // Get lookup parameters
-        $lookupType = $ar["ajax"] ?? Post("ajax", "unknown");
+        $lookupType = $req["ajax"] ?? "unknown";
         $pageSize = -1;
         $offset = -1;
         $searchValue = "";
         if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
-            $searchValue = $ar["q"] ?? Param("q") ?? $ar["sv"] ?? Post("sv", "");
-            $pageSize = $ar["n"] ?? Param("n") ?? $ar["recperpage"] ?? Post("recperpage", 10);
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
         } elseif (SameText($lookupType, "autosuggest")) {
-            $searchValue = $ar["q"] ?? Param("q", "");
-            $pageSize = $ar["n"] ?? Param("n", -1);
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
             $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
             if ($pageSize <= 0) {
                 $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
             }
         }
-        $start = $ar["start"] ?? Param("start", -1);
+        $start = $req["start"] ?? -1;
         $start = is_numeric($start) ? (int)$start : -1;
-        $page = $ar["page"] ?? Param("page", -1);
+        $page = $req["page"] ?? -1;
         $page = is_numeric($page) ? (int)$page : -1;
         $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
-        $userSelect = Decrypt($ar["s"] ?? Post("s", ""));
-        $userFilter = Decrypt($ar["f"] ?? Post("f", ""));
-        $userOrderBy = Decrypt($ar["o"] ?? Post("o", ""));
-        $keys = $ar["keys"] ?? Post("keys");
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
         $lookup->LookupType = $lookupType; // Lookup type
         $lookup->FilterValues = []; // Clear filter values first
         if ($keys !== null) { // Selected records from modal
@@ -401,11 +428,11 @@ class JdhExportlogAdd extends JdhExportlog
             $lookup->FilterValues[] = $keys; // Lookup values
             $pageSize = -1; // Show all records
         } else { // Lookup values
-            $lookup->FilterValues[] = $ar["v0"] ?? $ar["lookupValue"] ?? Post("v0", Post("lookupValue", ""));
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
         }
         $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
         for ($i = 1; $i <= $cnt; $i++) {
-            $lookup->FilterValues[] = $ar["v" . $i] ?? Post("v" . $i, "");
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
         }
         $lookup->SearchValue = $searchValue;
         $lookup->PageSize = $pageSize;
@@ -419,7 +446,7 @@ class JdhExportlogAdd extends JdhExportlog
         if ($userOrderBy != "") {
             $lookup->UserOrderBy = $userOrderBy;
         }
-        return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
     public $FormClassName = "ew-form ew-add-form";
     public $IsModal = false;
@@ -437,7 +464,7 @@ class JdhExportlogAdd extends JdhExportlog
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
+        global $ExportType, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
 
         // Is modal
         $this->IsModal = ConvertToBool(Param("modal"));
@@ -449,17 +476,15 @@ class JdhExportlogAdd extends JdhExportlog
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
+
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->FileId->setVisibility();
-        $this->DateTime->setVisibility();
-        $this->User->setVisibility();
-        $this->_ExportType->setVisibility();
-        $this->_Table->setVisibility();
-        $this->KeyValue->setVisibility();
-        $this->Filename->setVisibility();
-        $this->__Request->setVisibility();
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -467,7 +492,7 @@ class JdhExportlogAdd extends JdhExportlog
         }
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -497,7 +522,7 @@ class JdhExportlogAdd extends JdhExportlog
         if (IsApi()) {
             $this->CurrentAction = "insert"; // Add record directly
             $postBack = true;
-        } elseif (Post("action") !== null) {
+        } elseif (Post("action", "") !== "") {
             $this->CurrentAction = Post("action"); // Get form action
             $this->setKey(Post($this->OldKeyName));
             $postBack = true;
@@ -510,6 +535,7 @@ class JdhExportlogAdd extends JdhExportlog
             $this->CopyRecord = !EmptyValue($this->OldKey);
             if ($this->CopyRecord) {
                 $this->CurrentAction = "copy"; // Copy record
+                $this->setKey($this->OldKey); // Set up record key
             } else {
                 $this->CurrentAction = "show"; // Display blank record
             }
@@ -550,11 +576,7 @@ class JdhExportlogAdd extends JdhExportlog
                 break;
             case "insert": // Add new record
                 $this->SendEmail = true; // Send email on add success
-                if ($this->addRow($rsold)) {
-                    // Do not return Json for UseAjaxActions
-                    if ($this->IsModal && $this->UseAjaxActions) {
-                        $this->IsModal = false;
-                    }
+                if ($this->addRow($rsold)) { // Add successful
                     if ($this->getSuccessMessage() == "" && Post("addopt") != "1") { // Skip success message for addopt (done in JavaScript)
                         $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up success message
                     }
@@ -565,10 +587,13 @@ class JdhExportlogAdd extends JdhExportlog
                         $returnUrl = $this->getViewUrl(); // View page, return to View page with keyurl directly
                     }
 
-                    // Handle UseAjaxActions with return page
-                    if ($this->UseAjaxActions && GetPageName($returnUrl) != "jdhexportloglist") {
-                        Container("flash")->addMessage("Return-Url", $returnUrl); // Save return URL
-                        $returnUrl = "jdhexportloglist"; // Return list page content
+                    // Handle UseAjaxActions
+                    if ($this->IsModal && $this->UseAjaxActions) {
+                        $this->IsModal = false;
+                        if (GetPageName($returnUrl) != "jdhexportloglist") {
+                            Container("app.flash")->addMessage("Return-Url", $returnUrl); // Save return URL
+                            $returnUrl = "jdhexportloglist"; // Return list page content
+                        }
                     }
                     if (IsJsonResponse()) { // Return to caller
                         $this->terminate(true);
@@ -580,8 +605,8 @@ class JdhExportlogAdd extends JdhExportlog
                 } elseif (IsApi()) { // API request, return
                     $this->terminate();
                     return;
-                } elseif ($this->UseAjaxActions) { // Return JSON error message
-                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                } elseif ($this->IsModal && $this->UseAjaxActions) { // Return JSON error message
+                    WriteJson(["success" => false, "validation" => $this->getValidationErrors(), "error" => $this->getFailureMessage()]);
                     $this->clearFailureMessage();
                     $this->terminate();
                     return;
@@ -595,7 +620,7 @@ class JdhExportlogAdd extends JdhExportlog
         $this->setupBreadcrumb();
 
         // Render row based on row type
-        $this->RowType = ROWTYPE_ADD; // Render add type
+        $this->RowType = RowType::ADD; // Render add type
 
         // Render row
         $this->resetAttributes();
@@ -610,7 +635,7 @@ class JdhExportlogAdd extends JdhExportlog
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -766,23 +791,14 @@ class JdhExportlogAdd extends JdhExportlog
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -820,8 +836,8 @@ class JdhExportlogAdd extends JdhExportlog
             $this->CurrentFilter = $this->getRecordFilter();
             $sql = $this->getCurrentSql();
             $conn = $this->getConnection();
-            $rs = LoadRecordset($sql, $conn);
-            if ($rs && ($row = $rs->fields)) {
+            $rs = ExecuteQuery($sql, $conn);
+            if ($row = $rs->fetch()) {
                 $this->loadRowValues($row); // Load row values
                 return $row;
             }
@@ -867,7 +883,7 @@ class JdhExportlogAdd extends JdhExportlog
         $this->__Request->RowCssClass = "row";
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // FileId
             $this->FileId->ViewValue = $this->FileId->CurrentValue;
 
@@ -916,7 +932,7 @@ class JdhExportlogAdd extends JdhExportlog
 
             // Request
             $this->__Request->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_ADD) {
+        } elseif ($this->RowType == RowType::ADD) {
             // FileId
             $this->FileId->setupEditAttributes();
             if (!$this->FileId->Raw) {
@@ -1001,12 +1017,12 @@ class JdhExportlogAdd extends JdhExportlog
             // Request
             $this->__Request->HrefValue = "";
         }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+        if ($this->RowType == RowType::ADD || $this->RowType == RowType::EDIT || $this->RowType == RowType::SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -1021,49 +1037,49 @@ class JdhExportlogAdd extends JdhExportlog
             return true;
         }
         $validateForm = true;
-        if ($this->FileId->Required) {
-            if (!$this->FileId->IsDetailKey && EmptyValue($this->FileId->FormValue)) {
-                $this->FileId->addErrorMessage(str_replace("%s", $this->FileId->caption(), $this->FileId->RequiredErrorMessage));
+            if ($this->FileId->Visible && $this->FileId->Required) {
+                if (!$this->FileId->IsDetailKey && EmptyValue($this->FileId->FormValue)) {
+                    $this->FileId->addErrorMessage(str_replace("%s", $this->FileId->caption(), $this->FileId->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->DateTime->Required) {
-            if (!$this->DateTime->IsDetailKey && EmptyValue($this->DateTime->FormValue)) {
-                $this->DateTime->addErrorMessage(str_replace("%s", $this->DateTime->caption(), $this->DateTime->RequiredErrorMessage));
+            if ($this->DateTime->Visible && $this->DateTime->Required) {
+                if (!$this->DateTime->IsDetailKey && EmptyValue($this->DateTime->FormValue)) {
+                    $this->DateTime->addErrorMessage(str_replace("%s", $this->DateTime->caption(), $this->DateTime->RequiredErrorMessage));
+                }
             }
-        }
-        if (!CheckDate($this->DateTime->FormValue, $this->DateTime->formatPattern())) {
-            $this->DateTime->addErrorMessage($this->DateTime->getErrorMessage(false));
-        }
-        if ($this->User->Required) {
-            if (!$this->User->IsDetailKey && EmptyValue($this->User->FormValue)) {
-                $this->User->addErrorMessage(str_replace("%s", $this->User->caption(), $this->User->RequiredErrorMessage));
+            if (!CheckDate($this->DateTime->FormValue, $this->DateTime->formatPattern())) {
+                $this->DateTime->addErrorMessage($this->DateTime->getErrorMessage(false));
             }
-        }
-        if ($this->_ExportType->Required) {
-            if (!$this->_ExportType->IsDetailKey && EmptyValue($this->_ExportType->FormValue)) {
-                $this->_ExportType->addErrorMessage(str_replace("%s", $this->_ExportType->caption(), $this->_ExportType->RequiredErrorMessage));
+            if ($this->User->Visible && $this->User->Required) {
+                if (!$this->User->IsDetailKey && EmptyValue($this->User->FormValue)) {
+                    $this->User->addErrorMessage(str_replace("%s", $this->User->caption(), $this->User->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->_Table->Required) {
-            if (!$this->_Table->IsDetailKey && EmptyValue($this->_Table->FormValue)) {
-                $this->_Table->addErrorMessage(str_replace("%s", $this->_Table->caption(), $this->_Table->RequiredErrorMessage));
+            if ($this->_ExportType->Visible && $this->_ExportType->Required) {
+                if (!$this->_ExportType->IsDetailKey && EmptyValue($this->_ExportType->FormValue)) {
+                    $this->_ExportType->addErrorMessage(str_replace("%s", $this->_ExportType->caption(), $this->_ExportType->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->KeyValue->Required) {
-            if (!$this->KeyValue->IsDetailKey && EmptyValue($this->KeyValue->FormValue)) {
-                $this->KeyValue->addErrorMessage(str_replace("%s", $this->KeyValue->caption(), $this->KeyValue->RequiredErrorMessage));
+            if ($this->_Table->Visible && $this->_Table->Required) {
+                if (!$this->_Table->IsDetailKey && EmptyValue($this->_Table->FormValue)) {
+                    $this->_Table->addErrorMessage(str_replace("%s", $this->_Table->caption(), $this->_Table->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->Filename->Required) {
-            if (!$this->Filename->IsDetailKey && EmptyValue($this->Filename->FormValue)) {
-                $this->Filename->addErrorMessage(str_replace("%s", $this->Filename->caption(), $this->Filename->RequiredErrorMessage));
+            if ($this->KeyValue->Visible && $this->KeyValue->Required) {
+                if (!$this->KeyValue->IsDetailKey && EmptyValue($this->KeyValue->FormValue)) {
+                    $this->KeyValue->addErrorMessage(str_replace("%s", $this->KeyValue->caption(), $this->KeyValue->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->__Request->Required) {
-            if (!$this->__Request->IsDetailKey && EmptyValue($this->__Request->FormValue)) {
-                $this->__Request->addErrorMessage(str_replace("%s", $this->__Request->caption(), $this->__Request->RequiredErrorMessage));
+            if ($this->Filename->Visible && $this->Filename->Required) {
+                if (!$this->Filename->IsDetailKey && EmptyValue($this->Filename->FormValue)) {
+                    $this->Filename->addErrorMessage(str_replace("%s", $this->Filename->caption(), $this->Filename->RequiredErrorMessage));
+                }
             }
-        }
+            if ($this->__Request->Visible && $this->__Request->Required) {
+                if (!$this->__Request->IsDetailKey && EmptyValue($this->__Request->FormValue)) {
+                    $this->__Request->addErrorMessage(str_replace("%s", $this->__Request->caption(), $this->__Request->RequiredErrorMessage));
+                }
+            }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -1082,35 +1098,21 @@ class JdhExportlogAdd extends JdhExportlog
     {
         global $Language, $Security;
 
-        // Set new row
-        $rsnew = [];
-
-        // FileId
-        $this->FileId->setDbValueDef($rsnew, $this->FileId->CurrentValue, "", false);
-
-        // DateTime
-        $this->DateTime->setDbValueDef($rsnew, UnFormatDateTime($this->DateTime->CurrentValue, $this->DateTime->formatPattern()), CurrentDate(), false);
-
-        // User
-        $this->User->setDbValueDef($rsnew, $this->User->CurrentValue, "", false);
-
-        // ExportType
-        $this->_ExportType->setDbValueDef($rsnew, $this->_ExportType->CurrentValue, "", false);
-
-        // Table
-        $this->_Table->setDbValueDef($rsnew, $this->_Table->CurrentValue, "", false);
-
-        // KeyValue
-        $this->KeyValue->setDbValueDef($rsnew, $this->KeyValue->CurrentValue, null, false);
-
-        // Filename
-        $this->Filename->setDbValueDef($rsnew, $this->Filename->CurrentValue, "", false);
-
-        // Request
-        $this->__Request->setDbValueDef($rsnew, $this->__Request->CurrentValue, "", false);
+        // Get new row
+        $rsnew = $this->getAddRow();
 
         // Update current values
         $this->setCurrentValues($rsnew);
+        if ($this->FileId->CurrentValue != "") { // Check field with unique index
+            $filter = "(`FileId` = '" . AdjustSql($this->FileId->CurrentValue, $this->Dbid) . "')";
+            $rsChk = $this->loadRs($filter)->fetch();
+            if ($rsChk !== false) {
+                $idxErrMsg = str_replace("%f", $this->FileId->caption(), $Language->phrase("DupIndex"));
+                $idxErrMsg = str_replace("%v", $this->FileId->CurrentValue, $idxErrMsg);
+                $this->setFailureMessage($idxErrMsg);
+                return false;
+            }
+        }
         $conn = $this->getConnection();
 
         // Load db values from old row
@@ -1166,6 +1168,74 @@ class JdhExportlogAdd extends JdhExportlog
         return $addRow;
     }
 
+    /**
+     * Get add row
+     *
+     * @return array
+     */
+    protected function getAddRow()
+    {
+        global $Security;
+        $rsnew = [];
+
+        // FileId
+        $this->FileId->setDbValueDef($rsnew, $this->FileId->CurrentValue, false);
+
+        // DateTime
+        $this->DateTime->setDbValueDef($rsnew, UnFormatDateTime($this->DateTime->CurrentValue, $this->DateTime->formatPattern()), false);
+
+        // User
+        $this->User->setDbValueDef($rsnew, $this->User->CurrentValue, false);
+
+        // ExportType
+        $this->_ExportType->setDbValueDef($rsnew, $this->_ExportType->CurrentValue, false);
+
+        // Table
+        $this->_Table->setDbValueDef($rsnew, $this->_Table->CurrentValue, false);
+
+        // KeyValue
+        $this->KeyValue->setDbValueDef($rsnew, $this->KeyValue->CurrentValue, false);
+
+        // Filename
+        $this->Filename->setDbValueDef($rsnew, $this->Filename->CurrentValue, false);
+
+        // Request
+        $this->__Request->setDbValueDef($rsnew, $this->__Request->CurrentValue, false);
+        return $rsnew;
+    }
+
+    /**
+     * Restore add form from row
+     * @param array $row Row
+     */
+    protected function restoreAddFormFromRow($row)
+    {
+        if (isset($row['FileId'])) { // FileId
+            $this->FileId->setFormValue($row['FileId']);
+        }
+        if (isset($row['DateTime'])) { // DateTime
+            $this->DateTime->setFormValue($row['DateTime']);
+        }
+        if (isset($row['User'])) { // User
+            $this->User->setFormValue($row['User']);
+        }
+        if (isset($row['ExportType'])) { // ExportType
+            $this->_ExportType->setFormValue($row['ExportType']);
+        }
+        if (isset($row['Table'])) { // Table
+            $this->_Table->setFormValue($row['Table']);
+        }
+        if (isset($row['KeyValue'])) { // KeyValue
+            $this->KeyValue->setFormValue($row['KeyValue']);
+        }
+        if (isset($row['Filename'])) { // Filename
+            $this->Filename->setFormValue($row['Filename']);
+        }
+        if (isset($row['Request'])) { // Request
+            $this->__Request->setFormValue($row['Request']);
+        }
+    }
+
     // Set up Breadcrumb
     protected function setupBreadcrumb()
     {
@@ -1180,7 +1250,7 @@ class JdhExportlogAdd extends JdhExportlog
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -1199,7 +1269,7 @@ class JdhExportlogAdd extends JdhExportlog
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -1242,11 +1312,11 @@ class JdhExportlogAdd extends JdhExportlog
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

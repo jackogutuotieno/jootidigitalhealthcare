@@ -1,217 +1,93 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Base path
 $basePath = BasePath(true);
 ?>
 <!DOCTYPE html>
-<html<?= IsRTL() ? ' lang="' . CurrentLanguageID() . '" dir="rtl"' : '' ?>>
+<html<?= IsRTL() ? ' lang="' . CurrentLanguageID() . '" dir="rtl"' : '' ?> data-bs-theme="light">
 <head>
 <title><?= CurrentPageTitle() ?></title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="<?= $basePath ?>css/select2.min.css?v=19.0.15">
-<link rel="stylesheet" href="<?= $basePath ?>css/select2-bootstrap5.min.css?v=19.0.15">
-<link rel="stylesheet" href="<?= $basePath ?>css/sweetalert2.min.css?v=19.0.15">
-<link rel="stylesheet" href="<?= $basePath ?>plugins/fontawesome-free/css/all.min.css?v=19.0.15">
-<link rel="stylesheet" href="<?= $basePath ?>css/OverlayScrollbars.min.css?v=19.0.15">
-<link rel="stylesheet" href="<?= $basePath ?>adminlte3/css/<?= CssFile("adminlte.css") ?>?v=19.0.15">
-<link rel="stylesheet" href="<?= $basePath ?><?= CssFile(Config("PROJECT_STYLESHEET_FILENAME")) ?>?v=19.0.15">
-<script data-pace-options='<?= JsonEncode(Config("PACE_OPTIONS")) ?>' src="<?= $basePath ?>js/pace.js?v=19.0.15"></script><!-- Single quotes for data-pace-options -->
-<script src="<?= $basePath ?>js/element-internals-polyfill.min.js?v=19.0.15"></script>
-<script src="<?= $basePath ?>js/ewcore.min.js?v=19.0.15"></script>
+<link rel="stylesheet" href="<?= $basePath ?>css/select2.min.css?v=24.4.0">
+<link rel="stylesheet" href="<?= $basePath ?>css/select2-bootstrap5.min.css?v=24.4.0">
+<link rel="stylesheet" href="<?= $basePath ?><?= Config("FONT_AWESOME_STYLESHEET") ?>?v=24.4.0">
+<link rel="stylesheet" href="<?= $basePath ?>adminlte3/css/<?= CssFile("adminlte.css") ?>?v=24.4.0">
+<link rel="stylesheet" href="<?= $basePath ?><?= CssFile(Config("PROJECT_STYLESHEET_FILENAME")) ?>?v=24.4.0">
+<script data-pace-options='<?= JsonEncode(Config("PACE_OPTIONS")) ?>' src="<?= $basePath ?>js/pace.js?v=24.4.0"></script><!-- Single quotes for data-pace-options -->
+<script src="<?= $basePath ?>js/ewcore.min.js?v=24.4.0"></script>
 <script>
 var $rowindex$ = null;
 Object.assign(ew, <?= JsonEncode(ConfigClientVars()) ?>, <?= JsonEncode(GlobalClientVars()) ?>);
-loadjs(ew.PATH_BASE + "jquery/jquery.min.js?v=19.0.15", "jquery");
-loadjs(ew.PATH_BASE + "js/popper.min.js?v=19.0.15", "popper");
-loadjs(ew.PATH_BASE + "js/luxon.min.js?v=19.0.15", "luxon");
+loadjs(ew.PATH_BASE + "jquery/jquery.min.js?v=24.4.0", "jquery");
+loadjs(ew.PATH_BASE + "js/popper.min.js?v=24.4.0", "popper");
+loadjs(ew.PATH_BASE + "js/luxon.min.js?v=24.4.0", "luxon");
 loadjs([
-    ew.PATH_BASE + "js/mobile-detect.min.js?v=19.0.15",
-    ew.PATH_BASE + "js/purify.min.js?v=19.0.15",
-    ew.PATH_BASE + "js/cropper.min.js?v=19.0.15",
-    ew.PATH_BASE + "jquery/load-image.all.min.js?v=19.0.15"
+    ew.PATH_BASE + "js/mobile-detect.min.js?v=24.4.0",
+    ew.PATH_BASE + "js/purify.min.js?v=24.4.0",
+    ew.PATH_BASE + "js/cropper.min.js?v=24.4.0",
+    ew.PATH_BASE + "jquery/load-image.all.min.js?v=24.4.0"
 ], "others");
-loadjs(ew.PATH_BASE + "js/sweetalert2.min.js?v=19.0.15", "swal");
+loadjs(ew.PATH_BASE + "js/sweetalert2.all.min.js?v=24.4.0", "swal");
 <?= $Language->toJson() ?>
 ew.vars = <?= JsonEncode(GetClientVar()) ?>;
-ew.ready(["wrapper", "jquery"], ew.PATH_BASE + "jquery/jsrender.min.js?v=19.0.15", "jsrender", ew.renderJsTemplates);
-ew.ready("jsrender", ew.PATH_BASE + "jquery/jquery.overlayScrollbars.min.js?v=19.0.15", "scrollbars"); // Init sidebar scrollbars after rendering menu
-ew.ready("jquery", ew.PATH_BASE + "jquery/jquery-ui.min.js?v=19.0.15", "widget");
+ew.ready(["wrapper", "jquery"], ew.PATH_BASE + "jquery/jsrender.min.js?v=24.4.0", "jsrender", ew.renderJsTemplates);
+ew.ready("jquery", ew.PATH_BASE + "jquery/jquery-ui.min.js?v=24.4.0", "widget");
 </script>
-<?php include_once $RELATIVE_PATH . "views/menu.php"; ?>
+<?php include_once "views/menu.php"; ?>
 <script>
 var cssfiles = [
-    ew.PATH_BASE + "css/jquery.fileupload.css?v=19.0.15",
-    ew.PATH_BASE + "css/jquery.fileupload-ui.css?v=19.0.15",
-    ew.PATH_BASE + "css/cropper.min.css?v=19.0.15"
+    ew.PATH_BASE + "css/jquery.fileupload.css?v=24.4.0",
+    ew.PATH_BASE + "css/jquery.fileupload-ui.css?v=24.4.0",
+    ew.PATH_BASE + "css/cropper.min.css?v=24.4.0"
 ];
-cssfiles.push(ew.PATH_BASE + "colorbox/colorbox.css?v=19.0.15");
+cssfiles.push(ew.PATH_BASE + "colorbox/colorbox.css?v=24.4.0");
 loadjs(cssfiles, "css");
 var cssjs = [];
 <?php foreach (array_merge(Config("STYLESHEET_FILES"), Config("JAVASCRIPT_FILES")) as $file) { // External Stylesheets and JavaScripts ?>
-cssjs.push("<?= (IsRemote($file) ? "" : BasePath(true)) . $file ?>?v=19.0.15");
+cssjs.push("<?= (IsRemote($file) ? "" : BasePath(true)) . $file ?>?v=24.4.0");
 <?php } ?>
 var jqueryjs = [
-    ew.PATH_BASE + "jquery/select2.full.min.js?v=19.0.15",
-    ew.PATH_BASE + "jquery/jqueryfileupload.min.js?v=19.0.15",
-    ew.PATH_BASE + "jquery/typeahead.jquery.min.js?v=19.0.15"
+    ew.PATH_BASE + "jquery/select2.full.min.js?v=24.4.0",
+    ew.PATH_BASE + "jquery/jqueryfileupload.min.js?v=24.4.0",
+    ew.PATH_BASE + "jquery/typeahead.jquery.min.js?v=24.4.0"
 ];
-jqueryjs.push(ew.PATH_BASE + "jquery/pStrength.jquery.min.js?v=19.0.15");
-jqueryjs.push(ew.PATH_BASE + "colorbox/jquery.colorbox.min.js?v=19.0.15");
-jqueryjs.push(ew.PATH_BASE + "js/pdfobject.min.js?v=19.0.15");
-ew.ready(["jquery", "dom", "popper"], ew.PATH_BASE + "bootstrap5/js/bootstrap.min.js?v=19.0.15", "bootstrap"); // Bootstrap
-ew.ready("bootstrap", ew.PATH_BASE + "adminlte3/js/adminlte.min.js?v=19.0.15", "adminlte"); // AdminLTE (After Bootstrap)
+jqueryjs.push(ew.PATH_BASE + "jquery/pStrength.jquery.min.js?v=24.4.0");
+jqueryjs.push(ew.PATH_BASE + "colorbox/jquery.colorbox.min.js?v=24.4.0");
+jqueryjs.push(ew.PATH_BASE + "js/pdfobject.min.js?v=24.4.0");
+ew.ready(["jquery", "dom", "popper"], ew.PATH_BASE + "bootstrap5/js/bootstrap.min.js?v=24.4.0", "bootstrap"); // Bootstrap
+ew.ready("popper", ew.PATH_BASE + "js/tippy-bundle.umd.min.js?v=24.4.0", "tippy"); // Tippy
+ew.ready("bootstrap", ew.PATH_BASE + "adminlte3/js/adminlte.min.js?v=24.4.0", "adminlte"); // AdminLTE (After Bootstrap)
 ew.ready(["jquery", "widget"], [jqueryjs], "jqueryjs");
-ew.ready(["bootstrap", "adminlte", "jqueryjs", "scrollbars", "luxon", "others"], ew.PATH_BASE + "js/ew.min.js?v=19.0.15", "makerjs");
+ew.ready(["bootstrap", "adminlte", "jqueryjs", "luxon", "others"], ew.PATH_BASE + "js/ew.min.js?v=24.4.0", "makerjs");
 ew.ready("makerjs", [
     cssjs,
-    ew.PATH_BASE + "js/userfn.js?v=19.0.15",
-    ew.PATH_BASE + "js/userevent.js?v=19.0.15"
+    ew.PATH_BASE + "js/userfn.js?v=24.4.0",
+    ew.PATH_BASE + "js/userevent.js?v=24.4.0"
 ], "head");
 </script>
 <script>
-loadjs(ew.PATH_BASE + "css/<?= CssFile("tempus-dominus.css", false) ?>?v=19.0.2");
+loadjs(ew.PATH_BASE + "css/<?= CssFile("tempus-dominus.css") ?>?v=24.4.0");
 ew.ready("head", [
-    ew.PATH_BASE + "js/tempus-dominus.min.js?v=19.0.2",
-    ew.PATH_BASE + "js/ewdatetimepicker.min.js?v=19.0.2"
+    ew.PATH_BASE + "js/tempus-dominus.min.js?v=24.4.0",
+    ew.PATH_BASE + "js/ewdatetimepicker.min.js?v=24.4.0"
 ], "datetimepicker");
 </script>
 <script>
-ew.ready("head", [ew.PATH_BASE + "ckeditor/ckeditor.js?v=19.0.0", ew.PATH_BASE + "js/eweditor.js?v=19.0.0"], "editor");
+ew.ready("head", [ew.PATH_BASE + "ckeditor/ckeditor.js?v=24.4.0", ew.PATH_BASE + "js/eweditor.js?v=24.4.0"], "editor");
 </script>
 <script>
 // Load chart *.js
-loadjs(ew.PATH_BASE + "js/chart.min.js?v=19.0.0", "chartjs");
+loadjs(ew.PATH_BASE + "js/chart.umd.js?v=24.4.0", "chartjs");
 ew.ready(["chartjs", "luxon"], [
-    ew.PATH_BASE + "js/chartjs-adapter-luxon.min.js?v=19.0.0",
-    ew.PATH_BASE + "js/chartjs-plugin-annotation.min.js?v=19.0.0",
-    ew.PATH_BASE + "js/chartjs-plugin-datalabels.min.js?v=19.0.0"
+    ew.PATH_BASE + "js/chartjs-adapter-luxon.umd.min.js?v=24.4.0",
+    ew.PATH_BASE + "js/chartjs-plugin-annotation.min.js?v=24.4.0",
+    ew.PATH_BASE + "js/chartjs-plugin-datalabels.min.js?v=24.4.0",
+    ew.PATH_BASE + "js/chartjs-plugin-stacked100.js?v=24.4.0",
+    ew.PATH_BASE + "js/ewchart.js?v=24.4.0",
 ], "chart");
-// Create chart
-ew.createChart = function (args) {
-    loadjs.ready(["head", "chart"], function () {
-        let $ = jQuery,
-            canvas = document.getElementById(args.canvasId),
-            config = args.chartJson,
-            showPercentage = args.showPercentage,
-            yFieldFormat = args.yFieldFormat,
-            yAxisFormat = args.yAxisFormat;
-        canvas.dir = "ltr"; // Keep it LTR so currency symbol position in the format pattern will not be changed
-        let formatNumber = function (value, format) {
-            if (format == "Currency")
-                return ew.formatCurrency(value, ew.CURRENCY_FORMAT);
-            else if (format == "Number")
-                return ew.formatNumber(value, ew.NUMBER_FORMAT);
-            else if (format == "Percent")
-                return ew.formatPercent(value, ew.PERCENT_FORMAT);
-            return value;
-        };
-        if (config.data && config.data.datasets.length > 0) {
-            config.options.onHover = function (e) {
-                let el = this.getElementsAtEventForMode(e.native, "nearest", { intersect: true }, false);
-                e.native.target.style.cursor = (el.length) ? "pointer" : "default";
-            };
-            let axis = config.options.indexAxis == "y" ? "x" : "y";
-            if (!["pie", "doughnut"].includes(config.type)) { // Format x/y axis for non pie/doughnut charts
-                // Format Primary Axis (x/y)
-                config.options.scales[axis] = $.extend(true, {}, config.options.scales[axis], {
-                    ticks: {
-                        callback: function (value, index, values) {
-                            let format = yAxisFormat.length ? yAxisFormat[0] : "";
-                            return formatNumber(value, format);
-                        }
-                    }
-                });
-                // Format Secondary Axis (y1)
-                if (config.options.scales["y1"]) {
-                    config = $.extend(true, {}, config, {
-                        options: {
-                            scales: {
-                                y1: {
-                                    ticks: {
-                                        callback: function (value, index, values) {
-                                            let format = yAxisFormat.length > 1 ? yAxisFormat[1] : "";
-                                            return formatNumber(value, format);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-            config = $.extend(true, {}, config, {
-                plugins: [ChartDataLabels],
-                options: {
-                    plugins: {
-                        datalabels: {
-                            align: ["line", "area"].includes(config.type) ? "top" : ew.IS_RTL ? "right" : "center",
-                            rotation: config.type == "bar" && config.options.indexAxis != "y" ? -90 : 0, // Rotate label -90 degrees for column chart
-                            formatter: function (value, context) {
-                                let format = yFieldFormat.length > context.datasetIndex ? yFieldFormat[context.datasetIndex] : (yFieldFormat.length > 0 ? yFieldFormat[0] : "");
-                                if (["pie", "doughnut"].includes(config.type) && showPercentage) { // Show as percentage
-                                    let sum = context.dataset.data.reduce((accum, val) => {
-                                        return accum + val;
-                                    });
-                                    value = value / sum;
-                                    format = "Percent";
-                                }
-                                return formatNumber(value, format);
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    let label = ["pie", "doughnut"].includes(config.type) ? context.label || "" : "",
-                                        value = context.raw,
-                                        format = yFieldFormat.length > context.datasetIndex ? yFieldFormat[context.datasetIndex] : (yFieldFormat.length > 0 ? yFieldFormat[0] : "");
-                                    if (label)
-                                        label += ": ";
-                                    if (["pie", "doughnut"].includes(config.type) && showPercentage) {
-                                        let sum = context.dataset.data.reduce((accum, val) => {
-                                            return accum + val;
-                                        });
-                                        value = value / sum;
-                                        format = "Percent";
-                                    }
-                                    label += formatNumber(value, format);
-                                    return label;
-                                }
-                            }
-                        }
-                    }
-                }
-            }, ew.chartConfig, ew.charts[args.id]); // Deep copy (chart config + global config + user chart config)
-            if (ew.isDark()) {
-                Chart.defaults.borderColor = "rgba(255, 255, 255, 0.2)";
-                Chart.defaults.color = "white";
-            }
-            let evtArgs = { id: args.id, ctx: canvas, config: config };
-            $(document).trigger("chart", [evtArgs]);
-            let chart = new Chart(evtArgs.ctx, evtArgs.config);
-            if (ew.DEBUG)
-                console.log(evtArgs.config);
-            evtArgs.ctx.addEventListener("click", function (e) {
-                let activePoints = chart.getElementsAtEventForMode(e, "index", { intersect: true }, false);
-                if (activePoints[0]) {
-                    let activePoint = activePoints[0],
-                        links = chart.data.datasets[activePoint.datasetIndex].links,
-                        link = Array.isArray(links) ? links[activePoint.index] : {};
-                    if (args.useDrilldownPanel) {
-                        ew.showDrillDown(null, canvas, link.url, link.id, link.hdr);
-                    } else if (args.useDrilldownPanel === false) { // If null, no drilldown
-                        return ew.redirect(link.url);
-                    }
-                }
-            });
-            window.exportCharts["chart_" + args.id] = chart; // Export chart
-        } else {
-            canvas.classList.add("d-none");
-        }
-    });
-};
 </script>
 <!-- Navbar -->
 <script type="text/html" id="navbar-menu-items" class="ew-js-template" data-name="navbar" data-seq="10" data-data="navbar" data-method="appendTo" data-target="#ew-navbar">
@@ -289,7 +165,29 @@ ew.createChart = function (args) {
 <script type="text/html" class="ew-js-template" data-name="languages" data-seq="10" data-data="languages" data-method="<?= $Language->Method ?>" data-target="<?= HtmlEncode($Language->Target) ?>">
 <?= $Language->getTemplate() ?>
 </script>
-<script type="text/html" class="ew-js-template" data-name="login" data-seq="10" data-data="login" data-method="appendTo" data-target=".navbar-nav.ms-auto">
+<script type="text/html" class="ew-js-template" data-name="colormodes" data-seq="10" data-method="appendTo" data-target="#ew-navbar-end">
+<li class="nav-item dropdown">
+    <button class="btn btn-link nav-link py-2 px-0 px-lg-2 dropdown-toggle d-flex align-items-center" id="bd-theme" type="button" aria-expanded="true" data-bs-toggle="dropdown" data-bs-display="static" aria-label="<?= HtmlEncode($Language->phrase("ToggleTheme")) ?> (<?= HtmlEncode($Language->phrase("ThemeLight")) ?>)">
+        <i class="<?= $Language->phraseClass("ThemeLight") ?> my-1 theme-icon-active"></i>
+        <span class="d-none ms-2" id="bd-theme-text"><?= $Language->phrase("ToggleTheme") ?></span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bd-theme-text" data-bs-popper="static">
+        <li>
+            <button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="light" aria-pressed="true">
+                <i class="<?= $Language->phraseClass("ThemeLight") ?> me-2 opacity-50 theme-icon"></i>
+                <span class="fs-6"><?= $Language->phrase("ThemeLight", true) ?></span>
+            </button>
+        </li>
+        <li>
+            <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="dark" aria-pressed="false">
+                <i class="<?= $Language->phraseClass("ThemeDark") ?> me-2 opacity-50 theme-icon"></i>
+                <span class="fs-6"><?= $Language->phrase("ThemeDark", true) ?></span>
+            </button>
+        </li>
+    </ul>
+</li>
+</script>
+<script type="text/html" class="ew-js-template" data-name="login" data-seq="10" data-data="login" data-method="appendTo" data-target="#ew-navbar-end">
 {{if canSubscribe}}
 <li class="nav-item"><a id="subscribe-notification" class="nav-link disabled">{{:subscribeText}}</a></li>
 {{/if}}
@@ -298,7 +196,7 @@ ew.createChart = function (args) {
     <a id="ew-nav-link-user" class="nav-link ew-user" data-bs-toggle="dropdown" href="#">
         <i class="fa-solid fa-user"></i>
     </a>
-    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="ew-nav-link-user">
+    <div class="dropdown-menu dropdown-menu-end ew-user-dropdown" aria-labelledby="ew-nav-link-user">
         <div class="dropdown-header">
             <i class="fa-solid fa-user me-2"></i>{{:currentUserName}}
         </div>
@@ -318,6 +216,10 @@ ew.createChart = function (args) {
         {{if disable2FAText}}
         <a class="dropdown-item{{if !disable2FA}} d-none{{/if}}" id="disable-2fa" data-ew-action="disable-2fa">{{:disable2FAText}}</a>
         {{/if}}
+        {{if canChat}}
+        <a class="dropdown-item{{if !enableChat}} d-none{{/if}}" id="enable-chat" data-ew-action="toggle-chat" data-value="1">{{:enableChatText}}</a>
+        <a class="dropdown-item{{if !disableChat}} d-none{{/if}}" id="disable-chat" data-ew-action="toggle-chat" data-value="0">{{:disableChatText}}</a>
+        {{/if}}
         {{if canLogout}}
         <div class="dropdown-divider"></div>
         <div class="dropdown-footer text-end py-0">
@@ -335,9 +237,9 @@ ew.createChart = function (args) {
     {{/if}}
 {{/if}}
 </script>
-<meta name="generator" content="PHPMaker 2023.0.1">
+<meta name="generator" content="PHPMaker 2024.4.0">
 </head>
-<body class="<?= Config("BODY_CLASS") ?>">
+<body class="<?= Config("BODY_CLASS") ?>" style="<?= Config("BODY_STYLE") ?>">
 <?php if (@!$SkipHeaderFooter) { ?>
 <div class="wrapper ew-layout">
     <!-- Main Header -->
@@ -350,7 +252,7 @@ ew.createChart = function (args) {
                     <a class="nav-link" data-widget="pushmenu" data-enable-remember="true" data-ew-action="none"><i class="fa-solid fa-bars ew-icon"></i></a>
                 </li>
                 <a class="navbar-brand d-none" href="#" data-ew-action="none">
-                    <span class="brand-text">Jooti Digital | Healthcare V1.0</span>
+                    <span class="brand-text">PHPMaker 2024</span>
                 </a>
             </ul>
             <!-- Right navbar links -->
@@ -363,7 +265,7 @@ ew.createChart = function (args) {
         <div class="brand-container">
             <!-- Brand Logo //** Note: Only licensed users are allowed to change the logo ** -->
             <a href="#" class="brand-link">
-                <span class="brand-text">Jooti Digital | Healthcare V1.0</span>
+                <span class="brand-text">PHPMaker 2024</span>
             </a>
             <?php if (preg_match('/\bsidebar-mini\b/', Config("BODY_CLASS"))) { ?>
             <a class="pushmenu mx-1" data-pushmenu="mini" role="button"><i class="fa-solid fa-angle-double-left"></i></a>
@@ -400,10 +302,10 @@ ew.createChart = function (args) {
             <div class="container-fluid">
                 <div class="row">
                 <div class="col-sm-6">
-                    <h1 class="m-0 text-dark"><?= CurrentPageHeading() ?> <small class="text-muted"><?= CurrentPageSubheading() ?></small></h1>
+                    <h1 class="m-0 text-dark"><?= CurrentPageHeading() ?> <small class="text-body-secondary"><?= CurrentPageSubheading() ?></small></h1>
                 </div><!-- /.col -->
                 <div class="col-sm-6">
-                    <?php !Breadcrumb() || Breadcrumb()->render() ?>
+                    <?= Breadcrumb()?->render() ?>
                 </div><!-- /.col -->
                 </div><!-- /.row -->
             </div><!-- /.container-fluid -->
@@ -432,6 +334,7 @@ if (isset($DebugTimer)) {
         <div class="ew-footer-text"><?= $Language->projectPhrase("FooterText") ?></div>
         <div class="float-end d-none d-sm-inline"></div>
     </footer>
+    <!-- Page Foot -->
 </div>
 <!-- ./wrapper -->
 <?php } ?>
@@ -450,7 +353,7 @@ loadjs.done("wrapper");
             <p class="error"></p>
         </td>
         <td>
-            <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-bar bg-success" style="width: 0%;"></div></div>
+            <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-bar text-bg-success" style="width: 0%;"></div></div>
         </td>
         <td>
             {{if !#index && !~root.options.autoUpload}}
@@ -485,7 +388,7 @@ loadjs.done("wrapper");
         <td>
             <p class="name">
                 {{if !exists}}
-                <span class="text-muted">{{:name}}</span>
+                <span class="text-body-secondary">{{:name}}</span>
                 {{else url && (extension == "pdf" || thumbnailUrl) && extension != "mp3" && extension != "mp4"}}
                 <a href="{{>url}}" title="{{>name}}" data-extension="{{>extension}}" target="_blank">{{:name}}</a>
                 {{else url}}
@@ -513,17 +416,17 @@ loadjs.done("wrapper");
 </script>
 <!-- modal dialog -->
 <div id="ew-modal-dialog" class="modal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="ew-modal-dialog-title" aria-hidden="true"><div class="modal-dialog modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header"><h5 id="ew-modal-dialog-title" class="modal-title"></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?= $Language->phrase("CloseBtn") ?>"></button></div><div class="modal-body"></div><div class="modal-footer"></div></div></div></div>
-<?php include_once $RELATIVE_PATH . "views/email.php"; ?>
-<?php include_once $RELATIVE_PATH . "views/pushnotification.php"; ?>
+<?php include_once "views/email.php"; ?>
+<?php include_once "views/pushnotification.php"; ?>
 <!-- import dialog -->
 <div id="ew-import-dialog" class="modal" data-bs-backdrop="static" tabindex="-1" aria-labelledby="ew-import-dialog-title" aria-hidden="true"><div class="modal-dialog modal-lg modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header"><h5 id="ew-import-dialog-title" class="modal-title"></h5></div>
 <div class="modal-body">
     <div class="fileinput-button ew-file-drop-zone w-100">
         <input type="file" class="form-control ew-file-input" title="" id="importfiles" name="importfiles[]" multiple lang="<?= CurrentLanguageID() ?>">
-        <div class="text-muted ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+        <div class="text-body-secondary ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
     </div>
     <div class="message d-none mt-3"></div>
-    <div class="progress d-none mt-3"><div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">0%</div></div>
+    <div class="progress d-none mt-3" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width: 0%">0%</div></div>
     <div class="result mt-3"></div>
 </div>
 <div class="modal-footer">

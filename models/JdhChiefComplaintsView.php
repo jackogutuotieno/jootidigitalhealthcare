@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -125,7 +131,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -135,8 +141,20 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->id->setVisibility();
+        $this->patient_id->setVisibility();
+        $this->chief_compaints->setVisibility();
+        $this->addedby_user_id->setVisibility();
+        $this->modifiedby_user_id->setVisibility();
+        $this->date_created->setVisibility();
+        $this->date_updated->setVisibility();
     }
 
     // Constructor
@@ -154,10 +172,10 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_chief_complaints)
-        if (!isset($GLOBALS["jdh_chief_complaints"]) || get_class($GLOBALS["jdh_chief_complaints"]) == PROJECT_NAMESPACE . "jdh_chief_complaints") {
+        if (!isset($GLOBALS["jdh_chief_complaints"]) || $GLOBALS["jdh_chief_complaints"]::class == PROJECT_NAMESPACE . "jdh_chief_complaints") {
             $GLOBALS["jdh_chief_complaints"] = &$this;
         }
 
@@ -172,7 +190,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -184,24 +202,22 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         $UserTable = Container("usertable");
 
         // Export options
-        $this->ExportOptions = new ListOptions(["TagClassName" => "ew-export-option"]);
+        $this->ExportOptions = new ListOptions(TagClassName: "ew-export-option");
 
         // Other options
-        if (!$this->OtherOptions) {
-            $this->OtherOptions = new ListOptionsArray();
-        }
+        $this->OtherOptions = new ListOptionsArray();
 
         // Detail tables
-        $this->OtherOptions["detail"] = new ListOptions(["TagClassName" => "ew-detail-option"]);
+        $this->OtherOptions["detail"] = new ListOptions(TagClassName: "ew-detail-option");
         // Actions
-        $this->OtherOptions["action"] = new ListOptions(["TagClassName" => "ew-action-option"]);
+        $this->OtherOptions["action"] = new ListOptions(TagClassName: "ew-action-option");
     }
 
     // Get content from stream
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -250,13 +266,11 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -274,7 +288,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -286,15 +300,14 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
                 ob_end_clean();
             }
 
-            // Handle modal response (Assume return to modal for simplicity)
+            // Handle modal response
             if ($this->IsModal) { // Show as modal
-                $result = ["url" => GetUrl($url), "modal" => "1"];
                 $pageName = GetPageName($url);
-                if ($pageName != $this->getListUrl()) { // Not List page => View page
+                $result = ["url" => GetUrl($url), "modal" => "1"];  // Assume return to modal for simplicity
+                if (!SameString($pageName, GetPageName($this->getListUrl()))) { // Not List page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhchiefcomplaintsview"; // If View page, no primary button
+                    $result["view"] = SameString($pageName, "jdhchiefcomplaintsview"); // If View page, no primary button
                 } else { // List page
-                    // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
                     $this->clearFailureMessage();
                 }
@@ -307,20 +320,19 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -347,7 +359,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -400,44 +412,47 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
     }
 
     // Lookup data
-    public function lookup($ar = null)
+    public function lookup(array $req = [], bool $response = true)
     {
         global $Language, $Security;
 
         // Get lookup object
-        $fieldName = $ar["field"] ?? Post("field");
-        $lookup = $this->Fields[$fieldName]->Lookup;
-        $name = $ar["name"] ?? Post("name");
-        $isQuery = ContainsString($name, "query_builder_rule");
-        if ($isQuery) {
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
             $lookup->FilterFields = []; // Skip parent fields if any
         }
 
         // Get lookup parameters
-        $lookupType = $ar["ajax"] ?? Post("ajax", "unknown");
+        $lookupType = $req["ajax"] ?? "unknown";
         $pageSize = -1;
         $offset = -1;
         $searchValue = "";
         if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
-            $searchValue = $ar["q"] ?? Param("q") ?? $ar["sv"] ?? Post("sv", "");
-            $pageSize = $ar["n"] ?? Param("n") ?? $ar["recperpage"] ?? Post("recperpage", 10);
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
         } elseif (SameText($lookupType, "autosuggest")) {
-            $searchValue = $ar["q"] ?? Param("q", "");
-            $pageSize = $ar["n"] ?? Param("n", -1);
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
             $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
             if ($pageSize <= 0) {
                 $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
             }
         }
-        $start = $ar["start"] ?? Param("start", -1);
+        $start = $req["start"] ?? -1;
         $start = is_numeric($start) ? (int)$start : -1;
-        $page = $ar["page"] ?? Param("page", -1);
+        $page = $req["page"] ?? -1;
         $page = is_numeric($page) ? (int)$page : -1;
         $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
-        $userSelect = Decrypt($ar["s"] ?? Post("s", ""));
-        $userFilter = Decrypt($ar["f"] ?? Post("f", ""));
-        $userOrderBy = Decrypt($ar["o"] ?? Post("o", ""));
-        $keys = $ar["keys"] ?? Post("keys");
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
         $lookup->LookupType = $lookupType; // Lookup type
         $lookup->FilterValues = []; // Clear filter values first
         if ($keys !== null) { // Selected records from modal
@@ -448,11 +463,11 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
             $lookup->FilterValues[] = $keys; // Lookup values
             $pageSize = -1; // Show all records
         } else { // Lookup values
-            $lookup->FilterValues[] = $ar["v0"] ?? $ar["lookupValue"] ?? Post("v0", Post("lookupValue", ""));
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
         }
         $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
         for ($i = 1; $i <= $cnt; $i++) {
-            $lookup->FilterValues[] = $ar["v" . $i] ?? Post("v" . $i, "");
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
         }
         $lookup->SearchValue = $searchValue;
         $lookup->PageSize = $pageSize;
@@ -466,7 +481,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         if ($userOrderBy != "") {
             $lookup->UserOrderBy = $userOrderBy;
         }
-        return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
     public $ExportOptions; // Export options
     public $OtherOptions; // Other options
@@ -487,7 +502,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
+        global $ExportType, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
 
         // Is modal
         $this->IsModal = ConvertToBool(Param("modal"));
@@ -498,6 +513,11 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
 
         // Get export parameters
         $custom = "";
@@ -513,13 +533,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
             $SkipHeaderFooter = true;
         }
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->id->setVisibility();
-        $this->patient_id->setVisibility();
-        $this->chief_compaints->setVisibility();
-        $this->addedby_user_id->setVisibility();
-        $this->modifiedby_user_id->setVisibility();
-        $this->date_created->setVisibility();
-        $this->date_updated->setVisibility();
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -527,7 +541,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         }
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -582,8 +596,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
                         $this->CurrentFilter = $filter;
                         $sql = $this->getCurrentSql();
                         $conn = $this->getConnection();
-                        $this->Recordset = LoadRecordset($sql, $conn);
-                        $res = $this->Recordset && !$this->Recordset->EOF;
+                        $res = ($this->Recordset = ExecuteQuery($sql, $conn));
                     } else {
                         $res = $this->loadRow();
                     }
@@ -609,7 +622,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         }
 
         // Render row
-        $this->RowType = ROWTYPE_VIEW;
+        $this->RowType = RowType::VIEW;
         $this->resetAttributes();
         $this->renderRow();
 
@@ -617,7 +630,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         if (IsApi()) {
             if (!$this->isExport()) {
                 $row = $this->getRecordsFromRecordset($this->Recordset, true); // Get current record only
-                $this->Recordset->close();
+                $this->Recordset?->free();
                 WriteJson(["success" => true, "action" => Config("API_VIEW_ACTION"), $this->TableVar => $row]);
                 $this->terminate(true);
             }
@@ -633,7 +646,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -694,41 +707,58 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         $item->Visible = false;
     }
 
-    // Load recordset
+    /**
+     * Load result set
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return Doctrine\DBAL\Result Result
+     */
     public function loadRecordset($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
-        $rs = new Recordset($result, $sql);
+        $result = $sql->executeQuery();
+        if (property_exists($this, "TotalRecords") && $rowcnt < 0) {
+            $this->TotalRecords = $result->rowCount();
+            if ($this->TotalRecords <= 0) { // Handle database drivers that does not return rowCount()
+                $this->TotalRecords = $this->getRecordCount($this->getListSql());
+            }
+        }
 
         // Call Recordset Selected event
-        $this->recordsetSelected($rs);
-        return $rs;
+        $this->recordsetSelected($result);
+        return $result;
     }
 
-    // Load records as associative array
+    /**
+     * Load records as associative array
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return void
+     */
     public function loadRows($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
+        $result = $sql->executeQuery();
         return $result->fetchAllAssociative();
     }
 
@@ -759,23 +789,14 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -838,7 +859,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         // date_updated
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // id
             $this->id->ViewValue = $this->id->CurrentValue;
 
@@ -847,11 +868,11 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
             if ($curVal != "") {
                 $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
                 if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchExpression(), "=", $curVal, $this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchDataType(), "");
                     $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
+                    $config->setResultCache($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
@@ -906,7 +927,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -920,7 +941,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
             $exportUrl = GetUrl($pageUrl . "export=" . $type . ($custom ? "&amp;custom=1" : ""));
         } else { // Export API URL
             $exportUrl = GetApiUrl(Config("API_EXPORT_ACTION") . "/" . $type . "/" . $this->TableVar);
-            $exportUrl .= "?key=" . $this->getKey(true);
+            $exportUrl .= "/" . $this->getKey(true, "/");
         }
         if (SameText($type, "excel")) {
             if ($custom) {
@@ -948,7 +969,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-csv\" title=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\">" . $Language->phrase("ExportToCsv") . "</a>";
         } elseif (SameText($type, "email")) {
             $url = $custom ? ' data-url="' . $exportUrl . '"' : '';
-            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_chief_complaintsview" data-ew-action="email" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-key="' . HtmlEncode(ArrayToJsonAttribute($this->RecKey)) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
+            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_chief_complaintsview" data-ew-action="email" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-key="' . ArrayToJsonAttribute($this->RecKey) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
         } elseif (SameText($type, "print")) {
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-print\" title=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\">" . $Language->phrase("PrinterFriendly") . "</a>";
         }
@@ -1032,27 +1053,13 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
     * @param bool $return Return the data rather than output it
     * @return mixed
     */
-    public function exportData($doc)
+    public function exportData($doc, $keys)
     {
         global $Language;
-        $utf8 = SameText(Config("PROJECT_CHARSET"), "utf-8");
-
-        // Load recordset
-        if (!$this->Recordset) {
-            $this->Recordset = $this->loadRecordset();
-        }
-        $rs = &$this->Recordset;
-        if ($rs) {
-            $this->TotalRecords = $rs->recordCount();
-        }
-        $this->StartRecord = 1;
-        $this->setupStartRecord(); // Set up start record position
-
-        // Set the last record to display
-        if ($this->DisplayRecords <= 0) {
-            $this->StopRecord = $this->TotalRecords;
-        } else {
-            $this->StopRecord = $this->StartRecord + $this->DisplayRecords - 1;
+        $rs = null;
+        if (count($keys) >= 1) {
+            $this->id->OldValue = $keys[0];
+            $rs = $this->loadRs($this->getRecordFilter());
         }
         if (!$rs || !$doc) {
             RemoveHeader("Content-Type"); // Remove header
@@ -1071,9 +1078,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
         $this->pageDataRendering($header);
         $doc->Text .= $header;
         $this->exportDocument($doc, $rs, $this->StartRecord, $this->StopRecord, "view");
-
-        // Close recordset
-        $rs->close();
+        $rs->free();
 
         // Page footer
         $footer = $this->PageFooter;
@@ -1101,6 +1106,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
     protected function setupMasterParms()
     {
         $validMaster = false;
+        $foreignKeys = [];
         // Get the keys for master table
         if (($master = Get(Config("TABLE_SHOW_MASTER"), Get(Config("TABLE_MASTER")))) !== null) {
             $masterTblVar = $master;
@@ -1116,6 +1122,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
                     $masterTbl->patient_id->setQueryStringValue($parm);
                     $this->patient_id->QueryStringValue = $masterTbl->patient_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
                     $this->patient_id->setSessionValue($this->patient_id->QueryStringValue);
+                    $foreignKeys["patient_id"] = $this->patient_id->QueryStringValue;
                     if (!is_numeric($masterTbl->patient_id->QueryStringValue)) {
                         $validMaster = false;
                     }
@@ -1135,8 +1142,9 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
                 $masterTbl = Container("jdh_patients");
                 if (($parm = Post("fk_patient_id", Post("patient_id"))) !== null) {
                     $masterTbl->patient_id->setFormValue($parm);
-                    $this->patient_id->setFormValue($masterTbl->patient_id->FormValue);
+                    $this->patient_id->FormValue = $masterTbl->patient_id->FormValue;
                     $this->patient_id->setSessionValue($this->patient_id->FormValue);
+                    $foreignKeys["patient_id"] = $this->patient_id->FormValue;
                     if (!is_numeric($masterTbl->patient_id->FormValue)) {
                         $validMaster = false;
                     }
@@ -1151,14 +1159,14 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
             $this->setSessionWhere($this->getDetailFilterFromSession());
 
             // Reset start record counter (new master key)
-            if (!$this->isAddOrEdit()) {
+            if (!$this->isAddOrEdit() && !$this->isGridUpdate()) {
                 $this->StartRecord = 1;
                 $this->setStartRecordNumber($this->StartRecord);
             }
 
             // Clear previous master key from Session
             if ($masterTblVar != "jdh_patients") {
-                if ($this->patient_id->CurrentValue == "") {
+                if (!array_key_exists("patient_id", $foreignKeys)) { // Not current foreign key
                     $this->patient_id->setSessionValue("");
                 }
             }
@@ -1181,7 +1189,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -1202,7 +1210,7 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -1279,11 +1287,11 @@ class JdhChiefComplaintsView extends JdhChiefComplaints
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

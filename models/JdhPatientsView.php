@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -125,7 +131,7 @@ class JdhPatientsView extends JdhPatients
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -135,8 +141,28 @@ class JdhPatientsView extends JdhPatients
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->patient_id->setVisibility();
+        $this->photo->setVisibility();
+        $this->patient_ip_number->setVisibility();
+        $this->patient_name->setVisibility();
+        $this->patient_dob_year->setVisibility();
+        $this->patient_age->setVisibility();
+        $this->patient_gender->setVisibility();
+        $this->patient_phone->setVisibility();
+        $this->patient_kin_name->setVisibility();
+        $this->patient_kin_phone->setVisibility();
+        $this->service_id->setVisibility();
+        $this->patient_registration_date->setVisibility();
+        $this->time->setVisibility();
+        $this->is_inpatient->setVisibility();
+        $this->submitted_by_user_id->setVisibility();
     }
 
     // Constructor
@@ -154,10 +180,10 @@ class JdhPatientsView extends JdhPatients
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_patients)
-        if (!isset($GLOBALS["jdh_patients"]) || get_class($GLOBALS["jdh_patients"]) == PROJECT_NAMESPACE . "jdh_patients") {
+        if (!isset($GLOBALS["jdh_patients"]) || $GLOBALS["jdh_patients"]::class == PROJECT_NAMESPACE . "jdh_patients") {
             $GLOBALS["jdh_patients"] = &$this;
         }
 
@@ -172,7 +198,7 @@ class JdhPatientsView extends JdhPatients
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -184,24 +210,22 @@ class JdhPatientsView extends JdhPatients
         $UserTable = Container("usertable");
 
         // Export options
-        $this->ExportOptions = new ListOptions(["TagClassName" => "ew-export-option"]);
+        $this->ExportOptions = new ListOptions(TagClassName: "ew-export-option");
 
         // Other options
-        if (!$this->OtherOptions) {
-            $this->OtherOptions = new ListOptionsArray();
-        }
+        $this->OtherOptions = new ListOptionsArray();
 
         // Detail tables
-        $this->OtherOptions["detail"] = new ListOptions(["TagClassName" => "ew-detail-option"]);
+        $this->OtherOptions["detail"] = new ListOptions(TagClassName: "ew-detail-option");
         // Actions
-        $this->OtherOptions["action"] = new ListOptions(["TagClassName" => "ew-action-option"]);
+        $this->OtherOptions["action"] = new ListOptions(TagClassName: "ew-action-option");
     }
 
     // Get content from stream
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -250,13 +274,11 @@ class JdhPatientsView extends JdhPatients
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -274,7 +296,7 @@ class JdhPatientsView extends JdhPatients
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -286,15 +308,14 @@ class JdhPatientsView extends JdhPatients
                 ob_end_clean();
             }
 
-            // Handle modal response (Assume return to modal for simplicity)
+            // Handle modal response
             if ($this->IsModal) { // Show as modal
-                $result = ["url" => GetUrl($url), "modal" => "1"];
                 $pageName = GetPageName($url);
-                if ($pageName != $this->getListUrl()) { // Not List page => View page
+                $result = ["url" => GetUrl($url), "modal" => "1"];  // Assume return to modal for simplicity
+                if (!SameString($pageName, GetPageName($this->getListUrl()))) { // Not List page
                     $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhpatientsview"; // If View page, no primary button
+                    $result["view"] = SameString($pageName, "jdhpatientsview"); // If View page, no primary button
                 } else { // List page
-                    // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
                     $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
                     $this->clearFailureMessage();
                 }
@@ -307,20 +328,19 @@ class JdhPatientsView extends JdhPatients
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -347,7 +367,7 @@ class JdhPatientsView extends JdhPatients
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -400,44 +420,47 @@ class JdhPatientsView extends JdhPatients
     }
 
     // Lookup data
-    public function lookup($ar = null)
+    public function lookup(array $req = [], bool $response = true)
     {
         global $Language, $Security;
 
         // Get lookup object
-        $fieldName = $ar["field"] ?? Post("field");
-        $lookup = $this->Fields[$fieldName]->Lookup;
-        $name = $ar["name"] ?? Post("name");
-        $isQuery = ContainsString($name, "query_builder_rule");
-        if ($isQuery) {
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
             $lookup->FilterFields = []; // Skip parent fields if any
         }
 
         // Get lookup parameters
-        $lookupType = $ar["ajax"] ?? Post("ajax", "unknown");
+        $lookupType = $req["ajax"] ?? "unknown";
         $pageSize = -1;
         $offset = -1;
         $searchValue = "";
         if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
-            $searchValue = $ar["q"] ?? Param("q") ?? $ar["sv"] ?? Post("sv", "");
-            $pageSize = $ar["n"] ?? Param("n") ?? $ar["recperpage"] ?? Post("recperpage", 10);
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
         } elseif (SameText($lookupType, "autosuggest")) {
-            $searchValue = $ar["q"] ?? Param("q", "");
-            $pageSize = $ar["n"] ?? Param("n", -1);
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
             $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
             if ($pageSize <= 0) {
                 $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
             }
         }
-        $start = $ar["start"] ?? Param("start", -1);
+        $start = $req["start"] ?? -1;
         $start = is_numeric($start) ? (int)$start : -1;
-        $page = $ar["page"] ?? Param("page", -1);
+        $page = $req["page"] ?? -1;
         $page = is_numeric($page) ? (int)$page : -1;
         $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
-        $userSelect = Decrypt($ar["s"] ?? Post("s", ""));
-        $userFilter = Decrypt($ar["f"] ?? Post("f", ""));
-        $userOrderBy = Decrypt($ar["o"] ?? Post("o", ""));
-        $keys = $ar["keys"] ?? Post("keys");
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
         $lookup->LookupType = $lookupType; // Lookup type
         $lookup->FilterValues = []; // Clear filter values first
         if ($keys !== null) { // Selected records from modal
@@ -448,11 +471,11 @@ class JdhPatientsView extends JdhPatients
             $lookup->FilterValues[] = $keys; // Lookup values
             $pageSize = -1; // Show all records
         } else { // Lookup values
-            $lookup->FilterValues[] = $ar["v0"] ?? $ar["lookupValue"] ?? Post("v0", Post("lookupValue", ""));
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
         }
         $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
         for ($i = 1; $i <= $cnt; $i++) {
-            $lookup->FilterValues[] = $ar["v" . $i] ?? Post("v" . $i, "");
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
         }
         $lookup->SearchValue = $searchValue;
         $lookup->PageSize = $pageSize;
@@ -466,7 +489,7 @@ class JdhPatientsView extends JdhPatients
         if ($userOrderBy != "") {
             $lookup->UserOrderBy = $userOrderBy;
         }
-        return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
     public $ExportOptions; // Export options
     public $OtherOptions; // Other options
@@ -488,7 +511,7 @@ class JdhPatientsView extends JdhPatients
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
+        global $ExportType, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
 
         // Is modal
         $this->IsModal = ConvertToBool(Param("modal"));
@@ -499,6 +522,11 @@ class JdhPatientsView extends JdhPatients
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
 
         // Get export parameters
         $custom = "";
@@ -514,21 +542,7 @@ class JdhPatientsView extends JdhPatients
             $SkipHeaderFooter = true;
         }
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->patient_id->setVisibility();
-        $this->photo->setVisibility();
-        $this->patient_ip_number->setVisibility();
-        $this->patient_name->setVisibility();
-        $this->patient_dob_year->setVisibility();
-        $this->patient_age->setVisibility();
-        $this->patient_gender->setVisibility();
-        $this->patient_phone->setVisibility();
-        $this->patient_kin_name->setVisibility();
-        $this->patient_kin_phone->setVisibility();
-        $this->service_id->setVisibility();
-        $this->patient_registration_date->setVisibility();
-        $this->time->setVisibility();
-        $this->is_inpatient->setVisibility();
-        $this->submitted_by_user_id->setVisibility();
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -539,7 +553,7 @@ class JdhPatientsView extends JdhPatients
         $this->setupDetailPages();
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -593,8 +607,7 @@ class JdhPatientsView extends JdhPatients
                         $this->CurrentFilter = $filter;
                         $sql = $this->getCurrentSql();
                         $conn = $this->getConnection();
-                        $this->Recordset = LoadRecordset($sql, $conn);
-                        $res = $this->Recordset && !$this->Recordset->EOF;
+                        $res = ($this->Recordset = ExecuteQuery($sql, $conn));
                     } else {
                         $res = $this->loadRow();
                     }
@@ -620,7 +633,7 @@ class JdhPatientsView extends JdhPatients
         }
 
         // Render row
-        $this->RowType = ROWTYPE_VIEW;
+        $this->RowType = RowType::VIEW;
         $this->resetAttributes();
         $this->renderRow();
 
@@ -631,7 +644,7 @@ class JdhPatientsView extends JdhPatients
         if (IsApi()) {
             if (!$this->isExport()) {
                 $row = $this->getRecordsFromRecordset($this->Recordset, true); // Get current record only
-                $this->Recordset->close();
+                $this->Recordset?->free();
                 WriteJson(["success" => true, "action" => Config("API_VIEW_ACTION"), $this->TableVar => $row]);
                 $this->terminate(true);
             }
@@ -647,7 +660,7 @@ class JdhPatientsView extends JdhPatients
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -714,7 +727,7 @@ class JdhPatientsView extends JdhPatients
 
         // "detail_jdh_patient_visits"
         $item = &$option->add("detail_jdh_patient_visits");
-        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_patient_visits", "TblCaption");
+        $body = $Language->phrase("ViewPageDetailLink") . $Language->tablePhrase("jdh_patient_visits", "TblCaption");
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhpatientvisitslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhPatientVisitsGrid");
@@ -753,7 +766,7 @@ class JdhPatientsView extends JdhPatients
 
         // "detail_jdh_chief_complaints"
         $item = &$option->add("detail_jdh_chief_complaints");
-        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_chief_complaints", "TblCaption");
+        $body = $Language->phrase("ViewPageDetailLink") . $Language->tablePhrase("jdh_chief_complaints", "TblCaption");
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhchiefcomplaintslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhChiefComplaintsGrid");
@@ -792,7 +805,7 @@ class JdhPatientsView extends JdhPatients
 
         // "detail_jdh_examination_findings"
         $item = &$option->add("detail_jdh_examination_findings");
-        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_examination_findings", "TblCaption");
+        $body = $Language->phrase("ViewPageDetailLink") . $Language->tablePhrase("jdh_examination_findings", "TblCaption");
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhexaminationfindingslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhExaminationFindingsGrid");
@@ -831,7 +844,7 @@ class JdhPatientsView extends JdhPatients
 
         // "detail_jdh_patient_cases"
         $item = &$option->add("detail_jdh_patient_cases");
-        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_patient_cases", "TblCaption");
+        $body = $Language->phrase("ViewPageDetailLink") . $Language->tablePhrase("jdh_patient_cases", "TblCaption");
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhpatientcaseslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhPatientCasesGrid");
@@ -870,7 +883,7 @@ class JdhPatientsView extends JdhPatients
 
         // "detail_jdh_prescriptions"
         $item = &$option->add("detail_jdh_prescriptions");
-        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_prescriptions", "TblCaption");
+        $body = $Language->phrase("ViewPageDetailLink") . $Language->tablePhrase("jdh_prescriptions", "TblCaption");
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhprescriptionslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhPrescriptionsGrid");
@@ -909,7 +922,7 @@ class JdhPatientsView extends JdhPatients
 
         // "detail_jdh_prescriptions_actions"
         $item = &$option->add("detail_jdh_prescriptions_actions");
-        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_prescriptions_actions", "TblCaption");
+        $body = $Language->phrase("ViewPageDetailLink") . $Language->tablePhrase("jdh_prescriptions_actions", "TblCaption");
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhprescriptionsactionslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhPrescriptionsActionsGrid");
@@ -948,7 +961,7 @@ class JdhPatientsView extends JdhPatients
 
         // "detail_jdh_appointments"
         $item = &$option->add("detail_jdh_appointments");
-        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_appointments", "TblCaption");
+        $body = $Language->phrase("ViewPageDetailLink") . $Language->tablePhrase("jdh_appointments", "TblCaption");
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhappointmentslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhAppointmentsGrid");
@@ -987,7 +1000,7 @@ class JdhPatientsView extends JdhPatients
 
         // "detail_jdh_vitals"
         $item = &$option->add("detail_jdh_vitals");
-        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_vitals", "TblCaption");
+        $body = $Language->phrase("ViewPageDetailLink") . $Language->tablePhrase("jdh_vitals", "TblCaption");
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhvitalslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhVitalsGrid");
@@ -1026,7 +1039,7 @@ class JdhPatientsView extends JdhPatients
 
         // "detail_jdh_test_requests"
         $item = &$option->add("detail_jdh_test_requests");
-        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_test_requests", "TblCaption");
+        $body = $Language->phrase("ViewPageDetailLink") . $Language->tablePhrase("jdh_test_requests", "TblCaption");
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhtestrequestslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhTestRequestsGrid");
@@ -1065,7 +1078,7 @@ class JdhPatientsView extends JdhPatients
 
         // "detail_jdh_test_reports"
         $item = &$option->add("detail_jdh_test_reports");
-        $body = $Language->phrase("ViewPageDetailLink") . $Language->TablePhrase("jdh_test_reports", "TblCaption");
+        $body = $Language->phrase("ViewPageDetailLink") . $Language->tablePhrase("jdh_test_reports", "TblCaption");
         $body = "<a class=\"btn btn-default ew-row-link ew-detail\" data-action=\"list\" href=\"" . HtmlEncode(GetUrl("jdhtestreportslist?" . Config("TABLE_SHOW_MASTER") . "=jdh_patients&" . GetForeignKeyUrl("fk_patient_id", $this->patient_id->CurrentValue) . "")) . "\">" . $body . "</a>";
         $links = "";
         $detailPageObj = Container("JdhTestReportsGrid");
@@ -1146,41 +1159,58 @@ class JdhPatientsView extends JdhPatients
         $item->Visible = false;
     }
 
-    // Load recordset
+    /**
+     * Load result set
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return Doctrine\DBAL\Result Result
+     */
     public function loadRecordset($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
-        $rs = new Recordset($result, $sql);
+        $result = $sql->executeQuery();
+        if (property_exists($this, "TotalRecords") && $rowcnt < 0) {
+            $this->TotalRecords = $result->rowCount();
+            if ($this->TotalRecords <= 0) { // Handle database drivers that does not return rowCount()
+                $this->TotalRecords = $this->getRecordCount($this->getListSql());
+            }
+        }
 
         // Call Recordset Selected event
-        $this->recordsetSelected($rs);
-        return $rs;
+        $this->recordsetSelected($result);
+        return $result;
     }
 
-    // Load records as associative array
+    /**
+     * Load records as associative array
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return void
+     */
     public function loadRows($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
+        $result = $sql->executeQuery();
         return $result->fetchAllAssociative();
     }
 
@@ -1211,23 +1241,14 @@ class JdhPatientsView extends JdhPatients
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -1325,7 +1346,7 @@ class JdhPatientsView extends JdhPatients
         // submitted_by_user_id
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // patient_id
             $this->patient_id->ViewValue = $this->patient_id->CurrentValue;
 
@@ -1363,12 +1384,12 @@ class JdhPatientsView extends JdhPatients
             if ($curVal != "") {
                 $this->service_id->ViewValue = $this->service_id->lookupCacheOption($curVal);
                 if ($this->service_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`service_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->service_id->Lookup->getTable()->Fields["service_id"]->searchExpression(), "=", $curVal, $this->service_id->Lookup->getTable()->Fields["service_id"]->searchDataType(), "");
                     $lookupFilter = $this->service_id->getSelectFilter($this); // PHP
                     $sqlWrk = $this->service_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
+                    $config->setResultCache($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
@@ -1415,7 +1436,7 @@ class JdhPatientsView extends JdhPatients
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -1429,7 +1450,7 @@ class JdhPatientsView extends JdhPatients
             $exportUrl = GetUrl($pageUrl . "export=" . $type . ($custom ? "&amp;custom=1" : ""));
         } else { // Export API URL
             $exportUrl = GetApiUrl(Config("API_EXPORT_ACTION") . "/" . $type . "/" . $this->TableVar);
-            $exportUrl .= "?key=" . $this->getKey(true);
+            $exportUrl .= "/" . $this->getKey(true, "/");
         }
         if (SameText($type, "excel")) {
             if ($custom) {
@@ -1457,7 +1478,7 @@ class JdhPatientsView extends JdhPatients
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-csv\" title=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("ExportToCsv", true)) . "\">" . $Language->phrase("ExportToCsv") . "</a>";
         } elseif (SameText($type, "email")) {
             $url = $custom ? ' data-url="' . $exportUrl . '"' : '';
-            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_patientsview" data-ew-action="email" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-key="' . HtmlEncode(ArrayToJsonAttribute($this->RecKey)) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
+            return '<button type="button" class="btn btn-default ew-export-link ew-email" title="' . $Language->phrase("ExportToEmail", true) . '" data-caption="' . $Language->phrase("ExportToEmail", true) . '" form="fjdh_patientsview" data-ew-action="email" data-hdr="' . $Language->phrase("ExportToEmail", true) . '" data-key="' . ArrayToJsonAttribute($this->RecKey) . '" data-exported-selected="false"' . $url . '>' . $Language->phrase("ExportToEmail") . '</button>';
         } elseif (SameText($type, "print")) {
             return "<a href=\"$exportUrl\" class=\"btn btn-default ew-export-link ew-print\" title=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\" data-caption=\"" . HtmlEncode($Language->phrase("PrinterFriendly", true)) . "\">" . $Language->phrase("PrinterFriendly") . "</a>";
         }
@@ -1541,27 +1562,13 @@ class JdhPatientsView extends JdhPatients
     * @param bool $return Return the data rather than output it
     * @return mixed
     */
-    public function exportData($doc)
+    public function exportData($doc, $keys)
     {
         global $Language;
-        $utf8 = SameText(Config("PROJECT_CHARSET"), "utf-8");
-
-        // Load recordset
-        if (!$this->Recordset) {
-            $this->Recordset = $this->loadRecordset();
-        }
-        $rs = &$this->Recordset;
-        if ($rs) {
-            $this->TotalRecords = $rs->recordCount();
-        }
-        $this->StartRecord = 1;
-        $this->setupStartRecord(); // Set up start record position
-
-        // Set the last record to display
-        if ($this->DisplayRecords <= 0) {
-            $this->StopRecord = $this->TotalRecords;
-        } else {
-            $this->StopRecord = $this->StartRecord + $this->DisplayRecords - 1;
+        $rs = null;
+        if (count($keys) >= 1) {
+            $this->patient_id->OldValue = $keys[0];
+            $rs = $this->loadRs($this->getRecordFilter());
         }
         if (!$rs || !$doc) {
             RemoveHeader("Content-Type"); // Remove header
@@ -1581,198 +1588,199 @@ class JdhPatientsView extends JdhPatients
         $doc->Text .= $header;
         $this->exportDocument($doc, $rs, $this->StartRecord, $this->StopRecord, "view");
 
+        // Set up detail parameters
+        $this->setupDetailParms();
+
         // Export detail records (jdh_patient_visits)
-        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_patient_visits", explode(",", $this->getCurrentDetailTable() ?? ""))) {
+        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_patient_visits", explode(",", $this->getCurrentDetailTable()))) {
             $jdh_patient_visits = new JdhPatientVisitsList();
-            $rsdetail = $jdh_patient_visits->loadRs($jdh_patient_visits->getDetailFilterFromSession()); // Load detail records
+            $rsdetail = $jdh_patient_visits->loadRs($jdh_patient_visits->getDetailFilterFromSession(), $jdh_patient_visits->getSessionOrderBy()); // Load detail records
             if ($rsdetail) {
                 $exportStyle = $doc->Style;
                 $doc->setStyle("h"); // Change to horizontal
                 if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
                     $doc->exportEmptyRow();
                     $detailcnt = $rsdetail->rowCount();
-                    $oldtbl = $doc->Table;
-                    $doc->Table = $jdh_patient_visits;
-                    $jdh_patient_visits->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
-                    $doc->Table = $oldtbl;
+                    $oldtbl = $doc->getTable();
+                    $doc->setTable($jdh_patient_visits);
+                    $jdh_patient_visits->exportDocument($doc, $rsdetail, 1, $detailcnt);
+                    $doc->setTable($oldtbl);
                 }
                 $doc->setStyle($exportStyle); // Restore
             }
         }
 
         // Export detail records (jdh_chief_complaints)
-        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_chief_complaints", explode(",", $this->getCurrentDetailTable() ?? ""))) {
+        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_chief_complaints", explode(",", $this->getCurrentDetailTable()))) {
             $jdh_chief_complaints = new JdhChiefComplaintsList();
-            $rsdetail = $jdh_chief_complaints->loadRs($jdh_chief_complaints->getDetailFilterFromSession()); // Load detail records
+            $rsdetail = $jdh_chief_complaints->loadRs($jdh_chief_complaints->getDetailFilterFromSession(), $jdh_chief_complaints->getSessionOrderBy()); // Load detail records
             if ($rsdetail) {
                 $exportStyle = $doc->Style;
                 $doc->setStyle("h"); // Change to horizontal
                 if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
                     $doc->exportEmptyRow();
                     $detailcnt = $rsdetail->rowCount();
-                    $oldtbl = $doc->Table;
-                    $doc->Table = $jdh_chief_complaints;
-                    $jdh_chief_complaints->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
-                    $doc->Table = $oldtbl;
+                    $oldtbl = $doc->getTable();
+                    $doc->setTable($jdh_chief_complaints);
+                    $jdh_chief_complaints->exportDocument($doc, $rsdetail, 1, $detailcnt);
+                    $doc->setTable($oldtbl);
                 }
                 $doc->setStyle($exportStyle); // Restore
             }
         }
 
         // Export detail records (jdh_examination_findings)
-        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_examination_findings", explode(",", $this->getCurrentDetailTable() ?? ""))) {
+        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_examination_findings", explode(",", $this->getCurrentDetailTable()))) {
             $jdh_examination_findings = new JdhExaminationFindingsList();
-            $rsdetail = $jdh_examination_findings->loadRs($jdh_examination_findings->getDetailFilterFromSession()); // Load detail records
+            $rsdetail = $jdh_examination_findings->loadRs($jdh_examination_findings->getDetailFilterFromSession(), $jdh_examination_findings->getSessionOrderBy()); // Load detail records
             if ($rsdetail) {
                 $exportStyle = $doc->Style;
                 $doc->setStyle("h"); // Change to horizontal
                 if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
                     $doc->exportEmptyRow();
                     $detailcnt = $rsdetail->rowCount();
-                    $oldtbl = $doc->Table;
-                    $doc->Table = $jdh_examination_findings;
-                    $jdh_examination_findings->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
-                    $doc->Table = $oldtbl;
+                    $oldtbl = $doc->getTable();
+                    $doc->setTable($jdh_examination_findings);
+                    $jdh_examination_findings->exportDocument($doc, $rsdetail, 1, $detailcnt);
+                    $doc->setTable($oldtbl);
                 }
                 $doc->setStyle($exportStyle); // Restore
             }
         }
 
         // Export detail records (jdh_patient_cases)
-        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_patient_cases", explode(",", $this->getCurrentDetailTable() ?? ""))) {
+        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_patient_cases", explode(",", $this->getCurrentDetailTable()))) {
             $jdh_patient_cases = new JdhPatientCasesList();
-            $rsdetail = $jdh_patient_cases->loadRs($jdh_patient_cases->getDetailFilterFromSession()); // Load detail records
+            $rsdetail = $jdh_patient_cases->loadRs($jdh_patient_cases->getDetailFilterFromSession(), $jdh_patient_cases->getSessionOrderBy()); // Load detail records
             if ($rsdetail) {
                 $exportStyle = $doc->Style;
                 $doc->setStyle("h"); // Change to horizontal
                 if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
                     $doc->exportEmptyRow();
                     $detailcnt = $rsdetail->rowCount();
-                    $oldtbl = $doc->Table;
-                    $doc->Table = $jdh_patient_cases;
-                    $jdh_patient_cases->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
-                    $doc->Table = $oldtbl;
+                    $oldtbl = $doc->getTable();
+                    $doc->setTable($jdh_patient_cases);
+                    $jdh_patient_cases->exportDocument($doc, $rsdetail, 1, $detailcnt);
+                    $doc->setTable($oldtbl);
                 }
                 $doc->setStyle($exportStyle); // Restore
             }
         }
 
         // Export detail records (jdh_prescriptions)
-        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_prescriptions", explode(",", $this->getCurrentDetailTable() ?? ""))) {
+        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_prescriptions", explode(",", $this->getCurrentDetailTable()))) {
             $jdh_prescriptions = new JdhPrescriptionsList();
-            $rsdetail = $jdh_prescriptions->loadRs($jdh_prescriptions->getDetailFilterFromSession()); // Load detail records
+            $rsdetail = $jdh_prescriptions->loadRs($jdh_prescriptions->getDetailFilterFromSession(), $jdh_prescriptions->getSessionOrderBy()); // Load detail records
             if ($rsdetail) {
                 $exportStyle = $doc->Style;
                 $doc->setStyle("h"); // Change to horizontal
                 if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
                     $doc->exportEmptyRow();
                     $detailcnt = $rsdetail->rowCount();
-                    $oldtbl = $doc->Table;
-                    $doc->Table = $jdh_prescriptions;
-                    $jdh_prescriptions->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
-                    $doc->Table = $oldtbl;
+                    $oldtbl = $doc->getTable();
+                    $doc->setTable($jdh_prescriptions);
+                    $jdh_prescriptions->exportDocument($doc, $rsdetail, 1, $detailcnt);
+                    $doc->setTable($oldtbl);
                 }
                 $doc->setStyle($exportStyle); // Restore
             }
         }
 
         // Export detail records (jdh_prescriptions_actions)
-        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_prescriptions_actions", explode(",", $this->getCurrentDetailTable() ?? ""))) {
+        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_prescriptions_actions", explode(",", $this->getCurrentDetailTable()))) {
             $jdh_prescriptions_actions = new JdhPrescriptionsActionsList();
-            $rsdetail = $jdh_prescriptions_actions->loadRs($jdh_prescriptions_actions->getDetailFilterFromSession()); // Load detail records
+            $rsdetail = $jdh_prescriptions_actions->loadRs($jdh_prescriptions_actions->getDetailFilterFromSession(), $jdh_prescriptions_actions->getSessionOrderBy()); // Load detail records
             if ($rsdetail) {
                 $exportStyle = $doc->Style;
                 $doc->setStyle("h"); // Change to horizontal
                 if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
                     $doc->exportEmptyRow();
                     $detailcnt = $rsdetail->rowCount();
-                    $oldtbl = $doc->Table;
-                    $doc->Table = $jdh_prescriptions_actions;
-                    $jdh_prescriptions_actions->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
-                    $doc->Table = $oldtbl;
+                    $oldtbl = $doc->getTable();
+                    $doc->setTable($jdh_prescriptions_actions);
+                    $jdh_prescriptions_actions->exportDocument($doc, $rsdetail, 1, $detailcnt);
+                    $doc->setTable($oldtbl);
                 }
                 $doc->setStyle($exportStyle); // Restore
             }
         }
 
         // Export detail records (jdh_appointments)
-        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_appointments", explode(",", $this->getCurrentDetailTable() ?? ""))) {
+        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_appointments", explode(",", $this->getCurrentDetailTable()))) {
             $jdh_appointments = new JdhAppointmentsList();
-            $rsdetail = $jdh_appointments->loadRs($jdh_appointments->getDetailFilterFromSession()); // Load detail records
+            $rsdetail = $jdh_appointments->loadRs($jdh_appointments->getDetailFilterFromSession(), $jdh_appointments->getSessionOrderBy()); // Load detail records
             if ($rsdetail) {
                 $exportStyle = $doc->Style;
                 $doc->setStyle("h"); // Change to horizontal
                 if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
                     $doc->exportEmptyRow();
                     $detailcnt = $rsdetail->rowCount();
-                    $oldtbl = $doc->Table;
-                    $doc->Table = $jdh_appointments;
-                    $jdh_appointments->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
-                    $doc->Table = $oldtbl;
+                    $oldtbl = $doc->getTable();
+                    $doc->setTable($jdh_appointments);
+                    $jdh_appointments->exportDocument($doc, $rsdetail, 1, $detailcnt);
+                    $doc->setTable($oldtbl);
                 }
                 $doc->setStyle($exportStyle); // Restore
             }
         }
 
         // Export detail records (jdh_vitals)
-        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_vitals", explode(",", $this->getCurrentDetailTable() ?? ""))) {
+        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_vitals", explode(",", $this->getCurrentDetailTable()))) {
             $jdh_vitals = new JdhVitalsList();
-            $rsdetail = $jdh_vitals->loadRs($jdh_vitals->getDetailFilterFromSession()); // Load detail records
+            $rsdetail = $jdh_vitals->loadRs($jdh_vitals->getDetailFilterFromSession(), $jdh_vitals->getSessionOrderBy()); // Load detail records
             if ($rsdetail) {
                 $exportStyle = $doc->Style;
                 $doc->setStyle("h"); // Change to horizontal
                 if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
                     $doc->exportEmptyRow();
                     $detailcnt = $rsdetail->rowCount();
-                    $oldtbl = $doc->Table;
-                    $doc->Table = $jdh_vitals;
-                    $jdh_vitals->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
-                    $doc->Table = $oldtbl;
+                    $oldtbl = $doc->getTable();
+                    $doc->setTable($jdh_vitals);
+                    $jdh_vitals->exportDocument($doc, $rsdetail, 1, $detailcnt);
+                    $doc->setTable($oldtbl);
                 }
                 $doc->setStyle($exportStyle); // Restore
             }
         }
 
         // Export detail records (jdh_test_requests)
-        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_test_requests", explode(",", $this->getCurrentDetailTable() ?? ""))) {
+        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_test_requests", explode(",", $this->getCurrentDetailTable()))) {
             $jdh_test_requests = new JdhTestRequestsList();
-            $rsdetail = $jdh_test_requests->loadRs($jdh_test_requests->getDetailFilterFromSession()); // Load detail records
+            $rsdetail = $jdh_test_requests->loadRs($jdh_test_requests->getDetailFilterFromSession(), $jdh_test_requests->getSessionOrderBy()); // Load detail records
             if ($rsdetail) {
                 $exportStyle = $doc->Style;
                 $doc->setStyle("h"); // Change to horizontal
                 if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
                     $doc->exportEmptyRow();
                     $detailcnt = $rsdetail->rowCount();
-                    $oldtbl = $doc->Table;
-                    $doc->Table = $jdh_test_requests;
-                    $jdh_test_requests->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
-                    $doc->Table = $oldtbl;
+                    $oldtbl = $doc->getTable();
+                    $doc->setTable($jdh_test_requests);
+                    $jdh_test_requests->exportDocument($doc, $rsdetail, 1, $detailcnt);
+                    $doc->setTable($oldtbl);
                 }
                 $doc->setStyle($exportStyle); // Restore
             }
         }
 
         // Export detail records (jdh_test_reports)
-        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_test_reports", explode(",", $this->getCurrentDetailTable() ?? ""))) {
+        if (Config("EXPORT_DETAIL_RECORDS") && in_array("jdh_test_reports", explode(",", $this->getCurrentDetailTable()))) {
             $jdh_test_reports = new JdhTestReportsList();
-            $rsdetail = $jdh_test_reports->loadRs($jdh_test_reports->getDetailFilterFromSession()); // Load detail records
+            $rsdetail = $jdh_test_reports->loadRs($jdh_test_reports->getDetailFilterFromSession(), $jdh_test_reports->getSessionOrderBy()); // Load detail records
             if ($rsdetail) {
                 $exportStyle = $doc->Style;
                 $doc->setStyle("h"); // Change to horizontal
                 if (!$this->isExport("csv") || Config("EXPORT_DETAIL_RECORDS_FOR_CSV")) {
                     $doc->exportEmptyRow();
                     $detailcnt = $rsdetail->rowCount();
-                    $oldtbl = $doc->Table;
-                    $doc->Table = $jdh_test_reports;
-                    $jdh_test_reports->exportDocument($doc, new Recordset($rsdetail), 1, $detailcnt);
-                    $doc->Table = $oldtbl;
+                    $oldtbl = $doc->getTable();
+                    $doc->setTable($jdh_test_reports);
+                    $jdh_test_reports->exportDocument($doc, $rsdetail, 1, $detailcnt);
+                    $doc->setTable($oldtbl);
                 }
                 $doc->setStyle($exportStyle); // Restore
             }
         }
-
-        // Close recordset
-        $rs->close();
+        $rs->free();
 
         // Page footer
         $footer = $this->PageFooter;
@@ -1967,6 +1975,9 @@ class JdhPatientsView extends JdhPatients
     {
         $pages = new SubPages();
         $pages->Style = "tabs";
+        if ($pages->isAccordion()) {
+            $pages->Parent = "#accordion_" . $this->PageObjName;
+        }
         $pages->add('jdh_patient_visits');
         $pages->add('jdh_chief_complaints');
         $pages->add('jdh_examination_findings');
@@ -1983,7 +1994,7 @@ class JdhPatientsView extends JdhPatients
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -2009,7 +2020,7 @@ class JdhPatientsView extends JdhPatients
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -2086,11 +2097,11 @@ class JdhPatientsView extends JdhPatients
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

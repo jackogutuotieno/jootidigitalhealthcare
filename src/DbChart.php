@@ -1,14 +1,22 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\Query\QueryBuilder;
+use Dflydev\DotAccessData\Data;
+use Spatie\Color\Hex;
+use Spatie\Color\Rgb;
+use Spatie\Color\Rgba;
+use Spatie\Color\Hsl;
 
 /**
  * Chart class
  */
 class DbChart
 {
+    public static $Alpha = 50;
+    public static $BorderAlpha = 100;
+    public static $DefaultAdjust = 10; // Darken/Lighten
     public $Table; // Table object
     public $TableVar; // Retained for compatibility
     public $TableName; // Retained for compatibility
@@ -48,6 +56,7 @@ class DbChart
     public $SqlOrderBySeries;
     public $ChartSeriesSql;
     public $ChartSql;
+    public $PageBreakType;
     public $PageBreakClass = ""; // "break-before-page" and/or "break-after-page"
     public $DrillDownInPanel = false;
     public $ScrollChart = false;
@@ -67,6 +76,17 @@ class DbChart
     public $ShowLookupForXAxis = true;
     public $ShowChart = true;
     protected $dataLoaded = false;
+
+    // Default border colors in rgb() (see https://github.com/chartjs/Chart.js/blob/master/src/plugins/plugin.colors.ts)
+    public static $DefaultBorderColors = [
+        "rgb(54, 162, 235)", // blue
+        "rgb(255, 99, 132)", // red
+        "rgb(255, 159, 64)", // orange
+        "rgb(255, 205, 86)", // yellow
+        "rgb(75, 192, 192)", // green
+        "rgb(153, 102, 255)", // purple
+        "rgb(201, 203, 207)" // grey
+    ];
 
     // Constructor
     public function __construct($tbl, $chartvar, $chartname, $xfld, $yfld, $type, $sfld, $stype, $smrytype, $width, $height, $align = "")
@@ -99,7 +119,7 @@ class DbChart
             $this->MaxValue = Config("CHART_SCALE_MAXIMUM_VALUE");
         }
         $this->ShowPercentage = Config("CHART_SHOW_PERCENTAGE");
-        $this->Parameters = new \Dflydev\DotAccessData\Data();
+        $this->Parameters = new Data();
     }
 
     // Set chart caption
@@ -312,9 +332,7 @@ class DbChart
             $sqlSelect = $this->Table->getSqlSelect();
             $sqlChartSelect = $this->SqlSelect;
         }
-        $pageFilter = $DashboardReport
-            ? (method_exists($Page, "applyUserIDFilters") ? $Page->applyUserIDFilters("") : "")
-            : (isset($Page) ? $Page->Filter : "");
+        $pageFilter = $Page?->Filter ?? "";
         $dbType = GetConnectionType($this->Table->Dbid);
         if ($this->Table->SourceTableIsCustomView) {
             $sqlChartBase = "(" . $this->buildReportSql($sqlSelect, $this->Table->getSqlFrom(), $this->Table->getSqlWhere(), $this->Table->getSqlGroupBy(), $this->Table->getSqlHaving(), ($dbType == "MSSQL") ? $this->Table->getSqlOrderBy() : "", $pageFilter, "")->getSQL() . ") TMP_TABLE";
@@ -500,7 +518,7 @@ class DbChart
     public function sortData()
     {
         $ar = &$this->Data;
-        $opt = $this->SortType;
+        $opt = intval($this->SortType);
         $seq = $this->SortSequence;
         if (($opt < 3 || $opt > 4) && $seq == "" || ($opt < 1 || $opt > 4) && $seq != "") {
             return;
@@ -509,19 +527,12 @@ class DbChart
             $cntar = count($ar);
             for ($i = 0; $i < $cntar; $i++) {
                 for ($j = $i + 1; $j < $cntar; $j++) {
-                    switch ($opt) {
-                        case 1: // X values ascending
-                            $swap = CompareValueCustom($ar[$i][0], $ar[$j][0], $seq);
-                            break;
-                        case 2: // X values descending
-                            $swap = CompareValueCustom($ar[$j][0], $ar[$i][0], $seq);
-                            break;
-                        case 3: // Y values ascending
-                            $swap = CompareValueCustom($ar[$i][2], $ar[$j][2], $seq);
-                            break;
-                        case 4: // Y values descending
-                            $swap = CompareValueCustom($ar[$j][2], $ar[$i][2], $seq);
-                    }
+                    $swap = match ($opt) {
+                        1 => CompareValueCustom($ar[$i][0], $ar[$j][0], $seq), // X values ascending
+                        2 => CompareValueCustom($ar[$j][0], $ar[$i][0], $seq), // X values descending
+                        3 => CompareValueCustom($ar[$i][2], $ar[$j][2], $seq), // Y values ascending
+                        4 => CompareValueCustom($ar[$j][2], $ar[$i][2], $seq) // Y values descending
+                    };
                     if ($swap) {
                         $tmpar = $ar[$i];
                         $ar[$i] = $ar[$j];
@@ -565,22 +576,12 @@ class DbChart
 
         // No specific sequence, use array_multisort
         if ($seq == "") {
-            switch ($opt) {
-                case 1: // X values ascending
-                    array_multisort($xvalues, SORT_ASC, $ar);
-                    break;
-                case 2: // X values descending
-                    array_multisort($xvalues, SORT_DESC, $ar);
-                    break;
-                case 3:
-                case 4: // Y values
-                    if ($opt == 3) { // Ascending
-                        array_multisort($ysums, SORT_ASC, $ar);
-                    } elseif ($opt == 4) { // Descending
-                        array_multisort($ysums, SORT_DESC, $ar);
-                    }
-            }
-
+            match ($opt) {
+                1 => array_multisort($xvalues, SORT_ASC, $ar), // X values ascending
+                2 => array_multisort($xvalues, SORT_DESC, $ar), // X values descending
+                3 => array_multisort($ysums, SORT_ASC, $ar), // Y values ascending
+                4 => array_multisort($ysums, SORT_DESC, $ar) // Y values descending
+            };
         // Handle specific sequence
         } else {
             // Build key list
@@ -597,18 +598,10 @@ class DbChart
             $cntkey = count($keys);
             for ($i = 0; $i < $cntkey; $i++) {
                 for ($j = $i + 1; $j < $cntkey; $j++) {
-                    switch ($opt) {
-                        // Ascending
-                        case 1:
-                        case 3:
-                            $swap = CompareValueCustom($keys[$i][1], $keys[$j][1], $seq);
-                            break;
-                        // Descending
-                        case 2:
-                        case 4:
-                            $swap = CompareValueCustom($keys[$j][1], $keys[$i][1], $seq);
-                            break;
-                    }
+                    $swap = match ($opt) {
+                        1, 3 => CompareValueCustom($keys[$i][1], $keys[$j][1], $seq), // Ascending
+                        2, 4 => CompareValueCustom($keys[$j][1], $keys[$i][1], $seq) // Descending
+                    };
                     if ($swap) {
                         $tmpkey = $keys[$i];
                         $keys[$i] = $keys[$j];
@@ -635,30 +628,106 @@ class DbChart
         }
     }
 
-    // Get color
-    public function getPaletteColor($i)
+    // Get default alpha
+    public static function getDefaultAlpha()
     {
-        $colorpalette = $this->loadParameter("colorpalette");
-        $colors = preg_split("/[|,\s]+/", $colorpalette);
-        return is_array($colors) ? $colors[$i % count($colors)] : "";
+        return self::$Alpha;
     }
 
-    // Get RGBA color
-    public function getPaletteRgbaColor($i, $opacity = null)
+    // Get background opacity
+    public function getOpacity($alpha, $def = null)
     {
-        $color = $this->getPaletteColor($i);
-
-        // Return default if no color provided
-        if (EmptyValue($color)) {
-            return ""; // Use chart default
+        if ($alpha !== null) {
+            $alpha = (int)$alpha;
+            if ($alpha > 100) {
+                $alpha = 100;
+            } elseif ($alpha <= 0) {
+                $alpha = $def ?? 0; // Use default
+            }
+            return (float)$alpha / 100;
         }
+        return null;
+    }
 
+    // Adjust lightness (Darken/Lighten) a HSL value
+    private function adjustLightness(Hsl $hsl, ?int $amount = null): Hsl
+    {
+        $amount ??= self::$DefaultAdjust;
+        $lightness = $hsl->lightness();
+        $lightness = $lightness + $amount;
+        $lightness = ($lightness < 0) ? 0 : $lightness;
+        $lightness = ($lightness > 100) ? 100 : $lightness;
+        return new Hsl($hsl->hue(), $hsl->saturation(), $lightness);
+    }
+
+    // Get Rgba color
+    public function getRgbaColor($color, $opacity = null)
+    {
         // Check opacity
         if ($opacity === null) {
-            $alpha = $this->loadParameter("alpha");
-            $opacity = GetOpacity($alpha);
+            return $color;
+        } elseif (!is_float($opacity)) {
+            $opacity = (float)$opacity;
+        } elseif ($opacity > 1) {
+            $opacity = 1.0;
+        } elseif ($opacity < 0) {
+            $opacity = 0.0;
         }
-        return GetRgbaColor($color, $opacity);
+
+        // Convert color
+        if (str_starts_with($color, "#")) {
+            return (string) Hex::fromString($color)->toRgba($opacity);
+        } elseif (str_starts_with($color, "rgb(")) {
+            return (string) Rgb::fromString($color)->toRgba($opacity);
+        } elseif (str_starts_with($color, "rgba(")) {
+            return (string) Rgba::fromString($color);
+        }
+        return $color;
+    }
+
+    // Get Rgb color
+    public function getRgbColor($color)
+    {
+        if (preg_match('/^(?:[a-f0-9]{3}|[a-f0-9]{4}|[a-f0-9]{6}|[a-f0-9]{8})$/i', $color)) { // rgb / rgba / rrggbb / rrggbbaa (without #)
+            $color = "#" . $color;
+        }
+        if (str_starts_with($color, "#")) {
+            return (string) Hex::fromString($color)->toRgb();
+        }
+        return $color;
+    }
+
+    // Get color
+    public function getColor($i)
+    {
+        $colors = $this->loadParameter("colorpalette") ?: Config("CHART_COLOR_PALETTE");
+        $colors = trim($colors);
+        $colors = $colors ? array_map(fn($c) => $this->getRgbColor(trim($c)), preg_split('/[|,]/', $colors)) : self::$DefaultBorderColors;
+        $count = count($colors);
+        $color = $colors[$i % $count];
+        $q = intdiv($i, $count) % 3;
+        $factor = $q < 2 ? $q : -1;
+        if ($factor != 0) { // Get color variant
+            $rgb = Rgb::fromString($color);
+            $color = $this->adjustLightness($rgb->toHsl(), $factor * self::$DefaultAdjust)->toRgb();
+        }
+        return (string) $color;
+    }
+
+    // Get RGBA background color
+    public function getRgbaBackgroundColor($i, $opacity = null)
+    {
+        $color = $this->getColor($i);
+        $opacity ??= $this->getOpacity($this->loadParameter("alpha"), self::getDefaultAlpha());
+        return $this->getRgbaColor($color, $opacity);
+    }
+
+    // Get RGBA background color
+    public function getRgbaBorderColor($i, $opacity = null)
+    {
+        $color = $this->getColor($i);
+        $opacity ??= $this->getOpacity(self::$BorderAlpha);
+        return $this->getRgbaColor($color, $opacity);
     }
 
     // Format name for chart
@@ -721,6 +790,18 @@ class DbChart
         return EndsString("06", strval($this->Type));
     }
 
+    // Is polar area chart
+    public function isPolarAreaChart()
+    {
+        return EndsString("07", strval($this->Type));
+    }
+
+    // Is radar chart
+    public function isRadarChart()
+    {
+        return EndsString("08", strval($this->Type));
+    }
+
     // Is stack chart
     public function isStackedChart()
     {
@@ -742,6 +823,8 @@ class DbChart
     // Format number for chart
     public function formatNumber($v)
     {
+        if ($v === null)
+            return $v;
         if ($this->DefaultNumberFormat) {
             $fmt = new \NumberFormatter("en-US", \NumberFormatter::PATTERN_DECIMAL, $this->DefaultNumberFormat);
             $fmt->setSymbol(\NumberFormatter::GROUPING_SEPARATOR_SYMBOL, ""); // Always format without thousand separator
@@ -760,28 +843,28 @@ class DbChart
             return $fldsql . " = " . QuotedValue(UnFormatDateTime($val, $dt), $fldtype, $dbid);
         } elseif ($dt == "y") {
             if (is_numeric($val)) {
-                return GroupSql($fldsql, "y", 0, $dbid) . " = " . QuotedValue($val, DATATYPE_NUMBER, $dbid);
+                return GroupSql($fldsql, "y", 0, $dbid) . " = " . QuotedValue($val, DataType::NUMBER, $dbid);
             } else {
                 return $fldsql . " = " . QuotedValue($val, $fldtype, $dbid);
             }
         } elseif ($dt == "xyq") {
             $ar = explode("|", $val);
             if (count($ar) >= 2 && is_numeric($ar[0]) && is_numeric($ar[1])) {
-                return GroupSql($fldsql, "y", 0, $dbid) . " = " . QuotedValue($ar[0], DATATYPE_NUMBER, $dbid) . " AND " . GroupSql($fldsql, "xq", 0, $dbid) . " = " . QuotedValue($ar[1], DATATYPE_NUMBER, $dbid);
+                return GroupSql($fldsql, "y", 0, $dbid) . " = " . QuotedValue($ar[0], DataType::NUMBER, $dbid) . " AND " . GroupSql($fldsql, "xq", 0, $dbid) . " = " . QuotedValue($ar[1], DataType::NUMBER, $dbid);
             } else {
                 return $fldsql . " = " . QuotedValue($val, $fldtype, $dbid);
             }
         } elseif ($dt == "xym") {
             $ar = explode("|", $val);
             if (count($ar) >= 2 && is_numeric($ar[0]) && is_numeric($ar[1])) {
-                return GroupSql($fldsql, "y", 0, $dbid) . " = " . QuotedValue($ar[0], DATATYPE_NUMBER, $dbid) . " AND " . GroupSql($fldsql, "xm", 0, $dbid) . " = " . QuotedValue($ar[1], DATATYPE_NUMBER, $dbid);
+                return GroupSql($fldsql, "y", 0, $dbid) . " = " . QuotedValue($ar[0], DataType::NUMBER, $dbid) . " AND " . GroupSql($fldsql, "xm", 0, $dbid) . " = " . QuotedValue($ar[1], DataType::NUMBER, $dbid);
             } else {
                 return $fldsql . " = " . QuotedValue($val, $fldtype, $dbid);
             }
         } elseif ($dt == "xq") {
-            return GroupSql($fldsql, "xq", 0, $dbid) . " = " . QuotedValue($val, DATATYPE_NUMBER, $dbid);
+            return GroupSql($fldsql, "xq", 0, $dbid) . " = " . QuotedValue($val, DataType::NUMBER, $dbid);
         } elseif ($dt == "xm") {
-            return GroupSql($fldsql, "xm", 0, $dbid) . " = " . QuotedValue($val, DATATYPE_NUMBER, $dbid);
+            return GroupSql($fldsql, "xm", 0, $dbid) . " = " . QuotedValue($val, DataType::NUMBER, $dbid);
         } else {
             return $fldsql . " = " . QuotedValue($val, $fldtype, $dbid);
         }
@@ -794,21 +877,21 @@ class DbChart
         if ($dt == "syq") {
             $ar = explode("|", $val);
             if (count($ar) >= 2 && is_numeric($ar[0]) && is_numeric($ar[1])) {
-                return GroupSql($fldsql, "y", 0, $dbid) . " = " . QuotedValue($ar[0], DATATYPE_NUMBER, $dbid) . " AND " . GroupSql($fldsql, "xq", 0, $dbid) . " = " . QuotedValue($ar[1], DATATYPE_NUMBER, $dbid);
+                return GroupSql($fldsql, "y", 0, $dbid) . " = " . QuotedValue($ar[0], DataType::NUMBER, $dbid) . " AND " . GroupSql($fldsql, "xq", 0, $dbid) . " = " . QuotedValue($ar[1], DataType::NUMBER, $dbid);
             } else {
                 return $fldsql . " = " . QuotedValue($val, $fldtype, $dbid);
             }
         } elseif ($dt == "sym") {
             $ar = explode("|", $val);
             if (count($ar) >= 2 && is_numeric($ar[0]) && is_numeric($ar[1])) {
-                return GroupSql($fldsql, "y", 0, $dbid) . " = " . QuotedValue($ar[0], DATATYPE_NUMBER, $dbid) . " AND " . GroupSql($fldsql, "xm", 0, $dbid) . " = " . QuotedValue($ar[1], DATATYPE_NUMBER, $dbid);
+                return GroupSql($fldsql, "y", 0, $dbid) . " = " . QuotedValue($ar[0], DataType::NUMBER, $dbid) . " AND " . GroupSql($fldsql, "xm", 0, $dbid) . " = " . QuotedValue($ar[1], DataType::NUMBER, $dbid);
             } else {
                 return $fldsql . " = " . QuotedValue($val, $fldtype, $dbid);
             }
         } elseif ($dt == "sq") {
-            return GroupSql($fldsql, "xq", 0, $dbid) . " = " . QuotedValue($val, DATATYPE_NUMBER, $dbid);
+            return GroupSql($fldsql, "xq", 0, $dbid) . " = " . QuotedValue($val, DataType::NUMBER, $dbid);
         } elseif ($dt == "sm") {
-            return GroupSql($fldsql, "xm", 0, $dbid) . " = " . QuotedValue($val, DATATYPE_NUMBER, $dbid);
+            return GroupSql($fldsql, "xm", 0, $dbid) . " = " . QuotedValue($val, DataType::NUMBER, $dbid);
         } else {
             return $fldsql . " = " . QuotedValue($val, $fldtype, $dbid);
         }
@@ -838,7 +921,7 @@ class DbChart
         }
 
         // Skip if isAddOrEdit
-        if ($Page && method_exists($Page, "isAddOrEdit") && $Page->isAddOrEdit()) {
+        if ($Page != null && method_exists($Page, "isAddOrEdit") && $Page->isAddOrEdit()) {
             return;
         }
 
@@ -875,11 +958,14 @@ class DbChart
         $renderer = new $rendererClass($this);
 
         // Output chart HTML first
-        $isDrillDown = isset($Page) ? $Page->DrillDown : false;
+        $isDrillDown = $Page?->DrillDown ?? false;
         $html .= '<a id="cht_' . $this->ID . '"></a>' . // Anchor
             '<div id="div_cht_' . $this->ID . '" class="ew-chart' . (!$DashboardReport && $this->PageBreakClass ? ' ' . $this->PageBreakClass : '') . '">';
         if ($this->RunTimeSort && !$isDrillDown && $ExportType == "" && $this->hasData()) {
-            $url = CurrentDashboardPageUrl() . '/' . $this->ChartVar;
+            $url = GetUrl($this->Table->getDefaultRouteUrl() . '/' . $this->ChartVar);
+            if ($DashboardReport) {
+                $url .= "?" . Config("PAGE_DASHBOARD") . "=" . $DashboardReport;
+            }
             $html .= '<form class="row mb-3 ew-chart-sort" action="' . $url . '"><div class="col-sm-auto">' .
                 $Language->phrase("ChartOrder") .
                 '</div><div class="col-sm-auto"><select id="chartordertype" name="chartordertype" class="form-select" data-ew-action="chart-order">' .
@@ -888,6 +974,7 @@ class DbChart
                 '<option value="3"' . ($this->SortType == "3" ? ' selected' : '') . '>' . $Language->phrase("ChartOrderYAsc") . '</option>' .
                 '<option value="4"' . ($this->SortType == "4" ? ' selected' : '') . '>' . $Language->phrase("ChartOrderYDesc") . '</option>' .
                 '</select>' .
+                ($DashboardReport ? '<input type="hidden" id="' . Config("PAGE_DASHBOARD") . '" name="' . Config("PAGE_DASHBOARD") . '" value="' . $DashboardReport . '">' : '') .
                 '<input type="hidden" id="width" name="width" value="' . $width . '">' .
                 '<input type="hidden" id="height" name="height" value="' . $height . '">' .
                 '</div></form>';
@@ -921,7 +1008,7 @@ class DbChart
             $queryBuilder = $select;
         }
         if ($from != "") {
-            $queryBuilder->from($from);
+            $queryBuilder->resetQueryPart("from")->from($from);
         }
         if ($where != "") {
             $queryBuilder->where($where);

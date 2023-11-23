@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Table class for Patient Queues
@@ -30,7 +36,7 @@ class PatientQueues extends ReportTable
     public $ShowGroupHeaderAsRow = false;
     public $ShowCompactSummaryFooter = true;
 
-    // Export
+    // Ajax / Modal
     public $UseAjaxActions = false;
     public $ModalSearch = false;
     public $ModalView = false;
@@ -59,10 +65,11 @@ class PatientQueues extends ReportTable
         global $Language, $CurrentLanguage, $CurrentLocale;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
         $this->TableVar = "Patient_Queues";
         $this->TableName = 'Patient Queues';
         $this->TableType = "REPORT";
+        $this->TableReportType = "summary"; // Report Type
         $this->ReportSourceTable = 'jdh_patient_queue'; // Report source table
         $this->Dbid = 'DB';
         $this->ExportAll = true;
@@ -82,7 +89,7 @@ class PatientQueues extends ReportTable
         $this->ExportWordColumnWidth = null; // Cell width (PHPWord only)
         $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
 
-        // visit_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // visit_id
         $this->visit_id = new ReportField(
             $this, // Table
             'x_visit_id', // Variable name
@@ -101,14 +108,16 @@ class PatientQueues extends ReportTable
             'NO' // Edit Tag
         );
         $this->visit_id->InputTextType = "text";
+        $this->visit_id->Raw = true;
         $this->visit_id->IsAutoIncrement = true; // Autoincrement field
         $this->visit_id->IsPrimaryKey = true; // Primary key field
+        $this->visit_id->Nullable = false; // NOT NULL field
         $this->visit_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->visit_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->visit_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->visit_id->SourceTableVar = 'jdh_patient_queue';
         $this->Fields['visit_id'] = &$this->visit_id;
 
-        // patient_name $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // patient_name
         $this->patient_name = new ReportField(
             $this, // Table
             'x_patient_name', // Variable name
@@ -133,7 +142,7 @@ class PatientQueues extends ReportTable
         $this->patient_name->SourceTableVar = 'jdh_patient_queue';
         $this->Fields['patient_name'] = &$this->patient_name;
 
-        // visit_type $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // visit_type
         $this->visit_type = new ReportField(
             $this, // Table
             'x_visit_type', // Variable name
@@ -158,7 +167,7 @@ class PatientQueues extends ReportTable
         $this->visit_type->SourceTableVar = 'jdh_patient_queue';
         $this->Fields['visit_type'] = &$this->visit_type;
 
-        // visit_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // visit_date
         $this->visit_date = new ReportField(
             $this, // Table
             'x_visit_date', // Variable name
@@ -166,7 +175,7 @@ class PatientQueues extends ReportTable
             '`visit_date`', // Expression
             CastDateFieldForLike("`visit_date`", 11, "DB"), // Basic search expression
             135, // Type
-            19, // Size
+            76, // Size
             11, // Date/Time format
             false, // Is upload field
             '`visit_date`', // Virtual expression
@@ -177,8 +186,11 @@ class PatientQueues extends ReportTable
             'TEXT' // Edit Tag
         );
         $this->visit_date->InputTextType = "text";
+        $this->visit_date->Raw = true;
+        $this->visit_date->Nullable = false; // NOT NULL field
+        $this->visit_date->Required = true; // Required field
         $this->visit_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
-        $this->visit_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->visit_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->visit_date->SourceTableVar = 'jdh_patient_queue';
         $this->Fields['visit_date'] = &$this->visit_date;
 
@@ -210,12 +222,12 @@ class PatientQueues extends ReportTable
             ["showvalues", "1"],
             ["showhovercap", "1"]
         ]); // Show names / Show values / Show hover
-        $this->PatientQueues->setParameter("alpha", "50"); // Chart alpha
-        $this->PatientQueues->setParameter("colorpalette", "#5899DA,#E8743B,#19A979,#ED4A7B,#945ECF,#13A4B4,#525DF4,#BF399E,#6C8893,#EE6868,#2F6497"); // Chart color palette
+        $this->PatientQueues->setParameter("alpha", 50); // Chart alpha (datasets background color)
+        $this->PatientQueues->setParameters([["options.plugins.legend.display",false],["options.plugins.legend.fullWidth",false],["options.plugins.legend.reverse",false],["options.plugins.legend.rtl",false],["options.plugins.legend.labels.usePointStyle",false],["options.plugins.title.display",false],["options.plugins.tooltip.enabled",false],["options.plugins.tooltip.intersect",false],["options.plugins.tooltip.displayColors",false],["options.plugins.tooltip.rtl",false],["options.plugins.filler.propagate",false],["options.animation.animateRotate",false],["options.animation.animateScale",false],["dataset.showLine",false],["dataset.spanGaps",false],["dataset.steppedLine",false],["scale.offset",false],["scale.gridLines.offsetGridLines",false],["options.plugins.datalabels.clamp",false],["options.plugins.datalabels.clip",false],["options.plugins.datalabels.display",false],["annotation1.show",false],["annotation1.secondaryYAxis",false],["annotation2.show",false],["annotation2.secondaryYAxis",false],["annotation3.show",false],["annotation3.secondaryYAxis",false],["annotation4.show",false],["annotation4.secondaryYAxis",false],["options.scales.r.angleLines.display",false],["options.plugins.stacked100.enable",false],["dataset.circular",false]]);
         $this->Charts[$this->PatientQueues->ID] = &$this->PatientQueues;
 
         // Add Doctrine Cache
-        $this->Cache = new ArrayCache();
+        $this->Cache = new \Symfony\Component\Cache\Adapter\ArrayAdapter();
         $this->CacheProfile = new \Doctrine\DBAL\Cache\QueryCacheProfile(0, $this->TableVar);
 
         // Call Table Load event
@@ -347,42 +359,67 @@ class PatientQueues extends ReportTable
         return $chartRow;
     }
 
-    // Table level SQL
-    public function getSqlFrom() // From
+    // Get FROM clause
+    public function getSqlFrom()
     {
-        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_patient_queue`";
+        return ($this->SqlFrom != "") ? $this->SqlFrom : "jdh_patient_queue";
     }
 
-    public function sqlFrom() // For backward compatibility
+    // Get FROM clause (for backward compatibility)
+    public function sqlFrom()
     {
         return $this->getSqlFrom();
     }
 
+    // Set FROM clause
     public function setSqlFrom($v)
     {
         $this->SqlFrom = $v;
     }
 
-    public function getSqlSelect() // Select
+    // Get SELECT clause
+    public function getSqlSelect()
     {
         if ($this->SqlSelect) {
             return $this->SqlSelect;
         }
-        $select = $this->getQueryBuilder()->select("*");
+        $select = $this->getQueryBuilder()->select($this->sqlSelectFields());
         return $select;
     }
 
-    public function sqlSelect() // For backward compatibility
+    // Get list of fields
+    private function sqlSelectFields()
+    {
+        $useFieldNames = false;
+        $fieldNames = [];
+        $platform = $this->getConnection()->getDatabasePlatform();
+        foreach ($this->Fields as $field) {
+            $expr = $field->Expression;
+            $customExpr = $field->CustomDataType?->convertToPHPValueSQL($expr, $platform) ?? $expr;
+            if ($customExpr != $expr) {
+                $fieldNames[] = $customExpr . " AS " . QuotedName($field->Name, $this->Dbid);
+                $useFieldNames = true;
+            } else {
+                $fieldNames[] = $expr;
+            }
+        }
+        return $useFieldNames ? implode(", ", $fieldNames) : "*";
+    }
+
+    // Get SELECT clause (for backward compatibility)
+    public function sqlSelect()
     {
         return $this->getSqlSelect();
     }
 
+    // Set SELECT clause
     public function setSqlSelect($v)
     {
         $this->SqlSelect = $v;
     }
 
-    public function getSqlWhere() // Where
+    // Get WHERE clause
+    public function getSqlWhere()
     {
         $where = ($this->SqlWhere != "") ? $this->SqlWhere : "";
         $this->DefaultFilter = "";
@@ -390,56 +427,67 @@ class PatientQueues extends ReportTable
         return $where;
     }
 
-    public function sqlWhere() // For backward compatibility
+    // Get WHERE clause (for backward compatibility)
+    public function sqlWhere()
     {
         return $this->getSqlWhere();
     }
 
+    // Set WHERE clause
     public function setSqlWhere($v)
     {
         $this->SqlWhere = $v;
     }
 
-    public function getSqlGroupBy() // Group By
+    // Get GROUP BY clause
+    public function getSqlGroupBy()
     {
-        return ($this->SqlGroupBy != "") ? $this->SqlGroupBy : "";
+        return $this->SqlGroupBy != "" ? $this->SqlGroupBy : "";
     }
 
-    public function sqlGroupBy() // For backward compatibility
+    // Get GROUP BY clause (for backward compatibility)
+    public function sqlGroupBy()
     {
         return $this->getSqlGroupBy();
     }
 
+    // set GROUP BY clause
     public function setSqlGroupBy($v)
     {
         $this->SqlGroupBy = $v;
     }
 
+    // Get HAVING clause
     public function getSqlHaving() // Having
     {
         return ($this->SqlHaving != "") ? $this->SqlHaving : "";
     }
 
-    public function sqlHaving() // For backward compatibility
+    // Get HAVING clause (for backward compatibility)
+    public function sqlHaving()
     {
         return $this->getSqlHaving();
     }
 
+    // Set HAVING clause
     public function setSqlHaving($v)
     {
         $this->SqlHaving = $v;
     }
 
-    public function getSqlOrderBy() // Order By
+    // Get ORDER BY clause
+    public function getSqlOrderBy()
     {
         return ($this->SqlOrderBy != "") ? $this->SqlOrderBy : "";
     }
 
-    public function sqlOrderBy() // For backward compatibility
+    // Get ORDER BY clause (for backward compatibility)
+    public function sqlOrderBy()
     {
         return $this->getSqlOrderBy();
     }
 
+    // set ORDER BY clause
     public function setSqlOrderBy($v)
     {
         $this->SqlOrderBy = $v;
@@ -461,23 +509,23 @@ class PatientQueues extends ReportTable
             case "gridadd":
             case "register":
             case "addopt":
-                return (($allow & 1) == 1);
+                return ($allow & Allow::ADD->value) == Allow::ADD->value;
             case "edit":
             case "gridedit":
             case "update":
             case "changepassword":
             case "resetpassword":
-                return (($allow & 4) == 4);
+                return ($allow & Allow::EDIT->value) == Allow::EDIT->value;
             case "delete":
-                return (($allow & 2) == 2);
+                return ($allow & Allow::DELETE->value) == Allow::DELETE->value;
             case "view":
-                return (($allow & 32) == 32);
+                return ($allow & Allow::VIEW->value) == Allow::VIEW->value;
             case "search":
-                return (($allow & 64) == 64);
+                return ($allow & Allow::SEARCH->value) == Allow::SEARCH->value;
             case "lookup":
-                return (($allow & 256) == 256);
+                return ($allow & Allow::LOOKUP->value) == Allow::LOOKUP->value;
             default:
-                return (($allow & 8) == 8);
+                return ($allow & Allow::LIST->value) == Allow::LIST->value;
         }
     }
 
@@ -491,32 +539,36 @@ class PatientQueues extends ReportTable
     public function getRecordCount($sql, $c = null)
     {
         $cnt = -1;
-        $rs = null;
-        if ($sql instanceof QueryBuilder) { // Query builder
-            $sqlwrk = clone $sql;
-            $sqlwrk = $sqlwrk->resetQueryPart("orderBy")->getSQL();
-        } else {
-            $sqlwrk = $sql;
-        }
+        $sqlwrk = $sql instanceof QueryBuilder // Query builder
+            ? (clone $sql)->resetQueryPart("orderBy")->getSQL()
+            : $sql;
         $pattern = '/^SELECT\s([\s\S]+)\sFROM\s/i';
         // Skip Custom View / SubQuery / SELECT DISTINCT / ORDER BY
         if (
-            ($this->TableType == 'TABLE' || $this->TableType == 'VIEW' || $this->TableType == 'LINKTABLE') &&
-            preg_match($pattern, $sqlwrk) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
-            !preg_match('/^\s*select\s+distinct\s+/i', $sqlwrk) && !preg_match('/\s+order\s+by\s+/i', $sqlwrk)
+            in_array($this->TableType, ["TABLE", "VIEW", "LINKTABLE"]) &&
+            preg_match($pattern, $sqlwrk) &&
+            !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
+            !preg_match('/^\s*SELECT\s+DISTINCT\s+/i', $sqlwrk) &&
+            !preg_match('/\s+ORDER\s+BY\s+/i', $sqlwrk)
         ) {
-            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
+            $sqlcnt = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
         } else {
-            $sqlwrk = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
+            $sqlcnt = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
         }
         $conn = $c ?? $this->getConnection();
-        $cnt = $conn->fetchOne($sqlwrk);
+        $cnt = $conn->fetchOne($sqlcnt);
         if ($cnt !== false) {
             return (int)$cnt;
         }
-
         // Unable to get count by SELECT COUNT(*), execute the SQL to get record count directly
-        return ExecuteRecordCount($sql, $conn);
+        $result = $conn->executeQuery($sqlwrk);
+        $cnt = $result->rowCount();
+        if ($cnt == 0) { // Unable to get record count, count directly
+            while ($result->fetch()) {
+                $cnt++;
+            }
+        }
+        return $cnt;
     }
 
     // Record filter WHERE clause
@@ -526,7 +578,7 @@ class PatientQueues extends ReportTable
     }
 
     // Get Key
-    public function getKey($current = false)
+    public function getKey($current = false, $keySeparator = null)
     {
         $keys = [];
         $val = $current ? $this->visit_id->CurrentValue : $this->visit_id->OldValue;
@@ -535,14 +587,16 @@ class PatientQueues extends ReportTable
         } else {
             $keys[] = $val;
         }
-        return implode(Config("COMPOSITE_KEY_SEPARATOR"), $keys);
+        $keySeparator ??= Config("COMPOSITE_KEY_SEPARATOR");
+        return implode($keySeparator, $keys);
     }
 
     // Set Key
-    public function setKey($key, $current = false)
+    public function setKey($key, $current = false, $keySeparator = null)
     {
+        $keySeparator ??= Config("COMPOSITE_KEY_SEPARATOR");
         $this->OldKey = strval($key);
-        $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
+        $keys = explode($keySeparator, $this->OldKey);
         if (count($keys) == 1) {
             if ($current) {
                 $this->visit_id->CurrentValue = $keys[0];
@@ -595,14 +649,18 @@ class PatientQueues extends ReportTable
     public function getModalCaption($pageName)
     {
         global $Language;
-        if ($pageName == "") {
-            return $Language->phrase("View");
-        } elseif ($pageName == "") {
-            return $Language->phrase("Edit");
-        } elseif ($pageName == "") {
-            return $Language->phrase("Add");
-        }
-        return "";
+        return match ($pageName) {
+            "" => $Language->phrase("View"),
+            "" => $Language->phrase("Edit"),
+            "" => $Language->phrase("Add"),
+            default => ""
+        };
+    }
+
+    // Default route URL
+    public function getDefaultRouteUrl()
+    {
+        return "patientqueues";
     }
 
     // API page name
@@ -680,12 +738,12 @@ class PatientQueues extends ReportTable
     }
 
     // Delete URL
-    public function getDeleteUrl()
+    public function getDeleteUrl($parm = "")
     {
         if ($this->UseAjaxActions && ConvertToBool(Param("infinitescroll")) && CurrentPageID() == "list") {
             return $this->keyUrl(GetApiUrl(Config("API_DELETE_ACTION") . "/" . $this->TableVar));
         } else {
-            return $this->keyUrl("");
+            return $this->keyUrl("", $parm);
         }
     }
 
@@ -698,7 +756,7 @@ class PatientQueues extends ReportTable
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
-        $json .= "\"visit_id\":" . JsonEncode($this->visit_id->CurrentValue, "number");
+        $json .= "\"visit_id\":" . VarToJson($this->visit_id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -723,10 +781,10 @@ class PatientQueues extends ReportTable
     // Render sort
     public function renderFieldHeader($fld)
     {
-        global $Security, $Language, $Page;
+        global $Security, $Language;
         $sortUrl = "";
         $attrs = "";
-        if ($fld->Sortable) {
+        if ($this->PageID != "grid" && $fld->Sortable) {
             $sortUrl = $this->sortUrl($fld);
             $attrs = ' role="button" data-ew-action="sort" data-ajax="' . ($this->UseAjaxActions ? "true" : "false") . '" data-sort-url="' . $sortUrl . '" data-sort-type="1"';
             if ($this->ContextClass) { // Add context
@@ -737,9 +795,11 @@ class PatientQueues extends ReportTable
         if ($sortUrl) {
             $html .= '<div class="ew-table-header-sort">' . $fld->getSortIcon() . '</div>';
         }
-        if ($fld->UseFilter && $Security->canSearch()) {
+        if ($this->PageID != "grid" && !$this->isExport() && $fld->UseFilter && $Security->canSearch()) {
             $html .= '<div class="ew-filter-dropdown-btn" data-ew-action="filter" data-table="' . $fld->TableVar . '" data-field="' . $fld->FieldVar .
-                '"><div class="ew-table-header-filter" role="button" aria-haspopup="true">' . $Language->phrase("Filter") . '</div></div>';
+                '"><div class="ew-table-header-filter" role="button" aria-haspopup="true">' . $Language->phrase("Filter") .
+                (is_array($fld->EditValue) ? str_replace("%c", count($fld->EditValue), $Language->phrase("FilterCount")) : '') .
+                '</div></div>';
         }
         $html = '<div class="ew-table-header-btn">' . $html . '</div>';
         if ($this->UseCustomTemplate) {
@@ -762,7 +822,7 @@ class PatientQueues extends ReportTable
         } elseif ($fld->Sortable) {
             $urlParm = "order=" . urlencode($fld->Name) . "&amp;ordertype=" . $fld->getNextSort();
             if ($DashboardReport) {
-                $urlParm .= "&amp;dashboard=true";
+                $urlParm .= "&amp;" . Config("PAGE_DASHBOARD") . "=" . $DashboardReport;
             }
             return $this->addMasterUrl($this->CurrentPageName . "?" . $urlParm);
         } else {
@@ -779,15 +839,19 @@ class PatientQueues extends ReportTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
+            $isApi = IsApi();
+            $keyValues = $isApi
+                ? (Route(0) == "export"
+                    ? array_map(fn ($i) => Route($i + 3), range(0, 0))  // Export API
+                    : array_map(fn ($i) => Route($i + 2), range(0, 0))) // Other API
+                : []; // Non-API
             if (($keyValue = Param("visit_id") ?? Route("visit_id")) !== null) {
                 $arKeys[] = $keyValue;
-            } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
+            } elseif ($isApi && (($keyValue = Key(0) ?? $keyValues[0] ?? null) !== null)) {
                 $arKeys[] = $keyValue;
             } else {
                 $arKeys = null; // Do not setup
             }
-
-            //return $arKeys; // Do not return yet, so the values will also be checked by the following code
         }
         // Check keys
         $ar = [];
@@ -834,10 +898,10 @@ class PatientQueues extends ReportTable
         return $keyFilter;
     }
 
-    // Load recordset based on filter
-    public function loadRs($filter)
+    // Load result set based on filter/sort
+    public function loadRs($filter, $sort = "")
     {
-        $sql = $this->getSql($filter); // Set up filter (WHERE Clause)
+        $sql = $this->getSql($filter, $sort); // Set up filter (WHERE Clause) / sort (ORDER BY Clause)
         $conn = $this->getConnection();
         return $conn->executeQuery($sql);
     }
@@ -860,7 +924,7 @@ class PatientQueues extends ReportTable
     }
 
     // Email Sending event
-    public function emailSending($email, &$args)
+    public function emailSending($email, $args)
     {
         //var_dump($email, $args); exit();
         return true;

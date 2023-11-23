@@ -1,8 +1,8 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
-use Pinq\ITraversable, Pinq\Traversable;
+use Illuminate\Support\Collection;
 
 /**
  * Report field class
@@ -35,6 +35,9 @@ class ReportField extends DbField
     public $DistinctValues = [];
     public $Records = [];
     public $LevelBreak = false;
+    public $Expanded = true;
+    public $DashboardSearchSourceFields = [];
+    public $SearchType = "";
 
     // Database value (override PHPMaker)
     public function setDbValue($v)
@@ -58,29 +61,22 @@ class ReportField extends DbField
         $this->GroupValue = $this->DbValue;
     }
 
-    // Get select options HTML (override)
-    public function selectOptionListHtml($name = "", $multiple = null)
-    {
-        $html = parent::selectOptionListHtml($name, $multiple);
-        return str_replace(">" . Config("INIT_VALUE") . "</option>", "></option>", $html); // Do not show the INIT_VALUE as value
-    }
-
     // Get distinct values
     public function getDistinctValues($records, $sort = "ASC")
     {
         $name = $this->getGroupName();
         if (SameText($sort, "DESC")) {
-            $this->DistinctValues = Traversable::from($records)
-                ->select(fn($record) => $record[$name])
-                ->orderByDescending(fn($name) => $name)
+            $this->DistinctValues = Collection::make($records)
+                ->pluck($name)
+                ->sortByDesc($name)
                 ->unique()
-                ->asArray();
+                ->all();
         } else {
-            $this->DistinctValues = Traversable::from($records)
-                ->select(fn($record) => $record[$name])
-                ->orderByAscending(fn($name) => $name)
+            $this->DistinctValues = Collection::make($records)
+                ->pluck($name)
+                ->sortBy($name)
                 ->unique()
-                ->asArray();
+                ->all();
         }
     }
 
@@ -88,9 +84,9 @@ class ReportField extends DbField
     public function getDistinctRecords($records, $val)
     {
         $name = $this->getGroupName();
-        $this->Records = Traversable::from($records)
-            ->where(fn($record) => $record[$name] == $val)
-            ->asArray();
+        $this->Records = Collection::make($records)
+            ->where($name, $val)
+            ->all();
     }
 
     // Get Sum
@@ -99,7 +95,7 @@ class ReportField extends DbField
         $name = $this->getGroupName();
         $sum = 0;
         if (count($records) > 0) {
-            $sum = Traversable::from($records)->sum(fn($record) => $record[$name]);
+            $sum = Collection::make($records)->sum($name);
         }
         $this->SumValue = $sum;
     }
@@ -110,7 +106,7 @@ class ReportField extends DbField
         $name = $this->getGroupName();
         $avg = 0;
         if (count($records) > 0) {
-            $avg = Traversable::from($records)->average(fn($record) => $record[$name]);
+            $avg = Collection::make($records)->average($name);
         }
         $this->AvgValue = $avg;
     }
@@ -121,7 +117,10 @@ class ReportField extends DbField
         $name = $this->getGroupName();
         $min = null;
         if (count($records) > 0) {
-            $min = Traversable::from($records)->minimum(fn($record) => $record[$name]);
+            $collection = Collection::make($records)->whereNotNull($name);
+            if (!$collection->isEmpty()) {
+                $max = $collection->min($name);
+            }
         }
         $this->MinValue = $min;
     }
@@ -132,9 +131,9 @@ class ReportField extends DbField
         $name = $this->getGroupName();
         $max = null;
         if (count($records) > 0) {
-            $notNull = Traversable::from($records)->where(fn($record) => !is_null($record[$name]));
-            if (!$notNull->isEmpty()) {
-                $max = $notNull->maximum(fn($record) => $record[$name]);
+            $collection = Collection::make($records)->whereNotNull($name);
+            if (!$collection->isEmpty()) {
+                $max = $collection->max($name);
             }
         }
         $this->MaxValue = $max;
@@ -146,7 +145,7 @@ class ReportField extends DbField
         $name = $this->getGroupName();
         $cnt = 0;
         if (count($records) > 0) {
-            $cnt = Traversable::from($records)->where(fn($record) => $record[$name])->count();
+            $cnt = Collection::make($records)->count();
         }
         $this->CntValue = $cnt;
         $this->Count = $cnt;
@@ -178,5 +177,94 @@ class ReportField extends DbField
             }
         }
         return $ar;
+    }
+
+    /**
+     * Search expression
+     *
+     * @return string Search expression
+     */
+    public function searchExpression()
+    {
+        if (!EmptyValue($this->DateFilter)) { // Date filter
+            return match (strtolower($this->DateFilter)) {
+                "year" => GroupSql($this->Expression, "y", 0, $this->Table->Dbid),
+                "quarter" => GroupSql($this->Expression, "q", 0, $this->Table->Dbid),
+                "month" => GroupSql($this->Expression, "m", 0, $this->Table->Dbid),
+                "week" => GroupSql($this->Expression, "w", 0, $this->Table->Dbid),
+                "day" => GroupSql($this->Expression, "d", 0, $this->Table->Dbid),
+                "hour" => GroupSql($this->Expression, "h", 0, $this->Table->Dbid),
+                "minute" => GroupSql($this->Expression, "min", 0, $this->Table->Dbid),
+                default => $this->Expression
+            };
+        } elseif ($this->GroupSql != "") { // Use grouping SQL for search if exists
+            return str_replace("%s", $this->Expression, $this->GroupSql);
+        }
+        return parent::searchExpression();
+    }
+
+    /**
+     * Search field type
+     *
+     * @return enum Search data type
+     */
+    public function searchDataType()
+    {
+        if (!EmptyValue($this->DateFilter)) { // Date filter
+            return match (strtolower($this->DateFilter)) {
+                "year" => DataType::NUMBER,
+                "quarter" => DataType::STRING,
+                "month" => DataType::STRING,
+                "week" => DataType::STRING,
+                "day" => DataType::STRING,
+                "hour" => DataType::NUMBER,
+                "minute" => DataType::NUMBER,
+                default => $this->DataType
+            };
+        } elseif ($this->GroupSql != "") { // Use grouping SQL for search if exists
+            return DataType::STRING;
+        }
+        return parent::searchDataType();
+    }
+
+    /**
+     * Group toggle icon
+     *
+     * @return string Group toggle icon
+     */
+    public function groupToggleIcon()
+    {
+        $iconClass = "ew-group-toggle fa-solid fa-caret-down" . ($this->Expanded || $this->Table->hideGroupLevel() != $this->GroupingFieldId ? "" : " ew-rpt-grp-hide");
+        return '<i class="' . $iconClass . '"></i>';
+    }
+
+    /**
+     * Expand group
+     *
+     * @param bool $value Expanded
+     */
+    public function setExpanded(bool $value)
+    {
+        foreach ($this->Table->Fields as $fld) {
+            if ($fld->GroupingFieldId >= $this->GroupingFieldId) {
+                $fld->Expanded = $value;
+            }
+        }
+    }
+
+    /**
+     * Cell attributes
+     *
+     * @return string Cell attributes
+     */
+    public function cellAttributes($className = "") {
+        if ($className) {
+            $this->CellAttrs->AppendClass($className);
+        }
+        $cellAttrs = parent::cellAttributes(); // Call parent method
+        if ($className) {
+            $this->CellAttrs->removeClass($className);
+        }
+        return $cellAttrs;
     }
 }

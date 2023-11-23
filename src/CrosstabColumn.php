@@ -1,20 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Crosstab column class
  */
 class CrosstabColumn
 {
-    public $Caption;
-    public $Value;
-    public $Visible;
 
-    public function __construct($value, $caption, $visible = true)
-    {
-        $this->Caption = $caption;
-        $this->Value = $value;
-        $this->Visible = $visible;
+    public function __construct(
+        public $Caption,
+        public $Value,
+        public $Visible = true,
+    ) {
     }
 }

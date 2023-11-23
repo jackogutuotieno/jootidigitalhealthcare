@@ -1,7 +1,7 @@
-<?php namespace PHPMaker2023\jootidigitalhealthcare; ?>
+<?php namespace PHPMaker2024\jootidigitalhealthcare; ?>
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $Login = &$Page;
@@ -73,7 +73,7 @@ loadjs.ready(["wrapper", "head"], function() {
     loadjs.done(form.id);
 });
 </script>
-<form name="flogin" id="flogin" class="ew-form ew-login-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="flogin" id="flogin" class="ew-form ew-login-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
     <?php if (Config("CHECK_TOKEN")) { ?>
     <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
     <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -83,6 +83,7 @@ loadjs.ready(["wrapper", "head"], function() {
         <input type="text" name="<?= $Page->Username->FieldVar ?>" id="<?= $Page->Username->FieldVar ?>" autocomplete="username" value="<?= HtmlEncode($Page->Username->CurrentValue) ?>" placeholder="<?= HtmlEncode($Language->phrase("Username", true)) ?>"<?= $Page->Username->editAttributes() ?>>
         <div class="invalid-feedback"><?= $Page->Username->getErrorMessage() ?></div>
     </div>
+    <?php if (!CONFIG("OTP_ONLY")) { // Disable password checking ?>
     <div class="row gx-0">
         <div class="input-group px-0">
             <input type="password" name="<?= $Page->Password->FieldVar ?>" id="<?= $Page->Password->FieldVar ?>" autocomplete="current-password" placeholder="<?= HtmlEncode($Language->phrase("Password", true)) ?>"<?= $Page->Password->editAttributes() ?>>
@@ -91,6 +92,7 @@ loadjs.ready(["wrapper", "head"], function() {
         <div class="valid-feedback"><?= $Language->phrase("LoginSucceeded") ?></div>
         <div class="invalid-feedback"><?= $Page->Password->getErrorMessage() ?></div>
     </div>
+    <?php } ?>
     <div class="row gx-0">
         <div class="form-check">
             <input type="checkbox" name="<?= $Page->LoginType->FieldVar ?>" id="<?= $Page->LoginType->FieldVar ?>" class="form-check-input" value="a"<?php if ($Page->LoginType->CurrentValue == "a") { ?> checked<?php } ?>>

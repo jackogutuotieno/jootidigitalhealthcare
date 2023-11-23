@@ -1,17 +1,40 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Server\MiddlewareInterface;
+use Slim\Routing\RouteContext;
+use Slim\Exception\HttpNotFoundException;
 
 /**
  * JWT middleware
  */
 class JwtMiddleware implements MiddlewareInterface
 {
+    // Validate JWT token
+    public function process(Request $request, RequestHandler $handler): Response
+    {
+        // Set up request
+        $GLOBALS["Request"] = $request;
+        $route = GetRoute($request);
+
+        // Return Not Found for non-existent route
+        if (empty($route)) {
+            throw new HttpNotFoundException($request);
+        }
+
+        // Handle login
+        if ($route->getName() == "login") {
+            return $this->create($request, $handler);
+        }
+
+        // Login user against default expiry time
+        return $this->login($request, $handler);
+    }
+
     // Create JWT token
     public function create(Request $request, RequestHandler $handler): Response
     {
@@ -21,7 +44,7 @@ class JwtMiddleware implements MiddlewareInterface
         $response = $handler->handle($request);
 
         // Authorize
-        $Security = Container("security");
+        $Security = Container("app.security");
         if ($Security->isLoggedIn()) {
             if ($request->isGet()) {
                 $expire = $request->getQueryParam(Config("API_LOGIN_EXPIRE"));
@@ -35,7 +58,7 @@ class JwtMiddleware implements MiddlewareInterface
             $minExpiry = $expire ? time() + $expire * 60 * 60 : 0;
             $jwt = $Security->createJwt($minExpiry, $permission);
             $response = $ResponseFactory->createResponse();
-            return $response->withJson($jwt); // Return JWT token
+            return $response->withJson(["JWT" => $jwt]); // Return JWT token
         } elseif (StartsString("application/json", $response->getHeaderLine("Content-type") ?? "")) { // JSON error response
             return $response;
         } else {
@@ -43,29 +66,27 @@ class JwtMiddleware implements MiddlewareInterface
         }
     }
 
-    // Validate JWT token
-    public function process(Request $request, RequestHandler $handler): Response
-    {
-        // Login user against default expiry time
-        return $this->loginUser($request, $handler);
-    }
-
     // Login user
-    private function loginUser(Request $request, RequestHandler $handler): Response
+    private function login(Request $request, RequestHandler $handler): Response
     {
-        global $UserProfile, $Security, $ResponseFactory;
+        global $Security, $ResponseFactory;
 
         // Set up security from HTTP header or cookie
-        $UserProfile = Container("profile");
-        $Security = Container("security");
-        $bearerToken = preg_replace('/^Bearer\s+/', "", $request->getHeaderLine(Config("JWT.AUTH_HEADER"))); // Get bearer token from HTTP header
-        $token = $bearerToken ?: Get(Config("API_JWT_TOKEN_NAME")); // Try query parameter if no bearer token
-        $token = $token ?: ReadCookie("JWT"); // Try cookie if no token
+        $Security = Container("app.security");
+        $token = preg_replace('/^Bearer\s+/', "", $request->getHeaderLine(Config("JWT.AUTH_HEADER"))); // Get bearer token from HTTP header
         if ($token) {
             $jwt = DecodeJwt($token);
             if (is_array($jwt) && count($jwt) > 0) {
-                if (array_key_exists("username", $jwt)) { // User name exists
-                    $Security->loginUser($jwt["username"], @$jwt["userid"], @$jwt["parentuserid"], @$jwt["userlevelid"], @$jwt["permission"]); // Login user
+                if ((int)($jwt["userlevel"] ?? PHP_INT_MIN) >= AdvancedSecurity::ANONYMOUS_USER_LEVEL_ID) { // Valid JWT token
+                    $request->withAttribute("JWT", $jwt); // Add JWT to request attribute
+                    $Security->loginUser(
+                        $jwt["username"] ?? "",
+                        $jwt["userid"] ?? null,
+                        $jwt["parentuserid"] ?? null,
+                        $jwt["userlevel"] ?? AdvancedSecurity::ANONYMOUS_USER_LEVEL_ID,
+                        $jwt["userprimarykey"] ?? null,
+                        $jwt["permission"] ?? 0
+                    ); // Login user
                 } else { // JWT error
                     $response = $ResponseFactory->createResponse();
                     $json = array_merge($jwt, ["success" => false, "version" => PRODUCT_VERSION]);

@@ -7,6 +7,5 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'PHPThumb' => array($vendorDir . '/hkvstore/phpthumb/src'),
-    'HTMLPurifier' => array($vendorDir . '/hkvstore/htmlpurifier/library'),
-    'Detection' => array($vendorDir . '/mobiledetect/mobiledetectlib/namespaced'),
+    'HTMLPurifier' => array($vendorDir . '/ezyang/htmlpurifier/library'),
 );

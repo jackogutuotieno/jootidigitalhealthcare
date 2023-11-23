@@ -3,7 +3,7 @@
  *
  * Copyright 2014-2019 Damien "Mistic" Sorel (http://www.strangeplanet.fr)
  * Licensed under MIT (http://opensource.org/licenses/MIT)
- * 
+ *
  * Based on jQuery.extend by jQuery Foundation, Inc. and other contributors
  */
 
@@ -132,168 +132,23 @@
 }));
 
 
-// doT.js
-// 2011-2014, Laura Doktorova, https://github.com/olado/doT
-// Licensed under the MIT license.
-
-(function () {
-	"use strict";
-
-	var doT = {
-		name: "doT",
-		version: "1.1.1",
-		templateSettings: {
-			evaluate:    /\{\{([\s\S]+?(\}?)+)\}\}/g,
-			interpolate: /\{\{=([\s\S]+?)\}\}/g,
-			encode:      /\{\{!([\s\S]+?)\}\}/g,
-			use:         /\{\{#([\s\S]+?)\}\}/g,
-			useParams:   /(^|[^\w$])def(?:\.|\[[\'\"])([\w$\.]+)(?:[\'\"]\])?\s*\:\s*([\w$\.]+|\"[^\"]+\"|\'[^\']+\'|\{[^\}]+\})/g,
-			define:      /\{\{##\s*([\w\.$]+)\s*(\:|=)([\s\S]+?)#\}\}/g,
-			defineParams:/^\s*([\w$]+):([\s\S]+)/,
-			conditional: /\{\{\?(\?)?\s*([\s\S]*?)\s*\}\}/g,
-			iterate:     /\{\{~\s*(?:\}\}|([\s\S]+?)\s*\:\s*([\w$]+)\s*(?:\:\s*([\w$]+))?\s*\}\})/g,
-			varname:	"it",
-			strip:		true,
-			append:		true,
-			selfcontained: false,
-			doNotSkipEncoded: false
-		},
-		template: undefined, //fn, compile template
-		compile:  undefined, //fn, for express
-		log: true
-	}, _globals;
-
-	doT.encodeHTMLSource = function(doNotSkipEncoded) {
-		var encodeHTMLRules = { "&": "&#38;", "<": "&#60;", ">": "&#62;", '"': "&#34;", "'": "&#39;", "/": "&#47;" },
-			matchHTML = doNotSkipEncoded ? /[&<>"'\/]/g : /&(?!#?\w+;)|<|>|"|'|\//g;
-		return function(code) {
-			return code ? code.toString().replace(matchHTML, function(m) {return encodeHTMLRules[m] || m;}) : "";
-		};
-	};
-
-	_globals = (function(){ return this || (0,eval)("this"); }());
-
-	/* istanbul ignore else */
-	if (typeof module !== "undefined" && module.exports) {
-		module.exports = doT;
-	} else if (typeof define === "function" && define.amd) {
-		define('doT', function(){return doT;});
-	} else {
-		_globals.doT = doT;
-	}
-
-	var startend = {
-		append: { start: "'+(",      end: ")+'",      startencode: "'+encodeHTML(" },
-		split:  { start: "';out+=(", end: ");out+='", startencode: "';out+=encodeHTML(" }
-	}, skip = /$^/;
-
-	function resolveDefs(c, block, def) {
-		return ((typeof block === "string") ? block : block.toString())
-		.replace(c.define || skip, function(m, code, assign, value) {
-			if (code.indexOf("def.") === 0) {
-				code = code.substring(4);
-			}
-			if (!(code in def)) {
-				if (assign === ":") {
-					if (c.defineParams) value.replace(c.defineParams, function(m, param, v) {
-						def[code] = {arg: param, text: v};
-					});
-					if (!(code in def)) def[code]= value;
-				} else {
-					new Function("def", "def['"+code+"']=" + value)(def);
-				}
-			}
-			return "";
-		})
-		.replace(c.use || skip, function(m, code) {
-			if (c.useParams) code = code.replace(c.useParams, function(m, s, d, param) {
-				if (def[d] && def[d].arg && param) {
-					var rw = (d+":"+param).replace(/'|\\/g, "_");
-					def.__exp = def.__exp || {};
-					def.__exp[rw] = def[d].text.replace(new RegExp("(^|[^\\w$])" + def[d].arg + "([^\\w$])", "g"), "$1" + param + "$2");
-					return s + "def.__exp['"+rw+"']";
-				}
-			});
-			var v = new Function("def", "return " + code)(def);
-			return v ? resolveDefs(c, v, def) : v;
-		});
-	}
-
-	function unescape(code) {
-		return code.replace(/\\('|\\)/g, "$1").replace(/[\r\t\n]/g, " ");
-	}
-
-	doT.template = function(tmpl, c, def) {
-		c = c || doT.templateSettings;
-		var cse = c.append ? startend.append : startend.split, needhtmlencode, sid = 0, indv,
-			str  = (c.use || c.define) ? resolveDefs(c, tmpl, def || {}) : tmpl;
-
-		str = ("var out='" + (c.strip ? str.replace(/(^|\r|\n)\t* +| +\t*(\r|\n|$)/g," ")
-					.replace(/\r|\n|\t|\/\*[\s\S]*?\*\//g,""): str)
-			.replace(/'|\\/g, "\\$&")
-			.replace(c.interpolate || skip, function(m, code) {
-				return cse.start + unescape(code) + cse.end;
-			})
-			.replace(c.encode || skip, function(m, code) {
-				needhtmlencode = true;
-				return cse.startencode + unescape(code) + cse.end;
-			})
-			.replace(c.conditional || skip, function(m, elsecase, code) {
-				return elsecase ?
-					(code ? "';}else if(" + unescape(code) + "){out+='" : "';}else{out+='") :
-					(code ? "';if(" + unescape(code) + "){out+='" : "';}out+='");
-			})
-			.replace(c.iterate || skip, function(m, iterate, vname, iname) {
-				if (!iterate) return "';} } out+='";
-				sid+=1; indv=iname || "i"+sid; iterate=unescape(iterate);
-				return "';var arr"+sid+"="+iterate+";if(arr"+sid+"){var "+vname+","+indv+"=-1,l"+sid+"=arr"+sid+".length-1;while("+indv+"<l"+sid+"){"
-					+vname+"=arr"+sid+"["+indv+"+=1];out+='";
-			})
-			.replace(c.evaluate || skip, function(m, code) {
-				return "';" + unescape(code) + "out+='";
-			})
-			+ "';return out;")
-			.replace(/\n/g, "\\n").replace(/\t/g, '\\t').replace(/\r/g, "\\r")
-			.replace(/(\s|;|\}|^|\{)out\+='';/g, '$1').replace(/\+''/g, "");
-			//.replace(/(\s|;|\}|^|\{)out\+=''\+/g,'$1out+=');
-
-		if (needhtmlencode) {
-			if (!c.selfcontained && _globals && !_globals._encodeHTML) _globals._encodeHTML = doT.encodeHTMLSource(c.doNotSkipEncoded);
-			str = "var encodeHTML = typeof _encodeHTML !== 'undefined' ? _encodeHTML : ("
-				+ doT.encodeHTMLSource.toString() + "(" + (c.doNotSkipEncoded || '') + "));"
-				+ str;
-		}
-		try {
-			return new Function(c.varname, str);
-		} catch (e) {
-			/* istanbul ignore else */
-			if (typeof console !== "undefined") console.log("Could not create a template function: " + str);
-			throw e;
-		}
-	};
-
-	doT.compile = function(tmpl, def) {
-		return doT.template(tmpl, null, def);
-	};
-}());
-
-
 /*!
- * jQuery QueryBuilder 2.6.2
- * Copyright 2014-2022 Damien "Mistic" Sorel (http://www.strangeplanet.fr)
+ * jQuery QueryBuilder 2.7.0
+ * Copyright 2014-2023 Damien "Mistic" Sorel (http://www.strangeplanet.fr)
  * Licensed under MIT (https://opensource.org/licenses/MIT)
  */
+
 (function(root, factory) {
     if (typeof define == 'function' && define.amd) {
-        define('query-builder', ['jquery', 'dot/doT', 'jquery-extendext'], factory);
+        define('query-builder', ['jquery', 'jquery-extendext'], factory);
     }
     else if (typeof module === 'object' && module.exports) {
-        module.exports = factory(require('jquery'), require('dot/doT'), require('jquery-extendext'));
+        module.exports = factory(require('jquery'), require('jquery-extendext'));
     }
     else {
-        factory(root.jQuery, root.doT);
+        factory(root.jQuery);
     }
-}(this, function($, doT) {
+}(this, function($) {
 "use strict";
 
 /**
@@ -419,8 +274,8 @@ var QueryBuilder = function($el, options) {
         if (!this.templates[tpl]) {
             this.templates[tpl] = QueryBuilder.templates[tpl];
         }
-        if (typeof this.templates[tpl] == 'string') {
-            this.templates[tpl] = doT.template(this.templates[tpl]);
+        if (typeof this.templates[tpl] !== 'function') {
+            throw new Error(`Template ${tpl} must be a function`);
         }
     }, this);
 
@@ -432,7 +287,7 @@ var QueryBuilder = function($el, options) {
     this.status.id = this.$el.attr('id');
 
     // INIT
-    this.$el.addClass('query-builder');
+    this.$el.addClass('query-builder form-inline');
 
     this.filters = this.checkFilters(this.filters);
     this.operators = this.checkOperators(this.operators);
@@ -2699,22 +2554,18 @@ QueryBuilder.prototype.getRuleInputValue = function(rule) {
 
                 case 'checkbox':
                     tmp = [];
-                    // jshint loopfunc:true
                     $value.find('[name=' + name + ']:checked').each(function() {
                         tmp.push($(this).val());
                     });
-                    // jshint loopfunc:false
                     value.push(tmp);
                     break;
 
                 case 'select':
                     if (filter.multiple) {
                         tmp = [];
-                        // jshint loopfunc:true
                         $value.find('[name=' + name + '] option:selected').each(function() {
                             tmp.push($(this).val());
                         });
-                        // jshint loopfunc:false
                         value.push(tmp);
                     }
                     else {
@@ -2801,11 +2652,9 @@ QueryBuilder.prototype.setRuleInputValue = function(rule, value) {
                     if (!Array.isArray(value[i])) {
                         value[i] = [value[i]];
                     }
-                    // jshint loopfunc:true
                     value[i].forEach(function(value) {
                         $value.find('[name=' + name + '][value="' + value + '"]').prop('checked', true).trigger('change');
                     });
-                    // jshint loopfunc:false
                     break;
 
                 default:
@@ -2979,118 +2828,123 @@ QueryBuilder.prototype.getValidationMessage = function(validation, type, def) {
 };
 
 
-QueryBuilder.templates.group = '\
-<div id="{{= it.group_id }}" class="rules-group-container"> \
-  <div class="rules-group-header"> \
-    {{? it.level > 1 }} \
-    <button type="button" class="btn-close float-end m-2" aria-label="{{! it.translate("delete_group") }}" data-delete="group"></button> \
-    {{?}} \
+QueryBuilder.templates.group = ({ group_id, level, conditions, icons, settings, translate, builder }) => {
+  return `
+<div id="${group_id}" class="rules-group-container">
+  <div class="rules-group-header">
+    ${level > 1 ? `
+    <button type="button" class="btn-close float-end m-2" aria-label="${translate("delete_group")}" data-delete="group"></button>
+    ` : ''}
     <div class="btn-group btn-group-sm float-end group-actions"> \
-      <button type="button" class="btn btn-primary" data-add="rule" data-bs-toggle="tooltip" title="{{! it.translate("add_rule") }}"> \
-        <i class="{{= it.icons.add_rule }}"></i> \
-      </button> \
-      {{? it.settings.allow_groups === -1 || it.settings.allow_groups >= it.level }} \
-      <button type="button" class="btn btn-primary" data-add="group" data-bs-toggle="tooltip" title="{{! it.translate("add_group") }}"> \
-        <i class="{{= it.icons.add_group }}"></i> \
-      </button> \
-      {{?}} \
-    </div> \
-    {{ var i = 0; }} \
-    <div class="btn-group btn-group-sm group-conditions bg-white" role="group"> \
-      {{~ it.conditions: condition }} \
-        {{ i++; }} \
-        <input type="radio" class="btn-check" name="{{= it.group_id }}_cond" id="{{= it.group_id }}_cond_{{= i }}" value="{{! condition }}"> \
-        <label class="btn btn-outline-primary" for="{{= it.group_id }}_cond_{{= i }}">{{= it.translate("conditions", condition) }}</label> \
-      {{~}} \
-    </div> \
-    {{? it.settings.display_errors }} \
-    <div class="error-container"></div> \
-    {{?}} \
-  </div> \
-  <div class=rules-group-body> \
-    <div class=rules-list></div> \
-  </div> \
-</div>';
+      <button type="button" class="btn btn-primary" data-add="rule" data-bs-toggle="tooltip" title="${translate("add_rule")}">
+        <i class="${icons.add_rule}"></i>
+      </button>
+      ${settings.allow_groups === -1 || settings.allow_groups >= level ? `
+      <button type="button" class="btn btn-primary" data-add="group" data-bs-toggle="tooltip" title="${translate("add_group")}">
+        <i class="${icons.add_group}"></i>
+      </button>
+      ` : ''}
+    </div>
+    <div class="btn-group btn-group-sm group-conditions bg-white" role="group">
+      ${conditions.map((condition, i) => `
+        <input type="radio" class="btn-check" name="${group_id}_cond" id="${group_id}_cond_${i + 1}" value="${condition}"> \
+        <label class="btn btn-outline-primary" for="${group_id}_cond_${i + 1}">${translate("conditions", condition)}</label>
+      `).join('\n')}
+    </div>
+    ${settings.display_errors ? `
+      <div class="error-container"></div>
+    ` : ''}
+  </div>
+  <div class=rules-group-body>
+    <div class=rules-list></div>
+  </div>
+</div>`;
+};
 
-QueryBuilder.templates.rule = '\
-<div id="{{= it.rule_id }}" class="rule-container"> \
-  <div class="rule-header mb-1"> \
-    <div class="btn-group btn-group-sm float-end rule-actions"> \
-      <button type="button" class="btn-close m-2" aria-label="{{! it.translate("delete_rule") }}" data-delete="rule"></button> \
-    </div> \
-  </div> \
-  <div class="rule-filter-container"></div> \
-  <div class="rule-operator-container"></div> \
-  <div class="rule-value-container"></div> \
-</div>';
+QueryBuilder.templates.rule = ({ rule_id, icons, settings, translate, builder }) => {
+  return `
+<div id="${rule_id}" class="rule-container">
+  <div class="rule-header mb-1">
+    <div class="btn-group btn-group-sm float-end rule-actions">
+      <button type="button" class="btn-close m-2" aria-label="${translate("delete_rule")}" data-delete="rule"></button>
+    </div>
+  </div>
+  <div class="rule-filter-container"></div>
+  <div class="rule-operator-container"></div>
+  <div class="rule-value-container"></div>
+</div>`;
+};
 
-QueryBuilder.templates.filterSelect = '\
-{{ var optgroup = null; }} \
-<select class="form-select" name="{{= it.rule.id }}_filter"> \
-  {{? it.settings.display_empty_filter }} \
-    <option value="-1">{{= it.settings.select_placeholder }}</option> \
-  {{?}} \
-  {{~ it.filters: filter }} \
-    {{? optgroup !== filter.optgroup }} \
-      {{? optgroup !== null }}</optgroup>{{?}} \
-      {{? (optgroup = filter.optgroup) !== null }} \
-        <optgroup label="{{= it.translate(it.settings.optgroups[optgroup]) }}"> \
-      {{?}} \
-    {{?}} \
-    <option value="{{! filter.id }}" {{? filter.icon}}data-icon="{{= filter.icon}}"{{?}}>{{= it.translate(filter.label) }}</option> \
-  {{~}} \
-  {{? optgroup !== null }}</optgroup>{{?}} \
-</select>';
+QueryBuilder.templates.filterSelect = ({ rule, filters, icons, settings, translate, builder }) => {
+  let optgroup = null;
+  return `
+<select class="form-select" name="${rule.id}_filter">
+  ${settings.display_empty_filter ? `
+    <option value="-1">${settings.select_placeholder}</option>
+  ` : ''}
+  ${filters.map(filter => `
+    ${optgroup !== filter.optgroup ? `
+      ${optgroup !== null ? `</optgroup>` : ''}
+      ${(optgroup = filter.optgroup) !== null ? `
+        <optgroup label="${translate(settings.optgroups[optgroup])}">
+      ` : ''}
+    ` : ''}
+    <option value="${filter.id}" ${filter.icon ? `data-icon="${filter.icon}"` : ''}>${translate(filter.label)}</option>
+  `).join('')}
+  ${optgroup !== null ? '</optgroup>' : ''}
+</select>`;
+};
 
-QueryBuilder.templates.operatorSelect = '\
-{{? it.operators.length === 1 }} \
-<span class="rule-operator"> \
-{{= it.translate("operators", it.operators[0].type) }} \
-</span> \
-{{?}} \
-{{? it.operators.length > 1 }} \
-{{ var optgroup = null; }} \
-<select class="form-select{{? it.operators.length === 1 }} hide{{?}}" name="{{= it.rule.id }}_operator"> \
-  {{~ it.operators: operator }} \
-    {{? optgroup !== operator.optgroup }} \
-      {{? optgroup !== null }}</optgroup>{{?}} \
-      {{? (optgroup = operator.optgroup) !== null }} \
-        <optgroup label="{{= it.translate(it.settings.optgroups[optgroup]) }}"> \
-      {{?}} \
-    {{?}} \
-    <option value="{{! operator.type }}" {{? operator.icon}}data-icon="{{= operator.icon}}"{{?}}>{{= it.translate("operators", operator.type) }}</option> \
-  {{~}} \
-  {{? optgroup !== null }}</optgroup>{{?}} \
-</select> \
-{{?}}';
+QueryBuilder.templates.operatorSelect = ({ rule, operators, icons, settings, translate, builder }) => {
+  let optgroup = null;
+  return `
+${operators.length === 1 ? `
+<span class="rule-operator">
+${translate("operators", operators[0].type)}
+</span>
+` : ''}
+${operators.length > 1 ? `
+<select class="form-select ${operators.length === 1 ? 'hide' : ''}" name="${rule.id}_operator">
+  ${operators.map(operator => `
+    ${optgroup !== operator.optgroup ? `
+      ${optgroup !== null ? `</optgroup>` : ''}
+      ${(optgroup = operator.optgroup) !== null ? `
+        <optgroup label="${translate(settings.optgroups[optgroup])}">
+      ` : ''}
+    ` : ''}
+    <option value="${operator.type}" ${operator.icon ? `data-icon="${operator.icon}"` : ''}>${translate("operators", operator.type)}</option>
+  `).join('')}
+  ${optgroup !== null ? '</optgroup>' : ''}
+</select>
+` : ''}`;
+};
 
-QueryBuilder.templates.ruleValueSelect = '\
-{{ var optgroup = null; }} \
-<select class="form-select" name="{{= it.name }}" {{? it.rule.filter.multiple }}multiple{{?}}> \
-  {{? it.rule.filter.placeholder }} \
-    <option value="{{! it.rule.filter.placeholder_value }}" disabled selected>{{= it.rule.filter.placeholder }}</option> \
-  {{?}} \
-  {{~ it.rule.filter.values: entry }} \
-    {{? optgroup !== entry.optgroup }} \
-      {{? optgroup !== null }}</optgroup>{{?}} \
-      {{? (optgroup = entry.optgroup) !== null }} \
-        <optgroup label="{{= it.translate(it.settings.optgroups[optgroup]) }}"> \
-      {{?}} \
-    {{?}} \
-    <option value="{{! entry.value }}">{{= entry.label }}</option> \
-  {{~}} \
-  {{? optgroup !== null }}</optgroup>{{?}} \
-</select>';
+QueryBuilder.templates.ruleValueSelect = ({ name, rule, icons, settings, translate, builder }) => {
+    let optgroup = null;
+    return `
+  <select class="form-select" name="${name}" ${rule.filter.multiple ? 'multiple' : ''}>
+    ${rule.filter.placeholder ? `
+      <option value="${rule.filter.placeholder_value}" disabled selected>${rule.filter.placeholder}</option>
+    ` : ''}
+    ${rule.filter.values.map(entry => `
+      ${optgroup !== entry.optgroup ? `
+        ${optgroup !== null ? `</optgroup>` : ''}
+        ${(optgroup = entry.optgroup) !== null ? `
+          <optgroup label="${translate(settings.optgroups[optgroup])}">
+        ` : ''}
+      ` : ''}
+      <option value="${entry.value}">${entry.label}</option>
+    `).join('')}
+    ${optgroup !== null ? '</optgroup>' : ''}
+  </select>`;
+};
 
-QueryBuilder.templates.ruleValueCheck = `
-{{ var i = 0, id = "", style = it.rule.filter.vertical ? '' : ' form-check-inline'; }}
-{{~ it.rule.filter.values: entry }}
-<div class="form-check{{= style }}">
-    {{ id = it.name + '_' + (i++); }}
-    <input class="form-check-input" type="{{= it.rule.filter.type }}" name="{{= it.name }}" id="{{= id }}" value="{{! entry.value }}">
-    <label class="form-check-label" for="{{= id }}">{{= entry.value }}</label>
+QueryBuilder.templates.ruleValueCheck = ({ name, rule, icons, settings, translate, builder }) => rule.filter.values.map((entry, i) => `
+<div class="form-check${rule.filter.vertical ? '' : ' form-check-inline'}">
+    <input class="form-check-input" type="${rule.filter.type}" name="${name}" id="${name + '_' + i}" value="${entry.value}">
+    <label class="form-check-label" for="${name + '_' + i}">${entry.value}</label>
 </div>
-{{~}}`;
+`).join('');
 
 /**
  * Returns group's HTML
@@ -3109,7 +2963,7 @@ QueryBuilder.prototype.getGroupTemplate = function(group_id, level) {
         icons: this.icons,
         settings: this.settings,
         translate: this.translate.bind(this)
-    });
+  }).trim();
 
     /**
      * Modifies the raw HTML of a group
@@ -3136,7 +2990,7 @@ QueryBuilder.prototype.getRuleTemplate = function(rule_id) {
         icons: this.icons,
         settings: this.settings,
         translate: this.translate.bind(this)
-    });
+  }).trim();
 
     /**
      * Modifies the raw HTML of a rule
@@ -3164,7 +3018,7 @@ QueryBuilder.prototype.getRuleFilterSelect = function(rule, filters) {
         icons: this.icons,
         settings: this.settings,
         translate: this.translate.bind(this)
-    });
+  }).trim();
 
     /**
      * Modifies the raw HTML of the rule's filter dropdown
@@ -3194,7 +3048,7 @@ QueryBuilder.prototype.getRuleOperatorSelect = function(rule, operators) {
         icons: this.icons,
         settings: this.settings,
         translate: this.translate.bind(this)
-    });
+  }).trim();
 
     /**
      * Modifies the raw HTML of the rule's operator dropdown
@@ -3224,7 +3078,7 @@ QueryBuilder.prototype.getRuleValueSelect = function(name, rule) {
         icons: this.icons,
         settings: this.settings,
         translate: this.translate.bind(this)
-    });
+  }).trim();
 
     /**
      * Modifies the raw HTML of the rule's value dropdown (in case of a "select" filter)
@@ -4561,7 +4415,7 @@ QueryBuilder.define('invert', function(options) {
     type="button"
     class="btn btn-sm btn-secondary"
     data-bs-toggle="tooltip"
-    title="${self.translate('invert')}" 
+    title="${self.translate('invert')}"
     data-invert="group">
     <i class="${options.icon}"></i>
 </button>`
@@ -4577,7 +4431,7 @@ QueryBuilder.define('invert', function(options) {
     type="button"
     class="btn btn-sm btn-secondary"
     data-bs-toggle="tooltip"
-    title="${self.translate('invert')}" 
+    title="${self.translate('invert')}"
     data-invert="rule">
     <i class="${options.icon}"></i>
 </button>`
@@ -4840,6 +4694,49 @@ QueryBuilder.extend(/** @lends module:plugins.NotGroup.prototype */ {
 
         this.trigger('rulesChanged');
     }
+});
+
+
+/**
+ * @class Select2
+ * @memberof module:plugins
+ * @descriptioon Applies Select2 on filters, operators and values selection lists
+ * @param {object} [options]
+ */
+QueryBuilder.define('select2', function(options) {
+    var Selectors = QueryBuilder.selectors;
+
+    // Init Select2
+    this.on('afterCreateRuleFilters', function (e, rule) {
+        var filter = rule.filter;
+        if (options.applyToFilter)
+            rule.$el.find(Selectors.rule_filter).select2(options.filterSelect2Options ?? {});
+        if (options.applyToOperator)
+            rule.$el.find(Selectors.rule_operator).select2($.extend({}, filter?.operatorSelect2Options ?? {}, options.operatorSelect2Options ?? {}));
+        if (options.applyToValue)
+            rule.$el.find(Selectors.rule_value).filter('select').select2($.extend({}, filter?.valueSelect2Options ?? {}, options.valueSelect2Options ?? {}));
+    });
+
+    // Update select2 on change
+    this.on('afterUpdateRuleFilter', function(e, rule) {
+        //***rule.$el.find(Selectors.rule_filter).trigger('change');
+    });
+
+    this.on('beforeDeleteRule', function (e, rule) {
+        if (options.applyToFilter)
+            rule.$el.find(Selectors.rule_filter).select2('destroy');
+        if (options.applyToOperator)
+            rule.$el.find(Selectors.rule_operator).select2('destroy');
+        if (options.applyToValue)
+            rule.$el.find(Selectors.rule_value).filter('select').select2('destroy');
+    });
+}, {
+    applyToFilter: true, // Apply Select2 to filter
+    applyToOperator: false, // Apply Select2 to operator
+    applyToValue: true, // Apply Select2 to value
+    filterSelect2Options: null, // Select2 options for filter
+    operatorSelect2Options: null, // Select2 options for operator
+    valueSelect2Options: null, // Select2 options for value
 });
 
 
@@ -5634,7 +5531,7 @@ QueryBuilder.extend(/** @lends module:plugins.UniqueFilter.prototype */ {
 
 
 /*!
- * jQuery QueryBuilder 2.6.2
+ * jQuery QueryBuilder 2.7.0
  * Locale: English (en)
  * Author: Damien "Mistic" Sorel, http://www.strangeplanet.fr
  * Licensed under MIT (https://opensource.org/licenses/MIT)

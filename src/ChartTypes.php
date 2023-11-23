@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * ChartTypes class
@@ -32,6 +32,7 @@ class ChartTypes
         [1105, ["pie"]], // Pie 3D (**6) // NOT supported, revert to Pie 2D
         [1006, ["doughnut"]], // Doughnut 2D (**8)
         [1106, ["doughnut"]], // Doughnut 3D (**101) // NOT supported, revert to Dougnut 2D
+        [1007, ["polarArea"]], // Polar Area
 
         // Multi Series
         [2001, ["bar"]], // Multi-series Column 2D (**9)
@@ -40,6 +41,7 @@ class ChartTypes
         [2003, ["line"]], // Multi-series Area 2D (**12)
         [2004, ["bar"]], // Multi-series Bar 2D (**13)
         [2104, ["bar"]], // Multi-series Bar 3D (**102) // NOT supported, revert to Bar 2D
+        [2008, ["radar"]], // Multi-series Radar
 
         // Stacked
         [3001, ["bar"]], // Stacked Column 2D (**14)

@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Table class for Patient Appointments
@@ -28,8 +34,8 @@ class PatientAppointments extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
-    // Export
-    public $UseAjaxActions = false;
+    // Ajax / Modal
+    public $UseAjaxActions = true;
     public $ModalSearch = false;
     public $ModalView = false;
     public $ModalAdd = false;
@@ -62,10 +68,11 @@ class PatientAppointments extends DbTable
         global $Language, $CurrentLanguage, $CurrentLocale;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
         $this->TableVar = "Patient_Appointments";
         $this->TableName = 'Patient Appointments';
         $this->TableType = "REPORT";
+        $this->TableReportType = "calendar"; // Report Type
         $this->UpdateTable = 'jdh_appointments'; // Calendar update table
         $this->Dbid = 'DB';
         $this->ExportAll = true;
@@ -84,8 +91,9 @@ class PatientAppointments extends DbTable
         $this->ExportWordPageSize = ""; // Page orientation (PHPWord only)
         $this->ExportWordColumnWidth = null; // Cell width (PHPWord only)
         $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
+        $this->BasicSearch = new BasicSearch($this);
 
-        // appointment_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // appointment_id
         $this->appointment_id = new ReportField(
             $this, // Table
             'x_appointment_id', // Variable name
@@ -104,14 +112,16 @@ class PatientAppointments extends DbTable
             'NO' // Edit Tag
         );
         $this->appointment_id->InputTextType = "text";
+        $this->appointment_id->Raw = true;
         $this->appointment_id->IsAutoIncrement = true; // Autoincrement field
         $this->appointment_id->IsPrimaryKey = true; // Primary key field
+        $this->appointment_id->Nullable = false; // NOT NULL field
         $this->appointment_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->appointment_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->appointment_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->appointment_id->SourceTableVar = 'jdh_appointments';
         $this->Fields['appointment_id'] = &$this->appointment_id;
 
-        // patient_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // patient_id
         $this->patient_id = new ReportField(
             $this, // Table
             'x_patient_id', // Variable name
@@ -130,6 +140,7 @@ class PatientAppointments extends DbTable
             'TEXT' // Edit Tag
         );
         $this->patient_id->InputTextType = "text";
+        $this->patient_id->Raw = true;
         $this->patient_id->Nullable = false; // NOT NULL field
         $this->patient_id->Required = true; // Required field
         $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
@@ -137,7 +148,7 @@ class PatientAppointments extends DbTable
         $this->patient_id->SourceTableVar = 'jdh_appointments';
         $this->Fields['patient_id'] = &$this->patient_id;
 
-        // appointment_title $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // appointment_title
         $this->appointment_title = new ReportField(
             $this, // Table
             'x_appointment_title', // Variable name
@@ -162,7 +173,7 @@ class PatientAppointments extends DbTable
         $this->appointment_title->SourceTableVar = 'jdh_appointments';
         $this->Fields['appointment_title'] = &$this->appointment_title;
 
-        // appointment_start_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // appointment_start_date
         $this->appointment_start_date = new ReportField(
             $this, // Table
             'x_appointment_start_date', // Variable name
@@ -171,7 +182,7 @@ class PatientAppointments extends DbTable
             CastDateFieldForLike("`appointment_start_date`", 0, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            1, // Date/Time format
+            0, // Date/Time format
             false, // Is upload field
             '`appointment_start_date`', // Virtual expression
             false, // Is virtual
@@ -181,6 +192,7 @@ class PatientAppointments extends DbTable
             'TEXT' // Edit Tag
         );
         $this->appointment_start_date->InputTextType = "text";
+        $this->appointment_start_date->Raw = true;
         $this->appointment_start_date->Nullable = false; // NOT NULL field
         $this->appointment_start_date->Required = true; // Required field
         $this->appointment_start_date->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
@@ -188,7 +200,7 @@ class PatientAppointments extends DbTable
         $this->appointment_start_date->SourceTableVar = 'jdh_appointments';
         $this->Fields['appointment_start_date'] = &$this->appointment_start_date;
 
-        // appointment_end_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // appointment_end_date
         $this->appointment_end_date = new ReportField(
             $this, // Table
             'x_appointment_end_date', // Variable name
@@ -197,7 +209,7 @@ class PatientAppointments extends DbTable
             CastDateFieldForLike("`appointment_end_date`", 0, "DB"), // Basic search expression
             135, // Type
             19, // Size
-            1, // Date/Time format
+            0, // Date/Time format
             false, // Is upload field
             '`appointment_end_date`', // Virtual expression
             false, // Is virtual
@@ -207,6 +219,7 @@ class PatientAppointments extends DbTable
             'TEXT' // Edit Tag
         );
         $this->appointment_end_date->InputTextType = "text";
+        $this->appointment_end_date->Raw = true;
         $this->appointment_end_date->Nullable = false; // NOT NULL field
         $this->appointment_end_date->Required = true; // Required field
         $this->appointment_end_date->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
@@ -214,14 +227,14 @@ class PatientAppointments extends DbTable
         $this->appointment_end_date->SourceTableVar = 'jdh_appointments';
         $this->Fields['appointment_end_date'] = &$this->appointment_end_date;
 
-        // appointment_description $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // appointment_description
         $this->appointment_description = new ReportField(
             $this, // Table
             'x_appointment_description', // Variable name
             'appointment_description', // Name
             '`appointment_description`', // Expression
             '`appointment_description`', // Basic search expression
-            201, // Type
+            200, // Type
             65535, // Size
             -1, // Date/Time format
             false, // Is upload field
@@ -239,7 +252,7 @@ class PatientAppointments extends DbTable
         $this->appointment_description->SourceTableVar = 'jdh_appointments';
         $this->Fields['appointment_description'] = &$this->appointment_description;
 
-        // submission_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // submission_date
         $this->submission_date = new ReportField(
             $this, // Table
             'x_submission_date', // Variable name
@@ -258,6 +271,7 @@ class PatientAppointments extends DbTable
             'TEXT' // Edit Tag
         );
         $this->submission_date->InputTextType = "text";
+        $this->submission_date->Raw = true;
         $this->submission_date->Nullable = false; // NOT NULL field
         $this->submission_date->Required = true; // Required field
         $this->submission_date->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
@@ -265,7 +279,7 @@ class PatientAppointments extends DbTable
         $this->submission_date->SourceTableVar = 'jdh_appointments';
         $this->Fields['submission_date'] = &$this->submission_date;
 
-        // subbmitted_by_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // subbmitted_by_user_id
         $this->subbmitted_by_user_id = new ReportField(
             $this, // Table
             'x_subbmitted_by_user_id', // Variable name
@@ -285,13 +299,14 @@ class PatientAppointments extends DbTable
         );
         $this->subbmitted_by_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
         $this->subbmitted_by_user_id->InputTextType = "text";
+        $this->subbmitted_by_user_id->Raw = true;
         $this->subbmitted_by_user_id->Nullable = false; // NOT NULL field
         $this->subbmitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->subbmitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->subbmitted_by_user_id->SourceTableVar = 'jdh_appointments';
         $this->Fields['subbmitted_by_user_id'] = &$this->subbmitted_by_user_id;
 
-        // appointment_all_day $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // appointment_all_day
         $this->appointment_all_day = new ReportField(
             $this, // Table
             'x_appointment_all_day', // Variable name
@@ -310,16 +325,17 @@ class PatientAppointments extends DbTable
             'CHECKBOX' // Edit Tag
         );
         $this->appointment_all_day->InputTextType = "text";
+        $this->appointment_all_day->Raw = true;
         $this->appointment_all_day->Nullable = false; // NOT NULL field
-        $this->appointment_all_day->DataType = DATATYPE_BOOLEAN;
-        $this->appointment_all_day->Lookup = new Lookup('appointment_all_day', 'Patient_Appointments', false, '', ["","","",""], '', '', [], [], [], [], [], [], '', '', "");
+        $this->appointment_all_day->setDataType(DataType::BOOLEAN);
+        $this->appointment_all_day->Lookup = new Lookup($this->appointment_all_day, 'Patient_Appointments', false, '', ["","","",""], '', '', [], [], [], [], [], [], false, '', '', "");
         $this->appointment_all_day->OptionCount = 2;
         $this->appointment_all_day->DefaultErrorMessage = $Language->phrase("IncorrectField");
         $this->appointment_all_day->SearchOperators = ["=", "<>"];
         $this->appointment_all_day->SourceTableVar = 'jdh_appointments';
         $this->Fields['appointment_all_day'] = &$this->appointment_all_day;
 
-        // user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // user_id
         $this->user_id = new ReportField(
             $this, // Table
             'x_user_id', // Variable name
@@ -338,6 +354,7 @@ class PatientAppointments extends DbTable
             'TEXT' // Edit Tag
         );
         $this->user_id->InputTextType = "text";
+        $this->user_id->Raw = true;
         $this->user_id->Nullable = false; // NOT NULL field
         $this->user_id->Required = true; // Required field
         $this->user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
@@ -346,7 +363,7 @@ class PatientAppointments extends DbTable
         $this->Fields['user_id'] = &$this->user_id;
 
         // Add Doctrine Cache
-        $this->Cache = new ArrayCache();
+        $this->Cache = new \Symfony\Component\Cache\Adapter\ArrayAdapter();
         $this->CacheProfile = new \Doctrine\DBAL\Cache\QueryCacheProfile(0, $this->TableVar);
 
         // Call Table Load event
@@ -428,38 +445,63 @@ class PatientAppointments extends DbTable
         return $chartRow;
     }
 
-    // Table level SQL
-    public function getSqlFrom() // From
+    // Get FROM clause
+    public function getSqlFrom()
     {
-        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_appointments`";
+        return ($this->SqlFrom != "") ? $this->SqlFrom : "jdh_appointments";
     }
 
-    public function sqlFrom() // For backward compatibility
+    // Get FROM clause (for backward compatibility)
+    public function sqlFrom()
     {
         return $this->getSqlFrom();
     }
 
+    // Set FROM clause
     public function setSqlFrom($v)
     {
         $this->SqlFrom = $v;
     }
 
+    // Get SELECT clause
     public function getSqlSelect() // Select
     {
-        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*");
+        return $this->SqlSelect ?? $this->getQueryBuilder()->select($this->sqlSelectFields());
     }
 
-    public function sqlSelect() // For backward compatibility
+    // Get list of fields
+    private function sqlSelectFields()
+    {
+        $useFieldNames = false;
+        $fieldNames = [];
+        $platform = $this->getConnection()->getDatabasePlatform();
+        foreach ($this->Fields as $field) {
+            $expr = $field->Expression;
+            $customExpr = $field->CustomDataType?->convertToPHPValueSQL($expr, $platform) ?? $expr;
+            if ($customExpr != $expr) {
+                $fieldNames[] = $customExpr . " AS " . QuotedName($field->Name, $this->Dbid);
+                $useFieldNames = true;
+            } else {
+                $fieldNames[] = $expr;
+            }
+        }
+        return $useFieldNames ? implode(", ", $fieldNames) : "*";
+    }
+
+    // Get SELECT clause (for backward compatibility)
+    public function sqlSelect()
     {
         return $this->getSqlSelect();
     }
 
+    // Set SELECT clause
     public function setSqlSelect($v)
     {
         $this->SqlSelect = $v;
     }
 
-    public function getSqlWhere() // Where
+    // Get WHERE clause
+    public function getSqlWhere()
     {
         $where = ($this->SqlWhere != "") ? $this->SqlWhere : "";
         $this->DefaultFilter = "";
@@ -467,56 +509,67 @@ class PatientAppointments extends DbTable
         return $where;
     }
 
-    public function sqlWhere() // For backward compatibility
+    // Get WHERE clause (for backward compatibility)
+    public function sqlWhere()
     {
         return $this->getSqlWhere();
     }
 
+    // Set WHERE clause
     public function setSqlWhere($v)
     {
         $this->SqlWhere = $v;
     }
 
-    public function getSqlGroupBy() // Group By
+    // Get GROUP BY clause
+    public function getSqlGroupBy()
     {
-        return ($this->SqlGroupBy != "") ? $this->SqlGroupBy : "";
+        return $this->SqlGroupBy != "" ? $this->SqlGroupBy : "";
     }
 
-    public function sqlGroupBy() // For backward compatibility
+    // Get GROUP BY clause (for backward compatibility)
+    public function sqlGroupBy()
     {
         return $this->getSqlGroupBy();
     }
 
+    // set GROUP BY clause
     public function setSqlGroupBy($v)
     {
         $this->SqlGroupBy = $v;
     }
 
+    // Get HAVING clause
     public function getSqlHaving() // Having
     {
         return ($this->SqlHaving != "") ? $this->SqlHaving : "";
     }
 
-    public function sqlHaving() // For backward compatibility
+    // Get HAVING clause (for backward compatibility)
+    public function sqlHaving()
     {
         return $this->getSqlHaving();
     }
 
+    // Set HAVING clause
     public function setSqlHaving($v)
     {
         $this->SqlHaving = $v;
     }
 
-    public function getSqlOrderBy() // Order By
+    // Get ORDER BY clause
+    public function getSqlOrderBy()
     {
         return ($this->SqlOrderBy != "") ? $this->SqlOrderBy : "";
     }
 
-    public function sqlOrderBy() // For backward compatibility
+    // Get ORDER BY clause (for backward compatibility)
+    public function sqlOrderBy()
     {
         return $this->getSqlOrderBy();
     }
 
+    // set ORDER BY clause
     public function setSqlOrderBy($v)
     {
         $this->SqlOrderBy = $v;
@@ -538,23 +591,23 @@ class PatientAppointments extends DbTable
             case "gridadd":
             case "register":
             case "addopt":
-                return (($allow & 1) == 1);
+                return ($allow & Allow::ADD->value) == Allow::ADD->value;
             case "edit":
             case "gridedit":
             case "update":
             case "changepassword":
             case "resetpassword":
-                return (($allow & 4) == 4);
+                return ($allow & Allow::EDIT->value) == Allow::EDIT->value;
             case "delete":
-                return (($allow & 2) == 2);
+                return ($allow & Allow::DELETE->value) == Allow::DELETE->value;
             case "view":
-                return (($allow & 32) == 32);
+                return ($allow & Allow::VIEW->value) == Allow::VIEW->value;
             case "search":
-                return (($allow & 64) == 64);
+                return ($allow & Allow::SEARCH->value) == Allow::SEARCH->value;
             case "lookup":
-                return (($allow & 256) == 256);
+                return ($allow & Allow::LOOKUP->value) == Allow::LOOKUP->value;
             default:
-                return (($allow & 8) == 8);
+                return ($allow & Allow::LIST->value) == Allow::LIST->value;
         }
     }
 
@@ -568,32 +621,36 @@ class PatientAppointments extends DbTable
     public function getRecordCount($sql, $c = null)
     {
         $cnt = -1;
-        $rs = null;
-        if ($sql instanceof QueryBuilder) { // Query builder
-            $sqlwrk = clone $sql;
-            $sqlwrk = $sqlwrk->resetQueryPart("orderBy")->getSQL();
-        } else {
-            $sqlwrk = $sql;
-        }
+        $sqlwrk = $sql instanceof QueryBuilder // Query builder
+            ? (clone $sql)->resetQueryPart("orderBy")->getSQL()
+            : $sql;
         $pattern = '/^SELECT\s([\s\S]+)\sFROM\s/i';
         // Skip Custom View / SubQuery / SELECT DISTINCT / ORDER BY
         if (
-            ($this->TableType == 'TABLE' || $this->TableType == 'VIEW' || $this->TableType == 'LINKTABLE') &&
-            preg_match($pattern, $sqlwrk) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
-            !preg_match('/^\s*select\s+distinct\s+/i', $sqlwrk) && !preg_match('/\s+order\s+by\s+/i', $sqlwrk)
+            in_array($this->TableType, ["TABLE", "VIEW", "LINKTABLE"]) &&
+            preg_match($pattern, $sqlwrk) &&
+            !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
+            !preg_match('/^\s*SELECT\s+DISTINCT\s+/i', $sqlwrk) &&
+            !preg_match('/\s+ORDER\s+BY\s+/i', $sqlwrk)
         ) {
-            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
+            $sqlcnt = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
         } else {
-            $sqlwrk = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
+            $sqlcnt = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
         }
         $conn = $c ?? $this->getConnection();
-        $cnt = $conn->fetchOne($sqlwrk);
+        $cnt = $conn->fetchOne($sqlcnt);
         if ($cnt !== false) {
             return (int)$cnt;
         }
-
         // Unable to get count by SELECT COUNT(*), execute the SQL to get record count directly
-        return ExecuteRecordCount($sql, $conn);
+        $result = $conn->executeQuery($sqlwrk);
+        $cnt = $result->rowCount();
+        if ($cnt == 0) { // Unable to get record count, count directly
+            while ($result->fetch()) {
+                $cnt++;
+            }
+        }
+        return $cnt;
     }
 
     // Get SQL
@@ -672,9 +729,10 @@ class PatientAppointments extends DbTable
         $origFilter = $this->CurrentFilter;
         $this->CurrentFilter = $filter;
         $this->recordsetSelecting($this->CurrentFilter);
-        $select = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
-        $groupBy = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlGroupBy() : "";
-        $having = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlHaving() : "";
+        $isCustomView = $this->TableType == "CUSTOMVIEW";
+        $select = $isCustomView ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
+        $groupBy = $isCustomView ? $this->getSqlGroupBy() : "";
+        $having = $isCustomView ? $this->getSqlHaving() : "";
         $sql = $this->buildSelectSql($select, $this->getSqlFrom(), $this->getSqlWhere(), $groupBy, $having, "", $this->CurrentFilter, "");
         $cnt = $this->getRecordCount($sql);
         $this->CurrentFilter = $origFilter;
@@ -688,9 +746,10 @@ class PatientAppointments extends DbTable
         AddFilter($filter, $this->CurrentFilter);
         $filter = $this->applyUserIDFilters($filter);
         $this->recordsetSelecting($filter);
-        $select = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
-        $groupBy = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlGroupBy() : "";
-        $having = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlHaving() : "";
+        $isCustomView = $this->TableType == "CUSTOMVIEW";
+        $select = $isCustomView ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
+        $groupBy = $isCustomView ? $this->getSqlGroupBy() : "";
+        $having = $isCustomView ? $this->getSqlHaving() : "";
         $sql = $this->buildSelectSql($select, $this->getSqlFrom(), $this->getSqlWhere(), $groupBy, $having, "", $filter, "");
         $cnt = $this->getRecordCount($sql);
         return $cnt;
@@ -706,12 +765,15 @@ class PatientAppointments extends DbTable
     {
         $queryBuilder = $this->getQueryBuilder();
         $queryBuilder->insert($this->UpdateTable);
+        $platform = $this->getConnection()->getDatabasePlatform();
         foreach ($rs as $name => $value) {
             if (!isset($this->Fields[$name]) || $this->Fields[$name]->IsCustom) {
                 continue;
             }
-            $type = GetParameterType($this->Fields[$name], $value, $this->Dbid);
-            $queryBuilder->setValue($this->Fields[$name]->Expression, $queryBuilder->createPositionalParameter($value, $type));
+            $field = $this->Fields[$name];
+            $parm = $queryBuilder->createPositionalParameter($value, $field->getParameterType());
+            $parm = $field->CustomDataType?->convertToDatabaseValueSQL($parm, $platform) ?? $parm; // Convert database SQL
+            $queryBuilder->setValue($field->Expression, $parm);
         }
         return $queryBuilder;
     }
@@ -721,18 +783,18 @@ class PatientAppointments extends DbTable
     {
         $conn = $this->getConnection();
         try {
-            $success = $this->insertSql($rs)->execute();
+            $queryBuilder = $this->insertSql($rs);
+            $result = $queryBuilder->executeStatement();
             $this->DbErrorMessage = "";
         } catch (\Exception $e) {
-            $success = false;
+            $result = false;
             $this->DbErrorMessage = $e->getMessage();
         }
-        if ($success) {
-            // Get insert id if necessary
+        if ($result) {
             $this->appointment_id->setDbValue($conn->lastInsertId());
             $rs['appointment_id'] = $this->appointment_id->DbValue;
         }
-        return $success;
+        return $result;
     }
 
     /**
@@ -747,14 +809,17 @@ class PatientAppointments extends DbTable
     {
         $queryBuilder = $this->getQueryBuilder();
         $queryBuilder->update($this->UpdateTable);
+        $platform = $this->getConnection()->getDatabasePlatform();
         foreach ($rs as $name => $value) {
             if (!isset($this->Fields[$name]) || $this->Fields[$name]->IsCustom || $this->Fields[$name]->IsAutoIncrement) {
                 continue;
             }
-            $type = GetParameterType($this->Fields[$name], $value, $this->Dbid);
-            $queryBuilder->set($this->Fields[$name]->Expression, $queryBuilder->createPositionalParameter($value, $type));
+            $field = $this->Fields[$name];
+            $parm = $queryBuilder->createPositionalParameter($value, $field->getParameterType());
+            $parm = $field->CustomDataType?->convertToDatabaseValueSQL($parm, $platform) ?? $parm; // Convert database SQL
+            $queryBuilder->set($field->Expression, $parm);
         }
-        $filter = ($curfilter) ? $this->CurrentFilter : "";
+        $filter = $curfilter ? $this->CurrentFilter : "";
         if (is_array($where)) {
             $where = $this->arrayToFilter($where);
         }
@@ -770,8 +835,8 @@ class PatientAppointments extends DbTable
     {
         // If no field is updated, execute may return 0. Treat as success
         try {
-            $success = $this->updateSql($rs, $where, $curfilter)->execute();
-            $success = ($success > 0) ? $success : true;
+            $success = $this->updateSql($rs, $where, $curfilter)->executeStatement();
+            $success = $success > 0 ? $success : true;
             $this->DbErrorMessage = "";
         } catch (\Exception $e) {
             $success = false;
@@ -807,7 +872,7 @@ class PatientAppointments extends DbTable
                 AddFilter($where, QuotedName('appointment_id', $this->Dbid) . '=' . QuotedValue($rs['appointment_id'], $this->appointment_id->DataType, $this->Dbid));
             }
         }
-        $filter = ($curfilter) ? $this->CurrentFilter : "";
+        $filter = $curfilter ? $this->CurrentFilter : "";
         AddFilter($filter, $where);
         return $queryBuilder->where($filter != "" ? $filter : "0=1");
     }
@@ -818,7 +883,7 @@ class PatientAppointments extends DbTable
         $success = true;
         if ($success) {
             try {
-                $success = $this->deleteSql($rs, $where, $curfilter)->execute();
+                $success = $this->deleteSql($rs, $where, $curfilter)->executeStatement();
                 $this->DbErrorMessage = "";
             } catch (\Exception $e) {
                 $success = false;
@@ -828,7 +893,7 @@ class PatientAppointments extends DbTable
         return $success;
     }
 
-    // Load DbValue from recordset or array
+    // Load DbValue from result set or array
     protected function loadDbValues($row)
     {
         if (!is_array($row)) {
@@ -859,7 +924,7 @@ class PatientAppointments extends DbTable
     }
 
     // Get Key
-    public function getKey($current = false)
+    public function getKey($current = false, $keySeparator = null)
     {
         $keys = [];
         $val = $current ? $this->appointment_id->CurrentValue : $this->appointment_id->OldValue;
@@ -868,14 +933,16 @@ class PatientAppointments extends DbTable
         } else {
             $keys[] = $val;
         }
-        return implode(Config("COMPOSITE_KEY_SEPARATOR"), $keys);
+        $keySeparator ??= Config("COMPOSITE_KEY_SEPARATOR");
+        return implode($keySeparator, $keys);
     }
 
     // Set Key
-    public function setKey($key, $current = false)
+    public function setKey($key, $current = false, $keySeparator = null)
     {
+        $keySeparator ??= Config("COMPOSITE_KEY_SEPARATOR");
         $this->OldKey = strval($key);
-        $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
+        $keys = explode($keySeparator, $this->OldKey);
         if (count($keys) == 1) {
             if ($current) {
                 $this->appointment_id->CurrentValue = $keys[0];
@@ -928,14 +995,18 @@ class PatientAppointments extends DbTable
     public function getModalCaption($pageName)
     {
         global $Language;
-        if ($pageName == "patientappointmentsview") {
-            return $Language->phrase("View");
-        } elseif ($pageName == "patientappointmentsedit") {
-            return $Language->phrase("Edit");
-        } elseif ($pageName == "patientappointmentsadd") {
-            return $Language->phrase("Add");
-        }
-        return "";
+        return match ($pageName) {
+            "patientappointmentsview" => $Language->phrase("View"),
+            "patientappointmentsedit" => $Language->phrase("Edit"),
+            "patientappointmentsadd" => $Language->phrase("Add"),
+            default => ""
+        };
+    }
+
+    // Default route URL
+    public function getDefaultRouteUrl()
+    {
+        return "patientappointments";
     }
 
     // API page name
@@ -1013,12 +1084,12 @@ class PatientAppointments extends DbTable
     }
 
     // Delete URL
-    public function getDeleteUrl()
+    public function getDeleteUrl($parm = "")
     {
         if ($this->UseAjaxActions && ConvertToBool(Param("infinitescroll")) && CurrentPageID() == "list") {
             return $this->keyUrl(GetApiUrl(Config("API_DELETE_ACTION") . "/" . $this->TableVar));
         } else {
-            return $this->keyUrl("patientappointmentsdelete");
+            return $this->keyUrl("patientappointmentsdelete", $parm);
         }
     }
 
@@ -1031,7 +1102,7 @@ class PatientAppointments extends DbTable
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
-        $json .= "\"appointment_id\":" . JsonEncode($this->appointment_id->CurrentValue, "number");
+        $json .= "\"appointment_id\":" . VarToJson($this->appointment_id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -1056,10 +1127,10 @@ class PatientAppointments extends DbTable
     // Render sort
     public function renderFieldHeader($fld)
     {
-        global $Security, $Language, $Page;
+        global $Security, $Language;
         $sortUrl = "";
         $attrs = "";
-        if ($fld->Sortable) {
+        if ($this->PageID != "grid" && $fld->Sortable) {
             $sortUrl = $this->sortUrl($fld);
             $attrs = ' role="button" data-ew-action="sort" data-ajax="' . ($this->UseAjaxActions ? "true" : "false") . '" data-sort-url="' . $sortUrl . '" data-sort-type="1"';
             if ($this->ContextClass) { // Add context
@@ -1070,9 +1141,11 @@ class PatientAppointments extends DbTable
         if ($sortUrl) {
             $html .= '<div class="ew-table-header-sort">' . $fld->getSortIcon() . '</div>';
         }
-        if ($fld->UseFilter && $Security->canSearch()) {
+        if ($this->PageID != "grid" && !$this->isExport() && $fld->UseFilter && $Security->canSearch()) {
             $html .= '<div class="ew-filter-dropdown-btn" data-ew-action="filter" data-table="' . $fld->TableVar . '" data-field="' . $fld->FieldVar .
-                '"><div class="ew-table-header-filter" role="button" aria-haspopup="true">' . $Language->phrase("Filter") . '</div></div>';
+                '"><div class="ew-table-header-filter" role="button" aria-haspopup="true">' . $Language->phrase("Filter") .
+                (is_array($fld->EditValue) ? str_replace("%c", count($fld->EditValue), $Language->phrase("FilterCount")) : '') .
+                '</div></div>';
         }
         $html = '<div class="ew-table-header-btn">' . $html . '</div>';
         if ($this->UseCustomTemplate) {
@@ -1094,7 +1167,7 @@ class PatientAppointments extends DbTable
         } elseif ($fld->Sortable) {
             $urlParm = "order=" . urlencode($fld->Name) . "&amp;ordertype=" . $fld->getNextSort();
             if ($DashboardReport) {
-                $urlParm .= "&amp;dashboard=true";
+                $urlParm .= "&amp;" . Config("PAGE_DASHBOARD") . "=" . $DashboardReport;
             }
             return $this->addMasterUrl($this->CurrentPageName . "?" . $urlParm);
         } else {
@@ -1111,15 +1184,19 @@ class PatientAppointments extends DbTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
+            $isApi = IsApi();
+            $keyValues = $isApi
+                ? (Route(0) == "export"
+                    ? array_map(fn ($i) => Route($i + 3), range(0, 0))  // Export API
+                    : array_map(fn ($i) => Route($i + 2), range(0, 0))) // Other API
+                : []; // Non-API
             if (($keyValue = Param("appointment_id") ?? Route("appointment_id")) !== null) {
                 $arKeys[] = $keyValue;
-            } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
+            } elseif ($isApi && (($keyValue = Key(0) ?? $keyValues[0] ?? null) !== null)) {
                 $arKeys[] = $keyValue;
             } else {
                 $arKeys = null; // Do not setup
             }
-
-            //return $arKeys; // Do not return yet, so the values will also be checked by the following code
         }
         // Check keys
         $ar = [];
@@ -1166,10 +1243,10 @@ class PatientAppointments extends DbTable
         return $keyFilter;
     }
 
-    // Load recordset based on filter
-    public function loadRs($filter)
+    // Load result set based on filter/sort
+    public function loadRs($filter, $sort = "")
     {
-        $sql = $this->getSql($filter); // Set up filter (WHERE Clause)
+        $sql = $this->getSql($filter, $sort); // Set up filter (WHERE Clause) / sort (ORDER BY Clause)
         $conn = $this->getConnection();
         return $conn->executeQuery($sql);
     }
@@ -1198,7 +1275,7 @@ class PatientAppointments extends DbTable
     }
 
     // Recordset Selected event
-    public function recordsetSelected(&$rs)
+    public function recordsetSelected($rs)
     {
         //Log("Recordset Selected");
     }
@@ -1237,7 +1314,7 @@ class PatientAppointments extends DbTable
     }
 
     // Row Inserted event
-    public function rowInserted($rsold, &$rsnew)
+    public function rowInserted($rsold, $rsnew)
     {
         //Log("Row Inserted");
     }
@@ -1251,7 +1328,7 @@ class PatientAppointments extends DbTable
     }
 
     // Row Updated event
-    public function rowUpdated($rsold, &$rsnew)
+    public function rowUpdated($rsold, $rsnew)
     {
         //Log("Row Updated");
     }
@@ -1301,13 +1378,13 @@ class PatientAppointments extends DbTable
     }
 
     // Row Deleted event
-    public function rowDeleted(&$rs)
+    public function rowDeleted($rs)
     {
         //Log("Row Deleted");
     }
 
     // Email Sending event
-    public function emailSending($email, &$args)
+    public function emailSending($email, $args)
     {
         //var_dump($email, $args); exit();
         return true;

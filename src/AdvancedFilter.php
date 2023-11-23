@@ -1,21 +1,18 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Advanced filter class
  */
 class AdvancedFilter
 {
-    public $ID;
-    public $Name;
-    public $FunctionName;
     public $Enabled = true;
 
-    public function __construct($filterid, $filtername, $filterfunc)
-    {
-        $this->ID = $filterid;
-        $this->Name = $filtername;
-        $this->FunctionName = $filterfunc;
+    public function __construct(
+        public $ID,
+        public $Name,
+        public $FunctionName,
+    ) {
     }
 }

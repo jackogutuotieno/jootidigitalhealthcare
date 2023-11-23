@@ -1,70 +1,40 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
+use Illuminate\Support\Collection;
+use PHPMaker2024\jootidigitalhealthcare\Attributes\Delete;
+use PHPMaker2024\jootidigitalhealthcare\Attributes\Get;
+use PHPMaker2024\jootidigitalhealthcare\Attributes\Map;
+use PHPMaker2024\jootidigitalhealthcare\Attributes\Options;
+use PHPMaker2024\jootidigitalhealthcare\Attributes\Patch;
+use PHPMaker2024\jootidigitalhealthcare\Attributes\Post;
+use PHPMaker2024\jootidigitalhealthcare\Attributes\Put;
 
-// API controller
-class ApiController
+/**
+ * API controller
+ */
+class ApiController extends AbstractController
 {
-    protected $container;
+    protected ?string $pageName;
 
-    // Constructor
-    public function __construct(ContainerInterface $container)
+    /**
+     * Process page
+     */
+    public function processPage(Request $request, Response $response, array $args)
     {
-        $this->container = $container;
-    }
-
-    // Login
-    public function login(Request $request, Response $response, array $args): Response
-    {
-        global $Language, $UserProfile, $Security;
-        $GLOBALS["Request"] = $request;
-        if ($request->isGet()) {
-            $username = $request->getQueryParam(Config("API_LOGIN_USERNAME"));
-            $password = $request->getQueryParam(Config("API_LOGIN_PASSWORD"));
-            $code = $request->getQueryParam(Config("API_LOGIN_SECURITY_CODE"));
-            $expire = $request->getQueryParam(Config("API_LOGIN_EXPIRE"));
-            $permission = $request->getQueryParam(Config("API_LOGIN_PERMISSION")); 
-        } else {
-            $username = $request->getParsedBodyParam(Config("API_LOGIN_USERNAME"));
-            $password = $request->getParsedBodyParam(Config("API_LOGIN_PASSWORD"));
-            $code = $request->getParsedBodyParam(Config("API_LOGIN_SECURITY_CODE"));
-            $expire = $request->getParsedBodyParam(Config("API_LOGIN_EXPIRE"));
-            $permission = $request->getParsedBodyParam(Config("API_LOGIN_PERMISSION"));
-        }
-        $UserProfile = Container("profile");
-        $Security = Container("security");
-        $Language = Container("language");
-        // Valdiate expire
-        if ($expire && (!is_numeric($expire) || ParseInteger($expire) <= 0)) {
-            return $response->withJson([ "error" => $Language->phrase("IncorrectInteger") . ": " . Config("API_LOGIN_EXPIRE") ]); // Incorrect expire
-        }
-        // Valdiate permission
-        if ($permission && (!is_numeric($permission) || ParseInteger($permission) <= 0 || ParseInteger($permission) > ALLOW_ALL)) {
-            return $response->withJson([ "error" => $Language->phrase("IncorrectInteger") . ": " . Config("API_LOGIN_PERMISSION") ]); // Incorrect expire
-        }
-        $validPwd = $Security->validateUser($username, $password, false, "", $code);
-        if ($validPwd) {
-            return $response;
-        } else {
-            return $response->withStatus(401); // Not authorized
-        }
-    }
-
-    // Process route info and return json
-    public function processRoute(Request $request, Response $response, string $pageName)
-    {
-        if ($pageName != "") {
-            $pageClass = PROJECT_NAMESPACE . $pageName;
+        $this->setup($request, $response);
+        if ($this->pageName) {
+            $pageClass = PROJECT_NAMESPACE . $this->pageName;
             if (class_exists($pageClass)) {
                 $page = new $pageClass();
                 $page->run();
                 // Render page if not terminated
                 if (!$page->isTerminated()) {
-                    $view = $this->container->get("view");
+                    $view = $this->container->get("app.view");
                     $page->RenderingView = true;
                     $layout = property_exists($page, "MultiColumnLayout") && $page->MultiColumnLayout == "cards" ? "Cards" : "Table";
                     $template = $page->TableVar . $layout . ".php"; // View
@@ -81,50 +51,201 @@ class ApiController
         return $response;
     }
 
-    // Process export
-    public function processExport(Request $request, Response $response)
+    /**
+     * login
+     */
+    #[Map(["POST", "OPTIONS"], "/login", [JwtMiddleware::class], "login")]
+    public function login(Request $request, Response $response, array $args): Response
     {
-        $export = new ExportHandler();
-        return $export->export($request, $response);
+        global $Language, $Security;
+        $this->setup($request, $response);
+        if ($request->isGet()) {
+            $username = $request->getQueryParam(Config("API_LOGIN_USERNAME"));
+            $password = $request->getQueryParam(Config("API_LOGIN_PASSWORD"));
+            $code = $request->getQueryParam(Config("API_LOGIN_SECURITY_CODE"));
+            $expire = $request->getQueryParam(Config("API_LOGIN_EXPIRE"));
+            $permission = $request->getQueryParam(Config("API_LOGIN_PERMISSION"));
+        } else {
+            $username = $request->getParsedBodyParam(Config("API_LOGIN_USERNAME"));
+            $password = $request->getParsedBodyParam(Config("API_LOGIN_PASSWORD"));
+            $code = $request->getParsedBodyParam(Config("API_LOGIN_SECURITY_CODE"));
+            $expire = $request->getParsedBodyParam(Config("API_LOGIN_EXPIRE"));
+            $permission = $request->getParsedBodyParam(Config("API_LOGIN_PERMISSION"));
+        }
+        $Security = $this->container->get("app.security");
+        $Language = $this->container->get("app.language");
+        // Valdiate expire
+        if ($expire && (!is_numeric($expire) || ParseInteger($expire) <= 0)) {
+            return $response->withJson(["error" => $Language->phrase("IncorrectInteger") . ": " . Config("API_LOGIN_EXPIRE")]); // Incorrect expire
+        }
+        // Valdiate permission
+        if ($permission && (!is_numeric($permission) || ParseInteger($permission) <= 0 || ParseInteger($permission) > Allow::ALL->value)) {
+            return $response->withJson(["error" => $Language->phrase("IncorrectInteger") . ": " . Config("API_LOGIN_PERMISSION")]); // Incorrect expire
+        }
+        $validPwd = $Security->validateUser($username, $password, securityCode: $code);
+        return $validPwd
+            ? $response
+            : $response->withStatus(401); // Not authorized
     }
 
-    // Process file request
-    public function processFile()
+    /**
+     * list
+     */
+    #[Map(["GET", "OPTIONS"], "/list/{table}[/{params:.*}]", [ApiPermissionMiddleware::class, JwtMiddleware::class], "list")]
+    public function list(Request $request, Response $response, array $args): Response
     {
-        $file = new FileViewer();
-        return $file->getFile();
+        $table = $args["table"] ?? Get(Config("API_OBJECT_NAME"));
+        if ($table) {
+            $this->pageName = $this->container->get($table)?->getApiPageName("list");
+        }
+        return $this->processPage($request, $response, $args);
     }
 
-    // Process file upload
-    public function processFileUpload()
+    /**
+     * view
+     */
+    #[Map(["GET", "OPTIONS"], "/view/{table}[/{params:.*}]", [ApiPermissionMiddleware::class, JwtMiddleware::class], "view")]
+    public function view(Request $request, Response $response, array $args): Response
     {
-        $upload = new HttpUpload();
-        return $upload->getUploadedFiles();
+        $table = $args["table"] ?? Get(Config("API_OBJECT_NAME"));
+        if ($table) {
+            $this->pageName = $this->container->get($table)?->getApiPageName("view");
+        }
+        return $this->processPage($request, $response, $args);
     }
 
-    // Process jQuery file upload
-    public function processjQueryFileUpload()
+    /**
+     * add
+     */
+    #[Map(["POST", "OPTIONS"], "/add/{table}[/{params:.*}]", [ApiPermissionMiddleware::class, JwtMiddleware::class], "add")]
+    public function add(Request $request, Response $response, array $args): Response
     {
-        $upload = new FileUploadHandler();
-        return $upload->run();
+        $table = $args["table"] ?? Post(Config("API_OBJECT_NAME"));
+        if ($table) {
+            $this->pageName = $this->container->get($table)?->getApiPageName("add");
+        }
+        return $this->processPage($request, $response, $args);
     }
 
-    // Process lookup
-    public function processLookup($req)
+    /**
+     * edit
+     */
+    #[Map(["POST", "OPTIONS"], "/edit/{table}[/{params:.*}]", [ApiPermissionMiddleware::class, JwtMiddleware::class], "edit")]
+    public function edit(Request $request, Response $response, array $args): Response
+    {
+        $table = $args["table"] ?? Post(Config("API_OBJECT_NAME"));
+        if ($table) {
+            $this->pageName = $this->container->get($table)?->getApiPageName("edit");
+        }
+        return $this->processPage($request, $response, $args);
+    }
+
+    /**
+     * delete
+     */
+    #[Map(["GET", "POST", "DELETE", "OPTIONS"], "/delete/{table}[/{params:.*}]", [ApiPermissionMiddleware::class, JwtMiddleware::class], "delete")]
+    public function delete(Request $request, Response $response, array $args): Response
+    {
+        $table = $args["table"] ?? Param(Config("API_OBJECT_NAME"));
+        if ($table) {
+            $this->pageName = $this->container->get($table)?->getApiPageName("delete");
+        }
+        return $this->processPage($request, $response, $args);
+    }
+
+    /**
+     * register
+     */
+    #[Map(["POST", "OPTIONS"], "/register", [ApiPermissionMiddleware::class], "register")]
+    public function register(Request $request, Response $response, array $args): Response
+    {
+        $this->pageName = "Register";
+        return $this->processPage($request, $response, $args);
+    }
+
+    /**
+     * file
+     * /api/file/{table}/{field}/{key}
+     * /api/file/{table}/{path}
+     * $args["param"] can be {field} or {path}
+     */
+    #[Map(["GET", "OPTIONS"], "/file/{table}/{param}[/{key:.*}]", [ApiPermissionMiddleware::class, JwtMiddleware::class], "file")]
+    public function file(Request $request, Response $response, array $args): Response
+    {
+        $this->setup($request, $response);
+        (new FileViewer)();
+        return $response;
+    }
+
+    /**
+     * export
+     * /api/export/{type}/{table}/{key}
+     * /api/export/{id}
+     * /api/export/search
+     * $args["param"] can be {type} or {id} or "search"
+     */
+    #[Map(["GET", "POST", "OPTIONS"], "/export/{param}[/{table}[/{key:.*}]]", [ApiPermissionMiddleware::class, JwtMiddleware::class], "export")]
+    public function export(Request $request, Response $response, array $args): Response
+    {
+        $this->setup($request, $response);
+        (new ExportHandler())->export($request, $response);
+        return $response;
+    }
+
+    /**
+     * upload
+     */
+    #[Map(["POST", "OPTIONS"], "/upload", [ApiPermissionMiddleware::class, JwtMiddleware::class], "upload")]
+    public function upload(Request $request, Response $response, array $args): Response
+    {
+        $this->setup($request, $response);
+        HttpUpload::create()->getUploadedFiles();
+        return $response;
+    }
+
+    /**
+     * jupload
+     */
+    #[Map(["GET", "POST", "OPTIONS"], "/jupload", [ApiPermissionMiddleware::class], "jupload")]
+    public function jupload(Request $request, Response $response, array $args): Response
+    {
+        $this->setup($request, $response);
+        (new FileUploadHandler)();
+        return $response;
+    }
+
+    /**
+     * session
+     */
+    #[Map(["GET", "OPTIONS"], "/session", [ApiPermissionMiddleware::class], "session")]
+    public function session(Request $request, Response $response, array $args): Response
+    {
+        $this->setup($request, $response);
+        (new SessionHandler)();
+        return $response;
+    }
+
+    /**
+     * lookup
+     */
+    #[Map(["GET", "POST", "OPTIONS"], "/lookup[/{params:.*}]", [ApiPermissionMiddleware::class, JwtMiddleware::class], "lookup")]
+    public function lookup(Request $request, Response $response, array $args): Response
     {
         global $Security, $Language;
-        if (is_array($req)) { // Multiple requests
-            $out = [];
-            foreach ($req as $ar) {
-                if (is_string($ar)) { // Request is QueryString
-                    parse_str($ar, $ar);
-                }
-                $object = $ar[Config("API_LOOKUP_PAGE")];
-                $fieldName = $ar[Config("API_FIELD_NAME")];
-                $res = [Config("API_LOOKUP_PAGE") => $object, Config("API_FIELD_NAME") => $fieldName];
-                $page = Container($object);
-                if ($page !== null) {
-                    $lookupField = $page->Fields[$fieldName] ?? null;
+        $this->setup($request, $response);
+        if ($request->getContentType() == "application/json") { // Multiple requests
+            $req = $request->getParsedBody();
+            if (is_array($req)) { // Multiple requests
+                $out = [];
+                foreach ($req as $ar) {
+                    if (is_string($ar)) { // Request is QueryString
+                        parse_str($ar, $ar);
+                    }
+                    $object = $ar[Config("API_LOOKUP_PAGE")];
+                    $fieldName = $ar[Config("API_FIELD_NAME")];
+                    $res = [Config("API_LOOKUP_PAGE") => $object, Config("API_FIELD_NAME") => $fieldName];
+                    $page = Container($object); // Don't use $this->container
+                    $lookupField = $page?->Fields[$fieldName] ?? null;
                     if ($lookupField) {
                         $lookup = $lookupField->Lookup;
                         if ($lookup) {
@@ -132,66 +253,52 @@ class ApiController
                             if ($tbl) {
                                 $Security->loadTablePermissions($tbl->TableVar);
                                 if ($Security->canLookup()) {
-                                    $res = array_merge($res, $page->lookup($ar));
+                                    $res = array_merge($res, $page->lookup($ar, false));
                                 } else {
                                     $res = array_merge($res, ["result" => $Language->phrase("401")]);
                                 }
                             }
                         }
                     }
+                    if ($fieldName) {
+                        $out[] = $res;
+                    }
                 }
-                if ($fieldName) {
-                    $out[] = $res;
-                }
+                $response = $response->withJson(ConvertToUtf8($out));
             }
-            WriteJson($out);
-            return true;
         } else { // Single request
-            $page = Container($req);
-            if ($page !== null) {
-                return $page->lookup();
-            }
+            $page = $request->getParam(Config("API_LOOKUP_PAGE"));
+            Container($page)?->lookup($request->getParams()); // Don't use $this->container
         }
-        return false;
+        return $response;
     }
 
-    // Process session
-    public function processSession()
+    /**
+     * chart
+     */
+    #[Map(["GET", "OPTIONS"], "/chart[/{params:.*}]", [ApiPermissionMiddleware::class], "chart")]
+    public function exportchart(Request $request, Response $response, array $args): Response
     {
-        $session = new SessionHandler();
-        return $session->getSession();
+        $this->setup($request, $response);
+        (new ChartExporter)();
+        return $response;
     }
 
-    // Process metadata
-    public function processMetadata()
-    {
-    }
-
-    // Process progress
-    public function processProgress($token)
-    {
-        $data = GetCache($token); // Get import progress from file token
-        if (is_array($data)) {
-            WriteJson($data);
-            return true;
-        }
-        return false;
-    }
-
-    // Process export chart
-    public function processExportChart()
-    {
-        $exporter = new ChartExporter();
-        return $exporter->export();
-    }
-
-    // Process permissions
-    public function processPermissions($userLevel, $json)
+    /**
+     * permissions
+     */
+    #[Map(["GET", "POST", "OPTIONS"], "/permissions/{level}", [ApiPermissionMiddleware::class, JwtMiddleware::class], "permissions")]
+    public function permissions(Request $request, Response $response, array $args): Response
     {
         global $Security, $USER_LEVELS, $USER_LEVEL_TABLES;
+        $this->setup($request, $response);
+        $userLevel = $args["level"] ?? null;
+        if ($userLevel === null) {
+            return $response;
+        }
 
         // Set up security
-        $Security = Container("security");
+        $Security = $this->container->get("app.security");
         $Security->setupUserLevel(); // Get all User Level info
         $ar = $USER_LEVEL_TABLES;
 
@@ -226,28 +333,28 @@ class ApiController
                 }
             }
             $res = ["userlevel" => $userLevel, "permissions" => $privs];
-            WriteJson($res);
+            $response = $response->withJson($res);
 
         // Update permissions
-        } elseif (IsPost() && $Security->isSysAdmin()) {
+        } elseif (IsPost() && $Security->isSysAdmin()) { // System admin only
+            $json = $request->getContentType() == "application/json" ? $request->getParsedBody() : [];
+
             // Validate user level
-            if (!is_numeric($userLevel) || SameString($userLevel, "-1") || !ArrayFind(fn($level) => SameString($level[0], $userLevel), $USER_LEVELS)) {
+            if (!is_numeric($userLevel) || SameString($userLevel, "-1") || !Collection::make($USER_LEVELS)->first(fn ($level) => SameString($level[0], $userLevel))) {
                 $res = ["userlevel" => $userLevel, "permissions" => $json, "success" => false];
-                WriteJson($res);
-                return false;
+                $response = $response->withJson($res);
             }
 
             // Validate table names / permissions
             $newPrivs = [];
             $outPrivs = [];
             foreach ($json as $tableName => $permission) {
-                $table = ArrayFind(fn($privs) => $privs[0] == $tableName || $privs[1] == $tableName, $ar);
-                if (!$table || !is_numeric($permission) || intval($permission) < 0 || intval($permission) > ALLOW_ALL) {
+                $table = Collection::make($ar)->first(fn ($privs) => $privs[0] == $tableName || $privs[1] == $tableName);
+                if (!$table || !is_numeric($permission) || intval($permission) < 0 || intval($permission) > Allow::ALL->value) {
                     $res = ["userlevel" => $userLevel, "permissions" => $json, "success" => false];
-                    WriteJson($res);
-                    return false;
+                    $response = $response->withJson($res);
                 }
-                $permission = intval($permission) & ALLOW_ALL;
+                $permission = intval($permission) & Allow::ALL->value;
                 $newPrivs[$table[4] . $table[1]] = $permission;
                 $outPrivs[$table[1]] = $permission;
             }
@@ -256,19 +363,23 @@ class ApiController
             if (method_exists($Security, "updatePermissions")) {
                 $Security->updatePermissions($userLevel, $newPrivs);
                 $res = ["userlevel" => $userLevel, "permissions" => $outPrivs, "success" => true];
-                WriteJson($res);
+                $response = $response->withJson($res);
             } else {
                 $res = ["userlevel" => $userLevel, "permissions" => $json, "success" => false];
-                WriteJson($res);
-                return false;
+                $response = $response->withJson($res);
             }
         }
-        return true;
+        return $response;
     }
 
-    // Process push notification
-    public function processPushNotification($action)
+    /**
+     * push
+     */
+    #[Map(["GET", "POST", "OPTIONS"], "/push/{action}", [ApiPermissionMiddleware::class], "push")]
+    public function push(Request $request, Response $response, array $args): Response
     {
+        $this->setup($request, $response);
+        $action = $args["action"] ?? null;
         $push = new PushNotification();
         if ($action == Config("API_PUSH_NOTIFICATION_SUBSCRIBE")) {
             $push->subscribe();
@@ -277,138 +388,80 @@ class ApiController
         } elseif ($action == Config("API_PUSH_NOTIFICATION_DELETE")) {
             $push->delete();
         }
-    }
-
-    // Process two factor authentication
-    public function processTwoFactorAuthentication($action, $parm)
-    {
-        $className = TwoFactorAuthenticationClass();
-        $auth = new $className();
-        if ($action == Config("API_2FA_SHOW")) {
-            return $auth->show();
-        } elseif ($action == Config("API_2FA_VERIFY")) {
-            return $auth->verify($parm);
-        } elseif ($action == Config("API_2FA_RESET")) {
-            return $auth->reset($parm);
-        } elseif ($action == Config("API_2FA_BACKUP_CODES")) {
-            return $auth->getBackupCodes();
-        } elseif ($action == Config("API_2FA_NEW_BACKUP_CODES")) {
-            return $auth->getNewBackupCodes();
-        } elseif ($action == Config("API_2FA_SEND_OTP")) {
-            $usr = $_SESSION[SESSION_USER_PROFILE_USER_NAME] ?? CurrentUserName(); // Send OTP to logging in / current user
-            $res = $className::sendOneTimePassword($usr, $parm);
-            if ($res === true) { // Send successful
-                WriteJson(["success" => true]);
-                return true;
-            } else { //
-                WriteJson(["success" => false, "error" => [ "description" => $res ] ]);
-                return false;
-            }
-        }
-        return false;
+        return $response;
     }
 
     /**
-     * Perform API call
-     *
-     * Routes:
-     * 1. list/view/add/edit/delete/register/export
-     *  - api/view/cars/1
-     * 2. login
-     *  - api/login
-     * 3. file viewer
-     *  - api/file/cars/Picture/1
-     * 4. file upload
-     *  - api/upload
-     * 5. jQuery file upload
-     *  - api/jupload
-     * 6. session
-     *  - api/session
-     * 7. lookup (UpdateOption/ModalLookup/AutoSuggest/AutoFill)
-     *  - api/lookup&ajax=(updateoption|modal|autosuggest|autofill)
-     * 8. import progress
-     *  - api/progress
-     * 9. export chart
-     *  - api/exportchart
-     * 10. permissions
-     *  - api/permissions/-2
-     * 11. push notification
-     *  - api/push/(subscribe|send|delete)
-     * 12. two factor authentication
-     *  - api/2fa/(show|verify|reset|codes|newcodes|otp)
-     * 13. metadata
-     *  - api/metadata
-     * @return Response
+     * twofa
+     */
+    #[Map(["GET", "POST", "OPTIONS"], "/twofa/{action}[/{parm}]", [ApiPermissionMiddleware::class], "twofa")]
+    public function twofa(Request $request, Response $response, array $args): Response
+    {
+        $this->setup($request, $response);
+        $action = $args["action"] ?? null;
+        $parm = $args["parm"] ?? null;
+        $className = TwoFactorAuthenticationClass();
+        $auth = new $className();
+        if ($action == Config("API_2FA_SHOW")) {
+            $auth->show();
+        } elseif ($action == Config("API_2FA_VERIFY")) {
+            $auth->verify($parm);
+        } elseif ($action == Config("API_2FA_RESET")) {
+            $auth->reset($parm);
+        } elseif ($action == Config("API_2FA_BACKUP_CODES")) {
+            $auth->getBackupCodes();
+        } elseif ($action == Config("API_2FA_NEW_BACKUP_CODES")) {
+            $auth->getNewBackupCodes();
+        } elseif ($action == Config("API_2FA_SEND_OTP")) {
+            $usr = $_SESSION[SESSION_USER_PROFILE_USER_NAME] ?? CurrentUserName(); // Send OTP to logging in or current user
+            $res = $className::sendOneTimePassword($usr, $parm);
+            if ($res === true) { // Send successful
+                $response = $response->withJson(["success" => true]);
+            } else {
+                $response = $response->withJson(ConvertToUtf8(["success" => false, "error" => ["description" => $res]]));
+            }
+        }
+        return $response;
+    }
+
+    /**
+     * metadata
+     */
+    #[Get("/metadata", [ApiPermissionMiddleware::class], "metadata")]
+    public function metadata(Request $request, Response $response, array $args): Response
+    {
+        return $response;
+    }
+
+    /**
+     * chat
+     */
+    #[Get("/chat/{value:[01]}", [ApiPermissionMiddleware::class, JwtMiddleware::class], "chat")]
+    public function chat(Request $request, Response $response, array $args): Response
+    {
+        if (IsLoggedIn() && !IsSysAdmin()) {
+            if ((new UserProfile(CurrentUserName()))->set("ChatEnabled", ConvertToBool($args["value"]))->saveToStorage()) {
+                return $response->withJson(["success" => true]);
+            }
+        }
+        return $response->withJson(["success" => false]);
+    }
+
+    /**
+     * Other API actions
      */
     public function __invoke(Request $request, Response $response, array $args): Response
     {
-        // Get route data
-        $routeValues = $GLOBALS["RouteValues"];
-        if (count($routeValues) > 0) {
-            // Set up action
-            $action = $routeValues[0] ?? Config("API_LIST_ACTION"); // Default action = list
+        $this->setup($request, $response);
+        if (count(Route()) == 0) {
+            return $response;
+        }
 
-            // Set up object
-            $object = $routeValues[1] ?? Post(Config("API_OBJECT_NAME"));
-
-            // Set up page name
-            $pageName = "";
-            $apiTableActions = [
-                Config("API_LIST_ACTION"),
-                Config("API_VIEW_ACTION"),
-                Config("API_ADD_ACTION"),
-                Config("API_EDIT_ACTION"),
-                Config("API_DELETE_ACTION")
-            ];
-            if (in_array($action, $apiTableActions)) {
-                $pageName = Container($object)->getApiPageName($action);
-            } elseif ($action == Config("API_REGISTER_ACTION")) { // Register
-                $pageName = "Register";
-            }
-
-            // Set up response object
-            $GLOBALS["Response"] = &$response; // Note: global $Response does not work
-
-            // Handle custom actions first
-            if (is_callable($GLOBALS["API_ACTIONS"][$action] ?? null)) { // Deprecated
-                $func = $GLOBALS["API_ACTIONS"][$action];
-                $func($request, $response);
-            } elseif ($action == Config("API_EXPORT_ACTION")) { // Export
-                $this->processExport($request, $response);
-            } elseif ($action == Config("API_UPLOAD_ACTION")) { // Upload file
-                $this->processFileUpload();
-            } elseif ($action == Config("API_JQUERY_UPLOAD_ACTION")) { // jQuery file upload
-                $this->processjQueryFileUpload();
-            } elseif ($action == Config("API_FILE_ACTION")) { // File viewer
-                $this->processFile();
-            } elseif ($action == Config("API_LOOKUP_ACTION")) { // Lookup
-                if ($request->getContentType() == "application/json") {
-                    $ar = $request->getParsedBody();
-                    $this->processLookup($ar);
-                } else {
-                    $object = $request->getParam(Config("API_LOOKUP_PAGE")); // Get Lookup Page
-                    $this->processLookup($object);
-                }
-            } elseif ($action == Config("API_SESSION_ACTION")) { // Session
-                $this->processSession();
-            } elseif ($action == Config("API_EXPORT_CHART_ACTION")) { // Export chart
-                $this->processExportChart();
-            } elseif ($action == Config("API_PERMISSIONS_ACTION")) { // Permissions
-                $userLevel = count($routeValues) >= 2 ? $routeValues[1] : null;
-                $json = $request->getContentType() == "application/json" ? $request->getParsedBody() : [];
-                $this->processPermissions($userLevel, $json);
-            } elseif ($action == Config("API_PUSH_NOTIFICATION_ACTION")) { // Push notification
-                $action = count($routeValues) >= 2 ? $routeValues[1] : null;
-                $this->processPushNotification($action);
-            } elseif ($action == Config("API_2FA_ACTION")) { // Two factor authentication
-                $action = count($routeValues) >= 2 ? $routeValues[1] : null;
-                $parm = count($routeValues) >= 3 ? $routeValues[2] : null;
-                $this->processTwoFactorAuthentication($action, $parm);
-            } elseif ($action == Config("API_METADATA_ACTION")) { // Metadata
-                $this->processMetadata();
-            } else {
-                $this->processRoute($request, $response, $pageName);
-            }
+        // Handle custom actions (deprecated)
+        $action = Route(0);
+        if ($action && is_callable($GLOBALS["API_ACTIONS"][$action] ?? null)) {
+            $func = $GLOBALS["API_ACTIONS"][$action];
+            return $func($request, $response, $args);
         }
         return $response;
     }

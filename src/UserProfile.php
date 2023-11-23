@@ -1,95 +1,232 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * User Profile Class
  */
-class UserProfile
+class UserProfile implements \Stringable
 {
-    public $Username = "";
-    public $Profile = [];
-    public $Provider = "";
+    public static $CONCURRENT_SESSION_COUNT = -1; // Maximum sessions allowed
+    public static $FORCE_LOGOUT_USER = false; // Force logout user
+    public static $FORCE_LOGOUT_CONCURRENT_USER = false; // Force logout concurrent user
+    public static $SESSION_CLEANUP_TIME = 60 * 24; // Clean up unused sessions if idle more than 1 day
+    public static $SESSION_TIMEOUT = -1;
+    public static $MAX_RETRY = 3;
+    public static $RETRY_LOCKOUT = 20;
+    public static $PASSWORD_EXPIRE = 90;
+    public static $CONCURRENT_SESSIONS = "Sessions";
+    public static $SESSION_ID = "SessionID";
+    public static $LAST_ACCESSED_DATE_TIME = "LastAccessedDateTime";
+    public static $FORCE_LOGOUT = "ForceLogout";
+    public static $LOGIN_RETRY_COUNT = "LoginRetryCount";
+    public static $LAST_BAD_LOGIN_DATE_TIME = "LastBadLoginDateTime";
+    public static $LAST_PASSWORD_CHANGED_DATE = "LastPasswordChangedDate";
+    public static $LANGUAGE_ID = "LanguageId";
+    public static $SEARCH_FILTERS = "SearchFilters";
+    public static $IMAGE = "UserImage";
+    public static $SECRET = "Secret";
+    public static $SECRET_CREATE_DATE_TIME = "SecretCreateDateTime";
+    public static $SECRET_VERIFY_DATE_TIME = "SecretVerifyDateTime";
+    public static $SECRET_LAST_VERIFY_CODE = "SecretLastVerifyCode";
+    public static $BACKUP_CODES = "BackupCodes";
+    public static $ONE_TIME_PASSWORD = "OTP";
+    public static $OTP_ACCOUNT = "OTPAccount";
+    public static $OTP_CREATE_DATE_TIME = "OTPCreateDateTime";
+    public static $OTP_VERIFY_DATE_TIME = "OTPVerifyDateTime";
+    private $userName = "";
+    private $userId;
+    private $userPrimaryKey;
+    private $parentUserId;
+    private $userLevel = AdvancedSecurity::ANONYMOUS_USER_LEVEL_ID;
+    private $profile = [];
+    private $user;
+    private $provider;
+    public $TimeoutTime;
     public $MaxRetryCount;
     public $RetryLockoutTime;
-    protected $BackupUsername = "";
-    protected $BackupProfile = [];
-    protected $Excluded = []; // Excluded data (not to be saved to database)
+    public $PasswordExpiryTime;
 
     // Constructor
-    public function __construct()
+    public function __construct(string $userName = "")
     {
-        $this->MaxRetryCount = Config("USER_PROFILE_MAX_RETRY");
-        $this->RetryLockoutTime = Config("USER_PROFILE_RETRY_LOCKOUT");
-        $this->load();
-
-        // Max login retry
-        $this->set(Config("USER_PROFILE_LOGIN_RETRY_COUNT"), 0);
-        $this->set(Config("USER_PROFILE_LAST_BAD_LOGIN_DATE_TIME"), "");
+        $this->TimeoutTime = self::$SESSION_TIMEOUT > 0 ? self::$SESSION_TIMEOUT : Config("SESSION_TIMEOUT");
+        $this->MaxRetryCount = self::$MAX_RETRY;
+        $this->RetryLockoutTime = self::$RETRY_LOCKOUT;
+        $this->PasswordExpiryTime = self::$PASSWORD_EXPIRE;
+        $this->setLoginRetryCount(0)->setLastBadLoginDateTime(""); // Max login retry
+        $this->setLastPasswordChangedDate(""); // Password Expiry
+        if ($userName) {
+            $this->setUserName($userName)->loadFromStorage();
+        }
     }
 
-    // Has value
-    public function has($name)
+    // Create
+    public static function create(): static
     {
-        return array_key_exists($name, $this->Profile);
+        return new static();
+    }
+
+    // Get user name
+    public function getUserName(): string
+    {
+        return $this->userName;
+    }
+
+    // Set user name
+    public function setUserName(string $value)
+    {
+        $this->userName = $value;
+        return $this;
+    }
+
+    // Get user ID
+    public function getUserID()
+    {
+        return $this->userId;
+    }
+
+    // Set user ID
+    public function setUserID($value)
+    {
+        $this->userId = $value;
+        return $this;
+    }
+
+    // Get user primary key
+    public function getUserPrimaryKey()
+    {
+        return $this->userPrimaryKey;
+    }
+
+    // Set user primary key
+    public function setUserPrimaryKey($value)
+    {
+        $this->userPrimaryKey = $value;
+        return $this;
+    }
+
+    // Get parent user ID
+    public function getParentUserID()
+    {
+        return $this->parentUserId;
+    }
+
+    // Set parent user ID
+    public function setParentUserID($value)
+    {
+        $this->parentUserId = $value;
+        return $this;
+    }
+
+    // Get user level
+    public function getUserLevel()
+    {
+        return $this->userLevel;
+    }
+
+    // Set user level
+    public function setUserLevel($value)
+    {
+        $this->userLevel = $value;
+        return $this;
+    }
+
+    // Get login arguments
+    public function getLoginArguments(): array
+    {
+        return [
+            "userName" => $this->getUserName(),
+            "userId" => $this->getUserID(),
+            "parentUserId" => $this->getParentUserID(),
+            "userLevel" => $this->getUserLevel(),
+            "userPrimaryKey" => $this->getUserPrimaryKey(),
+        ];
+    }
+
+    // Get profile
+    public function getProfile(): array
+    {
+        return $this->profile;
+    }
+
+    // Set profile
+    public function setProfile(array $value)
+    {
+        $this->profile = $value;
+        return $this;
+    }
+
+    // Get provider
+    public function getProvider(): array
+    {
+        return $this->provider;
+    }
+
+    // Set provider
+    public function setProvider(string $value)
+    {
+        $this->provider = $value;
+        return $this;
+    }
+
+    // Has value in profile
+    public function has(string $name): bool
+    {
+        return array_key_exists($name, $this->profile);
     }
 
     // Get value
-    public function getValue($name)
+    public function get(string $name)
     {
-        return $this->Profile[$name] ?? null;
-    }
-
-    // Get all values
-    public function getValues()
-    {
-        return $this->Profile;
-    }
-
-    // Get value (alias)
-    public function get($name)
-    {
-        return $this->getValue($name);
+        return $this->profile[$name] ?? null;
     }
 
     // Set value
-    public function setValue($name, $value)
+    public function set(string $name, mixed $value): static
     {
-        $this->Profile[$name] = $value;
+        $this->profile[$name] = $value;
+        return $this;
     }
 
-    // Set value (alias)
-    public function set($name, $value)
+    // Get profile as array
+    public function toArray(): array
     {
-        $this->setValue($name, $value);
+        return $this->profile;
     }
 
-    // Set property // PHP
-    public function __set($name, $value)
+    // Get profile as object
+    public function toObject(): object
     {
-        $this->setValue($name, $value);
+        return (object)$this->toArray();
     }
 
-    // Get property // PHP
-    public function __get($name)
+    // Set property to profile // PHP
+    public function __set(string $name, mixed $value): void
     {
-        return $this->getValue($name);
-    }
-
-    // Delete property
-    public function delete($name)
-    {
-        if (array_key_exists($name, $this->Profile)) {
-            unset($this->Profile[$name]);
+        if ($value === null) {
+            $this->delete($name);
+        } else {
+            $this->set($name, $value);
         }
     }
 
-    // Assign properties
-    public function assign($input, $save = true)
+    // Get property from profile // PHP
+    public function __get(string $name)
     {
-        if (is_array($input) && !$save) {
-            $this->Excluded = array_merge($this->Excluded, $input);
-        }
+        return $this->get($name);
+    }
+
+    // Delete property from profile
+    public function delete(string $name)
+    {
+        unset($this->profile[$name]);
+        return $this;
+    }
+
+    // Assign properties to profile
+    public function assign(object|array $input, bool $save = true)
+    {
         if (is_object($input)) {
             $vars = get_object_vars($input);
             if (is_array($vars["data"])) {
@@ -99,12 +236,7 @@ class UserProfile
             }
             $this->assign($vars, $save);
         } elseif (is_array($input)) {
-            foreach ($input as $key => $value) { // Remove integer keys
-                if (is_int($key)) {
-                    unset($input[$key]);
-                }
-            }
-            $input = array_filter($input, fn($val) => is_bool($val) || is_float($val) || is_int($val) || $val === null || is_string($val) && strlen($val) <= Config("DATA_STRING_MAX_LENGTH"));
+            $input = array_filter($input, fn ($v, $k) => !is_int($k) && (is_bool($v) || is_float($v) || is_int($v) || $v === null || is_string($v)), ARRAY_FILTER_USE_BOTH);
             foreach ($input as $key => $value) {
                 if (preg_match('/http:\/\/schemas\.[.\/\w]+\/claims\/(\w+)/', $key, $m)) { // e.g. http://schemas.microsoft.com/identity/claims/xxx, http://schemas.xmlsoap.org/ws/2005/05/identity/claims/xxx
                     $key = $m[1];
@@ -115,247 +247,741 @@ class UserProfile
     }
 
     // Check if System Admin
-    protected function isSystemAdmin($usr)
+    public function isSysAdmin()
     {
-        $adminUserName = Config("ENCRYPTION_ENABLED") ? PhpDecrypt(Config("ADMIN_USER_NAME")) : Config("ADMIN_USER_NAME");
-        return $usr == "" || $usr == $adminUserName;
+        return Security()->isSysAdmin();
     }
 
-    // Backup user profile if user is different from existing user
-    protected function backup($usr)
+    // Get language ID
+    public function getLanguageId()
     {
-        if ($this->Username != "" && $usr != $this->Username) {
-            $this->BackupUsername = $this->Username;
-            $this->BackupProfile = $this->Profile;
-        }
+        return $this->{self::$LANGUAGE_ID};
     }
 
-    // Restore user profile if user is different from backup user
-    protected function restore($usr)
+    // Set language ID
+    public function setLanguageId($value)
     {
-        if ($this->BackupUsername != "" && $usr != $this->BackupUsername) {
-            $this->Username = $this->BackupUsername;
-            $this->Profile = $this->BackupProfile;
-        }
-    }
-
-    // Get language id
-    public function getLanguageId($usr)
-    {
-        try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                return $this->get(Config("USER_PROFILE_LANGUAGE_ID"));
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-        return "";
-    }
-
-    // Set language id
-    public function setLanguageId($usr, $langid)
-    {
-        try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $this->set(Config("USER_PROFILE_LANGUAGE_ID"), $langid);
-                return $this->saveProfileToDatabase($usr);
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-        return false;
+        $this->{self::$LANGUAGE_ID} = $value;
+        return $this;
     }
 
     // Get search filters
-    public function getSearchFilters($usr, $pageid)
+    public function getFilters()
+    {
+        return $this->{self::$SEARCH_FILTERS};
+    }
+
+    // Set search filters
+    public function setFilters($value)
+    {
+        $this->{self::$SEARCH_FILTERS} = $value;
+        return $this;
+    }
+
+    // Get search filters for a page
+    public function getSearchFilters($pageid)
     {
         try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $allfilters = @unserialize($this->get(Config("USER_PROFILE_SEARCH_FILTERS")));
-                return @$allfilters[$pageid];
-            }
+            $allfilters = $this->getFilters();
+            return $allfilters[$pageid] ?? "";
         } catch (\Throwable $e) {
             if (Config("DEBUG")) {
                 throw $e;
             }
-        } finally {
-            $this->restore($usr); // Restore current profile
         }
         return "";
     }
 
-    // Set search filters
-    public function setSearchFilters($usr, $pageid, $filters)
+    // Set search filters for a page
+    public function setSearchFilters($pageid, $filters)
     {
         try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $allfilters = @unserialize($this->get(Config("USER_PROFILE_SEARCH_FILTERS")));
-                if (!is_array($allfilters)) {
-                    $allfilters = [];
-                }
-                $allfilters[$pageid] = $filters;
-                $this->set(Config("USER_PROFILE_SEARCH_FILTERS"), serialize($allfilters));
-                return $this->saveProfileToDatabase($usr);
+            $allfilters = $this->getFilters();
+            if (!is_array($allfilters)) {
+                $allfilters = [];
             }
+            $allfilters[$pageid] = $filters;
+            return $this->setFilters($allfilters)->saveToStorage();
         } catch (\Throwable $e) {
             if (Config("DEBUG")) {
                 throw $e;
             }
-        } finally {
-            $this->restore($usr); // Restore current profile
         }
         return false;
     }
 
-    // Load profile from database
-    public function loadProfileFromDatabase($usr)
+    // Get user
+    public function getUser()
     {
-        global $UserTable;
-        if ($this->isSystemAdmin($usr)) { // Ignore system admin
-            return false;
-        } elseif ($usr == $this->Username) { // Already loaded, skip
-            return true;
+        if (!EmptyValue(Config("USER_PROFILE_FIELD_NAME"))) { // Get user if profile field exists
+            $userName = $this->getUserName();
+            if (!$this->user && $userName != "" || $this->user->get(Config("LOGIN_USERNAME_FIELD_NAME")) != $userName) {
+                $this->user = FindUserByUserName($userName);
+            }
         }
-        $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), $usr);
-        // Get SQL from getSql() method in <UserTable> class
-        $sql = "SELECT " . QuotedName(Config("USER_PROFILE_FIELD_NAME"), Config("USER_TABLE_DBID")) . " FROM " . Config("USER_TABLE") . " WHERE " . $filter;
-        $data = $UserTable->getConnection()->fetchNumeric($sql);
-        if ($data !== false) {
-            $this->backup($usr); // Backup user profile if exists
-            $this->clear();
-            $this->loadProfile(HtmlDecode($data[0]));
-            $this->Username = $usr; // Set current profile username
-            return true;
+        return $this->user;
+    }
+
+    // Set user
+    public function setUser($user)
+    {
+        if ($user instanceof AbstractEntity) {
+            $this->setUserName($user->get(Config("LOGIN_USERNAME_FIELD_NAME")));
+            if (!EmptyValue(Config("USER_PROFILE_FIELD_NAME"))) { // Set user and load profile if profile field exists
+                $this->user = $user;
+                $this->load($user->get(Config("USER_PROFILE_FIELD_NAME")));
+            }
+        }
+        return $this;
+    }
+
+    // Load profile from storage
+    public function loadFromStorage()
+    {
+        if (is_array(Session(SESSION_USER_PROFILE_RECORD))) { // Load from session for register and system admin
+            $row = Session(SESSION_USER_PROFILE_RECORD);
+            $profile = $row[SYS_ADMIN_USER_PROFILE] ?? null;
+            if ($profile !== null) {
+                $this->load($profile);
+                return true;
+            }
+        } else { // Load from database
+            if ($this->getUserName() == "") { // Empty user name
+                return false;
+            }
+            $user = $this->getUser();
+            if ($user) { // Database user
+                $this->load($user->get(Config("USER_PROFILE_FIELD_NAME")));
+                return true;
+            } else { // No database user
+                $this->loadFromSession();
+                return true;
+            }
         }
         return false;
     }
 
-    // Save profile to database
-    public function saveProfileToDatabase($usr)
+    // Save profile to storage
+    public function saveToStorage()
     {
-        global $UserTable;
-        if ($this->isSystemAdmin($usr)) { // Ignore system admin
-            return false;
+        if (is_array(Session(SESSION_USER_PROFILE_RECORD))) { // Save to session for register and system admin
+            $row = Session(SESSION_USER_PROFILE_RECORD);
+            $row[SYS_ADMIN_USER_PROFILE] = (string)$this;
+            $_SESSION[SESSION_USER_PROFILE_RECORD] = $row; // Save record
+            return true;
+        } else { // Save to database
+            if (EmptyValue($this->getUserName())) { // Empty user name
+                return false;
+            }
+            $user = $this->getUser();
+            if ($user) { // Database user
+                $user->set(Config("USER_PROFILE_FIELD_NAME"), (string)$this)->flush();
+            } else { // No database user
+                $this->saveToSession();
+            }
+            return true;
         }
-        $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), $usr);
-        $rs = [Config("USER_PROFILE_FIELD_NAME") => $this->profileToString()];
-        return $UserTable->update($rs, $filter);
+        return false;
     }
 
     // Load profile from session
-    public function load()
+    public function loadFromSession()
     {
         if (isset($_SESSION[SESSION_USER_PROFILE])) {
-            $this->loadProfile($_SESSION[SESSION_USER_PROFILE]);
+            $this->load($_SESSION[SESSION_USER_PROFILE]);
         }
+        return $this;
     }
 
     // Save profile to session
-    public function save()
+    public function saveToSession()
     {
-        $_SESSION[SESSION_USER_PROFILE] = $this->profileToString();
+        $_SESSION[SESSION_USER_PROFILE] = (string)$this;
+        return $this;
     }
 
     // Load profile from string
-    protected function loadProfile($profile)
+    public function load($profile)
     {
-        $ar = @unserialize(strval($profile));
+        $profile = trim(strval($profile ?? ""));
+        $ar = str_starts_with($profile, "a:") // Array by serialize()
+            ? @unserialize($profile)
+            : JsonDecode($profile, true);
         if (is_array($ar)) {
-            $this->Profile = array_merge($this->Profile, $ar);
+            $this->profile = array_merge($this->profile, $ar);
         }
-    }
-
-    // Write (var_dump) profile
-    public function writeProfile()
-    {
-        var_dump($this->Profile);
+        return $this;
     }
 
     // Clear profile
-    protected function clearProfile()
-    {
-        $this->Profile = [];
-    }
-
-    // Clear profile (alias)
     public function clear()
     {
-        $this->clearProfile();
+        $this->profile = [];
+        return $this;
     }
 
-    // Profile to string
-    protected function profileToString()
+    // Convert to string
+    public function __toString(): string
     {
-        $data = array_diff_assoc($this->Profile, $this->Excluded);
-        return serialize($data);
+        return JsonEncode($this->profile);
     }
 
-    // Exceed login retry
-    public function exceedLoginRetry($usr)
+    // Get concurrent sessions
+    public function getConcurrentSessions()
     {
-        if ($this->isSystemAdmin($usr)) { // Ignore system admin
+        return $this->{self::$CONCURRENT_SESSIONS};
+    }
+
+    // Set concurrent sessions
+    public function setConcurrentSessions($value)
+    {
+        $this->{self::$CONCURRENT_SESSIONS} = $value;
+        return $this;
+    }
+
+    // Is valid user
+    public function isValidUser($sessionId, $addSession = true)
+    {
+        if ($this->isSysAdmin() || IsApi()) { // Ignore system admin / API
+            return true;
+        }
+        try {
+            $sessions = $this->getConcurrentSessions();
+            $sessions = is_array($sessions) ? $sessions : [];
+            $valid = false;
+            $cnt = 0;
+            $logoutUser = self::$FORCE_LOGOUT_CONCURRENT_USER && self::$CONCURRENT_SESSION_COUNT == 1;
+            foreach ($sessions as &$session) {
+                $sessId = $session[self::$SESSION_ID];
+                $dt = $session[self::$LAST_ACCESSED_DATE_TIME];
+                $forceLogout = ConvertToBool($session[self::$FORCE_LOGOUT]);
+                if (SameString($sessId, $sessionId)) {
+                    $valid = true;
+                    if (!$forceLogout && ($this->TimeoutTime < 0 || DateDiff($dt, StdCurrentDateTime(), "n") > $this->TimeoutTime)) { // Update accessed time
+                        $session[self::$LAST_ACCESSED_DATE_TIME] = StdCurrentDateTime();
+                    }
+                    break;
+                } elseif ($logoutUser) { // Logout concurrent user
+                    $session[self::$FORCE_LOGOUT] = true;
+                } else {
+                    $cnt++;
+                }
+            }
+            if (!$valid && $addSession && (self::$CONCURRENT_SESSION_COUNT < 0 || $cnt < self::$CONCURRENT_SESSION_COUNT || $logoutUser)) {
+                $valid = true;
+                $sessions[] = [
+                    self::$SESSION_ID => $sessionId,
+                    self::$LAST_ACCESSED_DATE_TIME => StdCurrentDateTime(),
+                    self::$FORCE_LOGOUT => false,
+                ];
+            }
+            // Remove unused sessions
+            $sessions = $this->removeUnusedSessions($sessions);
+            if ($valid) {
+                $this->setConcurrentSessions($sessions)->saveToStorage();
+            }
+            return $valid;
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return false;
+    }
+
+    // Remove unused sessions
+    protected function removeUnusedSessions($sessions)
+    {
+        $cleanupTime = $this->TimeoutTime > 0 ? $this->TimeoutTime : self::$SESSION_CLEANUP_TIME; // Fallback to cleanup time if timeout not specified
+        return array_filter($sessions, fn($session) => DateDiff($session[self::$LAST_ACCESSED_DATE_TIME], StdCurrentDateTime(), "n") <= $cleanupTime);
+    }
+
+    // Remove user
+    public function removeUser($sessionId)
+    {
+        if ($this->isSysAdmin()) { // Ignore system admin
+            return true;
+        }
+        try {
+            $sessions = $this->getConcurrentSessions();
+            $sessions = is_array($sessions) ? $sessions : [];
+            $sessions = array_filter($sessions, fn($session) => $session[self::$SESSION_ID] != $sessionId);
+            return $this->setConcurrentSessions($sessions)->saveToStorage();
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return false;
+    }
+
+    // Reset concurrent user
+    public function resetConcurrentUser()
+    {
+        try {
+            return $this->setConcurrentSessions(null)->saveToStorage();
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return false;
+    }
+
+    // Get active user session coount
+    public function activeUserSessionCount($active = true)
+    {
+        try {
+            $sessions = $this->getConcurrentSessions();
+            $sessions = is_array($sessions) ? $sessions : [];
+            if ($active) {
+                $sessions = $this->removeUnusedSessions($sessions);
+            }
+            return count($sessions);
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return 0;
+    }
+
+    // Force logout user
+    public function isForceLogout($sessionId = null)
+    {
+        if ($this->isSysAdmin() || IsApi()) { // Ignore system admin / API
             return false;
         }
         try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $retrycount = $this->get(Config("USER_PROFILE_LOGIN_RETRY_COUNT"));
-                $dt = $this->get(Config("USER_PROFILE_LAST_BAD_LOGIN_DATE_TIME"));
-                if ((int)$retrycount >= (int)$this->MaxRetryCount) {
-                    if (DateDiff($dt, StdCurrentDateTime(), "n") < $this->RetryLockoutTime) {
-                        return true;
-                    } else {
-                        $this->set(Config("USER_PROFILE_LOGIN_RETRY_COUNT"), 0);
-                        $this->saveProfileToDatabase($usr);
+            $isForceLogout = $sessionId === null ? true : false;
+            $sessions = $this->getConcurrentSessions();
+            $sessions = is_array($sessions) ? $sessions : [];
+            foreach ($sessions as $session) {
+                if ($sessionId === null) { // All session must be force logout
+                    if (!ConvertToBool($session[self::$FORCE_LOGOUT])) {
+                        return false;
                     }
+                } elseif (SameText($session[self::$SESSION_ID], $sessionId)) {
+                    return ConvertToBool($session[self::$FORCE_LOGOUT]);
                 }
+            }
+            return $isForceLogout;
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return false;
+    }
+
+    // Force logout user
+    public function forceLogoutUser()
+    {
+        if (!self::$FORCE_LOGOUT_USER) {
+            return false;
+        }
+        try {
+            $sessions = $this->getConcurrentSessions();
+            $sessions = is_array($sessions) ? $sessions : [];
+            $sessions = $this->removeUnusedSessions($sessions);
+            foreach ($sessions as &$session) {
+                $session[self::$FORCE_LOGOUT] = true;
+            }
+            return $this->setConcurrentSessions($sessions)->saveToStorage();
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return false;
+    }
+
+    // Exceed login retry
+    public function exceedLoginRetry()
+    {
+        if ($this->isSysAdmin()) { // Ignore system admin
+            return false;
+        }
+        try {
+            $retrycount = $this->getLoginRetryCount();
+            $dt = $this->getLastBadLoginDateTime();
+            if ((int)$retrycount >= (int)$this->MaxRetryCount) {
+                return DateDiff($dt, StdCurrentDateTime(), "n") >= $this->RetryLockoutTime
+                    ? $this->resetLoginRetry()
+                    : true;
             }
         } catch (\Throwable $e) {
             if (Config("DEBUG")) {
                 throw $e;
             }
-        } finally {
-            $this->restore($usr); // Restore current profile
         }
         return false;
     }
 
     // Reset login retry
-    public function resetLoginRetry($usr)
+    public function resetLoginRetry()
     {
         try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $this->set(Config("USER_PROFILE_LOGIN_RETRY_COUNT"), 0);
-                return $this->saveProfileToDatabase($usr);
+            return $this->setLoginRetryCount(0)->saveToStorage();
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
             }
+        }
+        return false;
+    }
+
+    // Password expired
+    public function passwordExpired()
+    {
+        if ($this->isSysAdmin()) { // Ignore system admin
+            return false;
+        }
+        try {
+            $dt = $this->getLastPasswordChangedDate();
+            if (strval($dt) == "") {
+                $dt = StdCurrentDate();
+            }
+            return DateDiff($dt, StdCurrentDate(), "d") >= $this->PasswordExpiryTime;
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return false;
+    }
+
+    // Empty password changed date
+    public function emptyPasswordChangedDate()
+    {
+        if ($this->isSysAdmin()) { // Ignore system admin
+            return false;
+        }
+        try {
+            $dt = $this->getLastPasswordChangedDate();
+            return (strval($dt) == "");
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return false;
+    }
+
+    // Set password expired
+    public function setPasswordExpired()
+    {
+        try {
+            return $this->setLastPasswordChangedDate(StdDate(strtotime("-" . ($this->PasswordExpiryTime + 1) . " days")))
+                ->saveToStorage();
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return false;
+    }
+
+    // Get login retry count
+    public function getLoginRetryCount()
+    {
+        return $this->{self::$LOGIN_RETRY_COUNT};
+    }
+
+    // Set login retry count
+    public function setLoginRetryCount($value)
+    {
+        $this->{self::$LOGIN_RETRY_COUNT} = $value;
+        return $this;
+    }
+
+    // Get last bad login date time
+    public function getLastBadLoginDateTime()
+    {
+        return $this->{self::$LAST_BAD_LOGIN_DATE_TIME};
+    }
+
+    // Set last bad login date time
+    public function setLastBadLoginDateTime($value)
+    {
+        $this->{self::$LAST_BAD_LOGIN_DATE_TIME} = $value;
+        return $this;
+    }
+
+    // Get last password changed date
+    public function getLastPasswordChangedDate()
+    {
+        return $this->{self::$LAST_PASSWORD_CHANGED_DATE};
+    }
+
+    // Set last password changed date
+    public function setLastPasswordChangedDate($value)
+    {
+        $this->{self::$LAST_PASSWORD_CHANGED_DATE} = $value;
+        return $this;
+    }
+
+    // Get secret
+    public function getSecret()
+    {
+        return $this->{self::$SECRET};
+    }
+
+    // Set secret
+    public function setSecret($value)
+    {
+        $this->{self::$SECRET} = $value;
+        return $this;
+    }
+
+    // Get secret create datetime
+    public function getSecretCreateDateTime()
+    {
+        return $this->{self::$SECRET_CREATE_DATE_TIME};
+    }
+
+    // Set secret create datetime
+    public function setSecretCreateDateTime($value)
+    {
+        $this->{self::$SECRET_CREATE_DATE_TIME} = $value;
+        return $this;
+    }
+
+    // Get secret verify datetime
+    public function getSecretVerifyDateTime()
+    {
+        return $this->{self::$SECRET_VERIFY_DATE_TIME};
+    }
+
+    // Set secret verify datetime
+    public function setSecretVerifyDateTime($value)
+    {
+        $this->{self::$SECRET_VERIFY_DATE_TIME} = $value;
+        return $this;
+    }
+
+    // Get secret last verify code
+    public function getSecretLastVerifyCode()
+    {
+        return $this->{self::$SECRET_LAST_VERIFY_CODE};
+    }
+
+    // Set secret last verify code
+    public function setSecretLastVerifyCode($value)
+    {
+        $this->{self::$SECRET_LAST_VERIFY_CODE} = $value;
+        return $this;
+    }
+
+    // Get backup codes
+    public function getCodes()
+    {
+        return $this->{self::$BACKUP_CODES};
+    }
+
+    // Set backup codes
+    public function setCodes($value)
+    {
+        $this->{self::$BACKUP_CODES} = $value;
+        return $this;
+    }
+
+    // Get one time password
+    public function getPassword()
+    {
+        return $this->{self::$ONE_TIME_PASSWORD};
+    }
+
+    // Set one time password
+    public function setPassword($value)
+    {
+        $this->{self::$ONE_TIME_PASSWORD} = $value;
+        return $this;
+    }
+
+    // Get OTP account
+    public function getOtpAccount()
+    {
+        return $this->{self::$OTP_ACCOUNT};
+    }
+
+    // Set OTP account
+    public function setOtpAccount($value)
+    {
+        $this->{self::$OTP_ACCOUNT} = $value;
+        return $this;
+    }
+
+    // Get OTP create datetime
+    public function getOtpCreateDateTime()
+    {
+        return $this->{self::$OTP_CREATE_DATE_TIME};
+    }
+
+    // Set OTP create datetime
+    public function setOtpCreateDateTime($value)
+    {
+        $this->{self::$OTP_CREATE_DATE_TIME} = $value;
+        return $this;
+    }
+
+    // Get OTP verify datetime
+    public function getOtpVerifyDateTime()
+    {
+        return $this->{self::$OTP_VERIFY_DATE_TIME};
+    }
+
+    // Set OTP verify datetime
+    public function setOtpVerifyDateTime($value)
+    {
+        $this->{self::$OTP_VERIFY_DATE_TIME} = $value;
+        return $this;
+    }
+
+    // User has 2FA secret
+    public function hasUserSecret($verified = false)
+    {
+        try {
+            $secret = $this->getSecret();
+            $valid = !EmptyValue($secret); // Secret is not empty
+            if ($valid && $verified) {
+                $verifyDateTime = $this->getSecretVerifyDateTime();
+                $verifyCode = $this->getSecretLastVerifyCode();
+                $valid = !empty($verifyDateTime) && !empty($verifyCode);
+            }
+            return $valid;
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return false;
+    }
+
+    // Get user 2FA secret
+    public function getUserSecret()
+    {
+        try {
+            $secret = $this->getSecret();
+            // Create new secret and save to profile
+            if (EmptyValue($secret)) {
+                $className = TwoFactorAuthenticationClass();
+                $secret = $className::generateSecret();
+                $backupCodes = $className::generateBackupCodes();
+                $this->setSecret($secret)
+                    ->setSecretCreateDateTime(DbCurrentDateTime())
+                    ->setBackupCodes($backupCodes)
+                    ->saveToStorage();
+            }
+            return $secret;
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return "";
+    }
+
+    // Set one time password (Email/SMS)
+    public function setOneTimePassword($account, $otp)
+    {
+        try {
+            return $this->setPassword($otp)
+                ->setOtpAccount($account)
+                ->setOtpCreateDateTime(DbCurrentDateTime())
+                ->saveToStorage();
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return false;
+    }
+
+    // Get decrypted backup codes
+    public function getBackupCodes()
+    {
+        try {
+            $codes = $this->getCodes();
+            $decryptedCodes = is_array($codes)
+                ? array_map(fn($code) => strlen($code) == Config("TWO_FACTOR_AUTHENTICATION_BACKUP_CODE_LENGTH") ? $code : PhpDecrypt(strval($code)), $codes) // Encrypt backup codes if necessary
+                : [];
+            return $decryptedCodes;
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+    }
+
+    // Set encrypted backup codes
+    public function setBackupCodes(array $codes)
+    {
+        try {
+            $encryptedCodes = array_map(fn($code) => strlen($code) == Config("TWO_FACTOR_AUTHENTICATION_BACKUP_CODE_LENGTH") ? PhpEncrypt(strval($code)) : $code, $codes); // Encrypt backup codes if necessary
+            $this->setCodes($encryptedCodes);
         } catch (\Throwable $e) {
             if (Config("DEBUG")) {
                 throw $e;
             }
         } finally {
-            $this->restore($usr); // Restore current profile
+            return $this;
         }
-        return false;
     }
 
-    // User has 2FA secret
-    public function hasUserSecret($usr, $verified = false)
+    // Get new set of backup codes
+    public function getNewBackupCodes(): array
     {
         try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $secret = $this->get(Config("USER_PROFILE_SECRET"));
-                $valid = $secret !== null && $secret !== ""; // Secret is not empty
-                if ($valid && $verified) {
-                    $verifyDateTime = $this->get(Config("USER_PROFILE_SECRET_VERIFY_DATE_TIME"));
-                    $verifyCode = $this->get(Config("USER_PROFILE_SECRET_LAST_VERIFY_CODE"));
-                    $valid = !empty($verifyDateTime) && !empty($verifyCode);
+            $codes = TwoFactorAuthenticationClass()::generateBackupCodes();
+            $this->setBackupCodes($codes)->saveToStorage();
+            return $codes;
+        } catch (\Throwable $e) {
+            if (Config("DEBUG")) {
+                throw $e;
+            }
+        }
+        return [];
+    }
+
+    // Verify 2FA code
+    public function verify2FACode($code)
+    {
+        try {
+            if (SameText(Config("TWO_FACTOR_AUTHENTICATION_TYPE"), "google")) { // Check against secret
+                $storedCode = $this->getSecret();
+            } else { // Check against encrypted one time password
+                $secret = $this->getSecret();
+                $storedCode = Decrypt($this->getPassword(), $secret);
+            }
+            if ($storedCode !== "") { // Stored code is not empty
+                $valid = TwoFactorAuthenticationClass()::checkCode($storedCode, $code);
+                if (!$valid && strlen($code) == Config("TWO_FACTOR_AUTHENTICATION_BACKUP_CODE_LENGTH")) { // Not valid, check if $code is backup code
+                    $backupCodes = $this->getBackupCodes();
+                    $valid = array_search($code, $backupCodes);
+                    if ($valid !== false) {
+                        array_splice($backupCodes, $valid, 1); // Remove used backup code
+                        $this->setBackupCodes($backupCodes);
+                        $valid = true;
+                    }
+                }
+                if ($valid) { // Update verify date/time
+                    $this->setSecretVerifyDateTime(DbCurrentDateTime())->setSecretLastVerifyCode($code);
+                    if (!SameText(Config("TWO_FACTOR_AUTHENTICATION_TYPE"), "google")) {
+                        $this->setOtpVerifyDateTime(DbCurrentDateTime()); // Set OTP verify date time
+                    }
+                    $this->saveToStorage();
+                    // Update email address / mobile number if not verified
+                    $account = $this->getOtpAccount();
+                    if ($account && !$this->isSysAdmin()) {
+                        $user = $this->getUser();
+                        if (SameText(Config("TWO_FACTOR_AUTHENTICATION_TYPE"), "email")) {
+                            $user->set(Config("USER_EMAIL_FIELD_NAME"), $account);
+                        } elseif (SameText(Config("TWO_FACTOR_AUTHENTICATION_TYPE"), "sms")) {
+                            $user->set(Config("USER_PHONE_FIELD_NAME"), $account);
+                        }
+                        $user->flush();
+                    }
                 }
                 return $valid;
             }
@@ -363,189 +989,24 @@ class UserProfile
             if (Config("DEBUG")) {
                 throw $e;
             }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-        return false;
-    }
-
-    // Get User 2FA secret
-    public function getUserSecret($usr)
-    {
-        try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $secret = $this->get(Config("USER_PROFILE_SECRET"));
-                // Create new secret and save to profile
-                if (EmptyString($secret)) {
-                    $className = TwoFactorAuthenticationClass();
-                    $secret = $className::generateSecret();
-                    $backupCodes = $className::generateBackupCodes();
-                    $this->set(Config("USER_PROFILE_SECRET"), $secret);
-                    $this->set(Config("USER_PROFILE_SECRET_CREATE_DATE_TIME"), DbCurrentDateTime());
-                    $this->setBackupCodes($backupCodes);
-                    $this->saveProfileToDatabase($usr);
-                }
-                return $secret;
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-        return "";
-    }
-
-    // Set one time passwword (Email/SMS)
-    public function setOneTimePassword($usr, $account, $otp)
-    {
-        try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $this->set(Config("USER_PROFILE_ONE_TIME_PASSWORD"), $otp);
-                $this->set(Config("USER_PROFILE_OTP_ACCOUNT"), $account);
-                $this->set(Config("USER_PROFILE_OTP_CREATE_DATE_TIME"), DbCurrentDateTime());
-                $this->saveProfileToDatabase($usr);
-                return true;
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-        return false;
-    }
-
-    // Get backup codes
-    public function getBackupCodes($usr = "")
-    {
-        try {
-            if (EmptyValue($usr) || $this->loadProfileFromDatabase($usr)) {
-                $codes = $this->get(Config("USER_PROFILE_BACKUP_CODES"));
-                $decryptedCodes = is_array($codes)
-                    ? array_map(fn($code) => strlen($code) == Config("TWO_FACTOR_AUTHENTICATION_BACKUP_CODE_LENGTH") ? $code : PhpDecrypt(strval($code)), $codes) // Encrypt backup codes if necessary
-                    : [];
-                return $decryptedCodes;
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-    }
-
-    // Set backup codes to profile
-    protected function setBackupCodes(array $codes)
-    {
-        try {
-            $encryptedCodes = array_map(fn($code) => strlen($code) == Config("TWO_FACTOR_AUTHENTICATION_BACKUP_CODE_LENGTH") ? PhpEncrypt(strval($code)) : $code, $codes); // Encrypt backup codes if necessary
-            $this->set(Config("USER_PROFILE_BACKUP_CODES"), $encryptedCodes);
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        }
-    }
-
-    // Get new set of backup codes
-    public function getNewBackupCodes($usr): array
-    {
-        try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $codes = TwoFactorAuthenticationClass()::generateBackupCodes();
-                $this->setBackupCodes($codes);
-                $this->saveProfileToDatabase($usr);
-                return $codes;
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
-        }
-        return [];
-    }
-
-    // Verify 2FA code
-    public function verify2FACode($usr, $code)
-    {
-        global $UserTable;
-        try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                if (SameText(Config("TWO_FACTOR_AUTHENTICATION_TYPE"), "google")) { // Check against secret
-                    $storedCode = $this->get(Config("USER_PROFILE_SECRET"));
-                } else { // Check against encrypted one time password
-                    $secret = $this->get(Config("USER_PROFILE_SECRET"));
-                    $storedCode = Decrypt($this->get(Config("USER_PROFILE_ONE_TIME_PASSWORD")), $secret);
-                }
-                if ($storedCode !== "") { // Stored code is not empty
-                    $valid = TwoFactorAuthenticationClass()::checkCode($storedCode, $code);
-                    if (!$valid && strlen($code) == Config("TWO_FACTOR_AUTHENTICATION_BACKUP_CODE_LENGTH")) { // Not valid, check if $code is backup code
-                        $backupCodes = $this->getBackupCodes();
-                        $valid = array_search($code, $backupCodes);
-                        if ($valid !== false) {
-                            array_splice($backupCodes, $valid, 1); // Remove used backup code
-                            $this->setBackupCodes($backupCodes);
-                            $valid = true;
-                        }
-                    }
-                    if ($valid) { // Update verify date/time
-                        $this->set(Config("USER_PROFILE_SECRET_VERIFY_DATE_TIME"), DbCurrentDateTime());
-                        $this->set(Config("USER_PROFILE_SECRET_LAST_VERIFY_CODE"), $code);
-                        if (!SameText(Config("TWO_FACTOR_AUTHENTICATION_TYPE"), "google")) {
-                            // Set OTP verify date time
-                            $this->set(Config("USER_PROFILE_OTP_VERIFY_DATE_TIME"), DbCurrentDateTime());
-                        }
-                        $this->saveProfileToDatabase($usr);
-                        // Update email address / mobile number if not verified
-                        $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), $usr);
-                        $account = $this->get(Config("USER_PROFILE_OTP_ACCOUNT"));
-                        if ($account) {
-                            if (SameText(Config("TWO_FACTOR_AUTHENTICATION_TYPE"), "email")) {
-                                $rs = [Config("USER_EMAIL_FIELD_NAME") => $account];
-                                $UserTable->update($rs, $filter);
-                            } elseif (SameText(Config("TWO_FACTOR_AUTHENTICATION_TYPE"), "sms")) {
-                                $rs = [Config("USER_PHONE_FIELD_NAME") => $account];
-                                $UserTable->update($rs, $filter);
-                            }
-                        }
-                    }
-                    return $valid;
-                }
-            }
-        } catch (\Throwable $e) {
-            if (Config("DEBUG")) {
-                throw $e;
-            }
-        } finally {
-            $this->restore($usr); // Restore current profile
         }
         return false;
     }
 
     // Reset user secret
-    public function resetUserSecret($usr)
+    public function resetUserSecret()
     {
         try {
-            if ($this->loadProfileFromDatabase($usr)) {
-                $this->delete(Config("USER_PROFILE_SECRET"));
-                $this->delete(Config("USER_PROFILE_SECRET_CREATE_DATE_TIME"));
-                $this->delete(Config("USER_PROFILE_SECRET_VERIFY_DATE_TIME"));
-                $this->delete(Config("USER_PROFILE_SECRET_LAST_VERIFY_CODE"));
-                $this->delete(Config("USER_PROFILE_BACKUP_CODES"));
-                return $this->saveProfileToDatabase($usr);
-            }
+            return $this->setSecret(null)
+                ->setSecretCreateDateTime(null)
+                ->setSecretVerifyDateTime(null)
+                ->setSecretLastVerifyCode(null)
+                ->setCodes(null)
+                ->saveToStorage();
         } catch (\Throwable $e) {
             if (Config("DEBUG")) {
                 throw $e;
             }
-        } finally {
-            $this->restore($usr); // Restore current profile
         }
         return false;
     }

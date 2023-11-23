@@ -1,23 +1,23 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
+
+use Dflydev\DotAccessData\Data;
 
 /**
  * Chart.js renderer
  */
 class ChartJsRenderer implements ChartRendererInterface
 {
-    public $Chart;
     public $Data;
     public $Options;
     public static $DefaultWidth = 600;
     public static $DefaultHeight = 500;
+    public static $DefaultBorderWidth = 1.5;
 
     // Constructor
-    public function __construct($chart)
-    {
-        $this->Chart = $chart;
-        $this->Options = new \Dflydev\DotAccessData\Data();
+    public function __construct(public $Chart) {
+        $this->Options = new Data();
     }
 
     // Get chart Canvas
@@ -63,13 +63,13 @@ class ChartJsRenderer implements ChartRendererInterface
         if ($this->Chart->isPieChart() || $this->Chart->isDoughnutChart()) {
             $args["showPercentage"] = $this->Chart->ShowPercentage;
         }
-        $wrk = "<script>ew.createChart(" . JsonEncode($args) . ");</script>";
+        $wrk = '<script>loadjs.ready(["head", "chart"], () => ew.createChart(' . JsonEncode($args) . '));</script>';
 
         // Show data for debug
         if (Config("DEBUG")) {
             $chartJson = JsonEncode($chartData);
             $chartJson = json_encode(json_decode(ConvertToUtf8($chartJson)), JSON_PRETTY_PRINT); // Pretty print
-            SetDebugMessage("(Chart JSON):<pre>" . HtmlEncode(ConvertFromUtf8($chartJson)) . "</pre>");
+            SetDebugMessage("Chart JSON:<pre>" . HtmlEncode(ConvertFromUtf8($chartJson)) . "</pre>");
         }
         return $wrk;
     }
@@ -97,16 +97,16 @@ class ChartJsRenderer implements ChartRendererInterface
         $y = [];
         $scale = $this->Chart->getParameters("scale"); // Default bar chart scale
 
-        // Set up beginAtZero/min/max
+        // Set up beginAtZero/min/max (Skip for Pie/Doughnut/Polar Area/Radar)
         $vscale = [];
-        if ($this->Chart->ScaleBeginWithZero) {
-            $vscale["beginAtZero"] = true;
-        }
-        if ($this->Chart->MinValue !== null) {
-            $vscale["min"] = $this->Chart->MinValue;
-        }
-        if ($this->Chart->MaxValue !== null) {
-            $vscale["max"] = $this->Chart->MaxValue;
+        if (!$this->Chart->isPieChart() && !$this->Chart->isDoughnutChart() && !$this->Chart->isPolarAreaChart() && !$this->Chart->isRadarChart()) {
+            $vscale["beginAtZero"] = $this->Chart->ScaleBeginWithZero;
+            if ($this->Chart->MinValue !== null) {
+                $vscale["min"] = $this->Chart->MinValue;
+            }
+            if ($this->Chart->MaxValue !== null) {
+                $vscale["max"] = $this->Chart->MaxValue;
+            }
         }
         if (is_array($chartData)) {
             // Multi series
@@ -138,7 +138,8 @@ class ChartJsRenderer implements ChartRendererInterface
                                 $yAxes[$yAxisId]["grid"] = ["drawOnChartArea" => false];
                             }
                         }
-                        $color = $this->Chart->getPaletteRgbaColor($i);
+                        $backgroundColor = $this->Chart->getRgbaBackgroundColor($i);
+                        $borderColor = $this->Chart->getRgbaBorderColor($i);
                         $renderAs = $this->Chart->getRenderAs($i);
                         $showSeries = Config("CHART_SHOW_BLANK_SERIES");
                         $data = [];
@@ -154,7 +155,7 @@ class ChartJsRenderer implements ChartRendererInterface
                             $data[] = $val;
                         }
                         if ($showSeries) {
-                            $dataset = $this->getDataset($data, $color, $links, $seriesName, $renderAs, $yAxisId);
+                            $dataset = $this->getDataset($data, $backgroundColor, $borderColor, $links, $seriesName, $renderAs, $yAxisId);
                             $datasets[] = $dataset;
                         }
                     }
@@ -189,7 +190,8 @@ class ChartJsRenderer implements ChartRendererInterface
                                 $yAxes[$yAxisId]["grid"] = ["drawOnChartArea" => false];
                             }
                         }
-                        $color = $this->Chart->getPaletteRgbaColor($i);
+                        $backgroundColor = $this->Chart->getRgbaBackgroundColor($i);
+                        $borderColor = $this->Chart->getRgbaBorderColor($i);
                         $renderAs = $this->Chart->getRenderAs($i);
                         $showSeries = Config("CHART_SHOW_BLANK_SERIES");
                         $data = [];
@@ -212,7 +214,7 @@ class ChartJsRenderer implements ChartRendererInterface
                             $data[] = $val;
                         }
                         if ($showSeries) {
-                            $dataset = $this->getDataset($data, $color, $links, $seriesName, $renderAs, $yAxisId);
+                            $dataset = $this->getDataset($data, $backgroundColor, $borderColor, $links, $seriesName, $renderAs, $yAxisId);
                             $datasets[] = $dataset;
                         }
                     }
@@ -258,20 +260,24 @@ class ChartJsRenderer implements ChartRendererInterface
                 $cntData = count($chartData);
                 $labels = [];
                 $backgroundColor = [];
+                $borderColor = [];
                 $data = [];
                 $links = [];
                 for ($i = 0; $i < $cntData; $i++) {
                     $name = $this->Chart->formatName($chartData[$i][0]);
-                    $color = $this->Chart->getPaletteRgbaColor($i);
+                    $bgColor = $this->Chart->getRgbaBackgroundColor($i);
+                    $bdColor = $this->Chart->getRgbaBorderColor($i);
                     if ($chartData[$i][1] != "") {
                         $name .= ", " . $chartData[$i][1];
                     }
                     $val = $chartData[$i][2];
-                    $val = ($val === null) ? 0 : (float)$val;
+                    //$val = ($val === null) ? 0 : (float)$val;
+                    $val = ($val === null) ? $val : (float)$val; // Show null value as null
                     $lnk = $this->getChartLink($this->Chart->DrillDownUrl, $this->Chart->Data[$i]);
                     $links[] = $lnk;
                     $labels[] = $name;
-                    $backgroundColor[] = $color;
+                    $backgroundColor[] = $bgColor;
+                    $borderColor[] = $bdColor;
                     $data[] = $val;
                 }
 
@@ -294,15 +300,16 @@ class ChartJsRenderer implements ChartRendererInterface
 
                 // Line/Area chart, use first color
                 if ($this->Chart->isLineChart() || $this->Chart->isAreaChart()) {
-                    $backgroundColor = $this->Chart->getPaletteRgbaColor(0); // Use first color
+                    $backgroundColor = $this->Chart->getRgbaBackgroundColor(0); // Use first color
+                    $borderColor = $this->Chart->getRgbaBorderColor(0); // Use first color
                 }
 
                 // Get dataset
-                $datasets = $cntData > 0 ? [$this->getDataset($data, $backgroundColor, $links)] : [];
+                $datasets = $cntData > 0 ? [$this->getDataset($data, $backgroundColor, $borderColor, $links)] : [];
 
                 // Set up Data/Options
                 $this->Data = ["labels" => $labels, "datasets" => $datasets];
-                $showLegend = $this->Chart->isPieChart() || $this->Chart->isDoughnutChart() ? true : false;
+                $showLegend = $this->Chart->isPieChart() || $this->Chart->isDoughnutChart() || $this->Chart->isPolarAreaChart() ? true : false;
                 $this->Options->import(["responsive" => false, "plugins" => ["legend" => ["display" => $showLegend], "title" => ["display" => true, "text" => $title]]]);
             }
 
@@ -322,11 +329,25 @@ class ChartJsRenderer implements ChartRendererInterface
             if (count($yAxes) > 0) {
                 $scales = array_merge_recursive($scales, $yAxes);
             }
-            $this->Options["scales"] = $scales;
 
-            // Set up trend lines
+            // Skip axis for Pie/Doughnut/Polar Area/Radar
+            if (!$this->Chart->isPieChart() && !$this->Chart->isDoughnutChart() && !$this->Chart->isPolarAreaChart() && !$this->Chart->isRadarChart()) {
+                $this->Options->import(["scales" => $scales]);
+            }
+
+            // Remove R axis if not Radar chart
+            if (!$this->Chart->IsRadarChart()) {
+                $this->Options->remove("scales.r");
+            }
+
+            // Set showLabelBackdrop to false fo Polar Area / Radar chart
+            if ($this->Chart->IsPolarAreaChart() || $this->Chart->IsRadarChart()) {
+                $this->Options["scales.r.ticks.showLabelBackdrop"] = false;
+            }
+
+            // Set up trend lines (Skip for Pie/Doughnut/Polar Area/Radar)
             $annotations = $this->getAnnotations();
-            if (is_array($annotations)) {
+            if (is_array($annotations) && !$this->Chart->isPieChart() && !$this->Chart->isDoughnutChart() && !$this->Chart->isPolarAreaChart() && !$this->Chart->isRadarChart()) {
                 $this->Options->import(["plugins" => [ "annotation" => $annotations ] ]);
             }
         }
@@ -354,8 +375,8 @@ class ChartJsRenderer implements ChartRendererInterface
     protected function getAnnotation(array $line)
     {
         $line["type"] = "line"; // Line annotation
-        $line["borderColor"] = GetRgbaColor($line["borderColor"], GetOpacity(@$line["alpha"])); // Color
-        $line["endValue"] = $line["endValue"] ?? $line["value"]; // End value
+        $line["borderColor"] = $this->Chart->getRgbaColor($line["borderColor"], $this->Chart->getOpacity(@$line["alpha"])); // Color
+        $line["endValue"] ??= $line["value"]; // End value
         $label = $line["label"];
         $display = $label ? true : false;
         $line["label"] = [
@@ -403,20 +424,23 @@ class ChartJsRenderer implements ChartRendererInterface
         return null;
     }
 
-    protected function getDataset($data, $color, $links, $seriesName = null, $renderAs = "", $yAxisId = "")
+    protected function getDataset($data, $backgroundColor, $borderColor, $links, $seriesName = null, $renderAs = "", $yAxisId = "")
     {
         $dataset = $this->Chart->getParameters("dataset"); // Load default dataset options
         $dataset["data"] = $data; // Load data
-        $dataset["backgroundColor"] = $color; // Background color
+        $dataset["backgroundColor"] = $backgroundColor; // Background color
         $changeAlpha = fn($c) => preg_replace('/[\d\.]+(?=\))/', "1.0", $c); // Change alpha to 1.0
-        if (is_array($color)) {
-            $borderColor = array_map($changeAlpha, $color);
-            $dataset["borderColor"] = $borderColor;
-            $dataset["borderWidth"] = 1;
-        } elseif (is_string($color)) {
-            $dataset["borderColor"] = $changeAlpha($color);
-            $dataset["borderWidth"] = 1;
+        if (is_array($backgroundColor) && is_array($borderColor) && count($backgroundColor) == count($borderColor)) {
+            foreach ($borderColor as $i => &$color) {
+                if ($color == $backgroundColor[$i]) {
+                    $color = $changeAlpha($color);
+                }
+            }
+        } elseif (is_string($backgroundColor) && is_string($borderColor) && $backgroundColor == $borderColor) {
+            $borderColor = $changeAlpha($borderColor);
         }
+        $dataset["borderColor"] = $borderColor;
+        $dataset["borderWidth"] = self::$DefaultBorderWidth;
         $hasLink = count(array_filter($links)) > 0;
         $dataset["links"] = $hasLink ? $links : null; // Drill down link
         if ($seriesName !== null) { // Multi series

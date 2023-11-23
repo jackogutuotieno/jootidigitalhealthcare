@@ -1,14 +1,14 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Upload class
  */
 class HttpUpload
 {
+    public $UploadedFiles; // Uploaded files (array)
     public $Index = -1; // Index for multiple form elements
-    public $Parent; // Parent field object
     public $UploadPath; // Upload path
     public $Message; // Error message
     public $DbValue; // Value from database
@@ -24,9 +24,14 @@ class HttpUpload
     public $Plugins = []; // Plugins for Resize()
 
     // Constructor
-    public function __construct($fld = null)
+    public function __construct(public $Parent = null) // Parent field object
     {
-        $this->Parent = $fld;
+    }
+
+    // Create a new instance
+    public static function create(): static
+    {
+        return new static();
     }
 
     // Check file type of the uploaded file
@@ -51,7 +56,7 @@ class HttpUpload
             }
             $wrkvar = "fn_" . $fldvar;
             if (($fileNames = Post($wrkvar)) !== null) { // Get post back file names
-                if ($this->Parent->DataType != DATATYPE_BLOB || empty($fileNames)) { // Non blob or delete file action
+                if ($this->Parent->DataType != DataType::BLOB || empty($fileNames)) { // Non blob or delete file action
                     $this->FileName = $fileNames;
                 }
             }
@@ -90,13 +95,13 @@ class HttpUpload
         }
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
         $res = true;
-        $req = $Request->getUploadedFiles();
+        $this->UploadedFiles = $Request->getUploadedFiles();
         $files = [];
 
         // Validate request
-        if (!is_array($req)) {
+        if (!is_array($this->UploadedFiles)) {
             if ($output) {
                 WriteJson(["success" => false, "error" => "No uploaded files"]);
             }
@@ -122,30 +127,15 @@ class HttpUpload
         $fileTypes = '/\\.(' . (Config("UPLOAD_ALLOWED_FILE_EXT") != "" ? str_replace(",", "|", Config("UPLOAD_ALLOWED_FILE_EXT")) : "[\s\S]+") . ')$/i';
 
         // Process multi part upload
-        $name = $fld === null ? "" : $fld->Name;
-        foreach ($req as $id => $uploadedFiles) {
+        $name = $fld?->Name ?? "";
+        foreach ($this->UploadedFiles as $id => $uploadedFiles) {
             if ($id == $name || $name == "") {
                 $ar = [];
-                if (is_object($uploadedFiles)) { // Single upload
-                    $fileName = $uploadedFiles->getClientFilename();
-                    $fileSize = $uploadedFiles->getSize();
-                    $ar["name"] = $fileName;
-                    if (!preg_match($fileTypes, $fileName)) { // Check file extensions
-                        $ar["success"] = false;
-                        $ar["error"] = $Language->phrase("UploadErrorAcceptFileTypes");
-                        $res = false;
-                    } elseif (Config("MAX_FILE_SIZE") > 0 && $fileSize > Config("MAX_FILE_SIZE")) { // Check file size
-                        $ar["success"] = false;
-                        $ar["error"] = $Language->phrase("UploadErrorMaxFileSize");
-                        $res = false;
-                    } elseif ($this->moveUploadedFile($uploadedFiles, $path)) {
-                        $ar["success"] = true;
-                    } else {
-                        $ar["success"] = false;
-                        $ar["error"] = $uploadedFile->getError();
-                        $res = false;
-                    }
-                } elseif (is_array($uploadedFiles)) { // Multiple upload
+                $single = is_object($uploadedFiles); // Single upload
+                if ($single) {
+                    $uploadedFiles = [$uploadedFiles];
+                }
+                if (is_array($uploadedFiles)) { // Multiple upload
                     foreach ($uploadedFiles as $uploadedFile) {
                         if ($fileName != "") {
                             $fileName .= Config("MULTIPLE_UPLOAD_SEPARATOR");
@@ -167,10 +157,16 @@ class HttpUpload
                         } else {
                             $arwrk["success"] = false;
                             $arwrk["error"] = $uploadedFile->getError();
+                            if (in_array($arwrk["error"], range(1, 8))) {
+                                $arwrk["error"] = $Language->phrase("UploadError" . $arwrk["error"]);
+                            }
                             $res = false;
                         }
                         $ar[] = $arwrk;
                     }
+                }
+                if ($single) {
+                    $ar = $ar[0];
                 }
                 $files[$id] = $ar;
             }

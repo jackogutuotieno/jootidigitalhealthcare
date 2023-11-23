@@ -1,7 +1,7 @@
 <?php
 
 /**
- * PHPMaker 2023 configuration file (Production)
+ * PHPMaker 2024 configuration file (Production)
  */
 
 return [
@@ -17,9 +17,9 @@ return [
         "SERVER_PASSWORD" => "theclinicianshub_1044", // SMTP server password
     ],
     "JWT" => [
-        "SECRET_KEY" => "tZ2n2kcF4SY8mUoz", // API Secret Key
-        "ALGORITHM" => "HS512", // API Algorithm
-        "AUTH_HEADER" => "X-Authorization", // API Auth Header (Note: The "Authorization" header is removed by IIS, use "X-Authorization" instead.)
+        "SECRET_KEY" => "$rfeddg56t5tgf789ghjeddfvbfty", // JWT secret key
+        "ALGORITHM" => "HS512", // JWT algorithm
+        "AUTH_HEADER" => "X-Authorization", // API authentication header (Note: The "Authorization" header is removed by IIS, use "X-Authorization" instead.)
         "NOT_BEFORE_TIME" => 0, // API access time before login
         "EXPIRE_TIME" => 600 // API expire time
     ]

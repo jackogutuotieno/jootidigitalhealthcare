@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhExaminationFindingsList = &$Page;
@@ -54,8 +54,8 @@ loadjs.ready(["wrapper", "head"], function () {
 </script>
 <script>
 window.Tabulator || loadjs([
-    ew.PATH_BASE + "js/tabulator.min.js?v=19.0.15",
-    ew.PATH_BASE + "css/<?= CssFile("tabulator_bootstrap5.css") ?>?v=19.0.15"
+    ew.PATH_BASE + "js/tabulator.min.js?v=24.4.0",
+    ew.PATH_BASE + "css/<?= CssFile("tabulator_bootstrap5.css", false) ?>?v=24.4.0"
 ], "import");
 </script>
 <script>
@@ -89,9 +89,8 @@ if ($Page->DbMasterFilter != "" && $Page->getCurrentMasterTable() == "jdh_patien
 }
 ?>
 <?php } ?>
-<?php if ($Security->canSearch()) { ?>
-<?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
-<form name="fjdh_examination_findingssrch" id="fjdh_examination_findingssrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="on">
+<?php if (!$Page->IsModal) { ?>
+<form name="fjdh_examination_findingssrch" id="fjdh_examination_findingssrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="off">
 <div id="fjdh_examination_findingssrch_search_panel" class="mb-2 mb-sm-0 <?= $Page->SearchPanelClass ?>"><!-- .ew-search-panel -->
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
@@ -123,7 +122,8 @@ loadjs.ready(["wrapper", "head"], function () {
 });
 </script>
 <input type="hidden" name="cmd" value="search">
-<input type="hidden" name="t" value="jdh_examination_findings">
+<?php if ($Security->canSearch()) { ?>
+<?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
 <div class="ew-extended-search container-fluid ps-2">
 <!-- template for quick search in navbar -->
 <script id="navbar-basic-search" type="text/html" class="ew-js-template" data-name="search" data-seq="10" data-data="menu" data-target="#ew-navbar-end" data-method="prependTo">
@@ -155,19 +155,23 @@ loadjs.ready(["wrapper", "head"], function () {
     </li>
 </script>
 </div><!-- /.ew-extended-search -->
+<?php } ?>
+<?php } ?>
 </div><!-- /.ew-search-panel -->
 </form>
-<?php } ?>
 <?php } ?>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="list<?= ($Page->TotalRecords == 0 && !$Page->isAdd()) ? " ew-no-record" : "" ?>">
+<div id="ew-header-options">
+<?php $Page->HeaderOptions?->render("body") ?>
+</div>
 <div id="ew-list">
 <?php if ($Page->TotalRecords > 0 || $Page->CurrentAction) { ?>
 <div class="card ew-card ew-grid<?= $Page->isAddOrEdit() ? " ew-grid-add-edit" : "" ?> <?= $Page->TableGridClass ?>">
-<form name="<?= $Page->FormName ?>" id="<?= $Page->FormName ?>" class="ew-form ew-list-form" action="<?= $Page->PageAction ?>" method="post" novalidate autocomplete="on">
+<form name="<?= $Page->FormName ?>" id="<?= $Page->FormName ?>" class="ew-form ew-list-form" action="<?= $Page->PageAction ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -187,7 +191,7 @@ $Page->showMessage();
     <tr class="ew-table-header">
 <?php
 // Header row
-$Page->RowType = ROWTYPE_HEADER;
+$Page->RowType = RowType::HEADER;
 
 // Render list options
 $Page->renderListOptions();
@@ -216,7 +220,15 @@ $Page->ListOptions->render("header", "right");
 <tbody data-page="<?= $Page->getPageNumber() ?>">
 <?php
 $Page->setupGrid();
-while ($Page->RecordCount < $Page->StopRecord) {
+while ($Page->RecordCount < $Page->StopRecord || $Page->RowIndex === '$rowindex$') {
+    if (
+        $Page->CurrentRow !== false &&
+        $Page->RowIndex !== '$rowindex$' &&
+        (!$Page->isGridAdd() || $Page->CurrentMode == "copy") &&
+        (!(($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0))
+    ) {
+        $Page->fetch();
+    }
     $Page->RecordCount++;
     if ($Page->RecordCount >= $Page->StartRecord) {
         $Page->setupRow();
@@ -228,19 +240,19 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
     <?php if ($Page->id->Visible) { // id ?>
         <td data-name="id"<?= $Page->id->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_examination_findings_id" class="el_jdh_examination_findings_id"></span>
+<?php if ($Page->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_examination_findings_id" class="el_jdh_examination_findings_id"></span>
 <input type="hidden" data-table="jdh_examination_findings" data-field="x_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_id" id="o<?= $Page->RowIndex ?>_id" value="<?= HtmlEncode($Page->id->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_examination_findings_id" class="el_jdh_examination_findings_id">
+<?php if ($Page->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_examination_findings_id" class="el_jdh_examination_findings_id">
 <span<?= $Page->id->viewAttributes() ?>>
 <input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Page->id->getDisplayValue($Page->id->EditValue))) ?>"></span>
 <input type="hidden" data-table="jdh_examination_findings" data-field="x_id" data-hidden="1" name="x<?= $Page->RowIndex ?>_id" id="x<?= $Page->RowIndex ?>_id" value="<?= HtmlEncode($Page->id->CurrentValue) ?>">
 </span>
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_examination_findings_id" class="el_jdh_examination_findings_id">
+<?php if ($Page->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_examination_findings_id" class="el_jdh_examination_findings_id">
 <span<?= $Page->id->viewAttributes() ?>>
 <?= $Page->id->getViewValue() ?></span>
 </span>
@@ -251,13 +263,13 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Page->patient_id->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
+<?php if ($Page->RowType == RowType::ADD) { // Add record ?>
 <?php if ($Page->patient_id->getSessionValue() != "") { ?>
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <span class="form-control-plaintext"><?= $Page->patient_id->getDisplayValue($Page->patient_id->ViewValue) ?></span></span>
 <input type="hidden" id="x<?= $Page->RowIndex ?>_patient_id" name="x<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>" data-hidden="1">
 <?php } else { ?>
-<span id="el<?= $Page->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
 <?php
 if (IsRTL()) {
     $Page->patient_id->EditAttrs["dir"] = "rtl";
@@ -278,13 +290,13 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 <?php } ?>
 <input type="hidden" data-table="jdh_examination_findings" data-field="x_patient_id" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_patient_id" id="o<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<?php if ($Page->RowType == RowType::EDIT) { // Edit record ?>
 <?php if ($Page->patient_id->getSessionValue() != "") { ?>
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <span class="form-control-plaintext"><?= $Page->patient_id->getDisplayValue($Page->patient_id->ViewValue) ?></span></span>
 <input type="hidden" id="x<?= $Page->RowIndex ?>_patient_id" name="x<?= $Page->RowIndex ?>_patient_id" value="<?= HtmlEncode($Page->patient_id->CurrentValue) ?>" data-hidden="1">
 <?php } else { ?>
-<span id="el<?= $Page->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
 <?php
 if (IsRTL()) {
     $Page->patient_id->EditAttrs["dir"] = "rtl";
@@ -304,8 +316,8 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 </span>
 <?php } ?>
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
+<?php if ($Page->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
 <span<?= $Page->patient_id->viewAttributes() ?>>
 <?= $Page->patient_id->getViewValue() ?></span>
 </span>
@@ -314,21 +326,21 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
     <?php } ?>
     <?php if ($Page->general_exams->Visible) { // general_exams ?>
         <td data-name="general_exams"<?= $Page->general_exams->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_examination_findings_general_exams" class="el_jdh_examination_findings_general_exams">
+<?php if ($Page->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_examination_findings_general_exams" class="el_jdh_examination_findings_general_exams">
 <input type="<?= $Page->general_exams->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_general_exams" id="x<?= $Page->RowIndex ?>_general_exams" data-table="jdh_examination_findings" data-field="x_general_exams" value="<?= $Page->general_exams->EditValue ?>" maxlength="200" placeholder="<?= HtmlEncode($Page->general_exams->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->general_exams->formatPattern()) ?>"<?= $Page->general_exams->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Page->general_exams->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_examination_findings" data-field="x_general_exams" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_general_exams" id="o<?= $Page->RowIndex ?>_general_exams" value="<?= HtmlEncode($Page->general_exams->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_examination_findings_general_exams" class="el_jdh_examination_findings_general_exams">
+<?php if ($Page->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_examination_findings_general_exams" class="el_jdh_examination_findings_general_exams">
 <input type="<?= $Page->general_exams->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_general_exams" id="x<?= $Page->RowIndex ?>_general_exams" data-table="jdh_examination_findings" data-field="x_general_exams" value="<?= $Page->general_exams->EditValue ?>" maxlength="200" placeholder="<?= HtmlEncode($Page->general_exams->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->general_exams->formatPattern()) ?>"<?= $Page->general_exams->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Page->general_exams->getErrorMessage() ?></div>
 </span>
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_examination_findings_general_exams" class="el_jdh_examination_findings_general_exams">
+<?php if ($Page->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_examination_findings_general_exams" class="el_jdh_examination_findings_general_exams">
 <span<?= $Page->general_exams->viewAttributes() ?>>
 <?= $Page->general_exams->getViewValue() ?></span>
 </span>
@@ -337,21 +349,21 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
     <?php } ?>
     <?php if ($Page->systematic_exams->Visible) { // systematic_exams ?>
         <td data-name="systematic_exams"<?= $Page->systematic_exams->cellAttributes() ?>>
-<?php if ($Page->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_examination_findings_systematic_exams" class="el_jdh_examination_findings_systematic_exams">
+<?php if ($Page->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_examination_findings_systematic_exams" class="el_jdh_examination_findings_systematic_exams">
 <input type="<?= $Page->systematic_exams->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_systematic_exams" id="x<?= $Page->RowIndex ?>_systematic_exams" data-table="jdh_examination_findings" data-field="x_systematic_exams" value="<?= $Page->systematic_exams->EditValue ?>" maxlength="200" placeholder="<?= HtmlEncode($Page->systematic_exams->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->systematic_exams->formatPattern()) ?>"<?= $Page->systematic_exams->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Page->systematic_exams->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_examination_findings" data-field="x_systematic_exams" data-hidden="1" data-old name="o<?= $Page->RowIndex ?>_systematic_exams" id="o<?= $Page->RowIndex ?>_systematic_exams" value="<?= HtmlEncode($Page->systematic_exams->OldValue) ?>">
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_examination_findings_systematic_exams" class="el_jdh_examination_findings_systematic_exams">
+<?php if ($Page->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_examination_findings_systematic_exams" class="el_jdh_examination_findings_systematic_exams">
 <input type="<?= $Page->systematic_exams->getInputTextType() ?>" name="x<?= $Page->RowIndex ?>_systematic_exams" id="x<?= $Page->RowIndex ?>_systematic_exams" data-table="jdh_examination_findings" data-field="x_systematic_exams" value="<?= $Page->systematic_exams->EditValue ?>" maxlength="200" placeholder="<?= HtmlEncode($Page->systematic_exams->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->systematic_exams->formatPattern()) ?>"<?= $Page->systematic_exams->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Page->systematic_exams->getErrorMessage() ?></div>
 </span>
 <?php } ?>
-<?php if ($Page->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Page->RowCount ?>_jdh_examination_findings_systematic_exams" class="el_jdh_examination_findings_systematic_exams">
+<?php if ($Page->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_examination_findings_systematic_exams" class="el_jdh_examination_findings_systematic_exams">
 <span<?= $Page->systematic_exams->viewAttributes() ?>>
 <?= $Page->systematic_exams->getViewValue() ?></span>
 </span>
@@ -363,15 +375,21 @@ loadjs.ready("<?= $Page->FormName ?>", function() {
 $Page->ListOptions->render("body", "right", $Page->RowCount);
 ?>
     </tr>
-<?php if ($Page->RowType == ROWTYPE_ADD || $Page->RowType == ROWTYPE_EDIT) { ?>
+<?php if ($Page->RowType == RowType::ADD || $Page->RowType == RowType::EDIT) { ?>
 <script data-rowindex="<?= $Page->RowIndex ?>">
-loadjs.ready(["<?= $Page->FormName ?>","load"], () => <?= $Page->FormName ?>.updateLists(<?= $Page->RowIndex ?><?= $Page->RowIndex === '$rowindex$' ? ", true" : "" ?>));
+loadjs.ready(["<?= $Page->FormName ?>","load"], () => <?= $Page->FormName ?>.updateLists(<?= $Page->RowIndex ?><?= $Page->isAdd() || $Page->isEdit() || $Page->isCopy() || $Page->RowIndex === '$rowindex$' ? ", true" : "" ?>));
 </script>
 <?php } ?>
 <?php
     }
-    if (!$Page->isGridAdd()) {
-        $Page->Recordset->moveNext();
+
+    // Reset for template row
+    if ($Page->RowIndex === '$rowindex$') {
+        $Page->RowIndex = 0;
+    }
+    // Reset inline add/copy row
+    if (($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0) {
+        $Page->RowIndex = 1;
     }
 }
 ?>
@@ -391,10 +409,8 @@ loadjs.ready(["<?= $Page->FormName ?>","load"], () => <?= $Page->FormName ?>.upd
 <?php } ?>
 </form><!-- /.ew-list-form -->
 <?php
-// Close recordset
-if ($Page->Recordset) {
-    $Page->Recordset->close();
-}
+// Close result set
+$Page->Recordset?->free();
 ?>
 <?php if (!$Page->isExport()) { ?>
 <div class="card-footer ew-grid-lower-panel">
@@ -412,6 +428,9 @@ if ($Page->Recordset) {
 <?php $Page->OtherOptions->render("body") ?>
 </div>
 <?php } ?>
+</div>
+<div id="ew-footer-options">
+<?php $Page->FooterOptions?->render("body") ?>
 </div>
 </main>
 <?php

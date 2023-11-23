@@ -1,21 +1,16 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhIpdAdmissionEdit = &$Page;
 ?>
-<script>
-loadjs.ready("head", function () {
-    // Write your table-specific client script here, no need to add script tags.
-});
-</script>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="edit">
-<form name="fjdh_ipd_admissionedit" id="fjdh_ipd_admissionedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_ipd_admissionedit" id="fjdh_ipd_admissionedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
 ew.deepAssign(ew.vars, { tables: { jdh_ipd_admission: currentTable } });
@@ -64,6 +59,11 @@ loadjs.ready(["wrapper", "head"], function () {
     loadjs.done(form.id);
 });
 </script>
+<script>
+loadjs.ready("head", function () {
+    // Write your table-specific client script here, no need to add script tags.
+});
+</script>
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -97,7 +97,9 @@ loadjs.ready(["wrapper", "head"], function () {
         id="x_unit_id"
         name="x_unit_id"
         class="form-select ew-select<?= $Page->unit_id->isInvalidClass() ?>"
+        <?php if (!$Page->unit_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_ipd_admissionedit_x_unit_id"
+        <?php } ?>
         data-table="jdh_ipd_admission"
         data-field="x_unit_id"
         data-value-separator="<?= $Page->unit_id->displayValueSeparatorAttribute() ?>"
@@ -109,10 +111,13 @@ loadjs.ready(["wrapper", "head"], function () {
     <?= $Page->unit_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->unit_id->getErrorMessage() ?></div>
 <?= $Page->unit_id->Lookup->getParamTag($Page, "p_x_unit_id") ?>
+<?php if (!$Page->unit_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_ipd_admissionedit", function() {
     var options = { name: "x_unit_id", selectId: "fjdh_ipd_admissionedit_x_unit_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_ipd_admissionedit.lists.unit_id?.lookupOptions.length) {
@@ -125,6 +130,7 @@ loadjs.ready("fjdh_ipd_admissionedit", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -138,7 +144,9 @@ loadjs.ready("fjdh_ipd_admissionedit", function() {
         id="x_ward_id"
         name="x_ward_id"
         class="form-select ew-select<?= $Page->ward_id->isInvalidClass() ?>"
+        <?php if (!$Page->ward_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_ipd_admissionedit_x_ward_id"
+        <?php } ?>
         data-table="jdh_ipd_admission"
         data-field="x_ward_id"
         data-value-separator="<?= $Page->ward_id->displayValueSeparatorAttribute() ?>"
@@ -150,10 +158,13 @@ loadjs.ready("fjdh_ipd_admissionedit", function() {
     <?= $Page->ward_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->ward_id->getErrorMessage() ?></div>
 <?= $Page->ward_id->Lookup->getParamTag($Page, "p_x_ward_id") ?>
+<?php if (!$Page->ward_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_ipd_admissionedit", function() {
     var options = { name: "x_ward_id", selectId: "fjdh_ipd_admissionedit_x_ward_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_ipd_admissionedit.lists.ward_id?.lookupOptions.length) {
@@ -166,6 +177,7 @@ loadjs.ready("fjdh_ipd_admissionedit", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -179,7 +191,9 @@ loadjs.ready("fjdh_ipd_admissionedit", function() {
         id="x_bed_id"
         name="x_bed_id"
         class="form-select ew-select<?= $Page->bed_id->isInvalidClass() ?>"
+        <?php if (!$Page->bed_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_ipd_admissionedit_x_bed_id"
+        <?php } ?>
         data-table="jdh_ipd_admission"
         data-field="x_bed_id"
         data-value-separator="<?= $Page->bed_id->displayValueSeparatorAttribute() ?>"
@@ -190,10 +204,13 @@ loadjs.ready("fjdh_ipd_admissionedit", function() {
     <?= $Page->bed_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->bed_id->getErrorMessage() ?></div>
 <?= $Page->bed_id->Lookup->getParamTag($Page, "p_x_bed_id") ?>
+<?php if (!$Page->bed_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_ipd_admissionedit", function() {
     var options = { name: "x_bed_id", selectId: "fjdh_ipd_admissionedit_x_bed_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_ipd_admissionedit.lists.bed_id?.lookupOptions.length) {
@@ -206,6 +223,7 @@ loadjs.ready("fjdh_ipd_admissionedit", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -219,7 +237,9 @@ loadjs.ready("fjdh_ipd_admissionedit", function() {
         id="x_patient_id"
         name="x_patient_id"
         class="form-select ew-select<?= $Page->patient_id->isInvalidClass() ?>"
+        <?php if (!$Page->patient_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_ipd_admissionedit_x_patient_id"
+        <?php } ?>
         data-table="jdh_ipd_admission"
         data-field="x_patient_id"
         data-value-separator="<?= $Page->patient_id->displayValueSeparatorAttribute() ?>"
@@ -230,10 +250,13 @@ loadjs.ready("fjdh_ipd_admissionedit", function() {
     <?= $Page->patient_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->patient_id->getErrorMessage() ?></div>
 <?= $Page->patient_id->Lookup->getParamTag($Page, "p_x_patient_id") ?>
+<?php if (!$Page->patient_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_ipd_admissionedit", function() {
     var options = { name: "x_patient_id", selectId: "fjdh_ipd_admissionedit_x_patient_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_ipd_admissionedit.lists.patient_id?.lookupOptions.length) {
@@ -246,6 +269,7 @@ loadjs.ready("fjdh_ipd_admissionedit", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>

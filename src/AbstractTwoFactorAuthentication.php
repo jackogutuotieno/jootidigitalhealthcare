@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Abstract Two Factor Authentication class
@@ -49,8 +49,9 @@ abstract class AbstractTwoFactorAuthentication implements TwoFactorAuthenticatio
     public function getBackupCodes()
     {
         $user = CurrentUserName(); // Must be current user
-        $profile = Container("profile");
-        $codes = $profile->getBackupCodes($user);
+        $profile = Container("user.profile");
+        $profile->setUserName($user)->loadFromStorage();
+        $codes = $profile->getBackupCodes();
         WriteJson(["codes" => $codes, "success" => is_array($codes)]);
     }
 
@@ -62,8 +63,9 @@ abstract class AbstractTwoFactorAuthentication implements TwoFactorAuthenticatio
     public function getNewBackupCodes()
     {
         $user = CurrentUserName(); // Must be current user
-        $profile = Container("profile");
-        $codes = $profile->getNewBackupCodes($user);
+        $profile = Container("user.profile");
+        $profile->setUserName($user)->loadFromStorage();
+        $codes = $profile->getNewBackupCodes();
         WriteJson(["codes" => $codes, "success" => is_array($codes)]);
     }
 
@@ -76,15 +78,16 @@ abstract class AbstractTwoFactorAuthentication implements TwoFactorAuthenticatio
     public function verify($code)
     {
         $user = CurrentUserName(); // Must be current user
-        $profile = Container("profile");
+        $profile = Container("user.profile");
+        $profile->setUserName($user)->loadFromStorage();
         if ($code === null) { // Verify if user has secret only
-            if ($profile->hasUserSecret($user, true)) {
+            if ($profile->hasUserSecret(true)) {
                 WriteJson(["success" => true]);
                 return;
             }
         } else { // Verify user code
-            if ($profile->hasUserSecret($user)) { // Verified, just check code
-                WriteJson(["success" => $profile->verify2FACode($user, $code)]);
+            if ($profile->hasUserSecret()) { // Verified, just check code
+                WriteJson(["success" => $profile->verify2FACode($code)]);
                 return;
             }
         }
@@ -101,9 +104,10 @@ abstract class AbstractTwoFactorAuthentication implements TwoFactorAuthenticatio
     {
         $user = IsSysAdmin() ? $user : (Config("FORCE_TWO_FACTOR_AUTHENTICATION") ? null : CurrentUserName());
         if ($user) {
-            $profile = Container("profile");
-            if ($profile->hasUserSecret($user)) {
-                $profile->resetUserSecret($user);
+            $profile = Container("user.profile");
+            $profile->setUserName($user)->loadFromStorage();
+            if ($profile->hasUserSecret()) {
+                $profile->resetUserSecret();
                 WriteJson(["success" => true]);
                 return;
             }

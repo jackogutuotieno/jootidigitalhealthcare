@@ -1,17 +1,10 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhBedsView = &$Page;
 ?>
-<?php if (!$Page->isExport()) { ?>
-<script>
-loadjs.ready("head", function () {
-    // Write your table-specific client script here, no need to add script tags.
-});
-</script>
-<?php } ?>
 <?php if (!$Page->isExport()) { ?>
 <div class="btn-toolbar ew-toolbar">
 <?php $Page->ExportOptions->render("body") ?>
@@ -23,7 +16,7 @@ loadjs.ready("head", function () {
 $Page->showMessage();
 ?>
 <main class="view">
-<form name="fjdh_bedsview" id="fjdh_bedsview" class="ew-form ew-view-form overlay-wrapper" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_bedsview" id="fjdh_bedsview" class="ew-form ew-view-form overlay-wrapper" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (!$Page->isExport()) { ?>
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
@@ -43,6 +36,11 @@ loadjs.ready(["wrapper", "head"], function () {
     window[form.id] = form;
     currentForm = form;
     loadjs.done(form.id);
+});
+</script>
+<script>
+loadjs.ready("head", function () {
+    // Write your table-specific client script here, no need to add script tags.
 });
 </script>
 <?php } ?>
@@ -103,10 +101,8 @@ loadjs.ready(["wrapper", "head"], function () {
         <td data-name="assigned"<?= $Page->assigned->cellAttributes() ?>>
 <span id="el_jdh_beds_assigned">
 <span<?= $Page->assigned->viewAttributes() ?>>
-<div class="form-check d-inline-block">
-    <input type="checkbox" id="x_assigned_<?= $Page->RowCount ?>" class="form-check-input" value="<?= $Page->assigned->getViewValue() ?>" disabled<?php if (ConvertToBool($Page->assigned->CurrentValue)) { ?> checked<?php } ?>>
-    <label class="form-check-label" for="x_assigned_<?= $Page->RowCount ?>"></label>
-</div></span>
+<i class="fa-regular fa-square<?php if (ConvertToBool($Page->assigned->CurrentValue)) { ?>-check<?php } ?> ew-icon ew-boolean"></i>
+</span>
 </span>
 </td>
     </tr>

@@ -5,7 +5,7 @@
  * Copyright (c) e.World Technology Limited. All rights reserved.
 */
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Hybridauth\Adapter\OAuth2;
 use Hybridauth\Exception\UnexpectedApiResponseException;
@@ -54,7 +54,7 @@ class AzureAD extends OAuth2
             $idToken = $collection->get("id_token");
             $parts = explode(".", $idToken);
             list($headb64, $payload) = $parts;
-            $data = Tea::base64DecodeUrl($payload); // JWT token is base64 url-encoded
+            $data = UrlBase64Decode($payload); // JWT token is url-safe base64 encoded
             $this->storeData("user_data", $data);
         } else {
             throw new \Exception("No id_token was found.");

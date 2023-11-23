@@ -1,21 +1,16 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhPatientsEdit = &$Page;
 ?>
-<script>
-loadjs.ready("head", function () {
-    // Write your table-specific client script here, no need to add script tags.
-});
-</script>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="edit">
-<form name="fjdh_patientsedit" id="fjdh_patientsedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_patientsedit" id="fjdh_patientsedit" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
 ew.deepAssign(ew.vars, { tables: { jdh_patients: currentTable } });
@@ -65,6 +60,11 @@ loadjs.ready(["wrapper", "head"], function () {
     loadjs.done(form.id);
 });
 </script>
+<script>
+loadjs.ready("head", function () {
+    // Write your table-specific client script here, no need to add script tags.
+});
+</script>
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -104,7 +104,7 @@ loadjs.ready(["wrapper", "head"], function () {
         lang="<?= CurrentLanguageID() ?>"
         data-table="jdh_patients"
         data-field="x_photo"
-        data-size="0"
+        data-size="16777215"
         data-accept-file-types="<?= $Page->photo->acceptFileTypes() ?>"
         data-max-file-size="<?= $Page->photo->UploadMaxFileSize ?>"
         data-max-number-of-files="null"
@@ -113,10 +113,10 @@ loadjs.ready(["wrapper", "head"], function () {
         <?= ($Page->photo->ReadOnly || $Page->photo->Disabled) ? " disabled" : "" ?>
         <?= $Page->photo->editAttributes() ?>
     >
-    <div class="text-muted ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <div class="text-body-secondary ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <?= $Page->photo->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->photo->getErrorMessage() ?></div>
 </div>
-<?= $Page->photo->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->photo->getErrorMessage() ?></div>
 <input type="hidden" name="fn_x_photo" id= "fn_x_photo" value="<?= $Page->photo->Upload->FileName ?>">
 <input type="hidden" name="fa_x_photo" id= "fa_x_photo" value="<?= (Post("fa_x_photo") == "0") ? "0" : "1" ?>">
 <table id="ft_x_photo" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>
@@ -193,7 +193,9 @@ loadjs.ready(["wrapper", "head"], function () {
         id="x_is_inpatient"
         name="x_is_inpatient"
         class="form-select ew-select<?= $Page->is_inpatient->isInvalidClass() ?>"
+        <?php if (!$Page->is_inpatient->IsNativeSelect) { ?>
         data-select2-id="fjdh_patientsedit_x_is_inpatient"
+        <?php } ?>
         data-table="jdh_patients"
         data-field="x_is_inpatient"
         data-value-separator="<?= $Page->is_inpatient->displayValueSeparatorAttribute() ?>"
@@ -203,10 +205,13 @@ loadjs.ready(["wrapper", "head"], function () {
     </select>
     <?= $Page->is_inpatient->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->is_inpatient->getErrorMessage() ?></div>
+<?php if (!$Page->is_inpatient->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_patientsedit", function() {
     var options = { name: "x_is_inpatient", selectId: "fjdh_patientsedit_x_is_inpatient" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_patientsedit.lists.is_inpatient?.lookupOptions.length) {
@@ -219,6 +224,7 @@ loadjs.ready("fjdh_patientsedit", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>

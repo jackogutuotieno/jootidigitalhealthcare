@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $SubscriptionsDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fsubscriptionsdelete" id="fsubscriptionsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fsubscriptionsdelete" id="fsubscriptionsdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -71,16 +71,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -88,7 +88,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->Id->Visible) { // Id ?>
         <td<?= $Page->Id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_subscriptions_Id" class="el_subscriptions_Id">
+<span id="">
 <span<?= $Page->Id->viewAttributes() ?>>
 <?= $Page->Id->getViewValue() ?></span>
 </span>
@@ -96,7 +96,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->User->Visible) { // User ?>
         <td<?= $Page->User->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_subscriptions_User" class="el_subscriptions_User">
+<span id="">
 <span<?= $Page->User->viewAttributes() ?>>
 <?= $Page->User->getViewValue() ?></span>
 </span>
@@ -104,7 +104,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->PublicKey->Visible) { // PublicKey ?>
         <td<?= $Page->PublicKey->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_subscriptions_PublicKey" class="el_subscriptions_PublicKey">
+<span id="">
 <span<?= $Page->PublicKey->viewAttributes() ?>>
 <?= $Page->PublicKey->getViewValue() ?></span>
 </span>
@@ -112,7 +112,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->AuthenticationToken->Visible) { // AuthenticationToken ?>
         <td<?= $Page->AuthenticationToken->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_subscriptions_AuthenticationToken" class="el_subscriptions_AuthenticationToken">
+<span id="">
 <span<?= $Page->AuthenticationToken->viewAttributes() ?>>
 <?= $Page->AuthenticationToken->getViewValue() ?></span>
 </span>
@@ -120,7 +120,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->ContentEncoding->Visible) { // ContentEncoding ?>
         <td<?= $Page->ContentEncoding->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_subscriptions_ContentEncoding" class="el_subscriptions_ContentEncoding">
+<span id="">
 <span<?= $Page->ContentEncoding->viewAttributes() ?>>
 <?= $Page->ContentEncoding->getViewValue() ?></span>
 </span>
@@ -128,9 +128,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

@@ -1,0 +1,1227 @@
+<ew-language date="2023/11/23" id="en-US" desc="English" author="e.World Technology Limited">
+  <project>
+    <phrase id="bodytitle" value="Jooti Digital | Healthcare - Supporting Effective Health Information Management" />
+    <phrase id="footertext" value="&amp;copy;2023 Jooti Digital | Healthcare. All rights reserved." />
+    <menu id="271">
+      <phrase id="menutext" value="Dashboard" />
+    </menu>
+    <menu id="150">
+      <phrase id="menutext" value="Status Types" />
+    </menu>
+    <menu id="38">
+      <phrase id="menutext" value="Administrator" />
+    </menu>
+    <menu id="18">
+      <phrase id="menutext" value="Users" />
+    </menu>
+    <menu id="22">
+      <phrase id="menutext" value="Departments" />
+    </menu>
+    <menu id="292">
+      <phrase id="menutext" value="Units/Wings" />
+    </menu>
+    <menu id="25">
+      <phrase id="menutext" value="Roles" />
+    </menu>
+    <menu id="26">
+      <phrase id="menutext" value="System Logs" />
+    </menu>
+    <menu id="28">
+      <phrase id="menutext" value="Export Logs" />
+    </menu>
+    <menu id="276">
+      <phrase id="menutext" value="Doctor Charges" />
+    </menu>
+    <menu id="285">
+      <phrase id="menutext" value="Branding" />
+    </menu>
+    <menu id="282">
+      <phrase id="menutext" value="Wards" />
+    </menu>
+    <menu id="290">
+      <phrase id="menutext" value="Beds" />
+    </menu>
+    <menu id="102">
+      <phrase id="menutext" value="Patients" />
+    </menu>
+    <menu id="10">
+      <phrase id="menutext" value="OPD/IPD" />
+    </menu>
+    <menu id="1">
+      <phrase id="menutext" value="Appointments List" />
+    </menu>
+    <menu id="69">
+      <phrase id="menutext" value="Calendar" />
+    </menu>
+    <menu id="9">
+      <phrase id="menutext" value="Visits" />
+    </menu>
+    <menu id="8">
+      <phrase id="menutext" value="Cases" />
+    </menu>
+    <menu id="104">
+      <phrase id="menutext" value="Chief Complaints" />
+    </menu>
+    <menu id="279">
+      <phrase id="menutext" value="Patient Queue" />
+    </menu>
+    <menu id="106">
+      <phrase id="menutext" value="Findings" />
+    </menu>
+    <menu id="19">
+      <phrase id="menutext" value="Visit Types" />
+    </menu>
+    <menu id="20">
+      <phrase id="menutext" value="Vitals" />
+    </menu>
+    <menu id="11">
+      <phrase id="menutext" value="Prescriptions" />
+    </menu>
+    <menu id="291">
+      <phrase id="menutext" value="Bed Management" />
+    </menu>
+    <menu id="289">
+      <phrase id="menutext" value="Notifications" />
+    </menu>
+    <menu id="149">
+      <phrase id="menutext" value="Investigations" />
+    </menu>
+    <menu id="3">
+      <phrase id="menutext" value="Categories" />
+    </menu>
+    <menu id="4">
+      <phrase id="menutext" value="Subcategories" />
+    </menu>
+    <menu id="17">
+      <phrase id="menutext" value="Requests" />
+    </menu>
+    <menu id="16">
+      <phrase id="menutext" value="Results" />
+    </menu>
+    <menu id="68">
+      <phrase id="menutext" value="Pharmacy" />
+    </menu>
+    <menu id="5">
+      <phrase id="menutext" value="Medicine Categories" />
+    </menu>
+    <menu id="7">
+      <phrase id="menutext" value="Medicines" />
+    </menu>
+    <menu id="273">
+      <phrase id="menutext" value="Administer Drugs" />
+    </menu>
+    <menu id="141">
+      <phrase id="menutext" value="Services" />
+    </menu>
+    <menu id="12">
+      <phrase id="menutext" value="Category" />
+    </menu>
+    <menu id="13">
+      <phrase id="menutext" value="Subcategory" />
+    </menu>
+    <menu id="14">
+      <phrase id="menutext" value="Prices" />
+    </menu>
+    <menu id="60">
+      <phrase id="menutext" value="Financials" />
+    </menu>
+    <menu id="293">
+      <phrase id="menutext" value="Invoices" />
+    </menu>
+    <menu id="294">
+      <phrase id="menutext" value="Invoice Items" />
+    </menu>
+    <menu id="30">
+      <phrase id="menutext" value="Insurance" />
+    </menu>
+    <menu id="270">
+      <phrase id="menutext" value="Inventory" />
+    </menu>
+    <menu id="230">
+      <phrase id="menutext" value="Medicine" />
+    </menu>
+    <menu id="190">
+      <phrase id="menutext" value="Reports" />
+    </menu>
+    <menu id="274">
+      <phrase id="menutext" value="Pharmacy Income" />
+    </menu>
+    <menu id="275">
+      <phrase id="menutext" value="Registration Income" />
+    </menu>
+    <menu id="277">
+      <phrase id="menutext" value="Consultation Income" />
+    </menu>
+    <menu id="278">
+      <phrase id="menutext" value="Laboratory Income" />
+    </menu>
+    <menu id="280">
+      <phrase id="menutext" value="Patient Queues" />
+    </menu>
+    <table id="jdh_appointments">
+      <phrase id="tblcaption" value="Appointments" />
+      <field id="appointment_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient Name" />
+      </field>
+      <field id="user_id">
+        <phrase id="fldcaption" value="Doctor" />
+      </field>
+      <field id="appointment_title">
+        <phrase id="fldcaption" value="Title" />
+      </field>
+      <field id="appointment_start_date">
+        <phrase id="fldcaption" value="Start Date" />
+      </field>
+      <field id="appointment_end_date">
+        <phrase id="fldcaption" value="End Date" />
+      </field>
+      <field id="appointment_all_day">
+        <phrase id="fldcaption" value="All Day?" />
+        <phrase id="fldtagvalue1" value="1" />
+        <phrase id="fldtagcaption1" value="Yes" />
+        <phrase id="fldtagvalue2" value="0" />
+        <phrase id="fldtagcaption2" value="No" />
+      </field>
+      <field id="appointment_description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+      <field id="submission_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="subbmitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+    </table>
+    <table id="jdh_lab_test_categories">
+      <phrase id="tblcaption" value="Test Categories" />
+      <field id="test_category_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="test_category_name">
+        <phrase id="fldcaption" value="Category" />
+      </field>
+      <field id="test_category_description">
+        <phrase id="fldcaption" value="Patient No." />
+      </field>
+    </table>
+    <table id="jdh_lab_test_subcategories">
+      <phrase id="tblcaption" value="Test Subcategories" />
+      <field id="test_subcategory_id">
+        <phrase id="fldcaption" value="ID" />
+      </field>
+      <field id="test_category_id">
+        <phrase id="fldcaption" value="Category" />
+      </field>
+      <field id="test_subcategory_name">
+        <phrase id="fldcaption" value="Subcategory" />
+      </field>
+      <field id="description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+    </table>
+    <table id="jdh_medicine_categories">
+      <phrase id="tblcaption" value="Medicine Categories" />
+      <field id="category_id">
+        <phrase id="fldcaption" value="ID" />
+      </field>
+      <field id="category_name">
+        <phrase id="fldcaption" value="Category" />
+      </field>
+      <field id="category_description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+    </table>
+    <table id="jdh_medicines">
+      <phrase id="tblcaption" value="Medicines" />
+      <field id="id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="category_id">
+        <phrase id="fldcaption" value="Category" />
+      </field>
+      <field id="name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="selling_price">
+        <phrase id="fldcaption" value="Selling Price (KES)" />
+      </field>
+      <field id="buying_price">
+        <phrase id="fldcaption" value="Buying Price (KES)" />
+      </field>
+      <field id="description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+      <field id="expiry">
+        <phrase id="fldcaption" value="Expiry Date" />
+      </field>
+      <field id="date_created">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="date_updated">
+        <phrase id="fldcaption" value="Last Updated" />
+      </field>
+      <field id="submitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+    </table>
+    <table id="jdh_patient_cases">
+      <phrase id="tblcaption" value="Cases" />
+      <phrase id="tblpagecaption1" value="Page 1" />
+      <phrase id="tblpagecaption2" value="Page 2" />
+      <phrase id="tblpagecaption3" value="Page 3" />
+      <phrase id="tblpagecaption4" value="Page 4" />
+      <phrase id="tblpagecaption5" value="Page 5" />
+      <phrase id="tblpagecaption6" value="Page 6" />
+      <field id="case_id">
+        <phrase id="fldcaption" value="Case No." />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient Name" />
+      </field>
+      <field id="history">
+        <phrase id="fldcaption" value="History of Presenting Illness" />
+      </field>
+      <field id="random_blood_sugar">
+        <phrase id="fldcaption" value="Random Blood Sugar(Fasting)" />
+      </field>
+      <field id="medical_history">
+        <phrase id="fldcaption" value="Past Medical &amp; Surgical History" />
+      </field>
+      <field id="family">
+        <phrase id="fldcaption" value="Family" />
+      </field>
+      <field id="socio_economic_history">
+        <phrase id="fldcaption" value="Socio-Economic History" />
+      </field>
+      <field id="notes">
+        <phrase id="fldcaption" value="Notes" />
+      </field>
+      <field id="submission_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="submitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+    </table>
+    <table id="jdh_patient_visits">
+      <phrase id="tblcaption" value="Visits" />
+      <field id="visit_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient Name" />
+      </field>
+      <field id="visit_type_id">
+        <phrase id="fldcaption" value="Visit Type" />
+      </field>
+      <field id="user_id">
+        <phrase id="fldcaption" value="Doctor Name" />
+      </field>
+      <field id="insurance_id">
+        <phrase id="fldcaption" value="Insurance" />
+      </field>
+      <field id="visit_description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+      <field id="visit_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="subbmitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+    </table>
+    <table id="jdh_patients">
+      <phrase id="tblcaption" value="Patients" />
+      <field id="patient_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="photo">
+        <phrase id="fldcaption" value="Photo" />
+        <phrase id="fldalt" value="Patient Photo" />
+      </field>
+      <field id="patient_ip_number">
+        <phrase id="fldcaption" value="IP Number" />
+      </field>
+      <field id="patient_name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="patient_dob_year">
+        <phrase id="fldcaption" value="Year of Birth" />
+      </field>
+      <field id="patient_age">
+        <phrase id="fldcaption" value="Age (Y)" />
+      </field>
+      <field id="patient_gender">
+        <phrase id="fldcaption" value="Gender" />
+        <phrase id="fldtagvalue1" value="Male" />
+        <phrase id="fldtagcaption1" value="Male" />
+        <phrase id="fldtagvalue2" value="Female" />
+        <phrase id="fldtagcaption2" value="Female" />
+      </field>
+      <field id="patient_phone">
+        <phrase id="fldcaption" value="Phone" />
+      </field>
+      <field id="patient_kin_name">
+        <phrase id="fldcaption" value="Next of Kin" />
+      </field>
+      <field id="patient_kin_phone">
+        <phrase id="fldcaption" value="NoK Phone" />
+      </field>
+      <field id="service_id">
+        <phrase id="fldcaption" value="Reg. Fee" />
+      </field>
+      <field id="patient_registration_date">
+        <phrase id="fldcaption" value="Registration Date" />
+      </field>
+      <field id="time">
+        <phrase id="fldcaption" value="Time" />
+      </field>
+      <field id="is_inpatient">
+        <phrase id="fldcaption" value="Is IPD?" />
+        <phrase id="fldtagvalue1" value="0" />
+        <phrase id="fldtagcaption1" value="No" />
+        <phrase id="fldtagvalue2" value="1" />
+        <phrase id="fldtagcaption2" value="Yes" />
+      </field>
+      <field id="submitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+    </table>
+    <table id="jdh_prescriptions">
+      <phrase id="tblcaption" value="Prescriptions" />
+      <field id="prescription_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient Name" />
+      </field>
+      <field id="prescription_title">
+        <phrase id="fldcaption" value="Title" />
+      </field>
+      <field id="medicine_id">
+        <phrase id="fldcaption" value="Medicine" />
+      </field>
+      <field id="tabs">
+        <phrase id="fldcaption" value="Tabs (Eg. 1 tab/ml)" />
+      </field>
+      <field id="frequency">
+        <phrase id="fldcaption" value="Frequency" />
+      </field>
+      <field id="prescription_days">
+        <phrase id="fldcaption" value="No. of Days" />
+      </field>
+      <field id="prescription_time">
+        <phrase id="fldcaption" value="Before/After Meals" />
+        <phrase id="fldtagvalue1" value="Before Meals" />
+        <phrase id="fldtagcaption1" value="Before Meals" />
+        <phrase id="fldtagvalue2" value="After Meals" />
+        <phrase id="fldtagcaption2" value="After Meals" />
+      </field>
+      <field id="prescription_date">
+        <phrase id="fldcaption" value="Prescription Date" />
+      </field>
+      <field id="submitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+    </table>
+    <table id="jdh_service_category">
+      <phrase id="tblcaption" value="Service Category" />
+      <field id="category_id">
+        <phrase id="fldcaption" value="No." />
+      </field>
+      <field id="category_name">
+        <phrase id="fldcaption" value="Category" />
+      </field>
+      <field id="category_description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+    </table>
+    <table id="jdh_service_subcategory">
+      <phrase id="tblcaption" value="Service Subcategory" />
+      <field id="subcategory_id">
+        <phrase id="fldcaption" value="No." />
+      </field>
+      <field id="category_id">
+        <phrase id="fldcaption" value="Category" />
+      </field>
+      <field id="subcategory_name">
+        <phrase id="fldcaption" value="Subcategory" />
+      </field>
+      <field id="description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+    </table>
+    <table id="jdh_services">
+      <phrase id="tblcaption" value="Services Costs" />
+      <field id="service_id">
+        <phrase id="fldcaption" value="No." />
+      </field>
+      <field id="category_id">
+        <phrase id="fldcaption" value="Category" />
+      </field>
+      <field id="subcategory_id">
+        <phrase id="fldcaption" value="Subcategory" />
+      </field>
+      <field id="service_name">
+        <phrase id="fldcaption" value="Service Name" />
+      </field>
+      <field id="service_cost">
+        <phrase id="fldcaption" value="Cost (KES)" />
+      </field>
+      <field id="service_description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+      <field id="date_created">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="date_updated">
+        <phrase id="fldcaption" value="Last Updated" />
+      </field>
+      <field id="submitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+    </table>
+    <table id="jdh_test_reports">
+      <phrase id="tblcaption" value="Test Reports" />
+      <field id="report_id">
+        <phrase id="fldcaption" value="No." />
+      </field>
+      <field id="request_id">
+        <phrase id="fldcaption" value="Request No" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient Name" />
+      </field>
+      <field id="report_findings">
+        <phrase id="fldcaption" value="Findings" />
+      </field>
+      <field id="report_attachment">
+        <phrase id="fldcaption" value="Attachment" />
+      </field>
+      <field id="report_submittedby_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="report_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+    </table>
+    <table id="jdh_test_requests">
+      <phrase id="tblcaption" value="Test Requests" />
+      <field id="request_id">
+        <phrase id="fldcaption" value="Request No." />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient" />
+      </field>
+      <field id="request_title">
+        <phrase id="fldcaption" value="Title" />
+      </field>
+      <field id="request_service_id">
+        <phrase id="fldcaption" value="Test Name" />
+      </field>
+      <field id="request_description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+      <field id="requested_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="request_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="status_id">
+        <phrase id="fldcaption" value="Status" />
+        <phrase id="fldtagvalue1" value="0" />
+        <phrase id="fldtagcaption1" value="Pending" />
+        <phrase id="fldtagvalue2" value="1" />
+        <phrase id="fldtagcaption2" value="Done" />
+        <phrase id="fldtagvalue3" value="2" />
+        <phrase id="fldtagcaption3" value="Deferred" />
+      </field>
+    </table>
+    <table id="jdh_users">
+      <phrase id="tblcaption" value="Users" />
+      <field id="user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="photo">
+        <phrase id="fldcaption" value="Photo" />
+      </field>
+      <field id="first_name">
+        <phrase id="fldcaption" value="First Name" />
+      </field>
+      <field id="last_name">
+        <phrase id="fldcaption" value="Last Name" />
+      </field>
+      <field id="national_id">
+        <phrase id="fldcaption" value="National ID" />
+      </field>
+      <field id="email_address">
+        <phrase id="fldcaption" value="Email" />
+      </field>
+      <field id="phone">
+        <phrase id="fldcaption" value="Phone" />
+      </field>
+      <field id="department_id">
+        <phrase id="fldcaption" value="Department" />
+      </field>
+      <field id="_password">
+        <phrase id="fldcaption" value="Password" />
+      </field>
+      <field id="biography">
+        <phrase id="fldcaption" value="Bio" />
+      </field>
+      <field id="registration_date">
+        <phrase id="fldcaption" value="Registration Date" />
+      </field>
+      <field id="role_id">
+        <phrase id="fldcaption" value="Role" />
+        <phrase id="fldtagvalue1" value="-2" />
+        <phrase id="fldtagcaption1" value="Anonymous" />
+        <phrase id="fldtagvalue2" value="-1" />
+        <phrase id="fldtagcaption2" value="Administrator" />
+        <phrase id="fldtagvalue3" value="0" />
+        <phrase id="fldtagcaption3" value="Default" />
+        <phrase id="fldtagvalue4" value="1" />
+        <phrase id="fldtagcaption4" value="Receptionist" />
+        <phrase id="fldtagvalue5" value="2" />
+        <phrase id="fldtagcaption5" value="Doctor" />
+        <phrase id="fldtagvalue6" value="3" />
+        <phrase id="fldtagcaption6" value="Lab Technician" />
+        <phrase id="fldtagvalue7" value="4" />
+        <phrase id="fldtagcaption7" value="Pharmacist" />
+        <phrase id="fldtagvalue8" value="5" />
+        <phrase id="fldtagcaption8" value="Accountant" />
+        <phrase id="fldtagvalue9" value="6" />
+        <phrase id="fldtagcaption9" value="Stores" />
+        <phrase id="fldtagvalue10" value="7" />
+        <phrase id="fldtagcaption10" value="Human Resources" />
+        <phrase id="fldtagvalue11" value="8" />
+        <phrase id="fldtagcaption11" value="Hospital Manager" />
+        <phrase id="fldtagvalue12" value="9" />
+        <phrase id="fldtagcaption12" value="Nurse" />
+      </field>
+    </table>
+    <table id="jdh_visit_types">
+      <phrase id="tblcaption" value="Visit Types" />
+      <field id="visit_type_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="visit_type">
+        <phrase id="fldcaption" value="Visit Type" />
+      </field>
+      <field id="visit_description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+    </table>
+    <table id="jdh_vitals">
+      <phrase id="tblcaption" value="Vitals" />
+      <field id="vitals_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient Name" />
+      </field>
+      <field id="pressure">
+        <phrase id="fldcaption" value="Pressure (mmHg)" />
+      </field>
+      <field id="height">
+        <phrase id="fldcaption" value="Height(m)" />
+      </field>
+      <field id="weight">
+        <phrase id="fldcaption" value="Wheight(Kg)" />
+      </field>
+      <field id="body_mass_index">
+        <phrase id="fldcaption" value="BMI" />
+      </field>
+      <field id="pulse_rate">
+        <phrase id="fldcaption" value="Pulse" />
+      </field>
+      <field id="respiratory_rate">
+        <phrase id="fldcaption" value="Resp. Rate" />
+      </field>
+      <field id="temperature">
+        <phrase id="fldcaption" value="Temp (C)" />
+      </field>
+      <field id="random_blood_sugar">
+        <phrase id="fldcaption" value="RBS(Fasting)" />
+      </field>
+      <field id="spo_2">
+        <phrase id="fldcaption" value="SPO2(%)" />
+      </field>
+      <field id="submission_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="submitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="patient_status">
+        <phrase id="fldcaption" value="Status" />
+      </field>
+    </table>
+    <table id="jdh_departments">
+      <phrase id="tblcaption" value="Departments" />
+      <field id="department_id">
+        <phrase id="fldcaption" value="No." />
+      </field>
+      <field id="department_name">
+        <phrase id="fldcaption" value="Department" />
+      </field>
+      <field id="description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+    </table>
+    <table id="jdh_roles">
+      <phrase id="tblcaption" value="Roles" />
+      <field id="role_id">
+        <phrase id="fldcaption" value="Role No" />
+      </field>
+      <field id="role_name">
+        <phrase id="fldcaption" value="Role" />
+      </field>
+      <field id="role_description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+    </table>
+    <table id="jdh_audittrail">
+      <phrase id="tblcaption" value="System Logs" />
+      <field id="id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="datetime">
+        <phrase id="fldcaption" value="Date Time" />
+      </field>
+      <field id="script">
+        <phrase id="fldcaption" value="Script" />
+      </field>
+      <field id="user">
+        <phrase id="fldcaption" value="User" />
+      </field>
+      <field id="_action">
+        <phrase id="fldcaption" value="Action" />
+      </field>
+      <field id="_table">
+        <phrase id="fldcaption" value="Table" />
+      </field>
+      <field id="field">
+        <phrase id="fldcaption" value="Field" />
+      </field>
+      <field id="keyvalue">
+        <phrase id="fldcaption" value="Key Value" />
+      </field>
+      <field id="oldvalue">
+        <phrase id="fldcaption" value="Old Value" />
+      </field>
+      <field id="newvalue">
+        <phrase id="fldcaption" value="New Value" />
+      </field>
+    </table>
+    <table id="jdh_exportlog">
+      <phrase id="tblcaption" value="Export Logs" />
+      <field id="fileid">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="datetime">
+        <phrase id="fldcaption" value="Date Time" />
+      </field>
+      <field id="user">
+        <phrase id="fldcaption" value="User" />
+      </field>
+      <field id="_exporttype">
+        <phrase id="fldcaption" value="Export Type" />
+      </field>
+      <field id="_table">
+        <phrase id="fldcaption" value="Table" />
+      </field>
+      <field id="keyvalue">
+        <phrase id="fldcaption" value="Key Value" />
+      </field>
+      <field id="filename">
+        <phrase id="fldcaption" value="Filename" />
+      </field>
+      <field id="__request">
+        <phrase id="fldcaption" value="Submi" />
+      </field>
+    </table>
+    <table id="jdh_insurance">
+      <phrase id="tblcaption" value="Insurance" />
+      <field id="insurance_id">
+        <phrase id="fldcaption" value="No." />
+      </field>
+      <field id="insurance_name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="insurance_contact_person">
+        <phrase id="fldcaption" value="Contact Person" />
+      </field>
+      <field id="insurance_contact_person_phone">
+        <phrase id="fldcaption" value="Phone" />
+      </field>
+      <field id="insurance_contact_person_email">
+        <phrase id="fldcaption" value="Email" />
+      </field>
+      <field id="insurance_physical_address">
+        <phrase id="fldcaption" value="Physical Address" />
+      </field>
+      <field id="submission_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="date_updated">
+        <phrase id="fldcaption" value="Last Updated" />
+      </field>
+      <field id="submitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+    </table>
+    <table id="patient_appointments">
+      <phrase id="tblcaption" value="Appointments" />
+      <field id="appointment_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient" />
+      </field>
+      <field id="appointment_title">
+        <phrase id="fldcaption" value="Title" />
+      </field>
+      <field id="appointment_start_date">
+        <phrase id="fldcaption" value="Start Date" />
+      </field>
+      <field id="appointment_end_date">
+        <phrase id="fldcaption" value="End Date" />
+      </field>
+      <field id="appointment_description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+      <field id="submission_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="subbmitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="appointment_all_day">
+        <phrase id="fldcaption" value="appointment all day" />
+        <phrase id="fldtagvalue1" value="1" />
+        <phrase id="fldtagcaption1" value="Yes" />
+        <phrase id="fldtagvalue2" value="0" />
+        <phrase id="fldtagcaption2" value="No" />
+      </field>
+      <field id="user_id">
+        <phrase id="fldcaption" value="user id" />
+      </field>
+    </table>
+    <table id="jdh_chief_complaints">
+      <phrase id="tblcaption" value="Chief Complaints" />
+      <field id="id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient Name" />
+      </field>
+      <field id="chief_compaints">
+        <phrase id="fldcaption" value="Chief Complaint" />
+      </field>
+      <field id="addedby_user_id">
+        <phrase id="fldcaption" value="Added By ID" />
+      </field>
+      <field id="modifiedby_user_id">
+        <phrase id="fldcaption" value="Modified By ID" />
+      </field>
+      <field id="date_created">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="date_updated">
+        <phrase id="fldcaption" value="Modified Date" />
+      </field>
+    </table>
+    <table id="jdh_examination_findings">
+      <phrase id="tblcaption" value=" Findings" />
+      <field id="id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient Name" />
+      </field>
+      <field id="general_exams">
+        <phrase id="fldcaption" value="General Exams" />
+      </field>
+      <field id="systematic_exams">
+        <phrase id="fldcaption" value="Systematic Exams" />
+      </field>
+      <field id="submitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="date_submitted">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+    </table>
+    <table id="jdh_status">
+      <phrase id="tblcaption" value="jdh status" />
+      <field id="status_id">
+        <phrase id="fldcaption" value="status id" />
+      </field>
+      <field id="status">
+        <phrase id="fldcaption" value="status" />
+      </field>
+    </table>
+    <table id="jdh_medicine_stock">
+      <phrase id="tblcaption" value="Medicine Stock" />
+      <field id="id">
+        <phrase id="fldcaption" value="ID" />
+      </field>
+      <field id="medicine_id">
+        <phrase id="fldcaption" value="Medicine" />
+      </field>
+      <field id="units_available">
+        <phrase id="fldcaption" value="Units" />
+      </field>
+      <field id="expiry_date">
+        <phrase id="fldcaption" value="Expiry Date" />
+      </field>
+      <field id="status">
+        <phrase id="fldcaption" value="Status" />
+      </field>
+      <field id="submittedby_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="date_created">
+        <phrase id="fldcaption" value="Submisison Date" />
+      </field>
+      <field id="date_updated">
+        <phrase id="fldcaption" value="Last Updated" />
+      </field>
+    </table>
+    <table id="dashboard2">
+      <phrase id="tblcaption" value="Dashboard" />
+    </table>
+    <table id="jdh_prescriptions_actions">
+      <phrase id="tblcaption" value="Pharmacy Administration" />
+      <field id="id">
+        <phrase id="fldcaption" value="ID" />
+      </field>
+      <field id="medicine_id">
+        <phrase id="fldcaption" value="Medicine" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient Name" />
+      </field>
+      <field id="units_given">
+        <phrase id="fldcaption" value="Units" />
+      </field>
+      <field id="submittedby_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="submission_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+    </table>
+    <table id="jdh_pharmacy_income">
+      <phrase id="tblcaption" value="Pharmacy Income" />
+      <field id="patient_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="patient_name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="selling_price">
+        <phrase id="fldcaption" value="Selling Price (KES)" />
+      </field>
+      <field id="units_available">
+        <phrase id="fldcaption" value="Units" />
+      </field>
+      <field id="units_given">
+        <phrase id="fldcaption" value="Units" />
+      </field>
+      <field id="units_remaining">
+        <phrase id="fldcaption" value="Remaining Units" />
+      </field>
+      <field id="submission_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="line_total_cost">
+        <phrase id="fldcaption" value="Line Total (KES)" />
+      </field>
+    </table>
+    <table id="jdh_registration_income">
+      <phrase id="tblcaption" value="Registration Income" />
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient ID" />
+      </field>
+      <field id="patient_name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="patient_gender">
+        <phrase id="fldcaption" value="Gender" />
+      </field>
+      <field id="service_cost">
+        <phrase id="fldcaption" value="Regeistration Fee" />
+      </field>
+      <field id="patient_registration_date">
+        <phrase id="fldcaption" value="Registration Date" />
+      </field>
+      <field id="patient_dob_year">
+        <phrase id="fldcaption" value="Year of Birth" />
+      </field>
+    </table>
+    <table id="jdh_doctor_charges">
+      <phrase id="tblcaption" value="Doctor Charges" />
+      <field id="id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="user_id">
+        <phrase id="fldcaption" value="Doctor Name" />
+      </field>
+      <field id="service_id">
+        <phrase id="fldcaption" value="Cost/Charge Type" />
+      </field>
+      <field id="description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+      <field id="submission_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+      <field id="date_updated">
+        <phrase id="fldcaption" value="Last Updated" />
+      </field>
+      <field id="submitted_by_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+    </table>
+    <table id="jdh_consultation_income">
+      <phrase id="tblcaption" value="Consultation Income" />
+      <field id="user_id">
+        <phrase id="fldcaption" value="User No." />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient ID" />
+      </field>
+      <field id="first_name">
+        <phrase id="fldcaption" value="First Name" />
+      </field>
+      <field id="last_name">
+        <phrase id="fldcaption" value="Last Name" />
+      </field>
+      <field id="department_id">
+        <phrase id="fldcaption" value="Department" />
+      </field>
+      <field id="service_name">
+        <phrase id="fldcaption" value="Service Name" />
+      </field>
+      <field id="service_cost">
+        <phrase id="fldcaption" value="Cost (KES)" />
+      </field>
+    </table>
+    <table id="jdh_lab_income">
+      <phrase id="tblcaption" value="Laboratory Income" />
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient ID" />
+      </field>
+      <field id="patient_name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="service_name">
+        <phrase id="fldcaption" value="Service" />
+      </field>
+      <field id="service_cost">
+        <phrase id="fldcaption" value="Cost" />
+      </field>
+      <field id="request_date">
+        <phrase id="fldcaption" value="Request Date" />
+      </field>
+      <field id="patient_dob_year">
+        <phrase id="fldcaption" value="Year of Birth" />
+      </field>
+    </table>
+    <table id="jdh_patient_queue">
+      <phrase id="tblcaption" value="Patient Queue" />
+      <field id="visit_id">
+        <phrase id="fldcaption" value="Visit No" />
+      </field>
+      <field id="patient_name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="visit_type">
+        <phrase id="fldcaption" value="Visit Type" />
+      </field>
+      <field id="visit_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+    </table>
+    <table id="patient_queues">
+      <phrase id="tblcaption" value="Patient Queues" />
+      <chart id="patientqueues">
+        <phrase id="chartcaption" value="Patient Queues" />
+        <phrase id="chartxaxisname" value="Submission Date" />
+        <phrase id="chartyaxisname" value="Name" />
+      </chart>
+      <field id="visit_id">
+        <phrase id="fldcaption" value="No." />
+      </field>
+      <field id="patient_name">
+        <phrase id="fldcaption" value="Name" />
+      </field>
+      <field id="visit_type">
+        <phrase id="fldcaption" value="Visit Type" />
+      </field>
+      <field id="visit_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+    </table>
+    <table id="jdh_wards">
+      <phrase id="tblcaption" value="Wards &lt;i class = &quot;fas fa-bed&quot;&gt;&lt;/i&gt;" />
+      <field id="ward_id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="facility_id">
+        <phrase id="fldcaption" value="Facility Unit" />
+      </field>
+      <field id="ward_name">
+        <phrase id="fldcaption" value="Ward Name" />
+      </field>
+      <field id="description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+    </table>
+    <table id="jdh_branding">
+      <phrase id="tblcaption" value="Print Header/Footer" />
+      <field id="id">
+        <phrase id="fldcaption" value="id" />
+      </field>
+      <field id="header_image">
+        <phrase id="fldcaption" value="Print Header Image" />
+      </field>
+      <field id="footer_image">
+        <phrase id="fldcaption" value="Print Footer Image" />
+      </field>
+    </table>
+    <table id="subscriptions">
+      <phrase id="tblcaption" value="Notifications" />
+      <field id="id">
+        <phrase id="fldcaption" value="Id" />
+      </field>
+      <field id="user">
+        <phrase id="fldcaption" value="User" />
+      </field>
+      <field id="endpoint">
+        <phrase id="fldcaption" value="Endpoint" />
+      </field>
+      <field id="publickey">
+        <phrase id="fldcaption" value="Public Key" />
+      </field>
+      <field id="authenticationtoken">
+        <phrase id="fldcaption" value="Authentication Token" />
+      </field>
+      <field id="contentencoding">
+        <phrase id="fldcaption" value="Content Encoding" />
+      </field>
+    </table>
+    <table id="jdh_beds">
+      <phrase id="tblcaption" value="Beds" />
+      <field id="id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="facility_id">
+        <phrase id="fldcaption" value="Facility Unit" />
+      </field>
+      <field id="ward_id">
+        <phrase id="fldcaption" value="Ward" />
+      </field>
+      <field id="bed_number">
+        <phrase id="fldcaption" value="Bed No." />
+      </field>
+      <field id="assigned">
+        <phrase id="fldcaption" value="Assigned" />
+        <phrase id="fldtagvalue1" value="1" />
+        <phrase id="fldtagcaption1" value="Yes" />
+        <phrase id="fldtagvalue2" value="0" />
+        <phrase id="fldtagcaption2" value="No" />
+      </field>
+    </table>
+    <table id="jdh_ipd_admission">
+      <phrase id="tblcaption" value="Patient Admission/Transfer" />
+      <field id="id">
+        <phrase id="fldcaption" value="Admission No." />
+      </field>
+      <field id="unit_id">
+        <phrase id="fldcaption" value="Unit Facility" />
+      </field>
+      <field id="ward_id">
+        <phrase id="fldcaption" value="Ward" />
+      </field>
+      <field id="bed_id">
+        <phrase id="fldcaption" value="Bed No." />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient" />
+      </field>
+      <field id="user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="date_added">
+        <phrase id="fldcaption" value="Admission Date" />
+      </field>
+      <field id="date_updated">
+        <phrase id="fldcaption" value="Last Updated" />
+      </field>
+    </table>
+    <table id="jdh_facility_units">
+      <phrase id="tblcaption" value="Facility Wings/Units" />
+      <field id="id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="unit_name">
+        <phrase id="fldcaption" value="Unit Name" />
+      </field>
+      <field id="description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+    </table>
+    <table id="jdh_invoice">
+      <phrase id="tblcaption" value="Invoice" />
+      <field id="id">
+        <phrase id="fldcaption" value="Invoice No" />
+      </field>
+      <field id="patient_id">
+        <phrase id="fldcaption" value="Patient" />
+      </field>
+      <field id="invoice_title">
+        <phrase id="fldcaption" value="Title" />
+      </field>
+      <field id="invoice_description">
+        <phrase id="fldcaption" value="Description" />
+      </field>
+      <field id="invoice_date">
+        <phrase id="fldcaption" value="Date Created" />
+      </field>
+      <field id="submittedby_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+    </table>
+    <table id="jdh_invoice_items">
+      <phrase id="tblcaption" value="Invoice Items" />
+      <field id="id">
+        <phrase id="fldcaption" value="No" />
+      </field>
+      <field id="invoice_id">
+        <phrase id="fldcaption" value="Invoice No." />
+      </field>
+      <field id="invoice_item">
+        <phrase id="fldcaption" value="Item" />
+      </field>
+      <field id="total_amount">
+        <phrase id="fldcaption" value="Amount" />
+      </field>
+      <field id="submittedby_user_id">
+        <phrase id="fldcaption" value="User ID" />
+      </field>
+      <field id="submission_date">
+        <phrase id="fldcaption" value="Submission Date" />
+      </field>
+    </table>
+  </project>
+</ew-language>

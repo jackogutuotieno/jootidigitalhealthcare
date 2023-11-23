@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Two Factor Authentication class (SMS Authentication only)
@@ -14,7 +14,7 @@ class SmsTwoFactorAuthentication extends AbstractTwoFactorAuthentication impleme
      */
     public static function sendOneTimePassword($usr, $account = null)
     {
-        global $UserProfile, $Language;
+        global $Language;
 
         // Get mobile number
         $oldAccount = self::getAccount($usr);
@@ -24,18 +24,24 @@ class SmsTwoFactorAuthentication extends AbstractTwoFactorAuthentication impleme
         }
 
         // Create OTP and save in user profile
-        $secret = $UserProfile->getUserSecret($usr); // Get user secret
+        $profile = Profile();
+        $secret = $profile->getUserSecret(); // Get user secret
         $code = Random(Config("TWO_FACTOR_AUTHENTICATION_PASS_CODE_LENGTH")); // Generate OTP
         $encryptedCode = Encrypt($code, $secret); // Encrypt OTP
         $otpAccount = $oldAccount == $mobileNumber ? "" : $mobileNumber; // Save mobile number if changed
-        $UserProfile->setOneTimePassword($usr, $otpAccount, $encryptedCode);
+        $profile->setOneTimePassword($otpAccount, $encryptedCode);
 
         // Send OTP
         $smsClass = Config("SMS_CLASS");
+        $rc = new \ReflectionClass($smsClass);
+        if ($rc->isAbstract()) {
+            throw new \Exception("Make sure you have enabled an extension for sending SMS messages.");
+        }
         $sms = new $smsClass();
-        $sms->load(Config("SMS_ONE_TIME_PASSWORD_TEMPLATE"));
-        $sms->replaceContent("<!--code-->", $code);
-        $sms->replaceContent("<!--account-->", PartialHideValue($usr));
+        $sms->load(Config("SMS_ONE_TIME_PASSWORD_TEMPLATE"), data: [
+            "Code" => $code,
+            "Account" => PartialHideValue($usr)
+        ]);
         $sms->Recipient = FormatPhoneNumber($mobileNumber);
 
         // Call Otp_Sending event
@@ -54,11 +60,15 @@ class SmsTwoFactorAuthentication extends AbstractTwoFactorAuthentication impleme
      */
     public static function getAccount($usr): string
     {
-        global $UserTable;
-
         // Check if empty user
         if (EmptyValue($usr)) {
             return "";
+        }
+
+        // Load from session for system admin / register
+        if (is_array(Session(SESSION_USER_PROFILE_RECORD))) {
+            $row = Session(SESSION_USER_PROFILE_RECORD);
+            return (IsSysAdmin() ? $row[SYS_ADMIN_PHONE_NUMBER] : $row[Config("USER_PHONE_FIELD_NAME")]) ?? "";
         }
 
         // Check if phone field name is defined
@@ -67,13 +77,7 @@ class SmsTwoFactorAuthentication extends AbstractTwoFactorAuthentication impleme
         }
 
         // Load phone number
-        $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), $usr);
-        $sql = "SELECT " . QuotedName(Config("USER_PHONE_FIELD_NAME"), Config("USER_TABLE_DBID")) . " FROM " . Config("USER_TABLE") . " WHERE " . $filter;
-        $row = $UserTable->getConnection()->fetchAssociative($sql);
-        if ($row !== false) {
-            return strval(GetUserInfo(Config("USER_PHONE_FIELD_NAME"), $row));
-        }
-        return "";
+        return FindUserByUserName($usr)?->get(Config("USER_PHONE_FIELD_NAME")) ?? "";
     }
 
     /**
@@ -103,8 +107,9 @@ class SmsTwoFactorAuthentication extends AbstractTwoFactorAuthentication impleme
     public function show()
     {
         $user = CurrentUserName(); // Must be current user
-        $profile = Container("profile");
+        $profile = Container("user.profile");
+        $profile->setUserName($user)->loadFromStorage();
         $mobileNumber = self::getAccount($user); // Get mobile number
-        WriteJson(["account" => $mobileNumber, "success" => true, "verified" => $profile->hasUserSecret($user, true)]);
+        WriteJson(["account" => $mobileNumber, "success" => true, "verified" => $profile->hasUserSecret(true)]);
     }
 }

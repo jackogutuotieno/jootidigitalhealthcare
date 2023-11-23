@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -97,7 +103,7 @@ class PatientAppointmentsDelete extends PatientAppointments
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -107,7 +113,7 @@ class PatientAppointmentsDelete extends PatientAppointments
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
     }
 
@@ -122,14 +128,18 @@ class PatientAppointmentsDelete extends PatientAppointments
         // Table CSS class
         $this->TableClass = "table table-bordered table-hover table-sm ew-table";
 
+        // Start/End fields
+        $this->Fields['appointment_start_date']->DateTimeFormat = 1;
+        $this->Fields['appointment_end_date']->DateTimeFormat = 1;
+
         // Initialize
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (Patient_Appointments)
-        if (!isset($GLOBALS["Patient_Appointments"]) || get_class($GLOBALS["Patient_Appointments"]) == PROJECT_NAMESPACE . "Patient_Appointments") {
+        if (!isset($GLOBALS["Patient_Appointments"]) || $GLOBALS["Patient_Appointments"]::class == PROJECT_NAMESPACE . "Patient_Appointments") {
             $GLOBALS["Patient_Appointments"] = &$this;
         }
 
@@ -139,7 +149,7 @@ class PatientAppointmentsDelete extends PatientAppointments
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -155,7 +165,7 @@ class PatientAppointmentsDelete extends PatientAppointments
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -204,13 +214,11 @@ class PatientAppointmentsDelete extends PatientAppointments
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -230,7 +238,7 @@ class PatientAppointmentsDelete extends PatientAppointments
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -247,20 +255,19 @@ class PatientAppointmentsDelete extends PatientAppointments
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -287,7 +294,7 @@ class PatientAppointmentsDelete extends PatientAppointments
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -345,7 +352,6 @@ class PatientAppointmentsDelete extends PatientAppointments
     public $RecordCount;
     public $RecKeys = [];
     public $StartRowCount = 1;
-    public $RowCount = 0;
 
     /**
      * Page run
@@ -354,17 +360,22 @@ class PatientAppointmentsDelete extends PatientAppointments
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm;
+        global $ExportType, $Language, $Security, $CurrentForm;
 
         // Use layout
         $this->UseLayout = $this->UseLayout && ConvertToBool(Param(Config("PAGE_LAYOUT"), true));
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
         $this->CurrentAction = Param("action"); // Set up current action
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -405,7 +416,8 @@ class PatientAppointmentsDelete extends PatientAppointments
                     $this->terminate(true);
                     return;
                 } else {
-                    $this->terminate($this->getReturnUrl()); // Return to caller
+                    WriteJson(["url" => $this->getReturnUrl()]); // Reload calendar
+                    $this->terminate();
                     return;
                 }
             } else { // Delete failed
@@ -415,10 +427,10 @@ class PatientAppointmentsDelete extends PatientAppointments
                 }
                 // Return JSON error message if UseAjaxActions
                 if ($this->UseAjaxActions) {
-                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                    WriteJson(["success" => false, "error" => $this->getFailureMessage()]);
                     $this->clearFailureMessage();
                     $this->terminate();
-                    return;                    
+                    return;
                 }
                 if ($this->InlineDelete) {
                     $this->terminate($this->getReturnUrl()); // Return to caller
@@ -429,13 +441,9 @@ class PatientAppointmentsDelete extends PatientAppointments
             }
         }
         if ($this->isShow()) { // Load records for display
-            if ($this->Recordset = $this->loadRecordset()) {
-                $this->TotalRecords = $this->Recordset->recordCount(); // Get record count
-            }
+            $this->Recordset = $this->loadRecordset();
             if ($this->TotalRecords <= 0) { // No record found, exit
-                if ($this->Recordset) {
-                    $this->Recordset->close();
-                }
+                $this->Recordset?->free();
                 $this->terminate("patientappointmentslist"); // Return to list
                 return;
             }
@@ -450,7 +458,7 @@ class PatientAppointmentsDelete extends PatientAppointments
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -464,41 +472,58 @@ class PatientAppointmentsDelete extends PatientAppointments
         }
     }
 
-    // Load recordset
+    /**
+     * Load result set
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return Doctrine\DBAL\Result Result
+     */
     public function loadRecordset($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
-        $rs = new Recordset($result, $sql);
+        $result = $sql->executeQuery();
+        if (property_exists($this, "TotalRecords") && $rowcnt < 0) {
+            $this->TotalRecords = $result->rowCount();
+            if ($this->TotalRecords <= 0) { // Handle database drivers that does not return rowCount()
+                $this->TotalRecords = $this->getRecordCount($this->getListSql());
+            }
+        }
 
         // Call Recordset Selected event
-        $this->recordsetSelected($rs);
-        return $rs;
+        $this->recordsetSelected($result);
+        return $result;
     }
 
-    // Load records as associative array
+    /**
+     * Load records as associative array
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return void
+     */
     public function loadRows($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
+        $result = $sql->executeQuery();
         return $result->fetchAllAssociative();
     }
 
@@ -529,23 +554,14 @@ class PatientAppointmentsDelete extends PatientAppointments
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -612,7 +628,7 @@ class PatientAppointmentsDelete extends PatientAppointments
         // user_id
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // appointment_id
             $this->appointment_id->ViewValue = $this->appointment_id->CurrentValue;
 
@@ -684,7 +700,7 @@ class PatientAppointmentsDelete extends PatientAppointments
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -777,9 +793,9 @@ class PatientAppointmentsDelete extends PatientAppointments
             $rows = $this->getRecordsFromRecordset($rsold);
             $table = $this->UpdateTable;
             foreach ($rows as &$row) {
-                $row['id'] = $row['appointment_id']; // Get event id
+                $row["id"] = $row['appointment_id']; // Get event ID
             }
-            if (Route(2) !== null) { // Single delete
+            if (Param("key_m") === null) { // Single delete
                 $rows = $rows[0]; // Return object
             }
             WriteJson(["success" => true, "action" => Config("API_DELETE_ACTION"), $table => $rows]);
@@ -801,7 +817,7 @@ class PatientAppointmentsDelete extends PatientAppointments
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -822,7 +838,7 @@ class PatientAppointmentsDelete extends PatientAppointments
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -865,11 +881,11 @@ class PatientAppointmentsDelete extends PatientAppointments
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

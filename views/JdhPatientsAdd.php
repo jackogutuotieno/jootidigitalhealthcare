@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhPatientsAdd = &$Page;
@@ -67,7 +67,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_patientsadd" id="fjdh_patientsadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_patientsadd" id="fjdh_patientsadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -95,7 +95,7 @@ $Page->showMessage();
         lang="<?= CurrentLanguageID() ?>"
         data-table="jdh_patients"
         data-field="x_photo"
-        data-size="0"
+        data-size="16777215"
         data-accept-file-types="<?= $Page->photo->acceptFileTypes() ?>"
         data-max-file-size="<?= $Page->photo->UploadMaxFileSize ?>"
         data-max-number-of-files="null"
@@ -104,10 +104,10 @@ $Page->showMessage();
         <?= ($Page->photo->ReadOnly || $Page->photo->Disabled) ? " disabled" : "" ?>
         <?= $Page->photo->editAttributes() ?>
     >
-    <div class="text-muted ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <div class="text-body-secondary ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <?= $Page->photo->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->photo->getErrorMessage() ?></div>
 </div>
-<?= $Page->photo->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->photo->getErrorMessage() ?></div>
 <input type="hidden" name="fn_x_photo" id= "fn_x_photo" value="<?= $Page->photo->Upload->FileName ?>">
 <input type="hidden" name="fa_x_photo" id= "fa_x_photo" value="0">
 <table id="ft_x_photo" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>
@@ -160,7 +160,9 @@ $Page->showMessage();
         id="x_patient_gender"
         name="x_patient_gender"
         class="form-select ew-select<?= $Page->patient_gender->isInvalidClass() ?>"
+        <?php if (!$Page->patient_gender->IsNativeSelect) { ?>
         data-select2-id="fjdh_patientsadd_x_patient_gender"
+        <?php } ?>
         data-table="jdh_patients"
         data-field="x_patient_gender"
         data-value-separator="<?= $Page->patient_gender->displayValueSeparatorAttribute() ?>"
@@ -170,10 +172,13 @@ $Page->showMessage();
     </select>
     <?= $Page->patient_gender->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->patient_gender->getErrorMessage() ?></div>
+<?php if (!$Page->patient_gender->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_patientsadd", function() {
     var options = { name: "x_patient_gender", selectId: "fjdh_patientsadd_x_patient_gender" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_patientsadd.lists.patient_gender?.lookupOptions.length) {
@@ -186,6 +191,7 @@ loadjs.ready("fjdh_patientsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -235,7 +241,9 @@ loadjs.ready("fjdh_patientsadd", function() {
         id="x_service_id"
         name="x_service_id"
         class="form-select ew-select<?= $Page->service_id->isInvalidClass() ?>"
+        <?php if (!$Page->service_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_patientsadd_x_service_id"
+        <?php } ?>
         data-table="jdh_patients"
         data-field="x_service_id"
         data-value-separator="<?= $Page->service_id->displayValueSeparatorAttribute() ?>"
@@ -246,10 +254,13 @@ loadjs.ready("fjdh_patientsadd", function() {
     <?= $Page->service_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->service_id->getErrorMessage() ?></div>
 <?= $Page->service_id->Lookup->getParamTag($Page, "p_x_service_id") ?>
+<?php if (!$Page->service_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_patientsadd", function() {
     var options = { name: "x_service_id", selectId: "fjdh_patientsadd_x_service_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_patientsadd.lists.service_id?.lookupOptions.length) {
@@ -262,6 +273,7 @@ loadjs.ready("fjdh_patientsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -275,7 +287,9 @@ loadjs.ready("fjdh_patientsadd", function() {
         id="x_is_inpatient"
         name="x_is_inpatient"
         class="form-select ew-select<?= $Page->is_inpatient->isInvalidClass() ?>"
+        <?php if (!$Page->is_inpatient->IsNativeSelect) { ?>
         data-select2-id="fjdh_patientsadd_x_is_inpatient"
+        <?php } ?>
         data-table="jdh_patients"
         data-field="x_is_inpatient"
         data-value-separator="<?= $Page->is_inpatient->displayValueSeparatorAttribute() ?>"
@@ -285,10 +299,13 @@ loadjs.ready("fjdh_patientsadd", function() {
     </select>
     <?= $Page->is_inpatient->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->is_inpatient->getErrorMessage() ?></div>
+<?php if (!$Page->is_inpatient->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_patientsadd", function() {
     var options = { name: "x_is_inpatient", selectId: "fjdh_patientsadd_x_is_inpatient" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_patientsadd.lists.is_inpatient?.lookupOptions.length) {
@@ -301,6 +318,7 @@ loadjs.ready("fjdh_patientsadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>

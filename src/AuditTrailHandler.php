@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\LineFormatter;
@@ -23,7 +23,7 @@ class AuditTrailHandler extends RotatingFileHandler
     /**
      * @inheritdoc
      */
-    protected function streamWrite($stream, array $record): void
+    protected function streamWrite($stream, \Monolog\LogRecord $record): void
     {
         if (self::$UseHeader && filesize($this->url) == 0 && $this->writeHeader) {
             fputcsv($stream, self::$Headers, self::$Delimiter, self::$Enclosure, self::$EscapeChar); // Write headers

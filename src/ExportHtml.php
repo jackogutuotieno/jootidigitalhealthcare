@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Export to HTML
@@ -26,7 +26,7 @@ class ExportHtml extends AbstractExport
      * Add image to end of page
      *
      * @param string $imagefn Image file
-     * @param string $break Break type (before/after)
+     * @param string $break Break type (before/after/none)
      * @return void
      */
     public function addImage($imagefn, $break = false)
@@ -36,6 +36,8 @@ class ExportHtml extends AbstractExport
             $classes .= " break-before-page";
         } elseif (SameText($break, "after")) {
             $classes .= " break-after-page";
+        } elseif (SameText($break, "none")) {
+            $classes .= " break-after-avoid";
         }
         $html = '<div class="' . $classes . '">' . GetFileImgTag(ImageFileToBase64Url($imagefn)) . "</div>";
         if (ContainsText($this->Text, "</body>")) {

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhUsersAdd = &$Page;
@@ -65,7 +65,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_usersadd" id="fjdh_usersadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_usersadd" id="fjdh_usersadd" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -93,7 +93,7 @@ $Page->showMessage();
         lang="<?= CurrentLanguageID() ?>"
         data-table="jdh_users"
         data-field="x_photo"
-        data-size="0"
+        data-size="16777215"
         data-accept-file-types="<?= $Page->photo->acceptFileTypes() ?>"
         data-max-file-size="<?= $Page->photo->UploadMaxFileSize ?>"
         data-max-number-of-files="null"
@@ -102,10 +102,10 @@ $Page->showMessage();
         <?= ($Page->photo->ReadOnly || $Page->photo->Disabled) ? " disabled" : "" ?>
         <?= $Page->photo->editAttributes() ?>
     >
-    <div class="text-muted ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <div class="text-body-secondary ew-file-text"><?= $Language->phrase("ChooseFile") ?></div>
+    <?= $Page->photo->getCustomMessage() ?>
+    <div class="invalid-feedback"><?= $Page->photo->getErrorMessage() ?></div>
 </div>
-<?= $Page->photo->getCustomMessage() ?>
-<div class="invalid-feedback"><?= $Page->photo->getErrorMessage() ?></div>
 <input type="hidden" name="fn_x_photo" id= "fn_x_photo" value="<?= $Page->photo->Upload->FileName ?>">
 <input type="hidden" name="fa_x_photo" id= "fa_x_photo" value="0">
 <table id="ft_x_photo" class="table table-sm float-start ew-upload-table"><tbody class="files"></tbody></table>
@@ -182,7 +182,9 @@ $Page->showMessage();
         id="x_department_id"
         name="x_department_id"
         class="form-select ew-select<?= $Page->department_id->isInvalidClass() ?>"
+        <?php if (!$Page->department_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_usersadd_x_department_id"
+        <?php } ?>
         data-table="jdh_users"
         data-field="x_department_id"
         data-value-separator="<?= $Page->department_id->displayValueSeparatorAttribute() ?>"
@@ -193,10 +195,13 @@ $Page->showMessage();
     <?= $Page->department_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->department_id->getErrorMessage() ?></div>
 <?= $Page->department_id->Lookup->getParamTag($Page, "p_x_department_id") ?>
+<?php if (!$Page->department_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_usersadd", function() {
     var options = { name: "x_department_id", selectId: "fjdh_usersadd_x_department_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_usersadd.lists.department_id?.lookupOptions.length) {
@@ -209,6 +214,7 @@ loadjs.ready("fjdh_usersadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 </div></div>
     </div>
@@ -222,8 +228,8 @@ loadjs.ready("fjdh_usersadd", function() {
     <input type="text" data-password-strength="pst__password" data-table="jdh_users" data-field="x__password" name="x__password" id="x__password" value="<?= $Page->_password->EditValue ?>" size="30" maxlength="255" placeholder="<?= HtmlEncode($Page->_password->getPlaceHolder()) ?>"<?= $Page->_password->editAttributes() ?> aria-describedby="x__password_help">
     <button type="button" class="btn btn-default ew-toggle-password rounded-end" data-ew-action="password"><i class="fa-solid fa-eye"></i></button>
 </div>
-<div class="progress ew-password-strength-bar form-text mt-1 d-none" id="pst__password">
-    <div class="progress-bar" role="progressbar"></div>
+<div class="progress ew-password-strength-bar form-text mt-1 d-none" id="pst__password" role="progressbar">
+    <div class="progress-bar"></div>
 </div>
 <?= $Page->_password->getCustomMessage() ?>
 <div class="invalid-feedback"><?= $Page->_password->getErrorMessage() ?></div>
@@ -257,7 +263,9 @@ loadjs.ready("fjdh_usersadd", function() {
         id="x_role_id"
         name="x_role_id"
         class="form-select ew-select<?= $Page->role_id->isInvalidClass() ?>"
+        <?php if (!$Page->role_id->IsNativeSelect) { ?>
         data-select2-id="fjdh_usersadd_x_role_id"
+        <?php } ?>
         data-table="jdh_users"
         data-field="x_role_id"
         data-value-separator="<?= $Page->role_id->displayValueSeparatorAttribute() ?>"
@@ -267,10 +275,13 @@ loadjs.ready("fjdh_usersadd", function() {
     </select>
     <?= $Page->role_id->getCustomMessage() ?>
     <div class="invalid-feedback"><?= $Page->role_id->getErrorMessage() ?></div>
+<?php if (!$Page->role_id->IsNativeSelect) { ?>
 <script>
 loadjs.ready("fjdh_usersadd", function() {
     var options = { name: "x_role_id", selectId: "fjdh_usersadd_x_role_id" },
         el = document.querySelector("select[data-select2-id='" + options.selectId + "']");
+    if (!el)
+        return;
     options.closeOnSelect = !options.multiple;
     options.dropdownParent = el.closest("#ew-modal-dialog, #ew-add-opt-dialog");
     if (fjdh_usersadd.lists.role_id?.lookupOptions.length) {
@@ -283,6 +294,7 @@ loadjs.ready("fjdh_usersadd", function() {
     ew.createSelect(options);
 });
 </script>
+<?php } ?>
 </span>
 <?php } ?>
 </div></div>

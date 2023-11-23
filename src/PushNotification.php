@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Minishlink\WebPush\WebPush;
 use Minishlink\WebPush\Subscription;
@@ -182,7 +182,7 @@ class PushNotification
         // Delete subscription
         $deleteSubscription = true;
         $tbl = Container(Config("SUBSCRIPTION_TABLE_VAR"));
-        $endpointField = $tbl->Fields(Config("SUBSCRIPTION_FIELD_NAME_ENDPOINT"));
+        $endpointField = $tbl->fields(Config("SUBSCRIPTION_FIELD_NAME_ENDPOINT"));
         $filter = $endpointField ? $endpointField->Expression . "=" . QuotedValue($endpoint, $endpointField->DataType, $tbl->Dbid) : "";
         if ($filter && (int)$tbl->getConnection()->fetchOne("SELECT COUNT(*) FROM " . Config("SUBSCRIPTION_TABLE") . " WHERE " . $filter) === 0) { // Subscription not exists
             WriteJson(["success" => true]);

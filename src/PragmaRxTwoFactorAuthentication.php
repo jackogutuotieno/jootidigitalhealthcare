@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use PragmaRX\Google2FA\Google2FA;
 use Com\Tecnick\Barcode\Barcode;
@@ -80,9 +80,10 @@ class PragmaRxTwoFactorAuthentication extends AbstractTwoFactorAuthentication im
     public function show($size = 0)
     {
         $user = CurrentUserName(); // Must be current user
-        $profile = Container("profile");
-        if (!$profile->hasUserSecret($user, true)) {
-            $secret = $profile->getUserSecret($user); // Get Secret
+        $profile = Container("user.profile");
+        $profile->setUserName($user)->loadFromStorage();
+        if (!$profile->hasUserSecret(true)) {
+            $secret = $profile->getUserSecret(); // Get Secret
             WriteJson(["url" => self::getQrCodeUrl($user, $secret, null, $size), "success" => true]);
             return;
         }

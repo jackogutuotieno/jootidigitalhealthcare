@@ -1,25 +1,35 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
-
-use Doctrine\DBAL\FetchMode;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Advanced Security class
  */
 class AdvancedSecurity
 {
-    public $UserLevel = []; // All User Levels
-    public $UserLevelPriv = []; // All User Level permissions
-    public $UserLevelID = []; // User Level ID array
-    public $UserID = []; // User ID array
-    public $ParentUserID = []; // Parent User ID array
-    public $CurrentUserLevelID = -2; // User Level (Anonymous by default)
-    public $CurrentUserLevel; // Permissions
-    public $CurrentUserID;
-    private $isLoggedIn = false;
-    private $isSysAdmin = false;
-    private $userName;
+    // User level contants
+    public const ANONYMOUS_USER_LEVEL_ID = -2;
+    public const ADMIN_USER_LEVEL_ID = -1;
+    public const DEFAULT_USER_LEVEL_ID = 0;
+
+    // User ID constant
+    public const ADMIN_USER_ID = -1;
+
+    // For all users
+    public array $UserLevel = []; // All User Levels
+    public array $UserLevelPriv = []; // All User Level permissions
+
+    // Current user
+    public array $UserLevelID = []; // User Level ID array
+    public array $UserID = []; // User ID array
+    public array $ParentUserID = []; // Parent User ID array
+    public int $CurrentUserLevel = 0; // Permissions
+    public $CurrentUserLevelID = self::ANONYMOUS_USER_LEVEL_ID; // User Level (Anonymous by default)
+    public $CurrentUserID = null;
+    public $CurrentUserPrimaryKey = null;
+    private bool $isLoggedIn = false;
+    private bool $isSysAdmin = false;
+    private string $userName = "";
 
     // Constructor
     public function __construct()
@@ -31,18 +41,23 @@ class AdvancedSecurity
             $this->CurrentUserLevelID = $this->sessionUserLevelID();
             $this->setUserLevelID($this->CurrentUserLevelID);
         } else { // Anonymous user
-            $this->CurrentUserLevelID = -2;
+            $this->CurrentUserLevelID = self::ANONYMOUS_USER_LEVEL_ID;
             $this->UserLevelID[] = $this->CurrentUserLevelID;
         }
         $_SESSION[SESSION_USER_LEVEL_LIST] = $this->userLevelList();
 
-        // Init User ID
-        $this->CurrentUserID = $this->sessionUserID();
+        // Load user ID, Parent User ID and primary key
+        $this->setCurrentUserID($this->sessionUserID());
         $this->setParentUserID($this->sessionParentUserID());
+        $this->setCurrentUserPrimaryKey($this->sessionUserPrimaryKey());
 
         // Load user level
         $this->loadUserLevel();
     }
+
+    /**
+     * User ID
+     */
 
     // Get session User ID
     protected function sessionUserID()
@@ -56,6 +71,22 @@ class AdvancedSecurity
         $this->CurrentUserID = trim(strval($v));
         $_SESSION[SESSION_USER_ID] = $this->CurrentUserID;
     }
+
+    // Current User ID
+    public function currentUserID()
+    {
+        return $this->CurrentUserID;
+    }
+
+    // Set current User ID
+    public function setCurrentUserID($v)
+    {
+        $this->CurrentUserID = trim(strval($v));
+    }
+
+    /**
+     * Parent User ID
+     */
 
     // Get session Parent User ID
     protected function sessionParentUserID()
@@ -71,14 +102,14 @@ class AdvancedSecurity
     }
 
     // Set Parent User ID to array
-    private function setParentUserID($v)
+    public function setParentUserID($v)
     {
         $ids = is_array($v) ? $v : explode(Config("MULTIPLE_OPTION_SEPARATOR"), strval($v));
         $this->ParentUserID = [];
     }
 
     // Get Parent User ID
-    private function getParentUserID()
+    public function getParentUserID()
     {
         return implode(Config("MULTIPLE_OPTION_SEPARATOR"), $this->ParentUserID);
     }
@@ -95,6 +126,16 @@ class AdvancedSecurity
         return false;
     }
 
+    // Current Parent User ID
+    public function currentParentUserID()
+    {
+        return $this->getParentUserID();
+    }
+
+    /**
+     * User Level ID
+     */
+
     // Get session User Level ID
     protected function sessionUserLevelID()
     {
@@ -109,29 +150,15 @@ class AdvancedSecurity
         $this->setUserLevelID($v);
     }
 
-    // Set User Level ID to array
-    private function setUserLevelID($v)
+    // Current User Level ID
+    public function currentUserLevelID()
     {
-        $ids = is_array($v) ? $v : explode(Config("MULTIPLE_OPTION_SEPARATOR"), strval($v));
-        $this->UserLevelID = [];
-        foreach ($ids as $id) {
-            if ((int)$id >= -2) {
-                $this->UserLevelID[] = (int)$id;
-            }
-        }
+        return $this->CurrentUserLevelID;
     }
 
-    // Check if User Level ID in array
-    public function hasUserLevelID($v)
-    {
-        $ids = is_array($v) ? $v : explode(Config("MULTIPLE_OPTION_SEPARATOR"), strval($v));
-        foreach ($ids as $id) {
-            if (in_array((int)$id, $this->UserLevelID)) {
-                return true;
-            }
-        }
-        return false;
-    }
+    /**
+     * User Level (Permissions)
+     */
 
     // Get session User Level
     protected function sessionUserLevel()
@@ -145,6 +172,16 @@ class AdvancedSecurity
         $this->CurrentUserLevel = $v;
         $_SESSION[SESSION_USER_LEVEL] = $this->CurrentUserLevel;
     }
+
+    // Current User Level value
+    public function currentUserLevel()
+    {
+        return $this->CurrentUserLevel;
+    }
+
+    /**
+     * User name
+     */
 
     // Get current user name
     public function getCurrentUserName()
@@ -165,216 +202,249 @@ class AdvancedSecurity
         return $this->getCurrentUserName();
     }
 
-    // Current User ID
-    public function currentUserID()
+    /**
+     * User primary key
+     */
+
+    // Get session user primary key
+    protected function sessionUserPrimaryKey()
     {
-        return $this->CurrentUserID;
+        return isset($_SESSION[SESSION_USER_PRIMARY_KEY]) ? strval(Session(SESSION_USER_PRIMARY_KEY)) : $this->CurrentUserPrimaryKey;
     }
 
-    // Current Parent User ID
-    public function currentParentUserID()
+    // Set session user primary key
+    protected function setSessionUserPrimaryKey($v)
     {
-        return $this->getParentUserID();
+        $this->setCurrentUserPrimaryKey($v);
+        $_SESSION[SESSION_USER_PRIMARY_KEY] = $this->CurrentUserPrimaryKey;
     }
 
-    // Current User Level ID
-    public function currentUserLevelID()
+    // Get current user primary key
+    public function currentUserPrimaryKey()
     {
-        return $this->CurrentUserLevelID;
+        return $this->CurrentUserPrimaryKey;
     }
 
-    // Current User Level value
-    public function currentUserLevel()
+    // Set current user primary key
+    public function setCurrentUserPrimaryKey($v)
     {
-        return $this->CurrentUserLevel;
+        $this->CurrentUserPrimaryKey = $v;
+    }
+
+    /**
+     * Other methods
+     */
+
+    // Set User Level ID to array
+    public function setUserLevelID($v)
+    {
+        $ids = is_array($v) ? $v : explode(Config("MULTIPLE_OPTION_SEPARATOR"), strval($v));
+        $this->UserLevelID = [];
+        foreach ($ids as $id) {
+            if ((int)$id >= self::ANONYMOUS_USER_LEVEL_ID) {
+                $this->UserLevelID[] = (int)$id;
+            }
+        }
+    }
+
+    // Check if User Level ID in array
+    public function hasUserLevelID($v)
+    {
+        $ids = is_array($v) ? $v : explode(Config("MULTIPLE_OPTION_SEPARATOR"), strval($v));
+        foreach ($ids as $id) {
+            if (in_array((int)$id, $this->UserLevelID)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Get JWT Token
-    public function createJwt($minExpiry = 0, $permission = 0)
+    public function createJwt($expiry = 0, $permission = 0)
     {
-        return CreateJwt(
-            $this->currentUserName(),
-            $this->sessionUserID(),
-            $this->sessionParentUserID(),
-            $this->sessionUserLevelID(),
-            $minExpiry,
-            $permission
-        );
+        return CreateJwt([
+            "username" => $this->currentUserName(),
+            "userid" => $this->currentUserID(),
+            "parentuserid" => $this->currentParentUserID(),
+            "userlevel" => $this->currentUserLevelID(),
+            "userprimarykey" => $this->currentUserPrimaryKey(),
+            "permission" => $permission
+        ], $expiry);
     }
 
     // Can add
     public function canAdd()
     {
-        return (($this->CurrentUserLevel & ALLOW_ADD) == ALLOW_ADD);
+        return ($this->CurrentUserLevel & Allow::ADD->value) == Allow::ADD->value;
     }
 
     // Set can add
     public function setCanAdd($b)
     {
         if ($b) {
-            $this->CurrentUserLevel |= ALLOW_ADD;
+            $this->CurrentUserLevel |= Allow::ADD->value;
         } else {
-            $this->CurrentUserLevel ^= ALLOW_ADD;
+            $this->CurrentUserLevel &= ~(Allow::ADD->value);
         }
     }
 
     // Can delete
     public function canDelete()
     {
-        return (($this->CurrentUserLevel & ALLOW_DELETE) == ALLOW_DELETE);
+        return ($this->CurrentUserLevel & Allow::DELETE->value) == Allow::DELETE->value;
     }
 
     // Set can delete
     public function setCanDelete($b)
     {
         if ($b) {
-            $this->CurrentUserLevel |= ALLOW_DELETE;
+            $this->CurrentUserLevel |= Allow::DELETE->value;
         } else {
-            $this->CurrentUserLevel ^= ALLOW_DELETE;
+            $this->CurrentUserLevel &= ~(Allow::DELETE->value);
         }
     }
 
     // Can edit
     public function canEdit()
     {
-        return (($this->CurrentUserLevel & ALLOW_EDIT) == ALLOW_EDIT);
+        return ($this->CurrentUserLevel & Allow::EDIT->value) == Allow::EDIT->value;
     }
 
     // Set can edit
     public function setCanEdit($b)
     {
         if ($b) {
-            $this->CurrentUserLevel |= ALLOW_EDIT;
+            $this->CurrentUserLevel |= Allow::EDIT->value;
         } else {
-            $this->CurrentUserLevel ^= ALLOW_EDIT;
+            $this->CurrentUserLevel &= ~(Allow::EDIT->value);
         }
     }
 
     // Can view
     public function canView()
     {
-        return (($this->CurrentUserLevel & ALLOW_VIEW) == ALLOW_VIEW);
+        return ($this->CurrentUserLevel & Allow::VIEW->value) == Allow::VIEW->value;
     }
 
     // Set can view
     public function setCanView($b)
     {
         if ($b) {
-            $this->CurrentUserLevel |= ALLOW_VIEW;
+            $this->CurrentUserLevel |= Allow::VIEW->value;
         } else {
-            $this->CurrentUserLevel ^= ALLOW_VIEW;
+            $this->CurrentUserLevel &= ~(Allow::VIEW->value);
         }
     }
 
     // Can list
     public function canList()
     {
-        return (($this->CurrentUserLevel & ALLOW_LIST) == ALLOW_LIST);
+        return ($this->CurrentUserLevel & Allow::LIST->value) == Allow::LIST->value;
     }
 
     // Set can list
     public function setCanList($b)
     {
         if ($b) {
-            $this->CurrentUserLevel |= ALLOW_LIST;
+            $this->CurrentUserLevel |= Allow::LIST->value;
         } else {
-            $this->CurrentUserLevel ^= ALLOW_LIST;
+            $this->CurrentUserLevel &= ~(Allow::LIST->value);
         }
     }
 
     // Can search
     public function canSearch()
     {
-        return (($this->CurrentUserLevel & ALLOW_SEARCH) == ALLOW_SEARCH);
+        return ($this->CurrentUserLevel & Allow::SEARCH->value) == Allow::SEARCH->value;
     }
 
     // Set can search
     public function setCanSearch($b)
     {
         if ($b) {
-            $this->CurrentUserLevel |= ALLOW_SEARCH;
+            $this->CurrentUserLevel |= Allow::SEARCH->value;
         } else {
-            $this->CurrentUserLevel ^= ALLOW_SEARCH;
+            $this->CurrentUserLevel &= ~(Allow::SEARCH->value);
         }
     }
 
     // Can admin
     public function canAdmin()
     {
-        return (($this->CurrentUserLevel & ALLOW_ADMIN) == ALLOW_ADMIN);
+        return ($this->CurrentUserLevel & Allow::ADMIN->value) == Allow::ADMIN->value;
     }
 
     // Set can admin
     public function setCanAdmin($b)
     {
         if ($b) {
-            $this->CurrentUserLevel |= ALLOW_ADMIN;
+            $this->CurrentUserLevel |= Allow::ADMIN->value;
         } else {
-            $this->CurrentUserLevel ^= ALLOW_ADMIN;
+            $this->CurrentUserLevel &= ~(Allow::ADMIN->value);
         }
     }
 
     // Can import
     public function canImport()
     {
-        return (($this->CurrentUserLevel & ALLOW_IMPORT) == ALLOW_IMPORT);
+        return ($this->CurrentUserLevel & Allow::IMPORT->value) == Allow::IMPORT->value;
     }
 
     // Set can import
     public function setCanImport($b)
     {
         if ($b) {
-            $this->CurrentUserLevel |= ALLOW_IMPORT;
+            $this->CurrentUserLevel |= Allow::IMPORT->value;
         } else {
-            $this->CurrentUserLevel ^= ALLOW_IMPORT;
+            $this->CurrentUserLevel &= ~(Allow::IMPORT->value);
         }
     }
 
     // Can lookup
     public function canLookup()
     {
-        return (($this->CurrentUserLevel & ALLOW_LOOKUP) == ALLOW_LOOKUP);
+        return ($this->CurrentUserLevel & Allow::LOOKUP->value) == Allow::LOOKUP->value;
     }
 
     // Set can lookup
     public function setCanLookup($b)
     {
         if ($b) {
-            $this->CurrentUserLevel |= ALLOW_LOOKUP;
+            $this->CurrentUserLevel |= Allow::LOOKUP->value;
         } else {
-            $this->CurrentUserLevel ^= ALLOW_LOOKUP;
+            $this->CurrentUserLevel &= ~(Allow::LOOKUP->value);
         }
     }
 
     // Can push
     public function canPush()
     {
-        return (($this->CurrentUserLevel & ALLOW_PUSH) == ALLOW_PUSH);
+        return ($this->CurrentUserLevel & Allow::PUSH->value) == Allow::PUSH->value;
     }
 
     // Set can push
     public function setCanPush($b)
     {
         if ($b) {
-            $this->CurrentUserLevel |= ALLOW_PUSH;
+            $this->CurrentUserLevel |= Allow::PUSH->value;
         } else {
-            $this->CurrentUserLevel ^= ALLOW_PUSH;
+            $this->CurrentUserLevel &= ~(Allow::PUSH->value);
         }
     }
 
     // Can export
     public function canExport()
     {
-        return (($this->CurrentUserLevel & ALLOW_EXPORT) == ALLOW_EXPORT);
+        return ($this->CurrentUserLevel & Allow::EXPORT->value) == Allow::EXPORT->value;
     }
 
     // Set can push
     public function setCanExport($b)
     {
         if ($b) {
-            $this->CurrentUserLevel |= ALLOW_EXPORT;
+            $this->CurrentUserLevel |= Allow::EXPORT->value;
         } else {
-            $this->CurrentUserLevel ^= ALLOW_EXPORT;
+            $this->CurrentUserLevel &= ~(Allow::EXPORT->value);
         }
     }
 
@@ -400,52 +470,74 @@ class AdvancedSecurity
         }
     }
 
+    // Remove last URL
+    public function removeLastUrl()
+    {
+        RemoveCookie("LastUrl");
+    }
+
     // Auto login
     public function autoLogin()
     {
-        $autologin = false;
-        if (!$autologin && ReadCookie("AutoLogin") == "autologin") {
-            $usr = Decrypt(ReadCookie("Username"));
-            $pwd = Decrypt(ReadCookie("Password"));
-            if ($usr !== false && $pwd !== false) {
-                $autologin = $this->validateUser($usr, $pwd, true);
+        $valid = false;
+        if (!$valid && $jwt = ReadCookie("AutoLogin")) {
+            $data = DecodeJwt($jwt);
+            $usr = $data["username"] ?? "";
+            $autologin = $data["autologin"] ?? false;
+            if (!EmptyValue($usr) && $autologin) {
+                $valid = $this->validateUser($usr, $jwt, "cookie");
             }
         }
-        if (!$autologin && Config("ALLOW_LOGIN_BY_URL") && Get("username") !== null) {
+        if (!$valid && Config("ALLOW_LOGIN_BY_URL") && Get("username") !== null) {
             $usr = RemoveXss(Get("username"));
             $pwd = RemoveXss(Get("password"));
-            $autologin = $this->validateUser($usr, $pwd, true);
+            if ($usr !== false && $pwd !== false) {
+                if (!EmptyValue(DecodeJwt($pwd)["username"] ?? "")) { // Password is valid JWT token
+                    $valid = $this->validateUser($usr, $pwd, "token");
+                } else {
+                    $valid = $this->validateUser($usr, $pwd, "querystring");
+                }
+            }
         }
-        if ($autologin) {
-            WriteAuditLog($usr, $GLOBALS["Language"]->phrase("AuditTrailAutoLogin"), CurrentUserIP(), "", "", "", "");
+        if ($valid) {
+            WriteAuditLog($usr, $GLOBALS["Language"]->phrase("AuditTrailAutoLogin"), CurrentUserIP());
         }
-        return $autologin;
+        return $valid;
     }
 
     // Login user
-    public function loginUser($userName = null, $userID = null, $parentUserID = null, $userLevel = null, $allowedPermission = 0)
-    {
-        if ($userName != null) {
+    public function loginUser(
+        string $userName,
+        $userId = null,
+        $parentUserId = null,
+        $userLevel = AdvancedSecurity::ANONYMOUS_USER_LEVEL_ID,
+        $userPrimaryKey = null,
+        $permission = 0
+    ) {
+        if ($userName != "") {
             $this->setCurrentUserName($userName);
             $this->isLoggedIn = true;
             $_SESSION[SESSION_STATUS] = "login";
-            if ($userName == Container("language")->phrase("UserAdministrator")) { // Handle language phrase as well
+            if ($userName == Language()->phrase("UserAdministrator")) { // Handle language phrase as well
                 $userName = Config("ADMIN_USER_NAME");
             }
             $this->isSysAdmin = $this->validateSysAdmin($userName);
         }
-        if ($userID != null) {
-            $this->setSessionUserID($userID);
+        if ($userId != null) {
+            $this->setSessionUserID($userId);
         }
-        if ($parentUserID != null) {
-            $this->setSessionParentUserID($parentUserID);
+        if ($parentUserId != null) {
+            $this->setSessionParentUserID($parentUserId);
         }
-        if ($userLevel != null) {
+        if ($userLevel >= AdvancedSecurity::ANONYMOUS_USER_LEVEL_ID) {
             $this->setSessionUserLevelID($userLevel);
             $this->setupUserLevel();
         }
+        if ($userPrimaryKey != null) {
+            $this->setSessionUserPrimaryKey($userPrimaryKey);
+        }
         // Set allowed permission
-        $this->setAllowedPermissions($allowedPermission);
+        $this->setAllowedPermissions($permission);
     }
 
     // Logout user
@@ -454,32 +546,50 @@ class AdvancedSecurity
         $this->isLoggedIn = false;
         $_SESSION[SESSION_STATUS] = "";
         $this->setCurrentUserName("");
-        $this->setSessionUserID("");
-        $this->setSessionParentUserID("");
-        $this->setSessionUserLevelID(-2);
+        $this->setSessionUserID(null);
+        $this->setSessionParentUserID([]);
+        $this->setSessionUserLevelID(self::ANONYMOUS_USER_LEVEL_ID);
+        $this->setSessionUserPrimaryKey(null);
         $this->setupUserLevel();
+        Container(["app.user" => null, "user.profile" => null]);
     }
 
-    // Validate user
-    public function validateUser(&$usr, &$pwd, $autologin, $provider = "", $securitycode = "")
+    /**
+     * Validate user
+     *
+     * @param string $usr User name
+     * @param string $pwd Password
+     * @param string $loginType Login type. Possible values:
+     *  'windows' - Windows authenticaton
+     *  'cookie' - Auto login
+     *  'token' - Account activation or Login by URL with token as password
+     *  'querystring' - Login by URL
+     *  'register' - Login after registration
+     * @param string $provider External provider, e.g. "Google"
+     * @param string $securityCode Security code from Google Authenticator
+     * @return bool
+     */
+    public function validateUser(&$usr, &$pwd, $loginType = "", $provider = "", $securityCode = "")
     {
-        global $Language, $UserProfile;
-        global $UserTable;
+        global $Language;
         $valid = false;
         $customValid = false;
         $providerValid = false;
+        $userProfile = Container("user.profile");
+        $user = null;
 
-        // OAuth provider
+        // External provider
         if ($provider != "") {
             $providers = Config("AUTH_CONFIG.providers");
             if (array_key_exists($provider, $providers) && $providers[$provider]["enabled"]) {
                 try {
-                    $UserProfile->Provider = $provider;
                     $hybridauth = Container("hybridauth");
                     $adapter = $hybridauth->authenticate($provider); // Authenticate with the selected provider
-                    $profile = $adapter->getUserProfile();
-                    $UserProfile->assign($profile); // Save profile
-                    $usr = $usr ?: ($UserProfile->get("email") ?? $UserProfile->get("emailaddress"));
+                    $profile = $adapter->getUserProfile(); // Hybridauth\User\Profile
+                    $usr = $usr ?: $profile->email;
+                    $userProfile->setUserName($usr)
+                        ->setProvider($provider)
+                        ->assign($profile); // Save profile
                     $providerValid = true;
                 } catch (\Throwable $e) {
                     if (Config("DEBUG")) {
@@ -489,7 +599,7 @@ class AdvancedSecurity
                 }
             } else {
                 if (Config("DEBUG")) {
-                    throw new \Exception("Provider for " . $provider . " not found or not enabled.");
+                    throw new \Exception("Provider for " . $provider . " not found or not enabled");
                 }
                 return false;
             }
@@ -505,100 +615,104 @@ class AdvancedSecurity
             $customValid = true;
         }
         if ($customValid) {
-            //$_SESSION[SESSION_STATUS] = "login"; // To be setup below
-            $this->setCurrentUserName($usr); // Load user name
+            $userProfile->setUserName($usr); // User name might be changed by userCustomValidate()
+            $this->loginUser(...$userProfile->getLoginArguments());
         }
 
         // Check other users
         if (!$valid) {
-            $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), $usr);
+            // Find user
+            if (Config("REGISTER_ACTIVATE") && !EmptyValue(Config("REGISTER_ACTIVATE_FIELD_NAME"))) {
+                $user = FindUserByUserName($usr, [Config("REGISTER_ACTIVATE_PROPERTY_NAME") => Config("REGISTER_ACTIVATE_FIELD_VALUE")]);
+            } else {
+                $user = FindUserByUserName($usr);
+            }
+            if ($user) {
+                $valid = $customValid;
 
-            // User table object
-            $UserTable = Container("usertable");
+                // Set user
+                $userProfile->setUser($user);
 
-            // Set up filter (WHERE Clause)
-            $sql = $UserTable->getSql($filter);
-            if ($row = Conn($UserTable->Dbid)->fetchAssociative($sql)) {
-                $valid = $customValid || ComparePassword(GetUserInfo(Config("LOGIN_PASSWORD_FIELD_NAME"), $row), $pwd);
-
-                // Set up retry count from manual login
-                if (!$autologin) {
-                    $UserProfile->loadProfileFromDatabase($usr);
-                    if (!$valid) {
-                        $retrycount = $UserProfile->getValue(Config("USER_PROFILE_LOGIN_RETRY_COUNT"));
-                        $retrycount++;
-                        $UserProfile->setValue(Config("USER_PROFILE_LOGIN_RETRY_COUNT"), $retrycount);
-                        $UserProfile->setValue(Config("USER_PROFILE_LAST_BAD_LOGIN_DATE_TIME"), StdCurrentDateTime());
-                        WriteAuditLog($usr, str_replace("%n", $retrycount, $Language->phrase("AuditTrailFailedAttempt")), CurrentUserIP(), "", "", "", "");
+                // Check password
+                if (!$valid) {
+                    $valid = Config("OTP_ONLY") && Config("USE_TWO_FACTOR_AUTHENTICATION") && Config("FORCE_TWO_FACTOR_AUTHENTICATION"); // OTP only + 2FA enabled
+                }
+                if (!$valid) {
+                    if (in_array($loginType, ["cookie", "token"])) {
+                        $userName = DecodeJwt($pwd)["username"] ?? "";
+                        $valid = !EmptyValue($userName) && $userName == $usr;
                     } else {
-                        $UserProfile->setValue(Config("USER_PROFILE_LOGIN_RETRY_COUNT"), 0);
+                        $valid = ComparePassword($user->get(Config("LOGIN_PASSWORD_FIELD_NAME")), $pwd);
                     }
-                    $UserProfile->saveProfileToDatabase($usr); // Save profile
+                }
+
+                // Set up retry count
+                if (!$loginType) {
+                    if (!$valid) {
+                        $retrycount = $userProfile->getLoginRetryCount() + 1;
+                        $userProfile->setLoginRetryCount($retrycount)
+                            ->setLastBadLoginDateTime(StdCurrentDateTime())
+                            ->saveToStorage();
+                        WriteAuditLog($usr, str_replace("%n", $retrycount, $Language->phrase("AuditTrailFailedAttempt")), CurrentUserIP());
+                    } else {
+                        $userProfile->setLoginRetryCount(0)->saveToStorage();
+                    }
                 }
                 if ($valid) {
                     // Check two factor authentication
                     if (Config("USE_TWO_FACTOR_AUTHENTICATION")) {
                         // Check API login
                         if (IsApi()) {
-                            if (SameText(Config("TWO_FACTOR_AUTHENTICATION_TYPE"), "google") && (Config("FORCE_TWO_FACTOR_AUTHENTICATION") || $UserProfile->hasUserSecret($usr, true))) { // Verify security code for Google Authenticator
-                                if (!$UserProfile->verify2FACode($usr, $securitycode)) {
+                            if (
+                                SameText(Config("TWO_FACTOR_AUTHENTICATION_TYPE"), "google") &&
+                                (Config("FORCE_TWO_FACTOR_AUTHENTICATION") || $userProfile->hasUserSecret(true))
+                            ) { // Verify security code for Google Authenticator
+                                if (!$userProfile->verify2FACode($securityCode)) {
                                     return false;
                                 }
                             }
-                        } elseif (Config("FORCE_TWO_FACTOR_AUTHENTICATION") && !$UserProfile->hasUserSecret($usr, true)) { // Non API, go to 2fa page
+                        } elseif (Config("FORCE_TWO_FACTOR_AUTHENTICATION") && !$userProfile->hasUserSecret(true)) { // Non API, go to 2fa page
+                            if ($valid && $user) {
+                                Container("app.user", $user); // Save the user
+                            }
                             return $valid;
                         }
                     }
                     $this->isLoggedIn = true;
-                    $_SESSION[SESSION_STATUS] = "login";
                     $this->isSysAdmin = false;
+                    $_SESSION[SESSION_STATUS] = "login";
                     $_SESSION[SESSION_SYS_ADMIN] = 0; // Non System Administrator
-                    $this->setCurrentUserName(GetUserInfo(Config("LOGIN_USERNAME_FIELD_NAME"), $row)); // Load user name
-                    $this->setSessionUserID(GetUserInfo(Config("USER_ID_FIELD_NAME"), $row)); // Load User ID
-                    if (GetUserInfo(Config("USER_LEVEL_FIELD_NAME"), $row) === null) {
-                        $this->setSessionUserLevelID(0);
-                    } else {
-                        $this->setSessionUserLevelID(GetUserInfo(Config("USER_LEVEL_FIELD_NAME"), $row)); // Load User Level
-                    }
-                    $this->setupUserLevel();
+                    $this->loginUser(...$user->getLoginArguments());
 
                     // Call User Validated event
-                    $UserProfile->assign($row);
-                    $UserProfile->delete(Config("LOGIN_PASSWORD_FIELD_NAME")); // Delete password
-                    $valid = $this->userValidated($row) !== false; // For backward compatibility
+                    $valid = $this->userValidated($user->toArray()) !== false; // For backward compatibility
 
-                    // Set up User Email field
-                    if (!EmptyValue(Config("USER_EMAIL_FIELD_NAME"))) {
-                        $UserProfile->set(Config("USER_EMAIL_FIELD_NAME"), $row[Config("USER_EMAIL_FIELD_NAME")]);
-                    }
-
-                    // Set up User Image field
+                    // Set up user image
                     if (!EmptyValue(Config("USER_IMAGE_FIELD_NAME"))) {
-                        $imageField = $UserTable->Fields[Config("USER_IMAGE_FIELD_NAME")];
+                        $imageField = Container("usertable")->Fields[Config("USER_IMAGE_FIELD_NAME")];
                         if ($imageField->hasMethod("getUploadPath")) {
                             $imageField->UploadPath = $imageField->getUploadPath();
                         }
-                        $image = GetFileImage($imageField, $row[Config("USER_IMAGE_FIELD_NAME")], Config("USER_IMAGE_SIZE"), Config("USER_IMAGE_SIZE"), Config("USER_IMAGE_CROP"));
-                        $UserProfile->set(Config("USER_PROFILE_IMAGE"), base64_encode($image)); // Save as base64 encoded
+                        $image = GetFileImage($imageField, $user->get(Config("USER_IMAGE_FIELD_NAME")), Config("USER_IMAGE_SIZE"), Config("USER_IMAGE_SIZE"), Config("USER_IMAGE_CROP"));
+                        $userProfile->set(UserProfile::$IMAGE, base64_encode($image))->saveToStorage(); // Save as base64 encoded
                     }
                 }
             } else { // User not found in user table
                 if ($customValid) { // Grant default permissions
-                    $this->setSessionUserID($usr); // User name as User ID
-                    $this->setSessionUserLevelID(-2); // Anonymous User Level
-                    $this->setupUserLevel();
-                    $row = null;
-                    $customValid = $this->userValidated($row) !== false;
+                    $this->loginUser($usr);
+                    $customValid = $this->userValidated($userProfile->toArray()) !== false;
                 }
             }
         }
-        $UserProfile->save();
         if ($customValid) {
-            return $customValid;
+            return true;
         }
         if (!$valid && !IsPasswordExpired()) {
             $this->isLoggedIn = false;
             $_SESSION[SESSION_STATUS] = ""; // Clear login status
+        }
+        if ($valid && $user) {
+            Container("app.user", $user); // Save the user
         }
         return $valid;
     }
@@ -606,17 +720,8 @@ class AdvancedSecurity
     // Valdiate System Administrator
     private function validateSysAdmin($userName, $password = "", $checkUserNameOnly = true)
     {
-        $adminUserName = Config("ADMIN_USER_NAME");
-        $adminPassword = Config("ADMIN_PASSWORD");
-        if (Config("ENCRYPTION_ENABLED")) {
-            try {
-                $adminUserName = PhpDecrypt(Config("ADMIN_USER_NAME"));
-                $adminPassword = PhpDecrypt(Config("ADMIN_PASSWORD"));
-            } catch (\Defuse\Crypto\Exception\WrongKeyOrModifiedCiphertextException $e) {
-                $adminUserName = Config("ADMIN_USER_NAME");
-                $adminPassword = Config("ADMIN_PASSWORD");
-            }
-        }
+        $adminUserName = Config("ENCRYPT_USER_NAME_AND_PASSWORD") ? PhpDecrypt(Config("ADMIN_USER_NAME")) : Config("ADMIN_USER_NAME");
+        $adminPassword = Config("ENCRYPT_USER_NAME_AND_PASSWORD") ? PhpDecrypt(Config("ADMIN_PASSWORD")) : Config("ADMIN_PASSWORD");
         if (Config("CASE_SENSITIVE_PASSWORD")) {
             return !$checkUserNameOnly && $adminUserName === $userName && $adminPassword === $password ||
                 $checkUserNameOnly && $adminUserName === $userName;
@@ -675,6 +780,7 @@ class AdvancedSecurity
     {
         // Get User Level ID from user name
         $userLevelID = "";
+        $permission = GetPrivilege($userPermission);
         if (is_array($this->UserLevel)) {
             foreach ($this->UserLevel as $row) {
                 list($levelid, $name) = $row;
@@ -689,12 +795,12 @@ class AdvancedSecurity
             for ($i = 0; $i < $cnt; $i++) {
                 list($table, $levelid, $priv) = $this->UserLevelPriv[$i];
                 if (SameText($table, PROJECT_ID . $tableName) && SameString($levelid, $userLevelID)) {
-                    $this->UserLevelPriv[$i][2] = $priv | $userPermission; // Add permission
+                    $this->UserLevelPriv[$i][2] = $priv | $permission; // Add permission
                     return;
                 }
             }
             // Add new entry
-            $this->UserLevelPriv[] = [PROJECT_ID . $tableName, $userLevelID, $userPermission];
+            $this->UserLevelPriv[] = [PROJECT_ID . $tableName, $userLevelID, $permission];
         }
     }
 
@@ -715,6 +821,7 @@ class AdvancedSecurity
     {
         // Get User Level ID from user name
         $userLevelID = "";
+        $permission = GetPrivilege($userPermission);
         if (is_array($this->UserLevel)) {
             foreach ($this->UserLevel as $row) {
                 list($levelid, $name) = $row;
@@ -729,7 +836,7 @@ class AdvancedSecurity
             for ($i = 0; $i < $cnt; $i++) {
                 list($table, $levelid, $priv) = $this->UserLevelPriv[$i];
                 if (SameText($table, PROJECT_ID . $tableName) && SameString($levelid, $userLevelID)) {
-                    $this->UserLevelPriv[$i][2] = $priv & ~$userPermission; // Remove permission
+                    $this->UserLevelPriv[$i][2] = $priv & ~$permission; // Remove permission
                     break;
                 }
             }
@@ -793,7 +900,7 @@ class AdvancedSecurity
             }
             return $priv;
         } else { // Anonymous
-            return $this->getUserLevelPrivEx($tableName, -2);
+            return $this->getUserLevelPrivEx($tableName, self::ANONYMOUS_USER_LEVEL_ID);
         }
     }
 
@@ -802,17 +909,17 @@ class AdvancedSecurity
     {
         global $Language;
         if (SameString($userLevelName, "Anonymous")) {
-            return -2;
+            return self::ANONYMOUS_USER_LEVEL_ID;
         } elseif ($Language && SameString($userLevelName, $Language->phrase("UserAnonymous"))) {
-            return -2;
+            return self::ANONYMOUS_USER_LEVEL_ID;
         } elseif (SameString($userLevelName, "Administrator")) {
-            return -1;
+            return self::ADMIN_USER_LEVEL_ID;
         } elseif ($Language && SameString($userLevelName, $Language->phrase("UserAdministrator"))) {
-            return -1;
+            return self::ADMIN_USER_LEVEL_ID;
         } elseif (SameString($userLevelName, "Default")) {
-            return 0;
+            return self::DEFAULT_USER_LEVEL_ID;
         } elseif ($Language && SameString($userLevelName, $Language->phrase("UserDefault"))) {
-            return 0;
+            return self::DEFAULT_USER_LEVEL_ID;
         } elseif ($userLevelName != "") {
             if (is_array($this->UserLevel)) {
                 foreach ($this->UserLevel as $row) {
@@ -823,7 +930,7 @@ class AdvancedSecurity
                 }
             }
         }
-        return -2; // Anonymous
+        return self::ANONYMOUS_USER_LEVEL_ID; // Anonymous
     }
 
     // Add User Level by name
@@ -842,7 +949,7 @@ class AdvancedSecurity
         if (!is_numeric($userLevelID)) {
             return;
         }
-        if ($userLevelID < -1) {
+        if ($userLevelID < self::ADMIN_USER_LEVEL_ID) {
             return;
         }
         if (!in_array($userLevelID, $this->UserLevelID)) {
@@ -867,7 +974,7 @@ class AdvancedSecurity
         if (!is_numeric($userLevelID)) {
             return;
         }
-        if ($userLevelID < -1) {
+        if ($userLevelID < self::ADMIN_USER_LEVEL_ID) {
             return;
         }
         $cnt = count($this->UserLevelID);
@@ -908,7 +1015,7 @@ class AdvancedSecurity
             if ($list != "") {
                 $list .= ", ";
             }
-            $list .= QuotedValue($this->getUserLevelName($userLevelID), DATATYPE_STRING, Config("USER_LEVEL_DBID"));
+            $list .= QuotedValue($this->getUserLevelName($userLevelID), DataType::STRING, Config("USER_LEVEL_DBID"));
         }
         return $list;
     }
@@ -919,9 +1026,9 @@ class AdvancedSecurity
         $ids = explode(Config("MULTIPLE_OPTION_SEPARATOR"), strval($userLevelID));
         $userPriv = 0;
         foreach ($ids as $id) {
-            if (strval($id) == "-1") { // System Administrator
-                return ALLOW_ALL;
-            } elseif ((int)$id >= 0 || (int)$id == -2) {
+            if ($id == self::ADMIN_USER_LEVEL_ID) { // System Administrator
+                return Allow::ALL->value;
+            } elseif ((int)$id >= self::DEFAULT_USER_LEVEL_ID || $id == self::ANONYMOUS_USER_LEVEL_ID) {
                 if (is_array($this->UserLevelPriv)) {
                     foreach ($this->UserLevelPriv as $row) {
                         list($table, $levelid, $priv) = $row;
@@ -947,13 +1054,13 @@ class AdvancedSecurity
     public function getUserLevelName($userLevelID, $lang = true)
     {
         global $Language;
-        if (strval($userLevelID) == "-2") {
-            return ($lang) ? $Language->phrase("UserAnonymous") : "Anonymous";
-        } elseif (strval($userLevelID) == "-1") {
-            return ($lang) ? $Language->phrase("UserAdministrator") : "Administrator";
-        } elseif (strval($userLevelID) == "0") {
-            return ($lang) ? $Language->phrase("UserDefault") : "Default";
-        } elseif ($userLevelID > 0) {
+        if ($userLevelID === self::ANONYMOUS_USER_LEVEL_ID) {
+            return $lang ? $Language->phrase("UserAnonymous") : "Anonymous";
+        } elseif ($userLevelID === self::ADMIN_USER_LEVEL_ID) {
+            return $lang ? $Language->phrase("UserAdministrator") : "Administrator";
+        } elseif ($userLevelID === self::DEFAULT_USER_LEVEL_ID) {
+            return $lang ? $Language->phrase("UserDefault") : "Default";
+        } elseif ($userLevelID > self::DEFAULT_USER_LEVEL_ID) {
             if (is_array($this->UserLevel)) {
                 foreach ($this->UserLevel as $row) {
                     list($levelid, $name) = $row;
@@ -984,37 +1091,43 @@ class AdvancedSecurity
     // Check privilege for List page (for menu items)
     public function allowList($tableName)
     {
-        return ($this->currentUserLevelPriv($tableName) & ALLOW_LIST);
+        return ($this->currentUserLevelPriv($tableName) & Allow::LIST->value);
     }
 
     // Check privilege for View page (for Allow-View / Detail-View)
     public function allowView($tableName)
     {
-        return ($this->currentUserLevelPriv($tableName) & ALLOW_VIEW);
+        return ($this->currentUserLevelPriv($tableName) & Allow::VIEW->value);
     }
 
     // Check privilege for Add page (for Allow-Add / Detail-Add)
     public function allowAdd($tableName)
     {
-        return ($this->currentUserLevelPriv($tableName) & ALLOW_ADD);
+        return ($this->currentUserLevelPriv($tableName) & Allow::ADD->value);
     }
 
     // Check privilege for Edit page (for Detail-Edit)
     public function allowEdit($tableName)
     {
-        return ($this->currentUserLevelPriv($tableName) & ALLOW_EDIT);
+        return ($this->currentUserLevelPriv($tableName) & Allow::EDIT->value);
+    }
+
+    // Check privilege for Edit page (for Detail-Edit)
+    public function allowDelete($tableName)
+    {
+        return ($this->currentUserLevelPriv($tableName) & Allow::DELETE->value);
     }
 
     // Check privilege for lookup
     public function allowLookup($tableName)
     {
-        return ($this->currentUserLevelPriv($tableName) & ALLOW_LOOKUP);
+        return ($this->currentUserLevelPriv($tableName) & Allow::LOOKUP->value);
     }
 
     // Check privilege for export
     public function allowExport($tableName)
     {
-        return ($this->currentUserLevelPriv($tableName) & ALLOW_EXPORT);
+        return ($this->currentUserLevelPriv($tableName) & Allow::EXPORT->value);
     }
 
     // Check if user password expired
@@ -1070,10 +1183,10 @@ class AdvancedSecurity
     {
         $isAdmin = $this->isSysAdmin();
         if (!$isAdmin) {
-            $isAdmin = $this->CurrentUserLevelID == -1 || $this->hasUserLevelID(-1) || $this->canAdmin();
+            $isAdmin = $this->CurrentUserLevelID == self::ADMIN_USER_LEVEL_ID || $this->hasUserLevelID(self::ADMIN_USER_LEVEL_ID) || $this->canAdmin();
         }
         if (!$isAdmin) {
-            $isAdmin = $this->CurrentUserID == -1 || in_array(-1, $this->UserID);
+            $isAdmin = $this->CurrentUserID == self::ADMIN_USER_LEVEL_ID || in_array(self::ADMIN_USER_LEVEL_ID, $this->UserID);
         }
         return $isAdmin;
     }
@@ -1104,35 +1217,18 @@ class AdvancedSecurity
     }
 
     // Get current user info
-    public function currentUserInfo($fldname)
+    public function currentUserInfo(string $fldname)
     {
-        global $UserTable;
-        $info = null;
-        if (Config("USER_TABLE") && !$this->isSysAdmin()) {
-            $filter = GetUserFilter(Config("USER_ID_FIELD_NAME"), $this->CurrentUserID);
-            if ($filter != "") {
-                $sql = $UserTable->getSql($filter);
-                if ($row = ExecuteRow($sql, $UserTable->Dbid)) {
-                    $info = GetUserInfo($fldname, $row);
-                }
-            }
+        if (!$this->isSysAdmin() && Config("USER_TABLE") && $this->currentUserName()) {
+            return FindUserByUserName($this->currentUserName())?->get($fldname);
         }
-        return $info;
+        return null;
     }
 
     // Get User ID by user name
     public function getUserIDByUserName($userName)
     {
-        global $UserTable;
-        if (strval($userName) != "") {
-            $filter = GetUserFilter(Config("LOGIN_USERNAME_FIELD_NAME"), $userName);
-            $sql = $UserTable->getSql($filter);
-            if ($row = Conn($UserTable->Dbid)->fetchAssociative($sql)) {
-                $userID = GetUserInfo(Config("USER_ID_FIELD_NAME"), $row);
-                return $userID;
-            }
-        }
-        return "";
+        return FindUserByUserName($userName)?->get(Config("USER_ID_FIELD_NAME")) ?? "";
     }
 
     // Load User ID
@@ -1142,7 +1238,7 @@ class AdvancedSecurity
         $this->UserID = [];
         if (strval($this->CurrentUserID) == "") {
             // Handle empty User ID here
-        } elseif ($this->CurrentUserID != "-1") {
+        } elseif ($this->CurrentUserID != self::ADMIN_USER_LEVEL_ID) {
             // Get first level
             $this->addUserID($this->CurrentUserID);
             $UserTable = Container("usertable");
@@ -1153,7 +1249,7 @@ class AdvancedSecurity
             $sql = $UserTable->getSql($filter);
             $rows = Conn($UserTable->Dbid)->executeQuery($sql)->fetchAll();
             foreach ($rows as $row) {
-                $this->addUserID(GetUserInfo(Config("USER_ID_FIELD_NAME"), $row));
+                $this->addUserID($row[Config("USER_ID_FIELD_NAME")]);
             }
         }
     }
@@ -1206,7 +1302,7 @@ class AdvancedSecurity
     // User ID list
     public function userIDList()
     {
-        return implode(", ", array_map(fn($userId) => QuotedValue($userId, DATATYPE_NUMBER, Config("USER_TABLE_DBID")), $this->UserID));
+        return implode(", ", array_map(fn($userId) => QuotedValue($userId, DataType::NUMBER, Config("USER_TABLE_DBID")), $this->UserID));
     }
 
     // List of allowed User IDs for this user
@@ -1230,8 +1326,8 @@ class AdvancedSecurity
     // User Level Loaded event
     public function userLevelLoaded()
     {
-        //$this->AddUserPermission(<UserLevelName>, <TableName>, <UserPermission>);
-        //$this->DeleteUserPermission(<UserLevelName>, <TableName>, <UserPermission>);
+        //$this->addUserPermission(<UserLevelName>, <TableName>, <UserPermission>);
+        //$this->deleteUserPermission(<UserLevelName>, <TableName>, <UserPermission>);
     }
 
     // Table Permission Loading event
@@ -1254,14 +1350,14 @@ class AdvancedSecurity
     }
 
     // User Validated event
-    public function userValidated(&$rs)
+    public function userValidated($rs)
     {
         // Example:
         //$_SESSION['UserEmail'] = $rs['Email'];
     }
 
     // User PasswordExpired event
-    public function userPasswordExpired(&$rs)
+    public function userPasswordExpired($rs)
     {
         //Log("User_PasswordExpired");
     }

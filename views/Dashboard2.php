@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Dashboard Page object
 $Dashboard2 = $Page;
@@ -10,14 +10,14 @@ var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
 ew.deepAssign(ew.vars, { tables: { Dashboard2: currentTable } });
 var currentPageID = ew.PAGE_ID = "dashboard";
 var currentForm;
-var fDashboard2dashboard;
+var fDashboard2srch;
 loadjs.ready(["wrapper", "head"], function () {
     let $ = jQuery;
     let fields = currentTable.fields;
 
     // Form object
     let form = new ew.FormBuilder()
-        .setId("fDashboard2dashboard")
+        .setId("fDashboard2srch")
         .setPageId("dashboard")
         .build();
     window[form.id] = form;
@@ -35,6 +35,7 @@ loadjs.ready("head", function () {
 <div class="btn-toolbar ew-toolbar">
 <?php
     $Page->ExportOptions->render("body");
+    $Page->SearchOptions->render("body");
 ?>
 </div>
 <?php $Page->showPageHeader(); ?>
@@ -54,7 +55,7 @@ $Page->showMessage();
                     <p class="card-text"><i class="fas fa-users"></i></p>
                     <p class="record-count">
                         <?php
-                            $conn =& DbHelper();
+                            $conn = conn();
                             $sql = "SELECT COUNT(*) FROM jdh_patients";
                             $total_patients = ExecuteScalar($sql);
                             echo $total_patients;
@@ -72,7 +73,7 @@ $Page->showMessage();
                     <p class="card-text"><i class="fas fa-phone"></i></p>
                     <p class="record-count">
                         <?php
-                            $conn =& DbHelper();
+                            $conn = conn();
                             $sql = "SELECT COUNT(*) FROM jdh_users WHERE role_id=1";
                             $total_receptionists = ExecuteScalar($sql);
                             echo $total_receptionists;
@@ -90,7 +91,7 @@ $Page->showMessage();
                     <p class="card-text"><i class="fas fa-user-md"></i></p>
                     <p class="record-count">
                         <?php
-                            $conn =& DbHelper();
+                            $conn = conn();
                             $sql = "SELECT COUNT(*) FROM jdh_users WHERE role_id=2";
                             $total_doctors = ExecuteScalar($sql);
                             echo $total_doctors;
@@ -108,7 +109,7 @@ $Page->showMessage();
                     <p class="card-text"><i class="fas fa-user-nurse"></i></p>
                     <p class="record-count">
                         <?php
-                            $conn =& DbHelper();
+                            $conn = conn();
                             $sql = "SELECT COUNT(*) FROM jdh_users WHERE role_id=3";
                             $total_nurses = ExecuteScalar($sql);
                             echo $total_nurses;
@@ -126,7 +127,7 @@ $Page->showMessage();
                     <p class="card-text"><i class="fas fa-flask-vial"></i></p>
                     <p class="record-count">
                         <?php
-                            $conn =& DbHelper();
+                            $conn = conn();
                             $sql = "SELECT COUNT(*) FROM jdh_users WHERE role_id=4";
                             $total_lab_techs = ExecuteScalar($sql);
                             echo $total_lab_techs;
@@ -144,7 +145,7 @@ $Page->showMessage();
                     <p class="card-text"><i class="fas fa-pills"></i></p>
                     <p class="record-count">
                         <?php
-                            $conn =& DbHelper();
+                            $conn = conn();
                             $sql = "SELECT COUNT(*) FROM jdh_users WHERE role_id=5";
                             $total_pharmacists = ExecuteScalar($sql);
                             echo $total_pharmacists;
@@ -162,7 +163,7 @@ $Page->showMessage();
                     <p class="card-text"><i class="fas fa-money-bill-transfer"></i></p>
                     <p class="record-count">
                         <?php
-                            $conn =& DbHelper();
+                            $conn = conn();
                             $sql = "SELECT COUNT(*) FROM jdh_users WHERE role_id=6";
                             $total_accountants = ExecuteScalar($sql);
                             echo $total_accountants;
@@ -180,7 +181,7 @@ $Page->showMessage();
                     <p class="card-text"><i class="fas fa-money-bill-transfer"></i></p>
                     <p class="record-count">
                         <?php
-                            $conn =& DbHelper();
+                            $conn = conn();
                             $sql = "SELECT COUNT(*) FROM jdh_users WHERE role_id=7";
                             $total_stores = ExecuteScalar($sql);
                             echo $total_stores;
@@ -198,7 +199,7 @@ $Page->showMessage();
                     <p class="card-text"><i class="fas fa-file"></i></p>
                     <p class="record-count">
                         <?php
-                            $conn =& DbHelper();
+                            $conn = conn();
                             $sql1 = "SELECT SUM(service_cost) FROM jdh_lab_income";
                             $lab_income = ExecuteScalar($sql1);
                             $sql2 = "SELECT SUM(selling_price * units_given) FROM jdh_pharmacy_income";

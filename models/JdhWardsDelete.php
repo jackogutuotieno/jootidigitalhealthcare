@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -107,7 +113,7 @@ class JdhWardsDelete extends JdhWards
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -117,8 +123,17 @@ class JdhWardsDelete extends JdhWards
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->ward_id->setVisibility();
+        $this->facility_id->setVisibility();
+        $this->ward_name->setVisibility();
+        $this->description->Visible = false;
     }
 
     // Constructor
@@ -136,10 +151,10 @@ class JdhWardsDelete extends JdhWards
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_wards)
-        if (!isset($GLOBALS["jdh_wards"]) || get_class($GLOBALS["jdh_wards"]) == PROJECT_NAMESPACE . "jdh_wards") {
+        if (!isset($GLOBALS["jdh_wards"]) || $GLOBALS["jdh_wards"]::class == PROJECT_NAMESPACE . "jdh_wards") {
             $GLOBALS["jdh_wards"] = &$this;
         }
 
@@ -149,7 +164,7 @@ class JdhWardsDelete extends JdhWards
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -165,7 +180,7 @@ class JdhWardsDelete extends JdhWards
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -214,13 +229,11 @@ class JdhWardsDelete extends JdhWards
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -238,7 +251,7 @@ class JdhWardsDelete extends JdhWards
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -255,20 +268,19 @@ class JdhWardsDelete extends JdhWards
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -295,7 +307,7 @@ class JdhWardsDelete extends JdhWards
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -353,7 +365,6 @@ class JdhWardsDelete extends JdhWards
     public $RecordCount;
     public $RecKeys = [];
     public $StartRowCount = 1;
-    public $RowCount = 0;
 
     /**
      * Page run
@@ -362,18 +373,20 @@ class JdhWardsDelete extends JdhWards
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm;
+        global $ExportType, $Language, $Security, $CurrentForm;
 
         // Use layout
         $this->UseLayout = $this->UseLayout && ConvertToBool(Param(Config("PAGE_LAYOUT"), true));
 
         // View
         $this->View = Get(Config("VIEW"));
+
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->ward_id->setVisibility();
-        $this->facility_id->setVisibility();
-        $this->ward_name->setVisibility();
-        $this->description->Visible = false;
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -381,7 +394,7 @@ class JdhWardsDelete extends JdhWards
         }
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -444,10 +457,10 @@ class JdhWardsDelete extends JdhWards
                 }
                 // Return JSON error message if UseAjaxActions
                 if ($this->UseAjaxActions) {
-                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                    WriteJson(["success" => false, "error" => $this->getFailureMessage()]);
                     $this->clearFailureMessage();
                     $this->terminate();
-                    return;                    
+                    return;
                 }
                 if ($this->InlineDelete) {
                     $this->terminate($this->getReturnUrl()); // Return to caller
@@ -458,13 +471,9 @@ class JdhWardsDelete extends JdhWards
             }
         }
         if ($this->isShow()) { // Load records for display
-            if ($this->Recordset = $this->loadRecordset()) {
-                $this->TotalRecords = $this->Recordset->recordCount(); // Get record count
-            }
+            $this->Recordset = $this->loadRecordset();
             if ($this->TotalRecords <= 0) { // No record found, exit
-                if ($this->Recordset) {
-                    $this->Recordset->close();
-                }
+                $this->Recordset?->free();
                 $this->terminate("jdhwardslist"); // Return to list
                 return;
             }
@@ -479,7 +488,7 @@ class JdhWardsDelete extends JdhWards
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -493,41 +502,58 @@ class JdhWardsDelete extends JdhWards
         }
     }
 
-    // Load recordset
+    /**
+     * Load result set
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return Doctrine\DBAL\Result Result
+     */
     public function loadRecordset($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
-        $rs = new Recordset($result, $sql);
+        $result = $sql->executeQuery();
+        if (property_exists($this, "TotalRecords") && $rowcnt < 0) {
+            $this->TotalRecords = $result->rowCount();
+            if ($this->TotalRecords <= 0) { // Handle database drivers that does not return rowCount()
+                $this->TotalRecords = $this->getRecordCount($this->getListSql());
+            }
+        }
 
         // Call Recordset Selected event
-        $this->recordsetSelected($rs);
-        return $rs;
+        $this->recordsetSelected($result);
+        return $result;
     }
 
-    // Load records as associative array
+    /**
+     * Load records as associative array
+     *
+     * @param int $offset Offset
+     * @param int $rowcnt Maximum number of rows
+     * @return void
+     */
     public function loadRows($offset = -1, $rowcnt = -1)
     {
         // Load List page SQL (QueryBuilder)
         $sql = $this->getListSql();
 
-        // Load recordset
+        // Load result set
         if ($offset > -1) {
             $sql->setFirstResult($offset);
         }
         if ($rowcnt > 0) {
             $sql->setMaxResults($rowcnt);
         }
-        $result = $sql->execute();
+        $result = $sql->executeQuery();
         return $result->fetchAllAssociative();
     }
 
@@ -558,23 +584,14 @@ class JdhWardsDelete extends JdhWards
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -616,7 +633,7 @@ class JdhWardsDelete extends JdhWards
         // description
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // ward_id
             $this->ward_id->ViewValue = $this->ward_id->CurrentValue;
 
@@ -625,11 +642,11 @@ class JdhWardsDelete extends JdhWards
             if ($curVal != "") {
                 $this->facility_id->ViewValue = $this->facility_id->lookupCacheOption($curVal);
                 if ($this->facility_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->facility_id->Lookup->getTable()->Fields["id"]->searchExpression(), "=", $curVal, $this->facility_id->Lookup->getTable()->Fields["id"]->searchDataType(), "");
                     $sqlWrk = $this->facility_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
+                    $config->setResultCache($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
@@ -660,7 +677,7 @@ class JdhWardsDelete extends JdhWards
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -752,15 +769,15 @@ class JdhWardsDelete extends JdhWards
             $subject = $table . " " . $Language->phrase("RecordDeleted");
             $action = $Language->phrase("ActionDeleted");
             $email = new Email();
-            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-            $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-            $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-            $email->replaceSubject($subject); // Replace Subject
-            $email->replaceContent("<!--table-->", $table);
-            $email->replaceContent("<!--key-->", implode(", ", $successKeys));
-            $email->replaceContent("<!--action-->", $action);
-            $args = [];
-            $args["rs"] = &$rsold;
+            $email->load(Config("EMAIL_NOTIFY_TEMPLATE"), data: [
+                "From" => Config("SENDER_EMAIL"), // Replace Sender
+                "To" => Config("RECIPIENT_EMAIL"), // Replace Recipient
+                "Subject" => $subject,  // Replace Subject
+                "Table" => $table,
+                "Key" => implode(", ", $successKeys),
+                "Action" => $action
+            ]);
+            $args = ["rs" => $rsold];
             $emailSent = false;
             if ($this->emailSending($email, $args)) {
                 $emailSent = $email->send();
@@ -781,7 +798,7 @@ class JdhWardsDelete extends JdhWards
         if ((IsJsonResponse() || ConvertToBool(Param("infinitescroll"))) && $deleteRows) {
             $rows = $this->getRecordsFromRecordset($rsold);
             $table = $this->TableVar;
-            if (Route(2) !== null) { // Single delete
+            if (Param("key_m") === null) { // Single delete
                 $rows = $rows[0]; // Return object
             }
             WriteJson(["success" => true, "action" => Config("API_DELETE_ACTION"), $table => $rows]);
@@ -803,7 +820,7 @@ class JdhWardsDelete extends JdhWards
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -824,7 +841,7 @@ class JdhWardsDelete extends JdhWards
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -867,11 +884,11 @@ class JdhWardsDelete extends JdhWards
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

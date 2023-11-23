@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $PatientQueuesSummary = &$Page;
@@ -98,7 +98,7 @@ while ($Page->RecordCount < count($Page->DetailRecords) && $Page->RecordCount < 
 <?php
         // Render detail row
         $Page->resetAttributes();
-        $Page->RowType = ROWTYPE_DETAIL;
+        $Page->RowType = RowType::DETAIL;
         $Page->renderRow();
 ?>
     <tr<?= $Page->rowAttributes(); ?>>
@@ -138,7 +138,7 @@ while ($Page->RecordCount < count($Page->DetailRecords) && $Page->RecordCount < 
 </div>
 <!-- /.ew-grid-middle-panel -->
 <!-- Report grid (end) -->
-<?php if (!$Page->isExport() && !($Page->DrillDown && $Page->TotalGroups > 0)) { ?>
+<?php if (!$Page->isExport() && !($Page->DrillDown && $Page->TotalGroups > 0) && $Page->Pager->Visible) { ?>
 <!-- Bottom pager -->
 <div class="card-footer ew-grid-lower-panel">
 <?= $Page->Pager->render() ?>

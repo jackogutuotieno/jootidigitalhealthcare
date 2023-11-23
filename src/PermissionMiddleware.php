@@ -1,13 +1,12 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Slim\Routing\RouteContext;
 use Slim\Exception\HttpBadRequestException;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
-use Nyholm\Psr7\Factory\Psr17Factory;
 
 /**
  * Permission middleware
@@ -17,50 +16,45 @@ class PermissionMiddleware
     // Invoke
     public function __invoke(Request $request, RequestHandler $handler): Response
     {
-        global $Language, $UserProfile, $Security, $ResponseFactory;
+        global $Language, $Security;
 
-        // Non-API call
-        $GLOBALS["IsApi"] = false;
-
-        // Set up request
+        // Request
         $GLOBALS["Request"] = $request;
-        $response = $ResponseFactory->createResponse();
-        $routeContext = RouteContext::fromRequest($request);
-        $route = $routeContext->getRoute();
-        //$basePath = $routeContext->getBasePath();
-        //$routeParser = $routeContext->getRouteParser();
-        $pageAction = $route->getName();
-        $ar = explode("-", $pageAction);
-        $currentPageName = @$ar[0]; // Get current page name
-        $GLOBALS["RouteValues"] = [$currentPageName];
-        if (count($ar) > 2) {
-            list(, $table, $pageAction) = $ar;
-        }
+        $routeName = RouteName();
+        $ar = explode(".", $routeName);
+        $pageAction = $ar[0] ?? ""; // Page action
+        $table = $ar[1] ?? ""; // Table
 
-        // Set up Page ID
+        // Page ID
         if (!defined(PROJECT_NAMESPACE . "PAGE_ID")) {
             define(PROJECT_NAMESPACE . "PAGE_ID", $pageAction);
         }
 
-        // Set up language
-        $Language = Container("language");
+        // Language
+        $Language = Container("app.language");
 
-        // Load Security
-        $UserProfile = Container("profile");
-        $Security = Container("security");
+        // Security
+        $Security = Container("app.security");
 
-        // Set up current table
-        if (isset($table) && $table != "") {
+        // Current table
+        if ($table != "") {
             $GLOBALS["Table"] = Container($table);
         }
 
         // Auto login
-        if (!$Security->isLoggedIn() && !IsPasswordReset() && !IsPasswordExpired() && !IsLoggingIn2FA()) {
+        if (
+            !$Security->isLoggedIn() &&
+            !IsPasswordReset() &&
+            !IsPasswordExpired() &&
+            !IsLoggingIn2FA() &&
+            !IsRegistering() &&
+            !IsRegistering2FA()
+        ) {
             $Security->autoLogin();
         }
 
-        // Validate security
-        if (isset($table) && $table != "") { // Table level
+        // Check permission
+        if ($table != "") { // Table level
             $Security->loadTablePermissions($table);
             if (
                 $pageAction == Config("VIEW_ACTION") && !$Security->canView() ||
@@ -69,70 +63,75 @@ class PermissionMiddleware
                 $pageAction == Config("DELETE_ACTION") && !$Security->canDelete() ||
                 in_array($pageAction, [Config("SEARCH_ACTION"), Config("QUERY_ACTION")]) && !$Security->canSearch()
             ) {
-                $Security->saveLastUrl();
                 $_SESSION[SESSION_FAILURE_MESSAGE] = DeniedMessage(); // Set no permission
                 if ($Security->canList()) { // Back to list
                     $pageAction = Config("LIST_ACTION");
-                    $routeName = $GLOBALS["Table"]->getListUrl();
-                    return $this->getRedirectResponse($request, $response, $routeName . "-" . $table . "-" . $pageAction);
+                    $routeUrl = $GLOBALS["Table"]->getListUrl();
+                    return $this->redirect($table . "." . $pageAction);
                 } else {
-                    return $this->getRedirectResponse($request, $response);
+                    return $this->redirect();
                 }
             } elseif (
                 $pageAction == Config("LIST_ACTION") && !$Security->canList() || // List Permission
-                in_array($pageAction, [Config("CUSTOM_REPORT_ACTION"), Config("SUMMARY_REPORT_ACTION"), Config("CROSSTAB_REPORT_ACTION"), Config("DASHBOARD_REPORT_ACTION")]) && !$Security->canList()
+                in_array($pageAction, [
+                    Config("CUSTOM_REPORT_ACTION"),
+                    Config("SUMMARY_REPORT_ACTION"),
+                    Config("CROSSTAB_REPORT_ACTION"),
+                    Config("DASHBOARD_REPORT_ACTION"),
+                    Config("CALENDAR_REPORT_ACTION")
+                ]) && !$Security->canList()
             ) { // No permission
-                $Security->saveLastUrl();
                 $_SESSION[SESSION_FAILURE_MESSAGE] = DeniedMessage(); // Set no permission
-                return $this->getRedirectResponse($request, $response);
+                return $this->redirect();
             }
         } else { // Others
             if ($pageAction == "changepassword") { // Change password
                 if (!IsPasswordReset() && !IsPasswordExpired()) {
                     if (!$Security->isLoggedIn() || $Security->isSysAdmin()) {
-                        return $this->getRedirectResponse($request, $response);
+                        return $this->redirect();
                     }
                 }
             } elseif ($pageAction == "personaldata") { // Personal data
                 if (!$Security->isLoggedIn() || $Security->isSysAdmin()) {
                     $_SESSION[SESSION_FAILURE_MESSAGE] = DeniedMessage(); // Set no permission
-                    return $this->getRedirectResponse($request, $response);
+                    return $this->redirect();
                 }
             } elseif ($pageAction == "userpriv") { // User priv
                 $table = "";
                 $pageAction = Config("LIST_ACTION");
-                $routeName = Container($table)->getListUrl();
+                $routeUrl = Container($table)->getListUrl();
                 $Security->loadTablePermissions($table);
                 if (!$Security->isLoggedIn() || !$Security->isAdmin()) {
                     $_SESSION[SESSION_FAILURE_MESSAGE] = DeniedMessage(); // Set no permission
-                    return $this->getRedirectResponse($request, $response, $routeName . "-" . $table . "-" . $pageAction);
+                    return $this->redirect($table . "." . $pageAction);
                 }
             }
         }
 
         // Validate CSRF
-        if (Config("CHECK_TOKEN") && !IsSamlResponse()) {
-            if (!ValidateCsrf($request)) {
-                throw new HttpBadRequestException($request, $Language->phrase("InvalidPostRequest"));
-            }
+        if (Config("CHECK_TOKEN") && !IsSamlResponse() && !ValidateCsrf($request)) {
+            throw new HttpBadRequestException($request, $Language->phrase("InvalidPostRequest"));
         }
 
         // Handle request
         return $handler->handle($request);
     }
 
-    // Get response for redirection
-    public function getRedirectResponse(Request $request, Response $response, string $url = "login")
+    // Redirect
+    public function redirect(string $routeName = "login")
     {
-        $isModal = $request->getQueryParam("modal") == "1";
-        if ($isModal) {
-            if ($url == "login" && Config("USE_MODAL_LOGIN")) { // Redirect to login
-                return $response->withHeader("Location", UrlFor($url))->withStatus(302);
-            } else {
-                return $response->withJson(["url" => UrlFor($url)]);
-            }
-        } else {
-            return $response->withHeader("Location", UrlFor($url))->withStatus(302);
+        global $Request, $ResponseFactory, $Security;
+        $response = $ResponseFactory->createResponse(); // Create response
+        $GLOBALS["Response"] = &$response; // Note: global $Response does not work
+        if ($routeName == "login") {
+            $Security->saveLastUrl(); // Save last URL for redirection after login
         }
+        if (
+            $Request->getQueryParam("modal") == "1" && // Modal
+            !($routeName == "login" && Config("USE_MODAL_LOGIN")) // Not modal login
+        ) {
+            return $response->withJson(["url" => UrlFor($routeName)]);
+        }
+        return $response->withHeader("Location", UrlFor($routeName))->withStatus(302);
     }
 }

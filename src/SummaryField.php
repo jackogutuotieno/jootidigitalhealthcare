@@ -1,16 +1,12 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Summary field class
  */
 class SummaryField
 {
-    public $Name; // Field name
-    public $FieldVar; // Field variable name
-    public $Expression; // Field expression (used in SQL)
-    public $SummaryType;
     public $SummaryCaption;
     public $SummaryViewAttrs;
     public $SummaryLinkAttrs;
@@ -25,12 +21,12 @@ class SummaryField
     public $SummaryRowCount;
 
     // Constructor
-    public function __construct($fldvar, $fldname, $fldexpression, $smrytype)
-    {
-        $this->FieldVar = $fldvar;
-        $this->Name = $fldname;
-        $this->Expression = $fldexpression;
-        $this->SummaryType = $smrytype;
+    public function __construct(
+        public $FieldVar, // Field variable name
+        public $Name, // Field name
+        public $Expression, // Field expression (used in SQL)
+        public $SummaryType,
+    ) {
     }
 
     // Summary view attributes

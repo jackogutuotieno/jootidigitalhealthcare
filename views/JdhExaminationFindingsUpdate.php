@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhExaminationFindingsUpdate = &$Page;
@@ -22,10 +22,12 @@ loadjs.ready(["wrapper", "head"], function () {
 
         // Add fields
         .setFields([
+            ["id", [fields.id.visible && fields.id.required ? ew.Validators.required(fields.id.caption) : null], fields.id.isInvalid],
             ["patient_id", [fields.patient_id.visible && fields.patient_id.required ? ew.Validators.required(fields.patient_id.caption) : null, ew.Validators.integer, ew.Validators.selected], fields.patient_id.isInvalid],
             ["general_exams", [fields.general_exams.visible && fields.general_exams.required ? ew.Validators.required(fields.general_exams.caption) : null], fields.general_exams.isInvalid],
             ["systematic_exams", [fields.systematic_exams.visible && fields.systematic_exams.required ? ew.Validators.required(fields.systematic_exams.caption) : null], fields.systematic_exams.isInvalid],
-            ["submitted_by_user_id", [fields.submitted_by_user_id.visible && fields.submitted_by_user_id.required ? ew.Validators.required(fields.submitted_by_user_id.caption) : null], fields.submitted_by_user_id.isInvalid]
+            ["submitted_by_user_id", [fields.submitted_by_user_id.visible && fields.submitted_by_user_id.required ? ew.Validators.required(fields.submitted_by_user_id.caption) : null], fields.submitted_by_user_id.isInvalid],
+            ["date_submitted", [fields.date_submitted.visible && fields.date_submitted.required ? ew.Validators.required(fields.date_submitted.caption) : null, ew.Validators.datetime(fields.date_submitted.clientFormatPattern), ew.Validators.selected], fields.date_submitted.isInvalid]
         ])
 
         // Form_CustomValidate
@@ -58,7 +60,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_examination_findingsupdate" id="fjdh_examination_findingsupdate" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_examination_findingsupdate" id="fjdh_examination_findingsupdate" class="<?= $Page->FormClassName ?>" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -163,6 +165,53 @@ $Page->showMessage();
         </label>
         <div class="<?= $Page->RightColumnClass ?>">
             <div<?= $Page->submitted_by_user_id->cellAttributes() ?>>
+            </div>
+        </div>
+    </div>
+<?php } ?>
+<?php if ($Page->date_submitted->Visible && (!$Page->isConfirm() || $Page->date_submitted->multiUpdateSelected())) { // date_submitted ?>
+    <div id="r_date_submitted"<?= $Page->date_submitted->rowAttributes() ?>>
+        <label for="x_date_submitted" class="<?= $Page->LeftColumnClass ?>">
+            <div class="form-check">
+                <input type="checkbox" name="u_date_submitted" id="u_date_submitted" class="form-check-input ew-multi-select" value="1"<?= $Page->date_submitted->multiUpdateSelected() ? " checked" : "" ?>>
+                <label class="form-check-label" for="u_date_submitted"><?= $Page->date_submitted->caption() ?></label>
+            </div>
+        </label>
+        <div class="<?= $Page->RightColumnClass ?>">
+            <div<?= $Page->date_submitted->cellAttributes() ?>>
+                <span id="el_jdh_examination_findings_date_submitted">
+                <input type="<?= $Page->date_submitted->getInputTextType() ?>" name="x_date_submitted" id="x_date_submitted" data-table="jdh_examination_findings" data-field="x_date_submitted" value="<?= $Page->date_submitted->EditValue ?>" placeholder="<?= HtmlEncode($Page->date_submitted->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Page->date_submitted->formatPattern()) ?>"<?= $Page->date_submitted->editAttributes() ?> aria-describedby="x_date_submitted_help">
+                <?= $Page->date_submitted->getCustomMessage() ?>
+                <div class="invalid-feedback"><?= $Page->date_submitted->getErrorMessage() ?></div>
+                <?php if (!$Page->date_submitted->ReadOnly && !$Page->date_submitted->Disabled && !isset($Page->date_submitted->EditAttrs["readonly"]) && !isset($Page->date_submitted->EditAttrs["disabled"])) { ?>
+                <script>
+                loadjs.ready(["fjdh_examination_findingsupdate", "datetimepicker"], function () {
+                    let format = "<?= DateFormat(11) ?>",
+                        options = {
+                            localization: {
+                                locale: ew.LANGUAGE_ID + "-u-nu-" + ew.getNumberingSystem(),
+                                hourCycle: format.match(/H/) ? "h24" : "h12",
+                                format,
+                                ...ew.language.phrase("datetimepicker")
+                            },
+                            display: {
+                                icons: {
+                                    previous: ew.IS_RTL ? "fa-solid fa-chevron-right" : "fa-solid fa-chevron-left",
+                                    next: ew.IS_RTL ? "fa-solid fa-chevron-left" : "fa-solid fa-chevron-right"
+                                },
+                                components: {
+                                    hours: !!format.match(/h/i),
+                                    minutes: !!format.match(/m/),
+                                    seconds: !!format.match(/s/i)
+                                },
+                                theme: ew.getPreferredTheme()
+                            }
+                        };
+                    ew.createDateTimePicker("fjdh_examination_findingsupdate", "x_date_submitted", ew.deepAssign({"useCurrent":false,"display":{"sideBySide":false}}, options));
+                });
+                </script>
+                <?php } ?>
+                </span>
             </div>
         </div>
     </div>

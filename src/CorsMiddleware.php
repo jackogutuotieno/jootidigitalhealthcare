@@ -1,11 +1,11 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Routing\RouteContext;
 
 /**
@@ -13,7 +13,6 @@ use Slim\Routing\RouteContext;
  */
 final class CorsMiddleware implements MiddlewareInterface
 {
-    public $Config;
     protected $Default = [
         "Access-Control-Allow-Origin" => "*",
         "Access-Control-Allow-Headers" => "",
@@ -24,23 +23,23 @@ final class CorsMiddleware implements MiddlewareInterface
     /**
      * Constructor
      */
-    public function __construct($config = [])
+    public function __construct(public array $Config = [])
     {
-        $this->Config = array_merge($this->Default, $config);
+        $this->Config = array_merge($this->Default, $this->Config);
     }
 
     /**
      * Invoke middleware
      *
-     * @param ServerRequestInterface $request The request
-     * @param RequestHandlerInterface $handler The handler
+     * @param Request $request Request
+     * @param RequestHandler $handler Handler
      *
-     * @return ResponseInterface The response
+     * @return Response
      */
-    public function process(
-        ServerRequestInterface $request,
-        RequestHandlerInterface $handler
-    ): ResponseInterface {
+    public function process(Request $request, RequestHandler $handler): Response
+    {
+        // Set up request
+        $GLOBALS["Request"] = $request;
         $response = $handler->handle($request);
         $headers = array_keys($this->Config);
 
@@ -54,9 +53,7 @@ final class CorsMiddleware implements MiddlewareInterface
             if ($this->Config["Access-Control-Allow-Methods"]) {
                 $response = $response->withHeader("Access-Control-Allow-Methods", $this->Config["Access-Control-Allow-Methods"]);
             } else { // Default
-                $routeContext = RouteContext::fromRequest($request);
-                $routingResults = $routeContext->getRoutingResults();
-                $methods = $routingResults->getAllowedMethods();
+                $methods = RoutingResults($request)?->getAllowedMethods() ?? [];
                 $response = $response->withHeader("Access-Control-Allow-Methods", implode(", ", array_unique($methods)));
             }
         }

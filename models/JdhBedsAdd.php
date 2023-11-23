@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -107,7 +113,7 @@ class JdhBedsAdd extends JdhBeds
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -117,8 +123,18 @@ class JdhBedsAdd extends JdhBeds
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->id->Visible = false;
+        $this->facility_id->setVisibility();
+        $this->ward_id->setVisibility();
+        $this->bed_number->setVisibility();
+        $this->assigned->setVisibility();
     }
 
     // Constructor
@@ -136,10 +152,10 @@ class JdhBedsAdd extends JdhBeds
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_beds)
-        if (!isset($GLOBALS["jdh_beds"]) || get_class($GLOBALS["jdh_beds"]) == PROJECT_NAMESPACE . "jdh_beds") {
+        if (!isset($GLOBALS["jdh_beds"]) || $GLOBALS["jdh_beds"]::class == PROJECT_NAMESPACE . "jdh_beds") {
             $GLOBALS["jdh_beds"] = &$this;
         }
 
@@ -149,7 +165,7 @@ class JdhBedsAdd extends JdhBeds
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -165,7 +181,7 @@ class JdhBedsAdd extends JdhBeds
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -214,13 +230,11 @@ class JdhBedsAdd extends JdhBeds
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -238,7 +252,7 @@ class JdhBedsAdd extends JdhBeds
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -250,17 +264,25 @@ class JdhBedsAdd extends JdhBeds
                 ob_end_clean();
             }
 
-            // Handle modal response (Assume return to modal for simplicity)
+            // Handle modal response
             if ($this->IsModal) { // Show as modal
-                $result = ["url" => GetUrl($url), "modal" => "1"];
                 $pageName = GetPageName($url);
-                if ($pageName != $this->getListUrl()) { // Not List page => View page
-                    $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhbedsview"; // If View page, no primary button
-                } else { // List page
-                    // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
-                    $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
-                    $this->clearFailureMessage();
+                $result = ["url" => GetUrl($url), "modal" => "1"];  // Assume return to modal for simplicity
+                if (
+                    SameString($pageName, GetPageName($this->getListUrl())) ||
+                    SameString($pageName, GetPageName($this->getViewUrl())) ||
+                    SameString($pageName, GetPageName(CurrentMasterTable()?->getViewUrl() ?? ""))
+                ) { // List / View / Master View page
+                    if (!SameString($pageName, GetPageName($this->getListUrl()))) { // Not List page
+                        $result["caption"] = $this->getModalCaption($pageName);
+                        $result["view"] = SameString($pageName, "jdhbedsview"); // If View page, no primary button
+                    } else { // List page
+                        $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
+                        $this->clearFailureMessage();
+                    }
+                } else { // Other pages (add messages and then clear messages)
+                    $result = array_merge($this->getMessages(), ["modal" => "1"]);
+                    $this->clearMessages();
                 }
                 WriteJson($result);
             } else {
@@ -271,20 +293,19 @@ class JdhBedsAdd extends JdhBeds
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -311,7 +332,7 @@ class JdhBedsAdd extends JdhBeds
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -364,44 +385,47 @@ class JdhBedsAdd extends JdhBeds
     }
 
     // Lookup data
-    public function lookup($ar = null)
+    public function lookup(array $req = [], bool $response = true)
     {
         global $Language, $Security;
 
         // Get lookup object
-        $fieldName = $ar["field"] ?? Post("field");
-        $lookup = $this->Fields[$fieldName]->Lookup;
-        $name = $ar["name"] ?? Post("name");
-        $isQuery = ContainsString($name, "query_builder_rule");
-        if ($isQuery) {
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
             $lookup->FilterFields = []; // Skip parent fields if any
         }
 
         // Get lookup parameters
-        $lookupType = $ar["ajax"] ?? Post("ajax", "unknown");
+        $lookupType = $req["ajax"] ?? "unknown";
         $pageSize = -1;
         $offset = -1;
         $searchValue = "";
         if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
-            $searchValue = $ar["q"] ?? Param("q") ?? $ar["sv"] ?? Post("sv", "");
-            $pageSize = $ar["n"] ?? Param("n") ?? $ar["recperpage"] ?? Post("recperpage", 10);
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
         } elseif (SameText($lookupType, "autosuggest")) {
-            $searchValue = $ar["q"] ?? Param("q", "");
-            $pageSize = $ar["n"] ?? Param("n", -1);
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
             $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
             if ($pageSize <= 0) {
                 $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
             }
         }
-        $start = $ar["start"] ?? Param("start", -1);
+        $start = $req["start"] ?? -1;
         $start = is_numeric($start) ? (int)$start : -1;
-        $page = $ar["page"] ?? Param("page", -1);
+        $page = $req["page"] ?? -1;
         $page = is_numeric($page) ? (int)$page : -1;
         $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
-        $userSelect = Decrypt($ar["s"] ?? Post("s", ""));
-        $userFilter = Decrypt($ar["f"] ?? Post("f", ""));
-        $userOrderBy = Decrypt($ar["o"] ?? Post("o", ""));
-        $keys = $ar["keys"] ?? Post("keys");
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
         $lookup->LookupType = $lookupType; // Lookup type
         $lookup->FilterValues = []; // Clear filter values first
         if ($keys !== null) { // Selected records from modal
@@ -412,11 +436,11 @@ class JdhBedsAdd extends JdhBeds
             $lookup->FilterValues[] = $keys; // Lookup values
             $pageSize = -1; // Show all records
         } else { // Lookup values
-            $lookup->FilterValues[] = $ar["v0"] ?? $ar["lookupValue"] ?? Post("v0", Post("lookupValue", ""));
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
         }
         $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
         for ($i = 1; $i <= $cnt; $i++) {
-            $lookup->FilterValues[] = $ar["v" . $i] ?? Post("v" . $i, "");
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
         }
         $lookup->SearchValue = $searchValue;
         $lookup->PageSize = $pageSize;
@@ -430,7 +454,7 @@ class JdhBedsAdd extends JdhBeds
         if ($userOrderBy != "") {
             $lookup->UserOrderBy = $userOrderBy;
         }
-        return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
     public $FormClassName = "ew-form ew-add-form";
     public $IsModal = false;
@@ -448,7 +472,7 @@ class JdhBedsAdd extends JdhBeds
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
+        global $ExportType, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
 
         // Is modal
         $this->IsModal = ConvertToBool(Param("modal"));
@@ -460,14 +484,15 @@ class JdhBedsAdd extends JdhBeds
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
+
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->id->Visible = false;
-        $this->facility_id->setVisibility();
-        $this->ward_id->setVisibility();
-        $this->bed_number->setVisibility();
-        $this->assigned->setVisibility();
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -475,7 +500,7 @@ class JdhBedsAdd extends JdhBeds
         }
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -510,7 +535,7 @@ class JdhBedsAdd extends JdhBeds
         if (IsApi()) {
             $this->CurrentAction = "insert"; // Add record directly
             $postBack = true;
-        } elseif (Post("action") !== null) {
+        } elseif (Post("action", "") !== "") {
             $this->CurrentAction = Post("action"); // Get form action
             $this->setKey(Post($this->OldKeyName));
             $postBack = true;
@@ -523,6 +548,7 @@ class JdhBedsAdd extends JdhBeds
             $this->CopyRecord = !EmptyValue($this->OldKey);
             if ($this->CopyRecord) {
                 $this->CurrentAction = "copy"; // Copy record
+                $this->setKey($this->OldKey); // Set up record key
             } else {
                 $this->CurrentAction = "show"; // Display blank record
             }
@@ -563,11 +589,7 @@ class JdhBedsAdd extends JdhBeds
                 break;
             case "insert": // Add new record
                 $this->SendEmail = true; // Send email on add success
-                if ($this->addRow($rsold)) {
-                    // Do not return Json for UseAjaxActions
-                    if ($this->IsModal && $this->UseAjaxActions) {
-                        $this->IsModal = false;
-                    }
+                if ($this->addRow($rsold)) { // Add successful
                     if ($this->getSuccessMessage() == "" && Post("addopt") != "1") { // Skip success message for addopt (done in JavaScript)
                         $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up success message
                     }
@@ -578,10 +600,13 @@ class JdhBedsAdd extends JdhBeds
                         $returnUrl = $this->getViewUrl(); // View page, return to View page with keyurl directly
                     }
 
-                    // Handle UseAjaxActions with return page
-                    if ($this->UseAjaxActions && GetPageName($returnUrl) != "jdhbedslist") {
-                        Container("flash")->addMessage("Return-Url", $returnUrl); // Save return URL
-                        $returnUrl = "jdhbedslist"; // Return list page content
+                    // Handle UseAjaxActions
+                    if ($this->IsModal && $this->UseAjaxActions) {
+                        $this->IsModal = false;
+                        if (GetPageName($returnUrl) != "jdhbedslist") {
+                            Container("app.flash")->addMessage("Return-Url", $returnUrl); // Save return URL
+                            $returnUrl = "jdhbedslist"; // Return list page content
+                        }
                     }
                     if (IsJsonResponse()) { // Return to caller
                         $this->terminate(true);
@@ -593,8 +618,8 @@ class JdhBedsAdd extends JdhBeds
                 } elseif (IsApi()) { // API request, return
                     $this->terminate();
                     return;
-                } elseif ($this->UseAjaxActions) { // Return JSON error message
-                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                } elseif ($this->IsModal && $this->UseAjaxActions) { // Return JSON error message
+                    WriteJson(["success" => false, "validation" => $this->getValidationErrors(), "error" => $this->getFailureMessage()]);
                     $this->clearFailureMessage();
                     $this->terminate();
                     return;
@@ -608,7 +633,7 @@ class JdhBedsAdd extends JdhBeds
         $this->setupBreadcrumb();
 
         // Render row based on row type
-        $this->RowType = ROWTYPE_ADD; // Render add type
+        $this->RowType = RowType::ADD; // Render add type
 
         // Render row
         $this->resetAttributes();
@@ -623,7 +648,7 @@ class JdhBedsAdd extends JdhBeds
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -736,23 +761,14 @@ class JdhBedsAdd extends JdhBeds
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -784,8 +800,8 @@ class JdhBedsAdd extends JdhBeds
             $this->CurrentFilter = $this->getRecordFilter();
             $sql = $this->getCurrentSql();
             $conn = $this->getConnection();
-            $rs = LoadRecordset($sql, $conn);
-            if ($rs && ($row = $rs->fields)) {
+            $rs = ExecuteQuery($sql, $conn);
+            if ($row = $rs->fetch()) {
                 $this->loadRowValues($row); // Load row values
                 return $row;
             }
@@ -822,7 +838,7 @@ class JdhBedsAdd extends JdhBeds
         $this->assigned->RowCssClass = "row";
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // id
             $this->id->ViewValue = $this->id->CurrentValue;
 
@@ -831,11 +847,11 @@ class JdhBedsAdd extends JdhBeds
             if ($curVal != "") {
                 $this->facility_id->ViewValue = $this->facility_id->lookupCacheOption($curVal);
                 if ($this->facility_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->facility_id->Lookup->getTable()->Fields["id"]->searchExpression(), "=", $curVal, $this->facility_id->Lookup->getTable()->Fields["id"]->searchDataType(), "");
                     $sqlWrk = $this->facility_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
+                    $config->setResultCache($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
@@ -854,11 +870,11 @@ class JdhBedsAdd extends JdhBeds
             if ($curVal != "") {
                 $this->ward_id->ViewValue = $this->ward_id->lookupCacheOption($curVal);
                 if ($this->ward_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`ward_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->ward_id->Lookup->getTable()->Fields["ward_id"]->searchExpression(), "=", $curVal, $this->ward_id->Lookup->getTable()->Fields["ward_id"]->searchDataType(), "");
                     $sqlWrk = $this->ward_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
+                    $config->setResultCache($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
@@ -894,14 +910,14 @@ class JdhBedsAdd extends JdhBeds
 
             // assigned
             $this->assigned->HrefValue = "";
-        } elseif ($this->RowType == ROWTYPE_ADD) {
+        } elseif ($this->RowType == RowType::ADD) {
             // facility_id
             $this->facility_id->setupEditAttributes();
             $curVal = trim(strval($this->facility_id->CurrentValue));
             if ($curVal != "") {
                 $this->facility_id->ViewValue = $this->facility_id->lookupCacheOption($curVal);
             } else {
-                $this->facility_id->ViewValue = $this->facility_id->Lookup !== null && is_array($this->facility_id->lookupOptions()) ? $curVal : null;
+                $this->facility_id->ViewValue = $this->facility_id->Lookup !== null && is_array($this->facility_id->lookupOptions()) && count($this->facility_id->lookupOptions()) > 0 ? $curVal : null;
             }
             if ($this->facility_id->ViewValue !== null) { // Load from cache
                 $this->facility_id->EditValue = array_values($this->facility_id->lookupOptions());
@@ -909,12 +925,12 @@ class JdhBedsAdd extends JdhBeds
                 if ($curVal == "") {
                     $filterWrk = "0=1";
                 } else {
-                    $filterWrk = SearchFilter("`id`", "=", $this->facility_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->facility_id->Lookup->getTable()->Fields["id"]->searchExpression(), "=", $this->facility_id->CurrentValue, $this->facility_id->Lookup->getTable()->Fields["id"]->searchDataType(), "");
                 }
                 $sqlWrk = $this->facility_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
+                $config->setResultCache($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 $arwrk = $rswrk;
@@ -928,7 +944,7 @@ class JdhBedsAdd extends JdhBeds
             if ($curVal != "") {
                 $this->ward_id->ViewValue = $this->ward_id->lookupCacheOption($curVal);
             } else {
-                $this->ward_id->ViewValue = $this->ward_id->Lookup !== null && is_array($this->ward_id->lookupOptions()) ? $curVal : null;
+                $this->ward_id->ViewValue = $this->ward_id->Lookup !== null && is_array($this->ward_id->lookupOptions()) && count($this->ward_id->lookupOptions()) > 0 ? $curVal : null;
             }
             if ($this->ward_id->ViewValue !== null) { // Load from cache
                 $this->ward_id->EditValue = array_values($this->ward_id->lookupOptions());
@@ -936,12 +952,12 @@ class JdhBedsAdd extends JdhBeds
                 if ($curVal == "") {
                     $filterWrk = "0=1";
                 } else {
-                    $filterWrk = SearchFilter("`ward_id`", "=", $this->ward_id->CurrentValue, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->ward_id->Lookup->getTable()->Fields["ward_id"]->searchExpression(), "=", $this->ward_id->CurrentValue, $this->ward_id->Lookup->getTable()->Fields["ward_id"]->searchDataType(), "");
                 }
                 $sqlWrk = $this->ward_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
+                $config->setResultCache($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 $arwrk = $rswrk;
@@ -951,7 +967,7 @@ class JdhBedsAdd extends JdhBeds
 
             // bed_number
             $this->bed_number->setupEditAttributes();
-            $this->bed_number->EditValue = HtmlEncode($this->bed_number->CurrentValue);
+            $this->bed_number->EditValue = $this->bed_number->CurrentValue;
             $this->bed_number->PlaceHolder = RemoveHtml($this->bed_number->caption());
             if (strval($this->bed_number->EditValue) != "" && is_numeric($this->bed_number->EditValue)) {
                 $this->bed_number->EditValue = FormatNumber($this->bed_number->EditValue, null);
@@ -975,12 +991,12 @@ class JdhBedsAdd extends JdhBeds
             // assigned
             $this->assigned->HrefValue = "";
         }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+        if ($this->RowType == RowType::ADD || $this->RowType == RowType::EDIT || $this->RowType == RowType::SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -995,29 +1011,29 @@ class JdhBedsAdd extends JdhBeds
             return true;
         }
         $validateForm = true;
-        if ($this->facility_id->Required) {
-            if (!$this->facility_id->IsDetailKey && EmptyValue($this->facility_id->FormValue)) {
-                $this->facility_id->addErrorMessage(str_replace("%s", $this->facility_id->caption(), $this->facility_id->RequiredErrorMessage));
+            if ($this->facility_id->Visible && $this->facility_id->Required) {
+                if (!$this->facility_id->IsDetailKey && EmptyValue($this->facility_id->FormValue)) {
+                    $this->facility_id->addErrorMessage(str_replace("%s", $this->facility_id->caption(), $this->facility_id->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->ward_id->Required) {
-            if (!$this->ward_id->IsDetailKey && EmptyValue($this->ward_id->FormValue)) {
-                $this->ward_id->addErrorMessage(str_replace("%s", $this->ward_id->caption(), $this->ward_id->RequiredErrorMessage));
+            if ($this->ward_id->Visible && $this->ward_id->Required) {
+                if (!$this->ward_id->IsDetailKey && EmptyValue($this->ward_id->FormValue)) {
+                    $this->ward_id->addErrorMessage(str_replace("%s", $this->ward_id->caption(), $this->ward_id->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->bed_number->Required) {
-            if (!$this->bed_number->IsDetailKey && EmptyValue($this->bed_number->FormValue)) {
-                $this->bed_number->addErrorMessage(str_replace("%s", $this->bed_number->caption(), $this->bed_number->RequiredErrorMessage));
+            if ($this->bed_number->Visible && $this->bed_number->Required) {
+                if (!$this->bed_number->IsDetailKey && EmptyValue($this->bed_number->FormValue)) {
+                    $this->bed_number->addErrorMessage(str_replace("%s", $this->bed_number->caption(), $this->bed_number->RequiredErrorMessage));
+                }
             }
-        }
-        if (!CheckInteger($this->bed_number->FormValue)) {
-            $this->bed_number->addErrorMessage($this->bed_number->getErrorMessage(false));
-        }
-        if ($this->assigned->Required) {
-            if ($this->assigned->FormValue == "") {
-                $this->assigned->addErrorMessage(str_replace("%s", $this->assigned->caption(), $this->assigned->RequiredErrorMessage));
+            if (!CheckInteger($this->bed_number->FormValue)) {
+                $this->bed_number->addErrorMessage($this->bed_number->getErrorMessage(false));
             }
-        }
+            if ($this->assigned->Visible && $this->assigned->Required) {
+                if ($this->assigned->FormValue == "") {
+                    $this->assigned->addErrorMessage(str_replace("%s", $this->assigned->caption(), $this->assigned->RequiredErrorMessage));
+                }
+            }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -1036,24 +1052,8 @@ class JdhBedsAdd extends JdhBeds
     {
         global $Language, $Security;
 
-        // Set new row
-        $rsnew = [];
-
-        // facility_id
-        $this->facility_id->setDbValueDef($rsnew, $this->facility_id->CurrentValue, 0, false);
-
-        // ward_id
-        $this->ward_id->setDbValueDef($rsnew, $this->ward_id->CurrentValue, 0, false);
-
-        // bed_number
-        $this->bed_number->setDbValueDef($rsnew, $this->bed_number->CurrentValue, 0, false);
-
-        // assigned
-        $tmpBool = $this->assigned->CurrentValue;
-        if ($tmpBool != "1" && $tmpBool != "0") {
-            $tmpBool = !empty($tmpBool) ? "1" : "0";
-        }
-        $this->assigned->setDbValueDef($rsnew, $tmpBool, 0, false);
+        // Get new row
+        $rsnew = $this->getAddRow();
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -1098,6 +1098,54 @@ class JdhBedsAdd extends JdhBeds
         return $addRow;
     }
 
+    /**
+     * Get add row
+     *
+     * @return array
+     */
+    protected function getAddRow()
+    {
+        global $Security;
+        $rsnew = [];
+
+        // facility_id
+        $this->facility_id->setDbValueDef($rsnew, $this->facility_id->CurrentValue, false);
+
+        // ward_id
+        $this->ward_id->setDbValueDef($rsnew, $this->ward_id->CurrentValue, false);
+
+        // bed_number
+        $this->bed_number->setDbValueDef($rsnew, $this->bed_number->CurrentValue, false);
+
+        // assigned
+        $tmpBool = $this->assigned->CurrentValue;
+        if ($tmpBool != "1" && $tmpBool != "0") {
+            $tmpBool = !empty($tmpBool) ? "1" : "0";
+        }
+        $this->assigned->setDbValueDef($rsnew, $tmpBool, false);
+        return $rsnew;
+    }
+
+    /**
+     * Restore add form from row
+     * @param array $row Row
+     */
+    protected function restoreAddFormFromRow($row)
+    {
+        if (isset($row['facility_id'])) { // facility_id
+            $this->facility_id->setFormValue($row['facility_id']);
+        }
+        if (isset($row['ward_id'])) { // ward_id
+            $this->ward_id->setFormValue($row['ward_id']);
+        }
+        if (isset($row['bed_number'])) { // bed_number
+            $this->bed_number->setFormValue($row['bed_number']);
+        }
+        if (isset($row['assigned'])) { // assigned
+            $this->assigned->setFormValue($row['assigned']);
+        }
+    }
+
     // Set up Breadcrumb
     protected function setupBreadcrumb()
     {
@@ -1112,7 +1160,7 @@ class JdhBedsAdd extends JdhBeds
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -1137,7 +1185,7 @@ class JdhBedsAdd extends JdhBeds
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -1180,11 +1228,11 @@ class JdhBedsAdd extends JdhBeds
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

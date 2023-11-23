@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Set up and run Grid object
 $Grid = Container("JdhExaminationFindingsGrid");
@@ -61,7 +61,10 @@ loadjs.ready(["wrapper", "head"], function () {
 });
 </script>
 <?php } ?>
-<main class="list<?= ($Grid->TotalRecords == 0 && !$Grid->isAdd()) ? " ew-no-record" : "" ?>">
+<main class="list">
+<div id="ew-header-options">
+<?php $Grid->HeaderOptions?->render("body") ?>
+</div>
 <div id="ew-list">
 <?php if ($Grid->TotalRecords > 0 || $Grid->CurrentAction) { ?>
 <div class="card ew-card ew-grid<?= $Grid->isAddOrEdit() ? " ew-grid-add-edit" : "" ?> <?= $Grid->TableGridClass ?>">
@@ -72,7 +75,7 @@ loadjs.ready(["wrapper", "head"], function () {
     <tr class="ew-table-header">
 <?php
 // Header row
-$Grid->RowType = ROWTYPE_HEADER;
+$Grid->RowType = RowType::HEADER;
 
 // Render list options
 $Grid->renderListOptions();
@@ -101,7 +104,15 @@ $Grid->ListOptions->render("header", "right");
 <tbody data-page="<?= $Grid->getPageNumber() ?>">
 <?php
 $Grid->setupGrid();
-while ($Grid->RecordCount < $Grid->StopRecord) {
+while ($Grid->RecordCount < $Grid->StopRecord || $Grid->RowIndex === '$rowindex$') {
+    if (
+        $Grid->CurrentRow !== false &&
+        $Grid->RowIndex !== '$rowindex$' &&
+        (!$Grid->isGridAdd() || $Grid->CurrentMode == "copy") &&
+        (!(($Grid->isCopy() || $Grid->isAdd()) && $Grid->RowIndex == 0))
+    ) {
+        $Grid->fetch();
+    }
     $Grid->RecordCount++;
     if ($Grid->RecordCount >= $Grid->StartRecord) {
         $Grid->setupRow();
@@ -121,19 +132,19 @@ $Grid->ListOptions->render("body", "left", $Grid->RowCount);
 ?>
     <?php if ($Grid->id->Visible) { // id ?>
         <td data-name="id"<?= $Grid->id->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_id" class="el_jdh_examination_findings_id"></span>
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_examination_findings_id" class="el_jdh_examination_findings_id"></span>
 <input type="hidden" data-table="jdh_examination_findings" data-field="x_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_id" id="o<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_id" class="el_jdh_examination_findings_id">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_examination_findings_id" class="el_jdh_examination_findings_id">
 <span<?= $Grid->id->viewAttributes() ?>>
 <input type="text" readonly class="form-control-plaintext" value="<?= HtmlEncode(RemoveHtml($Grid->id->getDisplayValue($Grid->id->EditValue))) ?>"></span>
 <input type="hidden" data-table="jdh_examination_findings" data-field="x_id" data-hidden="1" name="x<?= $Grid->RowIndex ?>_id" id="x<?= $Grid->RowIndex ?>_id" value="<?= HtmlEncode($Grid->id->CurrentValue) ?>">
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_id" class="el_jdh_examination_findings_id">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_examination_findings_id" class="el_jdh_examination_findings_id">
 <span<?= $Grid->id->viewAttributes() ?>>
 <?= $Grid->id->getViewValue() ?></span>
 </span>
@@ -148,13 +159,13 @@ $Grid->ListOptions->render("body", "left", $Grid->RowCount);
     <?php } ?>
     <?php if ($Grid->patient_id->Visible) { // patient_id ?>
         <td data-name="patient_id"<?= $Grid->patient_id->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
 <?php if ($Grid->patient_id->getSessionValue() != "") { ?>
 <span<?= $Grid->patient_id->viewAttributes() ?>>
 <span class="form-control-plaintext"><?= $Grid->patient_id->getDisplayValue($Grid->patient_id->ViewValue) ?></span></span>
 <input type="hidden" id="x<?= $Grid->RowIndex ?>_patient_id" name="x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->CurrentValue) ?>" data-hidden="1">
 <?php } else { ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
 <?php
 if (IsRTL()) {
     $Grid->patient_id->EditAttrs["dir"] = "rtl";
@@ -175,13 +186,13 @@ loadjs.ready("fjdh_examination_findingsgrid", function() {
 <?php } ?>
 <input type="hidden" data-table="jdh_examination_findings" data-field="x_patient_id" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_patient_id" id="o<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
 <?php if ($Grid->patient_id->getSessionValue() != "") { ?>
 <span<?= $Grid->patient_id->viewAttributes() ?>>
 <span class="form-control-plaintext"><?= $Grid->patient_id->getDisplayValue($Grid->patient_id->ViewValue) ?></span></span>
 <input type="hidden" id="x<?= $Grid->RowIndex ?>_patient_id" name="x<?= $Grid->RowIndex ?>_patient_id" value="<?= HtmlEncode($Grid->patient_id->CurrentValue) ?>" data-hidden="1">
 <?php } else { ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
 <?php
 if (IsRTL()) {
     $Grid->patient_id->EditAttrs["dir"] = "rtl";
@@ -201,8 +212,8 @@ loadjs.ready("fjdh_examination_findingsgrid", function() {
 </span>
 <?php } ?>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_examination_findings_patient_id" class="el_jdh_examination_findings_patient_id">
 <span<?= $Grid->patient_id->viewAttributes() ?>>
 <?= $Grid->patient_id->getViewValue() ?></span>
 </span>
@@ -215,21 +226,21 @@ loadjs.ready("fjdh_examination_findingsgrid", function() {
     <?php } ?>
     <?php if ($Grid->general_exams->Visible) { // general_exams ?>
         <td data-name="general_exams"<?= $Grid->general_exams->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_general_exams" class="el_jdh_examination_findings_general_exams">
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_examination_findings_general_exams" class="el_jdh_examination_findings_general_exams">
 <input type="<?= $Grid->general_exams->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_general_exams" id="x<?= $Grid->RowIndex ?>_general_exams" data-table="jdh_examination_findings" data-field="x_general_exams" value="<?= $Grid->general_exams->EditValue ?>" maxlength="200" placeholder="<?= HtmlEncode($Grid->general_exams->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->general_exams->formatPattern()) ?>"<?= $Grid->general_exams->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->general_exams->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_examination_findings" data-field="x_general_exams" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_general_exams" id="o<?= $Grid->RowIndex ?>_general_exams" value="<?= HtmlEncode($Grid->general_exams->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_general_exams" class="el_jdh_examination_findings_general_exams">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_examination_findings_general_exams" class="el_jdh_examination_findings_general_exams">
 <input type="<?= $Grid->general_exams->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_general_exams" id="x<?= $Grid->RowIndex ?>_general_exams" data-table="jdh_examination_findings" data-field="x_general_exams" value="<?= $Grid->general_exams->EditValue ?>" maxlength="200" placeholder="<?= HtmlEncode($Grid->general_exams->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->general_exams->formatPattern()) ?>"<?= $Grid->general_exams->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->general_exams->getErrorMessage() ?></div>
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_general_exams" class="el_jdh_examination_findings_general_exams">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_examination_findings_general_exams" class="el_jdh_examination_findings_general_exams">
 <span<?= $Grid->general_exams->viewAttributes() ?>>
 <?= $Grid->general_exams->getViewValue() ?></span>
 </span>
@@ -242,21 +253,21 @@ loadjs.ready("fjdh_examination_findingsgrid", function() {
     <?php } ?>
     <?php if ($Grid->systematic_exams->Visible) { // systematic_exams ?>
         <td data-name="systematic_exams"<?= $Grid->systematic_exams->cellAttributes() ?>>
-<?php if ($Grid->RowType == ROWTYPE_ADD) { // Add record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_systematic_exams" class="el_jdh_examination_findings_systematic_exams">
+<?php if ($Grid->RowType == RowType::ADD) { // Add record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_examination_findings_systematic_exams" class="el_jdh_examination_findings_systematic_exams">
 <input type="<?= $Grid->systematic_exams->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_systematic_exams" id="x<?= $Grid->RowIndex ?>_systematic_exams" data-table="jdh_examination_findings" data-field="x_systematic_exams" value="<?= $Grid->systematic_exams->EditValue ?>" maxlength="200" placeholder="<?= HtmlEncode($Grid->systematic_exams->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->systematic_exams->formatPattern()) ?>"<?= $Grid->systematic_exams->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->systematic_exams->getErrorMessage() ?></div>
 </span>
 <input type="hidden" data-table="jdh_examination_findings" data-field="x_systematic_exams" data-hidden="1" data-old name="o<?= $Grid->RowIndex ?>_systematic_exams" id="o<?= $Grid->RowIndex ?>_systematic_exams" value="<?= HtmlEncode($Grid->systematic_exams->OldValue) ?>">
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_EDIT) { // Edit record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_systematic_exams" class="el_jdh_examination_findings_systematic_exams">
+<?php if ($Grid->RowType == RowType::EDIT) { // Edit record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_examination_findings_systematic_exams" class="el_jdh_examination_findings_systematic_exams">
 <input type="<?= $Grid->systematic_exams->getInputTextType() ?>" name="x<?= $Grid->RowIndex ?>_systematic_exams" id="x<?= $Grid->RowIndex ?>_systematic_exams" data-table="jdh_examination_findings" data-field="x_systematic_exams" value="<?= $Grid->systematic_exams->EditValue ?>" maxlength="200" placeholder="<?= HtmlEncode($Grid->systematic_exams->getPlaceHolder()) ?>" data-format-pattern="<?= HtmlEncode($Grid->systematic_exams->formatPattern()) ?>"<?= $Grid->systematic_exams->editAttributes() ?>>
 <div class="invalid-feedback"><?= $Grid->systematic_exams->getErrorMessage() ?></div>
 </span>
 <?php } ?>
-<?php if ($Grid->RowType == ROWTYPE_VIEW) { // View record ?>
-<span id="el<?= $Grid->RowCount ?>_jdh_examination_findings_systematic_exams" class="el_jdh_examination_findings_systematic_exams">
+<?php if ($Grid->RowType == RowType::VIEW) { // View record ?>
+<span id="el<?= $Grid->RowIndex == '$rowindex$' ? '$rowindex$' : $Grid->RowCount ?>_jdh_examination_findings_systematic_exams" class="el_jdh_examination_findings_systematic_exams">
 <span<?= $Grid->systematic_exams->viewAttributes() ?>>
 <?= $Grid->systematic_exams->getViewValue() ?></span>
 </span>
@@ -272,23 +283,15 @@ loadjs.ready("fjdh_examination_findingsgrid", function() {
 $Grid->ListOptions->render("body", "right", $Grid->RowCount);
 ?>
     </tr>
-<?php if ($Grid->RowType == ROWTYPE_ADD || $Grid->RowType == ROWTYPE_EDIT) { ?>
+<?php if ($Grid->RowType == RowType::ADD || $Grid->RowType == RowType::EDIT) { ?>
 <script data-rowindex="<?= $Grid->RowIndex ?>">
-loadjs.ready(["fjdh_examination_findingsgrid","load"], () => fjdh_examination_findingsgrid.updateLists(<?= $Grid->RowIndex ?><?= $Grid->RowIndex === '$rowindex$' ? ", true" : "" ?>));
+loadjs.ready(["fjdh_examination_findingsgrid","load"], () => fjdh_examination_findingsgrid.updateLists(<?= $Grid->RowIndex ?><?= $Grid->isAdd() || $Grid->isEdit() || $Grid->isCopy() || $Grid->RowIndex === '$rowindex$' ? ", true" : "" ?>));
 </script>
 <?php } ?>
 <?php
     }
     } // End delete row checking
-    if (
-        $Grid->Recordset &&
-        !$Grid->Recordset->EOF &&
-        $Grid->RowIndex !== '$rowindex$' &&
-        (!$Grid->isGridAdd() || $Grid->CurrentMode == "copy") &&
-        (!(($Grid->isCopy() || $Grid->isAdd()) && $Grid->RowIndex == 0))
-    ) {
-        $Grid->Recordset->moveNext();
-    }
+
     // Reset for template row
     if ($Grid->RowIndex === '$rowindex$') {
         $Grid->RowIndex = 0;
@@ -316,10 +319,8 @@ loadjs.ready(["fjdh_examination_findingsgrid","load"], () => fjdh_examination_fi
 <input type="hidden" name="detailpage" value="fjdh_examination_findingsgrid">
 </div><!-- /.ew-list-form -->
 <?php
-// Close recordset
-if ($Grid->Recordset) {
-    $Grid->Recordset->close();
-}
+// Close result set
+$Grid->Recordset?->free();
 ?>
 <?php if ($Grid->ShowOtherOptions) { ?>
 <div class="card-footer ew-grid-lower-panel">
@@ -332,6 +333,9 @@ if ($Grid->Recordset) {
 <?php $Grid->OtherOptions->render("body") ?>
 </div>
 <?php } ?>
+</div>
+<div id="ew-footer-options">
+<?php $Grid->FooterOptions?->render("body") ?>
 </div>
 </main>
 <?php if (!$Grid->isExport()) { ?>

@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Page class
@@ -107,7 +113,7 @@ class JdhTestReportsAdd extends JdhTestReports
         $header = $this->PageHeader;
         $this->pageDataRendering($header);
         if ($header != "") { // Header exists, display
-            echo '<p id="ew-page-header">' . $header . '</p>';
+            echo '<div id="ew-page-header">' . $header . '</div>';
         }
     }
 
@@ -117,8 +123,20 @@ class JdhTestReportsAdd extends JdhTestReports
         $footer = $this->PageFooter;
         $this->pageDataRendered($footer);
         if ($footer != "") { // Footer exists, display
-            echo '<p id="ew-page-footer">' . $footer . '</p>';
+            echo '<div id="ew-page-footer">' . $footer . '</div>';
         }
+    }
+
+    // Set field visibility
+    public function setVisibility()
+    {
+        $this->report_id->Visible = false;
+        $this->request_id->setVisibility();
+        $this->patient_id->setVisibility();
+        $this->report_findings->setVisibility();
+        $this->report_attachment->setVisibility();
+        $this->report_submittedby_user_id->Visible = false;
+        $this->report_date->Visible = false;
     }
 
     // Constructor
@@ -136,10 +154,10 @@ class JdhTestReportsAdd extends JdhTestReports
         $GLOBALS["Page"] = &$this;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
 
         // Table object (jdh_test_reports)
-        if (!isset($GLOBALS["jdh_test_reports"]) || get_class($GLOBALS["jdh_test_reports"]) == PROJECT_NAMESPACE . "jdh_test_reports") {
+        if (!isset($GLOBALS["jdh_test_reports"]) || $GLOBALS["jdh_test_reports"]::class == PROJECT_NAMESPACE . "jdh_test_reports") {
             $GLOBALS["jdh_test_reports"] = &$this;
         }
 
@@ -149,7 +167,7 @@ class JdhTestReportsAdd extends JdhTestReports
         }
 
         // Start timer
-        $DebugTimer = Container("timer");
+        $DebugTimer = Container("debug.timer");
 
         // Debug message
         LoadDebugMessage();
@@ -165,7 +183,7 @@ class JdhTestReportsAdd extends JdhTestReports
     public function getContents(): string
     {
         global $Response;
-        return is_object($Response) ? $Response->getBody() : ob_get_clean();
+        return $Response?->getBody() ?? ob_get_clean();
     }
 
     // Is lookup
@@ -214,13 +232,11 @@ class JdhTestReportsAdd extends JdhTestReports
         // Page is terminated
         $this->terminated = true;
 
-         // Page Unload event
+        // Page Unload event
         if (method_exists($this, "pageUnload")) {
             $this->pageUnload();
         }
-
-        // Global Page Unloaded event (in userfn*.php)
-        Page_Unloaded();
+        DispatchEvent(new PageUnloadedEvent($this), PageUnloadedEvent::NAME);
         if (!IsApi() && method_exists($this, "pageRedirecting")) {
             $this->pageRedirecting($url);
         }
@@ -238,7 +254,7 @@ class JdhTestReportsAdd extends JdhTestReports
             $this->clearMessages(); // Clear messages for API request
             return;
         } else { // Check if response is JSON
-            if (StartsString("application/json", $Response->getHeaderLine("Content-type")) && $Response->getBody()->getSize()) { // With JSON response
+            if (WithJsonResponse()) { // With JSON response
                 $this->clearMessages();
                 return;
             }
@@ -250,17 +266,25 @@ class JdhTestReportsAdd extends JdhTestReports
                 ob_end_clean();
             }
 
-            // Handle modal response (Assume return to modal for simplicity)
+            // Handle modal response
             if ($this->IsModal) { // Show as modal
-                $result = ["url" => GetUrl($url), "modal" => "1"];
                 $pageName = GetPageName($url);
-                if ($pageName != $this->getListUrl()) { // Not List page => View page
-                    $result["caption"] = $this->getModalCaption($pageName);
-                    $result["view"] = $pageName == "jdhtestreportsview"; // If View page, no primary button
-                } else { // List page
-                    // $result["list"] = $this->PageID == "search"; // Refresh List page if current page is Search page
-                    $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
-                    $this->clearFailureMessage();
+                $result = ["url" => GetUrl($url), "modal" => "1"];  // Assume return to modal for simplicity
+                if (
+                    SameString($pageName, GetPageName($this->getListUrl())) ||
+                    SameString($pageName, GetPageName($this->getViewUrl())) ||
+                    SameString($pageName, GetPageName(CurrentMasterTable()?->getViewUrl() ?? ""))
+                ) { // List / View / Master View page
+                    if (!SameString($pageName, GetPageName($this->getListUrl()))) { // Not List page
+                        $result["caption"] = $this->getModalCaption($pageName);
+                        $result["view"] = SameString($pageName, "jdhtestreportsview"); // If View page, no primary button
+                    } else { // List page
+                        $result["error"] = $this->getFailureMessage(); // List page should not be shown as modal => error
+                        $this->clearFailureMessage();
+                    }
+                } else { // Other pages (add messages and then clear messages)
+                    $result = array_merge($this->getMessages(), ["modal" => "1"]);
+                    $this->clearMessages();
                 }
                 WriteJson($result);
             } else {
@@ -271,20 +295,19 @@ class JdhTestReportsAdd extends JdhTestReports
         return; // Return to controller
     }
 
-    // Get records from recordset
+    // Get records from result set
     protected function getRecordsFromRecordset($rs, $current = false)
     {
         $rows = [];
-        if (is_object($rs)) { // Recordset
-            while ($rs && !$rs->EOF) {
-                $this->loadRowValues($rs); // Set up DbValue/CurrentValue
-                $row = $this->getRecordFromArray($rs->fields);
+        if (is_object($rs)) { // Result set
+            while ($row = $rs->fetch()) {
+                $this->loadRowValues($row); // Set up DbValue/CurrentValue
+                $row = $this->getRecordFromArray($row);
                 if ($current) {
                     return $row;
                 } else {
                     $rows[] = $row;
                 }
-                $rs->moveNext();
             }
         } elseif (is_array($rs)) {
             foreach ($rs as $ar) {
@@ -311,7 +334,7 @@ class JdhTestReportsAdd extends JdhTestReports
                         if (EmptyValue($val)) {
                             $row[$fldname] = null;
                         } else {
-                            if ($fld->DataType == DATATYPE_BLOB) {
+                            if ($fld->DataType == DataType::BLOB) {
                                 $url = FullUrl(GetApiUrl(Config("API_FILE_ACTION") .
                                     "/" . $fld->TableVar . "/" . $fld->Param . "/" . rawurlencode($this->getRecordKeyValue($ar))));
                                 $row[$fldname] = ["type" => ContentType($val), "url" => $url, "name" => $fld->Param . ContentExtension($val)];
@@ -364,44 +387,47 @@ class JdhTestReportsAdd extends JdhTestReports
     }
 
     // Lookup data
-    public function lookup($ar = null)
+    public function lookup(array $req = [], bool $response = true)
     {
         global $Language, $Security;
 
         // Get lookup object
-        $fieldName = $ar["field"] ?? Post("field");
-        $lookup = $this->Fields[$fieldName]->Lookup;
-        $name = $ar["name"] ?? Post("name");
-        $isQuery = ContainsString($name, "query_builder_rule");
-        if ($isQuery) {
+        $fieldName = $req["field"] ?? null;
+        if (!$fieldName) {
+            return [];
+        }
+        $fld = $this->Fields[$fieldName];
+        $lookup = $fld->Lookup;
+        $name = $req["name"] ?? "";
+        if (ContainsString($name, "query_builder_rule")) {
             $lookup->FilterFields = []; // Skip parent fields if any
         }
 
         // Get lookup parameters
-        $lookupType = $ar["ajax"] ?? Post("ajax", "unknown");
+        $lookupType = $req["ajax"] ?? "unknown";
         $pageSize = -1;
         $offset = -1;
         $searchValue = "";
         if (SameText($lookupType, "modal") || SameText($lookupType, "filter")) {
-            $searchValue = $ar["q"] ?? Param("q") ?? $ar["sv"] ?? Post("sv", "");
-            $pageSize = $ar["n"] ?? Param("n") ?? $ar["recperpage"] ?? Post("recperpage", 10);
+            $searchValue = $req["q"] ?? $req["sv"] ?? "";
+            $pageSize = $req["n"] ?? $req["recperpage"] ?? 10;
         } elseif (SameText($lookupType, "autosuggest")) {
-            $searchValue = $ar["q"] ?? Param("q", "");
-            $pageSize = $ar["n"] ?? Param("n", -1);
+            $searchValue = $req["q"] ?? "";
+            $pageSize = $req["n"] ?? -1;
             $pageSize = is_numeric($pageSize) ? (int)$pageSize : -1;
             if ($pageSize <= 0) {
                 $pageSize = Config("AUTO_SUGGEST_MAX_ENTRIES");
             }
         }
-        $start = $ar["start"] ?? Param("start", -1);
+        $start = $req["start"] ?? -1;
         $start = is_numeric($start) ? (int)$start : -1;
-        $page = $ar["page"] ?? Param("page", -1);
+        $page = $req["page"] ?? -1;
         $page = is_numeric($page) ? (int)$page : -1;
         $offset = $start >= 0 ? $start : ($page > 0 && $pageSize > 0 ? ($page - 1) * $pageSize : 0);
-        $userSelect = Decrypt($ar["s"] ?? Post("s", ""));
-        $userFilter = Decrypt($ar["f"] ?? Post("f", ""));
-        $userOrderBy = Decrypt($ar["o"] ?? Post("o", ""));
-        $keys = $ar["keys"] ?? Post("keys");
+        $userSelect = Decrypt($req["s"] ?? "");
+        $userFilter = Decrypt($req["f"] ?? "");
+        $userOrderBy = Decrypt($req["o"] ?? "");
+        $keys = $req["keys"] ?? null;
         $lookup->LookupType = $lookupType; // Lookup type
         $lookup->FilterValues = []; // Clear filter values first
         if ($keys !== null) { // Selected records from modal
@@ -412,11 +438,11 @@ class JdhTestReportsAdd extends JdhTestReports
             $lookup->FilterValues[] = $keys; // Lookup values
             $pageSize = -1; // Show all records
         } else { // Lookup values
-            $lookup->FilterValues[] = $ar["v0"] ?? $ar["lookupValue"] ?? Post("v0", Post("lookupValue", ""));
+            $lookup->FilterValues[] = $req["v0"] ?? $req["lookupValue"] ?? "";
         }
         $cnt = is_array($lookup->FilterFields) ? count($lookup->FilterFields) : 0;
         for ($i = 1; $i <= $cnt; $i++) {
-            $lookup->FilterValues[] = $ar["v" . $i] ?? Post("v" . $i, "");
+            $lookup->FilterValues[] = $req["v" . $i] ?? "";
         }
         $lookup->SearchValue = $searchValue;
         $lookup->PageSize = $pageSize;
@@ -430,7 +456,7 @@ class JdhTestReportsAdd extends JdhTestReports
         if ($userOrderBy != "") {
             $lookup->UserOrderBy = $userOrderBy;
         }
-        return $lookup->toJson($this, !is_array($ar)); // Use settings from current page
+        return $lookup->toJson($this, $response); // Use settings from current page
     }
     public $FormClassName = "ew-form ew-add-form";
     public $IsModal = false;
@@ -448,7 +474,7 @@ class JdhTestReportsAdd extends JdhTestReports
      */
     public function run()
     {
-        global $ExportType, $UserProfile, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
+        global $ExportType, $Language, $Security, $CurrentForm, $SkipHeaderFooter;
 
         // Is modal
         $this->IsModal = ConvertToBool(Param("modal"));
@@ -460,16 +486,15 @@ class JdhTestReportsAdd extends JdhTestReports
         // View
         $this->View = Get(Config("VIEW"));
 
+        // Load user profile
+        if (IsLoggedIn()) {
+            Profile()->setUserName(CurrentUserName())->loadFromStorage();
+        }
+
         // Create form object
         $CurrentForm = new HttpForm();
         $this->CurrentAction = Param("action"); // Set up current action
-        $this->report_id->Visible = false;
-        $this->request_id->setVisibility();
-        $this->patient_id->setVisibility();
-        $this->report_findings->setVisibility();
-        $this->report_attachment->setVisibility();
-        $this->report_submittedby_user_id->Visible = false;
-        $this->report_date->Visible = false;
+        $this->setVisibility();
 
         // Set lookup cache
         if (!in_array($this->PageID, Config("LOOKUP_CACHE_PAGE_IDS"))) {
@@ -477,7 +502,7 @@ class JdhTestReportsAdd extends JdhTestReports
         }
 
         // Global Page Loading event (in userfn*.php)
-        Page_Loading();
+        DispatchEvent(new PageLoadingEvent($this), PageLoadingEvent::NAME);
 
         // Page Load event
         if (method_exists($this, "pageLoad")) {
@@ -510,7 +535,7 @@ class JdhTestReportsAdd extends JdhTestReports
         if (IsApi()) {
             $this->CurrentAction = "insert"; // Add record directly
             $postBack = true;
-        } elseif (Post("action") !== null) {
+        } elseif (Post("action", "") !== "") {
             $this->CurrentAction = Post("action"); // Get form action
             $this->setKey(Post($this->OldKeyName));
             $postBack = true;
@@ -523,6 +548,7 @@ class JdhTestReportsAdd extends JdhTestReports
             $this->CopyRecord = !EmptyValue($this->OldKey);
             if ($this->CopyRecord) {
                 $this->CurrentAction = "copy"; // Copy record
+                $this->setKey($this->OldKey); // Set up record key
             } else {
                 $this->CurrentAction = "show"; // Display blank record
             }
@@ -567,11 +593,7 @@ class JdhTestReportsAdd extends JdhTestReports
                 break;
             case "insert": // Add new record
                 $this->SendEmail = true; // Send email on add success
-                if ($this->addRow($rsold)) {
-                    // Do not return Json for UseAjaxActions
-                    if ($this->IsModal && $this->UseAjaxActions) {
-                        $this->IsModal = false;
-                    }
+                if ($this->addRow($rsold)) { // Add successful
                     if ($this->getSuccessMessage() == "" && Post("addopt") != "1") { // Skip success message for addopt (done in JavaScript)
                         $this->setSuccessMessage($Language->phrase("AddSuccess")); // Set up success message
                     }
@@ -582,10 +604,13 @@ class JdhTestReportsAdd extends JdhTestReports
                         $returnUrl = $this->getViewUrl(); // View page, return to View page with keyurl directly
                     }
 
-                    // Handle UseAjaxActions with return page
-                    if ($this->UseAjaxActions && GetPageName($returnUrl) != "jdhtestreportslist") {
-                        Container("flash")->addMessage("Return-Url", $returnUrl); // Save return URL
-                        $returnUrl = "jdhtestreportslist"; // Return list page content
+                    // Handle UseAjaxActions
+                    if ($this->IsModal && $this->UseAjaxActions) {
+                        $this->IsModal = false;
+                        if (GetPageName($returnUrl) != "jdhtestreportslist") {
+                            Container("app.flash")->addMessage("Return-Url", $returnUrl); // Save return URL
+                            $returnUrl = "jdhtestreportslist"; // Return list page content
+                        }
                     }
                     if (IsJsonResponse()) { // Return to caller
                         $this->terminate(true);
@@ -597,8 +622,8 @@ class JdhTestReportsAdd extends JdhTestReports
                 } elseif (IsApi()) { // API request, return
                     $this->terminate();
                     return;
-                } elseif ($this->UseAjaxActions) { // Return JSON error message
-                    WriteJson([ "success" => false, "error" => $this->getFailureMessage() ]);
+                } elseif ($this->IsModal && $this->UseAjaxActions) { // Return JSON error message
+                    WriteJson(["success" => false, "validation" => $this->getValidationErrors(), "error" => $this->getFailureMessage()]);
                     $this->clearFailureMessage();
                     $this->terminate();
                     return;
@@ -612,7 +637,7 @@ class JdhTestReportsAdd extends JdhTestReports
         $this->setupBreadcrumb();
 
         // Render row based on row type
-        $this->RowType = ROWTYPE_ADD; // Render add type
+        $this->RowType = RowType::ADD; // Render add type
 
         // Render row
         $this->resetAttributes();
@@ -627,7 +652,7 @@ class JdhTestReportsAdd extends JdhTestReports
             SetClientVar("login", LoginStatus());
 
             // Global Page Rendering event (in userfn*.php)
-            Page_Rendering();
+            DispatchEvent(new PageRenderingEvent($this), PageRenderingEvent::NAME);
 
             // Page Render event
             if (method_exists($this, "pageRender")) {
@@ -741,23 +766,14 @@ class JdhTestReportsAdd extends JdhTestReports
     }
 
     /**
-     * Load row values from recordset or record
+     * Load row values from result set or record
      *
-     * @param Recordset|array $rs Record
+     * @param array $row Record
      * @return void
      */
-    public function loadRowValues($rs = null)
+    public function loadRowValues($row = null)
     {
-        if (is_array($rs)) {
-            $row = $rs;
-        } elseif ($rs && property_exists($rs, "fields")) { // Recordset
-            $row = $rs->fields;
-        } else {
-            $row = $this->newRow();
-        }
-        if (!$row) {
-            return;
-        }
+        $row = is_array($row) ? $row : $this->newRow();
 
         // Call Row Selected event
         $this->rowSelected($row);
@@ -796,8 +812,8 @@ class JdhTestReportsAdd extends JdhTestReports
             $this->CurrentFilter = $this->getRecordFilter();
             $sql = $this->getCurrentSql();
             $conn = $this->getConnection();
-            $rs = LoadRecordset($sql, $conn);
-            if ($rs && ($row = $rs->fields)) {
+            $rs = ExecuteQuery($sql, $conn);
+            if ($row = $rs->fetch()) {
                 $this->loadRowValues($row); // Load row values
                 return $row;
             }
@@ -840,7 +856,7 @@ class JdhTestReportsAdd extends JdhTestReports
         $this->report_date->RowCssClass = "row";
 
         // View row
-        if ($this->RowType == ROWTYPE_VIEW) {
+        if ($this->RowType == RowType::VIEW) {
             // report_id
             $this->report_id->ViewValue = $this->report_id->CurrentValue;
 
@@ -853,11 +869,11 @@ class JdhTestReportsAdd extends JdhTestReports
             if ($curVal != "") {
                 $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
                 if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchExpression(), "=", $curVal, $this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchDataType(), "");
                     $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
+                    $config->setResultCache($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
@@ -913,10 +929,10 @@ class JdhTestReportsAdd extends JdhTestReports
                 $this->report_attachment->HrefValue = "";
             }
             $this->report_attachment->ExportHrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
-        } elseif ($this->RowType == ROWTYPE_ADD) {
+        } elseif ($this->RowType == RowType::ADD) {
             // request_id
             $this->request_id->setupEditAttributes();
-            $this->request_id->EditValue = HtmlEncode($this->request_id->CurrentValue);
+            $this->request_id->EditValue = $this->request_id->CurrentValue;
             $this->request_id->PlaceHolder = RemoveHtml($this->request_id->caption());
             if (strval($this->request_id->EditValue) != "" && is_numeric($this->request_id->EditValue)) {
                 $this->request_id->EditValue = FormatNumber($this->request_id->EditValue, null);
@@ -930,11 +946,11 @@ class JdhTestReportsAdd extends JdhTestReports
                 if ($curVal != "") {
                     $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
                     if ($this->patient_id->ViewValue === null) { // Lookup from database
-                        $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                        $filterWrk = SearchFilter($this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchExpression(), "=", $curVal, $this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchDataType(), "");
                         $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                         $conn = Conn();
                         $config = $conn->getConfiguration();
-                        $config->setResultCacheImpl($this->Cache);
+                        $config->setResultCache($this->Cache);
                         $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                         $ari = count($rswrk);
                         if ($ari > 0) { // Lookup values found
@@ -952,7 +968,7 @@ class JdhTestReportsAdd extends JdhTestReports
                 if ($curVal != "") {
                     $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
                 } else {
-                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) ? $curVal : null;
+                    $this->patient_id->ViewValue = $this->patient_id->Lookup !== null && is_array($this->patient_id->lookupOptions()) && count($this->patient_id->lookupOptions()) > 0 ? $curVal : null;
                 }
                 if ($this->patient_id->ViewValue !== null) { // Load from cache
                     $this->patient_id->EditValue = array_values($this->patient_id->lookupOptions());
@@ -960,12 +976,12 @@ class JdhTestReportsAdd extends JdhTestReports
                     if ($curVal == "") {
                         $filterWrk = "0=1";
                     } else {
-                        $filterWrk = SearchFilter("`patient_id`", "=", $this->patient_id->CurrentValue, DATATYPE_NUMBER, "");
+                        $filterWrk = SearchFilter($this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchExpression(), "=", $this->patient_id->CurrentValue, $this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchDataType(), "");
                     }
                     $sqlWrk = $this->patient_id->Lookup->getSql(true, $filterWrk, '', $this, false, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
+                    $config->setResultCache($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     $arwrk = $rswrk;
@@ -986,6 +1002,9 @@ class JdhTestReportsAdd extends JdhTestReports
                 $this->report_attachment->IsBlobImage = IsImageFile(ContentExtension($this->report_attachment->Upload->DbValue));
             } else {
                 $this->report_attachment->EditValue = "";
+            }
+            if (!Config("CREATE_UPLOAD_FILE_ON_COPY")) {
+                $this->report_attachment->Upload->DbValue = null;
             }
             if ($this->isShow() || $this->isCopy()) {
                 RenderUploadField($this->report_attachment);
@@ -1017,12 +1036,12 @@ class JdhTestReportsAdd extends JdhTestReports
             }
             $this->report_attachment->ExportHrefValue = GetFileUploadUrl($this->report_attachment, $this->report_id->CurrentValue);
         }
-        if ($this->RowType == ROWTYPE_ADD || $this->RowType == ROWTYPE_EDIT || $this->RowType == ROWTYPE_SEARCH) { // Add/Edit/Search row
+        if ($this->RowType == RowType::ADD || $this->RowType == RowType::EDIT || $this->RowType == RowType::SEARCH) { // Add/Edit/Search row
             $this->setupFieldTitles();
         }
 
         // Call Row Rendered event
-        if ($this->RowType != ROWTYPE_AGGREGATEINIT) {
+        if ($this->RowType != RowType::AGGREGATEINIT) {
             $this->rowRendered();
         }
     }
@@ -1037,29 +1056,29 @@ class JdhTestReportsAdd extends JdhTestReports
             return true;
         }
         $validateForm = true;
-        if ($this->request_id->Required) {
-            if (!$this->request_id->IsDetailKey && EmptyValue($this->request_id->FormValue)) {
-                $this->request_id->addErrorMessage(str_replace("%s", $this->request_id->caption(), $this->request_id->RequiredErrorMessage));
+            if ($this->request_id->Visible && $this->request_id->Required) {
+                if (!$this->request_id->IsDetailKey && EmptyValue($this->request_id->FormValue)) {
+                    $this->request_id->addErrorMessage(str_replace("%s", $this->request_id->caption(), $this->request_id->RequiredErrorMessage));
+                }
             }
-        }
-        if (!CheckInteger($this->request_id->FormValue)) {
-            $this->request_id->addErrorMessage($this->request_id->getErrorMessage(false));
-        }
-        if ($this->patient_id->Required) {
-            if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
-                $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
+            if (!CheckInteger($this->request_id->FormValue)) {
+                $this->request_id->addErrorMessage($this->request_id->getErrorMessage(false));
             }
-        }
-        if ($this->report_findings->Required) {
-            if (!$this->report_findings->IsDetailKey && EmptyValue($this->report_findings->FormValue)) {
-                $this->report_findings->addErrorMessage(str_replace("%s", $this->report_findings->caption(), $this->report_findings->RequiredErrorMessage));
+            if ($this->patient_id->Visible && $this->patient_id->Required) {
+                if (!$this->patient_id->IsDetailKey && EmptyValue($this->patient_id->FormValue)) {
+                    $this->patient_id->addErrorMessage(str_replace("%s", $this->patient_id->caption(), $this->patient_id->RequiredErrorMessage));
+                }
             }
-        }
-        if ($this->report_attachment->Required) {
-            if ($this->report_attachment->Upload->FileName == "" && !$this->report_attachment->Upload->KeepFile) {
-                $this->report_attachment->addErrorMessage(str_replace("%s", $this->report_attachment->caption(), $this->report_attachment->RequiredErrorMessage));
+            if ($this->report_findings->Visible && $this->report_findings->Required) {
+                if (!$this->report_findings->IsDetailKey && EmptyValue($this->report_findings->FormValue)) {
+                    $this->report_findings->addErrorMessage(str_replace("%s", $this->report_findings->caption(), $this->report_findings->RequiredErrorMessage));
+                }
             }
-        }
+            if ($this->report_attachment->Visible && $this->report_attachment->Required) {
+                if ($this->report_attachment->Upload->FileName == "" && !$this->report_attachment->Upload->KeepFile) {
+                    $this->report_attachment->addErrorMessage(str_replace("%s", $this->report_attachment->caption(), $this->report_attachment->RequiredErrorMessage));
+                }
+            }
 
         // Return validate result
         $validateForm = $validateForm && !$this->hasInvalidFields();
@@ -1078,31 +1097,8 @@ class JdhTestReportsAdd extends JdhTestReports
     {
         global $Language, $Security;
 
-        // Set new row
-        $rsnew = [];
-
-        // request_id
-        $this->request_id->setDbValueDef($rsnew, $this->request_id->CurrentValue, 0, false);
-
-        // patient_id
-        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, 0, false);
-
-        // report_findings
-        $this->report_findings->setDbValueDef($rsnew, $this->report_findings->CurrentValue, "", false);
-
-        // report_attachment
-        if ($this->report_attachment->Visible && !$this->report_attachment->Upload->KeepFile) {
-            if ($this->report_attachment->Upload->Value === null) {
-                $rsnew['report_attachment'] = null;
-            } else {
-                $rsnew['report_attachment'] = $this->report_attachment->Upload->Value;
-            }
-        }
-
-        // report_submittedby_user_id
-        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
-            $rsnew['report_submittedby_user_id'] = CurrentUserID();
-        }
+        // Get new row
+        $rsnew = $this->getAddRow();
 
         // Update current values
         $this->setCurrentValues($rsnew);
@@ -1181,6 +1177,64 @@ class JdhTestReportsAdd extends JdhTestReports
         return $addRow;
     }
 
+    /**
+     * Get add row
+     *
+     * @return array
+     */
+    protected function getAddRow()
+    {
+        global $Security;
+        $rsnew = [];
+
+        // request_id
+        $this->request_id->setDbValueDef($rsnew, $this->request_id->CurrentValue, false);
+
+        // patient_id
+        $this->patient_id->setDbValueDef($rsnew, $this->patient_id->CurrentValue, false);
+
+        // report_findings
+        $this->report_findings->setDbValueDef($rsnew, $this->report_findings->CurrentValue, false);
+
+        // report_attachment
+        if ($this->report_attachment->Visible && !$this->report_attachment->Upload->KeepFile) {
+            if ($this->report_attachment->Upload->Value === null) {
+                $rsnew['report_attachment'] = null;
+            } else {
+                $rsnew['report_attachment'] = $this->report_attachment->Upload->Value;
+            }
+        }
+
+        // report_submittedby_user_id
+        if (!$Security->isAdmin() && $Security->isLoggedIn()) { // Non system admin
+            $rsnew['report_submittedby_user_id'] = CurrentUserID();
+        }
+        return $rsnew;
+    }
+
+    /**
+     * Restore add form from row
+     * @param array $row Row
+     */
+    protected function restoreAddFormFromRow($row)
+    {
+        if (isset($row['request_id'])) { // request_id
+            $this->request_id->setFormValue($row['request_id']);
+        }
+        if (isset($row['patient_id'])) { // patient_id
+            $this->patient_id->setFormValue($row['patient_id']);
+        }
+        if (isset($row['report_findings'])) { // report_findings
+            $this->report_findings->setFormValue($row['report_findings']);
+        }
+        if (isset($row['report_attachment'])) { // report_attachment
+            $this->report_attachment->setFormValue($row['report_attachment']);
+        }
+        if (isset($row['report_submittedby_user_id'])) { // report_submittedby_user_id
+            $this->report_submittedby_user_id->setFormValue($row['report_submittedby_user_id']);
+        }
+    }
+
     // Show link optionally based on User ID
     protected function showOptionLink($id = "")
     {
@@ -1195,6 +1249,7 @@ class JdhTestReportsAdd extends JdhTestReports
     protected function setupMasterParms()
     {
         $validMaster = false;
+        $foreignKeys = [];
         // Get the keys for master table
         if (($master = Get(Config("TABLE_SHOW_MASTER"), Get(Config("TABLE_MASTER")))) !== null) {
             $masterTblVar = $master;
@@ -1210,6 +1265,7 @@ class JdhTestReportsAdd extends JdhTestReports
                     $masterTbl->patient_id->setQueryStringValue($parm);
                     $this->patient_id->QueryStringValue = $masterTbl->patient_id->QueryStringValue; // DO NOT change, master/detail key data type can be different
                     $this->patient_id->setSessionValue($this->patient_id->QueryStringValue);
+                    $foreignKeys["patient_id"] = $this->patient_id->QueryStringValue;
                     if (!is_numeric($masterTbl->patient_id->QueryStringValue)) {
                         $validMaster = false;
                     }
@@ -1229,8 +1285,9 @@ class JdhTestReportsAdd extends JdhTestReports
                 $masterTbl = Container("jdh_patients");
                 if (($parm = Post("fk_patient_id", Post("patient_id"))) !== null) {
                     $masterTbl->patient_id->setFormValue($parm);
-                    $this->patient_id->setFormValue($masterTbl->patient_id->FormValue);
+                    $this->patient_id->FormValue = $masterTbl->patient_id->FormValue;
                     $this->patient_id->setSessionValue($this->patient_id->FormValue);
+                    $foreignKeys["patient_id"] = $this->patient_id->FormValue;
                     if (!is_numeric($masterTbl->patient_id->FormValue)) {
                         $validMaster = false;
                     }
@@ -1244,14 +1301,14 @@ class JdhTestReportsAdd extends JdhTestReports
             $this->setCurrentMasterTable($masterTblVar);
 
             // Reset start record counter (new master key)
-            if (!$this->isAddOrEdit()) {
+            if (!$this->isAddOrEdit() && !$this->isGridUpdate()) {
                 $this->StartRecord = 1;
                 $this->setStartRecordNumber($this->StartRecord);
             }
 
             // Clear previous master key from Session
             if ($masterTblVar != "jdh_patients") {
-                if ($this->patient_id->CurrentValue == "") {
+                if (!array_key_exists("patient_id", $foreignKeys)) { // Not current foreign key
                     $this->patient_id->setSessionValue("");
                 }
             }
@@ -1274,7 +1331,7 @@ class JdhTestReportsAdd extends JdhTestReports
     // Setup lookup options
     public function setupLookupOptions($fld)
     {
-        if ($fld->Lookup !== null && $fld->Lookup->Options === null) {
+        if ($fld->Lookup && $fld->Lookup->Options === null) {
             // Get default connection and filter
             $conn = $this->getConnection();
             $lookupFilter = "";
@@ -1295,7 +1352,7 @@ class JdhTestReportsAdd extends JdhTestReports
             $sql = $fld->Lookup->getSql(false, "", $lookupFilter, $this);
 
             // Set up lookup cache
-            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0) {
+            if (!$fld->hasLookupOptions() && $fld->UseLookupCache && $sql != "" && count($fld->Lookup->Options) == 0 && count($fld->Lookup->FilterFields) == 0) {
                 $totalCnt = $this->getRecordCount($sql, $conn);
                 if ($totalCnt > $fld->LookupCacheCount) { // Total count > cache count, do not cache
                     return;
@@ -1338,11 +1395,11 @@ class JdhTestReportsAdd extends JdhTestReports
     // $type = ''|'success'|'failure'|'warning'
     public function messageShowing(&$msg, $type)
     {
-        if ($type == 'success') {
+        if ($type == "success") {
             //$msg = "your success message";
-        } elseif ($type == 'failure') {
+        } elseif ($type == "failure") {
             //$msg = "your failure message";
-        } elseif ($type == 'warning') {
+        } elseif ($type == "warning") {
             //$msg = "your warning message";
         } else {
             //$msg = "your message";

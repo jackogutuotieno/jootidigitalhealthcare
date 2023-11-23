@@ -1,53 +1,41 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Menu item class
  */
 class MenuItem
 {
-    public $Id = "";
-    public $Name = "";
-    public $Text = "";
-    public $Url = "";
-    public $ParentId = -1;
     public $SubMenu = null; // Data type = Menu
-    public $Allowed = true;
     public $Target = "";
-    public $IsHeader = false;
-    public $IsCustomUrl = false;
     public $Href = ""; // Href attribute
     public $Active = false;
-    public $Icon = "";
     public $Attrs; // HTML attributes
-    public $Label = ""; // HTML (for vertical menu only)
-    public $IsNavbarItem;
-    public $IsSidebarItem;
     public $Level = 0;
 
     // Constructor
-    public function __construct($id, $name, $text, $url, $parentId = -1, $allowed = true, $isHeader = false, $isCustomUrl = false, $icon = "", $label = "", $isNavbarItem = false, $isSidebarItem = false)
-    {
-        $this->Id = $id;
-        $this->Name = $name;
-        $this->Text = $text;
-        $this->Url = $url;
-        $this->ParentId = $parentId;
-        $this->Allowed = $allowed;
-        $this->IsHeader = $isHeader;
-        $this->IsCustomUrl = $isCustomUrl;
-        $this->Icon = $icon;
-        $this->Label = $label;
-        $this->IsNavbarItem = $isNavbarItem;
-        $this->IsSidebarItem = $isSidebarItem;
+    public function __construct(
+        public $Id = "",
+        public $Name = "",
+        public $Text = "",
+        public $Url = "",
+        public $ParentId = -1,
+        public $Allowed = true,
+        public $IsHeader = false,
+        public $IsCustomUrl = false,
+        public $Icon = "",
+        public $Label = "", // HTML (for vertical menu only)
+        public $IsNavbarItem = false,
+        public $IsSidebarItem = false
+    ) {
         $this->Attrs = new Attributes();
     }
 
     // Set property case-insensitively (for backward compatibility) // PHP
     public function __set($name, $value)
     {
-        $vars = get_class_vars(get_class($this));
+        $vars = get_class_vars($this::class);
         foreach ($vars as $key => $val) {
             if (SameText($name, $key)) {
                 $this->$key = $value;
@@ -59,7 +47,7 @@ class MenuItem
     // Get property case-insensitively (for backward compatibility) // PHP
     public function __get($name)
     {
-        $vars = get_class_vars(get_class($this));
+        $vars = get_class_vars($this::class);
         foreach ($vars as $key => $val) {
             if (SameText($name, $key)) {
                 return $this->$key;
@@ -106,20 +94,10 @@ class MenuItem
             $this->setAttribute("data-ew-action", "none");
         }
         $icon = trim($this->Icon);
-        if ($icon) {
-            $ar = explode(" ", $icon);
-            foreach ($ar as $name) {
-                if (
-                    StartsString("fa-", $name) &&
-                    !in_array("fa", $ar) &&
-                    !in_array("fas", $ar) &&
-                    !in_array("fab", $ar) &&
-                    !in_array("far", $ar) &&
-                    !in_array("fal", $ar)
-                ) {
-                    $ar[] = "fas";
-                    break;
-                }
+        if ($icon && ContainsString($icon, "fa-")) {
+            $ar = ClassList($icon);
+            if (count(array_intersect($ar, ["fa-solid", "fa-regular", "fa-light", "fa-thin", "fa-duotone", "fa-sharp", "fa-brands"])) == 0) {
+                $ar[] = "fa-solid";
             }
             $icon = implode(" ", $ar);
         }

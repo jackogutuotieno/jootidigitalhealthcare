@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Table class for jdh_vitals
@@ -28,7 +34,7 @@ class JdhVitals extends DbTable
     public $OffsetColumnClass = "col-sm-10 offset-sm-2";
     public $TableLeftColumnClass = "w-col-2";
 
-    // Export
+    // Ajax / Modal
     public $UseAjaxActions = false;
     public $ModalSearch = false;
     public $ModalView = false;
@@ -66,7 +72,7 @@ class JdhVitals extends DbTable
         global $Language, $CurrentLanguage, $CurrentLocale;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
         $this->TableVar = "jdh_vitals";
         $this->TableName = 'jdh_vitals';
         $this->TableType = "TABLE";
@@ -74,7 +80,7 @@ class JdhVitals extends DbTable
         $this->UseTransaction = $this->supportsTransaction() && Config("USE_TRANSACTION");
 
         // Update Table
-        $this->UpdateTable = "`jdh_vitals`";
+        $this->UpdateTable = "jdh_vitals";
         $this->Dbid = 'DB';
         $this->ExportAll = true;
         $this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
@@ -101,7 +107,7 @@ class JdhVitals extends DbTable
         $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
         $this->BasicSearch = new BasicSearch($this);
 
-        // vitals_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // vitals_id
         $this->vitals_id = new DbField(
             $this, // Table
             'x_vitals_id', // Variable name
@@ -120,13 +126,15 @@ class JdhVitals extends DbTable
             'NO' // Edit Tag
         );
         $this->vitals_id->InputTextType = "text";
+        $this->vitals_id->Raw = true;
         $this->vitals_id->IsAutoIncrement = true; // Autoincrement field
         $this->vitals_id->IsPrimaryKey = true; // Primary key field
+        $this->vitals_id->Nullable = false; // NOT NULL field
         $this->vitals_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->vitals_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->vitals_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['vitals_id'] = &$this->vitals_id;
 
-        // patient_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // patient_id
         $this->patient_id = new DbField(
             $this, // Table
             'x_patient_id', // Variable name
@@ -145,15 +153,17 @@ class JdhVitals extends DbTable
             'SELECT' // Edit Tag
         );
         $this->patient_id->InputTextType = "text";
+        $this->patient_id->Raw = true;
         $this->patient_id->IsForeignKey = true; // Foreign key field
+        $this->patient_id->setSelectMultiple(false); // Select one
         $this->patient_id->UsePleaseSelect = true; // Use PleaseSelect by default
         $this->patient_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->patient_id->Lookup = new Lookup('patient_id', 'jdh_patients', false, 'patient_id', ["patient_name","","",""], '', '', [], [], [], [], [], [], '', '', "`patient_name`");
+        $this->patient_id->Lookup = new Lookup($this->patient_id, 'jdh_patients', false, 'patient_id', ["patient_name","","",""], '', '', [], [], [], [], [], [], false, '', '', "`patient_name`");
         $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->patient_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->Fields['patient_id'] = &$this->patient_id;
 
-        // pressure $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // pressure
         $this->pressure = new DbField(
             $this, // Table
             'x_pressure', // Variable name
@@ -172,13 +182,14 @@ class JdhVitals extends DbTable
             'TEXT' // Edit Tag
         );
         $this->pressure->InputTextType = "text";
+        $this->pressure->Raw = true;
         $this->pressure->Nullable = false; // NOT NULL field
         $this->pressure->Required = true; // Required field
         $this->pressure->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->pressure->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['pressure'] = &$this->pressure;
 
-        // height $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // height
         $this->height = new DbField(
             $this, // Table
             'x_height', // Variable name
@@ -197,13 +208,14 @@ class JdhVitals extends DbTable
             'TEXT' // Edit Tag
         );
         $this->height->InputTextType = "text";
+        $this->height->Raw = true;
         $this->height->Nullable = false; // NOT NULL field
         $this->height->Required = true; // Required field
         $this->height->DefaultErrorMessage = $Language->phrase("IncorrectFloat");
         $this->height->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['height'] = &$this->height;
 
-        // weight $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // weight
         $this->weight = new DbField(
             $this, // Table
             'x_weight', // Variable name
@@ -222,13 +234,14 @@ class JdhVitals extends DbTable
             'TEXT' // Edit Tag
         );
         $this->weight->InputTextType = "text";
+        $this->weight->Raw = true;
         $this->weight->Nullable = false; // NOT NULL field
         $this->weight->Required = true; // Required field
         $this->weight->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->weight->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['weight'] = &$this->weight;
 
-        // body_mass_index $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // body_mass_index
         $this->body_mass_index = new DbField(
             $this, // Table
             'x_body_mass_index', // Variable name
@@ -247,12 +260,13 @@ class JdhVitals extends DbTable
             'TEXT' // Edit Tag
         );
         $this->body_mass_index->InputTextType = "text";
+        $this->body_mass_index->Raw = true;
         $this->body_mass_index->IsCustom = true; // Custom field
         $this->body_mass_index->DefaultErrorMessage = $Language->phrase("IncorrectFloat");
         $this->body_mass_index->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
         $this->Fields['body_mass_index'] = &$this->body_mass_index;
 
-        // pulse_rate $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // pulse_rate
         $this->pulse_rate = new DbField(
             $this, // Table
             'x_pulse_rate', // Variable name
@@ -271,13 +285,14 @@ class JdhVitals extends DbTable
             'TEXT' // Edit Tag
         );
         $this->pulse_rate->InputTextType = "text";
+        $this->pulse_rate->Raw = true;
         $this->pulse_rate->Nullable = false; // NOT NULL field
         $this->pulse_rate->Required = true; // Required field
         $this->pulse_rate->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->pulse_rate->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['pulse_rate'] = &$this->pulse_rate;
 
-        // respiratory_rate $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // respiratory_rate
         $this->respiratory_rate = new DbField(
             $this, // Table
             'x_respiratory_rate', // Variable name
@@ -296,13 +311,14 @@ class JdhVitals extends DbTable
             'TEXT' // Edit Tag
         );
         $this->respiratory_rate->InputTextType = "text";
+        $this->respiratory_rate->Raw = true;
         $this->respiratory_rate->Nullable = false; // NOT NULL field
         $this->respiratory_rate->Required = true; // Required field
         $this->respiratory_rate->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->respiratory_rate->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['respiratory_rate'] = &$this->respiratory_rate;
 
-        // temperature $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // temperature
         $this->temperature = new DbField(
             $this, // Table
             'x_temperature', // Variable name
@@ -321,13 +337,14 @@ class JdhVitals extends DbTable
             'TEXT' // Edit Tag
         );
         $this->temperature->InputTextType = "text";
+        $this->temperature->Raw = true;
         $this->temperature->Nullable = false; // NOT NULL field
         $this->temperature->Required = true; // Required field
         $this->temperature->DefaultErrorMessage = $Language->phrase("IncorrectFloat");
         $this->temperature->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['temperature'] = &$this->temperature;
 
-        // random_blood_sugar $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // random_blood_sugar
         $this->random_blood_sugar = new DbField(
             $this, // Table
             'x_random_blood_sugar', // Variable name
@@ -351,7 +368,7 @@ class JdhVitals extends DbTable
         $this->random_blood_sugar->SearchOperators = ["=", "<>", "IN", "NOT IN", "STARTS WITH", "NOT STARTS WITH", "LIKE", "NOT LIKE", "ENDS WITH", "NOT ENDS WITH", "IS EMPTY", "IS NOT EMPTY"];
         $this->Fields['random_blood_sugar'] = &$this->random_blood_sugar;
 
-        // spo_2 $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // spo_2
         $this->spo_2 = new DbField(
             $this, // Table
             'x_spo_2', // Variable name
@@ -370,13 +387,14 @@ class JdhVitals extends DbTable
             'TEXT' // Edit Tag
         );
         $this->spo_2->InputTextType = "text";
+        $this->spo_2->Raw = true;
         $this->spo_2->Nullable = false; // NOT NULL field
         $this->spo_2->Required = true; // Required field
         $this->spo_2->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->spo_2->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['spo_2'] = &$this->spo_2;
 
-        // submission_date $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // submission_date
         $this->submission_date = new DbField(
             $this, // Table
             'x_submission_date', // Variable name
@@ -395,13 +413,14 @@ class JdhVitals extends DbTable
             'TEXT' // Edit Tag
         );
         $this->submission_date->InputTextType = "text";
+        $this->submission_date->Raw = true;
         $this->submission_date->Nullable = false; // NOT NULL field
         $this->submission_date->Required = true; // Required field
         $this->submission_date->DefaultErrorMessage = str_replace("%s", DateFormat(11), $Language->phrase("IncorrectDate"));
         $this->submission_date->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['submission_date'] = &$this->submission_date;
 
-        // submitted_by_user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // submitted_by_user_id
         $this->submitted_by_user_id = new DbField(
             $this, // Table
             'x_submitted_by_user_id', // Variable name
@@ -421,12 +440,13 @@ class JdhVitals extends DbTable
         );
         $this->submitted_by_user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
         $this->submitted_by_user_id->InputTextType = "text";
+        $this->submitted_by_user_id->Raw = true;
         $this->submitted_by_user_id->Nullable = false; // NOT NULL field
         $this->submitted_by_user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->submitted_by_user_id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['submitted_by_user_id'] = &$this->submitted_by_user_id;
 
-        // patient_status $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // patient_status
         $this->patient_status = new DbField(
             $this, // Table
             'x_patient_status', // Variable name
@@ -450,7 +470,7 @@ class JdhVitals extends DbTable
         $this->Fields['patient_status'] = &$this->patient_status;
 
         // Add Doctrine Cache
-        $this->Cache = new ArrayCache();
+        $this->Cache = new \Symfony\Component\Cache\Adapter\ArrayAdapter();
         $this->CacheProfile = new \Doctrine\DBAL\Cache\QueryCacheProfile(0, $this->TableVar);
 
         // Call Table Load event
@@ -595,38 +615,50 @@ class JdhVitals extends DbTable
         return $chartRow;
     }
 
-    // Table level SQL
-    public function getSqlFrom() // From
+    // Get FROM clause
+    public function getSqlFrom()
     {
-        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_vitals`";
+        return ($this->SqlFrom != "") ? $this->SqlFrom : "jdh_vitals";
     }
 
-    public function sqlFrom() // For backward compatibility
+    // Get FROM clause (for backward compatibility)
+    public function sqlFrom()
     {
         return $this->getSqlFrom();
     }
 
+    // Set FROM clause
     public function setSqlFrom($v)
     {
         $this->SqlFrom = $v;
     }
 
+    // Get SELECT clause
     public function getSqlSelect() // Select
     {
-        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*, weight/(height*height) AS `body_mass_index`, '' AS `patient_status`");
+        return $this->SqlSelect ?? $this->getQueryBuilder()->select($this->sqlSelectFields());
     }
 
-    public function sqlSelect() // For backward compatibility
+    // Get list of fields
+    private function sqlSelectFields()
+    {
+        return "*, weight/(height*height) AS `body_mass_index`, '' AS `patient_status`";
+    }
+
+    // Get SELECT clause (for backward compatibility)
+    public function sqlSelect()
     {
         return $this->getSqlSelect();
     }
 
+    // Set SELECT clause
     public function setSqlSelect($v)
     {
         $this->SqlSelect = $v;
     }
 
-    public function getSqlWhere() // Where
+    // Get WHERE clause
+    public function getSqlWhere()
     {
         $where = ($this->SqlWhere != "") ? $this->SqlWhere : "";
         $this->DefaultFilter = "";
@@ -634,56 +666,67 @@ class JdhVitals extends DbTable
         return $where;
     }
 
-    public function sqlWhere() // For backward compatibility
+    // Get WHERE clause (for backward compatibility)
+    public function sqlWhere()
     {
         return $this->getSqlWhere();
     }
 
+    // Set WHERE clause
     public function setSqlWhere($v)
     {
         $this->SqlWhere = $v;
     }
 
-    public function getSqlGroupBy() // Group By
+    // Get GROUP BY clause
+    public function getSqlGroupBy()
     {
-        return ($this->SqlGroupBy != "") ? $this->SqlGroupBy : "";
+        return $this->SqlGroupBy != "" ? $this->SqlGroupBy : "";
     }
 
-    public function sqlGroupBy() // For backward compatibility
+    // Get GROUP BY clause (for backward compatibility)
+    public function sqlGroupBy()
     {
         return $this->getSqlGroupBy();
     }
 
+    // set GROUP BY clause
     public function setSqlGroupBy($v)
     {
         $this->SqlGroupBy = $v;
     }
 
+    // Get HAVING clause
     public function getSqlHaving() // Having
     {
         return ($this->SqlHaving != "") ? $this->SqlHaving : "";
     }
 
-    public function sqlHaving() // For backward compatibility
+    // Get HAVING clause (for backward compatibility)
+    public function sqlHaving()
     {
         return $this->getSqlHaving();
     }
 
+    // Set HAVING clause
     public function setSqlHaving($v)
     {
         $this->SqlHaving = $v;
     }
 
-    public function getSqlOrderBy() // Order By
+    // Get ORDER BY clause
+    public function getSqlOrderBy()
     {
         return ($this->SqlOrderBy != "") ? $this->SqlOrderBy : "";
     }
 
-    public function sqlOrderBy() // For backward compatibility
+    // Get ORDER BY clause (for backward compatibility)
+    public function sqlOrderBy()
     {
         return $this->getSqlOrderBy();
     }
 
+    // set ORDER BY clause
     public function setSqlOrderBy($v)
     {
         $this->SqlOrderBy = $v;
@@ -710,23 +753,23 @@ class JdhVitals extends DbTable
             case "gridadd":
             case "register":
             case "addopt":
-                return (($allow & 1) == 1);
+                return ($allow & Allow::ADD->value) == Allow::ADD->value;
             case "edit":
             case "gridedit":
             case "update":
             case "changepassword":
             case "resetpassword":
-                return (($allow & 4) == 4);
+                return ($allow & Allow::EDIT->value) == Allow::EDIT->value;
             case "delete":
-                return (($allow & 2) == 2);
+                return ($allow & Allow::DELETE->value) == Allow::DELETE->value;
             case "view":
-                return (($allow & 32) == 32);
+                return ($allow & Allow::VIEW->value) == Allow::VIEW->value;
             case "search":
-                return (($allow & 64) == 64);
+                return ($allow & Allow::SEARCH->value) == Allow::SEARCH->value;
             case "lookup":
-                return (($allow & 256) == 256);
+                return ($allow & Allow::LOOKUP->value) == Allow::LOOKUP->value;
             default:
-                return (($allow & 8) == 8);
+                return ($allow & Allow::LIST->value) == Allow::LIST->value;
         }
     }
 
@@ -740,32 +783,36 @@ class JdhVitals extends DbTable
     public function getRecordCount($sql, $c = null)
     {
         $cnt = -1;
-        $rs = null;
-        if ($sql instanceof QueryBuilder) { // Query builder
-            $sqlwrk = clone $sql;
-            $sqlwrk = $sqlwrk->resetQueryPart("orderBy")->getSQL();
-        } else {
-            $sqlwrk = $sql;
-        }
+        $sqlwrk = $sql instanceof QueryBuilder // Query builder
+            ? (clone $sql)->resetQueryPart("orderBy")->getSQL()
+            : $sql;
         $pattern = '/^SELECT\s([\s\S]+)\sFROM\s/i';
         // Skip Custom View / SubQuery / SELECT DISTINCT / ORDER BY
         if (
-            ($this->TableType == 'TABLE' || $this->TableType == 'VIEW' || $this->TableType == 'LINKTABLE') &&
-            preg_match($pattern, $sqlwrk) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
-            !preg_match('/^\s*select\s+distinct\s+/i', $sqlwrk) && !preg_match('/\s+order\s+by\s+/i', $sqlwrk)
+            in_array($this->TableType, ["TABLE", "VIEW", "LINKTABLE"]) &&
+            preg_match($pattern, $sqlwrk) &&
+            !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
+            !preg_match('/^\s*SELECT\s+DISTINCT\s+/i', $sqlwrk) &&
+            !preg_match('/\s+ORDER\s+BY\s+/i', $sqlwrk)
         ) {
-            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
+            $sqlcnt = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
         } else {
-            $sqlwrk = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
+            $sqlcnt = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
         }
         $conn = $c ?? $this->getConnection();
-        $cnt = $conn->fetchOne($sqlwrk);
+        $cnt = $conn->fetchOne($sqlcnt);
         if ($cnt !== false) {
             return (int)$cnt;
         }
-
         // Unable to get count by SELECT COUNT(*), execute the SQL to get record count directly
-        return ExecuteRecordCount($sql, $conn);
+        $result = $conn->executeQuery($sqlwrk);
+        $cnt = $result->rowCount();
+        if ($cnt == 0) { // Unable to get record count, count directly
+            while ($result->fetch()) {
+                $cnt++;
+            }
+        }
+        return $cnt;
     }
 
     // Get SQL
@@ -844,9 +891,10 @@ class JdhVitals extends DbTable
         $origFilter = $this->CurrentFilter;
         $this->CurrentFilter = $filter;
         $this->recordsetSelecting($this->CurrentFilter);
-        $select = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
-        $groupBy = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlGroupBy() : "";
-        $having = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlHaving() : "";
+        $isCustomView = $this->TableType == "CUSTOMVIEW";
+        $select = $isCustomView ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
+        $groupBy = $isCustomView ? $this->getSqlGroupBy() : "";
+        $having = $isCustomView ? $this->getSqlHaving() : "";
         $sql = $this->buildSelectSql($select, $this->getSqlFrom(), $this->getSqlWhere(), $groupBy, $having, "", $this->CurrentFilter, "");
         $cnt = $this->getRecordCount($sql);
         $this->CurrentFilter = $origFilter;
@@ -860,9 +908,10 @@ class JdhVitals extends DbTable
         AddFilter($filter, $this->CurrentFilter);
         $filter = $this->applyUserIDFilters($filter);
         $this->recordsetSelecting($filter);
-        $select = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
-        $groupBy = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlGroupBy() : "";
-        $having = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlHaving() : "";
+        $isCustomView = $this->TableType == "CUSTOMVIEW";
+        $select = $isCustomView ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
+        $groupBy = $isCustomView ? $this->getSqlGroupBy() : "";
+        $having = $isCustomView ? $this->getSqlHaving() : "";
         $sql = $this->buildSelectSql($select, $this->getSqlFrom(), $this->getSqlWhere(), $groupBy, $having, "", $filter, "");
         $cnt = $this->getRecordCount($sql);
         return $cnt;
@@ -878,12 +927,15 @@ class JdhVitals extends DbTable
     {
         $queryBuilder = $this->getQueryBuilder();
         $queryBuilder->insert($this->UpdateTable);
+        $platform = $this->getConnection()->getDatabasePlatform();
         foreach ($rs as $name => $value) {
             if (!isset($this->Fields[$name]) || $this->Fields[$name]->IsCustom) {
                 continue;
             }
-            $type = GetParameterType($this->Fields[$name], $value, $this->Dbid);
-            $queryBuilder->setValue($this->Fields[$name]->Expression, $queryBuilder->createPositionalParameter($value, $type));
+            $field = $this->Fields[$name];
+            $parm = $queryBuilder->createPositionalParameter($value, $field->getParameterType());
+            $parm = $field->CustomDataType?->convertToDatabaseValueSQL($parm, $platform) ?? $parm; // Convert database SQL
+            $queryBuilder->setValue($field->Expression, $parm);
         }
         return $queryBuilder;
     }
@@ -893,18 +945,18 @@ class JdhVitals extends DbTable
     {
         $conn = $this->getConnection();
         try {
-            $success = $this->insertSql($rs)->execute();
+            $queryBuilder = $this->insertSql($rs);
+            $result = $queryBuilder->executeStatement();
             $this->DbErrorMessage = "";
         } catch (\Exception $e) {
-            $success = false;
+            $result = false;
             $this->DbErrorMessage = $e->getMessage();
         }
-        if ($success) {
-            // Get insert id if necessary
+        if ($result) {
             $this->vitals_id->setDbValue($conn->lastInsertId());
             $rs['vitals_id'] = $this->vitals_id->DbValue;
         }
-        return $success;
+        return $result;
     }
 
     /**
@@ -919,14 +971,17 @@ class JdhVitals extends DbTable
     {
         $queryBuilder = $this->getQueryBuilder();
         $queryBuilder->update($this->UpdateTable);
+        $platform = $this->getConnection()->getDatabasePlatform();
         foreach ($rs as $name => $value) {
             if (!isset($this->Fields[$name]) || $this->Fields[$name]->IsCustom || $this->Fields[$name]->IsAutoIncrement) {
                 continue;
             }
-            $type = GetParameterType($this->Fields[$name], $value, $this->Dbid);
-            $queryBuilder->set($this->Fields[$name]->Expression, $queryBuilder->createPositionalParameter($value, $type));
+            $field = $this->Fields[$name];
+            $parm = $queryBuilder->createPositionalParameter($value, $field->getParameterType());
+            $parm = $field->CustomDataType?->convertToDatabaseValueSQL($parm, $platform) ?? $parm; // Convert database SQL
+            $queryBuilder->set($field->Expression, $parm);
         }
-        $filter = ($curfilter) ? $this->CurrentFilter : "";
+        $filter = $curfilter ? $this->CurrentFilter : "";
         if (is_array($where)) {
             $where = $this->arrayToFilter($where);
         }
@@ -942,8 +997,8 @@ class JdhVitals extends DbTable
     {
         // If no field is updated, execute may return 0. Treat as success
         try {
-            $success = $this->updateSql($rs, $where, $curfilter)->execute();
-            $success = ($success > 0) ? $success : true;
+            $success = $this->updateSql($rs, $where, $curfilter)->executeStatement();
+            $success = $success > 0 ? $success : true;
             $this->DbErrorMessage = "";
         } catch (\Exception $e) {
             $success = false;
@@ -979,7 +1034,7 @@ class JdhVitals extends DbTable
                 AddFilter($where, QuotedName('vitals_id', $this->Dbid) . '=' . QuotedValue($rs['vitals_id'], $this->vitals_id->DataType, $this->Dbid));
             }
         }
-        $filter = ($curfilter) ? $this->CurrentFilter : "";
+        $filter = $curfilter ? $this->CurrentFilter : "";
         AddFilter($filter, $where);
         return $queryBuilder->where($filter != "" ? $filter : "0=1");
     }
@@ -990,7 +1045,7 @@ class JdhVitals extends DbTable
         $success = true;
         if ($success) {
             try {
-                $success = $this->deleteSql($rs, $where, $curfilter)->execute();
+                $success = $this->deleteSql($rs, $where, $curfilter)->executeStatement();
                 $this->DbErrorMessage = "";
             } catch (\Exception $e) {
                 $success = false;
@@ -1000,7 +1055,7 @@ class JdhVitals extends DbTable
         return $success;
     }
 
-    // Load DbValue from recordset or array
+    // Load DbValue from result set or array
     protected function loadDbValues($row)
     {
         if (!is_array($row)) {
@@ -1035,7 +1090,7 @@ class JdhVitals extends DbTable
     }
 
     // Get Key
-    public function getKey($current = false)
+    public function getKey($current = false, $keySeparator = null)
     {
         $keys = [];
         $val = $current ? $this->vitals_id->CurrentValue : $this->vitals_id->OldValue;
@@ -1044,14 +1099,16 @@ class JdhVitals extends DbTable
         } else {
             $keys[] = $val;
         }
-        return implode(Config("COMPOSITE_KEY_SEPARATOR"), $keys);
+        $keySeparator ??= Config("COMPOSITE_KEY_SEPARATOR");
+        return implode($keySeparator, $keys);
     }
 
     // Set Key
-    public function setKey($key, $current = false)
+    public function setKey($key, $current = false, $keySeparator = null)
     {
+        $keySeparator ??= Config("COMPOSITE_KEY_SEPARATOR");
         $this->OldKey = strval($key);
-        $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
+        $keys = explode($keySeparator, $this->OldKey);
         if (count($keys) == 1) {
             if ($current) {
                 $this->vitals_id->CurrentValue = $keys[0];
@@ -1104,33 +1161,31 @@ class JdhVitals extends DbTable
     public function getModalCaption($pageName)
     {
         global $Language;
-        if ($pageName == "jdhvitalsview") {
-            return $Language->phrase("View");
-        } elseif ($pageName == "jdhvitalsedit") {
-            return $Language->phrase("Edit");
-        } elseif ($pageName == "jdhvitalsadd") {
-            return $Language->phrase("Add");
-        }
-        return "";
+        return match ($pageName) {
+            "jdhvitalsview" => $Language->phrase("View"),
+            "jdhvitalsedit" => $Language->phrase("Edit"),
+            "jdhvitalsadd" => $Language->phrase("Add"),
+            default => ""
+        };
+    }
+
+    // Default route URL
+    public function getDefaultRouteUrl()
+    {
+        return "jdhvitalslist";
     }
 
     // API page name
     public function getApiPageName($action)
     {
-        switch (strtolower($action)) {
-            case Config("API_VIEW_ACTION"):
-                return "JdhVitalsView";
-            case Config("API_ADD_ACTION"):
-                return "JdhVitalsAdd";
-            case Config("API_EDIT_ACTION"):
-                return "JdhVitalsEdit";
-            case Config("API_DELETE_ACTION"):
-                return "JdhVitalsDelete";
-            case Config("API_LIST_ACTION"):
-                return "JdhVitalsList";
-            default:
-                return "";
-        }
+        return match (strtolower($action)) {
+            Config("API_VIEW_ACTION") => "JdhVitalsView",
+            Config("API_ADD_ACTION") => "JdhVitalsAdd",
+            Config("API_EDIT_ACTION") => "JdhVitalsEdit",
+            Config("API_DELETE_ACTION") => "JdhVitalsDelete",
+            Config("API_LIST_ACTION") => "JdhVitalsList",
+            default => ""
+        };
     }
 
     // Current URL
@@ -1202,12 +1257,12 @@ class JdhVitals extends DbTable
     }
 
     // Delete URL
-    public function getDeleteUrl()
+    public function getDeleteUrl($parm = "")
     {
         if ($this->UseAjaxActions && ConvertToBool(Param("infinitescroll")) && CurrentPageID() == "list") {
             return $this->keyUrl(GetApiUrl(Config("API_DELETE_ACTION") . "/" . $this->TableVar));
         } else {
-            return $this->keyUrl("jdhvitalsdelete");
+            return $this->keyUrl("jdhvitalsdelete", $parm);
         }
     }
 
@@ -1224,7 +1279,7 @@ class JdhVitals extends DbTable
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
-        $json .= "\"vitals_id\":" . JsonEncode($this->vitals_id->CurrentValue, "number");
+        $json .= "\"vitals_id\":" . VarToJson($this->vitals_id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -1249,10 +1304,10 @@ class JdhVitals extends DbTable
     // Render sort
     public function renderFieldHeader($fld)
     {
-        global $Security, $Language, $Page;
+        global $Security, $Language;
         $sortUrl = "";
         $attrs = "";
-        if ($fld->Sortable) {
+        if ($this->PageID != "grid" && $fld->Sortable) {
             $sortUrl = $this->sortUrl($fld);
             $attrs = ' role="button" data-ew-action="sort" data-ajax="' . ($this->UseAjaxActions ? "true" : "false") . '" data-sort-url="' . $sortUrl . '" data-sort-type="1"';
             if ($this->ContextClass) { // Add context
@@ -1263,9 +1318,11 @@ class JdhVitals extends DbTable
         if ($sortUrl) {
             $html .= '<div class="ew-table-header-sort">' . $fld->getSortIcon() . '</div>';
         }
-        if ($fld->UseFilter && $Security->canSearch()) {
+        if ($this->PageID != "grid" && !$this->isExport() && $fld->UseFilter && $Security->canSearch()) {
             $html .= '<div class="ew-filter-dropdown-btn" data-ew-action="filter" data-table="' . $fld->TableVar . '" data-field="' . $fld->FieldVar .
-                '"><div class="ew-table-header-filter" role="button" aria-haspopup="true">' . $Language->phrase("Filter") . '</div></div>';
+                '"><div class="ew-table-header-filter" role="button" aria-haspopup="true">' . $Language->phrase("Filter") .
+                (is_array($fld->EditValue) ? str_replace("%c", count($fld->EditValue), $Language->phrase("FilterCount")) : '') .
+                '</div></div>';
         }
         $html = '<div class="ew-table-header-btn">' . $html . '</div>';
         if ($this->UseCustomTemplate) {
@@ -1287,7 +1344,7 @@ class JdhVitals extends DbTable
         } elseif ($fld->Sortable) {
             $urlParm = "order=" . urlencode($fld->Name) . "&amp;ordertype=" . $fld->getNextSort();
             if ($DashboardReport) {
-                $urlParm .= "&amp;dashboard=true";
+                $urlParm .= "&amp;" . Config("PAGE_DASHBOARD") . "=" . $DashboardReport;
             }
             return $this->addMasterUrl($this->CurrentPageName . "?" . $urlParm);
         } else {
@@ -1304,15 +1361,19 @@ class JdhVitals extends DbTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
+            $isApi = IsApi();
+            $keyValues = $isApi
+                ? (Route(0) == "export"
+                    ? array_map(fn ($i) => Route($i + 3), range(0, 0))  // Export API
+                    : array_map(fn ($i) => Route($i + 2), range(0, 0))) // Other API
+                : []; // Non-API
             if (($keyValue = Param("vitals_id") ?? Route("vitals_id")) !== null) {
                 $arKeys[] = $keyValue;
-            } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
+            } elseif ($isApi && (($keyValue = Key(0) ?? $keyValues[0] ?? null) !== null)) {
                 $arKeys[] = $keyValue;
             } else {
                 $arKeys = null; // Do not setup
             }
-
-            //return $arKeys; // Do not return yet, so the values will also be checked by the following code
         }
         // Check keys
         $ar = [];
@@ -1359,10 +1420,10 @@ class JdhVitals extends DbTable
         return $keyFilter;
     }
 
-    // Load recordset based on filter
-    public function loadRs($filter)
+    // Load result set based on filter/sort
+    public function loadRs($filter, $sort = "")
     {
-        $sql = $this->getSql($filter); // Set up filter (WHERE Clause)
+        $sql = $this->getSql($filter, $sort); // Set up filter (WHERE Clause) / sort (ORDER BY Clause)
         $conn = $this->getConnection();
         return $conn->executeQuery($sql);
     }
@@ -1401,7 +1462,7 @@ class JdhVitals extends DbTable
         $listClass = PROJECT_NAMESPACE . $listPage;
         $page = new $listClass();
         $page->loadRecordsetFromFilter($filter);
-        $view = Container("view");
+        $view = Container("app.view");
         $template = $listPage . ".php"; // View
         $GLOBALS["Title"] ??= $page->Title; // Title
         try {
@@ -1457,11 +1518,11 @@ class JdhVitals extends DbTable
         if ($curVal != "") {
             $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
             if ($this->patient_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                $filterWrk = SearchFilter($this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchExpression(), "=", $curVal, $this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchDataType(), "");
                 $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
+                $config->setResultCache($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 if ($ari > 0) { // Lookup values found
@@ -1604,11 +1665,11 @@ class JdhVitals extends DbTable
             if ($curVal != "") {
                 $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
                 if ($this->patient_id->ViewValue === null) { // Lookup from database
-                    $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                    $filterWrk = SearchFilter($this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchExpression(), "=", $curVal, $this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchDataType(), "");
                     $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                     $conn = Conn();
                     $config = $conn->getConfiguration();
-                    $config->setResultCacheImpl($this->Cache);
+                    $config->setResultCache($this->Cache);
                     $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                     $ari = count($rswrk);
                     if ($ari > 0) { // Lookup values found
@@ -1723,9 +1784,9 @@ class JdhVitals extends DbTable
     }
 
     // Export data in HTML/CSV/Word/Excel/Email/PDF format
-    public function exportDocument($doc, $recordset, $startRec = 1, $stopRec = 1, $exportPageType = "")
+    public function exportDocument($doc, $result, $startRec = 1, $stopRec = 1, $exportPageType = "")
     {
-        if (!$recordset || !$doc) {
+        if (!$result || !$doc) {
             return;
         }
         if (!$doc->ExportCustom) {
@@ -1764,12 +1825,9 @@ class JdhVitals extends DbTable
                 $doc->endExportRow();
             }
         }
-
-        // Move to first record
         $recCnt = $startRec - 1;
-        $stopRec = ($stopRec > 0) ? $stopRec : PHP_INT_MAX;
-        while (!$recordset->EOF && $recCnt < $stopRec) {
-            $row = $recordset->fields;
+        $stopRec = $stopRec > 0 ? $stopRec : PHP_INT_MAX;
+        while (($row = $result->fetch()) && $recCnt < $stopRec) {
             $recCnt++;
             if ($recCnt >= $startRec) {
                 $rowCnt = $recCnt - $startRec + 1;
@@ -1783,7 +1841,7 @@ class JdhVitals extends DbTable
                 $this->loadListRowValues($row);
 
                 // Render row
-                $this->RowType = ROWTYPE_VIEW; // Render view
+                $this->RowType = RowType::VIEW; // Render view
                 $this->resetAttributes();
                 $this->renderListRow();
                 if (!$doc->ExportCustom) {
@@ -1824,7 +1882,6 @@ class JdhVitals extends DbTable
             if ($doc->ExportCustom) {
                 $this->rowExport($doc, $row);
             }
-            $recordset->moveNext();
         }
         if (!$doc->ExportCustom) {
             $doc->exportTableFooter();
@@ -1836,8 +1893,9 @@ class JdhVitals extends DbTable
     {
         global $Security;
         $filterWrk = "";
-        if ($id == "")
-            $id = (CurrentPageID() == "list") ? $this->CurrentAction : CurrentPageID();
+        if ($id == "") {
+            $id = CurrentPageID() == "list" ? $this->CurrentAction : CurrentPageID();
+        }
         if (!$this->userIDAllow($id) && !$Security->isAdmin()) {
             $filterWrk = $Security->userIdList();
             if ($filterWrk != "") {
@@ -1856,7 +1914,7 @@ class JdhVitals extends DbTable
     {
         global $UserTable;
         $wrk = "";
-        $sql = "SELECT " . $masterfld->Expression . " FROM `jdh_vitals`";
+        $sql = "SELECT " . $masterfld->Expression . " FROM jdh_vitals";
         $filter = $this->addUserIDFilter("");
         if ($filter != "") {
             $sql .= " WHERE " . $filter;
@@ -1865,7 +1923,7 @@ class JdhVitals extends DbTable
         // List all values
         $conn = Conn($UserTable->Dbid);
         $config = $conn->getConfiguration();
-        $config->setResultCacheImpl($this->Cache);
+        $config->setResultCache($this->Cache);
         if ($rs = $conn->executeCacheQuery($sql, [], [], $this->CacheProfile)->fetchAllNumeric()) {
             foreach ($rs as $row) {
                 if ($wrk != "") {
@@ -1930,7 +1988,7 @@ class JdhVitals extends DbTable
     }
 
     // Recordset Selected event
-    public function recordsetSelected(&$rs)
+    public function recordsetSelected($rs)
     {
         //Log("Recordset Selected");
     }
@@ -1969,7 +2027,7 @@ class JdhVitals extends DbTable
     }
 
     // Row Inserted event
-    public function rowInserted($rsold, &$rsnew)
+    public function rowInserted($rsold, $rsnew)
     {
         //Log("Row Inserted");
     }
@@ -1983,7 +2041,7 @@ class JdhVitals extends DbTable
     }
 
     // Row Updated event
-    public function rowUpdated($rsold, &$rsnew)
+    public function rowUpdated($rsold, $rsnew)
     {
         //Log("Row Updated");
     }
@@ -2033,13 +2091,13 @@ class JdhVitals extends DbTable
     }
 
     // Row Deleted event
-    public function rowDeleted(&$rs)
+    public function rowDeleted($rs)
     {
         //Log("Row Deleted");
     }
 
     // Email Sending event
-    public function emailSending($email, &$args)
+    public function emailSending($email, $args)
     {
         //var_dump($email, $args); exit();
         return true;

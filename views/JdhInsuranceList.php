@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhInsuranceList = &$Page;
@@ -30,8 +30,8 @@ loadjs.ready(["wrapper", "head"], function () {
 </script>
 <script>
 window.Tabulator || loadjs([
-    ew.PATH_BASE + "js/tabulator.min.js?v=19.0.15",
-    ew.PATH_BASE + "css/<?= CssFile("tabulator_bootstrap5.css") ?>?v=19.0.15"
+    ew.PATH_BASE + "js/tabulator.min.js?v=24.4.0",
+    ew.PATH_BASE + "css/<?= CssFile("tabulator_bootstrap5.css", false) ?>?v=24.4.0"
 ], "import");
 </script>
 <script>
@@ -56,9 +56,8 @@ loadjs.ready("head", function () {
 <?php } ?>
 </div>
 <?php } ?>
-<?php if ($Security->canSearch()) { ?>
-<?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
-<form name="fjdh_insurancesrch" id="fjdh_insurancesrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="on">
+<?php if (!$Page->IsModal) { ?>
+<form name="fjdh_insurancesrch" id="fjdh_insurancesrch" class="ew-form ew-ext-search-form" action="<?= CurrentPageUrl(false) ?>" novalidate autocomplete="off">
 <div id="fjdh_insurancesrch_search_panel" class="mb-2 mb-sm-0 <?= $Page->SearchPanelClass ?>"><!-- .ew-search-panel -->
 <script>
 var currentTable = <?= JsonEncode($Page->toClientVar()) ?>;
@@ -90,7 +89,8 @@ loadjs.ready(["wrapper", "head"], function () {
 });
 </script>
 <input type="hidden" name="cmd" value="search">
-<input type="hidden" name="t" value="jdh_insurance">
+<?php if ($Security->canSearch()) { ?>
+<?php if (!$Page->isExport() && !($Page->CurrentAction && $Page->CurrentAction != "search") && $Page->hasSearchFields()) { ?>
 <div class="ew-extended-search container-fluid ps-2">
 <!-- template for quick search in navbar -->
 <script id="navbar-basic-search" type="text/html" class="ew-js-template" data-name="search" data-seq="10" data-data="menu" data-target="#ew-navbar-end" data-method="prependTo">
@@ -122,19 +122,23 @@ loadjs.ready(["wrapper", "head"], function () {
     </li>
 </script>
 </div><!-- /.ew-extended-search -->
+<?php } ?>
+<?php } ?>
 </div><!-- /.ew-search-panel -->
 </form>
-<?php } ?>
 <?php } ?>
 <?php $Page->showPageHeader(); ?>
 <?php
 $Page->showMessage();
 ?>
 <main class="list<?= ($Page->TotalRecords == 0 && !$Page->isAdd()) ? " ew-no-record" : "" ?>">
+<div id="ew-header-options">
+<?php $Page->HeaderOptions?->render("body") ?>
+</div>
 <div id="ew-list">
 <?php if ($Page->TotalRecords > 0 || $Page->CurrentAction) { ?>
 <div class="card ew-card ew-grid<?= $Page->isAddOrEdit() ? " ew-grid-add-edit" : "" ?> <?= $Page->TableGridClass ?>">
-<form name="<?= $Page->FormName ?>" id="<?= $Page->FormName ?>" class="ew-form ew-list-form" action="<?= $Page->PageAction ?>" method="post" novalidate autocomplete="on">
+<form name="<?= $Page->FormName ?>" id="<?= $Page->FormName ?>" class="ew-form ew-list-form" action="<?= $Page->PageAction ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -150,7 +154,7 @@ $Page->showMessage();
     <tr class="ew-table-header">
 <?php
 // Header row
-$Page->RowType = ROWTYPE_HEADER;
+$Page->RowType = RowType::HEADER;
 
 // Render list options
 $Page->renderListOptions();
@@ -188,7 +192,15 @@ $Page->ListOptions->render("header", "right");
 <tbody data-page="<?= $Page->getPageNumber() ?>">
 <?php
 $Page->setupGrid();
-while ($Page->RecordCount < $Page->StopRecord) {
+while ($Page->RecordCount < $Page->StopRecord || $Page->RowIndex === '$rowindex$') {
+    if (
+        $Page->CurrentRow !== false &&
+        $Page->RowIndex !== '$rowindex$' &&
+        (!$Page->isGridAdd() || $Page->CurrentMode == "copy") &&
+        (!(($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0))
+    ) {
+        $Page->fetch();
+    }
     $Page->RecordCount++;
     if ($Page->RecordCount >= $Page->StartRecord) {
         $Page->setupRow();
@@ -200,7 +212,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
 ?>
     <?php if ($Page->insurance_id->Visible) { // insurance_id ?>
         <td data-name="insurance_id"<?= $Page->insurance_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_insurance_id" class="el_jdh_insurance_insurance_id">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_insurance_insurance_id" class="el_jdh_insurance_insurance_id">
 <span<?= $Page->insurance_id->viewAttributes() ?>>
 <?= $Page->insurance_id->getViewValue() ?></span>
 </span>
@@ -208,7 +220,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->insurance_name->Visible) { // insurance_name ?>
         <td data-name="insurance_name"<?= $Page->insurance_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_insurance_name" class="el_jdh_insurance_insurance_name">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_insurance_insurance_name" class="el_jdh_insurance_insurance_name">
 <span<?= $Page->insurance_name->viewAttributes() ?>>
 <?= $Page->insurance_name->getViewValue() ?></span>
 </span>
@@ -216,7 +228,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->insurance_contact_person->Visible) { // insurance_contact_person ?>
         <td data-name="insurance_contact_person"<?= $Page->insurance_contact_person->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_insurance_contact_person" class="el_jdh_insurance_insurance_contact_person">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_insurance_insurance_contact_person" class="el_jdh_insurance_insurance_contact_person">
 <span<?= $Page->insurance_contact_person->viewAttributes() ?>>
 <?= $Page->insurance_contact_person->getViewValue() ?></span>
 </span>
@@ -224,7 +236,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->insurance_contact_person_phone->Visible) { // insurance_contact_person_phone ?>
         <td data-name="insurance_contact_person_phone"<?= $Page->insurance_contact_person_phone->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_insurance_contact_person_phone" class="el_jdh_insurance_insurance_contact_person_phone">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_insurance_insurance_contact_person_phone" class="el_jdh_insurance_insurance_contact_person_phone">
 <span<?= $Page->insurance_contact_person_phone->viewAttributes() ?>>
 <?php if (!EmptyString($Page->insurance_contact_person_phone->getViewValue()) && $Page->insurance_contact_person_phone->linkAttributes() != "") { ?>
 <a<?= $Page->insurance_contact_person_phone->linkAttributes() ?>><?= $Page->insurance_contact_person_phone->getViewValue() ?></a>
@@ -237,7 +249,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->insurance_contact_person_email->Visible) { // insurance_contact_person_email ?>
         <td data-name="insurance_contact_person_email"<?= $Page->insurance_contact_person_email->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_insurance_contact_person_email" class="el_jdh_insurance_insurance_contact_person_email">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_insurance_insurance_contact_person_email" class="el_jdh_insurance_insurance_contact_person_email">
 <span<?= $Page->insurance_contact_person_email->viewAttributes() ?>>
 <?php if (!EmptyString($Page->insurance_contact_person_email->getViewValue()) && $Page->insurance_contact_person_email->linkAttributes() != "") { ?>
 <a<?= $Page->insurance_contact_person_email->linkAttributes() ?>><?= $Page->insurance_contact_person_email->getViewValue() ?></a>
@@ -250,7 +262,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->submission_date->Visible) { // submission_date ?>
         <td data-name="submission_date"<?= $Page->submission_date->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_submission_date" class="el_jdh_insurance_submission_date">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_insurance_submission_date" class="el_jdh_insurance_submission_date">
 <span<?= $Page->submission_date->viewAttributes() ?>>
 <?= $Page->submission_date->getViewValue() ?></span>
 </span>
@@ -258,7 +270,7 @@ $Page->ListOptions->render("body", "left", $Page->RowCount);
     <?php } ?>
     <?php if ($Page->date_updated->Visible) { // date_updated ?>
         <td data-name="date_updated"<?= $Page->date_updated->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_insurance_date_updated" class="el_jdh_insurance_date_updated">
+<span id="el<?= $Page->RowIndex == '$rowindex$' ? '$rowindex$' : $Page->RowCount ?>_jdh_insurance_date_updated" class="el_jdh_insurance_date_updated">
 <span<?= $Page->date_updated->viewAttributes() ?>>
 <?= $Page->date_updated->getViewValue() ?></span>
 </span>
@@ -271,8 +283,14 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
     </tr>
 <?php
     }
-    if (!$Page->isGridAdd()) {
-        $Page->Recordset->moveNext();
+
+    // Reset for template row
+    if ($Page->RowIndex === '$rowindex$') {
+        $Page->RowIndex = 0;
+    }
+    // Reset inline add/copy row
+    if (($Page->isCopy() || $Page->isAdd()) && $Page->RowIndex == 0) {
+        $Page->RowIndex = 1;
     }
 }
 ?>
@@ -285,10 +303,8 @@ $Page->ListOptions->render("body", "right", $Page->RowCount);
 <?php } ?>
 </form><!-- /.ew-list-form -->
 <?php
-// Close recordset
-if ($Page->Recordset) {
-    $Page->Recordset->close();
-}
+// Close result set
+$Page->Recordset?->free();
 ?>
 <?php if (!$Page->isExport()) { ?>
 <div class="card-footer ew-grid-lower-panel">
@@ -306,6 +322,9 @@ if ($Page->Recordset) {
 <?php $Page->OtherOptions->render("body") ?>
 </div>
 <?php } ?>
+</div>
+<div id="ew-footer-options">
+<?php $Page->FooterOptions?->render("body") ?>
 </div>
 </main>
 <?php

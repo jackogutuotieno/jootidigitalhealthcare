@@ -1,10 +1,16 @@
 <?php
 /**
- * PHPMaker 2023 user level settings
+ * PHPMaker 2024 User Level Settings
  */
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
-// User level info
+/**
+ * User levels
+ *
+ * @var array<int, string>
+ * [0] int User level ID
+ * [1] string User level name
+ */
 $USER_LEVELS = [["-2","Anonymous"],
     ["0","Default"],
     ["1","Receptionist"],
@@ -16,7 +22,15 @@ $USER_LEVELS = [["-2","Anonymous"],
     ["7","Human Resources"],
     ["8","Hospital Manager"],
     ["9","Nurse"]];
-// User level priv info
+
+/**
+ * User level permissions
+ *
+ * @var array<string, int, int>
+ * [0] string Project ID + Table name
+ * [1] int User level ID
+ * [2] int Permissions
+ */
 $USER_LEVEL_PRIVS = [["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","-2","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","0","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","1","2029"],
@@ -501,7 +515,18 @@ $USER_LEVEL_PRIVS = [["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_appointments","
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","7","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","8","0"],
     ["{EDB02539-D193-4081-B8F6-DEFFEAE24230}jdh_invoice_items","9","0"]];
-// User level table info
+
+/**
+ * Tables
+ *
+ * @var array<string, string, string, bool, string>
+ * [0] string Table name
+ * [1] string Table variable name
+ * [2] string Table caption
+ * [3] bool Allowed for update (for userpriv.php)
+ * [4] string Project ID
+ * [5] string URL (for OthersController::index)
+ */
 $USER_LEVEL_TABLES = [["jdh_appointments","jdh_appointments","Appointments",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhappointmentslist"],
     ["jdh_lab_test_categories","jdh_lab_test_categories","Test Categories",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabtestcategorieslist"],
     ["jdh_lab_test_subcategories","jdh_lab_test_subcategories","Test Subcategories",true,"{EDB02539-D193-4081-B8F6-DEFFEAE24230}","jdhlabtestsubcategorieslist"],

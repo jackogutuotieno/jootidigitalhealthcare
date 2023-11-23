@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use LightSaml\State\Sso\SsoState;
 use LightSaml\Store\Sso\SsoStateStoreInterface;
@@ -8,22 +8,16 @@ use LightSaml\State\Sso\SsoSessionState;
 
 class SsoStateSessionStore implements SsoStateStoreInterface
 {
-    /** @var HttpSession */
-    protected $session;
-
-    /** @var string */
-    protected $key;
-
     /**
      * Constructor
      *
      * @param HttpSession $session
      * @param string $key
      */
-    public function __construct(HttpSession $session, $key)
-    {
-        $this->session = $session;
-        $this->key = $key;
+    public function __construct(
+        protected HttpSession $session,
+        protected string $key,
+    ) {
     }
 
     /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Class for table
@@ -206,19 +206,19 @@ class DbTable extends DbTableBase
     // Inline-Add row
     public function isInlineAddRow()
     {
-        return $this->isAdd() && $this->RowType == ROWTYPE_ADD;
+        return $this->isAdd() && $this->RowType == RowType::ADD;
     }
 
     // Inline-Copy row
     public function isInlineCopyRow()
     {
-        return $this->isCopy() && $this->RowType == ROWTYPE_ADD;
+        return $this->isCopy() && $this->RowType == RowType::ADD;
     }
 
     // Inline-Edit row
     public function isInlineEditRow()
     {
-        return $this->isEdit() && $this->RowType == ROWTYPE_EDIT;
+        return $this->isEdit() && $this->RowType == RowType::EDIT;
     }
 
     // Inline-Add/Copy/Edit row
@@ -326,7 +326,7 @@ class DbTable extends DbTableBase
         if ($pattern == '') {
             return $src;
         }
-        $pattern = '/(' . $pattern . ')/' . (SameText(Config("PROJECT_CHARSET"), 'utf-8') ? 'u' : '') . (Config("HIGHLIGHT_COMPARE") ? 'i' : '');
+        $pattern = '/(' . $pattern . ')/' . (IS_UTF8 ? 'u' : '') . (Config("HIGHLIGHT_COMPARE") ? 'i' : '');
         $src = preg_replace_callback(
             $pattern,
             fn($match) => '<mark class="' . $this->highlightName() . ' mark ew-mark">' . $match[0] . '</mark>',
@@ -366,17 +366,6 @@ class DbTable extends DbTableBase
     public function setSessionOrderBy($v)
     {
         $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_ORDER_BY")] = $v;
-    }
-
-    // Session Rule (QueryBuilder)
-    public function getSessionRules()
-    {
-        return Session(PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RULES"));
-    }
-
-    public function setSessionRules($v)
-    {
-        $_SESSION[PROJECT_NAME . "_" . $this->TableVar . "_" . Config("TABLE_RULES")] = $v;
     }
 
     // Session layout

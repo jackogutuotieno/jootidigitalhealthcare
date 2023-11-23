@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Page object
 $JdhUsersDelete = &$Page;
@@ -34,7 +34,7 @@ loadjs.ready("head", function () {
 <?php
 $Page->showMessage();
 ?>
-<form name="fjdh_usersdelete" id="fjdh_usersdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="on">
+<form name="fjdh_usersdelete" id="fjdh_usersdelete" class="ew-form ew-delete-form" action="<?= CurrentPageUrl(false) ?>" method="post" novalidate autocomplete="off">
 <?php if (Config("CHECK_TOKEN")) { ?>
 <input type="hidden" name="<?= $TokenNameKey ?>" value="<?= $TokenName ?>"><!-- CSRF token name -->
 <input type="hidden" name="<?= $TokenValueKey ?>" value="<?= $TokenValue ?>"><!-- CSRF token value -->
@@ -77,16 +77,16 @@ $Page->showMessage();
 <?php
 $Page->RecordCount = 0;
 $i = 0;
-while (!$Page->Recordset->EOF) {
+while ($Page->fetch()) {
     $Page->RecordCount++;
     $Page->RowCount++;
 
     // Set row properties
     $Page->resetAttributes();
-    $Page->RowType = ROWTYPE_VIEW; // View
+    $Page->RowType = RowType::VIEW; // View
 
     // Get the field contents
-    $Page->loadRowValues($Page->Recordset);
+    $Page->loadRowValues($Page->CurrentRow);
 
     // Render row
     $Page->renderRow();
@@ -94,7 +94,7 @@ while (!$Page->Recordset->EOF) {
     <tr <?= $Page->rowAttributes() ?>>
 <?php if ($Page->first_name->Visible) { // first_name ?>
         <td<?= $Page->first_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_first_name" class="el_jdh_users_first_name">
+<span id="">
 <span<?= $Page->first_name->viewAttributes() ?>>
 <?= $Page->first_name->getViewValue() ?></span>
 </span>
@@ -102,7 +102,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->last_name->Visible) { // last_name ?>
         <td<?= $Page->last_name->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_last_name" class="el_jdh_users_last_name">
+<span id="">
 <span<?= $Page->last_name->viewAttributes() ?>>
 <?= $Page->last_name->getViewValue() ?></span>
 </span>
@@ -110,7 +110,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->national_id->Visible) { // national_id ?>
         <td<?= $Page->national_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_national_id" class="el_jdh_users_national_id">
+<span id="">
 <span<?= $Page->national_id->viewAttributes() ?>>
 <?= $Page->national_id->getViewValue() ?></span>
 </span>
@@ -118,7 +118,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->email_address->Visible) { // email_address ?>
         <td<?= $Page->email_address->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_email_address" class="el_jdh_users_email_address">
+<span id="">
 <span<?= $Page->email_address->viewAttributes() ?>>
 <?php if (!EmptyString($Page->email_address->getViewValue()) && $Page->email_address->linkAttributes() != "") { ?>
 <a<?= $Page->email_address->linkAttributes() ?>><?= $Page->email_address->getViewValue() ?></a>
@@ -131,7 +131,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->phone->Visible) { // phone ?>
         <td<?= $Page->phone->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_phone" class="el_jdh_users_phone">
+<span id="">
 <span<?= $Page->phone->viewAttributes() ?>>
 <?php if (!EmptyString($Page->phone->getViewValue()) && $Page->phone->linkAttributes() != "") { ?>
 <a<?= $Page->phone->linkAttributes() ?>><?= $Page->phone->getViewValue() ?></a>
@@ -144,7 +144,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->department_id->Visible) { // department_id ?>
         <td<?= $Page->department_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_department_id" class="el_jdh_users_department_id">
+<span id="">
 <span<?= $Page->department_id->viewAttributes() ?>>
 <?= $Page->department_id->getViewValue() ?></span>
 </span>
@@ -152,7 +152,7 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
 <?php if ($Page->role_id->Visible) { // role_id ?>
         <td<?= $Page->role_id->cellAttributes() ?>>
-<span id="el<?= $Page->RowCount ?>_jdh_users_role_id" class="el_jdh_users_role_id">
+<span id="">
 <span<?= $Page->role_id->viewAttributes() ?>>
 <?= $Page->role_id->getViewValue() ?></span>
 </span>
@@ -160,9 +160,8 @@ while (!$Page->Recordset->EOF) {
 <?php } ?>
     </tr>
 <?php
-    $Page->Recordset->moveNext();
 }
-$Page->Recordset->close();
+$Page->Recordset?->free();
 ?>
 </tbody>
 </table>

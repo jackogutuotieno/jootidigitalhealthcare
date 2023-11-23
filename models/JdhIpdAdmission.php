@@ -1,11 +1,17 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 use Doctrine\DBAL\ParameterType;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Container\ContainerInterface;
+use Slim\Routing\RouteCollectorProxy;
+use Slim\App;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Closure;
 
 /**
  * Table class for jdh_ipd_admission
@@ -36,7 +42,7 @@ class JdhIpdAdmission extends DbTable
     public $AuditTrailOnViewData = false;
     public $AuditTrailOnSearch = false;
 
-    // Export
+    // Ajax / Modal
     public $UseAjaxActions = false;
     public $ModalSearch = false;
     public $ModalView = false;
@@ -68,7 +74,7 @@ class JdhIpdAdmission extends DbTable
         global $Language, $CurrentLanguage, $CurrentLocale;
 
         // Language object
-        $Language = Container("language");
+        $Language = Container("app.language");
         $this->TableVar = "jdh_ipd_admission";
         $this->TableName = 'jdh_ipd_admission';
         $this->TableType = "TABLE";
@@ -76,7 +82,7 @@ class JdhIpdAdmission extends DbTable
         $this->UseTransaction = $this->supportsTransaction() && Config("USE_TRANSACTION");
 
         // Update Table
-        $this->UpdateTable = "`jdh_ipd_admission`";
+        $this->UpdateTable = "jdh_ipd_admission";
         $this->Dbid = 'DB';
         $this->ExportAll = true;
         $this->ExportPageBreakCount = 0; // Page break per every n record (PDF only)
@@ -103,7 +109,7 @@ class JdhIpdAdmission extends DbTable
         $this->UserIDAllowSecurity = Config("DEFAULT_USER_ID_ALLOW_SECURITY"); // Default User ID allowed permissions
         $this->BasicSearch = new BasicSearch($this);
 
-        // id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // id
         $this->id = new DbField(
             $this, // Table
             'x_id', // Variable name
@@ -122,13 +128,15 @@ class JdhIpdAdmission extends DbTable
             'NO' // Edit Tag
         );
         $this->id->InputTextType = "text";
+        $this->id->Raw = true;
         $this->id->IsAutoIncrement = true; // Autoincrement field
         $this->id->IsPrimaryKey = true; // Primary key field
+        $this->id->Nullable = false; // NOT NULL field
         $this->id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
-        $this->id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN", "IS NULL", "IS NOT NULL"];
+        $this->id->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['id'] = &$this->id;
 
-        // unit_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // unit_id
         $this->unit_id = new DbField(
             $this, // Table
             'x_unit_id', // Variable name
@@ -147,16 +155,18 @@ class JdhIpdAdmission extends DbTable
             'SELECT' // Edit Tag
         );
         $this->unit_id->InputTextType = "text";
+        $this->unit_id->Raw = true;
         $this->unit_id->Nullable = false; // NOT NULL field
         $this->unit_id->Required = true; // Required field
+        $this->unit_id->setSelectMultiple(false); // Select one
         $this->unit_id->UsePleaseSelect = true; // Use PleaseSelect by default
         $this->unit_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->unit_id->Lookup = new Lookup('unit_id', 'jdh_facility_units', false, 'id', ["unit_name","","",""], '', '', [], ["x_ward_id"], [], [], [], [], '', '', "`unit_name`");
+        $this->unit_id->Lookup = new Lookup($this->unit_id, 'jdh_facility_units', false, 'id', ["unit_name","","",""], '', '', [], ["x_ward_id"], [], [], [], [], false, '', '', "`unit_name`");
         $this->unit_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->unit_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['unit_id'] = &$this->unit_id;
 
-        // ward_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // ward_id
         $this->ward_id = new DbField(
             $this, // Table
             'x_ward_id', // Variable name
@@ -175,16 +185,18 @@ class JdhIpdAdmission extends DbTable
             'SELECT' // Edit Tag
         );
         $this->ward_id->InputTextType = "text";
+        $this->ward_id->Raw = true;
         $this->ward_id->Nullable = false; // NOT NULL field
         $this->ward_id->Required = true; // Required field
+        $this->ward_id->setSelectMultiple(false); // Select one
         $this->ward_id->UsePleaseSelect = true; // Use PleaseSelect by default
         $this->ward_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->ward_id->Lookup = new Lookup('ward_id', 'jdh_wards', false, 'ward_id', ["ward_name","","",""], '', '', ["x_unit_id"], ["x_bed_id"], ["facility_id"], ["x_facility_id"], [], [], '', '', "`ward_name`");
+        $this->ward_id->Lookup = new Lookup($this->ward_id, 'jdh_wards', false, 'ward_id', ["ward_name","","",""], '', '', ["x_unit_id"], ["x_bed_id"], ["facility_id"], ["x_facility_id"], [], [], false, '', '', "`ward_name`");
         $this->ward_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->ward_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['ward_id'] = &$this->ward_id;
 
-        // bed_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // bed_id
         $this->bed_id = new DbField(
             $this, // Table
             'x_bed_id', // Variable name
@@ -204,16 +216,18 @@ class JdhIpdAdmission extends DbTable
         );
         $this->bed_id->addMethod("getSelectFilter", fn() => "`assigned`=0");
         $this->bed_id->InputTextType = "text";
+        $this->bed_id->Raw = true;
         $this->bed_id->Nullable = false; // NOT NULL field
         $this->bed_id->Required = true; // Required field
+        $this->bed_id->setSelectMultiple(false); // Select one
         $this->bed_id->UsePleaseSelect = true; // Use PleaseSelect by default
         $this->bed_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->bed_id->Lookup = new Lookup('bed_id', 'jdh_beds', false, 'id', ["bed_number","","",""], '', '', ["x_ward_id"], [], ["ward_id"], ["x_ward_id"], [], [], '', '', "`bed_number`");
+        $this->bed_id->Lookup = new Lookup($this->bed_id, 'jdh_beds', false, 'id', ["bed_number","","",""], '', '', ["x_ward_id"], [], ["ward_id"], ["x_ward_id"], [], [], false, '', '', "`bed_number`");
         $this->bed_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->bed_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['bed_id'] = &$this->bed_id;
 
-        // patient_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // patient_id
         $this->patient_id = new DbField(
             $this, // Table
             'x_patient_id', // Variable name
@@ -233,16 +247,18 @@ class JdhIpdAdmission extends DbTable
         );
         $this->patient_id->addMethod("getSelectFilter", fn() => "`is_inpatient`=1");
         $this->patient_id->InputTextType = "text";
+        $this->patient_id->Raw = true;
         $this->patient_id->Nullable = false; // NOT NULL field
         $this->patient_id->Required = true; // Required field
+        $this->patient_id->setSelectMultiple(false); // Select one
         $this->patient_id->UsePleaseSelect = true; // Use PleaseSelect by default
         $this->patient_id->PleaseSelectText = $Language->phrase("PleaseSelect"); // "PleaseSelect" text
-        $this->patient_id->Lookup = new Lookup('patient_id', 'jdh_patients', false, 'patient_id', ["patient_id","patient_name","",""], '', '', [], [], [], [], [], [], '', '', "CONCAT(COALESCE(`patient_id`, ''),'" . ValueSeparator(1, $this->patient_id) . "',COALESCE(`patient_name`,''))");
+        $this->patient_id->Lookup = new Lookup($this->patient_id, 'jdh_patients', false, 'patient_id', ["patient_id","patient_name","",""], '', '', [], [], [], [], [], [], false, '', '', "CONCAT(COALESCE(`patient_id`, ''),'" . ValueSeparator(1, $this->patient_id) . "',COALESCE(`patient_name`,''))");
         $this->patient_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->patient_id->SearchOperators = ["=", "<>", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['patient_id'] = &$this->patient_id;
 
-        // user_id $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // user_id
         $this->user_id = new DbField(
             $this, // Table
             'x_user_id', // Variable name
@@ -262,13 +278,14 @@ class JdhIpdAdmission extends DbTable
         );
         $this->user_id->addMethod("getAutoUpdateValue", fn() => CurrentUserID());
         $this->user_id->InputTextType = "text";
+        $this->user_id->Raw = true;
         $this->user_id->Nullable = false; // NOT NULL field
         $this->user_id->Sortable = false; // Allow sort
         $this->user_id->DefaultErrorMessage = $Language->phrase("IncorrectInteger");
         $this->user_id->SearchOperators = ["=", "<>"];
         $this->Fields['user_id'] = &$this->user_id;
 
-        // date_added $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // date_added
         $this->date_added = new DbField(
             $this, // Table
             'x_date_added', // Variable name
@@ -287,13 +304,14 @@ class JdhIpdAdmission extends DbTable
             'TEXT' // Edit Tag
         );
         $this->date_added->InputTextType = "text";
+        $this->date_added->Raw = true;
         $this->date_added->Nullable = false; // NOT NULL field
         $this->date_added->Required = true; // Required field
         $this->date_added->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
         $this->date_added->SearchOperators = ["=", "<>", "IN", "NOT IN", "<", "<=", ">", ">=", "BETWEEN", "NOT BETWEEN"];
         $this->Fields['date_added'] = &$this->date_added;
 
-        // date_updated $tbl, $fldvar, $fldname, $fldexp, $fldbsexp, $fldtype, $fldsize, $flddtfmt, $upload, $fldvirtualexp, $fldvirtual, $forceselect, $fldvirtualsrch, $fldviewtag = "", $fldhtmltag
+        // date_updated
         $this->date_updated = new DbField(
             $this, // Table
             'x_date_updated', // Variable name
@@ -312,6 +330,7 @@ class JdhIpdAdmission extends DbTable
             'TEXT' // Edit Tag
         );
         $this->date_updated->InputTextType = "text";
+        $this->date_updated->Raw = true;
         $this->date_updated->Nullable = false; // NOT NULL field
         $this->date_updated->Required = true; // Required field
         $this->date_updated->DefaultErrorMessage = str_replace("%s", $GLOBALS["DATE_FORMAT"], $Language->phrase("IncorrectDate"));
@@ -319,7 +338,7 @@ class JdhIpdAdmission extends DbTable
         $this->Fields['date_updated'] = &$this->date_updated;
 
         // Add Doctrine Cache
-        $this->Cache = new ArrayCache();
+        $this->Cache = new \Symfony\Component\Cache\Adapter\ArrayAdapter();
         $this->CacheProfile = new \Doctrine\DBAL\Cache\QueryCacheProfile(0, $this->TableVar);
 
         // Call Table Load event
@@ -382,38 +401,63 @@ class JdhIpdAdmission extends DbTable
         return $chartRow;
     }
 
-    // Table level SQL
-    public function getSqlFrom() // From
+    // Get FROM clause
+    public function getSqlFrom()
     {
-        return ($this->SqlFrom != "") ? $this->SqlFrom : "`jdh_ipd_admission`";
+        return ($this->SqlFrom != "") ? $this->SqlFrom : "jdh_ipd_admission";
     }
 
-    public function sqlFrom() // For backward compatibility
+    // Get FROM clause (for backward compatibility)
+    public function sqlFrom()
     {
         return $this->getSqlFrom();
     }
 
+    // Set FROM clause
     public function setSqlFrom($v)
     {
         $this->SqlFrom = $v;
     }
 
+    // Get SELECT clause
     public function getSqlSelect() // Select
     {
-        return $this->SqlSelect ?? $this->getQueryBuilder()->select("*");
+        return $this->SqlSelect ?? $this->getQueryBuilder()->select($this->sqlSelectFields());
     }
 
-    public function sqlSelect() // For backward compatibility
+    // Get list of fields
+    private function sqlSelectFields()
+    {
+        $useFieldNames = false;
+        $fieldNames = [];
+        $platform = $this->getConnection()->getDatabasePlatform();
+        foreach ($this->Fields as $field) {
+            $expr = $field->Expression;
+            $customExpr = $field->CustomDataType?->convertToPHPValueSQL($expr, $platform) ?? $expr;
+            if ($customExpr != $expr) {
+                $fieldNames[] = $customExpr . " AS " . QuotedName($field->Name, $this->Dbid);
+                $useFieldNames = true;
+            } else {
+                $fieldNames[] = $expr;
+            }
+        }
+        return $useFieldNames ? implode(", ", $fieldNames) : "*";
+    }
+
+    // Get SELECT clause (for backward compatibility)
+    public function sqlSelect()
     {
         return $this->getSqlSelect();
     }
 
+    // Set SELECT clause
     public function setSqlSelect($v)
     {
         $this->SqlSelect = $v;
     }
 
-    public function getSqlWhere() // Where
+    // Get WHERE clause
+    public function getSqlWhere()
     {
         $where = ($this->SqlWhere != "") ? $this->SqlWhere : "";
         $this->DefaultFilter = "";
@@ -421,56 +465,67 @@ class JdhIpdAdmission extends DbTable
         return $where;
     }
 
-    public function sqlWhere() // For backward compatibility
+    // Get WHERE clause (for backward compatibility)
+    public function sqlWhere()
     {
         return $this->getSqlWhere();
     }
 
+    // Set WHERE clause
     public function setSqlWhere($v)
     {
         $this->SqlWhere = $v;
     }
 
-    public function getSqlGroupBy() // Group By
+    // Get GROUP BY clause
+    public function getSqlGroupBy()
     {
-        return ($this->SqlGroupBy != "") ? $this->SqlGroupBy : "";
+        return $this->SqlGroupBy != "" ? $this->SqlGroupBy : "";
     }
 
-    public function sqlGroupBy() // For backward compatibility
+    // Get GROUP BY clause (for backward compatibility)
+    public function sqlGroupBy()
     {
         return $this->getSqlGroupBy();
     }
 
+    // set GROUP BY clause
     public function setSqlGroupBy($v)
     {
         $this->SqlGroupBy = $v;
     }
 
+    // Get HAVING clause
     public function getSqlHaving() // Having
     {
         return ($this->SqlHaving != "") ? $this->SqlHaving : "";
     }
 
-    public function sqlHaving() // For backward compatibility
+    // Get HAVING clause (for backward compatibility)
+    public function sqlHaving()
     {
         return $this->getSqlHaving();
     }
 
+    // Set HAVING clause
     public function setSqlHaving($v)
     {
         $this->SqlHaving = $v;
     }
 
-    public function getSqlOrderBy() // Order By
+    // Get ORDER BY clause
+    public function getSqlOrderBy()
     {
         return ($this->SqlOrderBy != "") ? $this->SqlOrderBy : "";
     }
 
-    public function sqlOrderBy() // For backward compatibility
+    // Get ORDER BY clause (for backward compatibility)
+    public function sqlOrderBy()
     {
         return $this->getSqlOrderBy();
     }
 
+    // set ORDER BY clause
     public function setSqlOrderBy($v)
     {
         $this->SqlOrderBy = $v;
@@ -497,23 +552,23 @@ class JdhIpdAdmission extends DbTable
             case "gridadd":
             case "register":
             case "addopt":
-                return (($allow & 1) == 1);
+                return ($allow & Allow::ADD->value) == Allow::ADD->value;
             case "edit":
             case "gridedit":
             case "update":
             case "changepassword":
             case "resetpassword":
-                return (($allow & 4) == 4);
+                return ($allow & Allow::EDIT->value) == Allow::EDIT->value;
             case "delete":
-                return (($allow & 2) == 2);
+                return ($allow & Allow::DELETE->value) == Allow::DELETE->value;
             case "view":
-                return (($allow & 32) == 32);
+                return ($allow & Allow::VIEW->value) == Allow::VIEW->value;
             case "search":
-                return (($allow & 64) == 64);
+                return ($allow & Allow::SEARCH->value) == Allow::SEARCH->value;
             case "lookup":
-                return (($allow & 256) == 256);
+                return ($allow & Allow::LOOKUP->value) == Allow::LOOKUP->value;
             default:
-                return (($allow & 8) == 8);
+                return ($allow & Allow::LIST->value) == Allow::LIST->value;
         }
     }
 
@@ -527,32 +582,36 @@ class JdhIpdAdmission extends DbTable
     public function getRecordCount($sql, $c = null)
     {
         $cnt = -1;
-        $rs = null;
-        if ($sql instanceof QueryBuilder) { // Query builder
-            $sqlwrk = clone $sql;
-            $sqlwrk = $sqlwrk->resetQueryPart("orderBy")->getSQL();
-        } else {
-            $sqlwrk = $sql;
-        }
+        $sqlwrk = $sql instanceof QueryBuilder // Query builder
+            ? (clone $sql)->resetQueryPart("orderBy")->getSQL()
+            : $sql;
         $pattern = '/^SELECT\s([\s\S]+)\sFROM\s/i';
         // Skip Custom View / SubQuery / SELECT DISTINCT / ORDER BY
         if (
-            ($this->TableType == 'TABLE' || $this->TableType == 'VIEW' || $this->TableType == 'LINKTABLE') &&
-            preg_match($pattern, $sqlwrk) && !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
-            !preg_match('/^\s*select\s+distinct\s+/i', $sqlwrk) && !preg_match('/\s+order\s+by\s+/i', $sqlwrk)
+            in_array($this->TableType, ["TABLE", "VIEW", "LINKTABLE"]) &&
+            preg_match($pattern, $sqlwrk) &&
+            !preg_match('/\(\s*(SELECT[^)]+)\)/i', $sqlwrk) &&
+            !preg_match('/^\s*SELECT\s+DISTINCT\s+/i', $sqlwrk) &&
+            !preg_match('/\s+ORDER\s+BY\s+/i', $sqlwrk)
         ) {
-            $sqlwrk = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
+            $sqlcnt = "SELECT COUNT(*) FROM " . preg_replace($pattern, "", $sqlwrk);
         } else {
-            $sqlwrk = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
+            $sqlcnt = "SELECT COUNT(*) FROM (" . $sqlwrk . ") COUNT_TABLE";
         }
         $conn = $c ?? $this->getConnection();
-        $cnt = $conn->fetchOne($sqlwrk);
+        $cnt = $conn->fetchOne($sqlcnt);
         if ($cnt !== false) {
             return (int)$cnt;
         }
-
         // Unable to get count by SELECT COUNT(*), execute the SQL to get record count directly
-        return ExecuteRecordCount($sql, $conn);
+        $result = $conn->executeQuery($sqlwrk);
+        $cnt = $result->rowCount();
+        if ($cnt == 0) { // Unable to get record count, count directly
+            while ($result->fetch()) {
+                $cnt++;
+            }
+        }
+        return $cnt;
     }
 
     // Get SQL
@@ -631,9 +690,10 @@ class JdhIpdAdmission extends DbTable
         $origFilter = $this->CurrentFilter;
         $this->CurrentFilter = $filter;
         $this->recordsetSelecting($this->CurrentFilter);
-        $select = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
-        $groupBy = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlGroupBy() : "";
-        $having = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlHaving() : "";
+        $isCustomView = $this->TableType == "CUSTOMVIEW";
+        $select = $isCustomView ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
+        $groupBy = $isCustomView ? $this->getSqlGroupBy() : "";
+        $having = $isCustomView ? $this->getSqlHaving() : "";
         $sql = $this->buildSelectSql($select, $this->getSqlFrom(), $this->getSqlWhere(), $groupBy, $having, "", $this->CurrentFilter, "");
         $cnt = $this->getRecordCount($sql);
         $this->CurrentFilter = $origFilter;
@@ -647,9 +707,10 @@ class JdhIpdAdmission extends DbTable
         AddFilter($filter, $this->CurrentFilter);
         $filter = $this->applyUserIDFilters($filter);
         $this->recordsetSelecting($filter);
-        $select = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
-        $groupBy = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlGroupBy() : "";
-        $having = $this->TableType == 'CUSTOMVIEW' ? $this->getSqlHaving() : "";
+        $isCustomView = $this->TableType == "CUSTOMVIEW";
+        $select = $isCustomView ? $this->getSqlSelect() : $this->getQueryBuilder()->select("*");
+        $groupBy = $isCustomView ? $this->getSqlGroupBy() : "";
+        $having = $isCustomView ? $this->getSqlHaving() : "";
         $sql = $this->buildSelectSql($select, $this->getSqlFrom(), $this->getSqlWhere(), $groupBy, $having, "", $filter, "");
         $cnt = $this->getRecordCount($sql);
         return $cnt;
@@ -665,12 +726,15 @@ class JdhIpdAdmission extends DbTable
     {
         $queryBuilder = $this->getQueryBuilder();
         $queryBuilder->insert($this->UpdateTable);
+        $platform = $this->getConnection()->getDatabasePlatform();
         foreach ($rs as $name => $value) {
             if (!isset($this->Fields[$name]) || $this->Fields[$name]->IsCustom) {
                 continue;
             }
-            $type = GetParameterType($this->Fields[$name], $value, $this->Dbid);
-            $queryBuilder->setValue($this->Fields[$name]->Expression, $queryBuilder->createPositionalParameter($value, $type));
+            $field = $this->Fields[$name];
+            $parm = $queryBuilder->createPositionalParameter($value, $field->getParameterType());
+            $parm = $field->CustomDataType?->convertToDatabaseValueSQL($parm, $platform) ?? $parm; // Convert database SQL
+            $queryBuilder->setValue($field->Expression, $parm);
         }
         return $queryBuilder;
     }
@@ -680,21 +744,21 @@ class JdhIpdAdmission extends DbTable
     {
         $conn = $this->getConnection();
         try {
-            $success = $this->insertSql($rs)->execute();
+            $queryBuilder = $this->insertSql($rs);
+            $result = $queryBuilder->executeStatement();
             $this->DbErrorMessage = "";
         } catch (\Exception $e) {
-            $success = false;
+            $result = false;
             $this->DbErrorMessage = $e->getMessage();
         }
-        if ($success) {
-            // Get insert id if necessary
+        if ($result) {
             $this->id->setDbValue($conn->lastInsertId());
             $rs['id'] = $this->id->DbValue;
             if ($this->AuditTrailOnAdd) {
                 $this->writeAuditTrailOnAdd($rs);
             }
         }
-        return $success;
+        return $result;
     }
 
     /**
@@ -709,14 +773,17 @@ class JdhIpdAdmission extends DbTable
     {
         $queryBuilder = $this->getQueryBuilder();
         $queryBuilder->update($this->UpdateTable);
+        $platform = $this->getConnection()->getDatabasePlatform();
         foreach ($rs as $name => $value) {
             if (!isset($this->Fields[$name]) || $this->Fields[$name]->IsCustom || $this->Fields[$name]->IsAutoIncrement) {
                 continue;
             }
-            $type = GetParameterType($this->Fields[$name], $value, $this->Dbid);
-            $queryBuilder->set($this->Fields[$name]->Expression, $queryBuilder->createPositionalParameter($value, $type));
+            $field = $this->Fields[$name];
+            $parm = $queryBuilder->createPositionalParameter($value, $field->getParameterType());
+            $parm = $field->CustomDataType?->convertToDatabaseValueSQL($parm, $platform) ?? $parm; // Convert database SQL
+            $queryBuilder->set($field->Expression, $parm);
         }
-        $filter = ($curfilter) ? $this->CurrentFilter : "";
+        $filter = $curfilter ? $this->CurrentFilter : "";
         if (is_array($where)) {
             $where = $this->arrayToFilter($where);
         }
@@ -732,8 +799,8 @@ class JdhIpdAdmission extends DbTable
     {
         // If no field is updated, execute may return 0. Treat as success
         try {
-            $success = $this->updateSql($rs, $where, $curfilter)->execute();
-            $success = ($success > 0) ? $success : true;
+            $success = $this->updateSql($rs, $where, $curfilter)->executeStatement();
+            $success = $success > 0 ? $success : true;
             $this->DbErrorMessage = "";
         } catch (\Exception $e) {
             $success = false;
@@ -777,7 +844,7 @@ class JdhIpdAdmission extends DbTable
                 AddFilter($where, QuotedName('id', $this->Dbid) . '=' . QuotedValue($rs['id'], $this->id->DataType, $this->Dbid));
             }
         }
-        $filter = ($curfilter) ? $this->CurrentFilter : "";
+        $filter = $curfilter ? $this->CurrentFilter : "";
         AddFilter($filter, $where);
         return $queryBuilder->where($filter != "" ? $filter : "0=1");
     }
@@ -788,7 +855,7 @@ class JdhIpdAdmission extends DbTable
         $success = true;
         if ($success) {
             try {
-                $success = $this->deleteSql($rs, $where, $curfilter)->execute();
+                $success = $this->deleteSql($rs, $where, $curfilter)->executeStatement();
                 $this->DbErrorMessage = "";
             } catch (\Exception $e) {
                 $success = false;
@@ -801,7 +868,7 @@ class JdhIpdAdmission extends DbTable
         return $success;
     }
 
-    // Load DbValue from recordset or array
+    // Load DbValue from result set or array
     protected function loadDbValues($row)
     {
         if (!is_array($row)) {
@@ -830,7 +897,7 @@ class JdhIpdAdmission extends DbTable
     }
 
     // Get Key
-    public function getKey($current = false)
+    public function getKey($current = false, $keySeparator = null)
     {
         $keys = [];
         $val = $current ? $this->id->CurrentValue : $this->id->OldValue;
@@ -839,14 +906,16 @@ class JdhIpdAdmission extends DbTable
         } else {
             $keys[] = $val;
         }
-        return implode(Config("COMPOSITE_KEY_SEPARATOR"), $keys);
+        $keySeparator ??= Config("COMPOSITE_KEY_SEPARATOR");
+        return implode($keySeparator, $keys);
     }
 
     // Set Key
-    public function setKey($key, $current = false)
+    public function setKey($key, $current = false, $keySeparator = null)
     {
+        $keySeparator ??= Config("COMPOSITE_KEY_SEPARATOR");
         $this->OldKey = strval($key);
-        $keys = explode(Config("COMPOSITE_KEY_SEPARATOR"), $this->OldKey);
+        $keys = explode($keySeparator, $this->OldKey);
         if (count($keys) == 1) {
             if ($current) {
                 $this->id->CurrentValue = $keys[0];
@@ -899,33 +968,31 @@ class JdhIpdAdmission extends DbTable
     public function getModalCaption($pageName)
     {
         global $Language;
-        if ($pageName == "jdhipdadmissionview") {
-            return $Language->phrase("View");
-        } elseif ($pageName == "jdhipdadmissionedit") {
-            return $Language->phrase("Edit");
-        } elseif ($pageName == "jdhipdadmissionadd") {
-            return $Language->phrase("Add");
-        }
-        return "";
+        return match ($pageName) {
+            "jdhipdadmissionview" => $Language->phrase("View"),
+            "jdhipdadmissionedit" => $Language->phrase("Edit"),
+            "jdhipdadmissionadd" => $Language->phrase("Add"),
+            default => ""
+        };
+    }
+
+    // Default route URL
+    public function getDefaultRouteUrl()
+    {
+        return "jdhipdadmissionlist";
     }
 
     // API page name
     public function getApiPageName($action)
     {
-        switch (strtolower($action)) {
-            case Config("API_VIEW_ACTION"):
-                return "JdhIpdAdmissionView";
-            case Config("API_ADD_ACTION"):
-                return "JdhIpdAdmissionAdd";
-            case Config("API_EDIT_ACTION"):
-                return "JdhIpdAdmissionEdit";
-            case Config("API_DELETE_ACTION"):
-                return "JdhIpdAdmissionDelete";
-            case Config("API_LIST_ACTION"):
-                return "JdhIpdAdmissionList";
-            default:
-                return "";
-        }
+        return match (strtolower($action)) {
+            Config("API_VIEW_ACTION") => "JdhIpdAdmissionView",
+            Config("API_ADD_ACTION") => "JdhIpdAdmissionAdd",
+            Config("API_EDIT_ACTION") => "JdhIpdAdmissionEdit",
+            Config("API_DELETE_ACTION") => "JdhIpdAdmissionDelete",
+            Config("API_LIST_ACTION") => "JdhIpdAdmissionList",
+            default => ""
+        };
     }
 
     // Current URL
@@ -997,12 +1064,12 @@ class JdhIpdAdmission extends DbTable
     }
 
     // Delete URL
-    public function getDeleteUrl()
+    public function getDeleteUrl($parm = "")
     {
         if ($this->UseAjaxActions && ConvertToBool(Param("infinitescroll")) && CurrentPageID() == "list") {
             return $this->keyUrl(GetApiUrl(Config("API_DELETE_ACTION") . "/" . $this->TableVar));
         } else {
-            return $this->keyUrl("jdhipdadmissiondelete");
+            return $this->keyUrl("jdhipdadmissiondelete", $parm);
         }
     }
 
@@ -1015,7 +1082,7 @@ class JdhIpdAdmission extends DbTable
     public function keyToJson($htmlEncode = false)
     {
         $json = "";
-        $json .= "\"id\":" . JsonEncode($this->id->CurrentValue, "number");
+        $json .= "\"id\":" . VarToJson($this->id->CurrentValue, "number");
         $json = "{" . $json . "}";
         if ($htmlEncode) {
             $json = HtmlEncode($json);
@@ -1040,10 +1107,10 @@ class JdhIpdAdmission extends DbTable
     // Render sort
     public function renderFieldHeader($fld)
     {
-        global $Security, $Language, $Page;
+        global $Security, $Language;
         $sortUrl = "";
         $attrs = "";
-        if ($fld->Sortable) {
+        if ($this->PageID != "grid" && $fld->Sortable) {
             $sortUrl = $this->sortUrl($fld);
             $attrs = ' role="button" data-ew-action="sort" data-ajax="' . ($this->UseAjaxActions ? "true" : "false") . '" data-sort-url="' . $sortUrl . '" data-sort-type="1"';
             if ($this->ContextClass) { // Add context
@@ -1054,9 +1121,11 @@ class JdhIpdAdmission extends DbTable
         if ($sortUrl) {
             $html .= '<div class="ew-table-header-sort">' . $fld->getSortIcon() . '</div>';
         }
-        if ($fld->UseFilter && $Security->canSearch()) {
+        if ($this->PageID != "grid" && !$this->isExport() && $fld->UseFilter && $Security->canSearch()) {
             $html .= '<div class="ew-filter-dropdown-btn" data-ew-action="filter" data-table="' . $fld->TableVar . '" data-field="' . $fld->FieldVar .
-                '"><div class="ew-table-header-filter" role="button" aria-haspopup="true">' . $Language->phrase("Filter") . '</div></div>';
+                '"><div class="ew-table-header-filter" role="button" aria-haspopup="true">' . $Language->phrase("Filter") .
+                (is_array($fld->EditValue) ? str_replace("%c", count($fld->EditValue), $Language->phrase("FilterCount")) : '') .
+                '</div></div>';
         }
         $html = '<div class="ew-table-header-btn">' . $html . '</div>';
         if ($this->UseCustomTemplate) {
@@ -1078,7 +1147,7 @@ class JdhIpdAdmission extends DbTable
         } elseif ($fld->Sortable) {
             $urlParm = "order=" . urlencode($fld->Name) . "&amp;ordertype=" . $fld->getNextSort();
             if ($DashboardReport) {
-                $urlParm .= "&amp;dashboard=true";
+                $urlParm .= "&amp;" . Config("PAGE_DASHBOARD") . "=" . $DashboardReport;
             }
             return $this->addMasterUrl($this->CurrentPageName . "?" . $urlParm);
         } else {
@@ -1095,15 +1164,19 @@ class JdhIpdAdmission extends DbTable
             $arKeys = Param("key_m");
             $cnt = count($arKeys);
         } else {
+            $isApi = IsApi();
+            $keyValues = $isApi
+                ? (Route(0) == "export"
+                    ? array_map(fn ($i) => Route($i + 3), range(0, 0))  // Export API
+                    : array_map(fn ($i) => Route($i + 2), range(0, 0))) // Other API
+                : []; // Non-API
             if (($keyValue = Param("id") ?? Route("id")) !== null) {
                 $arKeys[] = $keyValue;
-            } elseif (IsApi() && (($keyValue = Key(0) ?? Route(2)) !== null)) {
+            } elseif ($isApi && (($keyValue = Key(0) ?? $keyValues[0] ?? null) !== null)) {
                 $arKeys[] = $keyValue;
             } else {
                 $arKeys = null; // Do not setup
             }
-
-            //return $arKeys; // Do not return yet, so the values will also be checked by the following code
         }
         // Check keys
         $ar = [];
@@ -1150,10 +1223,10 @@ class JdhIpdAdmission extends DbTable
         return $keyFilter;
     }
 
-    // Load recordset based on filter
-    public function loadRs($filter)
+    // Load result set based on filter/sort
+    public function loadRs($filter, $sort = "")
     {
-        $sql = $this->getSql($filter); // Set up filter (WHERE Clause)
+        $sql = $this->getSql($filter, $sort); // Set up filter (WHERE Clause) / sort (ORDER BY Clause)
         $conn = $this->getConnection();
         return $conn->executeQuery($sql);
     }
@@ -1186,7 +1259,7 @@ class JdhIpdAdmission extends DbTable
         $listClass = PROJECT_NAMESPACE . $listPage;
         $page = new $listClass();
         $page->loadRecordsetFromFilter($filter);
-        $view = Container("view");
+        $view = Container("app.view");
         $template = $listPage . ".php"; // View
         $GLOBALS["Title"] ??= $page->Title; // Title
         try {
@@ -1230,11 +1303,11 @@ class JdhIpdAdmission extends DbTable
         if ($curVal != "") {
             $this->unit_id->ViewValue = $this->unit_id->lookupCacheOption($curVal);
             if ($this->unit_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`id`", "=", $curVal, DATATYPE_NUMBER, "");
+                $filterWrk = SearchFilter($this->unit_id->Lookup->getTable()->Fields["id"]->searchExpression(), "=", $curVal, $this->unit_id->Lookup->getTable()->Fields["id"]->searchDataType(), "");
                 $sqlWrk = $this->unit_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
+                $config->setResultCache($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 if ($ari > 0) { // Lookup values found
@@ -1253,11 +1326,11 @@ class JdhIpdAdmission extends DbTable
         if ($curVal != "") {
             $this->ward_id->ViewValue = $this->ward_id->lookupCacheOption($curVal);
             if ($this->ward_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`ward_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                $filterWrk = SearchFilter($this->ward_id->Lookup->getTable()->Fields["ward_id"]->searchExpression(), "=", $curVal, $this->ward_id->Lookup->getTable()->Fields["ward_id"]->searchDataType(), "");
                 $sqlWrk = $this->ward_id->Lookup->getSql(false, $filterWrk, '', $this, true, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
+                $config->setResultCache($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 if ($ari > 0) { // Lookup values found
@@ -1276,12 +1349,12 @@ class JdhIpdAdmission extends DbTable
         if ($curVal != "") {
             $this->bed_id->ViewValue = $this->bed_id->lookupCacheOption($curVal);
             if ($this->bed_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`id`", "=", $curVal, DATATYPE_NUMBER, "");
+                $filterWrk = SearchFilter($this->bed_id->Lookup->getTable()->Fields["id"]->searchExpression(), "=", $curVal, $this->bed_id->Lookup->getTable()->Fields["id"]->searchDataType(), "");
                 $lookupFilter = $this->bed_id->getSelectFilter($this); // PHP
                 $sqlWrk = $this->bed_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
+                $config->setResultCache($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 if ($ari > 0) { // Lookup values found
@@ -1300,12 +1373,12 @@ class JdhIpdAdmission extends DbTable
         if ($curVal != "") {
             $this->patient_id->ViewValue = $this->patient_id->lookupCacheOption($curVal);
             if ($this->patient_id->ViewValue === null) { // Lookup from database
-                $filterWrk = SearchFilter("`patient_id`", "=", $curVal, DATATYPE_NUMBER, "");
+                $filterWrk = SearchFilter($this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchExpression(), "=", $curVal, $this->patient_id->Lookup->getTable()->Fields["patient_id"]->searchDataType(), "");
                 $lookupFilter = $this->patient_id->getSelectFilter($this); // PHP
                 $sqlWrk = $this->patient_id->Lookup->getSql(false, $filterWrk, $lookupFilter, $this, true, true);
                 $conn = Conn();
                 $config = $conn->getConfiguration();
-                $config->setResultCacheImpl($this->Cache);
+                $config->setResultCache($this->Cache);
                 $rswrk = $conn->executeCacheQuery($sqlWrk, [], [], $this->CacheProfile)->fetchAll();
                 $ari = count($rswrk);
                 if ($ari > 0) { // Lookup values found
@@ -1427,9 +1500,9 @@ class JdhIpdAdmission extends DbTable
     }
 
     // Export data in HTML/CSV/Word/Excel/Email/PDF format
-    public function exportDocument($doc, $recordset, $startRec = 1, $stopRec = 1, $exportPageType = "")
+    public function exportDocument($doc, $result, $startRec = 1, $stopRec = 1, $exportPageType = "")
     {
-        if (!$recordset || !$doc) {
+        if (!$result || !$doc) {
             return;
         }
         if (!$doc->ExportCustom) {
@@ -1457,12 +1530,9 @@ class JdhIpdAdmission extends DbTable
                 $doc->endExportRow();
             }
         }
-
-        // Move to first record
         $recCnt = $startRec - 1;
-        $stopRec = ($stopRec > 0) ? $stopRec : PHP_INT_MAX;
-        while (!$recordset->EOF && $recCnt < $stopRec) {
-            $row = $recordset->fields;
+        $stopRec = $stopRec > 0 ? $stopRec : PHP_INT_MAX;
+        while (($row = $result->fetch()) && $recCnt < $stopRec) {
             $recCnt++;
             if ($recCnt >= $startRec) {
                 $rowCnt = $recCnt - $startRec + 1;
@@ -1476,7 +1546,7 @@ class JdhIpdAdmission extends DbTable
                 $this->loadListRowValues($row);
 
                 // Render row
-                $this->RowType = ROWTYPE_VIEW; // Render view
+                $this->RowType = RowType::VIEW; // Render view
                 $this->resetAttributes();
                 $this->renderListRow();
                 if (!$doc->ExportCustom) {
@@ -1506,7 +1576,6 @@ class JdhIpdAdmission extends DbTable
             if ($doc->ExportCustom) {
                 $this->rowExport($doc, $row);
             }
-            $recordset->moveNext();
         }
         if (!$doc->ExportCustom) {
             $doc->exportTableFooter();
@@ -1518,8 +1587,9 @@ class JdhIpdAdmission extends DbTable
     {
         global $Security;
         $filterWrk = "";
-        if ($id == "")
-            $id = (CurrentPageID() == "list") ? $this->CurrentAction : CurrentPageID();
+        if ($id == "") {
+            $id = CurrentPageID() == "list" ? $this->CurrentAction : CurrentPageID();
+        }
         if (!$this->userIDAllow($id) && !$Security->isAdmin()) {
             $filterWrk = $Security->userIdList();
             if ($filterWrk != "") {
@@ -1538,7 +1608,7 @@ class JdhIpdAdmission extends DbTable
     {
         global $UserTable;
         $wrk = "";
-        $sql = "SELECT " . $masterfld->Expression . " FROM `jdh_ipd_admission`";
+        $sql = "SELECT " . $masterfld->Expression . " FROM jdh_ipd_admission";
         $filter = $this->addUserIDFilter("");
         if ($filter != "") {
             $sql .= " WHERE " . $filter;
@@ -1547,7 +1617,7 @@ class JdhIpdAdmission extends DbTable
         // List all values
         $conn = Conn($UserTable->Dbid);
         $config = $conn->getConfiguration();
-        $config->setResultCacheImpl($this->Cache);
+        $config->setResultCache($this->Cache);
         if ($rs = $conn->executeCacheQuery($sql, [], [], $this->CacheProfile)->fetchAllNumeric()) {
             foreach ($rs as $row) {
                 if ($wrk != "") {
@@ -1576,7 +1646,7 @@ class JdhIpdAdmission extends DbTable
     // Write audit trail start/end for grid update
     public function writeAuditTrailDummy($typ)
     {
-        WriteAuditLog(CurrentUser(), $typ, 'jdh_ipd_admission', "", "", "", "");
+        WriteAuditLog(CurrentUserIdentifier(), $typ, 'jdh_ipd_admission');
     }
 
     // Write audit trail (add page)
@@ -1595,14 +1665,14 @@ class JdhIpdAdmission extends DbTable
         $key .= $rs['id'];
 
         // Write audit trail
-        $usr = CurrentUser();
+        $usr = CurrentUserIdentifier();
         foreach (array_keys($rs) as $fldname) {
-            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DataType::BLOB) { // Ignore BLOB fields
                 if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
                     $newvalue = $Language->phrase("PasswordMask");
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo Field
+                } elseif ($this->Fields[$fldname]->DataType == DataType::MEMO) { // Memo Field
                     $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML Field
+                } elseif ($this->Fields[$fldname]->DataType == DataType::XML) { // XML Field
                     $newvalue = "[XML]";
                 } else {
                     $newvalue = $rs[$fldname];
@@ -1628,10 +1698,10 @@ class JdhIpdAdmission extends DbTable
         $key .= $rsold['id'];
 
         // Write audit trail
-        $usr = CurrentUser();
+        $usr = CurrentUserIdentifier();
         foreach (array_keys($rsnew) as $fldname) {
-            if (array_key_exists($fldname, $this->Fields) && array_key_exists($fldname, $rsold) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
-                if ($this->Fields[$fldname]->DataType == DATATYPE_DATE) { // DateTime field
+            if (array_key_exists($fldname, $this->Fields) && array_key_exists($fldname, $rsold) && $this->Fields[$fldname]->DataType != DataType::BLOB) { // Ignore BLOB fields
+                if ($this->Fields[$fldname]->DataType == DataType::DATE) { // DateTime field
                     $modified = (FormatDateTime($rsold[$fldname], 0) != FormatDateTime($rsnew[$fldname], 0));
                 } else {
                     $modified = !CompareValue($rsold[$fldname], $rsnew[$fldname]);
@@ -1640,10 +1710,10 @@ class JdhIpdAdmission extends DbTable
                     if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
                         $oldvalue = $Language->phrase("PasswordMask");
                         $newvalue = $Language->phrase("PasswordMask");
-                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                    } elseif ($this->Fields[$fldname]->DataType == DataType::MEMO) { // Memo field
                         $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsold[$fldname] : "[MEMO]";
                         $newvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rsnew[$fldname] : "[MEMO]";
-                    } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                    } elseif ($this->Fields[$fldname]->DataType == DataType::XML) { // XML field
                         $oldvalue = "[XML]";
                         $newvalue = "[XML]";
                     } else {
@@ -1672,19 +1742,19 @@ class JdhIpdAdmission extends DbTable
         $key .= $rs['id'];
 
         // Write audit trail
-        $usr = CurrentUser();
+        $usr = CurrentUserIdentifier();
         foreach (array_keys($rs) as $fldname) {
-            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DATATYPE_BLOB) { // Ignore BLOB fields
+            if (array_key_exists($fldname, $this->Fields) && $this->Fields[$fldname]->DataType != DataType::BLOB) { // Ignore BLOB fields
                 if ($this->Fields[$fldname]->HtmlTag == "PASSWORD") { // Password Field
                     $oldvalue = $Language->phrase("PasswordMask");
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_MEMO) { // Memo field
+                } elseif ($this->Fields[$fldname]->DataType == DataType::MEMO) { // Memo field
                     $oldvalue = Config("AUDIT_TRAIL_TO_DATABASE") ? $rs[$fldname] : "[MEMO]";
-                } elseif ($this->Fields[$fldname]->DataType == DATATYPE_XML) { // XML field
+                } elseif ($this->Fields[$fldname]->DataType == DataType::XML) { // XML field
                     $oldvalue = "[XML]";
                 } else {
                     $oldvalue = $rs[$fldname];
                 }
-                WriteAuditLog($usr, "D", 'jdh_ipd_admission', $fldname, $key, $oldvalue, "");
+                WriteAuditLog($usr, "D", 'jdh_ipd_admission', $fldname, $key, $oldvalue);
             }
         }
     }
@@ -1704,13 +1774,14 @@ class JdhIpdAdmission extends DbTable
         }
         $key .= $rs['id'];
         $email = new Email();
-        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-        $email->replaceSubject($subject); // Replace Subject
-        $email->replaceContent("<!--table-->", $table);
-        $email->replaceContent("<!--key-->", $key);
-        $email->replaceContent("<!--action-->", $action);
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"), data: [
+            "From" => Config("SENDER_EMAIL"), // Replace Sender
+            "To" => Config("RECIPIENT_EMAIL"), // Replace Recipient
+            "Subject" => $subject,  // Replace Subject
+            "Table" => $table,
+            "Key" => $key,
+            "Action" => $action
+        ]);
         $args = ["rsnew" => $rs];
         $emailSent = false;
         if ($this->emailSending($email, $args)) {
@@ -1738,16 +1809,15 @@ class JdhIpdAdmission extends DbTable
         }
         $key .= $rsold['id'];
         $email = new Email();
-        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"));
-        $email->replaceSender(Config("SENDER_EMAIL")); // Replace Sender
-        $email->replaceRecipient(Config("RECIPIENT_EMAIL")); // Replace Recipient
-        $email->replaceSubject($subject); // Replace Subject
-        $email->replaceContent("<!--table-->", $table);
-        $email->replaceContent("<!--key-->", $key);
-        $email->replaceContent("<!--action-->", $action);
-        $args = [];
-        $args["rsold"] = &$rsold;
-        $args["rsnew"] = &$rsnew;
+        $email->load(Config("EMAIL_NOTIFY_TEMPLATE"), data: [
+            "From" => Config("SENDER_EMAIL"), // Replace Sender
+            "To" => Config("RECIPIENT_EMAIL"), // Replace Recipient
+            "Subject" => $subject,  // Replace Subject
+            "Table" => $table,
+            "Key" => $key,
+            "Action" => $action
+        ]);
+        $args = ["rsold" => $rsold, "rsnew" => $rsnew];
         $emailSent = false;
         if ($this->emailSending($email, $args)) {
             $emailSent = $email->send();
@@ -1774,7 +1844,7 @@ class JdhIpdAdmission extends DbTable
     }
 
     // Recordset Selected event
-    public function recordsetSelected(&$rs)
+    public function recordsetSelected($rs)
     {
         //Log("Recordset Selected");
     }
@@ -1813,7 +1883,7 @@ class JdhIpdAdmission extends DbTable
     }
 
     // Row Inserted event
-    public function rowInserted($rsold, &$rsnew)
+    public function rowInserted($rsold, $rsnew)
     {
         //Log("Row Inserted");
     }
@@ -1827,7 +1897,7 @@ class JdhIpdAdmission extends DbTable
     }
 
     // Row Updated event
-    public function rowUpdated($rsold, &$rsnew)
+    public function rowUpdated($rsold, $rsnew)
     {
         //Log("Row Updated");
     }
@@ -1877,13 +1947,13 @@ class JdhIpdAdmission extends DbTable
     }
 
     // Row Deleted event
-    public function rowDeleted(&$rs)
+    public function rowDeleted($rs)
     {
         //Log("Row Deleted");
     }
 
     // Email Sending event
-    public function emailSending($email, &$args)
+    public function emailSending($email, $args)
     {
         //var_dump($email, $args); exit();
         return true;

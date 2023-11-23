@@ -1,13 +1,12 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Basic Search class
  */
 class BasicSearch
 {
-    public $Table;
     public $BasicSearchAnyFields;
     public $Keyword = "";
     public $KeywordDefault = "";
@@ -17,11 +16,10 @@ class BasicSearch
     protected $Prefix = "";
 
     // Constructor
-    public function __construct($table)
+    public function __construct(public $Table)
     {
-        $this->Table = $table;
         $this->BasicSearchAnyFields = Config("BASIC_SEARCH_ANY_FIELDS");
-        $this->Prefix = PROJECT_NAME . "_" . $table->TableVar . "_";
+        $this->Prefix = PROJECT_NAME . "_" . $this->Table->TableVar . "_";
         $this->Raw = !Config("REMOVE_XSS");
     }
 
@@ -97,16 +95,12 @@ class BasicSearch
     {
         global $Language;
         $typ = $this->getType();
-        switch ($typ) {
-            case "=":
-                return $Language->phrase("QuickSearchExact");
-            case "AND":
-                return $Language->phrase("QuickSearchAll");
-            case "OR":
-                return $Language->phrase("QuickSearchAny");
-            default:
-                return $Language->phrase("QuickSearchAuto");
-        }
+        return match ($typ) {
+            "=" => $Language->phrase("QuickSearchExact"),
+            "AND" => $Language->phrase("QuickSearchAll"),
+            "OR" => $Language->phrase("QuickSearchAny"),
+            default => $Language->phrase("QuickSearchAuto")
+        };
     }
 
     // Get short type name
@@ -114,20 +108,12 @@ class BasicSearch
     {
         global $Language;
         $typ = $this->getType();
-        switch ($typ) {
-            case "=":
-                $typname = $Language->phrase("QuickSearchExactShort");
-                break;
-            case "AND":
-                $typname = $Language->phrase("QuickSearchAllShort");
-                break;
-            case "OR":
-                $typname = $Language->phrase("QuickSearchAnyShort");
-                break;
-            default:
-                $typname = $Language->phrase("QuickSearchAutoShort");
-                break;
-        }
+        $typname = match ($typ) {
+            "=" => $Language->phrase("QuickSearchExactShort"),
+            "AND" => $Language->phrase("QuickSearchAllShort"),
+            "OR" => $Language->phrase("QuickSearchAnyShort"),
+            default => $Language->phrase("QuickSearchAutoShort")
+        };
         if ($typname != "") {
             $typname .= "&nbsp;";
         }

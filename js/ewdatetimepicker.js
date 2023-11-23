@@ -1,5 +1,5 @@
 /**
- * Create Date/Time Picker (for PHPMaker 2023)
+ * Create Date/Time Picker (for PHPMaker 2024)
  * @license Copyright (c) e.World Technology Limited. All rights reserved.
  */
 
@@ -70,5 +70,7 @@ ew.createDateTimePicker = function(formid, id, options) {
             });
     }
     $input.tempusDominus(args.options);
-    return $input.data(dataKey);
+    const td = $input.data(dataKey);
+    document.addEventListener("changetheme", e => td.updateOptions({ display: { theme: e.detail } }));
+    return td;
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * File Viewer class
@@ -12,7 +12,7 @@ class FileViewer
      *
      * @return bool Whether file is outputted successfully
      */
-    public function getFile()
+    public function __invoke()
     {
         global $Security;
 
@@ -35,12 +35,12 @@ class FileViewer
             $token = Get($GLOBALS["TokenName"] ?? "", "");
             $sessionId = Get("session", "");
             $fn = Get("fn", "");
-            if (!empty(Route(2)) && empty(Route(3))) {
-                $fn = Route(2);
+            if (!empty(Route("param")) && empty(Route("key"))) {
+                $fn = Route("param");
             }
-            $table = Get(Config("API_OBJECT_NAME"), Route(1));
-            $field = Get(Config("API_FIELD_NAME"), Route(2));
-            $recordkey = Get(Config("API_KEY_NAME"), Route(3, true));
+            $table = Get(Config("API_OBJECT_NAME"), Route("table"));
+            $field = Get(Config("API_FIELD_NAME"), Route("param"));
+            $recordkey = Get(Config("API_KEY_NAME"), Route("key"));
             $resize = Get("resize", "0") == "1";
             $width = Get("width", 0);
             $height = Get("height", 0);
@@ -48,7 +48,7 @@ class FileViewer
             $crop = Get("crop", "");
         }
         $sessionId = Decrypt($sessionId);
-        $key = Config("RANDOM_KEY") . ($sessionId != "" ? $sessionId : "");
+        $key = $sessionId . Config("ENCRYPTION_KEY");
         if (!is_numeric($width)) {
             $width = 0;
         }
@@ -62,14 +62,11 @@ class FileViewer
 
         // Get table object
         $tbl = Container($table);
-        $tableName = is_object($tbl) ? $tbl->TableName : "";
 
         // API request with table/fn
-        if ($tableName != "") {
-            $fn = Decrypt($fn, $key); // File path is always encrypted
-        } else {
-            $fn = "";
-        }
+        $fn = ($tbl?->TableName ?? false)
+            ? Decrypt($fn, $key) // File path is always encrypted
+            : "";
 
         // Get image
         $res = false;

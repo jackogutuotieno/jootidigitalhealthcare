@@ -1,6 +1,6 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 /**
  * Numeric pager class
@@ -140,7 +140,7 @@ class NumericPager extends Pager
             $html .= '<li class="page-item' . $this->FirstButton->getDisabledClass() . '"><a class="page-link" data-value="first" ' . $this->FirstButton->getAttributes($url, $action) . ' aria-label="' . $Language->phrase("PagerFirst") . '"><i class="fa-solid fa-angles-left"></i></a></li>';
             $html .= '<li class="page-item' . $this->PrevButton->getDisabledClass() . '"><a class="page-link" data-value="prev" ' . $this->PrevButton->getAttributes($url, $action) . ' aria-label="' . $Language->phrase("PagerPrevious") . '"><i class="fa-solid fa-angle-left"></i></a></li>';
             foreach ($this->Items as $pagerItem) {
-                $html .= '<li class="page-item' . $pagerItem->getActiveClass() . '"><a class="page-link" ' . $pagerItem->getAttributes($url, $action) . '">' . FormatInteger($pagerItem->Text) . '</a></li>';
+                $html .= '<li class="page-item' . $pagerItem->getActiveClass() . '"><a class="page-link" ' . $pagerItem->getAttributes($url, $action) . '>' . FormatInteger($pagerItem->Text) . '</a></li>';
             }
             $html .= '<li class="page-item' . $this->NextButton->getDisabledClass() . '"><a class="page-link" data-value="next" ' . $this->NextButton->getAttributes($url, $action) . ' aria-label="' . $Language->phrase("PagerNext") . '"><i class="fa-solid fa-angle-right"></i></a></li>';
             $html .= '<li class="page-item' . $this->LastButton->getDisabledClass() . '"><a class="page-link" data-value="last" ' . $this->LastButton->getAttributes($url, $action) . ' aria-label="' . $Language->phrase("PagerLast") . '"><i class="fa-solid fa-angles-right"></i></a></li>';
@@ -153,8 +153,8 @@ class NumericPager extends Pager
                     </div>
                 </div>
                 PAGER;
-            $html .= parent::render();
         }
+        $html .= parent::render();
         return $html;
     }
 }

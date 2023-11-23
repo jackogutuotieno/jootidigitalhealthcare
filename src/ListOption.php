@@ -1,13 +1,14 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
+
+use DiDom\Element;
 
 /**
  * List option class
  */
 class ListOption
 {
-    public $Name;
     public $OnLeft;
     public $CssStyle;
     public $CssClass;
@@ -21,11 +22,14 @@ class ListOption
     public $ButtonGroupName = "_default";
 
     // Constructor
-    public function __construct($name, array $properties = [])
-    {
-        $this->Name = $name;
+    public function __construct(
+        public $Name,
+        array $properties = []
+    ) {
         foreach ($properties as $property => $value) {
-            $this->$property = $value;
+            if (property_exists($this, $property)) {
+                $this->$property = $value;
+            }
         }
     }
 
@@ -45,6 +49,32 @@ class ListOption
     public function moveTo($pos)
     {
         $this->Parent->moveItem($this->Name, $pos);
+    }
+
+    // Get body
+    public function getBody()
+    {
+        return $this->Body;
+    }
+
+    // Set body
+    public function setBody($value)
+    {
+        $this->Body = $value;
+        return $this;
+    }
+
+    // Get visible
+    public function getVisible()
+    {
+        return $this->Visible;
+    }
+
+    // Set visible
+    public function setVisible($value)
+    {
+        $this->Visible = $value;
+        return $this;
     }
 
     // Render
@@ -101,7 +131,9 @@ class ListOption
         if ($this->Parent->UseButtonGroup && $this->ShowInButtonGroup) {
             $attrs->appendClass("text-nowrap");
         }
-        $res = $tag ? HtmlElement($tag, $attrs, $res) : $res;
+        if ($tag) {
+            $res = Element::create($tag, attributes: $attrs->toArray())->setInnerHtml($res ?? "")->toDocument()->format()->html();
+        }
         if ($this->Parent->TemplateId != "" && $this->Parent->TemplateType == "single") {
             if ($part == "header") {
                 $res = '<template id="tpoh_' . $this->Parent->TemplateId . '_' . $this->Name . '">' . $res . '</template>';

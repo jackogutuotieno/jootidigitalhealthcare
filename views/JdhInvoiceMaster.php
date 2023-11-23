@@ -1,9 +1,10 @@
 <?php
 
-namespace PHPMaker2023\jootidigitalhealthcare;
+namespace PHPMaker2024\jootidigitalhealthcare;
 
 // Table
 $jdh_invoice = Container("jdh_invoice");
+$jdh_invoice->TableClass = "table table-bordered table-hover table-sm ew-table ew-master-table";
 ?>
 <?php if ($jdh_invoice->Visible) { ?>
 <div class="ew-master-div">
